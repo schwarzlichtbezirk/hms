@@ -1,0 +1,56 @@
+
+.field-name {
+	text-align: right;
+	font-weight: 700;
+}
+
+.field-value {
+	text-align: left;
+	font-weight: 400;
+}
+
+.stattable > .row {
+	border-bottom: 1px solid rgba(0, 0, 0, 0);
+}
+
+.stattable > .row:hover {
+	border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.console-window {
+	color: #d9d9d9;
+	background: #262626;
+	margin-top: 1em;
+	margin-bottom: 1em;
+	width: 80ch;
+	height: 25em;
+	overflow: auto;
+	-ms-overflow-style: scrollbar;
+	white-space: pre-wrap;
+	word-break: break-all;
+}
+
+.console-but {
+	width: 120px;
+}
+
+@media (max-width: 575.98px) {
+	.field-name {
+		text-align: left;
+		font-weight: 700;
+	}
+
+	.field-value {
+		text-align: left;
+		font-weight: 400;
+	}
+
+	.console-window {
+		width: 40ch;
+		height: 40em;
+	}
+
+	.console-but {
+		width: auto;
+	}
+}

@@ -1,0 +1,15 @@
+[
+	"System Volume Information",
+	"*.sys",
+	"Windows",
+	"$Recycle.Bin",
+	"Program Files",
+	"Program Files (x86)",
+	"ProgramData",
+	"Recovery",
+	"Thumb.db",
+	".git",
+	".svn",
+	".vs",
+	"*.tmp"
+]
