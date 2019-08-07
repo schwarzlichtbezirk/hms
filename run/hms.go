@@ -1,25 +1,17 @@
 package main
 
 import (
-	"flag"
 	"github.com/schwarzlichtbezirk/hms"
 )
 
-const buildvers = "0.1.1"
-const builddate = "2019.08.04"
+const buildvers = "0.1.2"
+const builddate = "2019.08.07"
 
 var log = hms.Log
 
 func main() {
-	flag.BoolVar(&hms.DevMode, "dev", false, "starts web-server in developer mode")
-	flag.Parse()
-
-	log.Printf("version: %s, date: %s", buildvers, builddate)
-	if hms.DevMode {
-		log.Println("starts in developer mode")
-	} else {
-		log.Println("starts")
-	}
+	log.Printf("version: %s, builton: %s", buildvers, builddate)
+	log.Println("starts")
 	hms.Init()
 	var gmux = hms.NewRouter()
 	hms.RegisterRoutes(gmux)

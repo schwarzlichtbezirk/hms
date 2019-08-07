@@ -31,19 +31,16 @@ const (
 
 var (
 	destpath string // contains program destination path
-	rootpath,
-	asstpath,
-	devmpath,
-	relmpath,
-	plugpath,
-	confpath,
+	rootpath string
+	confpath string
 	mailpath string
 )
 
-// command line variables
-var (
-	DevMode bool
-)
+var routedpages = map[string]string{
+	"main": "main.html",
+	"stat": "stat.html",
+}
+var routedpaths = map[string]string{}
 
 // settings
 var (
@@ -202,32 +199,33 @@ func Init() {
 		return
 	}
 	rootpath = checkpath("")
-	asstpath = checkpath(asstsuff)
-	devmpath = checkpath(devmsuff)
-	relmpath = checkpath(relmsuff)
-	plugpath = checkpath(plugsuff)
 	confpath = checkpath(confsuff)
 	mailpath = checkpath(mailsuff)
+	var devmpath = checkpath(devmsuff)
+	//var relmpath = checkpath(relmsuff)
+	var plugpath = checkpath(plugsuff)
+	var asstpath = checkpath(asstsuff)
 
 	var err error
 
-	// open resources
+	// open settings
 	opensettings()
 	loadshared()
 	loadhidden()
-	if err = LoadFiles(devmpath, "/devm/"); err != nil {
-		Log.Printf("failure on load 'devm' route: %s", err.Error())
+	// make paths routes table
+	routedpaths = map[string]string{
+		"/devm/": devmpath,
+		"/relm/": devmpath, /*relmpath*/ // TODO: put release mode when it will be ready
+		"/plug/": plugpath,
+		"/asst/": asstpath,
 	}
-	// TODO: put release mode when it will be ready
-	if err = LoadFiles(devmpath /*relmpath*/, "/relm/"); err != nil {
-		Log.Printf("failure on load 'relm' route: %s", err.Error())
+	// cache routed files
+	for prefix, path := range routedpaths {
+		var count, size, errs = LoadFiles(path, prefix)
+		LogErrors(errs)
+		Log.Printf("cached %d files on %d bytes for %s route", count, size, prefix)
 	}
-	if err = LoadFiles(plugpath, "/plug/"); err != nil {
-		Log.Printf("failure on load 'plug' route: %s", err.Error())
-	}
-	if err = LoadFiles(asstpath, "/asst/"); err != nil {
-		Log.Printf("failure on load 'asst' route: %s", err.Error())
-	}
+
 	if err = loadtemlates(); err != nil {
 		Log.Fatal(err)
 	}

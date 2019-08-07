@@ -5,7 +5,7 @@
 const token = {};
 
 // URI to jump on logout
-const signuri = "/sign";
+const signuri = devmode ? "/dev/sign" : "/sign";
 
 // Sends given request with optional JSON object
 const sendjson = (xhr, body) => {

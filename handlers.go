@@ -3,6 +3,7 @@ package hms
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -28,13 +29,13 @@ const (
 func pageHandler(pref, name string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		WriteHtmlHeader(w)
-		var content, ok = filecache[pref+pages[name]]
+		var content, ok = filecache[pref+routedpages[name]]
 		if ok {
 			pccmux.Lock()
 			pagecallcount[name]++
 			pccmux.Unlock()
 
-			http.ServeContent(w, r, pages[name], starttime, bytes.NewReader(content))
+			http.ServeContent(w, r, routedpages[name], starttime, bytes.NewReader(content))
 		} else {
 			http.NotFound(w, r)
 		}
@@ -113,6 +114,52 @@ func pingApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	WriteJson(w, http.StatusOK, body)
+}
+
+// APIHANDLER
+func reloadApi(w http.ResponseWriter, r *http.Request) {
+	var err error
+	type cached struct {
+		Prefix string  `json:"prefix"`
+		Count  uint64  `json:"count"`
+		Size   uint64  `json:"size"`
+		Errors []error `json:"errors"`
+	}
+
+	var body []byte
+	body, err = ioutil.ReadAll(r.Body)
+	if err != nil {
+		WriteError500(w, err, EC_reloadbadreq)
+		return
+	}
+
+	var prefixlist []string
+	err = json.Unmarshal(body, &prefixlist)
+	if err != nil {
+		WriteError400(w, err.Error(), EC_reloadbadcontent)
+		return
+	}
+
+	var p []cached
+	for _, prefix := range prefixlist {
+		var path, ok = routedpaths[prefix]
+		if !ok {
+			path, ok = routedpaths["/"+prefix+"/"]
+			if !ok {
+				WriteError400(w, fmt.Sprintf("given routes prefix \"%s\" does not assigned to any file path", prefix), EC_reloadbadprefix)
+				return
+			}
+			prefix = "/" + prefix + "/"
+		}
+		var res cached
+		res.Prefix = prefix
+		res.Count, res.Size, res.Errors = LoadFiles(path, prefix)
+		p = append(p, res)
+		LogErrors(res.Errors)
+		Log.Printf("reloaded cache of %d files on %d bytes for %s route", res.Count, res.Size, prefix)
+	}
+
+	WriteJson(w, http.StatusOK, p)
 }
 
 // APIHANDLER

@@ -49,8 +49,13 @@ const (
 	// ping
 	EC_pingbadreq = 5
 
+	// reload
+	EC_reloadbadreq     = 6
+	EC_reloadbadcontent = 7
+	EC_reloadbadprefix  = 8
+
 	// getlog
-	EC_getlogbadnum = 6
+	EC_getlogbadnum = 9
 
 	// getdrv
 	EC_getdrvunauth = 10
@@ -72,11 +77,6 @@ const (
 // Routes table //
 //////////////////
 
-var pages = map[string]string{
-	"main": "main.html",
-	"stat": "stat.html",
-}
-
 // Puts application routes to given router.
 func RegisterRoutes(gmux *Router) {
 
@@ -85,17 +85,16 @@ func RegisterRoutes(gmux *Router) {
 	var devm = gmux.PathPrefix("/dev").Subrouter()
 	devm.Path("/").HandlerFunc(pageHandler("/devm/", "main"))
 	gmux.Path("/").HandlerFunc(pageHandler("/relm/", "main"))
-	for name := range pages {
+	for name := range routedpages {
 		devm.Path("/" + name).HandlerFunc(pageHandler("/devm/", name)) // development mode
 		gmux.Path("/" + name).HandlerFunc(pageHandler("/relm/", name)) // release mode
 	}
 
 	// files sharing
 
-	gmux.PathPrefix("/devm/").HandlerFunc(filecacheHandler)
-	gmux.PathPrefix("/relm/").HandlerFunc(filecacheHandler)
-	gmux.PathPrefix("/plug/").HandlerFunc(filecacheHandler)
-	gmux.PathPrefix("/asst/").HandlerFunc(filecacheHandler)
+	for prefix := range routedpaths {
+		gmux.PathPrefix(prefix).HandlerFunc(filecacheHandler)
+	}
 
 	gmux.PathPrefix(shareprefix).HandlerFunc(shareHandler)
 	gmux.PathPrefix("/local").HandlerFunc(localHandler)
@@ -103,6 +102,7 @@ func RegisterRoutes(gmux *Router) {
 	// ajax-queries
 
 	gmux.Path("/api/ping").HandlerFunc(AjaxWrap(pingApi))
+	gmux.Path("/api/reload").HandlerFunc(AjaxWrap(reloadApi))
 	gmux.Path("/api/servinfo").HandlerFunc(AjaxWrap(servinfoApi))
 	gmux.Path("/api/memusage").HandlerFunc(AjaxWrap(memusageApi))
 	gmux.Path("/api/getlog").HandlerFunc(AjaxWrap(getlogApi))
@@ -138,34 +138,45 @@ func registershares() {
 // HTTP distribution cache
 var filecache = map[string][]byte{}
 
-func LoadFiles(rootpath, prefix string) error {
+func LoadFiles(path, prefix string) (count, size uint64, errs []error) {
 	var err error
 	var files []os.FileInfo
-	files, err = ioutil.ReadDir(rootpath)
+	files, err = ioutil.ReadDir(path)
 	if err != nil {
-		return err
+		errs = append(errs, fmt.Errorf("failed path scanning \"%s\" for %s prefix: %s", path, prefix, err.Error()))
+		return
 	}
 	for _, file := range files {
 		if file.IsDir() {
-			err = LoadFiles(rootpath+file.Name()+"/", prefix+file.Name()+"/")
-			if err != nil {
-				return err
-			}
+			var count1, size1 uint64
+			var errs1 []error
+			count1, size1, errs1 = LoadFiles(path+file.Name()+"/", prefix+file.Name()+"/")
+			count += count1
+			size += size1
+			errs = append(errs, errs1...)
 		} else {
 			var content []byte
-			content, err = ioutil.ReadFile(rootpath + file.Name())
+			content, err = ioutil.ReadFile(path + file.Name())
 			if err != nil {
-				Log.Printf("failed read file '%s' for '%s' prefix: %s", rootpath+file.Name(), prefix, err.Error())
+				errs = append(errs, fmt.Errorf("failed read file \"%s\" for %s prefix: %s", path+file.Name(), prefix, err.Error()))
 			} else {
 				var ext = strings.ToLower(filepath.Ext(file.Name()))
 				if ext == ".htm" || ext == ".html" {
 					content = bytes.TrimPrefix(content, []byte("\xef\xbb\xbf")) // remove UTF-8 format BOM header
 				}
 				filecache[prefix+file.Name()] = content
+				count++
+				size += uint64(len(content))
 			}
 		}
 	}
-	return nil
+	return
+}
+
+func LogErrors(errs []error) {
+	for _, err := range errs {
+		Log.Logln("error", err.Error())
+	}
 }
 
 // handler wrapper for AJAX API calls without authorization
@@ -177,7 +188,7 @@ func AjaxWrap(fn http.HandlerFunc) http.HandlerFunc {
 }
 
 func StripPort(hostport string) string {
-	colon := strings.IndexByte(hostport, ':')
+	var colon = strings.IndexByte(hostport, ':')
 	if colon == -1 {
 		return hostport
 	}
