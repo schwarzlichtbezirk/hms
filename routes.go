@@ -215,9 +215,51 @@ const (
 	serverlabel = "hms-go"
 	keepconn    = "keep-alive"
 	xframe      = "sameorigin"
-	jsoncontent = "application/json; charset=utf-8"
-	htmlcontent = "text/html; charset=utf-8"
+	jsoncontent = "application/json;charset=utf-8"
+	htmlcontent = "text/html;charset=utf-8"
+	csscontent  = "text/css;charset=utf-8"
+	jscontent   = "text/javascript;charset=utf-8"
 )
+
+var mimeext = map[string]string{
+	// Common text content
+	".json": jsoncontent,
+	".html": htmlcontent,
+	".htm":  htmlcontent,
+	".css":  csscontent,
+	".js":   jscontent,
+	".mjs":  jscontent,
+	".txt":  "text/plain;charset=utf-8",
+	".pdf":  "application/pdf",
+	// Image types
+	".gif":  "image/gif",
+	".jpeg": "image/jpeg",
+	".jpg":  "image/jpeg",
+	".png":  "image/png",
+	".webp": "image/webp",
+	".tiff": "image/tiff",
+	".tif":  "image/tiff",
+	".bmp":  "image/bmp",
+	".svg":  "image/svg+xml",
+	".ico":  "image/x-icon",
+	// Audio types
+	".aac": "audio/aac",
+	".mp3": "audio/mpeg",
+	".wav": "audio/wav",
+	".wma": "audio/x-ms-wma",
+	".ogg": "audio/ogg",
+	// Video types
+	".mpg": "video/mpeg",
+	".mp4": "video/mp4",
+	".wmv": "video/x-ms-wmv",
+	".flv": "video/x-flv",
+	".3gp": "video/3gpp",
+	// Fonts types
+	".ttf":   "font/ttf",
+	".otf":   "font/otf",
+	".woff":  "font/woff",
+	".woff2": "font/woff2",
+}
 
 func WriteStdHeader(w http.ResponseWriter) {
 	w.Header().Set("Connection", keepconn)

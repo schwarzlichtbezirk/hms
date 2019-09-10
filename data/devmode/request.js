@@ -16,6 +16,8 @@ const sendjson = (xhr, body) => {
 		if (body.constructor.name !== 'FormData') {
 			xhr.setRequestHeader("Content-Type", "application/json");
 			body = JSON.stringify(body);
+		} else {
+			xhr.setRequestHeader("Content-Type", "multipart/form-data");
 		}
 	}
 	xhr.send(body);

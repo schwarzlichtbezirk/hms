@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path/filepath"
 	"runtime"
 	"sort"
 	"strconv"
@@ -44,10 +45,16 @@ func pageHandler(pref, name string) http.HandlerFunc {
 
 // APIHANDLER
 func filecacheHandler(w http.ResponseWriter, r *http.Request) {
-	WriteStdHeader(w)
 	var route = r.URL.Path
 	var content, ok = filecache[route]
+	WriteStdHeader(w)
 	if ok {
+		if strings.HasPrefix(route, "/plug/") {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+		}
+		if ct, ok := mimeext[strings.ToLower(filepath.Ext(route))]; ok {
+			w.Header().Set("Content-Type", ct)
+		}
 		http.ServeContent(w, r, route, starttime, bytes.NewReader(content))
 	} else {
 		http.NotFound(w, r)

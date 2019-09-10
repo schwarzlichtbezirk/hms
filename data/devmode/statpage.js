@@ -48,7 +48,7 @@ const app = new Vue({
 			<div id="collapse-servinfo" class="collapse show">
 				<div class="card-body stattable">
 					<div class="row">
-						<div class="col-sm-6 field-name">server version:</div>
+						<div class="col-sm-6 field-name">client version:</div>
 						<div class="col-md-6 field-value">{{servinfo.buildvers}}</div>
 					</div>
 					<div class="row">
