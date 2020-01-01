@@ -12,6 +12,7 @@
 	font-style: normal;
 	font-size: 24px; /* Preferred icon size */
 	display: inline-block;
+	vertical-align: middle;
 	line-height: 1;
 	text-transform: none;
 	letter-spacing: normal;
@@ -29,6 +30,11 @@
 }
 
 	/* Rules for sizing the icon. */
+	.material-icons.md-inline {
+		font-size: inherit;
+		line-height: inherit;
+	}
+
 	.material-icons.md-12 {
 		font-size: 12px;
 	}

@@ -153,7 +153,7 @@ const app = new Vue({
 		timemode: 1
 	},
 	computed: {
-		consolecontent: function () {
+		consolecontent() {
 			const text = [];
 			for (const i of this.log) {
 				let prefix = "";
@@ -174,20 +174,20 @@ const app = new Vue({
 			return text.join('\n');
 		},
 
-		isnoprefix: function () {
+		isnoprefix() {
 			return this.timemode === 0 && 'btn-info' || 'btn-outline-info';
 		},
 
-		istime: function () {
+		istime() {
 			return this.timemode === 1 && 'btn-info' || 'btn-outline-info';
 		},
 
-		isdatetime: function () {
+		isdatetime() {
 			return this.timemode === 2 && 'btn-info' || 'btn-outline-info';
 		}
 	},
 	methods: {
-		fmtduration: function (dur) {
+		fmtduration(dur) {
 			const sec = 1000;
 			const min = 60 * sec;
 			const hour = 60 * min;
@@ -204,7 +204,7 @@ const app = new Vue({
 			return fd;
 		},
 
-		ongetlog: function () {
+		ongetlog() {
 			ajaxjson("GET", "/api/getlog", (xhr) => {
 				if (xhr.status === 200) { // OK
 					this.log = xhr.response;
@@ -212,15 +212,15 @@ const app = new Vue({
 			});
 		},
 
-		onnoprefix: function () {
+		onnoprefix() {
 			this.timemode = 0;
 		},
 
-		ontime: function () {
+		ontime() {
 			this.timemode = 1;
 		},
 
-		ondatetime: function () {
+		ondatetime() {
 			this.timemode = 2;
 		}
 	}

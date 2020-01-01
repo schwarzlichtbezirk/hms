@@ -18,18 +18,19 @@ const (
 	MP3    = 3
 	OGG    = 4
 	MP4    = 5
-	Photo  = 6
-	Bitmap = 7
-	GIF    = 8
-	PNG    = 9
-	JPEG   = 10
-	WebP   = 11
-	PDF    = 12
-	HTML   = 13
-	Text   = 14
-	Script = 15
-	Config = 16
-	LogFT  = 17
+	WebM   = 6
+	Photo  = 7
+	Bitmap = 8
+	GIF    = 9
+	PNG    = 10
+	JPEG   = 11
+	WebP   = 12
+	PDF    = 13
+	HTML   = 14
+	Text   = 15
+	Script = 16
+	Config = 17
+	LogFT  = 18
 )
 
 // File groups
@@ -51,6 +52,7 @@ var typetogroup = map[int]int{
 	MP3:    FGMusic,
 	OGG:    FGMusic,
 	MP4:    FGVideo,
+	WebM:   FGVideo,
 	Photo:  FGImage,
 	Bitmap: FGImage,
 	GIF:    FGImage,
@@ -73,7 +75,8 @@ var extset = map[string]int{
 	".ogg":  OGG,
 
 	// Video
-	".mp4": MP4,
+	".mp4":  MP4,
+	".webm": WebM,
 
 	// Images
 	".bmp":  Bitmap,

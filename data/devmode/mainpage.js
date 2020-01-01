@@ -10,27 +10,30 @@ const FLAC = 2;
 const MP3 = 3;
 const OGG = 4;
 const MP4 = 5;
-const Photo = 6;
-const Bitmap = 7;
-const GIF = 8;
-const PNG = 9;
-const JPEG = 10;
-const WebP = 11;
-const PDF = 12;
-const HTML = 13;
-const Text = 14;
-const Script = 15;
-const Config = 16;
-const Log = 17;
+const WebM = 6;
+const Photo = 7;
+const Bitmap = 8;
+const GIF = 9;
+const PNG = 10;
+const JPEG = 11;
+const WebP = 12;
+const PDF = 13;
+const HTML = 14;
+const Text = 15;
+const Script = 16;
+const Config = 17;
+const Log = 18;
 
 // File groups
-const FGOther = 0;
-const FGMusic = 1;
-const FGVideo = 2;
-const FGImage = 3;
-const FGBooks = 4;
-const FGTexts = 5;
-const FGDir = 6;
+const FG = {
+	other: 0,
+	music: 1,
+	video: 2,
+	image: 3,
+	books: 4,
+	texts: 5,
+	dir: 6
+};
 
 // File viewers
 const FVNone = 0;
@@ -60,19 +63,19 @@ const geticonname = (file) => {
 					}
 					if (!fnum) {
 						return "folder-empty" + suff;
-					} else if (fg[FGMusic] / fnum > 0.5) {
+					} else if (fg[FG.music] / fnum > 0.5) {
 						return "folder-mp3" + suff;
-					} else if (fg[FGVideo] / fnum > 0.5) {
+					} else if (fg[FG.video] / fnum > 0.5) {
 						return "folder-movies" + suff;
-					} else if (fg[FGImage] / fnum > 0.5) {
+					} else if (fg[FG.image] / fnum > 0.5) {
 						return "folder-photo" + suff;
-					} else if (fg[FGBooks] / fnum > 0.5) {
+					} else if (fg[FG.books] / fnum > 0.5) {
 						return "folder-doc" + suff;
-					} else if (fg[FGTexts] / fnum > 0.5) {
+					} else if (fg[FG.texts] / fnum > 0.5) {
 						return "folder-doc" + suff;
-					} else if (fg[FGDir] / fnum > 0.5) {
+					} else if (fg[FG.dir] / fnum > 0.5) {
 						return "folder-sub" + suff;
-					} else if ((fg[FGMusic] + fg[FGVideo] + fg[FGImage]) / fnum > 0.5) {
+					} else if ((fg[FG.music] + fg[FG.video] + fg[FG.image]) / fnum > 0.5) {
 						return "folder-media" + suff;
 					} else {
 						return "folder-empty" + suff;
@@ -93,6 +96,8 @@ const geticonname = (file) => {
 			return "doc-music";
 		case MP4:
 			return "doc-mp4";
+		case WebM:
+			return "doc-movie";
 		case Photo:
 			return "doc-photo";
 		case Bitmap:
@@ -189,7 +194,7 @@ let app = new Vue({
 	computed: {
 
 		// array of paths to current folder
-		folderpath: function () {
+		folderpath() {
 			if (!this.folderinfo.name) {
 				return [];
 			}
@@ -215,14 +220,14 @@ let app = new Vue({
 		},
 
 		// sorted subfolders list
-		sortedsubfld: function () {
+		sortedsubfld() {
 			return this.subfldlist.slice().sort((v1, v2) => {
 				return v1.name.toLowerCase() > v2.name.toLowerCase() ? 1 : -1;
 			});
 		},
 
 		// sorted files list
-		sortedfiles: function () {
+		sortedfiles() {
 			if (this.filter.sortmode === sortbyalpha) {
 				return this.filelist.slice().sort((v1, v2) => {
 					return v1.name.toLowerCase() > v2.name.toLowerCase() ? 1 : -1;
@@ -241,7 +246,7 @@ let app = new Vue({
 		},
 
 		// display filtered playlist
-		playlist: function () {
+		playlist() {
 			const pl = [];
 			for (const file of this.sortedfiles) {
 				if (this.showitem(file)) {
@@ -252,7 +257,7 @@ let app = new Vue({
 		},
 
 		// files sum size
-		sumsize: function () {
+		sumsize() {
 			let ss = 0;
 			for (let file of this.filelist) {
 				ss += file.size;
@@ -262,7 +267,7 @@ let app = new Vue({
 
 		// get all folder shares
 
-		foldershares: function () {
+		foldershares() {
 			let shares = [];
 			let fldpath = this.folderinfo.path;
 			for (let fp of this.shared) {
@@ -277,48 +282,48 @@ let app = new Vue({
 
 		// common buttons enablers
 
-		ishome: function () {
+		ishome() {
 			return { disabled: this.loadcount || !this.folderinfo.name };
 		},
-		isback: function () {
+		isback() {
 			return { disabled: this.loadcount || this.folderhistpos < 2 };
 		},
-		isforward: function () {
+		isforward() {
 			return { disabled: this.loadcount || this.folderhistpos > folderhist.length - 1 };
 		},
-		isparent: function () {
+		isparent() {
 			return { disabled: this.loadcount || !this.folderpath.length };
 		},
-		isshared: function () {
+		isshared() {
 			return {
 				active: this.selected && this.selected.pref,
 				disabled: !this.selected
 			};
 		},
 
-		ismusic: function () {
+		ismusic() {
 			return { active: this.filter.music };
 		},
-		isvideo: function () {
+		isvideo() {
 			return { active: this.filter.video };
 		},
-		isphoto: function () {
+		isphoto() {
 			return { active: this.filter.photo };
 		},
-		ispdf: function () {
+		ispdf() {
 			return { active: this.filter.pdf };
 		},
-		isbooks: function () {
+		isbooks() {
 			return { active: this.filter.books };
 		},
-		isother: function () {
+		isother() {
 			return { active: this.filter.other };
 		},
 
-		isorder: function () {
+		isorder() {
 			return this.filter.order ? 'arrow_upward' : 'arrow_downward';
 		},
-		issortmode: function () {
+		issortmode() {
 			switch (this.filter.sortmode) {
 				case sortbyalpha:
 					return "sort";
@@ -330,7 +335,7 @@ let app = new Vue({
 		},
 
 		// buttons hints
-		hintback: function () {
+		hintback() {
 			if (this.folderhistpos < 2) {
 				return "go back";
 			} else {
@@ -341,7 +346,7 @@ let app = new Vue({
 				return "go back to " + name;
 			}
 		},
-		hintforward: function () {
+		hintforward() {
 			if (this.folderhistpos > folderhist.length - 1) {
 				return "go forward";
 			} else {
@@ -352,7 +357,7 @@ let app = new Vue({
 				return "go forward to " + name;
 			}
 		},
-		hintsortmode: function () {
+		hintsortmode() {
 			switch (this.filter.sortmode) {
 				case sortbyalpha:
 					return "sort by size";
@@ -364,7 +369,7 @@ let app = new Vue({
 		},
 
 		// styles changers
-		atorder: function () {
+		atorder() {
 			return {
 				'flex-wrap': this.filter.order ? 'wrap' : 'wrap-reverse',
 				'flex-direction': this.filter.order ? 'row' : 'row-reverse'
@@ -373,21 +378,21 @@ let app = new Vue({
 
 		// music buttons
 
-		hintplay: function () {
+		hintplay() {
 			let c = true;
 			return c ? 'play' : 'pause';
 		},
-		isrepeat: function () {
+		isrepeat() {
 			return 'repeat';
 		},
-		hintrepeat: function () {
+		hintrepeat() {
 			let c = true;
 			return c ? 'repeat' : 'repeat one';
 		}
 	},
 	methods: {
 		// events responders
-		gohome: function () {
+		gohome() {
 			// remove selected state before request for any result
 			this.ondelsel();
 
@@ -428,7 +433,7 @@ let app = new Vue({
 			});
 		},
 
-		goback: function () {
+		goback() {
 			if (folderhist.length < 2 || this.folderhistpos < 2) {
 				return;
 			}
@@ -436,7 +441,7 @@ let app = new Vue({
 			this.gofolder(folderhist[this.folderhistpos - 1]);
 		},
 
-		goforward: function () {
+		goforward() {
 			if (folderhist.length < 2 || this.folderhistpos > folderhist.length - 1) {
 				return;
 			}
@@ -444,14 +449,14 @@ let app = new Vue({
 			this.gofolder(folderhist[this.folderhistpos - 1]);
 		},
 
-		goparent: function () {
+		goparent() {
 			const fl = this.folderpath;
 			if (fl.length) {
 				this.openfolder(fl[fl.length - 1]);
 			}
 		},
 
-		openfolder: function (file) {
+		openfolder(file) {
 			this.gofolder(file);
 
 			// update folder history
@@ -462,7 +467,7 @@ let app = new Vue({
 			this.folderhistpos = folderhist.length;
 		},
 
-		onshare: function () {
+		onshare() {
 			if (!this.selected) {
 				return;
 			}
@@ -512,7 +517,7 @@ let app = new Vue({
 			}
 		},
 
-		onrefresh: function () {
+		onrefresh() {
 			let file = this.folderinfo;
 			this.gofolder(file);
 
@@ -528,17 +533,17 @@ let app = new Vue({
 			}
 		},
 
-		onsettings: function () {
+		onsettings() {
 		},
 
-		onstatistics: function () {
+		onstatistics() {
 		},
 
-		onorder: function () {
+		onorder() {
 			this.filter.order = !this.filter.order;
 		},
 
-		onsortmode: function () {
+		onsortmode() {
 			switch (this.filter.sortmode) {
 				case sortbyalpha:
 					this.filter.sortmode = sortbysize;
@@ -552,34 +557,34 @@ let app = new Vue({
 			}
 		},
 
-		onlist: function () {
+		onlist() {
 		},
 
-		onmusic: function () {
+		onmusic() {
 			this.filter.music = !this.filter.music;
 		},
 
-		onvideo: function () {
+		onvideo() {
 			this.filter.video = !this.filter.video;
 		},
 
-		onphoto: function () {
+		onphoto() {
 			this.filter.photo = !this.filter.photo;
 		},
 
-		onpdf: function () {
+		onpdf() {
 			this.filter.pdf = !this.filter.pdf;
 		},
 
-		onbooks: function () {
+		onbooks() {
 			this.filter.books = !this.filter.books;
 		},
 
-		onother: function () {
+		onother() {
 			this.filter.other = !this.filter.other;
 		},
 
-		ondelsel: function () {
+		ondelsel() {
 			this.selected = null;
 			if (this.viewer) {
 				this.viewer.hide();
@@ -587,7 +592,7 @@ let app = new Vue({
 			}
 		},
 
-		onfilesel: function (e, file) {
+		onfilesel(e, file) {
 			if (this.loadcount) { // no ajax request in progress
 				return;
 			}
@@ -616,6 +621,7 @@ let app = new Vue({
 					this.viewer.setfile(file, mp3viewer.isplay());
 					break;
 				case MP4:
+				case WebM:
 					if (this.viewer) {
 						this.viewer.hide();
 						this.viewer = null;
@@ -657,7 +663,7 @@ let app = new Vue({
 			}
 		},
 
-		onfilerun: function (file) {
+		onfilerun(file) {
 			if (this.loadcount) { // no ajax request in progress
 				return;
 			}
@@ -678,7 +684,7 @@ let app = new Vue({
 
 		// helper functions
 
-		gofolder: function (file) {
+		gofolder(file) {
 			// remove selected state before request for any result
 			this.ondelsel();
 
@@ -715,7 +721,7 @@ let app = new Vue({
 			});
 		},
 
-		fmtsize: function (size) {
+		fmtsize(size) {
 			if (size < 1536) {
 				return fmtfilesize(size);
 			} else {
@@ -723,7 +729,7 @@ let app = new Vue({
 			}
 		},
 
-		fmttitle: function (file) {
+		fmttitle(file) {
 			let title = file.name;
 			if (file.pref) {
 				title += '\nshare: ' + shareprefix + file.pref;
@@ -734,21 +740,21 @@ let app = new Vue({
 			return title;
 		},
 
-		getwebpicon: function (file) {
+		getwebpicon(file) {
 			return '/asst/file-webp/' + geticonname(file) + '.webp';
 		},
 
-		getpngicon: function (file) {
+		getpngicon(file) {
 			return '/asst/file-png/' + geticonname(file) + '.png';
 		},
 
 		// manage items classes
-		itemview: function (file) {
+		itemview(file) {
 			return { selected: this.selected && this.selected.name === file.name };
 		},
 
 		// show/hide functions
-		showitem: function (file) {
+		showitem(file) {
 			switch (file.type) {
 				case Dir:
 					return true;
@@ -758,6 +764,7 @@ let app = new Vue({
 				case OGG:
 					return this.filter.music;
 				case MP4:
+				case WebM:
 					return this.filter.video;
 				case Photo:
 				case Bitmap:
@@ -779,7 +786,7 @@ let app = new Vue({
 			}
 		},
 
-		isplay: function (file) {
+		isplay(file) {
 			return this.selected && file.path === this.selected.path && this.playbackmode;
 		}
 	}
@@ -907,7 +914,7 @@ class MP3Player extends Viewer {
 					const file = pls[i];
 					if (file.type === Wave || file.type === FLAC ||
 						file.type === MP3 || file.type === OGG ||
-						file.type === MP4) {
+						file.type === MP4 || file.type === WebM) {
 						return file;
 					}
 				}
