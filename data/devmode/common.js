@@ -65,6 +65,14 @@ const fmtfilesize = (size) => {
 	}
 };
 
+const fmtitemsize = (size) => {
+	if (size < 1536) {
+		return fmtfilesize(size);
+	} else {
+		return "%s (%d bytes)".printf(fmtfilesize(size), size);
+	}
+};
+
 const fmttime = (tval, tmax) => {
 	const lead0 = (v, n) => {
 		const vs = Math.floor(v).toString();

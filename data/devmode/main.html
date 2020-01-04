@@ -14,11 +14,13 @@
 </head>
 <body>
 	<div class="preloader">
-		<span></span>
-		<span></span>
-		<span></span>
-		<span></span>
-		<span></span>
+		<div>
+			<span></span>
+			<span></span>
+			<span></span>
+			<span></span>
+			<span></span>
+		</div>
 	</div>
 
 	<!-- normalize.css -->
@@ -53,12 +55,12 @@
 
 		<nav class="header navbar navbar-expand-sm bg-dark navbar-dark sticky-top">
 			<ul class="navbar-nav flex-row">
-				<li class="nav-item"><button class="btn btn-link nav-link bg-secondary" v-bind:class="ishome" v-on:click="gohome" title="root folder"><i class="material-icons">home</i></button></li>
-				<li class="nav-item"><button class="btn btn-link nav-link" v-bind:class="isback" v-on:click="goback" v-bind:title="hintback"><i class="material-icons">arrow_back</i></button></li>
-				<li class="nav-item"><button class="btn btn-link nav-link" v-bind:class="isforward" v-on:click="goforward" v-bind:title="hintforward"><i class="material-icons">arrow_forward</i></button></li>
-				<li class="nav-item"><button class="btn btn-link nav-link" v-bind:class="isparent" v-on:click="goparent" title="to parent folder"><i class="material-icons">subdirectory_arrow_left</i></button></li>
-				<li v-if="isadmin" class="nav-item"><button class="btn btn-link nav-link" v-bind:class="isshared" v-on:click="onshare" title="share folder or file to get access from internet"><i class="material-icons">share</i></button></li>
-				<li class="nav-item"><button class="btn btn-link nav-link" v-on:click="onrefresh" title="refresh"><i class="material-icons">refresh</i></button></li>
+				<li><button class="btn btn-link nav-link bg-secondary" v-bind:disabled="dishome" v-on:click="gohome" title="root folder"><i class="material-icons">home</i></button></li>
+				<li><button class="btn btn-link nav-link" v-bind:disabled="disback" v-on:click="goback" v-bind:title="hintback"><i class="material-icons">arrow_back</i></button></li>
+				<li><button class="btn btn-link nav-link" v-bind:disabled="disforward" v-on:click="goforward" v-bind:title="hintforward"><i class="material-icons">arrow_forward</i></button></li>
+				<li><button class="btn btn-link nav-link" v-bind:disabled="disparent" v-on:click="goparent" title="to parent folder"><i class="material-icons">subdirectory_arrow_left</i></button></li>
+				<li v-if="isadmin"><button class="btn btn-link nav-link" v-bind:disabled="disshared" v-bind:class="clsshared" v-on:click="onshare" title="share folder or file to get access from internet"><i class="material-icons">share</i></button></li>
+				<li><button class="btn btn-link nav-link" v-on:click="onrefresh" title="refresh"><i class="material-icons">refresh</i></button></li>
 			</ul>
 			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="nav.header > .navbar-collapse">
 				<span class="navbar-toggler-icon"></span>
@@ -66,21 +68,21 @@
 			<div class="collapse navbar-collapse">
 				<div class="d-flex flex-wrap">
 					<ul class="navbar-nav flex-row">
-						<li class="nav-item"><button class="btn btn-link nav-link" v-on:click="onorder" title="direct / reverse order"><i class="material-icons">{{isorder}}</i></button></li>
-						<li class="nav-item"><button class="btn btn-link nav-link" v-on:click="onsortmode" v-bind:title="hintsortmode"><i class="material-icons">{{issortmode}}</i></button></li>
-						<li class="nav-item"><button class="btn btn-link nav-link" v-on:click="onlist" title="list"><i class="material-icons">list</i></button></li>
+						<li><button class="btn btn-link nav-link" v-on:click="onorder" title="direct / reverse order"><i class="material-icons">{{clsorder}}</i></button></li>
+						<li><button class="btn btn-link nav-link" v-on:click="onsortmode" v-bind:title="hintsortmode"><i class="material-icons">{{clssortmode}}</i></button></li>
+						<li><button class="btn btn-link nav-link" v-on:click="onlist" title="list"><i class="material-icons">list</i></button></li>
 					</ul>
 					<ul class="navbar-nav flex-row">
-						<li class="nav-item"><button class="btn btn-link nav-link" v-bind:class="ismusic" v-on:click="onmusic" title="show music files"><i class="material-icons">library_music</i></button></li>
-						<li class="nav-item"><button class="btn btn-link nav-link" v-bind:class="isvideo" v-on:click="onvideo" title="show video files"><i class="material-icons">video_library</i></button></li>
-						<li class="nav-item"><button class="btn btn-link nav-link" v-bind:class="isphoto" v-on:click="onphoto" title="show photos and images"><i class="material-icons">photo_library</i></button></li>
-						<li class="nav-item"><button class="btn btn-link nav-link" v-bind:class="ispdf" v-on:click="onpdf" title="show books and PDF files"><i class="material-icons">picture_as_pdf</i></button></li>
-						<li class="nav-item"><button class="btn btn-link nav-link" v-bind:class="isbooks" v-on:click="onbooks" title="show plain text files"><i class="material-icons">library_books</i></button></li>
-						<li class="nav-item"><button class="btn btn-link nav-link" v-bind:class="isother" v-on:click="onother" title="show other non-supported files"><i class="material-icons">library_add</i></button></li>
+						<li><button class="btn btn-link nav-link" v-bind:class="clsmusic" v-on:click="onmusic" title="show music files"><i class="material-icons">library_music</i></button></li>
+						<li><button class="btn btn-link nav-link" v-bind:class="clsvideo" v-on:click="onvideo" title="show video files"><i class="material-icons">video_library</i></button></li>
+						<li><button class="btn btn-link nav-link" v-bind:class="clsphoto" v-on:click="onphoto" title="show photos and images"><i class="material-icons">photo_library</i></button></li>
+						<li><button class="btn btn-link nav-link" v-bind:class="clspdf" v-on:click="onpdf" title="show books and PDF files"><i class="material-icons">picture_as_pdf</i></button></li>
+						<li><button class="btn btn-link nav-link" v-bind:class="clsbooks" v-on:click="onbooks" title="show plain text files"><i class="material-icons">library_books</i></button></li>
+						<li><button class="btn btn-link nav-link" v-bind:class="clsother" v-on:click="onother" title="show other non-supported files"><i class="material-icons">library_add</i></button></li>
 					</ul>
 					<ul class="navbar-nav flex-row" v-show="isadmin">
-						<li class="nav-item"><button class="btn btn-link nav-link" v-on:click="onsettings" title="settings"><i class="material-icons">settings_applications</i></button></li>
-						<li class="nav-item"><button class="btn btn-link nav-link" v-on:click="onstatistics" title="statistics"><i class="material-icons">assessment</i></button></li>
+						<li><button class="btn btn-link nav-link" v-on:click="onsettings" title="settings"><i class="material-icons">settings_applications</i></button></li>
+						<li><button class="btn btn-link nav-link" v-on:click="onstatistics" title="statistics"><i class="material-icons">assessment</i></button></li>
 					</ul>
 				</div>
 			</div>
@@ -92,22 +94,24 @@
 					<a class="card-link d-flex w-100" data-toggle="collapse" href="#collapse-sub">subfolders</a>
 				</div>
 				<div id="collapse-sub" class="collapse show">
-					<div class="card-body folder-list" v-bind:style="atorder" v-on:click="ondelsel">
-						<div v-for="file in sortedsubfld" class="file-item" v-bind:class="itemview(file)" v-on:click="onfilesel($event,file)" v-on:dblclick="onfilerun(file)" v-bind:title="fmttitle(file)">
-							<div class="img-overlay">
-								<picture>
-									<source v-bind:srcset="getwebpicon(file)" type="image/webp">
-									<source v-bind:srcset="getpngicon(file)" type="image/png">
-									<img src="/asst/file-png/doc-file.png" v-bind:alt="file.name">
-								</picture>
-								<picture v-if="file.pref">
-									<source srcset="/asst/file-webp/shared.webp" type="image/webp">
-									<source srcset="/asst/file-png/shared.png" type="image/png">
-									<img src="/asst/file-png/shared.png" alt="shared">
-								</picture>
+					<div class="card-body folder-list" v-bind:style="stlfileorder" v-on:click="ondelsel">
+						<template v-for="file in sortedsubfld">
+							<div class="file-item" v-bind:class="itemview(file)" v-on:click.stop="onfilesel(file)" v-on:dblclick.stop="onfilerun(file)" v-bind:title="fmttitle(file)">
+								<div class="img-overlay">
+									<picture>
+										<source v-bind:srcset="getwebpicon(file)" type="image/webp">
+										<source v-bind:srcset="getpngicon(file)" type="image/png">
+										<img src="/asst/file-png/doc-file.png" v-bind:alt="file.name">
+									</picture>
+									<picture v-if="file.pref">
+										<source srcset="/asst/file-webp/shared.webp" type="image/webp">
+										<source srcset="/asst/file-png/shared.png" type="image/png">
+										<img src="/asst/file-png/shared.png" alt="shared">
+									</picture>
+								</div>
+								<p>{{file.name}}</p>
 							</div>
-							<p>{{file.name}}</p>
-						</div>
+						</template>
 					</div>
 				</div>
 			</div>
@@ -117,23 +121,25 @@
 					<a class="card-link d-flex w-100" data-toggle="collapse" href="#collapse-files">files</a>
 				</div>
 				<div id="collapse-files" class="collapse show">
-					<div class="card-body folder-list" v-bind:style="atorder" v-on:click="ondelsel">
-						<div v-for="file in playlist" class="file-item" v-bind:class="itemview(file)" v-on:click="onfilesel($event,file)" v-on:dblclick="onfilerun(file)" v-bind:title="fmttitle(file)">
-							<div class="img-overlay">
-								<picture>
-									<source v-bind:srcset="getwebpicon(file)" type="image/webp">
-									<source v-bind:srcset="getpngicon(file)" type="image/png">
-									<img src="/asst/file-png/doc-file.png" v-bind:alt="file.name">
-								</picture>
-								<picture v-if="file.pref">
-									<source srcset="/asst/file-webp/shared.webp" type="image/webp">
-									<source srcset="/asst/file-png/shared.png" type="image/png">
-									<img src="/asst/file-png/shared.png" alt="shared">
-								</picture>
-								<img v-if="isplay(file)" src="/asst/equalizer-bars.gif" alt="shared">
+					<div class="card-body folder-list" v-bind:style="stlfileorder" v-on:click="ondelsel">
+						<template v-for="file in playlist">
+							<div class="file-item" v-bind:class="itemview(file)" v-on:click.stop="onfilesel(file)" v-on:dblclick.stop="onfilerun(file)" v-bind:title="fmttitle(file)">
+								<div class="img-overlay">
+									<picture>
+										<source v-bind:srcset="getwebpicon(file)" type="image/webp">
+										<source v-bind:srcset="getpngicon(file)" type="image/png">
+										<img src="/asst/file-png/doc-file.png" v-bind:alt="file.name">
+									</picture>
+									<picture v-if="file.pref">
+										<source srcset="/asst/file-webp/shared.webp" type="image/webp">
+										<source srcset="/asst/file-png/shared.png" type="image/png">
+										<img src="/asst/file-png/shared.png" alt="shared">
+									</picture>
+									<img v-if="isplay(file)" src="/asst/equalizer-bars.gif" alt="shared">
+								</div>
+								<p>{{file.name}}</p>
 							</div>
-							<p>{{file.name}}</p>
-						</div>
+						</template>
 					</div>
 				</div>
 			</div>
@@ -146,16 +152,16 @@
 
 		<nav class="footer navbar navbar-expand-sm bg-dark navbar-dark fixed-bottom" id="music-footer">
 			<ul class="navbar-nav flex-row">
-				<li class="nav-item"><button class="btn btn-link nav-link prev" onclick="mp3viewer.onprev()" title="skip to previous"><i class="material-icons">skip_previous</i></button></li>
-				<li class="nav-item"><button class="btn btn-link nav-link play bg-secondary disabled" onclick="mp3viewer.play()" v-bind:title="hintplay"><i class="material-icons">play_arrow</i></button></li>
-				<li class="nav-item"><button class="btn btn-link nav-link next" onclick="mp3viewer.onnext()" title="skip to next"><i class="material-icons">skip_next</i></button></li>
-				<li class="nav-item"><button class="btn btn-link nav-link repeat" onclick="mp3viewer.onrepeat()" v-on:title="hintrepeat"><i class="material-icons">{{isrepeat}}</i></button></li>
+				<li><button class="btn btn-link nav-link prev" onclick="mp3viewer.onprev()" title="skip to previous"><i class="material-icons">skip_previous</i></button></li>
+				<li><button class="btn btn-link nav-link play bg-secondary disabled" onclick="mp3viewer.play()" v-bind:title="hintplay"><i class="material-icons">play_arrow</i></button></li>
+				<li><button class="btn btn-link nav-link next" onclick="mp3viewer.onnext()" title="skip to next"><i class="material-icons">skip_next</i></button></li>
+				<li><button class="btn btn-link nav-link repeat" onclick="mp3viewer.onrepeat()" v-on:title="hintrepeat"><i class="material-icons">{{isrepeat}}</i></button></li>
 			</ul>
 			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="nav.footer > .navbar-collapse">
 				<span class="navbar-toggler-icon"></span>
 			</button>
 			<div class="collapse navbar-collapse">
-				<div class="timescale nav-item flex-grow-1">
+				<div class="timescale flex-grow-1">
 					<div class="progress position-relative">
 						<div class="current progress-bar"></div>
 						<div class="buffer progress-bar"></div>
@@ -165,7 +171,7 @@
 					<div>artist - albom - track name</div>
 				</div>
 				<ul class="navbar-nav flex-row">
-					<li class="nav-item btn-group dropup">
+					<li class="btn-group dropup">
 						<button class="btn btn-link nav-link dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="playback rate"><i class="material-icons">slow_motion_video</i></button>
 						<div class="dropdown-menu dropdown-menu-right" id="rate">
 							<button class="dropdown-item speed_2_50" onclick="mp3viewer.setrate(2.50)">&times;2.50</button>
@@ -206,11 +212,13 @@
 
 		<!-- Preloader at last to cover previous code -->
 		<div class="preloader" v-show="loadcount>0">
-			<span></span>
-			<span></span>
-			<span></span>
-			<span></span>
-			<span></span>
+			<div>
+				<span></span>
+				<span></span>
+				<span></span>
+				<span></span>
+				<span></span>
+			</div>
 		</div>
 
 	</div>
@@ -223,10 +231,12 @@
 	<script src="/plug/vue.js?2.6.11"></script>
 
 	<!-- common functionality used in all components -->
-	<script src="/devm/devmode.js?0.1.2"></script>
-	<script src="/devm/request.js?0.1.2"></script>
-	<script src="/devm/common.js?0.1.0"></script>
+	<script src="/devm/devmode.js?0.1.3"></script>
+	<script src="/devm/request.js?0.1.3"></script>
+	<script src="/devm/common.js?0.1.3"></script>
+	<!-- register Vue.js components -->
+	<script src="/devm/fileitem.js?0.1.3"></script>
 	<!-- load application script -->
-	<script src="/devm/mainpage.js?0.1.0"></script>
+	<script src="/devm/mainpage.js?0.1.3"></script>
 </body>
 </html>

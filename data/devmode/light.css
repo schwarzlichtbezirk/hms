@@ -52,27 +52,25 @@ body {
 .file-item {
 	display: block;
 	text-align: center;
-	margin: 0px;
+	border: 1px solid RGBA(189, 183, 107, 0);
 	padding: 4px;
+	margin: 0px;
 	cursor: pointer;
 }
 
 	.file-item:hover {
 		background: Moccasin;
 		border: 1px solid DarkKhaki;
-		padding: 3px;
 	}
 
 	.file-item.selected {
 		background: PaleGoldenRod;
 		border: 1px solid DarkKhaki;
-		padding: 3px;
 	}
 
 		.file-item.selected:hover {
 			background: Khaki;
 			border: 1px solid DarkKhaki;
-			padding: 3px;
 		}
 
 	.file-item > .img-overlay {
@@ -87,7 +85,7 @@ body {
 		background: NavajoWhite;
 		font-size: 0.72em;
 		line-height: 1.25;
-		max-height: 4.7em;
+		max-height: 5.2em;
 		overflow: hidden;
 		text-overflow: ellipsis;
 	}

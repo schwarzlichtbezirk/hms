@@ -7,30 +7,40 @@
 /* preloader */
 
 .preloader {
-	top: 50%;
-	left: 50%;
-	position: absolute;
-	transform: translate(-50%,-50%);
-	display: -webkit-flex;
-	display: -ms-flexbox;
-	display: flex;
-	-webkit-flex-direction: row;
-	flex-direction: row;
-	-ms-flex-wrap: nowrap;
-	flex-wrap: nowrap;
+	z-index: 1024; /* above sticked navbar */
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+	background-color: RGBA(0, 0, 0, 0.1875);
 }
 
-	.preloader span {
-		height: 25px;
-		width: 25px;
-		background: RebeccaPurple;
-		border-radius: 50%;
-		animation: fade 1s linear infinite;
-		margin: 15px;
+	.preloader > div {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%,-50%);
+		display: -webkit-flex;
+		display: -ms-flexbox;
+		display: flex;
+		-webkit-flex-direction: row;
+		flex-direction: row;
+		-ms-flex-wrap: nowrap;
+		flex-wrap: nowrap;
 	}
 
+		.preloader > div > span {
+			height: 25px;
+			width: 25px;
+			background: RebeccaPurple;
+			border-radius: 50%;
+			animation: fade 1s linear infinite;
+			margin: 15px;
+		}
+
 @media (max-width: 767.98px) {
-	.preloader span {
+	.preloader > div > span {
 		height: 30px;
 		width: 30px;
 		margin: 5px;
@@ -47,22 +57,22 @@
 	}
 }
 
-.preloader span:nth-child(1) {
+.preloader > div > span:nth-child(1) {
 	animation-delay: 0s;
 }
 
-.preloader span:nth-child(2) {
+.preloader > div > span:nth-child(2) {
 	animation-delay: 0.2s;
 }
 
-.preloader span:nth-child(3) {
+.preloader > div > span:nth-child(3) {
 	animation-delay: 0.4s;
 }
 
-.preloader span:nth-child(4) {
+.preloader > div > span:nth-child(4) {
 	animation-delay: 0.6s;
 }
 
-.preloader span:nth-child(5) {
+.preloader > div > span:nth-child(5) {
 	animation-delay: 0.8s;
 }

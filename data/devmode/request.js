@@ -36,11 +36,11 @@ const ajaxjson = (method, url, onload, body) => {
 		app.loadcount--;
 	};
 	xhr.onerror = () => {
+		app.loadcount--;
 		showmsgbox(
 			"Server unavailable",
 			"Server is currently not available, action can not be done now."
 		);
-		app.loadcount--;
 	};
 	xhr.open(method, url, true);
 	sendjson(xhr, body);

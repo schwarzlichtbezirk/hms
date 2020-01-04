@@ -57,30 +57,26 @@ body {
 .file-item {
 	display: block;
 	text-align: center;
-	margin: 0px;
+	border: 1px solid RGBA(25, 25, 112, 0);
+	border-radius: 4px;
 	padding: 4px;
+	margin: 0px;
 	cursor: pointer;
 }
 
 	.file-item:hover {
 		background: RGBA(25, 25, 112, 0.5); /*MidnightBlue*/
 		border: 1px solid DarkTurquoise;
-		border-radius: 4px;
-		padding: 3px;
 	}
 
 	.file-item.selected {
 		background: RGBA(75, 0, 130, 0.50); /*Indigo*/
 		border: 1px solid DarkTurquoise;
-		border-radius: 4px;
-		padding: 3px;
 	}
 
 		.file-item.selected:hover {
 			background: RGBA(106, 90, 205, 0.5); /*SlateBlue*/
 			border: 1px solid DarkTurquoise;
-			border-radius: 4px;
-			padding: 3px;
 		}
 
 	.file-item > .img-overlay {
@@ -96,7 +92,7 @@ body {
 		background: RGBA(102, 51, 153, 0.50); /*RebeccaPurple*/
 		font-size: 0.72em;
 		line-height: 1.25;
-		max-height: 4.7em;
+		max-height: 5.2em;
 		overflow: hidden;
 		text-overflow: ellipsis;
 	}

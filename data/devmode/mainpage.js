@@ -262,7 +262,7 @@ let app = new Vue({
 			for (let file of this.filelist) {
 				ss += file.size;
 			}
-			return this.fmtsize(ss);
+			return fmtitemsize(ss);
 		},
 
 		// get all folder shares
@@ -282,48 +282,48 @@ let app = new Vue({
 
 		// common buttons enablers
 
-		ishome() {
-			return { disabled: this.loadcount || !this.folderinfo.name };
+		dishome() {
+			return !this.folderinfo.name;
 		},
-		isback() {
-			return { disabled: this.loadcount || this.folderhistpos < 2 };
+		disback() {
+			return this.folderhistpos < 2;
 		},
-		isforward() {
-			return { disabled: this.loadcount || this.folderhistpos > folderhist.length - 1 };
+		disforward() {
+			return this.folderhistpos > folderhist.length - 1;
 		},
-		isparent() {
-			return { disabled: this.loadcount || !this.folderpath.length };
+		disparent() {
+			return !this.folderpath.length;
 		},
-		isshared() {
-			return {
-				active: this.selected && this.selected.pref,
-				disabled: !this.selected
-			};
+		disshared() {
+			return !this.selected;
+		},
+		clsshared() {
+			return { active: this.selected && this.selected.pref };
 		},
 
-		ismusic() {
+		clsmusic() {
 			return { active: this.filter.music };
 		},
-		isvideo() {
+		clsvideo() {
 			return { active: this.filter.video };
 		},
-		isphoto() {
+		clsphoto() {
 			return { active: this.filter.photo };
 		},
-		ispdf() {
+		clspdf() {
 			return { active: this.filter.pdf };
 		},
-		isbooks() {
+		clsbooks() {
 			return { active: this.filter.books };
 		},
-		isother() {
+		clsother() {
 			return { active: this.filter.other };
 		},
 
-		isorder() {
+		clsorder() {
 			return this.filter.order ? 'arrow_upward' : 'arrow_downward';
 		},
-		issortmode() {
+		clssortmode() {
 			switch (this.filter.sortmode) {
 				case sortbyalpha:
 					return "sort";
@@ -369,7 +369,7 @@ let app = new Vue({
 		},
 
 		// styles changers
-		atorder() {
+		stlfileorder() {
 			return {
 				'flex-wrap': this.filter.order ? 'wrap' : 'wrap-reverse',
 				'flex-direction': this.filter.order ? 'row' : 'row-reverse'
@@ -434,26 +434,17 @@ let app = new Vue({
 		},
 
 		goback() {
-			if (folderhist.length < 2 || this.folderhistpos < 2) {
-				return;
-			}
 			this.folderhistpos--;
 			this.gofolder(folderhist[this.folderhistpos - 1]);
 		},
 
 		goforward() {
-			if (folderhist.length < 2 || this.folderhistpos > folderhist.length - 1) {
-				return;
-			}
 			this.folderhistpos++;
 			this.gofolder(folderhist[this.folderhistpos - 1]);
 		},
 
 		goparent() {
-			const fl = this.folderpath;
-			if (fl.length) {
-				this.openfolder(fl[fl.length - 1]);
-			}
+			this.openfolder(this.folderpath[this.folderpath.length - 1]);
 		},
 
 		openfolder(file) {
@@ -592,12 +583,8 @@ let app = new Vue({
 			}
 		},
 
-		onfilesel(e, file) {
-			if (this.loadcount) { // no ajax request in progress
-				return;
-			}
+		onfilesel(file) {
 			this.selected = file;
-			e.stopPropagation(); // prevent deselect item by parent widget
 
 			// Run viewer/player
 			switch (file.type) {
@@ -664,9 +651,6 @@ let app = new Vue({
 		},
 
 		onfilerun(file) {
-			if (this.loadcount) { // no ajax request in progress
-				return;
-			}
 			if (file.type === Dir) {
 				this.gofolder(file);
 
@@ -721,21 +705,13 @@ let app = new Vue({
 			});
 		},
 
-		fmtsize(size) {
-			if (size < 1536) {
-				return fmtfilesize(size);
-			} else {
-				return "%s (%d bytes)".printf(fmtfilesize(size), size);
-			}
-		},
-
 		fmttitle(file) {
 			let title = file.name;
 			if (file.pref) {
 				title += '\nshare: ' + shareprefix + file.pref;
 			}
 			if (file.type !== Dir) {
-				title += '\nsize: ' + this.fmtsize(file.size);
+				title += '\nsize: ' + fmtitemsize(file.size);
 			}
 			return title;
 		},
