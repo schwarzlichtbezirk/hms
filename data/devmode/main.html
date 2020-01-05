@@ -94,23 +94,9 @@
 					<a class="card-link d-flex w-100" data-toggle="collapse" href="#collapse-sub">subfolders</a>
 				</div>
 				<div id="collapse-sub" class="collapse show">
-					<div class="card-body folder-list" v-bind:style="stlfileorder" v-on:click="ondelsel">
+					<div class="card-body folder-list" v-on:click="ondelsel">
 						<template v-for="file in sortedsubfld">
-							<div class="file-item" v-bind:class="itemview(file)" v-on:click.stop="onfilesel(file)" v-on:dblclick.stop="onfilerun(file)" v-bind:title="fmttitle(file)">
-								<div class="img-overlay">
-									<picture>
-										<source v-bind:srcset="getwebpicon(file)" type="image/webp">
-										<source v-bind:srcset="getpngicon(file)" type="image/png">
-										<img src="/asst/file-png/doc-file.png" v-bind:alt="file.name">
-									</picture>
-									<picture v-if="file.pref">
-										<source srcset="/asst/file-webp/shared.webp" type="image/webp">
-										<source srcset="/asst/file-png/shared.png" type="image/png">
-										<img src="/asst/file-png/shared.png" alt="shared">
-									</picture>
-								</div>
-								<p>{{file.name}}</p>
-							</div>
+							<file-icon-tag v-bind:file="file" v-bind:state="{selected:selected===file,playback:false}" v-on:select="onfilesel" v-on:run="onfilerun" />
 						</template>
 					</div>
 				</div>
@@ -121,24 +107,9 @@
 					<a class="card-link d-flex w-100" data-toggle="collapse" href="#collapse-files">files</a>
 				</div>
 				<div id="collapse-files" class="collapse show">
-					<div class="card-body folder-list" v-bind:style="stlfileorder" v-on:click="ondelsel">
+					<div class="card-body folder-list" v-on:click="ondelsel">
 						<template v-for="file in playlist">
-							<div class="file-item" v-bind:class="itemview(file)" v-on:click.stop="onfilesel(file)" v-on:dblclick.stop="onfilerun(file)" v-bind:title="fmttitle(file)">
-								<div class="img-overlay">
-									<picture>
-										<source v-bind:srcset="getwebpicon(file)" type="image/webp">
-										<source v-bind:srcset="getpngicon(file)" type="image/png">
-										<img src="/asst/file-png/doc-file.png" v-bind:alt="file.name">
-									</picture>
-									<picture v-if="file.pref">
-										<source srcset="/asst/file-webp/shared.webp" type="image/webp">
-										<source srcset="/asst/file-png/shared.png" type="image/png">
-										<img src="/asst/file-png/shared.png" alt="shared">
-									</picture>
-									<img v-if="isplay(file)" src="/asst/equalizer-bars.gif" alt="shared">
-								</div>
-								<p>{{file.name}}</p>
-							</div>
+							<file-icon-tag v-bind:file="file" v-bind:state="{selected:selected===file,playback:playbackmode&&selected===file}" v-on:select="onfilesel" v-on:run="onfilerun" />
 						</template>
 					</div>
 				</div>
@@ -231,12 +202,12 @@
 	<script src="/plug/vue.js?2.6.11"></script>
 
 	<!-- common functionality used in all components -->
-	<script src="/devm/devmode.js?0.1.3"></script>
+	<script src="/devm/devmode.js?0.1.4"></script>
 	<script src="/devm/request.js?0.1.3"></script>
-	<script src="/devm/common.js?0.1.3"></script>
+	<script src="/devm/common.js?0.1.4"></script>
 	<!-- register Vue.js components -->
-	<script src="/devm/fileitem.js?0.1.3"></script>
+	<script src="/devm/fileitem.js?0.1.4"></script>
 	<!-- load application script -->
-	<script src="/devm/mainpage.js?0.1.3"></script>
+	<script src="/devm/mainpage.js?0.1.4"></script>
 </body>
 </html>

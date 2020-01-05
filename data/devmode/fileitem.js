@@ -29,17 +29,12 @@ Vue.component('file-icon-tag', {
 			<source srcset="/asst/file-png/shared.png" type="image/png">
 			<img src="/asst/file-png/shared.png" alt="shared">
 		</picture>
-		<img v-if="isplay" src="/asst/equalizer-bars.gif" alt="shared">
+		<img v-if="state.playback" src="/asst/equalizer-bars.gif" alt="shared">
 	</div>
 	<p>{{file.name}}</p>
 </div>
 `,
-	mixins: [globalmixin],
-	props: ["file"],
-	data: function () {
-		return {
-		};
-	},
+	props: ["file", "state"],
 	computed: {
 		fmttitle() {
 			let title = this.file.name;
@@ -62,11 +57,7 @@ Vue.component('file-icon-tag', {
 
 		// manage items classes
 		itemview() {
-			return { selected: this.selected === this.file};
-		},
-
-		isplay() {
-			return this.selected === this.file && this.playbackmode;
+			return { selected: this.state.selected };
 		}
 	},
 	methods: {
@@ -77,6 +68,34 @@ Vue.component('file-icon-tag', {
 		onrun() {
 			this.$emit('run', this.file);
 		}
+	}
+});
+
+// <file-page-tag v-bind:list="playlist">files</file-page-tag>
+Vue.component('file-page-tag', {
+	template: `
+<div class="card">
+	<div class="card-header">
+		<a class="card-link d-flex w-100" data-toggle="collapse" v-bind:href="'#body'+iid"><slot>files</slot></a>
+	</div>
+	<div v-bind:id="'body'+iid" class="collapse show">
+		<div class="card-body folder-list" v-on:click="ondelsel">
+			<template v-for="file in list">
+				<file-icon-tag v-bind:file="file" v-bind:state="{selected:selected===file,playback:playbackmode&&selected===file}" v-on:select="onfilesel" v-on:run="onfilerun" />
+			</template>
+		</div>
+	</div>
+</div>
+`,
+	props: ["list"],
+	data: function () {
+		return {
+			iid: makestrid(10) // instance ID
+		};
+	},
+	computed: {
+	},
+	methods: {
 	}
 });
 

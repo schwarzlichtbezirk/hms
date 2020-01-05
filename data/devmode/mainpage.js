@@ -42,7 +42,7 @@ const FVVideo = 2;
 const FVImage = 3;
 
 const root = { name: "", path: "", size: 0, time: 0, type: Dir };
-let folderhist = [];
+const folderhist = [];
 
 const shareprefix = "/share/";
 
@@ -175,7 +175,7 @@ let app = new Vue({
 		shared: [], // list of shared folders and files
 		filter: { // main menu buttons flags
 			music: true, video: true, photo: true, pdf: true, books: true, other: false,
-			order: true, sortmode: sortbyalpha
+			order: false, sortmode: sortbyalpha
 		},
 		loadcount: 0, // ajax working request count
 
@@ -226,34 +226,31 @@ let app = new Vue({
 			});
 		},
 
-		// sorted files list
-		sortedfiles() {
+		// display filtered sorted playlist
+		playlist() {
+			const res = [];
+			for (const file of this.filelist) {
+				if (this.showitem(file)) {
+					res.push(file);
+				}
+			}
 			if (this.filter.sortmode === sortbyalpha) {
-				return this.filelist.slice().sort((v1, v2) => {
+				res.sort((v1, v2) => {
 					return v1.name.toLowerCase() > v2.name.toLowerCase() ? 1 : -1;
 				});
 			} else if (this.filter.sortmode === sortbysize) {
-				return this.filelist.slice().sort((v1, v2) => {
+				res.sort((v1, v2) => {
 					if (v1.size === v2.size) {
 						return v1.name.toLowerCase() > v2.name.toLowerCase() ? 1 : -1;
 					} else {
 						return v1.size > v2.size ? 1 : -1;
 					}
 				});
-			} else { // remains unsorted
-				return this.filelist.slice();
 			}
-		},
-
-		// display filtered playlist
-		playlist() {
-			const pl = [];
-			for (const file of this.sortedfiles) {
-				if (this.showitem(file)) {
-					pl.push(file);
-				}
+			if (this.filter.order) {
+				res.reverse();
 			}
-			return pl;
+			return res;
 		},
 
 		// files sum size
@@ -368,14 +365,6 @@ let app = new Vue({
 			}
 		},
 
-		// styles changers
-		stlfileorder() {
-			return {
-				'flex-wrap': this.filter.order ? 'wrap' : 'wrap-reverse',
-				'flex-direction': this.filter.order ? 'row' : 'row-reverse'
-			};
-		},
-
 		// music buttons
 
 		hintplay() {
@@ -477,7 +466,7 @@ let app = new Vue({
 					} else if (xhr.status === 404) { // Not Found
 						onerr404();
 						// clear folder history
-						folderhist = [];
+						folderhist.splice(0, folderhist.length);
 						this.folderhistpos = 0;
 					}
 				});
@@ -501,7 +490,7 @@ let app = new Vue({
 					} else if (xhr.status === 404) { // Not Found
 						onerr404();
 						// clear folder history
-						folderhist = [];
+						folderhist.splice(0, folderhist.length);
 						this.folderhistpos = 0;
 					}
 				});
@@ -697,7 +686,7 @@ let app = new Vue({
 						} else if (xhr.status === 404) { // Not Found
 							onerr404();
 							// clear folder history
-							folderhist = [];
+							folderhist.splice(0, folderhist.length);
 							this.folderhistpos = 0;
 						}
 					});
