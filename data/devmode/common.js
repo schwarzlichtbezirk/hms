@@ -103,4 +103,12 @@ const makestrid = length => {
 	return result;
 };
 
+class Viewer {
+	setup() { }
+	close() { }
+	setfile(file) {
+		this.file = file;
+	}
+}
+
 // The End.

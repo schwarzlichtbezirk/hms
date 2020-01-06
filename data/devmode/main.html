@@ -55,12 +55,12 @@
 
 		<nav class="header navbar navbar-expand-sm bg-dark navbar-dark sticky-top">
 			<ul class="navbar-nav flex-row">
-				<li><button class="btn btn-link nav-link bg-secondary" v-bind:disabled="dishome" v-on:click="gohome" title="root folder"><i class="material-icons">home</i></button></li>
-				<li><button class="btn btn-link nav-link" v-bind:disabled="disback" v-on:click="goback" v-bind:title="hintback"><i class="material-icons">arrow_back</i></button></li>
-				<li><button class="btn btn-link nav-link" v-bind:disabled="disforward" v-on:click="goforward" v-bind:title="hintforward"><i class="material-icons">arrow_forward</i></button></li>
-				<li><button class="btn btn-link nav-link" v-bind:disabled="disparent" v-on:click="goparent" title="to parent folder"><i class="material-icons">subdirectory_arrow_left</i></button></li>
-				<li v-if="isadmin"><button class="btn btn-link nav-link" v-bind:disabled="disshared" v-bind:class="clsshared" v-on:click="onshare" title="share folder or file to get access from internet"><i class="material-icons">share</i></button></li>
-				<li><button class="btn btn-link nav-link" v-on:click="onrefresh" title="refresh"><i class="material-icons">refresh</i></button></li>
+				<li class="btn btn-link nav-link bg-secondary" v-bind:disabled="dishome" v-on:click="gohome" title="root folder"><i class="material-icons">home</i></li>
+				<li class="btn btn-link nav-link" v-bind:disabled="disback" v-on:click="goback" v-bind:title="hintback"><i class="material-icons">arrow_back</i></li>
+				<li class="btn btn-link nav-link" v-bind:disabled="disforward" v-on:click="goforward" v-bind:title="hintforward"><i class="material-icons">arrow_forward</i></li>
+				<li class="btn btn-link nav-link" v-bind:disabled="disparent" v-on:click="goparent" title="to parent folder"><i class="material-icons">subdirectory_arrow_left</i></li>
+				<li v-if="isadmin" class="btn btn-link nav-link" v-bind:disabled="disshared" v-bind:class="clsshared" v-on:click="onshare" title="share folder or file to get access from internet"><i class="material-icons">share</i></li>
+				<li class="btn btn-link nav-link" v-on:click="onrefresh" title="refresh"><i class="material-icons">refresh</i></li>
 			</ul>
 			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="nav.header > .navbar-collapse">
 				<span class="navbar-toggler-icon"></span>
@@ -68,21 +68,21 @@
 			<div class="collapse navbar-collapse">
 				<div class="d-flex flex-wrap">
 					<ul class="navbar-nav flex-row">
-						<li><button class="btn btn-link nav-link" v-on:click="onorder" title="direct / reverse order"><i class="material-icons">{{clsorder}}</i></button></li>
-						<li><button class="btn btn-link nav-link" v-on:click="onsortmode" v-bind:title="hintsortmode"><i class="material-icons">{{clssortmode}}</i></button></li>
-						<li><button class="btn btn-link nav-link" v-on:click="onlist" title="list"><i class="material-icons">list</i></button></li>
+						<li class="btn btn-link nav-link" v-on:click="onorder" title="direct / reverse order"><i class="material-icons">{{clsorder}}</i></li>
+						<li class="btn btn-link nav-link" v-on:click="onsortmode" v-bind:title="hintsortmode"><i class="material-icons">{{clssortmode}}</i></li>
+						<li class="btn btn-link nav-link" v-on:click="onlist" title="list"><i class="material-icons">list</i></li>
 					</ul>
 					<ul class="navbar-nav flex-row">
-						<li><button class="btn btn-link nav-link" v-bind:class="clsmusic" v-on:click="onmusic" title="show music files"><i class="material-icons">library_music</i></button></li>
-						<li><button class="btn btn-link nav-link" v-bind:class="clsvideo" v-on:click="onvideo" title="show video files"><i class="material-icons">video_library</i></button></li>
-						<li><button class="btn btn-link nav-link" v-bind:class="clsphoto" v-on:click="onphoto" title="show photos and images"><i class="material-icons">photo_library</i></button></li>
-						<li><button class="btn btn-link nav-link" v-bind:class="clspdf" v-on:click="onpdf" title="show books and PDF files"><i class="material-icons">picture_as_pdf</i></button></li>
-						<li><button class="btn btn-link nav-link" v-bind:class="clsbooks" v-on:click="onbooks" title="show plain text files"><i class="material-icons">library_books</i></button></li>
-						<li><button class="btn btn-link nav-link" v-bind:class="clsother" v-on:click="onother" title="show other non-supported files"><i class="material-icons">library_add</i></button></li>
+						<li class="btn btn-link nav-link" v-bind:class="clsmusic" v-on:click="onmusic" title="show music files"><i class="material-icons">library_music</i></li>
+						<li class="btn btn-link nav-link" v-bind:class="clsvideo" v-on:click="onvideo" title="show video files"><i class="material-icons">video_library</i></li>
+						<li class="btn btn-link nav-link" v-bind:class="clsphoto" v-on:click="onphoto" title="show photos and images"><i class="material-icons">photo_library</i></li>
+						<li class="btn btn-link nav-link" v-bind:class="clspdf" v-on:click="onpdf" title="show books and PDF files"><i class="material-icons">picture_as_pdf</i></li>
+						<li class="btn btn-link nav-link" v-bind:class="clsbooks" v-on:click="onbooks" title="show plain text files"><i class="material-icons">library_books</i></li>
+						<li class="btn btn-link nav-link" v-bind:class="clsother" v-on:click="onother" title="show other non-supported files"><i class="material-icons">library_add</i></li>
 					</ul>
 					<ul class="navbar-nav flex-row" v-show="isadmin">
-						<li><button class="btn btn-link nav-link" v-on:click="onsettings" title="settings"><i class="material-icons">settings_applications</i></button></li>
-						<li><button class="btn btn-link nav-link" v-on:click="onstatistics" title="statistics"><i class="material-icons">assessment</i></button></li>
+						<li class="btn btn-link nav-link" v-on:click="onsettings" title="settings"><i class="material-icons">settings_applications</i></li>
+						<li class="btn btn-link nav-link" v-on:click="onstatistics" title="statistics"><i class="material-icons">assessment</i></li>
 					</ul>
 				</div>
 			</div>
@@ -121,47 +121,10 @@
 			<br>
 		</div>
 
-		<nav class="footer navbar navbar-expand-sm bg-dark navbar-dark fixed-bottom" id="music-footer">
-			<ul class="navbar-nav flex-row">
-				<li><button class="btn btn-link nav-link prev" onclick="mp3viewer.onprev()" title="skip to previous"><i class="material-icons">skip_previous</i></button></li>
-				<li><button class="btn btn-link nav-link play bg-secondary disabled" onclick="mp3viewer.play()" v-bind:title="hintplay"><i class="material-icons">play_arrow</i></button></li>
-				<li><button class="btn btn-link nav-link next" onclick="mp3viewer.onnext()" title="skip to next"><i class="material-icons">skip_next</i></button></li>
-				<li><button class="btn btn-link nav-link repeat" onclick="mp3viewer.onrepeat()" v-on:title="hintrepeat"><i class="material-icons">{{isrepeat}}</i></button></li>
-			</ul>
-			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="nav.footer > .navbar-collapse">
-				<span class="navbar-toggler-icon"></span>
-			</button>
-			<div class="collapse navbar-collapse">
-				<div class="timescale flex-grow-1">
-					<div class="progress position-relative">
-						<div class="current progress-bar"></div>
-						<div class="buffer progress-bar"></div>
-						<div class="timer justify-content-center align-self-center d-flex position-absolute w-100"><span class="time-pos"></span>&nbsp/&nbsp<span class="time-end"></span></div>
-						<input type="range" min="0" max="100" class="seeker position-absolute w-100">
-					</div>
-					<div>artist - albom - track name</div>
-				</div>
-				<ul class="navbar-nav flex-row">
-					<li class="btn-group dropup">
-						<button class="btn btn-link nav-link dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="playback rate"><i class="material-icons">slow_motion_video</i></button>
-						<div class="dropdown-menu dropdown-menu-right" id="rate">
-							<button class="dropdown-item speed_2_50" onclick="mp3viewer.setrate(2.50)">&times;2.50</button>
-							<button class="dropdown-item speed_2_00" onclick="mp3viewer.setrate(2.00)">&times;2.00</button>
-							<button class="dropdown-item speed_1_75" onclick="mp3viewer.setrate(1.75)">&times;1.75</button>
-							<button class="dropdown-item speed_1_50" onclick="mp3viewer.setrate(1.50)">&times;1.50</button>
-							<button class="dropdown-item speed_1_25" onclick="mp3viewer.setrate(1.25)">&times;1.25</button>
-							<button class="dropdown-item speed_1_15" onclick="mp3viewer.setrate(1.15)">&times;1.15</button>
-							<button class="dropdown-item speed_1_00 active" onclick="mp3viewer.setrate(1.00)">normal</button>
-							<button class="dropdown-item speed_0_90" onclick="mp3viewer.setrate(0.90)">&times;0.90</button>
-							<button class="dropdown-item speed_0_80" onclick="mp3viewer.setrate(0.80)">&times;0.80</button>
-							<button class="dropdown-item speed_0_70" onclick="mp3viewer.setrate(0.70)">&times;0.70</button>
-							<button class="dropdown-item speed_0_60" onclick="mp3viewer.setrate(0.60)">&times;0.60</button>
-							<button class="dropdown-item speed_0_50" onclick="mp3viewer.setrate(0.50)">&times;0.50</button>
-							<button class="dropdown-item speed_0_40" onclick="mp3viewer.setrate(0.40)">&times;0.40</button>
-						</div>
-					</li>
-				</ul>
-			</div>
+		<nav class="footer bg-dark navbar-dark fixed-bottom">
+			<template>
+				<mp3-player-tag ref="mp3player" v-show="isshowmp3" />
+			</template>
 		</nav>
 
 		<!-- Dialog managed by jQuery calls -->
@@ -207,6 +170,7 @@
 	<script src="/devm/common.js?0.1.4"></script>
 	<!-- register Vue.js components -->
 	<script src="/devm/fileitem.js?0.1.4"></script>
+	<script src="/devm/mp3player.js?0.1.4"></script>
 	<!-- load application script -->
 	<script src="/devm/mainpage.js?0.1.4"></script>
 </body>

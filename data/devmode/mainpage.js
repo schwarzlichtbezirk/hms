@@ -36,10 +36,12 @@ const FG = {
 };
 
 // File viewers
-const FVNone = 0;
-const FVMusic = 1;
-const FVVideo = 2;
-const FVImage = 3;
+const FV = {
+	none: 0,
+	music: 1,
+	video: 2,
+	image: 3
+};
 
 const root = { name: "", path: "", size: 0, time: 0, type: Dir };
 const folderhist = [];
@@ -207,14 +209,13 @@ let app = new Vue({
 			let path = '';
 			for (const fn of arr) {
 				path += fn + '/';
-				const fp = {
+				pathlist.push({
 					name: fn,
 					path: path,
 					size: 0,
 					time: 0,
 					type: Dir
-				};
-				pathlist.push(fp);
+				});
 			}
 			return pathlist;
 		},
@@ -365,18 +366,8 @@ let app = new Vue({
 			}
 		},
 
-		// music buttons
-
-		hintplay() {
-			let c = true;
-			return c ? 'play' : 'pause';
-		},
-		isrepeat() {
-			return 'repeat';
-		},
-		hintrepeat() {
-			let c = true;
-			return c ? 'repeat' : 'repeat one';
+		isshowmp3() {
+			return this.selected && (this.selected.type === MP3 || this.selected.type === OGG);
 		}
 	},
 	methods: {
@@ -445,6 +436,13 @@ let app = new Vue({
 			}
 			folderhist.push(file);
 			this.folderhistpos = folderhist.length;
+		},
+
+		closeviewer() {
+			if (this.viewer) {
+				this.viewer.close();
+				this.viewer = null;
+			}
 		},
 
 		onshare() {
@@ -566,10 +564,7 @@ let app = new Vue({
 
 		ondelsel() {
 			this.selected = null;
-			if (this.viewer) {
-				this.viewer.hide();
-				this.viewer = null;
-			}
+			this.closeviewer();
 		},
 
 		onfilesel(file) {
@@ -578,30 +573,22 @@ let app = new Vue({
 			// Run viewer/player
 			switch (file.type) {
 				case Dir:
-					if (this.viewer) {
-						this.viewer.hide();
-						this.viewer = null;
-					}
+					this.closeviewer();
 					break;
 				case Wave:
 				case FLAC:
 				case MP3:
 				case OGG:
-					if (this.viewer !== mp3viewer) {
-						if (this.viewer) {
-							this.viewer.hide();
-						}
-						this.viewer = mp3viewer;
-						this.viewer.show();
+					if (this.viewer !== this.$refs.mp3player) {
+						this.closeviewer();
+						this.viewer = this.$refs.mp3player;
+						this.viewer.setup();
 					}
-					this.viewer.setfile(file, mp3viewer.isplay());
+					mp3player.setfile(file, mp3player.isplay());
 					break;
 				case MP4:
 				case WebM:
-					if (this.viewer) {
-						this.viewer.hide();
-						this.viewer = null;
-					}
+					this.closeviewer();
 					break;
 				case Photo:
 				case Bitmap:
@@ -609,32 +596,20 @@ let app = new Vue({
 				case PNG:
 				case JPEG:
 				case WebP:
-					if (this.viewer) {
-						this.viewer.hide();
-						this.viewer = null;
-					}
+					this.closeviewer();
 					break;
 				case PDF:
 				case HTML:
-					if (this.viewer) {
-						this.viewer.hide();
-						this.viewer = null;
-					}
+					this.closeviewer();
 					break;
 				case Text:
 				case Script:
 				case Config:
 				case Log:
-					if (this.viewer) {
-						this.viewer.hide();
-						this.viewer = null;
-					}
+					this.closeviewer();
 					break;
 				default:
-					if (this.viewer) {
-						this.viewer.hide();
-						this.viewer = null;
-					}
+					this.closeviewer();
 					break;
 			}
 		},
@@ -694,30 +669,6 @@ let app = new Vue({
 			});
 		},
 
-		fmttitle(file) {
-			let title = file.name;
-			if (file.pref) {
-				title += '\nshare: ' + shareprefix + file.pref;
-			}
-			if (file.type !== Dir) {
-				title += '\nsize: ' + fmtitemsize(file.size);
-			}
-			return title;
-		},
-
-		getwebpicon(file) {
-			return '/asst/file-webp/' + geticonname(file) + '.webp';
-		},
-
-		getpngicon(file) {
-			return '/asst/file-png/' + geticonname(file) + '.png';
-		},
-
-		// manage items classes
-		itemview(file) {
-			return { selected: this.selected && this.selected.name === file.name };
-		},
-
 		// show/hide functions
 		showitem(file) {
 			switch (file.type) {
@@ -749,251 +700,15 @@ let app = new Vue({
 				default:
 					return this.filter.other;
 			}
-		},
-
-		isplay(file) {
-			return this.selected && file.path === this.selected.path && this.playbackmode;
 		}
 	}
 });
-
-class Viewer {
-	show() { }
-	hide() { }
-	setfile(file) {
-		this.file = file;
-	}
-}
-
-class MP3Player extends Viewer {
-	constructor() {
-		super();
-		this.file = {};
-		this.rate = 1.00;
-		this.volume = 1.00;
-		this.repeatmode = 0; // 0 - no any repeat, 1 - repeat single, 2 - repeat playlist
-		this.seeking = false;
-		this.playonshow = false;
-
-		this.media = null;
-
-		const frame = $("#music-footer");
-		this.frame = frame;
-		this.ratemenu = frame.find("#rate");
-		this.curbar = frame.find(".timescale > .progress > .current");
-		this.bufbar = frame.find(".timescale > .progress > .buffer");
-		this.timer = frame.find(".timescale .time-pos");
-		this.seeker = frame.find(".timescale > .progress > .seeker");
-
-		this.seeker.on('change', () => {
-			this.media.currentTime = Number(this.seeker.val());
-			this.seeking = false;
-		});
-		this.seeker.on('input', () => {
-			this.seeking = true;
-			this.timer.text(fmttime(Number(this.seeker.val()), this.media.duration));
-		});
-	}
-
-	show() {
-		this.frame.show("fast");
-		if (this.playonshow) {
-			this.play();
-			this.playonshow = false;
-		}
-	}
-
-	hide() {
-		this.frame.hide("fast");
-		if (this.isplay()) {
-			this.media.pause();
-			this.playonshow = true;
-		}
-	}
-
-	setfile(file, start) {
-		if (this.file.path === file.path) { // do not set again same file
-			return;
-		}
-		if (this.isplay()) { // stop previous
-			this.media.pause();
-		}
-		this.file = file;
-		this.media = new Audio(getfileurl(file)); // API HTMLMediaElement, HTMLAudioElement
-		this.media.playbackRate = this.rate;
-		this.media.loop = this.repeatmode === 1;
-
-		this.frame.find(".timescale > div:last-child").text(file.name);
-
-		// disable UI for not ready media
-		this.frame.find(".play").addClass('disabled');
-		this.seeker.prop('disabled', true);
-
-		// media interface responders
-		this.media.addEventListener('loadedmetadata', () => {
-			this.updateprogress();
-		});
-		this.media.addEventListener('canplay', () => {
-			const len = this.media.duration;
-			const cur = this.media.currentTime;
-			// enable UI
-			this.frame.find(".play").removeClass('disabled');
-			this.seeker.prop('disabled', false);
-			this.seeker.attr('min', "0");
-			this.seeker.attr('max', len.toString());
-			this.seeker.val(cur.toString());
-			this.frame.find(".timescale .time-end").text(fmttime(len, len));
-			if (start) {
-				this.media.play();
-			}
-		});
-		this.media.addEventListener('timeupdate', () => {
-			this.updateprogress();
-		});
-		this.media.addEventListener('seeked', () => {
-			this.updateprogress();
-		});
-		this.media.addEventListener('progress', () => {
-			this.updateprogress();
-		});
-		this.media.addEventListener('play', () => {
-			this.frame.find(".play > i").html('pause');
-			app.playbackmode = true;
-		});
-		this.media.addEventListener('pause', () => {
-			this.frame.find(".play > i").html('play_arrow');
-			app.playbackmode = false;
-		});
-		this.media.addEventListener('ended', () => {
-			const pls = app.playlist;
-			const filepos = () => {
-				for (const i in pls) {
-					const file = pls[i];
-					if (this.file.path === file.path) {
-						return Number(i);
-					}
-				}
-			};
-			const nextpos = (pos) => {
-				for (let i = pos + 1; i < pls.length; i++) {
-					const file = pls[i];
-					if (file.type === Wave || file.type === FLAC ||
-						file.type === MP3 || file.type === OGG ||
-						file.type === MP4 || file.type === WebM) {
-						return file;
-					}
-				}
-			};
-			const next1 = nextpos(filepos());
-			if (next1) {
-				app.selected = next1;
-				this.setfile(next1, true);
-				return;
-			} else if (this.repeatmode === 2) {
-				const next2 = nextpos(-1);
-				if (next2) {
-					app.selected = next2;
-					this.setfile(next2, true);
-					return;
-				}
-			}
-			this.frame.find(".play > i").html('play_arrow');
-			app.playbackmode = false;
-		});
-	}
-
-	setrate(rate) {
-		this.ratemenu.find(".dropdown-item").removeClass("active");
-		const str = rate.toFixed(2);
-		this.ratemenu.find(".speed_" + str.substr(0, 1) + "_" + str.substr(2, 2)).addClass("active");
-		this.rate = rate;
-		if (this.media) {
-			this.media.playbackRate = rate;
-		}
-	}
-
-	play() {
-		if (this.media.paused) {
-			this.media.play();
-		} else {
-			this.media.pause();
-		}
-	}
-
-	isplay() {
-		return this.media && !this.media.paused;
-	}
-
-	updateprogress() {
-		const len = this.media.duration;
-		const cur = this.media.currentTime;
-		{
-			let percent;
-			if (len === Infinity) { // streamed
-				percent = 95;
-			} else if (isNaN(len)) { // unknown length
-				percent = 5;
-			} else {
-				percent = cur / len * 100;
-			}
-			this.curbar.css("width", percent + "%");
-		}
-
-		if (this.media.buffered.length > 0) {
-			const pos1 = this.media.buffered.start(0);
-			const pos2 = this.media.buffered.end(0);
-			let percent;
-			if (pos1 <= cur && pos2 - cur > 0) { // buffered in current pos
-				percent = (pos2 - cur) / len * 100;
-			} else { // not buffered or buffered outside
-				percent = 0;
-			}
-			this.bufbar.css("width", percent + "%");
-		}
-
-		if (!this.seeking) {
-			this.timer.text(fmttime(cur, len));
-			this.seeker.val(cur.toString());
-		}
-	}
-
-	// user events responders
-
-	onprev() {
-	}
-
-	onnext() {
-	}
-
-	onrepeat() {
-		this.repeatmode = (this.repeatmode + 1) % 3;
-		if (this.media) {
-			this.media.loop = this.repeatmode === 1;
-		}
-
-		this.frame.find(".repeat > i").html(this.repeatmode === 1 ? 'repeat_one' : 'repeat');
-		if (this.repeatmode) {
-			this.frame.find(".repeat").addClass('active');
-		} else {
-			this.frame.find(".repeat").removeClass('active');
-		}
-	}
-}
 
 /////////////
 // Startup //
 /////////////
 
-// Widgets
-let mp3viewer = undefined;
-
-const initwidgets = () => {
-	mp3viewer = new MP3Player();
-};
-
 $(document).ready(() => {
-	$("nav.footer").hide();
-	initwidgets();
 	app.gohome();
 
 	$('.preloader').hide("fast");
