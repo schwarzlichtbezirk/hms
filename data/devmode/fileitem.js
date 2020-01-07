@@ -1,8 +1,6 @@
 "use strict";
 
 const G = {
-	selected: null, // selected file properties
-	playbackmode: false
 };
 
 const globalmixin = {

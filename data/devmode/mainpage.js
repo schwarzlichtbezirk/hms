@@ -579,12 +579,8 @@ let app = new Vue({
 				case FLAC:
 				case MP3:
 				case OGG:
-					if (this.viewer !== this.$refs.mp3player) {
-						this.closeviewer();
-						this.viewer = this.$refs.mp3player;
-						this.viewer.setup();
-					}
-					mp3player.setfile(file, mp3player.isplay());
+					this.viewer = this.$refs.mp3player;
+					this.viewer.setfile(file);
 					break;
 				case MP4:
 				case WebM:
