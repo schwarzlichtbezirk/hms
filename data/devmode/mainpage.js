@@ -3,26 +3,28 @@
 //@ sourceMappingURL=mainpage.min.map
 
 // File types
-const Dir = -1;
-const File = 0;
-const Wave = 1;
-const FLAC = 2;
-const MP3 = 3;
-const OGG = 4;
-const MP4 = 5;
-const WebM = 6;
-const Photo = 7;
-const Bitmap = 8;
-const GIF = 9;
-const PNG = 10;
-const JPEG = 11;
-const WebP = 12;
-const PDF = 13;
-const HTML = 14;
-const Text = 15;
-const Script = 16;
-const Config = 17;
-const Log = 18;
+const FT = {
+	dir: -1,
+	file: 0,
+	wave: 1,
+	flac: 2,
+	mp3: 3,
+	ogg: 4,
+	mp4: 5,
+	webm: 6,
+	photo: 7,
+	bitmap: 8,
+	gif: 9,
+	png: 10,
+	jpeg: 11,
+	webp: 12,
+	pdf: 13,
+	html: 14,
+	text: 15,
+	script: 16,
+	config: 17,
+	log: 18
+};
 
 // File groups
 const FG = {
@@ -43,7 +45,30 @@ const FV = {
 	image: 3
 };
 
-const root = { name: "", path: "", size: 0, time: 0, type: Dir };
+const FTtoFV = {
+	[FT.dir]: FV.none,
+	[FT.file]: FV.none,
+	[FT.wave]: FV.music,
+	[FT.flac]: FV.music,
+	[FT.mp3]: FV.music,
+	[FT.ogg]: FV.video,
+	[FT.mp4]: FV.video,
+	[FT.webm]: FV.video,
+	[FT.photo]: FV.image,
+	[FT.bitmap]: FV.image,
+	[FT.gif]: FV.image,
+	[FT.png]: FV.image,
+	[FT.jpeg]: FV.image,
+	[FT.webp]: FV.image,
+	[FT.pdf]: FV.none,
+	[FT.html]: FV.none,
+	[FT.text]: FV.none,
+	[FT.script]: FV.none,
+	[FT.config]: FV.none,
+	[FT.log]: FV.none
+};
+
+const root = { name: "", path: "", size: 0, time: 0, type: FT.dir };
 const folderhist = [];
 
 const shareprefix = "/share/";
@@ -54,7 +79,7 @@ const unsorted = "";
 
 const geticonname = (file) => {
 	switch (file.type) {
-		case Dir:
+		case FT.dir:
 			if (file.path.length > 3) {
 				let suff = app.foldershares.length ? "-pub" : "";
 				if (file.scan) {
@@ -88,41 +113,41 @@ const geticonname = (file) => {
 			} else {
 				return "drive";
 			}
-		case Wave:
+		case FT.wave:
 			return "doc-wave";
-		case FLAC:
+		case FT.flac:
 			return "doc-flac";
-		case MP3:
+		case FT.mp3:
 			return "doc-mp3";
-		case OGG:
+		case FT.ogg:
 			return "doc-music";
-		case MP4:
+		case FT.mp4:
 			return "doc-mp4";
-		case WebM:
+		case FT.webm:
 			return "doc-movie";
-		case Photo:
+		case FT.photo:
 			return "doc-photo";
-		case Bitmap:
+		case FT.bitmap:
 			return "doc-bitmap";
-		case GIF:
+		case FT.gif:
 			return "doc-gif";
-		case PNG:
+		case FT.png:
 			return "doc-png";
-		case JPEG:
+		case FT.jpeg:
 			return "doc-jpeg";
-		case WebP:
+		case FT.webp:
 			return "doc-webp";
-		case PDF:
+		case FT.pdf:
 			return "doc-pdf";
-		case HTML:
+		case FT.html:
 			return "doc-html";
-		case Text:
+		case FT.text:
 			return "doc-text";
-		case Script:
+		case FT.script:
 			return "doc-script";
-		case Config:
+		case FT.config:
 			return "doc-config";
-		case Log:
+		case FT.log:
 			return "doc-log";
 		default: // File and others
 			return "doc-file";
@@ -137,7 +162,7 @@ const getfileurl = (file) => {
 		if (app.foldershares.length) {
 			const shr = app.foldershares[0]; // use any first available share
 			url = shareprefix + shr.pref + '/' + shr.suff + file.name;
-			if (file.type === Dir) {
+			if (file.type === FT.dir) {
 				url += '/';
 			}
 		} else {
@@ -151,7 +176,7 @@ const getfileurl = (file) => {
 
 const splitfilelist = (list, subfld, files) => {
 	for (const file of list) {
-		if (file.type === Dir) {
+		if (file.type === FT.dir) {
 			subfld.push(file);
 		} else {
 			files.push(file);
@@ -191,7 +216,7 @@ let app = new Vue({
 
 		// file viewers
 		viewer: null,
-		playbackmode: false
+		playbackfile: null
 	},
 	computed: {
 
@@ -214,7 +239,7 @@ let app = new Vue({
 					path: path,
 					size: 0,
 					time: 0,
-					type: Dir
+					type: FT.dir
 				});
 			}
 			return pathlist;
@@ -367,7 +392,7 @@ let app = new Vue({
 		},
 
 		isshowmp3() {
-			return this.selected && (this.selected.type === MP3 || this.selected.type === OGG);
+			return this.selected && FTtoFV[this.selected.type] === FV.music;
 		}
 	},
 	methods: {
@@ -571,37 +596,18 @@ let app = new Vue({
 			this.selected = file;
 
 			// Run viewer/player
-			switch (file.type) {
-				case Dir:
+			switch (FTtoFV[file.type]) {
+				case FV.none:
 					this.closeviewer();
 					break;
-				case Wave:
-				case FLAC:
-				case MP3:
-				case OGG:
+				case FV.music:
 					this.viewer = this.$refs.mp3player;
 					this.viewer.setfile(file);
 					break;
-				case MP4:
-				case WebM:
+				case FV.video:
 					this.closeviewer();
 					break;
-				case Photo:
-				case Bitmap:
-				case GIF:
-				case PNG:
-				case JPEG:
-				case WebP:
-					this.closeviewer();
-					break;
-				case PDF:
-				case HTML:
-					this.closeviewer();
-					break;
-				case Text:
-				case Script:
-				case Config:
-				case Log:
+				case FV.image:
 					this.closeviewer();
 					break;
 				default:
@@ -611,7 +617,7 @@ let app = new Vue({
 		},
 
 		onfilerun(file) {
-			if (file.type === Dir) {
+			if (file.type === FT.dir) {
 				this.gofolder(file);
 
 				// update folder history
@@ -620,10 +626,14 @@ let app = new Vue({
 				}
 				folderhist.push(file);
 				this.folderhistpos = folderhist.length;
-			} else if (file.type !== File) {
+			} else if (file.type !== FT.file) {
 				let url = getfileurl(file);
 				window.open(url, file.name);
 			}
+		},
+
+		onplayback(file, playback) {
+			this.playbackfile = playback && file;
 		},
 
 		// helper functions
@@ -668,30 +678,30 @@ let app = new Vue({
 		// show/hide functions
 		showitem(file) {
 			switch (file.type) {
-				case Dir:
+				case FT.dir:
 					return true;
-				case Wave:
-				case FLAC:
-				case MP3:
-				case OGG:
+				case FT.wave:
+				case FT.flac:
+				case FT.mp3:
 					return this.filter.music;
-				case MP4:
-				case WebM:
+				case FT.ogg:
+				case FT.mp4:
+				case FT.webm:
 					return this.filter.video;
-				case Photo:
-				case Bitmap:
-				case GIF:
-				case PNG:
-				case JPEG:
-				case WebP:
+				case FT.photo:
+				case FT.bitmap:
+				case FT.gif:
+				case FT.png:
+				case FT.jpeg:
+				case FT.webp:
 					return this.filter.photo;
-				case PDF:
-				case HTML:
+				case FT.pdf:
+				case FT.html:
 					return this.filter.pdf;
-				case Text:
-				case Script:
-				case Config:
-				case Log:
+				case FT.text:
+				case FT.script:
+				case FT.config:
+				case FT.log:
 					return this.filter.books;
 				default:
 					return this.filter.other;

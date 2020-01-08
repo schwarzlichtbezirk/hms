@@ -39,7 +39,7 @@ Vue.component('file-icon-tag', {
 			if (this.file.pref) {
 				title += '\nshare: ' + shareprefix + this.file.pref;
 			}
-			if (this.file.type !== Dir) {
+			if (this.file.type !== FT.dir) {
 				title += '\nsize: ' + fmtitemsize(this.file.size);
 			}
 			return title;
@@ -79,7 +79,7 @@ Vue.component('file-page-tag', {
 	<div v-bind:id="'body'+iid" class="collapse show">
 		<div class="card-body folder-list" v-on:click="ondelsel">
 			<template v-for="file in list">
-				<file-icon-tag v-bind:file="file" v-bind:state="{selected:selected===file,playback:playbackmode&&selected===file}" v-on:select="onfilesel" v-on:run="onfilerun" />
+				<file-icon-tag v-bind:file="file" v-bind:state="{selected:selected===file,playback:playbackfile===file}" v-on:select="onfilesel" v-on:run="onfilerun" />
 			</template>
 		</div>
 	</div>
