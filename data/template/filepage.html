@@ -1,0 +1,13 @@
+
+<div class="card">
+	<div class="card-header">
+		<a class="card-link d-flex w-100" data-toggle="collapse" v-bind:href="'#body'+iid"><slot>files</slot></a>
+	</div>
+	<div v-bind:id="'body'+iid" class="collapse show">
+		<div class="card-body folder-list" v-on:click="ondelsel">
+			<template v-for="file in list">
+				<file-icon-tag v-bind:file="file" v-bind:state="{selected:selected===file,playback:playbackfile===file}" v-on:select="onfilesel" v-on:run="onfilerun" />
+			</template>
+		</div>
+	</div>
+</div>

@@ -20,12 +20,12 @@ import (
 
 const (
 	rootsuff = "hms/"
-	asstsuff = "assets/"  // relative path to assets folder
-	devmsuff = "devmode/" // relative path to folder with development mode code files
-	relmsuff = "build/"   // relative path to folder with compiled code files
-	plugsuff = "plugin/"  // relative path to third party code
-	confsuff = "config/"  // relative path to configuration files folder
-	mailsuff = "mail/"    // relative path to email templates folder
+	asstsuff = "assets/"   // relative path to assets folder
+	devmsuff = "devmode/"  // relative path to folder with development mode code files
+	relmsuff = "build/"    // relative path to folder with compiled code files
+	plugsuff = "plugin/"   // relative path to third party code
+	confsuff = "config/"   // relative path to configuration files folder
+	tmplsuff = "template/" // relative path to html templates folder
 	dsrcsuff = "/src/github.com/schwarzlichtbezirk/hms/data/"
 )
 
@@ -33,7 +33,8 @@ var (
 	destpath string // contains program destination path
 	rootpath string
 	confpath string
-	mailpath string
+	tmplpath string
+	devmpath string
 )
 
 var routedpages = map[string]string{
@@ -57,8 +58,6 @@ var Log = NewLogger(os.Stderr, LstdFlags, 300)
 
 var starttime = time.Now() // save server start time
 var httpsrv, tlssrv []*http.Server
-
-var mailtmpl *template.Template // all email templates
 
 // patterns for hidden files
 var hidden []string
@@ -151,16 +150,43 @@ var dict = func(values ...interface{}) (map[string]interface{}, error) {
 }
 
 // hot templates reload, during server running
-func loadtemlates() error {
-	var t *template.Template
+func loadtemplates() error {
+	var ts, tc *template.Template
 	var err error
 
-	t, err = template.ParseGlob(mailpath + "*.tpl")
-	if err != nil && !strings.Contains(err.Error(), "matches no files") {
+	ts = template.New("storage").Delims("[=[", "]=]")
+	_, err = ts.ParseGlob(tmplpath + "*.html")
+	if err != nil {
 		return err
 	}
-	mailtmpl = t
 
+	tc, err = ts.Clone()
+	if err != nil {
+		return err
+	}
+	_, err = tc.ParseGlob(devmpath + "*.html")
+	if err != nil {
+		return err
+	}
+	for _, fname := range routedpages {
+		var buf bytes.Buffer
+		tc.ExecuteTemplate(&buf, fname, nil)
+		filecache["/devm/"+fname] = buf.Bytes()
+	}
+
+	tc, err = ts.Clone()
+	if err != nil {
+		return err
+	}
+	_, err = tc.ParseGlob(devmpath + "*.html")
+	if err != nil {
+		return err
+	}
+	for _, fname := range routedpages {
+		var buf bytes.Buffer
+		tc.ExecuteTemplate(&buf, fname, nil)
+		filecache["/relm/"+fname] = buf.Bytes()
+	}
 	return nil
 }
 
@@ -200,8 +226,8 @@ func Init() {
 	}
 	rootpath = checkpath("")
 	confpath = checkpath(confsuff)
-	mailpath = checkpath(mailsuff)
-	var devmpath = checkpath(devmsuff)
+	tmplpath = checkpath(tmplsuff)
+	devmpath = checkpath(devmsuff)
 	//var relmpath = checkpath(relmsuff)
 	var plugpath = checkpath(plugsuff)
 	var asstpath = checkpath(asstsuff)
@@ -226,7 +252,7 @@ func Init() {
 		Log.Printf("cached %d files on %d bytes for %s route", count, size, prefix)
 	}
 
-	if err = loadtemlates(); err != nil {
+	if err = loadtemplates(); err != nil {
 		Log.Fatal(err)
 	}
 

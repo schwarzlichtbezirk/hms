@@ -1,50 +1,7 @@
 "use strict";
 
 Vue.component('mp3-player-tag', {
-	template: `
-<div class="navbar navbar-expand-sm w-100" id="music-footer">
-	<ul class="navbar-nav flex-row">
-		<li><button class="btn btn-link nav-link" v-on:click="onprev" title="skip to previous"><i class="material-icons">skip_previous</i></button></li>
-		<li><button class="btn btn-link nav-link bg-secondary" v-on:click="onplay" v-bind:disabled="!ready" v-bind:title="hintplay"><i class="material-icons">{{iconplay}}</i></button></li>
-		<li><button class="btn btn-link nav-link" v-on:click="onnext" title="skip to next"><i class="material-icons">skip_next</i></button></li>
-		<li><button class="btn btn-link nav-link" v-on:click="onrepeat" v-bind:class="{active:repeatmode>0}" v-bind:title="hintrepeat"><i class="material-icons">{{iconrepeat}}</i></button></li>
-	</ul>
-	<button class="navbar-toggler" type="button" data-toggle="collapse" v-bind:data-target="'#nav'+iid">
-		<span class="navbar-toggler-icon"></span>
-	</button>
-	<div class="collapse navbar-collapse" v-bind:id="'nav'+iid">
-		<div class="timescale flex-grow-1">
-			<div class="progress position-relative">
-				<div class="current progress-bar" v-bind:style="stlbarcur" v-bind:aria-valuenow="timecur" aria-valuemin="0" v-bind:aria-valuemax="timeend"></div>
-				<div class="buffer progress-bar" v-bind:style="stlbarbuf" v-bind:aria-valuenow="timebuf" aria-valuemin="0" v-bind:aria-valuemax="timeend"></div>
-				<div class="timer justify-content-center align-self-center d-flex position-absolute w-100">{{fmttimecur}}&nbsp/&nbsp{{fmttimeend}}</div>
-				<input class="seeker position-absolute w-100" min="0" type="range" v-bind:max="timeend" v-bind:value="timecur" v-bind:disabled="!ready" v-on:change="onseekerchange" v-on:input="onseekerinput">
-			</div>
-			<div>{{file.name}}</div>
-		</div>
-		<ul class="navbar-nav flex-row">
-			<li class="btn-group dropup">
-				<button class="btn btn-link nav-link dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="playback rate"><i class="material-icons">slow_motion_video</i></button>
-				<ul class="dropdown-menu dropdown-menu-right" id="rate">
-					<li class="dropdown-item" v-on:click="setrate(2.50)" v-bind:class="{active:rate===2.50}">&times;2.50</li>
-					<li class="dropdown-item" v-on:click="setrate(2.00)" v-bind:class="{active:rate===2.00}">&times;2.00</li>
-					<li class="dropdown-item" v-on:click="setrate(1.75)" v-bind:class="{active:rate===1.75}">&times;1.75</li>
-					<li class="dropdown-item" v-on:click="setrate(1.50)" v-bind:class="{active:rate===1.50}">&times;1.50</li>
-					<li class="dropdown-item" v-on:click="setrate(1.25)" v-bind:class="{active:rate===1.25}">&times;1.25</li>
-					<li class="dropdown-item" v-on:click="setrate(1.15)" v-bind:class="{active:rate===1.15}">&times;1.15</li>
-					<li class="dropdown-item" v-on:click="setrate(1.00)" v-bind:class="{active:rate===1.00}">normal</li>
-					<li class="dropdown-item" v-on:click="setrate(0.90)" v-bind:class="{active:rate===0.90}">&times;0.90</li>
-					<li class="dropdown-item" v-on:click="setrate(0.80)" v-bind:class="{active:rate===0.80}">&times;0.80</li>
-					<li class="dropdown-item" v-on:click="setrate(0.70)" v-bind:class="{active:rate===0.70}">&times;0.70</li>
-					<li class="dropdown-item" v-on:click="setrate(0.60)" v-bind:class="{active:rate===0.60}">&times;0.60</li>
-					<li class="dropdown-item" v-on:click="setrate(0.50)" v-bind:class="{active:rate===0.50}">&times;0.50</li>
-					<li class="dropdown-item" v-on:click="setrate(0.40)" v-bind:class="{active:rate===0.40}">&times;0.40</li>
-				</ul>
-			</li>
-		</ul>
-	</div>
-</div>
-`,
+	template: '#mp3-player-tpl',
 	props: ["playlist"],
 	data: function () {
 		return {

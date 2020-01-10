@@ -14,24 +14,7 @@ const globalmixin = {
 };
 
 Vue.component('file-icon-tag', {
-	template: `
-<div class="file-item" v-bind:class="itemview" v-on:click.stop="onselect" v-on:dblclick.stop="onrun" v-bind:title="fmttitle">
-	<div class="img-overlay">
-		<picture>
-			<source v-bind:srcset="webpicon" type="image/webp">
-			<source v-bind:srcset="pngicon" type="image/png">
-			<img src="/asst/file-png/doc-file.png" v-bind:alt="file.name">
-		</picture>
-		<picture v-if="file.pref">
-			<source srcset="/asst/file-webp/shared.webp" type="image/webp">
-			<source srcset="/asst/file-png/shared.png" type="image/png">
-			<img src="/asst/file-png/shared.png" alt="shared">
-		</picture>
-		<img v-if="state.playback" src="/asst/equalizer-bars.gif" alt="shared">
-	</div>
-	<p>{{file.name}}</p>
-</div>
-`,
+	template: '#file-icon-tpl',
 	props: ["file", "state"],
 	computed: {
 		fmttitle() {
@@ -71,20 +54,7 @@ Vue.component('file-icon-tag', {
 
 // <file-page-tag v-bind:list="playlist">files</file-page-tag>
 Vue.component('file-page-tag', {
-	template: `
-<div class="card">
-	<div class="card-header">
-		<a class="card-link d-flex w-100" data-toggle="collapse" v-bind:href="'#body'+iid"><slot>files</slot></a>
-	</div>
-	<div v-bind:id="'body'+iid" class="collapse show">
-		<div class="card-body folder-list" v-on:click="ondelsel">
-			<template v-for="file in list">
-				<file-icon-tag v-bind:file="file" v-bind:state="{selected:selected===file,playback:playbackfile===file}" v-on:select="onfilesel" v-on:run="onfilerun" />
-			</template>
-		</div>
-	</div>
-</div>
-`,
+	template: '#file-page-tpl',
 	props: ["list"],
 	data: function () {
 		return {

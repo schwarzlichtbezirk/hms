@@ -197,6 +197,7 @@ const onerr404 = () => {
 
 let app = new Vue({
 	el: '#app',
+	template: '#app-tpl',
 	data: {
 		isadmin: false, // is it running on localhost
 		shared: [], // list of shared folders and files
