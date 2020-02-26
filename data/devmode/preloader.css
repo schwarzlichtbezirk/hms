@@ -13,7 +13,7 @@
 	left: 0;
 	width: 100vw;
 	height: 100vh;
-	background-color: RGBA(0, 0, 0, 0.1875);
+	background-color: rgba(0, 0, 0, 0.1875);
 }
 
 	.preloader > div {

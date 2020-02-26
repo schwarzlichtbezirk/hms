@@ -421,7 +421,7 @@ let app = new Vue({
 				}
 
 				// get shares for root
-				ajaxjson("GET", "/api/shared", (xhr) => {
+				ajaxjson("GET", "/api/share/lst", (xhr) => {
 					traceresponse(xhr);
 					if (xhr.status === 200) {
 						// update folder settings
@@ -476,7 +476,7 @@ let app = new Vue({
 				return;
 			}
 			if (!this.selected.pref) { // should add share
-				ajaxjson("PUT", "/api/addshr?" + $.param({
+				ajaxjson("PUT", "/api/share/add?" + $.param({
 					path: this.selected.path
 				}), (xhr) => {
 					traceresponse(xhr);
@@ -495,7 +495,7 @@ let app = new Vue({
 					}
 				});
 			} else { // should remove share
-				ajaxjson("DELETE", "/api/delshr?" + $.param({
+				ajaxjson("DELETE", "/api/share/del?" + $.param({
 					pref: this.selected.pref
 				}), (xhr) => {
 					traceresponse(xhr);
@@ -527,7 +527,7 @@ let app = new Vue({
 
 			// get shares on any case
 			if (file.name) {
-				ajaxjson("GET", "/api/shared", (xhr) => {
+				ajaxjson("GET", "/api/share/lst", (xhr) => {
 					traceresponse(xhr);
 					if (xhr.status === 200) {
 						// update folder settings
@@ -659,7 +659,7 @@ let app = new Vue({
 
 				// get shares only for root
 				if (!file.name) {
-					ajaxjson("GET", "/api/shared", (xhr) => {
+					ajaxjson("GET", "/api/share/lst", (xhr) => {
 						traceresponse(xhr);
 						if (xhr.status === 200) {
 							// update folder settings

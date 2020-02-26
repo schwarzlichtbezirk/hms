@@ -18,12 +18,26 @@ type void = struct{}
 
 // Error on API handlers
 type AjaxErr struct {
-	Message string `json:"message"`
-	Code    int    `json:"code,omitempty"`
+	what error
+	code int
 }
 
-func (e *AjaxErr) AjaxErr() string {
-	return fmt.Sprintf("error with code %d: %s", e.Code, e.Message)
+func (e *AjaxErr) Error() string {
+	return fmt.Sprintf("error with code %d: %s", e.code, e.what.Error())
+}
+
+func (e *AjaxErr) Unwrap() error {
+	return e.what
+}
+
+func (e *AjaxErr) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		What string `json:"what"`
+		Code int    `json:"code,omitempty"`
+	}{
+		e.what.Error(),
+		e.code,
+	})
 }
 
 // Local alias for router type.
@@ -36,8 +50,6 @@ var NewRouter = mux.NewRouter
 const (
 	EC_null = 0
 
-	EC_unauthorized = 1
-
 	// share
 	EC_sharegone = 1
 	EC_sharenone = 2
@@ -46,13 +58,11 @@ const (
 	EC_localunauth = 3
 	EC_localnopath = 4
 
-	// ping
-	EC_pingbadreq = 5
-
 	// reload
-	EC_reloadbadreq     = 6
-	EC_reloadbadcontent = 7
-	EC_reloadbadprefix  = 8
+	EC_reloadnoreq  = 5
+	EC_reloadbadreq = 6
+	EC_reloadnodata = 7
+	EC_reloadbadprf = 8
 
 	// getlog
 	EC_getlogbadnum = 9
@@ -99,18 +109,20 @@ func RegisterRoutes(gmux *Router) {
 	gmux.PathPrefix(shareprefix).HandlerFunc(shareHandler)
 	gmux.PathPrefix("/local").HandlerFunc(localHandler)
 
-	// ajax-queries
+	// API routes
 
-	gmux.Path("/api/ping").HandlerFunc(AjaxWrap(pingApi))
-	gmux.Path("/api/reload").HandlerFunc(AjaxWrap(reloadApi))
-	gmux.Path("/api/servinfo").HandlerFunc(AjaxWrap(servinfoApi))
-	gmux.Path("/api/memusage").HandlerFunc(AjaxWrap(memusageApi))
-	gmux.Path("/api/getlog").HandlerFunc(AjaxWrap(getlogApi))
-	gmux.Path("/api/getdrv").HandlerFunc(AjaxWrap(getdrvApi))
-	gmux.Path("/api/folder").HandlerFunc(AjaxWrap(folderApi))
-	gmux.Path("/api/shared").HandlerFunc(AjaxWrap(sharedApi))
-	gmux.Path("/api/addshr").HandlerFunc(AjaxWrap(addshrApi))
-	gmux.Path("/api/delshr").HandlerFunc(AjaxWrap(delshrApi))
+	var api = gmux.PathPrefix("/api").Subrouter()
+	api.Path("/ping").HandlerFunc(AjaxWrap(pingApi))
+	api.Path("/reload").HandlerFunc(AjaxWrap(reloadApi))
+	api.Path("/servinfo").HandlerFunc(AjaxWrap(servinfoApi))
+	api.Path("/memusage").HandlerFunc(AjaxWrap(memusageApi))
+	api.Path("/getlog").HandlerFunc(AjaxWrap(getlogApi))
+	api.Path("/getdrv").HandlerFunc(AjaxWrap(getdrvApi))
+	api.Path("/folder").HandlerFunc(AjaxWrap(folderApi))
+	var shr = api.PathPrefix("/share").Subrouter()
+	shr.Path("/lst").HandlerFunc(AjaxWrap(shrlstApi))
+	shr.Path("/add").HandlerFunc(AjaxWrap(shraddApi))
+	shr.Path("/del").HandlerFunc(AjaxWrap(shrdelApi))
 }
 
 func registershares() {
@@ -306,15 +318,12 @@ func WriteJson(w http.ResponseWriter, status int, body interface{}) {
 	}
 }
 
-func WriteError400(w http.ResponseWriter, err string, code int) {
+func WriteError400(w http.ResponseWriter, err error, code int) {
 	WriteJson(w, http.StatusBadRequest, &AjaxErr{err, code})
 }
 
 func WriteError500(w http.ResponseWriter, err error, code int) {
-	WriteJson(w, http.StatusInternalServerError, &AjaxErr{
-		err.Error(),
-		code,
-	})
+	WriteJson(w, http.StatusInternalServerError, &AjaxErr{err, code})
 }
 
 // The End.

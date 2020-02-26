@@ -170,7 +170,10 @@ func loadtemplates() error {
 	}
 	for _, fname := range routedpages {
 		var buf bytes.Buffer
-		tc.ExecuteTemplate(&buf, fname, nil)
+		err = tc.ExecuteTemplate(&buf, fname, nil)
+		if err != nil {
+			return err
+		}
 		filecache["/devm/"+fname] = buf.Bytes()
 	}
 
@@ -184,7 +187,10 @@ func loadtemplates() error {
 	}
 	for _, fname := range routedpages {
 		var buf bytes.Buffer
-		tc.ExecuteTemplate(&buf, fname, nil)
+		err = tc.ExecuteTemplate(&buf, fname, nil)
+		if err != nil {
+			return err
+		}
 		filecache["/relm/"+fname] = buf.Bytes()
 	}
 	return nil
@@ -252,6 +258,7 @@ func Init() {
 		Log.Printf("cached %d files on %d bytes for %s route", count, size, prefix)
 	}
 
+	// insert components templates into pages
 	if err = loadtemplates(); err != nil {
 		Log.Fatal(err)
 	}
@@ -344,6 +351,7 @@ func Done() {
 		srvwg.Add(1)
 		go func() {
 			defer srvwg.Done()
+			srv.SetKeepAlivesEnabled(false)
 			if err := srv.Shutdown(ctx); err != nil {
 				Log.Printf("HTTP server Shutdown: %v", err)
 			}
@@ -357,6 +365,7 @@ func Done() {
 		srvwg.Add(1)
 		go func() {
 			defer srvwg.Done()
+			srv.SetKeepAlivesEnabled(false)
 			if err := srv.Shutdown(ctx); err != nil {
 				Log.Printf("TLS server Shutdown: %v", err)
 			}

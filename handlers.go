@@ -3,6 +3,7 @@ package hms
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -16,10 +17,16 @@ import (
 )
 
 // HTTP error messages
-const (
-	ErrDeny    = "access denied"
-	ErrShrNone = "404 share not found"
-	ErrShrGone = "410 share is closed and does not available any more"
+var (
+	ErrNoJson = errors.New("data not given")
+	ErrNoData = errors.New("data is empty")
+
+	ErrDeny      = errors.New("access denied")
+	ErrShareNone = errors.New("404 share not found")
+	ErrShareGone = errors.New("410 share is closed and does not available any more")
+	ErrArgNoNum  = errors.New("'num' parameter not recognized")
+	ErrArgNoPath = errors.New("'path' argument required")
+	ErrArgNoPref = errors.New("'pref' or 'path' argument required")
 )
 
 //////////////////////////
@@ -82,10 +89,10 @@ func shareHandler(w http.ResponseWriter, r *http.Request) {
 		_, ok = sharesgone[pref]
 		shrmux.RUnlock()
 		if ok {
-			WriteJson(w, http.StatusGone, &AjaxErr{ErrShrGone, EC_sharegone})
+			WriteJson(w, http.StatusGone, &AjaxErr{ErrShareGone, EC_sharegone})
 			return
 		} else {
-			WriteJson(w, http.StatusNotFound, &AjaxErr{ErrShrNone, EC_sharenone})
+			WriteJson(w, http.StatusNotFound, &AjaxErr{ErrShareNone, EC_sharenone})
 			return
 		}
 	}
@@ -104,7 +111,7 @@ func localHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	var path = r.FormValue("path")
 	if len(path) == 0 {
-		WriteJson(w, http.StatusNotAcceptable, &AjaxErr{"'path' argument required", EC_localnopath})
+		WriteJson(w, http.StatusNotAcceptable, &AjaxErr{ErrArgNoPath, EC_localnopath})
 		return
 	}
 
@@ -114,18 +121,12 @@ func localHandler(w http.ResponseWriter, r *http.Request) {
 
 // APIHANDLER
 func pingApi(w http.ResponseWriter, r *http.Request) {
-	var body, err = ioutil.ReadAll(r.Body)
-	if err != nil {
-		WriteError500(w, err, EC_pingbadreq)
-		return
-	}
-
+	var body, _ = ioutil.ReadAll(r.Body)
 	WriteJson(w, http.StatusOK, body)
 }
 
 // APIHANDLER
 func reloadApi(w http.ResponseWriter, r *http.Request) {
-	var err error
 	type cached struct {
 		Prefix string  `json:"prefix"`
 		Count  uint64  `json:"count"`
@@ -133,45 +134,56 @@ func reloadApi(w http.ResponseWriter, r *http.Request) {
 		Errors []error `json:"errors"`
 	}
 
-	var body []byte
-	body, err = ioutil.ReadAll(r.Body)
-	if err != nil {
-		WriteError500(w, err, EC_reloadbadreq)
+	var err error
+	var arg []string
+	var ret []cached
+
+	// get arguments
+	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
+		if err = json.Unmarshal(jb, &arg); err != nil {
+			WriteError400(w, err, EC_reloadbadreq)
+			return
+		}
+		if len(arg) == 0 {
+			WriteError400(w, ErrNoData, EC_reloadnodata)
+			return
+		}
+	} else {
+		WriteError500(w, ErrNoJson, EC_reloadnoreq)
 		return
 	}
 
-	var prefixlist []string
-	err = json.Unmarshal(body, &prefixlist)
-	if err != nil {
-		WriteError400(w, err.Error(), EC_reloadbadcontent)
-		return
-	}
-
-	var p []cached
-	for _, prefix := range prefixlist {
+	var reloadtpl = false
+	for _, prefix := range arg {
 		var path, ok = routedpaths[prefix]
 		if !ok {
-			path, ok = routedpaths["/"+prefix+"/"]
+			prefix = "/" + prefix + "/"
+			path, ok = routedpaths[prefix]
 			if !ok {
-				WriteError400(w, fmt.Sprintf("given routes prefix \"%s\" does not assigned to any file path", prefix), EC_reloadbadprefix)
+				WriteError400(w, fmt.Errorf("given routes prefix \"%s\" does not assigned to any file path", prefix), EC_reloadbadprf)
 				return
 			}
-			prefix = "/" + prefix + "/"
 		}
 		var res cached
 		res.Prefix = prefix
 		res.Count, res.Size, res.Errors = LoadFiles(path, prefix)
-		p = append(p, res)
+		ret = append(ret, res)
 		LogErrors(res.Errors)
 		Log.Printf("reloaded cache of %d files on %d bytes for %s route", res.Count, res.Size, prefix)
+		if prefix == "/devm/" || prefix == "/relm/" {
+			reloadtpl = true
+		}
+	}
+	if reloadtpl {
+		loadtemplates()
 	}
 
-	WriteJson(w, http.StatusOK, p)
+	WriteJson(w, http.StatusOK, ret)
 }
 
 // APIHANDLER
 func servinfoApi(w http.ResponseWriter, r *http.Request) {
-	var p = map[string]interface{}{
+	var ret = map[string]interface{}{
 		"started":  starttime.UnixNano() / int64(time.Millisecond),
 		"govers":   runtime.Version(),
 		"os":       runtime.GOOS,
@@ -181,7 +193,7 @@ func servinfoApi(w http.ResponseWriter, r *http.Request) {
 		"rootpath": rootpath,
 	}
 
-	WriteJson(w, http.StatusOK, p)
+	WriteJson(w, http.StatusOK, ret)
 }
 
 // APIHANDLER
@@ -189,7 +201,7 @@ func memusageApi(w http.ResponseWriter, r *http.Request) {
 	var mem runtime.MemStats
 	runtime.ReadMemStats(&mem)
 
-	var p = map[string]interface{}{
+	var ret = map[string]interface{}{
 		"running":       time.Since(starttime) / time.Millisecond,
 		"heapalloc":     mem.HeapAlloc,
 		"heapsys":       mem.HeapSys,
@@ -200,7 +212,7 @@ func memusageApi(w http.ResponseWriter, r *http.Request) {
 		"gccpufraction": mem.GCCPUFraction,
 	}
 
-	WriteJson(w, http.StatusOK, p)
+	WriteJson(w, http.StatusOK, ret)
 }
 
 // APIHANDLER
@@ -214,7 +226,7 @@ func getlogApi(w http.ResponseWriter, r *http.Request) {
 	if s := r.FormValue("num"); len(s) > 0 {
 		var i64 int64
 		if i64, err = strconv.ParseInt(s, 10, 64); err != nil {
-			WriteError400(w, "'num' parameter not recognized", EC_getlogbadnum)
+			WriteError400(w, ErrArgNoNum, EC_getlogbadnum)
 			return
 		}
 		num = int(i64)
@@ -223,14 +235,14 @@ func getlogApi(w http.ResponseWriter, r *http.Request) {
 		num = size
 	}
 
-	var p = make([]interface{}, num)
+	var ret = make([]interface{}, num)
 	var h = Log.Ring()
 	for i := 0; i < num; i++ {
-		p[i] = h.Value
+		ret[i] = h.Value
 		h = h.Prev()
 	}
 
-	WriteJson(w, http.StatusOK, p)
+	WriteJson(w, http.StatusOK, ret)
 }
 
 // APIHANDLER
@@ -240,7 +252,7 @@ func getdrvApi(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var p = getdrives()
+	var ret = getdrives()
 	Log.Printf("navigate to root")
 
 	if r.Method == "HEAD" {
@@ -248,7 +260,7 @@ func getdrvApi(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	WriteJson(w, http.StatusOK, p)
+	WriteJson(w, http.StatusOK, ret)
 }
 
 // APIHANDLER
@@ -256,7 +268,7 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 	incuint(&foldercallcout, 1)
 
 	var err error
-	var p []IFileProp
+	var ret []IFileProp
 	var adm = IsAdmin(r)
 
 	var path = r.FormValue("path")
@@ -265,21 +277,21 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 	if len(path) == 0 {
 		// does not give anything here if it is not admin
 		if adm {
-			p = getdrives()
+			ret = getdrives()
 		} else {
-			p = []IFileProp{}
+			ret = []IFileProp{}
 		}
 	} else {
-		p, err = readdir(path)
+		ret, err = readdir(path)
 		if err != nil {
-			WriteJson(w, http.StatusNotFound, &AjaxErr{err.Error(), EC_folderabsent})
+			WriteJson(w, http.StatusNotFound, &AjaxErr{err, EC_folderabsent})
 			return
 		}
 		switch sval {
 		case "name":
-			sort.Slice(p, func(i, j int) bool {
-				var pi = p[i].Base()
-				var pj = p[j].Base()
+			sort.Slice(ret, func(i, j int) bool {
+				var pi = ret[i].Base()
+				var pj = ret[j].Base()
 				if (pi.Type == Dir) != (pj.Type == Dir) {
 					return pi.Type == Dir
 				} else {
@@ -287,9 +299,9 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 				}
 			})
 		case "type":
-			sort.Slice(p, func(i, j int) bool {
-				var pi = p[i].Base()
-				var pj = p[j].Base()
+			sort.Slice(ret, func(i, j int) bool {
+				var pi = ret[i].Base()
+				var pj = ret[j].Base()
 				if pi.Type != pj.Type {
 					return pi.Type < pj.Type
 				} else {
@@ -297,9 +309,9 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 				}
 			})
 		case "size":
-			sort.Slice(p, func(i, j int) bool {
-				var pi = p[i].Base()
-				var pj = p[j].Base()
+			sort.Slice(ret, func(i, j int) bool {
+				var pi = ret[i].Base()
+				var pj = ret[j].Base()
 				if (pi.Type == Dir) != (pj.Type == Dir) {
 					return pi.Type < pj.Type
 				} else {
@@ -319,20 +331,20 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	WriteJson(w, http.StatusOK, p)
+	WriteJson(w, http.StatusOK, ret)
 }
 
 // APIHANDLER
-func sharedApi(w http.ResponseWriter, r *http.Request) {
+func shrlstApi(w http.ResponseWriter, r *http.Request) {
 	shrmux.RLock()
-	var b, _ = json.Marshal(shareslist)
+	var jb, _ = json.Marshal(shareslist)
 	shrmux.RUnlock()
 
-	WriteJson(w, http.StatusOK, b)
+	WriteJson(w, http.StatusOK, jb)
 }
 
 // APIHANDLER
-func addshrApi(w http.ResponseWriter, r *http.Request) {
+func shraddApi(w http.ResponseWriter, r *http.Request) {
 	if !IsAdmin(r) {
 		WriteJson(w, http.StatusUnauthorized, &AjaxErr{ErrDeny, EC_addshrunauth})
 		return
@@ -340,7 +352,7 @@ func addshrApi(w http.ResponseWriter, r *http.Request) {
 
 	var fpath = r.FormValue("path")
 	if len(fpath) == 0 {
-		WriteJson(w, http.StatusNotAcceptable, &AjaxErr{"'path' argument required", EC_addshrnopath})
+		WriteJson(w, http.StatusNotAcceptable, &AjaxErr{ErrArgNoPath, EC_addshrnopath})
 		return
 	}
 
@@ -354,7 +366,7 @@ func addshrApi(w http.ResponseWriter, r *http.Request) {
 
 	var f, err = os.Open(fpath)
 	if err != nil {
-		WriteJson(w, http.StatusNotFound, &AjaxErr{err.Error(), EC_addshrbadpath})
+		WriteJson(w, http.StatusNotFound, &AjaxErr{err, EC_addshrbadpath})
 		return
 	}
 	var fi, _ = f.Stat()
@@ -369,7 +381,7 @@ func addshrApi(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
-func delshrApi(w http.ResponseWriter, r *http.Request) {
+func shrdelApi(w http.ResponseWriter, r *http.Request) {
 	if !IsAdmin(r) {
 		WriteJson(w, http.StatusUnauthorized, &AjaxErr{ErrDeny, EC_delshrunauth})
 		return
@@ -381,7 +393,7 @@ func delshrApi(w http.ResponseWriter, r *http.Request) {
 	} else if path := r.FormValue("path"); len(path) > 0 {
 		ok = DelSharePath(path)
 	} else {
-		WriteJson(w, http.StatusNotAcceptable, &AjaxErr{"'pref' or 'path' argument required", EC_delshrnopath})
+		WriteJson(w, http.StatusNotAcceptable, &AjaxErr{ErrArgNoPref, EC_delshrnopath})
 		return
 	}
 

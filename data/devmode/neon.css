@@ -35,7 +35,7 @@ body {
 .card-header {
 	padding-top: 0.25rem;
 	padding-bottom: 0.25rem;
-	background: RGBA(75, 0, 130, 0.50); /*Indigo*/
+	background: rgba(75, 0, 130, 0.50); /*Indigo*/
 }
 
 .breadcrumb-item.active {
@@ -57,7 +57,7 @@ body {
 .file-item {
 	display: block;
 	text-align: center;
-	border: 1px solid RGBA(25, 25, 112, 0);
+	border: 1px solid rgba(25, 25, 112, 0);
 	border-radius: 4px;
 	padding: 4px;
 	margin: 0px;
@@ -65,17 +65,17 @@ body {
 }
 
 	.file-item:hover {
-		background: RGBA(25, 25, 112, 0.5); /*MidnightBlue*/
+		background: rgba(25, 25, 112, 0.5); /*MidnightBlue*/
 		border: 1px solid DarkTurquoise;
 	}
 
 	.file-item.selected {
-		background: RGBA(75, 0, 130, 0.50); /*Indigo*/
+		background: rgba(75, 0, 130, 0.50); /*Indigo*/
 		border: 1px solid DarkTurquoise;
 	}
 
 		.file-item.selected:hover {
-			background: RGBA(106, 90, 205, 0.5); /*SlateBlue*/
+			background: rgba(106, 90, 205, 0.5); /*SlateBlue*/
 			border: 1px solid DarkTurquoise;
 		}
 
@@ -89,7 +89,7 @@ body {
 		width: 112px;
 		margin: 0px;
 		color: Aquamarine;
-		background: RGBA(102, 51, 153, 0.50); /*RebeccaPurple*/
+		background: rgba(102, 51, 153, 0.50); /*RebeccaPurple*/
 		font-size: 0.72em;
 		line-height: 1.25;
 		max-height: 5.2em;
@@ -130,7 +130,7 @@ body {
 		.timescale > .progress > .seeker {
 			-webkit-appearance: none;
 			height: 20px;
-			background: RGBA(48, 48, 48, 0.25);
+			background: rgba(48, 48, 48, 0.25);
 			outline: none;
 			opacity: 0;
 			-webkit-transition: .2s;

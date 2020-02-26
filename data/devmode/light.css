@@ -52,7 +52,7 @@ body {
 .file-item {
 	display: block;
 	text-align: center;
-	border: 1px solid RGBA(189, 183, 107, 0);
+	border: 1px solid rgba(189, 183, 107, 0);
 	padding: 4px;
 	margin: 0px;
 	cursor: pointer;
@@ -122,7 +122,7 @@ body {
 		.timescale > .progress > .seeker {
 			-webkit-appearance: none;
 			height: 20px;
-			background: RGBA(48, 48, 48, 0.25);
+			background: rgba(48, 48, 48, 0.25);
 			outline: none;
 			opacity: 0;
 			-webkit-transition: .2s;
