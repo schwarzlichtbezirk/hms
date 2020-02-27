@@ -183,10 +183,6 @@ var dircache = map[string]*DirProp{
 }
 var dcmux sync.RWMutex
 
-type IFileProp interface {
-	Base() *FileProp
-}
-
 ////////////////////////////
 // Common file properties //
 ////////////////////////////
@@ -212,14 +208,10 @@ type FileProp struct {
 	Pref string `json:"pref,omitempty"` // share prefix
 }
 
-func (fp *FileProp) Base() *FileProp {
-	return fp
-}
-
 func (fp *FileProp) Setup(fi os.FileInfo) {
 	fp.Name = fi.Name()
 	fp.Size = fi.Size()
-	fp.Time = fi.ModTime().UnixNano() / int64(time.Millisecond)
+	fp.Time = UnixJS(fi.ModTime())
 	if fi.IsDir() {
 		fp.Type = Dir
 	} else {
@@ -323,18 +315,20 @@ type DirProp struct {
 	FGrp [7]int `json:"fgrp"` // file groups counters
 }
 
-func (fp *DirProp) Base() *FileProp {
-	return &fp.FileProp
+// Returned data for "getdrv", "folder" API handlers.
+type folderRet struct {
+	Paths []DirProp  `json:"paths"`
+	Files []FileProp `json:"files"`
 }
 
 // Scan all available drives installed on local machine.
-func getdrives() (p []IFileProp) {
+func getdrives() (drvs []DirProp) {
 	for _, drive := range "ABCDEFGHIJKLMNOPQRSTUVWXYZ" {
 		var name = string(drive) + ":"
 		var f, err = os.Open(name)
 		if err == nil {
 			f.Close()
-			var fp = &DirProp{
+			var dp = DirProp{
 				FileProp: FileProp{
 					Name: name,
 					Path: name + "/",
@@ -342,22 +336,21 @@ func getdrives() (p []IFileProp) {
 				},
 			}
 			shrmux.RLock()
-			var shr, ok = sharespath[fp.Path]
-			shrmux.RUnlock()
-			if ok {
-				fp.Pref = shr.Pref
+			if shr, ok := sharespath[dp.Path]; ok {
+				dp.Pref = shr.Pref
 			}
-			p = append(p, fp)
+			shrmux.RUnlock()
+			drvs = append(drvs, dp)
 		}
 	}
 
-	root.Scan = timenowjs()
-	root.FGrp[FGDir] = len(p)
+	root.Scan = UnixJS(time.Now())
+	root.FGrp[FGDir] = len(drvs)
 	return
 }
 
 // Reads directory with given name and returns fileinfo for each entry.
-func readdir(dirname string) (p []IFileProp, err error) {
+func readdir(dirname string) (ret folderRet, err error) {
 	defer func() {
 		// Remove from cache dir that can not be opened
 		if err != nil {
@@ -384,9 +377,8 @@ func readdir(dirname string) (p []IFileProp, err error) {
 		return
 	}
 	var fgrp = [7]int{}
-	var scan = timenowjs()
+	var scan = UnixJS(time.Now())
 
-	p = make([]IFileProp, 0, len(fis))
 scanprop:
 	for _, fi := range fis {
 		var fname = fi.Name()
@@ -395,6 +387,7 @@ scanprop:
 		var ft int
 		if fi.IsDir() {
 			ft = Dir
+			fpath += "/"
 		} else {
 			ft = extset[strings.ToLower(filepath.Ext(fname))]
 			if (ft == JPEG && size > PhotoJPEG) || (ft == WebP && size > PhotoWEBP) {
@@ -409,37 +402,36 @@ scanprop:
 			}
 		}
 
-		var ifp IFileProp
-		if ft == Dir {
-			fpath += "/"
-			var dp = &DirProp{}
-			dcmux.RLock()
-			var cached, cchok = dircache[dirname+fname+"/"]
-			dcmux.RUnlock()
-			if cchok {
-				dp.Scan = cached.Scan
-				dp.FGrp = cached.FGrp
-			}
-			ifp = dp
-		} else {
-			var fp = &FileProp{}
-			ifp = fp
-		}
-
-		var fp = ifp.Base()
-		fp.Name = fname
-		fp.Path = fpath
-		fp.Size = size
-		fp.Time = fi.ModTime().UnixNano() / int64(time.Millisecond)
-		fp.Type = ft
+		var pref string
 		shrmux.RLock()
-		var shr, shrok = sharespath[fpath]
+		if shr, ok := sharespath[fpath]; ok {
+			pref = shr.Pref
+		}
 		shrmux.RUnlock()
-		if shrok {
-			fp.Pref = shr.Pref
+		var fp = FileProp{
+			Name: fname,
+			Path: fpath,
+			Size: size,
+			Time: UnixJS(fi.ModTime()),
+			Type: ft,
+			Pref: pref,
 		}
 
-		p = append(p, ifp)
+		if ft == Dir {
+			dcmux.RLock()
+			var dc, ok = dircache[dirname+fname+"/"]
+			dcmux.RUnlock()
+			var dp = DirProp{
+				FileProp: fp,
+			}
+			if ok {
+				dp.Scan = dc.Scan
+				dp.FGrp = dc.FGrp
+			}
+			ret.Paths = append(ret.Paths, dp)
+		} else {
+			ret.Files = append(ret.Files, fp)
+		}
 	}
 
 	dcmux.RLock()

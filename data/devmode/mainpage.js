@@ -174,16 +174,6 @@ const getfileurl = (file) => {
 	return url;
 };
 
-const splitfilelist = (list, subfld, files) => {
-	for (const file of list) {
-		if (file.type === FT.dir) {
-			subfld.push(file);
-		} else {
-			files.push(file);
-		}
-	}
-};
-
 const showmsgbox = (title, body) => {
 	const dlg = $("#msgbox");
 	dlg.find(".modal-title").html(title);
@@ -408,10 +398,8 @@ let app = new Vue({
 					this.isadmin = true;
 					this.folderscan = new Date(Date.now());
 					// update folder settings
-					const dir = xhr.response;
-					this.subfldlist = [];
+					this.subfldlist = xhr.response || [];
 					this.filelist = [];
-					splitfilelist(dir, this.subfldlist, this.filelist);
 					this.folderinfo = root;
 				} else if (xhr.status === 401) { // Unauthorized
 					this.isadmin = false;
@@ -425,8 +413,14 @@ let app = new Vue({
 					traceresponse(xhr);
 					if (xhr.status === 200) {
 						// update folder settings
-						this.shared = xhr.response;
-						splitfilelist(this.shared, this.subfldlist, this.filelist);
+						this.shared = xhr.response || [];
+						for (const file of this.shared) {
+							if (file.type === FT.dir) {
+								this.subfldlist.push(file);
+							} else {
+								this.filelist.push(file);
+							}
+						}
 					}
 				});
 
@@ -650,28 +644,9 @@ let app = new Vue({
 				if (xhr.status === 200) {
 					this.folderscan = new Date(Date.now());
 					// update folder settings
-					const dir = xhr.response;
-					this.subfldlist = [];
-					this.filelist = [];
-					splitfilelist(dir, this.subfldlist, this.filelist);
+					this.subfldlist = xhr.response.paths || [];
+					this.filelist = xhr.response.files || [];
 					this.folderinfo = file;
-				}
-
-				// get shares only for root
-				if (!file.name) {
-					ajaxjson("GET", "/api/share/lst", (xhr) => {
-						traceresponse(xhr);
-						if (xhr.status === 200) {
-							// update folder settings
-							this.shared = xhr.response;
-							splitfilelist(this.shared, this.subfldlist, this.filelist);
-						} else if (xhr.status === 404) { // Not Found
-							onerr404();
-							// clear folder history
-							folderhist.splice(0, folderhist.length);
-							this.folderhistpos = 0;
-						}
-					});
 				}
 			});
 		},

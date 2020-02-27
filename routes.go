@@ -50,37 +50,37 @@ var NewRouter = mux.NewRouter
 const (
 	EC_null = 0
 
+	// admin
+	EC_adminfail = 1
+
 	// share
-	EC_sharegone = 1
-	EC_sharenone = 2
+	EC_sharegone = 2
+	EC_sharenone = 3
 
 	// local
-	EC_localunauth = 3
-	EC_localnopath = 4
+	EC_localnopath = 5
 
 	// reload
-	EC_reloadnoreq  = 5
-	EC_reloadbadreq = 6
-	EC_reloadnodata = 7
-	EC_reloadbadprf = 8
+	EC_reloadnoreq  = 6
+	EC_reloadbadreq = 7
+	EC_reloadnodata = 8
+	EC_reloadbadprf = 9
 
 	// getlog
-	EC_getlogbadnum = 9
+	EC_getlogbadnum = 10
 
 	// getdrv
-	EC_getdrvunauth = 10
+	EC_getdrvunauth = 11
 
 	// folder
-	EC_folderabsent = 11
+	EC_folderabsent = 12
 
 	// addshr
-	EC_addshrunauth  = 12
-	EC_addshrnopath  = 13
-	EC_addshrbadpath = 14
+	EC_addshrnopath  = 14
+	EC_addshrbadpath = 15
 
 	// delshr
-	EC_delshrunauth = 15
-	EC_delshrnopath = 16
+	EC_delshrnopath = 17
 )
 
 //////////////////
@@ -100,14 +100,18 @@ func RegisterRoutes(gmux *Router) {
 		gmux.Path("/" + name).HandlerFunc(pageHandler("/relm/", name)) // release mode
 	}
 
+	// cached thumbs
+
+	gmux.PathPrefix("/thumb/").HandlerFunc(thumbHandler)
+
 	// files sharing
 
 	for prefix := range routedpaths {
 		gmux.PathPrefix(prefix).HandlerFunc(filecacheHandler)
 	}
 
-	gmux.PathPrefix(shareprefix).HandlerFunc(shareHandler)
-	gmux.PathPrefix("/local").HandlerFunc(localHandler)
+	gmux.PathPrefix(shareprefix).HandlerFunc(AjaxWrap(shareHandler))
+	gmux.PathPrefix("/local").HandlerFunc(AdminWrap(localHandler))
 
 	// API routes
 
@@ -117,28 +121,30 @@ func RegisterRoutes(gmux *Router) {
 	api.Path("/servinfo").HandlerFunc(AjaxWrap(servinfoApi))
 	api.Path("/memusage").HandlerFunc(AjaxWrap(memusageApi))
 	api.Path("/getlog").HandlerFunc(AjaxWrap(getlogApi))
-	api.Path("/getdrv").HandlerFunc(AjaxWrap(getdrvApi))
-	api.Path("/folder").HandlerFunc(AjaxWrap(folderApi))
+	api.Path("/getdrv").HandlerFunc(AdminWrap(getdrvApi))
+	api.Path("/folder").HandlerFunc(AdminWrap(folderApi))
 	var shr = api.PathPrefix("/share").Subrouter()
 	shr.Path("/lst").HandlerFunc(AjaxWrap(shrlstApi))
-	shr.Path("/add").HandlerFunc(AjaxWrap(shraddApi))
-	shr.Path("/del").HandlerFunc(AjaxWrap(shrdelApi))
+	shr.Path("/add").HandlerFunc(AdminWrap(shraddApi))
+	shr.Path("/del").HandlerFunc(AdminWrap(shrdelApi))
+	var tmb = api.PathPrefix("/tmb").Subrouter()
+	tmb.Path("/get").HandlerFunc(AjaxWrap(tmbgetApi))
 }
 
 func registershares() {
-	for i := 0; i < len(shareslist); i++ {
+	for i := 0; i < len(shareslist); {
 		var fp = shareslist[i]
 
 		var f, err = os.Open(fp.Path)
 		if err != nil { // check up share valid
 			Log.Printf("can not create share '%s' on path '%s'", fp.Pref, fp.Path)
 			shareslist = append(shareslist[:i], shareslist[i+1:]...)
-			i--
 		} else {
 			f.Close()
 			sharespath[fp.Path] = fp
 			sharespref[fp.Pref] = fp
 			Log.Printf("created share '%s' on path '%s'", fp.Pref, fp.Path)
+			i++
 		}
 	}
 }
@@ -191,10 +197,24 @@ func LogErrors(errs []error) {
 	}
 }
 
-// handler wrapper for AJAX API calls without authorization
+// Handler wrapper for AJAX API calls without authorization.
 func AjaxWrap(fn http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		incuint(&ajaxcallcount, 1)
+		fn(w, r)
+	}
+}
+
+// Handler wrapper for API with admin checkup.
+func AdminWrap(fn http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		incuint(&ajaxcallcount, 1)
+
+		if !IsAdmin(r) {
+			WriteJson(w, http.StatusForbidden, &AjaxErr{ErrDeny, EC_adminfail})
+			return
+		}
+
 		fn(w, r)
 	}
 }

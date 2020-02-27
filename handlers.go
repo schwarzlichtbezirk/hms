@@ -105,13 +105,10 @@ func shareHandler(w http.ResponseWriter, r *http.Request) {
 func localHandler(w http.ResponseWriter, r *http.Request) {
 	incuint(&localcallcount, 1)
 
-	if !IsAdmin(r) {
-		WriteJson(w, http.StatusUnauthorized, &AjaxErr{ErrDeny, EC_localunauth})
-		return
-	}
+	// get arguments
 	var path = r.FormValue("path")
 	if len(path) == 0 {
-		WriteJson(w, http.StatusNotAcceptable, &AjaxErr{ErrArgNoPath, EC_localnopath})
+		WriteError400(w, ErrArgNoPath, EC_localnopath)
 		return
 	}
 
@@ -184,7 +181,7 @@ func reloadApi(w http.ResponseWriter, r *http.Request) {
 // APIHANDLER
 func servinfoApi(w http.ResponseWriter, r *http.Request) {
 	var ret = map[string]interface{}{
-		"started":  starttime.UnixNano() / int64(time.Millisecond),
+		"started":  UnixJS(starttime),
 		"govers":   runtime.Version(),
 		"os":       runtime.GOOS,
 		"numcpu":   runtime.NumCPU(),
@@ -221,7 +218,7 @@ func getlogApi(w http.ResponseWriter, r *http.Request) {
 
 	var size = Log.Size()
 
-	// Get number of log lines
+	// get arguments
 	var num int
 	if s := r.FormValue("num"); len(s) > 0 {
 		var i64 int64
@@ -247,19 +244,8 @@ func getlogApi(w http.ResponseWriter, r *http.Request) {
 
 // APIHANDLER
 func getdrvApi(w http.ResponseWriter, r *http.Request) {
-	if !IsAdmin(r) {
-		WriteJson(w, http.StatusUnauthorized, &AjaxErr{ErrDeny, EC_getdrvunauth})
-		return
-	}
-
 	var ret = getdrives()
 	Log.Printf("navigate to root")
-
-	if r.Method == "HEAD" {
-		WriteStdHeader(w)
-		return
-	}
-
 	WriteJson(w, http.StatusOK, ret)
 }
 
@@ -268,18 +254,28 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 	incuint(&foldercallcout, 1)
 
 	var err error
-	var ret []IFileProp
-	var adm = IsAdmin(r)
+	var ret folderRet
 
+	// get arguments
 	var path = r.FormValue("path")
 	var sval = r.FormValue("sort")
 
 	if len(path) == 0 {
-		// does not give anything here if it is not admin
-		if adm {
-			ret = getdrives()
-		} else {
-			ret = []IFileProp{}
+		ret.Paths = getdrives()
+
+		shrmux.RLock()
+		var lst = make([]*FileProp, len(shareslist))
+		copy(lst, shareslist)
+		shrmux.RUnlock()
+
+		for _, fp := range lst {
+			if fp.Type == Dir {
+				ret.Paths = append(ret.Paths, DirProp{
+					FileProp: *fp,
+				})
+			} else {
+				ret.Files = append(ret.Files, *fp)
+			}
 		}
 	} else {
 		ret, err = readdir(path)
@@ -289,9 +285,9 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 		}
 		switch sval {
 		case "name":
-			sort.Slice(ret, func(i, j int) bool {
-				var pi = ret[i].Base()
-				var pj = ret[j].Base()
+			sort.Slice(ret.Files, func(i, j int) bool {
+				var pi = ret.Files[i]
+				var pj = ret.Files[j]
 				if (pi.Type == Dir) != (pj.Type == Dir) {
 					return pi.Type == Dir
 				} else {
@@ -299,9 +295,9 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 				}
 			})
 		case "type":
-			sort.Slice(ret, func(i, j int) bool {
-				var pi = ret[i].Base()
-				var pj = ret[j].Base()
+			sort.Slice(ret.Files, func(i, j int) bool {
+				var pi = ret.Files[i]
+				var pj = ret.Files[j]
 				if pi.Type != pj.Type {
 					return pi.Type < pj.Type
 				} else {
@@ -309,9 +305,9 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 				}
 			})
 		case "size":
-			sort.Slice(ret, func(i, j int) bool {
-				var pi = ret[i].Base()
-				var pj = ret[j].Base()
+			sort.Slice(ret.Files, func(i, j int) bool {
+				var pi = ret.Files[i]
+				var pj = ret.Files[j]
 				if (pi.Type == Dir) != (pj.Type == Dir) {
 					return pi.Type < pj.Type
 				} else {
@@ -323,13 +319,22 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 				}
 			})
 		}
+		// arrange folders by name on any case
+		if len(sval) > 0 {
+			sort.Slice(ret.Paths, func(i, j int) bool {
+				var pi = ret.Paths[i]
+				var pj = ret.Paths[j]
+				return strings.ToLower(pi.Name) < strings.ToLower(pj.Name)
+			})
+		}
+		// cache folder thumnails
+		go func() {
+			for _, fp := range ret.Files {
+				CacheImg(&fp)
+			}
+		}()
 	}
 	Log.Printf("navigate to: %s", path)
-
-	if r.Method == "HEAD" {
-		WriteStdHeader(w)
-		return
-	}
 
 	WriteJson(w, http.StatusOK, ret)
 }
@@ -345,14 +350,10 @@ func shrlstApi(w http.ResponseWriter, r *http.Request) {
 
 // APIHANDLER
 func shraddApi(w http.ResponseWriter, r *http.Request) {
-	if !IsAdmin(r) {
-		WriteJson(w, http.StatusUnauthorized, &AjaxErr{ErrDeny, EC_addshrunauth})
-		return
-	}
-
+	// get arguments
 	var fpath = r.FormValue("path")
 	if len(fpath) == 0 {
-		WriteJson(w, http.StatusNotAcceptable, &AjaxErr{ErrArgNoPath, EC_addshrnopath})
+		WriteError400(w, ErrArgNoPath, EC_addshrnopath)
 		return
 	}
 
@@ -382,18 +383,18 @@ func shraddApi(w http.ResponseWriter, r *http.Request) {
 
 // APIHANDLER
 func shrdelApi(w http.ResponseWriter, r *http.Request) {
-	if !IsAdmin(r) {
-		WriteJson(w, http.StatusUnauthorized, &AjaxErr{ErrDeny, EC_delshrunauth})
-		return
-	}
-
 	var ok bool
-	if pref := r.FormValue("pref"); len(pref) > 0 {
+
+	// get arguments
+	var pref = r.FormValue("pref")
+	var path = r.FormValue("path")
+
+	if len(pref) > 0 {
 		ok = DelSharePref(pref)
-	} else if path := r.FormValue("path"); len(path) > 0 {
+	} else if len(path) > 0 {
 		ok = DelSharePath(path)
 	} else {
-		WriteJson(w, http.StatusNotAcceptable, &AjaxErr{ErrArgNoPref, EC_delshrnopath})
+		WriteError400(w, ErrArgNoPref, EC_delshrnopath)
 		return
 	}
 

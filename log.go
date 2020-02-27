@@ -164,7 +164,7 @@ func (l *Logger) Output(calldepth int, lev string, s string) error {
 		buf = append(buf, '\n')
 	}
 	var li = LogItem{
-		Time:    now.UnixNano() / 1000000,
+		Time:    UnixJS(now),
 		Message: s,
 		Level:   lev,
 		Line:    line,

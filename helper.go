@@ -42,13 +42,13 @@ var (
 
 func makehash(data []byte, password []byte) []byte {
 	var h = sha256.New()
-	h.Write(data)
 	h.Write(password)
+	h.Write(data)
 	return h.Sum(nil)
 }
 
-func timenowjs() int64 {
-	return time.Now().UnixNano() / int64(time.Millisecond)
+func UnixJS(u time.Time) int64 {
+	return u.UnixNano() / 1000000
 }
 
 ///////////
