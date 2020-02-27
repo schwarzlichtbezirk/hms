@@ -37,49 +37,49 @@ body {
 	font-size: 1.5rem;
 }
 
-.img-overlay {
-	position: relative;
-}
-
-	.img-overlay > picture > img, .img-overlay > img {
-		position: absolute;
-		left: 0;
-		top: 0;
-		width: 100%;
-		height: 100%;
-	}
-
-.file-item {
+.fileitem {
 	display: block;
 	text-align: center;
 	border: 1px solid rgba(189, 183, 107, 0);
 	padding: 4px;
-	margin: 0px;
+	margin: 0;
 	cursor: pointer;
 }
 
-	.file-item:hover {
+	.fileitem:hover {
 		background: Moccasin;
 		border: 1px solid DarkKhaki;
 	}
 
-	.file-item.selected {
+	.fileitem.selected {
 		background: PaleGoldenRod;
 		border: 1px solid DarkKhaki;
 	}
 
-		.file-item.selected:hover {
+		.fileitem.selected:hover {
 			background: Khaki;
 			border: 1px solid DarkKhaki;
 		}
 
-	.file-item > .img-overlay {
-		display: inline-block;
+	.fileitem > .overlay {
+		position: relative;
 		width: 96px;
 		height: 96px;
 	}
 
-	.file-item > p {
+		.fileitem > .overlay > * {
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%,-50%);
+		}
+
+		.fileitem > .overlay > picture > *, .fileitem > .overlay > img {
+			max-width: 96px;
+			max-height: 96px;
+		}
+
+	.fileitem > p {
 		width: 112px;
 		margin: 0px;
 		background: NavajoWhite;

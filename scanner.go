@@ -11,157 +11,157 @@ import (
 
 // File types
 const (
-	Dir    = -1
-	File   = 0
-	Wave   = 1
-	FLAC   = 2
-	MP3    = 3
-	OGG    = 4
-	MP4    = 5
-	WebM   = 6
-	Photo  = 7
-	Bitmap = 8
-	GIF    = 9
-	PNG    = 10
-	JPEG   = 11
-	WebP   = 12
-	PDF    = 13
-	HTML   = 14
-	Text   = 15
-	Script = 16
-	Config = 17
-	LogFT  = 18
+	FT_dir   = -1
+	FT_file  = 0
+	FT_wave  = 1
+	FT_flac  = 2
+	FT_mp3   = 3
+	FT_ogg   = 4
+	FT_mp4   = 5
+	FT_webm  = 6
+	FT_photo = 7
+	FT_bmp   = 8
+	FT_gif   = 9
+	FT_png   = 10
+	FT_jpeg  = 11
+	FT_webp  = 12
+	FT_pdf   = 13
+	FT_html  = 14
+	FT_text  = 15
+	FT_scr   = 16
+	FT_cfg   = 17
+	FT_log   = 18
 )
 
 // File groups
 const (
-	FGOther = 0
-	FGMusic = 1
-	FGVideo = 2
-	FGImage = 3
-	FGBooks = 4
-	FGTexts = 5
-	FGDir   = 6
+	FG_other = 0
+	FG_music = 1
+	FG_video = 2
+	FG_image = 3
+	FG_books = 4
+	FG_texts = 5
+	FG_dir   = 6
 )
 
 var typetogroup = map[int]int{
-	Dir:    FGDir,
-	File:   FGOther,
-	Wave:   FGMusic,
-	FLAC:   FGMusic,
-	MP3:    FGMusic,
-	OGG:    FGMusic,
-	MP4:    FGVideo,
-	WebM:   FGVideo,
-	Photo:  FGImage,
-	Bitmap: FGImage,
-	GIF:    FGImage,
-	PNG:    FGImage,
-	JPEG:   FGImage,
-	WebP:   FGImage,
-	PDF:    FGBooks,
-	HTML:   FGBooks,
-	Text:   FGTexts,
-	Script: FGTexts,
-	Config: FGTexts,
-	LogFT:  FGTexts,
+	FT_dir:   FG_dir,
+	FT_file:  FG_other,
+	FT_wave:  FG_music,
+	FT_flac:  FG_music,
+	FT_mp3:   FG_music,
+	FT_ogg:   FG_music,
+	FT_mp4:   FG_video,
+	FT_webm:  FG_video,
+	FT_photo: FG_image,
+	FT_bmp:   FG_image,
+	FT_gif:   FG_image,
+	FT_png:   FG_image,
+	FT_jpeg:  FG_image,
+	FT_webp:  FG_image,
+	FT_pdf:   FG_books,
+	FT_html:  FG_books,
+	FT_text:  FG_texts,
+	FT_scr:   FG_texts,
+	FT_cfg:   FG_texts,
+	FT_log:   FG_texts,
 }
 
 var extset = map[string]int{
 	// Audio
-	".wav":  Wave,
-	".flac": FLAC,
-	".mp3":  MP3,
-	".ogg":  OGG,
+	".wav":  FT_wave,
+	".flac": FT_flac,
+	".mp3":  FT_mp3,
+	".ogg":  FT_ogg,
 
 	// Video
-	".mp4":  MP4,
-	".webm": WebM,
+	".mp4":  FT_mp4,
+	".webm": FT_webm,
 
 	// Images
-	".bmp":  Bitmap,
-	".dib":  Bitmap,
-	".gif":  GIF,
-	".png":  PNG,
-	".jpg":  JPEG,
-	".jpe":  JPEG,
-	".jpeg": JPEG,
-	".webp": WebP,
+	".bmp":  FT_bmp,
+	".dib":  FT_bmp,
+	".gif":  FT_gif,
+	".png":  FT_png,
+	".jpg":  FT_jpeg,
+	".jpe":  FT_jpeg,
+	".jpeg": FT_jpeg,
+	".webp": FT_webp,
 
 	// Text
-	".pdf":   PDF,
-	".html":  HTML,
-	".htm":   HTML,
-	".shtml": HTML,
-	".shtm":  HTML,
-	".xhtml": HTML,
-	".phtml": HTML,
-	".hta":   HTML,
-	".txt":   Text,
-	".css":   Script,
-	".js":    Script,
-	".jsm":   Script,
-	".vb":    Script,
-	".vbs":   Script,
-	".bat":   Script,
-	".cmd":   Script,
-	".sh":    Script,
-	".mak":   Script,
-	".iss":   Script,
-	".nsi":   Script,
-	".nsh":   Script,
-	".bsh":   Script,
-	".sql":   Script,
-	".as":    Script,
-	".mx":    Script,
-	".php":   Script,
-	".phpt":  Script,
-	".java":  Script,
-	".jsp":   Script,
-	".asp":   Script,
-	".lua":   Script,
-	".tcl":   Script,
-	".asm":   Script,
-	".c":     Script,
-	".h":     Script,
-	".hpp":   Script,
-	".hxx":   Script,
-	".cpp":   Script,
-	".cxx":   Script,
-	".cc":    Script,
-	".cs":    Script,
-	".go":    Script,
-	".r":     Script,
-	".d":     Script,
-	".pas":   Script,
-	".inc":   Script,
-	".py":    Script,
-	".pyw":   Script,
-	".pl":    Script,
-	".pm":    Script,
-	".plx":   Script,
-	".rb":    Script,
-	".rbw":   Script,
-	".rc":    Script,
-	".ps":    Script,
-	".ini":   Config,
-	".inf":   Config,
-	".reg":   Config,
-	".url":   Config,
-	".xml":   Config,
-	".xsml":  Config,
-	".xsl":   Config,
-	".xsd":   Config,
-	".kml":   Config,
-	".wsdl":  Config,
-	".xlf":   Config,
-	".xliff": Config,
-	".yml":   Config,
-	".cmake": Config,
-	".vhd":   Config,
-	".vhdl":  Config,
-	".json":  Config,
-	".log":   LogFT,
+	".pdf":   FT_pdf,
+	".html":  FT_html,
+	".htm":   FT_html,
+	".shtml": FT_html,
+	".shtm":  FT_html,
+	".xhtml": FT_html,
+	".phtml": FT_html,
+	".hta":   FT_html,
+	".txt":   FT_text,
+	".css":   FT_scr,
+	".js":    FT_scr,
+	".jsm":   FT_scr,
+	".vb":    FT_scr,
+	".vbs":   FT_scr,
+	".bat":   FT_scr,
+	".cmd":   FT_scr,
+	".sh":    FT_scr,
+	".mak":   FT_scr,
+	".iss":   FT_scr,
+	".nsi":   FT_scr,
+	".nsh":   FT_scr,
+	".bsh":   FT_scr,
+	".sql":   FT_scr,
+	".as":    FT_scr,
+	".mx":    FT_scr,
+	".php":   FT_scr,
+	".phpt":  FT_scr,
+	".java":  FT_scr,
+	".jsp":   FT_scr,
+	".asp":   FT_scr,
+	".lua":   FT_scr,
+	".tcl":   FT_scr,
+	".asm":   FT_scr,
+	".c":     FT_scr,
+	".h":     FT_scr,
+	".hpp":   FT_scr,
+	".hxx":   FT_scr,
+	".cpp":   FT_scr,
+	".cxx":   FT_scr,
+	".cc":    FT_scr,
+	".cs":    FT_scr,
+	".go":    FT_scr,
+	".r":     FT_scr,
+	".d":     FT_scr,
+	".pas":   FT_scr,
+	".inc":   FT_scr,
+	".py":    FT_scr,
+	".pyw":   FT_scr,
+	".pl":    FT_scr,
+	".pm":    FT_scr,
+	".plx":   FT_scr,
+	".rb":    FT_scr,
+	".rbw":   FT_scr,
+	".rc":    FT_scr,
+	".ps":    FT_scr,
+	".ini":   FT_cfg,
+	".inf":   FT_cfg,
+	".reg":   FT_cfg,
+	".url":   FT_cfg,
+	".xml":   FT_cfg,
+	".xsml":  FT_cfg,
+	".xsl":   FT_cfg,
+	".xsd":   FT_cfg,
+	".kml":   FT_cfg,
+	".wsdl":  FT_cfg,
+	".xlf":   FT_cfg,
+	".xliff": FT_cfg,
+	".yml":   FT_cfg,
+	".cmake": FT_cfg,
+	".vhd":   FT_cfg,
+	".vhdl":  FT_cfg,
+	".json":  FT_cfg,
+	".log":   FT_log,
 }
 
 var (
@@ -206,18 +206,32 @@ type FileProp struct {
 	Time int64  `json:"time,omitempty"`
 	Type int    `json:"type"`
 	Pref string `json:"pref,omitempty"` // share prefix
+	KTmb string `json:"ktmb,omitempty"` // thumbnail key
+	NTmb int    `json:"ntmb"`           // thumbnail state, -1 impossible, 0 undefined, 1 ready
 }
 
-func (fp *FileProp) Setup(fi os.FileInfo) {
+func (fp *FileProp) Setup(fi os.FileInfo, fpath string) {
 	fp.Name = fi.Name()
+	fp.Path = fpath
 	fp.Size = fi.Size()
 	fp.Time = UnixJS(fi.ModTime())
+	fp.KTmb = ThumbName(fpath)
 	if fi.IsDir() {
-		fp.Type = Dir
+		fp.Type = FT_dir
+		fp.NTmb = TMB_reject
 	} else {
 		fp.Type = extset[strings.ToLower(filepath.Ext(fp.Name))]
-		if (fp.Type == JPEG && fp.Size > PhotoJPEG) || (fp.Type == WebP && fp.Size > PhotoWEBP) {
-			fp.Type = Photo
+		if (fp.Type == FT_jpeg && fp.Size > PhotoJPEG) || (fp.Type == FT_webp && fp.Size > PhotoWEBP) {
+			fp.Type = FT_photo
+		}
+		if tmb, err := thumbcache.Get(fp.KTmb); err == nil {
+			if tmb != nil {
+				fp.NTmb = TMB_cached
+			} else {
+				fp.NTmb = TMB_reject
+			}
+		} else {
+			fp.NTmb = TMB_none
 		}
 	}
 }
@@ -317,22 +331,25 @@ type DirProp struct {
 
 // Returned data for "getdrv", "folder" API handlers.
 type folderRet struct {
-	Paths []DirProp  `json:"paths"`
-	Files []FileProp `json:"files"`
+	Paths []*DirProp  `json:"paths"`
+	Files []*FileProp `json:"files"`
 }
 
 // Scan all available drives installed on local machine.
-func getdrives() (drvs []DirProp) {
+func getdrives() (drvs []*DirProp) {
 	for _, drive := range "ABCDEFGHIJKLMNOPQRSTUVWXYZ" {
-		var name = string(drive) + ":"
-		var f, err = os.Open(name)
+		var fname = string(drive) + ":"
+		var fpath = fname + "/"
+		var file, err = os.Open(fname)
 		if err == nil {
-			f.Close()
+			file.Close()
 			var dp = DirProp{
 				FileProp: FileProp{
-					Name: name,
-					Path: name + "/",
-					Type: Dir,
+					Name: fname,
+					Path: fpath,
+					Type: FT_dir,
+					KTmb: ThumbName(fpath),
+					NTmb: TMB_reject,
 				},
 			}
 			shrmux.RLock()
@@ -340,12 +357,12 @@ func getdrives() (drvs []DirProp) {
 				dp.Pref = shr.Pref
 			}
 			shrmux.RUnlock()
-			drvs = append(drvs, dp)
+			drvs = append(drvs, &dp)
 		}
 	}
 
 	root.Scan = UnixJS(time.Now())
-	root.FGrp[FGDir] = len(drvs)
+	root.FGrp[FG_dir] = len(drvs)
 	return
 }
 
@@ -365,14 +382,14 @@ func readdir(dirname string) (ret folderRet, err error) {
 		dirname += "/"
 	}
 
-	var f *os.File
-	f, err = os.Open(dirname)
+	var file *os.File
+	file, err = os.Open(dirname)
 	if err != nil {
 		return
 	}
 	var fis []os.FileInfo
-	fis, err = f.Readdir(-1)
-	f.Close()
+	fis, err = file.Readdir(-1)
+	file.Close()
 	if err != nil {
 		return
 	}
@@ -382,44 +399,30 @@ func readdir(dirname string) (ret folderRet, err error) {
 scanprop:
 	for _, fi := range fis {
 		var fname = fi.Name()
-		var fpath = dirname + fname
-		var size = fi.Size()
-		var ft int
-		if fi.IsDir() {
-			ft = Dir
-			fpath += "/"
-		} else {
-			ft = extset[strings.ToLower(filepath.Ext(fname))]
-			if (ft == JPEG && size > PhotoJPEG) || (ft == WebP && size > PhotoWEBP) {
-				ft = Photo
-			}
-		}
-		fgrp[typetogroup[ft]]++
-
 		for _, pat := range hidden {
 			if matched, _ := path.Match(pat, strings.ToLower(fname)); matched {
 				continue scanprop
 			}
 		}
 
-		var pref string
+		var fpath = dirname + fname
+		if fi.IsDir() {
+			fpath += "/"
+		}
+		var fp FileProp
+		fp.Setup(fi, fpath)
+
+		fgrp[typetogroup[fp.Type]]++
+
 		shrmux.RLock()
 		if shr, ok := sharespath[fpath]; ok {
-			pref = shr.Pref
+			fp.Pref = shr.Pref
 		}
 		shrmux.RUnlock()
-		var fp = FileProp{
-			Name: fname,
-			Path: fpath,
-			Size: size,
-			Time: UnixJS(fi.ModTime()),
-			Type: ft,
-			Pref: pref,
-		}
 
-		if ft == Dir {
+		if fp.Type == FT_dir {
 			dcmux.RLock()
-			var dc, ok = dircache[dirname+fname+"/"]
+			var dc, ok = dircache[fpath]
 			dcmux.RUnlock()
 			var dp = DirProp{
 				FileProp: fp,
@@ -428,9 +431,9 @@ scanprop:
 				dp.Scan = dc.Scan
 				dp.FGrp = dc.FGrp
 			}
-			ret.Paths = append(ret.Paths, dp)
+			ret.Paths = append(ret.Paths, &dp)
 		} else {
-			ret.Files = append(ret.Files, fp)
+			ret.Files = append(ret.Files, &fp)
 		}
 	}
 
@@ -442,18 +445,20 @@ scanprop:
 		cached.FGrp = fgrp
 	} else {
 		var _, fname = path.Split(dirname[:len(dirname)-1])
-		var dp = &DirProp{
+		var dp = DirProp{
 			FileProp: FileProp{
 				Name: fname,
 				Path: dirname,
-				Type: Dir,
+				Type: FT_dir,
+				KTmb: ThumbName(dirname),
+				NTmb: TMB_reject,
 			},
 			Scan: scan,
 			FGrp: fgrp,
 		}
 
 		dcmux.Lock()
-		dircache[dirname] = dp
+		dircache[dirname] = &dp
 		dcmux.Unlock()
 	}
 

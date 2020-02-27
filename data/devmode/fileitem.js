@@ -29,11 +29,15 @@ Vue.component('file-icon-tag', {
 		},
 
 		webpicon() {
-			return '/asst/file-webp/' + geticonname(this.file) + '.webp';
+			return this.file.ntmb === 1
+				? ''
+				: '/asst/file-webp/' + geticonname(this.file) + '.webp';
 		},
 
 		pngicon() {
-			return '/asst/file-png/' + geticonname(this.file) + '.png';
+			return this.file.ntmb === 1
+				? '/thumb/' + this.file.ktmb
+				: '/asst/file-png/' + geticonname(this.file) + '.png';
 		},
 
 		// manage items classes

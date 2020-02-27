@@ -269,12 +269,12 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 		shrmux.RUnlock()
 
 		for _, fp := range lst {
-			if fp.Type == Dir {
-				ret.Paths = append(ret.Paths, DirProp{
+			if fp.Type == FT_dir {
+				ret.Paths = append(ret.Paths, &DirProp{
 					FileProp: *fp,
 				})
 			} else {
-				ret.Files = append(ret.Files, *fp)
+				ret.Files = append(ret.Files, fp)
 			}
 		}
 	} else {
@@ -288,8 +288,8 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 			sort.Slice(ret.Files, func(i, j int) bool {
 				var pi = ret.Files[i]
 				var pj = ret.Files[j]
-				if (pi.Type == Dir) != (pj.Type == Dir) {
-					return pi.Type == Dir
+				if (pi.Type == FT_dir) != (pj.Type == FT_dir) {
+					return pi.Type == FT_dir
 				} else {
 					return strings.ToLower(pi.Name) < strings.ToLower(pj.Name)
 				}
@@ -308,10 +308,10 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 			sort.Slice(ret.Files, func(i, j int) bool {
 				var pi = ret.Files[i]
 				var pj = ret.Files[j]
-				if (pi.Type == Dir) != (pj.Type == Dir) {
+				if (pi.Type == FT_dir) != (pj.Type == FT_dir) {
 					return pi.Type < pj.Type
 				} else {
-					if pi.Type == Dir {
+					if pi.Type == FT_dir {
 						return strings.ToLower(pi.Name) < strings.ToLower(pj.Name)
 					} else {
 						return pi.Size < pj.Size
@@ -330,7 +330,9 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 		// cache folder thumnails
 		go func() {
 			for _, fp := range ret.Files {
-				CacheImg(&fp)
+				if fp.NTmb == TMB_none {
+					CacheImg(fp)
+				}
 			}
 		}()
 	}
@@ -365,20 +367,19 @@ func shraddApi(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var f, err = os.Open(fpath)
+	var file, err = os.Open(fpath)
 	if err != nil {
 		WriteJson(w, http.StatusNotFound, &AjaxErr{err, EC_addshrbadpath})
 		return
 	}
-	var fi, _ = f.Stat()
-	f.Close()
+	var fi, _ = file.Stat()
+	file.Close()
 
-	var shr FileProp
-	shr.Setup(fi)
-	shr.Path = fpath
-	shr.MakeShare()
+	var fp FileProp
+	fp.Setup(fi, fpath)
+	fp.MakeShare()
 
-	WriteJson(w, http.StatusOK, shr)
+	WriteJson(w, http.StatusOK, fp)
 }
 
 // APIHANDLER

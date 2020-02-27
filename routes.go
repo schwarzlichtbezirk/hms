@@ -135,16 +135,16 @@ func registershares() {
 	for i := 0; i < len(shareslist); {
 		var fp = shareslist[i]
 
-		var f, err = os.Open(fp.Path)
-		if err != nil { // check up share valid
-			Log.Printf("can not create share '%s' on path '%s'", fp.Pref, fp.Path)
-			shareslist = append(shareslist[:i], shareslist[i+1:]...)
-		} else {
-			f.Close()
+		var file, err = os.Open(fp.Path)
+		if err == nil { // check up share valid
+			file.Close()
 			sharespath[fp.Path] = fp
 			sharespref[fp.Pref] = fp
 			Log.Printf("created share '%s' on path '%s'", fp.Pref, fp.Path)
 			i++
+		} else {
+			Log.Printf("can not create share '%s' on path '%s'", fp.Pref, fp.Path)
+			shareslist = append(shareslist[:i], shareslist[i+1:]...)
 		}
 	}
 }

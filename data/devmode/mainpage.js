@@ -13,7 +13,7 @@ const FT = {
 	mp4: 5,
 	webm: 6,
 	photo: 7,
-	bitmap: 8,
+	bmp: 8,
 	gif: 9,
 	png: 10,
 	jpeg: 11,
@@ -21,8 +21,8 @@ const FT = {
 	pdf: 13,
 	html: 14,
 	text: 15,
-	script: 16,
-	config: 17,
+	scr: 16,
+	cfg: 17,
 	log: 18
 };
 
@@ -55,7 +55,7 @@ const FTtoFV = {
 	[FT.mp4]: FV.video,
 	[FT.webm]: FV.video,
 	[FT.photo]: FV.image,
-	[FT.bitmap]: FV.image,
+	[FT.bmp]: FV.image,
 	[FT.gif]: FV.image,
 	[FT.png]: FV.image,
 	[FT.jpeg]: FV.image,
@@ -63,8 +63,8 @@ const FTtoFV = {
 	[FT.pdf]: FV.none,
 	[FT.html]: FV.none,
 	[FT.text]: FV.none,
-	[FT.script]: FV.none,
-	[FT.config]: FV.none,
+	[FT.scr]: FV.none,
+	[FT.cfg]: FV.none,
 	[FT.log]: FV.none
 };
 
@@ -127,7 +127,7 @@ const geticonname = (file) => {
 			return "doc-movie";
 		case FT.photo:
 			return "doc-photo";
-		case FT.bitmap:
+		case FT.bmp:
 			return "doc-bitmap";
 		case FT.gif:
 			return "doc-gif";
@@ -143,9 +143,9 @@ const geticonname = (file) => {
 			return "doc-html";
 		case FT.text:
 			return "doc-text";
-		case FT.script:
+		case FT.scr:
 			return "doc-script";
-		case FT.config:
+		case FT.cfg:
 			return "doc-config";
 		case FT.log:
 			return "doc-log";
@@ -665,7 +665,7 @@ let app = new Vue({
 				case FT.webm:
 					return this.filter.video;
 				case FT.photo:
-				case FT.bitmap:
+				case FT.bmp:
 				case FT.gif:
 				case FT.png:
 				case FT.jpeg:
@@ -675,8 +675,8 @@ let app = new Vue({
 				case FT.html:
 					return this.filter.pdf;
 				case FT.text:
-				case FT.script:
-				case FT.config:
+				case FT.scr:
+				case FT.cfg:
 				case FT.log:
 					return this.filter.books;
 				default:
