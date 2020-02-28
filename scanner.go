@@ -19,18 +19,19 @@ const (
 	FT_mp4   = 5
 	FT_webm  = 6
 	FT_photo = 7
-	FT_bmp   = 8
-	FT_tiff  = 9
+	FT_tga   = 8
+	FT_bmp   = 9
 	FT_gif   = 10
 	FT_png   = 11
 	FT_jpeg  = 12
-	FT_webp  = 13
-	FT_pdf   = 14
-	FT_html  = 15
-	FT_text  = 16
-	FT_scr   = 17
-	FT_cfg   = 18
-	FT_log   = 19
+	FT_tiff  = 13
+	FT_webp  = 14
+	FT_pdf   = 15
+	FT_html  = 16
+	FT_text  = 17
+	FT_scr   = 18
+	FT_cfg   = 19
+	FT_log   = 20
 )
 
 // File groups
@@ -54,11 +55,12 @@ var typetogroup = map[int]int{
 	FT_mp4:   FG_video,
 	FT_webm:  FG_video,
 	FT_photo: FG_image,
+	FT_tga:   FG_image,
 	FT_bmp:   FG_image,
-	FT_tiff:  FG_image,
 	FT_gif:   FG_image,
 	FT_png:   FG_image,
 	FT_jpeg:  FG_image,
+	FT_tiff:  FG_image,
 	FT_webp:  FG_image,
 	FT_pdf:   FG_books,
 	FT_html:  FG_books,
@@ -80,15 +82,17 @@ var extset = map[string]int{
 	".webm": FT_webm,
 
 	// Images
+	".tga":  FT_tga,
 	".bmp":  FT_bmp,
 	".dib":  FT_bmp,
-	".tif":  FT_tiff,
-	".tiff": FT_tiff,
 	".gif":  FT_gif,
 	".png":  FT_png,
 	".jpg":  FT_jpeg,
 	".jpe":  FT_jpeg,
 	".jpeg": FT_jpeg,
+	".jfif": FT_jpeg,
+	".tif":  FT_tiff,
+	".tiff": FT_tiff,
 	".webp": FT_webp,
 
 	// Text

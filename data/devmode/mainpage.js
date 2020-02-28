@@ -13,18 +13,19 @@ const FT = {
 	mp4: 5,
 	webm: 6,
 	photo: 7,
-	bmp: 8,
-	tiff: 9,
+	tga: 8,
+	bmp: 9,
 	gif: 10,
 	png: 11,
 	jpeg: 12,
-	webp: 13,
-	pdf: 14,
-	html: 15,
-	text: 16,
-	scr: 17,
-	cfg: 18,
-	log: 19
+	tiff: 13,
+	webp: 14,
+	pdf: 15,
+	html: 16,
+	text: 17,
+	scr: 18,
+	cfg: 19,
+	log: 20
 };
 
 // File groups
@@ -56,11 +57,12 @@ const FTtoFV = {
 	[FT.mp4]: FV.video,
 	[FT.webm]: FV.video,
 	[FT.photo]: FV.image,
+	[FT.tga]: FV.image,
 	[FT.bmp]: FV.image,
-	[FT.tiff]: FV.image,
 	[FT.gif]: FV.image,
 	[FT.png]: FV.image,
 	[FT.jpeg]: FV.image,
+	[FT.tiff]: FV.image,
 	[FT.webp]: FV.image,
 	[FT.pdf]: FV.none,
 	[FT.html]: FV.none,
@@ -129,14 +131,15 @@ const geticonname = (file) => {
 			return "doc-movie";
 		case FT.photo:
 			return "doc-photo";
+		case FT.tga:
 		case FT.bmp:
-		case FT.tiff:
 			return "doc-bitmap";
 		case FT.gif:
 			return "doc-gif";
 		case FT.png:
 			return "doc-png";
 		case FT.jpeg:
+		case FT.tiff:
 			return "doc-jpeg";
 		case FT.webp:
 			return "doc-webp";
@@ -192,7 +195,7 @@ let app = new Vue({
 	el: '#app',
 	template: '#app-tpl',
 	data: {
-		isadmin: false, // is it running on localhost
+		isadmin: true, // is it running on localhost
 		shared: [], // list of shared folders and files
 		filter: { // main menu buttons flags
 			music: true, video: true, photo: true, pdf: true, books: true, other: false,
@@ -401,71 +404,69 @@ let app = new Vue({
 		}
 	},
 	methods: {
-		// events responders
-		gohome() {
+		// opens given folder cleary
+		gofolder(file) {
 			// remove selected state before request for any result
 			this.ondelsel();
 
-			ajaxjson("GET", "/api/getdrv", xhr => {
+			ajaxjson("GET", "/api/folder?" + $.param({
+				path: file.path
+			}), xhr => {
 				traceresponse(xhr);
+
+				this.subfldlist = [];
+				this.filelist = [];
+				this.folderinfo = file;
+
+				const scan = () => {
+				};
+
 				if (xhr.status === 200) {
 					this.isadmin = true;
+
 					this.folderscan = new Date(Date.now());
 					// update folder settings
-					this.subfldlist = xhr.response || [];
-					this.filelist = [];
-					this.folderinfo = root;
+					this.subfldlist = xhr.response.paths || [];
+					this.filelist = xhr.response.files || [];
 				} else if (xhr.status === 403) { // Forbidden
 					this.isadmin = false;
-					this.subfldlist = [];
-					this.filelist = [];
-					this.folderinfo = root;
 				}
 
-				// get shares for root
-				ajaxjson("GET", "/api/share/lst", xhr => {
-					traceresponse(xhr);
-					if (xhr.status === 200) {
-						// update folder settings
-						this.shared = xhr.response || [];
-						for (const file of this.shared) {
-							if (file.type === FT.dir) {
-								this.subfldlist.push(file);
-							} else {
-								this.filelist.push(file);
+				// cache folder thumnails
+				if (this.uncached.length) {
+					ajaxjson("POST", "/api/tmb/scn", xhr => { }, {
+						itmbs: this.uncached,
+						force: false
+					}, true);
+					// check cached state loop
+					let chktmb;
+					chktmb = () => {
+						ajaxjson("POST", "/api/tmb/chk", xhr => {
+							traceresponse(xhr);
+							if (xhr.status === 200) {
+								for (const itmb of xhr.response.itmbs) {
+									if (itmb.ntmb) {
+										for (const file of this.filelist) {
+											if (file.ktmb === itmb.ktmb) {
+												Vue.set(file, 'ntmb', itmb.ntmb);
+												break;
+											}
+										}
+									}
+								}
+								if (this.uncached.length && this.folderinfo === file) {
+									setTimeout(chktmb, 1500); // wait and run again
+								}
 							}
-						}
-					}
-				});
-
-				// update folder history
-				if (this.folderhistpos < folderhist.length) {
-					folderhist.splice(this.folderhistpos, folderhist.length - this.folderhistpos);
+						}, { itmbs: this.uncached }, true);
+					};
+					// gets thumbs
+					setTimeout(chktmb, 600);
 				}
-				folderhist.push(root);
-				this.folderhistpos = folderhist.length;
 			});
 		},
 
-		goback() {
-			this.folderhistpos--;
-			const file = folderhist[this.folderhistpos - 1];
-			if (file.path) {
-				this.gofolder(file);
-			} else {
-				this.gohome();
-			}
-		},
-
-		goforward() {
-			this.folderhistpos++;
-			this.gofolder(folderhist[this.folderhistpos - 1]);
-		},
-
-		goparent() {
-			this.openfolder(this.folderpath[this.folderpath.length - 1]);
-		},
-
+		// opens given folder and push history step
 		openfolder(file) {
 			this.gofolder(file);
 
@@ -482,6 +483,60 @@ let app = new Vue({
 				this.viewer.close();
 				this.viewer = null;
 			}
+		},
+
+		// show/hide functions
+		showitem(file) {
+			switch (file.type) {
+				case FT.dir:
+					return true;
+				case FT.wave:
+				case FT.flac:
+				case FT.mp3:
+					return this.filter.music;
+				case FT.ogg:
+				case FT.mp4:
+				case FT.webm:
+					return this.filter.video;
+				case FT.photo:
+				case FT.tga:
+				case FT.bmp:
+				case FT.gif:
+				case FT.png:
+				case FT.jpeg:
+				case FT.tiff:
+				case FT.webp:
+					return this.filter.photo;
+				case FT.pdf:
+				case FT.html:
+					return this.filter.pdf;
+				case FT.text:
+				case FT.scr:
+				case FT.cfg:
+				case FT.log:
+					return this.filter.books;
+				default:
+					return this.filter.other;
+			}
+		},
+
+		onhome() {
+			this.openfolder(root);
+		},
+
+		onback() {
+			this.folderhistpos--;
+			const file = folderhist[this.folderhistpos - 1];
+			this.gofolder(file);
+		},
+
+		onforward() {
+			this.folderhistpos++;
+			this.gofolder(folderhist[this.folderhistpos - 1]);
+		},
+
+		onparent() {
+			this.openfolder(this.folderpath[this.folderpath.length - 1]);
 		},
 
 		onshare() {
@@ -537,17 +592,6 @@ let app = new Vue({
 		onrefresh() {
 			let file = this.folderinfo;
 			this.gofolder(file);
-
-			// get shares on any case
-			if (file.name) {
-				ajaxjson("GET", "/api/share/lst", xhr => {
-					traceresponse(xhr);
-					if (xhr.status === 200) {
-						// update folder settings
-						this.shared = xhr.response;
-					}
-				});
-			}
 		},
 
 		onsettings() {
@@ -632,14 +676,7 @@ let app = new Vue({
 
 		onfilerun(file) {
 			if (file.type === FT.dir) {
-				this.gofolder(file);
-
-				// update folder history
-				if (this.folderhistpos < folderhist.length) {
-					folderhist.splice(this.folderhistpos, folderhist.length - this.folderhistpos);
-				}
-				folderhist.push(file);
-				this.folderhistpos = folderhist.length;
+				this.openfolder(file);
 			} else if (file.type !== FT.file) {
 				let url = getfileurl(file);
 				window.open(url, file.name);
@@ -648,93 +685,6 @@ let app = new Vue({
 
 		onplayback(file, playback) {
 			this.playbackfile = playback && file;
-		},
-
-		// helper functions
-
-		gofolder(file) {
-			// remove selected state before request for any result
-			this.ondelsel();
-
-			ajaxjson("GET", "/api/folder?" + $.param({
-				path: file.path
-			}), xhr => {
-				traceresponse(xhr);
-				if (xhr.status === 200) {
-					this.folderscan = new Date(Date.now());
-					// update folder settings
-					this.subfldlist = xhr.response.paths || [];
-					this.filelist = xhr.response.files || [];
-					this.folderinfo = file;
-
-					// cache folder thumnails
-					if (this.uncached.length) {
-						ajaxjson("POST", "/api/tmb/scn", xhr => { }, {
-							itmbs: this.uncached,
-							force: false
-						}, true);
-					}
-
-					// check cached state loop
-					let chktmb;
-					chktmb = () => {
-						if (!this.uncached.length || this.folderinfo !== file) {
-							return;
-						}
-						ajaxjson("POST", "/api/tmb/chk", xhr => {
-							traceresponse(xhr);
-							if (xhr.status === 200) {
-								for (const itmb of xhr.response.itmbs) {
-									if (itmb.ntmb) {
-										for (const file of this.filelist) {
-											if (file.ktmb === itmb.ktmb) {
-												Vue.set(file, 'ntmb', itmb.ntmb);
-												break;
-											}
-										}
-									}
-								}
-								setTimeout(chktmb, 1500);
-							}
-						}, { itmbs: this.uncached }, true);
-					};
-					setTimeout(chktmb, 600);
-				}
-			});
-		},
-
-		// show/hide functions
-		showitem(file) {
-			switch (file.type) {
-				case FT.dir:
-					return true;
-				case FT.wave:
-				case FT.flac:
-				case FT.mp3:
-					return this.filter.music;
-				case FT.ogg:
-				case FT.mp4:
-				case FT.webm:
-					return this.filter.video;
-				case FT.photo:
-				case FT.bmp:
-				case FT.tiff:
-				case FT.gif:
-				case FT.png:
-				case FT.jpeg:
-				case FT.webp:
-					return this.filter.photo;
-				case FT.pdf:
-				case FT.html:
-					return this.filter.pdf;
-				case FT.text:
-				case FT.scr:
-				case FT.cfg:
-				case FT.log:
-					return this.filter.books;
-				default:
-					return this.filter.other;
-			}
 		}
 	}
 });
@@ -744,7 +694,7 @@ let app = new Vue({
 /////////////
 
 $(document).ready(() => {
-	app.gohome();
+	app.openfolder(root);
 
 	$('.preloader').hide("fast");
 	$('#app').show("fast");

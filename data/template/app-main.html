@@ -20,10 +20,10 @@
 
 	<nav class="header navbar navbar-expand-sm bg-dark navbar-dark sticky-top">
 		<ul class="navbar-nav flex-row">
-			<li><button class="btn btn-link nav-link bg-secondary" v-bind:disabled="dishome" v-on:click="gohome" title="root folder"><i class="material-icons">home</i></button></li>
-			<li><button class="btn btn-link nav-link" v-bind:disabled="disback" v-on:click="goback" v-bind:title="hintback"><i class="material-icons">arrow_back</i></button></li>
-			<li><button class="btn btn-link nav-link" v-bind:disabled="disforward" v-on:click="goforward" v-bind:title="hintforward"><i class="material-icons">arrow_forward</i></button></li>
-			<li><button class="btn btn-link nav-link" v-bind:disabled="disparent" v-on:click="goparent" title="to parent folder"><i class="material-icons">subdirectory_arrow_left</i></button></li>
+			<li><button class="btn btn-link nav-link bg-secondary" v-bind:disabled="dishome" v-on:click="onhome" title="root folder"><i class="material-icons">home</i></button></li>
+			<li><button class="btn btn-link nav-link" v-bind:disabled="disback" v-on:click="onback" v-bind:title="hintback"><i class="material-icons">arrow_back</i></button></li>
+			<li><button class="btn btn-link nav-link" v-bind:disabled="disforward" v-on:click="onforward" v-bind:title="hintforward"><i class="material-icons">arrow_forward</i></button></li>
+			<li><button class="btn btn-link nav-link" v-bind:disabled="disparent" v-on:click="onparent" title="to parent folder"><i class="material-icons">subdirectory_arrow_left</i></button></li>
 			<li v-if="isadmin"><button class="btn btn-link nav-link" v-bind:disabled="disshared" v-bind:class="clsshared" v-on:click="onshare" title="share folder or file to get access from internet"><i class="material-icons">share</i></button></li>
 			<li><button class="btn btn-link nav-link" v-on:click="onrefresh" title="refresh"><i class="material-icons">refresh</i></button></li>
 		</ul>

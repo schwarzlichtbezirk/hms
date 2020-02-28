@@ -265,7 +265,8 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 	copy(shrlst, shareslist)
 	shrmux.RUnlock()
 
-	if !IsAdmin(r) {
+	var adm = IsAdmin(r)
+	if !adm && len(path) > 0 {
 		var shared bool
 		for _, shr := range shrlst {
 			if strings.HasPrefix(path, shr.Path) {
@@ -280,7 +281,9 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if len(path) == 0 {
-		ret.Paths = getdrives()
+		if adm {
+			ret.Paths = getdrives()
+		}
 
 		for _, fp := range shrlst {
 			if fp.Type == FT_dir {
@@ -342,7 +345,11 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 			})
 		}
 	}
-	Log.Printf("navigate to: %s", path)
+	if len(path) > 0 {
+		Log.Printf("navigate to: %s", path)
+	} else {
+		Log.Printf("navigate to root")
+	}
 
 	WriteJson(w, http.StatusOK, ret)
 }

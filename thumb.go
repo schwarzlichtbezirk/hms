@@ -15,6 +15,7 @@ import (
 
 	"github.com/bluele/gcache"
 	"github.com/disintegration/gift"
+	_ "github.com/ftrvxmtrx/tga"
 )
 
 const (
@@ -24,6 +25,7 @@ const (
 )
 
 const thumbside = 256
+const thumbmaxfile = 4096*3072*4 + 16384 // 48M, max 4K image + 16K metadata
 
 var thumbrect = image.Rect(0, 0, thumbside, thumbside)
 
@@ -99,6 +101,14 @@ func CacheImg(fp *FileProp, force bool) (ftmb []byte) {
 			thumbcache.Set(fp.KTmb, nil)
 		}
 	}()
+
+	if typetogroup[fp.Type] != FG_image {
+		return // file is not image
+	}
+
+	if fp.Size > thumbmaxfile {
+		return // file is too big
+	}
 
 	var img image.Image
 	if img, _, err = ThumbImg(fp.Path); err != nil {

@@ -2,8 +2,8 @@
 
 // This file is included for release mode linkage
 
-const buildvers = "0.2.0";
-const builddate = "2020.02.27";
+const buildvers = "0.2.1";
+const builddate = "2020.02.28";
 const devmode = false;
 
 const traceresponse = () => undefined;
