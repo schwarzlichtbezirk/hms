@@ -9,14 +9,12 @@ console.info("starts in developer mode");
 
 const devmode = true;
 
-const traceresponse = (xhr) => {
-	console.log(xhr.status, xhr.responseURL);
+const traceresponse = xhr => {
+	if (xhr.status >= 200 && xhr.status < 300) {
+		console.log(xhr.status, xhr.responseURL);
+	}
 	if (xhr.response) {
-		if (xhr.status === 200) { // OK
-			console.log(xhr.response);
-		} else {
-			console.log(JSON.stringify(xhr.response).substring(0, 256));
-		}
+		console.log(xhr.response);
 	}
 };
 

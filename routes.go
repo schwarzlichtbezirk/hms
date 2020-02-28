@@ -33,9 +33,11 @@ func (e *AjaxErr) Unwrap() error {
 func (e *AjaxErr) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		What string `json:"what"`
+		When int64  `json:"when"`
 		Code int    `json:"code,omitempty"`
 	}{
 		e.what.Error(),
+		UnixJSNow(),
 		e.code,
 	})
 }
@@ -51,36 +53,44 @@ const (
 	EC_null = 0
 
 	// admin
-	EC_adminfail = 1
+	EC_admindeny = 1
 
 	// share
 	EC_sharegone = 2
 	EC_sharenone = 3
 
 	// local
-	EC_localnopath = 5
+	EC_localnopath = 4
 
 	// reload
-	EC_reloadnoreq  = 6
-	EC_reloadbadreq = 7
-	EC_reloadnodata = 8
-	EC_reloadbadprf = 9
+	EC_reloadnoreq  = 5
+	EC_reloadbadreq = 6
+	EC_reloadnodata = 7
+	EC_reloadbadprf = 8
 
 	// getlog
-	EC_getlogbadnum = 10
-
-	// getdrv
-	EC_getdrvunauth = 11
+	EC_getlogbadnum = 9
 
 	// folder
-	EC_folderabsent = 12
+	EC_folderdeny   = 10
+	EC_folderabsent = 11
 
 	// addshr
-	EC_addshrnopath  = 14
-	EC_addshrbadpath = 15
+	EC_addshrnopath  = 12
+	EC_addshrbadpath = 13
 
 	// delshr
-	EC_delshrnopath = 17
+	EC_delshrnopath = 14
+
+	// tmbchk
+	EC_tmbchknoreq  = 20
+	EC_tmbchkbadreq = 21
+	EC_tmbchknodata = 22
+
+	// tmbscn
+	EC_tmbscnnoreq  = 30
+	EC_tmbscnbadreq = 31
+	EC_tmbscnnodata = 32
 )
 
 //////////////////
@@ -122,13 +132,14 @@ func RegisterRoutes(gmux *Router) {
 	api.Path("/memusage").HandlerFunc(AjaxWrap(memusageApi))
 	api.Path("/getlog").HandlerFunc(AjaxWrap(getlogApi))
 	api.Path("/getdrv").HandlerFunc(AdminWrap(getdrvApi))
-	api.Path("/folder").HandlerFunc(AdminWrap(folderApi))
+	api.Path("/folder").HandlerFunc(AjaxWrap(folderApi))
 	var shr = api.PathPrefix("/share").Subrouter()
 	shr.Path("/lst").HandlerFunc(AjaxWrap(shrlstApi))
 	shr.Path("/add").HandlerFunc(AdminWrap(shraddApi))
 	shr.Path("/del").HandlerFunc(AdminWrap(shrdelApi))
 	var tmb = api.PathPrefix("/tmb").Subrouter()
-	tmb.Path("/get").HandlerFunc(AjaxWrap(tmbgetApi))
+	tmb.Path("/chk").HandlerFunc(AjaxWrap(tmbchkApi))
+	tmb.Path("/scn").HandlerFunc(AjaxWrap(tmbscnApi))
 }
 
 func registershares() {
@@ -140,6 +151,7 @@ func registershares() {
 			file.Close()
 			sharespath[fp.Path] = fp
 			sharespref[fp.Pref] = fp
+			fp.NTmb = TMB_none
 			Log.Printf("created share '%s' on path '%s'", fp.Pref, fp.Path)
 			i++
 		} else {
@@ -211,7 +223,7 @@ func AdminWrap(fn http.HandlerFunc) http.HandlerFunc {
 		incuint(&ajaxcallcount, 1)
 
 		if !IsAdmin(r) {
-			WriteJson(w, http.StatusForbidden, &AjaxErr{ErrDeny, EC_adminfail})
+			WriteJson(w, http.StatusForbidden, &AjaxErr{ErrDeny, EC_admindeny})
 			return
 		}
 

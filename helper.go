@@ -51,6 +51,10 @@ func UnixJS(u time.Time) int64 {
 	return u.UnixNano() / 1000000
 }
 
+func UnixJSNow() int64 {
+	return time.Now().UnixNano() / 1000000
+}
+
 ///////////
 // Meter //
 ///////////

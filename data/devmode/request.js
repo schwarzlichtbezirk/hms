@@ -28,15 +28,21 @@ const sendjsonauth = (xhr, body) => {
 	sendjson(xhr, body);
 };
 
-const ajaxjson = (method, url, onload, body) => {
-	app.loadcount++;
+const ajaxjson = (method, url, onload, body, silent) => {
+	if (!silent) {
+		app.loadcount++;
+	}
 	const xhr = new XMLHttpRequest();
 	xhr.onload = () => {
 		onload(xhr);
-		app.loadcount--;
+		if (!silent) {
+			app.loadcount--;
+		}
 	};
 	xhr.onerror = () => {
-		app.loadcount--;
+		if (!silent) {
+			app.loadcount--;
+		}
 		showmsgbox(
 			"Server unavailable",
 			"Server is currently not available, action can not be done now."

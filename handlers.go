@@ -260,15 +260,29 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 	var path = r.FormValue("path")
 	var sval = r.FormValue("sort")
 
+	shrmux.RLock()
+	var shrlst = make([]*FileProp, len(shareslist))
+	copy(shrlst, shareslist)
+	shrmux.RUnlock()
+
+	if !IsAdmin(r) {
+		var shared bool
+		for _, shr := range shrlst {
+			if strings.HasPrefix(path, shr.Path) {
+				shared = true
+				break
+			}
+		}
+		if !shared {
+			WriteJson(w, http.StatusForbidden, &AjaxErr{ErrDeny, EC_folderdeny})
+			return
+		}
+	}
+
 	if len(path) == 0 {
 		ret.Paths = getdrives()
 
-		shrmux.RLock()
-		var lst = make([]*FileProp, len(shareslist))
-		copy(lst, shareslist)
-		shrmux.RUnlock()
-
-		for _, fp := range lst {
+		for _, fp := range shrlst {
 			if fp.Type == FT_dir {
 				ret.Paths = append(ret.Paths, &DirProp{
 					FileProp: *fp,
@@ -327,14 +341,6 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 				return strings.ToLower(pi.Name) < strings.ToLower(pj.Name)
 			})
 		}
-		// cache folder thumnails
-		go func() {
-			for _, fp := range ret.Files {
-				if fp.NTmb == TMB_none {
-					CacheImg(fp)
-				}
-			}
-		}()
 	}
 	Log.Printf("navigate to: %s", path)
 

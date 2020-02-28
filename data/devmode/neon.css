@@ -69,6 +69,7 @@ body {
 
 	.fileitem > .overlay {
 		position: relative;
+		display: inline-block;
 		width: 96px;
 		height: 96px;
 	}

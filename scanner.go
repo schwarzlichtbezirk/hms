@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"time"
 )
 
 // File types
@@ -21,16 +20,17 @@ const (
 	FT_webm  = 6
 	FT_photo = 7
 	FT_bmp   = 8
-	FT_gif   = 9
-	FT_png   = 10
-	FT_jpeg  = 11
-	FT_webp  = 12
-	FT_pdf   = 13
-	FT_html  = 14
-	FT_text  = 15
-	FT_scr   = 16
-	FT_cfg   = 17
-	FT_log   = 18
+	FT_tiff  = 9
+	FT_gif   = 10
+	FT_png   = 11
+	FT_jpeg  = 12
+	FT_webp  = 13
+	FT_pdf   = 14
+	FT_html  = 15
+	FT_text  = 16
+	FT_scr   = 17
+	FT_cfg   = 18
+	FT_log   = 19
 )
 
 // File groups
@@ -55,6 +55,7 @@ var typetogroup = map[int]int{
 	FT_webm:  FG_video,
 	FT_photo: FG_image,
 	FT_bmp:   FG_image,
+	FT_tiff:  FG_image,
 	FT_gif:   FG_image,
 	FT_png:   FG_image,
 	FT_jpeg:  FG_image,
@@ -81,6 +82,8 @@ var extset = map[string]int{
 	// Images
 	".bmp":  FT_bmp,
 	".dib":  FT_bmp,
+	".tif":  FT_tiff,
+	".tiff": FT_tiff,
 	".gif":  FT_gif,
 	".png":  FT_png,
 	".jpg":  FT_jpeg,
@@ -183,33 +186,19 @@ var dircache = map[string]*DirProp{
 }
 var dcmux sync.RWMutex
 
-////////////////////////////
-// Common file properties //
-////////////////////////////
-
-var sharecharset = []byte("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
-
-func makerandstr(n int) string {
-	var l = byte(len(sharecharset))
-	var str = make([]byte, n)
-	randbytes(str)
-	for i := 0; i < n; i++ {
-		str[i] = sharecharset[str[i]%l]
-	}
-	return string(str)
-}
-
+// Common file properties.
 type FileProp struct {
-	Name string `json:"name"`
-	Path string `json:"path"` // full path with name; folder ends with splash
+	Name string `json:"name,omitempty"`
+	Path string `json:"path,omitempty"` // full path with name; folder ends with splash
 	Size int64  `json:"size,omitempty"`
 	Time int64  `json:"time,omitempty"`
-	Type int    `json:"type"`
+	Type int    `json:"type,omitempty"`
 	Pref string `json:"pref,omitempty"` // share prefix
 	KTmb string `json:"ktmb,omitempty"` // thumbnail key
-	NTmb int    `json:"ntmb"`           // thumbnail state, -1 impossible, 0 undefined, 1 ready
+	NTmb int    `json:"ntmb,omitempty"` // thumbnail state, -1 impossible, 0 undefined, 1 ready
 }
 
+// Fills fields from os.FileInfo structure. Do not looks for share.
 func (fp *FileProp) Setup(fi os.FileInfo, fpath string) {
 	fp.Name = fi.Name()
 	fp.Path = fpath
@@ -236,6 +225,7 @@ func (fp *FileProp) Setup(fi os.FileInfo, fpath string) {
 	}
 }
 
+// Looks for correct prefix and add share with it.
 func (fp *FileProp) MakeShare() {
 	var pref string
 	if len(fp.Name) > 8 {
@@ -260,6 +250,20 @@ func (fp *FileProp) MakeShare() {
 	}
 }
 
+// Directory properties.
+type DirProp struct {
+	FileProp
+	Scan int64  `json:"scan"` // scanning time
+	FGrp [7]int `json:"fgrp"` // file groups counters
+}
+
+// Returned data for "getdrv", "folder" API handlers.
+type folderRet struct {
+	Paths []*DirProp  `json:"paths"`
+	Files []*FileProp `json:"files"`
+}
+
+// Add share with given prefix.
 func AddShare(pref string, fp *FileProp) bool {
 	shrmux.RLock()
 	var _, ok = sharespref[pref]
@@ -277,6 +281,7 @@ func AddShare(pref string, fp *FileProp) bool {
 	return !ok
 }
 
+// Delete share by given prefix.
 func DelSharePref(pref string) bool {
 	shrmux.RLock()
 	var shr, ok = sharespref[pref]
@@ -298,6 +303,7 @@ func DelSharePref(pref string) bool {
 	return ok
 }
 
+// Delete share by given shared path.
 func DelSharePath(path string) bool {
 	shrmux.RLock()
 	var shr, ok = sharespath[path]
@@ -319,20 +325,16 @@ func DelSharePath(path string) bool {
 	return ok
 }
 
-//////////////////////////
-// Directory properties //
-//////////////////////////
+var sharecharset = []byte("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
 
-type DirProp struct {
-	FileProp
-	Scan int64  `json:"scan"` // scanning time
-	FGrp [7]int `json:"fgrp"` // file groups counters
-}
-
-// Returned data for "getdrv", "folder" API handlers.
-type folderRet struct {
-	Paths []*DirProp  `json:"paths"`
-	Files []*FileProp `json:"files"`
+func makerandstr(n int) string {
+	var l = byte(len(sharecharset))
+	var str = make([]byte, n)
+	randbytes(str)
+	for i := 0; i < n; i++ {
+		str[i] = sharecharset[str[i]%l]
+	}
+	return string(str)
 }
 
 // Scan all available drives installed on local machine.
@@ -361,7 +363,7 @@ func getdrives() (drvs []*DirProp) {
 		}
 	}
 
-	root.Scan = UnixJS(time.Now())
+	root.Scan = UnixJSNow()
 	root.FGrp[FG_dir] = len(drvs)
 	return
 }
@@ -394,7 +396,7 @@ func readdir(dirname string) (ret folderRet, err error) {
 		return
 	}
 	var fgrp = [7]int{}
-	var scan = UnixJS(time.Now())
+	var scan = UnixJSNow()
 
 scanprop:
 	for _, fi := range fis {

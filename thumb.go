@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"crypto/md5"
 	"encoding/hex"
+	"encoding/json"
 	"image"
 	_ "image/gif"
 	_ "image/jpeg"
 	"image/png"
+	"io/ioutil"
 	"net/http"
 	"os"
 
@@ -34,6 +36,17 @@ var thumbfilter = gift.New(
 
 var thumbpngenc = png.Encoder{
 	CompressionLevel: png.BestCompression,
+}
+
+// Data for "entchk" API handler.
+type tmbchkArg struct {
+	ITmbs []FileProp `json:"itmbs"`
+}
+
+// Argument data for "tmbscn" API handler.
+type tmbscnArg struct {
+	ITmbs []FileProp `json:"itmbs"`
+	Force bool       `json:"force"`
 }
 
 func ThumbName(fname string) string {
@@ -64,8 +77,19 @@ func ThumbImg(fname string) (img image.Image, ftype string, err error) {
 	return
 }
 
-func CacheImg(fp *FileProp) (ftmb []byte) {
+func CacheImg(fp *FileProp, force bool) (ftmb []byte) {
 	var err error
+
+	if !force {
+		var val interface{}
+		if val, err = thumbcache.Get(fp.KTmb); err == nil {
+			if val != nil {
+				ftmb = val.([]byte)
+			}
+			return // image already cached
+		}
+	}
+
 	defer func() {
 		if len(ftmb) > 0 {
 			fp.NTmb = TMB_cached
@@ -76,16 +100,7 @@ func CacheImg(fp *FileProp) (ftmb []byte) {
 		}
 	}()
 
-	var val interface{}
-	if val, err = thumbcache.Get(fp.KTmb); err == nil {
-		if val != nil {
-			ftmb = val.([]byte)
-		}
-		return // image already cached
-	}
-
 	var img image.Image
-
 	if img, _, err = ThumbImg(fp.Path); err != nil {
 		return // can not make thumbnail
 	}
@@ -127,7 +142,67 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
-func tmbgetApi(w http.ResponseWriter, r *http.Request) {
+func tmbchkApi(w http.ResponseWriter, r *http.Request) {
+	var err error
+	var arg tmbchkArg
+
+	// get arguments
+	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
+		if err = json.Unmarshal(jb, &arg); err != nil {
+			WriteError400(w, err, EC_tmbchkbadreq)
+			return
+		}
+		if len(arg.ITmbs) == 0 {
+			WriteError400(w, ErrNoData, EC_tmbchknodata)
+			return
+		}
+	} else {
+		WriteError400(w, ErrNoJson, EC_tmbchknoreq)
+		return
+	}
+
+	for i := range arg.ITmbs {
+		var fp = &arg.ITmbs[i]
+		if tmb, err := thumbcache.Get(fp.KTmb); err == nil {
+			if tmb != nil {
+				fp.NTmb = TMB_cached
+			} else {
+				fp.NTmb = TMB_reject
+			}
+		} else {
+			fp.NTmb = TMB_none
+		}
+	}
+
+	WriteJson(w, http.StatusOK, arg)
+}
+
+// APIHANDLER
+func tmbscnApi(w http.ResponseWriter, r *http.Request) {
+	var err error
+	var arg tmbscnArg
+
+	// get arguments
+	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
+		if err = json.Unmarshal(jb, &arg); err != nil {
+			WriteError400(w, err, EC_tmbscnbadreq)
+			return
+		}
+		if len(arg.ITmbs) == 0 {
+			WriteError400(w, ErrNoData, EC_tmbscnnodata)
+			return
+		}
+	} else {
+		WriteError400(w, ErrNoJson, EC_tmbscnnoreq)
+		return
+	}
+
+	for i := range arg.ITmbs {
+		var fp = &arg.ITmbs[i]
+		CacheImg(fp, arg.Force)
+	}
+
+	WriteJson(w, http.StatusOK, nil)
 }
 
 // The End.

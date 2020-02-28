@@ -96,7 +96,7 @@ const app = new Vue({
 		},
 
 		ongetlog() {
-			ajaxjson("GET", "/api/getlog", (xhr) => {
+			ajaxjson("GET", "/api/getlog", xhr => {
 				if (xhr.status === 200) { // OK
 					this.log = xhr.response;
 				}
@@ -121,7 +121,7 @@ $(document).ready(() => {
 	$('.preloader').hide("fast");
 	$('#app').show("fast");
 
-	ajaxjson("GET", "/api/servinfo", (xhr) => {
+	ajaxjson("GET", "/api/servinfo", xhr => {
 		if (xhr.status === 200) { // OK
 			app.servinfo = xhr.response;
 			app.servinfo.buildvers = buildvers;
@@ -130,7 +130,7 @@ $(document).ready(() => {
 
 	$("#collapse-memory").on('show.bs.collapse', () => {
 		const scanner = () => {
-			ajaxjson("GET", "/api/memusage", (xhr) => {
+			ajaxjson("GET", "/api/memusage", xhr => {
 				if (xhr.status === 200) { // OK
 					app.memgc = xhr.response;
 				}

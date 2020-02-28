@@ -14,16 +14,17 @@ const FT = {
 	webm: 6,
 	photo: 7,
 	bmp: 8,
-	gif: 9,
-	png: 10,
-	jpeg: 11,
-	webp: 12,
-	pdf: 13,
-	html: 14,
-	text: 15,
-	scr: 16,
-	cfg: 17,
-	log: 18
+	tiff: 9,
+	gif: 10,
+	png: 11,
+	jpeg: 12,
+	webp: 13,
+	pdf: 14,
+	html: 15,
+	text: 16,
+	scr: 17,
+	cfg: 18,
+	log: 19
 };
 
 // File groups
@@ -56,6 +57,7 @@ const FTtoFV = {
 	[FT.webm]: FV.video,
 	[FT.photo]: FV.image,
 	[FT.bmp]: FV.image,
+	[FT.tiff]: FV.image,
 	[FT.gif]: FV.image,
 	[FT.png]: FV.image,
 	[FT.jpeg]: FV.image,
@@ -128,6 +130,7 @@ const geticonname = (file) => {
 		case FT.photo:
 			return "doc-photo";
 		case FT.bmp:
+		case FT.tiff:
 			return "doc-bitmap";
 		case FT.gif:
 			return "doc-gif";
@@ -241,6 +244,17 @@ let app = new Vue({
 			return this.subfldlist.slice().sort((v1, v2) => {
 				return v1.name.toLowerCase() > v2.name.toLowerCase() ? 1 : -1;
 			});
+		},
+
+		// not cached files
+		uncached() {
+			const lst = [];
+			for (const file of this.filelist) {
+				if (!file.ntmb) {
+					lst.push(file);
+				}
+			}
+			return lst;
 		},
 
 		// display filtered sorted playlist
@@ -392,7 +406,7 @@ let app = new Vue({
 			// remove selected state before request for any result
 			this.ondelsel();
 
-			ajaxjson("GET", "/api/getdrv", (xhr) => {
+			ajaxjson("GET", "/api/getdrv", xhr => {
 				traceresponse(xhr);
 				if (xhr.status === 200) {
 					this.isadmin = true;
@@ -401,7 +415,7 @@ let app = new Vue({
 					this.subfldlist = xhr.response || [];
 					this.filelist = [];
 					this.folderinfo = root;
-				} else if (xhr.status === 401) { // Unauthorized
+				} else if (xhr.status === 403) { // Forbidden
 					this.isadmin = false;
 					this.subfldlist = [];
 					this.filelist = [];
@@ -409,7 +423,7 @@ let app = new Vue({
 				}
 
 				// get shares for root
-				ajaxjson("GET", "/api/share/lst", (xhr) => {
+				ajaxjson("GET", "/api/share/lst", xhr => {
 					traceresponse(xhr);
 					if (xhr.status === 200) {
 						// update folder settings
@@ -435,7 +449,12 @@ let app = new Vue({
 
 		goback() {
 			this.folderhistpos--;
-			this.gofolder(folderhist[this.folderhistpos - 1]);
+			const file = folderhist[this.folderhistpos - 1];
+			if (file.path) {
+				this.gofolder(file);
+			} else {
+				this.gohome();
+			}
 		},
 
 		goforward() {
@@ -472,13 +491,13 @@ let app = new Vue({
 			if (!this.selected.pref) { // should add share
 				ajaxjson("PUT", "/api/share/add?" + $.param({
 					path: this.selected.path
-				}), (xhr) => {
+				}), xhr => {
 					traceresponse(xhr);
 					if (xhr.status === 200) {
 						let shr = xhr.response;
 						if (shr) {
 							// update folder settings
-							this.selected.pref = shr.pref;
+							Vue.set(this.selected, 'pref', shr.pref);
 							this.shared.push(shr);
 						}
 					} else if (xhr.status === 404) { // Not Found
@@ -491,7 +510,7 @@ let app = new Vue({
 			} else { // should remove share
 				ajaxjson("DELETE", "/api/share/del?" + $.param({
 					pref: this.selected.pref
-				}), (xhr) => {
+				}), xhr => {
 					traceresponse(xhr);
 					if (xhr.status === 200) {
 						let ok = xhr.response;
@@ -503,7 +522,7 @@ let app = new Vue({
 									break;
 								}
 							}
-							this.selected.pref = "";
+							Vue.delete(this.selected, 'pref');
 						}
 					} else if (xhr.status === 404) { // Not Found
 						onerr404();
@@ -521,7 +540,7 @@ let app = new Vue({
 
 			// get shares on any case
 			if (file.name) {
-				ajaxjson("GET", "/api/share/lst", (xhr) => {
+				ajaxjson("GET", "/api/share/lst", xhr => {
 					traceresponse(xhr);
 					if (xhr.status === 200) {
 						// update folder settings
@@ -639,7 +658,7 @@ let app = new Vue({
 
 			ajaxjson("GET", "/api/folder?" + $.param({
 				path: file.path
-			}), (xhr) => {
+			}), xhr => {
 				traceresponse(xhr);
 				if (xhr.status === 200) {
 					this.folderscan = new Date(Date.now());
@@ -647,6 +666,39 @@ let app = new Vue({
 					this.subfldlist = xhr.response.paths || [];
 					this.filelist = xhr.response.files || [];
 					this.folderinfo = file;
+
+					// cache folder thumnails
+					if (this.uncached.length) {
+						ajaxjson("POST", "/api/tmb/scn", xhr => { }, {
+							itmbs: this.uncached,
+							force: false
+						}, true);
+					}
+
+					// check cached state loop
+					let chktmb;
+					chktmb = () => {
+						if (!this.uncached.length || this.folderinfo !== file) {
+							return;
+						}
+						ajaxjson("POST", "/api/tmb/chk", xhr => {
+							traceresponse(xhr);
+							if (xhr.status === 200) {
+								for (const itmb of xhr.response.itmbs) {
+									if (itmb.ntmb) {
+										for (const file of this.filelist) {
+											if (file.ktmb === itmb.ktmb) {
+												Vue.set(file, 'ntmb', itmb.ntmb);
+												break;
+											}
+										}
+									}
+								}
+								setTimeout(chktmb, 1500);
+							}
+						}, { itmbs: this.uncached }, true);
+					};
+					setTimeout(chktmb, 600);
 				}
 			});
 		},
@@ -666,6 +718,7 @@ let app = new Vue({
 					return this.filter.video;
 				case FT.photo:
 				case FT.bmp:
+				case FT.tiff:
 				case FT.gif:
 				case FT.png:
 				case FT.jpeg:
