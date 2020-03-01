@@ -32,6 +32,9 @@ const (
 	FT_scr   = 18
 	FT_cfg   = 19
 	FT_log   = 20
+	FT_cab   = 21
+	FT_zip   = 22
+	FT_rar   = 23
 )
 
 // File groups
@@ -42,8 +45,11 @@ const (
 	FG_image = 3
 	FG_books = 4
 	FG_texts = 5
-	FG_dir   = 6
+	FG_store = 6
+	FG_dir   = 7
 )
+
+const FG_num = 8
 
 var typetogroup = map[int]int{
 	FT_dir:   FG_dir,
@@ -68,6 +74,9 @@ var typetogroup = map[int]int{
 	FT_scr:   FG_texts,
 	FT_cfg:   FG_texts,
 	FT_log:   FG_texts,
+	FT_cab:   FG_store,
+	FT_zip:   FG_store,
+	FT_rar:   FG_store,
 }
 
 var extset = map[string]int{
@@ -169,6 +178,13 @@ var extset = map[string]int{
 	".vhdl":  FT_cfg,
 	".json":  FT_cfg,
 	".log":   FT_log,
+
+	// archive
+	".cab": FT_cab,
+	".tar": FT_cab,
+	".zip": FT_zip,
+	".7z":  FT_zip,
+	".rar": FT_rar,
 }
 
 var (
@@ -257,8 +273,8 @@ func (fp *FileProp) MakeShare() {
 // Directory properties.
 type DirProp struct {
 	FileProp
-	Scan int64  `json:"scan"` // scanning time
-	FGrp [7]int `json:"fgrp"` // file groups counters
+	Scan int64       `json:"scan"` // scanning time
+	FGrp [FG_num]int `json:"fgrp"` // file groups counters
 }
 
 // Returned data for "getdrv", "folder" API handlers.
@@ -399,7 +415,7 @@ func readdir(dirname string) (ret folderRet, err error) {
 	if err != nil {
 		return
 	}
-	var fgrp = [7]int{}
+	var fgrp = [FG_num]int{}
 	var scan = UnixJSNow()
 
 scanprop:

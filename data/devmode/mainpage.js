@@ -25,7 +25,10 @@ const FT = {
 	text: 17,
 	scr: 18,
 	cfg: 19,
-	log: 20
+	log: 20,
+	cab: 21,
+	zip: 22,
+	rar: 23
 };
 
 // File groups
@@ -36,7 +39,8 @@ const FG = {
 	image: 3,
 	books: 4,
 	texts: 5,
-	dir: 6
+	store: 6,
+	dir: 7
 };
 
 // File viewers
@@ -69,7 +73,10 @@ const FTtoFV = {
 	[FT.text]: FV.none,
 	[FT.scr]: FV.none,
 	[FT.cfg]: FV.none,
-	[FT.log]: FV.none
+	[FT.log]: FV.none,
+	[FT.cab]: FV.none,
+	[FT.zip]: FV.none,
+	[FT.rar]: FV.none
 };
 
 const root = { name: "", path: "", size: 0, time: 0, type: FT.dir };
@@ -155,6 +162,12 @@ const geticonname = (file) => {
 			return "doc-config";
 		case FT.log:
 			return "doc-log";
+		case FT.cab:
+			return "doc-cab";
+		case FT.zip:
+			return "doc-zip";
+		case FT.rar:
+			return "doc-rar";
 		default: // File and others
 			return "doc-file";
 	}
