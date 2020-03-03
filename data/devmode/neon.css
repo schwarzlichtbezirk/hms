@@ -17,7 +17,10 @@ body {
 	display: flex;
 	flex-wrap: wrap;
 	flex-direction: row;
+	-ms-flex-pack: center;
 	justify-content: center;
+	-ms-flex-align: start;
+	align-items: flex-start;
 }
 
 #accordion {
@@ -43,12 +46,9 @@ body {
 }
 
 .fileitem {
-	display: block;
-	text-align: center;
 	border: 1px solid rgba(25, 25, 112, 0);
 	border-radius: 4px;
 	padding: 4px;
-	margin: 0;
 	cursor: pointer;
 }
 
@@ -68,8 +68,8 @@ body {
 		}
 
 	.fileitem > .overlay {
+		display: block;
 		position: relative;
-		display: inline-block;
 		width: 96px;
 		height: 96px;
 	}
@@ -86,16 +86,83 @@ body {
 			max-height: 96px;
 		}
 
-	.fileitem > p {
-		width: 112px;
-		margin: 0px;
+	.fileitem > .tag {
+		display: block;
+		text-align: center;
 		color: Aquamarine;
 		background: rgba(102, 51, 153, 0.50); /*RebeccaPurple*/
-		font-size: 0.72em;
+		max-width: 96px;
+		max-height: 3.8rem;
 		line-height: 1.25;
-		max-height: 5.2em;
+		font-size: 0.72rem;
 		overflow: hidden;
-		text-overflow: ellipsis;
+	}
+
+.imgitem {
+	position: relative;
+	cursor: pointer;
+}
+
+	.imgitem:hover {
+		z-index: 1;
+		background: rgba(25, 25, 112, 0.5); /*MidnightBlue*/
+		box-shadow: 0px 0px 12px DarkTurquoise;
+	}
+
+	.imgitem.selected {
+		z-index: 1;
+		background: rgba(75, 0, 130, 0.50); /*Indigo*/
+		box-shadow: 0px 0px 12px Azure;
+	}
+
+		.imgitem.selected:hover {
+			z-index: 1;
+			background: rgba(106, 90, 205, 0.5); /*SlateBlue*/
+			box-shadow: 0px 0px 12px Azure;
+		}
+
+	.imgitem > .pict > * {
+		max-width: 256px;
+		max-height: 256px;
+	}
+
+	.imgitem > .pref {
+		position: absolute;
+		left: 0;
+		bottom: 0;
+	}
+
+		.imgitem > .pref > * {
+			width: 100%;
+			max-width: 96px;
+		}
+
+	.imgitem > img.bars {
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%,-50%);
+		width: 100%;
+		max-width: 176px;
+	}
+
+	.imgitem > .tag {
+		position: absolute;
+		right: 16px;
+		bottom: 16px;
+		display: block;
+		text-align: center;
+		color: Aquamarine;
+		background: rgba(102, 51, 153, 0.50); /*RebeccaPurple*/
+		max-width: 112px;
+		max-height: 3.8rem;
+		line-height: 1.25;
+		font-size: 0.72rem;
+		overflow: hidden;
+	}
+
+	.imgitem:hover > .tag {
+		color: Azure;
 	}
 
 .bg-stat {

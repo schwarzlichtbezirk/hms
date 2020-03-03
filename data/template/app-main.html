@@ -33,9 +33,9 @@
 		<div class="collapse navbar-collapse">
 			<div class="d-flex flex-wrap">
 				<ul class="navbar-nav flex-row">
-					<li><button class="btn btn-link nav-link" v-on:click="onorder" title="direct / reverse order"><i class="material-icons">{{clsorder}}</i></button></li>
+					<li><button class="btn btn-link nav-link" v-on:click="onorder" v-bind:title="hintorder"><i class="material-icons">{{clsorder}}</i></button></li>
 					<li><button class="btn btn-link nav-link" v-on:click="onsortmode" v-bind:title="hintsortmode"><i class="material-icons">{{clssortmode}}</i></button></li>
-					<li><button class="btn btn-link nav-link" v-on:click="onlist" title="list"><i class="material-icons">list</i></button></li>
+					<li><button class="btn btn-link nav-link" v-on:click="onlist" v-bind:title="hintlist"><i class="material-icons">{{clslistmode}}</i></button></li>
 				</ul>
 				<ul class="navbar-nav flex-row">
 					<li><button class="btn btn-link nav-link" v-bind:class="clsmusic" v-on:click="onmusic" title="show music files"><i class="material-icons">library_music</i></button></li>
@@ -74,7 +74,7 @@
 			<div id="collapse-files" class="collapse show">
 				<div class="card-body folder-list" v-on:click="ondelsel">
 					<template v-for="file in playlist">
-						<file-icon-tag v-bind:file="file" v-bind:state="{selected:selected===file,playback:playbackfile===file}" v-on:select="onfilesel" v-on:run="onfilerun" />
+						<component v-bind:is="iconmodetag" v-bind:file="file" v-bind:state="{selected:selected===file,playback:playbackfile===file}" v-on:select="onfilesel" v-on:run="onfilerun" />
 					</template>
 				</div>
 			</div>

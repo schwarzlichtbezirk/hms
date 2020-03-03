@@ -214,6 +214,7 @@ let app = new Vue({
 			music: true, video: true, photo: true, pdf: true, books: true, other: false,
 			order: false, sortmode: sortbyalpha
 		},
+		listmode: "mdicon",
 		loadcount: 0, // ajax working request count
 
 		// current opened folder data
@@ -365,16 +366,35 @@ let app = new Vue({
 		},
 
 		clsorder() {
-			return this.filter.order ? 'arrow_upward' : 'arrow_downward';
+			return this.filter.order
+				? 'arrow_upward'
+				: 'arrow_downward';
 		},
 		clssortmode() {
 			switch (this.filter.sortmode) {
 				case sortbyalpha:
-					return "sort";
-				case sortbysize:
-					return "reorder";
-				case unsorted:
 					return "sort_by_alpha";
+				case sortbysize:
+					return "sort";
+				case unsorted:
+					return "reorder";
+			}
+		},
+		clslistmode() {
+			switch (this.listmode) {
+				case "lgicon":
+					return 'view_module';
+				case "mdicon":
+					return 'subject';
+			}
+		},
+
+		iconmodetag() {
+			switch (this.listmode) {
+				case "lgicon":
+					return 'img-icon-tag';
+				case "mdicon":
+					return 'file-icon-tag';
 			}
 		},
 
@@ -401,14 +421,27 @@ let app = new Vue({
 				return "go forward to " + name;
 			}
 		},
+		hintorder() {
+			return this.filter.order
+				? "reverse order"
+				: "direct order";
+		},
 		hintsortmode() {
 			switch (this.filter.sortmode) {
 				case sortbyalpha:
-					return "sort by size";
-				case sortbysize:
-					return "as is unsorted";
-				case unsorted:
 					return "sort by alpha";
+				case sortbysize:
+					return "sort by size";
+				case unsorted:
+					return "as is unsorted";
+			}
+		},
+		hintlist() {
+			switch (this.listmode) {
+				case "lgicon":
+					return "large icons";
+				case "mdicon":
+					return "middle icons";
 			}
 		},
 
@@ -620,18 +653,26 @@ let app = new Vue({
 		onsortmode() {
 			switch (this.filter.sortmode) {
 				case sortbyalpha:
-					this.filter.sortmode = sortbysize;
+					this.filter.sortmode = sortbyalpha;
 					break;
 				case sortbysize:
-					this.filter.sortmode = unsorted;
+					this.filter.sortmode = sortbysize;
 					break;
 				case unsorted:
-					this.filter.sortmode = sortbyalpha;
+					this.filter.sortmode = unsorted;
 					break;
 			}
 		},
 
 		onlist() {
+			switch (this.listmode) {
+				case "lgicon":
+					this.listmode = 'mdicon';
+					break;
+				case "mdicon":
+					this.listmode = 'lgicon';
+					break;
+			}
 		},
 
 		onmusic() {
