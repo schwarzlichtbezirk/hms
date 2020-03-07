@@ -325,9 +325,9 @@ func (fp *FileProp) Setup(fi os.FileInfo, path string) {
 type DirProp struct {
 	FileProp
 	// Directory scanning time in UNIX format, milliseconds.
-	Scan int64
+	Scan int64 `json:"scan"`
 	// Directory file groups counters.
-	FGrp [FG_num]int
+	FGrp [FG_num]int `json:"fgrp"`
 }
 
 // Fills fields with given path. Do not looks for share.
@@ -339,6 +339,7 @@ func (dp *DirProp) Setup(name, path string) {
 	dp.NTmbVal = TMB_reject
 }
 
+// Creates new DirProp or returns cached object with given full path.
 func MakeDirProp(fullpath string) *DirProp {
 	dcmux.RLock()
 	var dc, has = dircache[fullpath]
@@ -358,6 +359,60 @@ func MakeDirProp(fullpath string) *DirProp {
 	return &dp
 }
 
+// Descriptor for discs and tracks.
+type TagEnum struct {
+	Number int `json:"number,omitempty"`
+	Total  int `json:"total,omitempty"`
+}
+
+// Music file properties by file tags.
+type TagProp struct {
+	FileProp
+	Title    string  `json:"title,omitempty"`
+	Album    string  `json:"album,omitempty"`
+	Artist   string  `json:"artist,omitempty"`
+	Composer string  `json:"composer,omitempty"`
+	Genre    string  `json:"genre,omitempty"`
+	Year     int     `json:"year,omitempty"`
+	Track    TagEnum `json:"track,omitempty"`
+	Disc     TagEnum `json:"disc,omitempty"`
+	Lyrics   string  `json:"lyrics,omitempty"`
+	Comment  string  `json:"comment,omitempty"`
+}
+
+// Fills fields with given path. Do not looks for share.
+func (tp *TagProp) Setup(fullpath string) (err error) {
+	var file *os.File
+	if file, err = os.Open(fullpath); err != nil {
+		return err
+	}
+	defer file.Close()
+
+	var fi os.FileInfo
+	if fi, err = file.Stat(); err != nil {
+		return err
+	}
+	tp.FileProp.Setup(fi, fullpath)
+
+	var m tag.Metadata
+	if m, err = tag.ReadFrom(file); err != nil {
+		return err
+	}
+
+	tp.Title = m.Title()
+	tp.Album = m.Album()
+	tp.Artist = m.Artist()
+	tp.Composer = m.Composer()
+	tp.Genre = m.Genre()
+	tp.Year = m.Year()
+	tp.Track.Number, tp.Track.Total = m.Track()
+	tp.Disc.Number, tp.Disc.Total = m.Disc()
+	tp.Lyrics = m.Lyrics()
+	tp.Comment = m.Comment()
+
+	return
+}
+
 // Returns os.FileInfo for given full file name.
 func FileStat(path string) (fi os.FileInfo, err error) {
 	var file *os.File
@@ -375,9 +430,16 @@ func MakeProp(fi os.FileInfo, path string) (prop FileProper) {
 	if fi.IsDir() {
 		prop = MakeDirProp(path)
 	} else {
-		var fp FileProp
-		fp.Setup(fi, path)
-		prop = &fp
+		var ft = extset[strings.ToLower(filepath.Ext(path))]
+		if ft == FT_flac || ft == FT_mp3 || ft == FT_ogg || ft == FT_mp4 {
+			var tp TagProp
+			tp.Setup(path)
+			prop = &tp
+		} else {
+			var fp FileProp
+			fp.Setup(fi, path)
+			prop = &fp
+		}
 	}
 
 	shrmux.RLock()
@@ -479,15 +541,15 @@ func DelSharePath(path string) bool {
 
 // Returned data for "getdrv", "folder" API handlers.
 type folderRet struct {
-	Paths []*DirProp  `json:"paths"`
-	Files []*FileProp `json:"files"`
+	Paths []*DirProp   `json:"paths"`
+	Files []FileProper `json:"files"`
 }
 
 func (fr *folderRet) AddProp(prop FileProper) {
 	if dp, ok := prop.(*DirProp); ok {
 		fr.Paths = append(fr.Paths, dp)
-	} else if fp, ok := prop.(*FileProp); ok {
-		fr.Files = append(fr.Files, fp)
+	} else {
+		fr.Files = append(fr.Files, prop)
 	}
 }
 
@@ -508,14 +570,13 @@ func getdrives() (drvs []*DirProp) {
 	for _, drive := range "ABCDEFGHIJKLMNOPQRSTUVWXYZ" {
 		var name = string(drive) + ":"
 		var path = name + "/"
-		var fi, err = FileStat(path)
-		if err == nil {
-			var prop = MakeProp(fi, path)
-			if dp, ok := prop.(*DirProp); ok {
-				dp.NameVal = name
-				drvs = append(drvs, dp)
-			}
+		var _, err = FileStat(path)
+		if err != nil {
+			continue
 		}
+		var dp = MakeDirProp(path)
+		dp.NameVal = name
+		drvs = append(drvs, dp)
 	}
 
 	root.Scan = UnixJSNow()
@@ -570,16 +631,6 @@ scanprop:
 		var prop = MakeProp(fi, path)
 		fgrp[typetogroup[prop.Type()]]++
 		ret.AddProp(prop)
-
-		if prop.Type() == FT_mp3 {
-			var file, _ = os.Open(path)
-			var m, err = tag.ReadFrom(file)
-			file.Close()
-			if err == nil {
-				Log.Printf(`file: %s, title: %s, album-artist: %s, year: %d, genre: %s`, path,
-					m.Title(), m.AlbumArtist(), m.Year(), m.Genre())
-			}
-		}
 	}
 
 	var dp = MakeDirProp(dirname)

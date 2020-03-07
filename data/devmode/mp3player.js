@@ -46,6 +46,13 @@ Vue.component('mp3-player-tag', {
 		fmttimeend() {
 			return fmttime(this.timeend, this.timeend);
 		},
+		fmttrackinfo() {
+			if (this.file.title) {
+				return `${this.file.artist || this.file.album || this.file.genre || ''} - ${this.file.title}`;
+			} else {
+				return this.file.name;
+			}
+		},
 		stlbarcur() {
 			const percent = this.timeend === Infinity ? 95 : // streamed
 				!this.timeend || isNaN(this.timeend) ? 5 : // unknown length

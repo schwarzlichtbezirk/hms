@@ -1,18 +1,50 @@
 "use strict";
 
+const filehint = file => {
+	const lst = [];
+	lst.push(file.name);
+	if (file.pref) {
+		lst.push('share: ' + shareprefix + file.pref);
+	}
+	if (file.type !== FT.dir) {
+		lst.push('size: ' + fmtitemsize(file.size));
+	}
+	if (file.title) {
+		lst.push('title: ' + file.title);
+	}
+	if (file.album) {
+		lst.push('album: ' + file.album);
+	}
+	if (file.artist) {
+		lst.push('artist: ' + file.artist);
+	}
+	if (file.composer) {
+		lst.push('composer: ' + file.composer);
+	}
+	if (file.genre) {
+		lst.push('genre: ' + file.genre);
+	}
+	if (file.year) {
+		lst.push('year: ' + file.year);
+	}
+	if (file.track && (file.track.number || file.track.total)) {
+		lst.push(`track: ${file.track.number || ''}/${file.track.total || ''}`);
+	}
+	if (file.disc && (file.disc.number || file.disc.total)) {
+		lst.push(`disc: ${file.disc.number || ''}/${file.disc.total || ''}`);
+	}
+	if (file.comment) {
+		lst.push('comment: ' + file.comment.substring(0, 80));
+	}
+	return lst.join('\n');
+};
+
 Vue.component('file-icon-tag', {
 	template: '#file-icon-tpl',
 	props: ["file", "state"],
 	computed: {
 		fmttitle() {
-			let title = this.file.name;
-			if (this.file.pref) {
-				title += '\nshare: ' + shareprefix + this.file.pref;
-			}
-			if (this.file.type !== FT.dir) {
-				title += '\nsize: ' + fmtitemsize(this.file.size);
-			}
-			return title;
+			return filehint(this.file);
 		},
 
 		webpicon() {
@@ -48,14 +80,7 @@ Vue.component('img-icon-tag', {
 	props: ["file", "state"],
 	computed: {
 		fmttitle() {
-			let title = this.file.name;
-			if (this.file.pref) {
-				title += '\nshare: ' + shareprefix + this.file.pref;
-			}
-			if (this.file.type !== FT.dir) {
-				title += '\nsize: ' + fmtitemsize(this.file.size);
-			}
-			return title;
+			return filehint(this.file);
 		},
 
 		webpicon() {

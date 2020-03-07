@@ -40,6 +40,12 @@ var thumbpngenc = png.Encoder{
 	CompressionLevel: png.BestCompression,
 }
 
+// Thumbnails cache element.
+type Thumb struct {
+	Data []byte
+	Mime string
+}
+
 // Data for "entchk" API handler.
 type tmbchkArg struct {
 	ITmbs []*FileProp `json:"itmbs"`
@@ -79,7 +85,7 @@ func ThumbImg(fname string) (img image.Image, ftype string, err error) {
 	return
 }
 
-func CacheImg(fp FileProper, force bool) (ftmb []byte) {
+func CacheImg(fp FileProper, force bool) (tmb *Thumb) {
 	var err error
 	var ktmb = fp.KTmb()
 
@@ -87,16 +93,16 @@ func CacheImg(fp FileProper, force bool) (ftmb []byte) {
 		var val interface{}
 		if val, err = thumbcache.Get(ktmb); err == nil {
 			if val != nil {
-				ftmb = val.([]byte)
+				tmb = val.(*Thumb)
 			}
 			return // image already cached
 		}
 	}
 
 	defer func() {
-		if len(ftmb) > 0 {
+		if tmb != nil {
 			fp.SetNTmb(TMB_cached)
-			thumbcache.Set(ktmb, ftmb)
+			thumbcache.Set(ktmb, tmb)
 		} else {
 			fp.SetNTmb(TMB_reject)
 			thumbcache.Set(ktmb, nil)
@@ -120,7 +126,10 @@ func CacheImg(fp FileProper, force bool) (ftmb []byte) {
 	if err = thumbpngenc.Encode(&buf, img); err != nil {
 		return // can not write png
 	}
-	ftmb = buf.Bytes()
+	tmb = &Thumb{
+		Data: buf.Bytes(),
+		Mime: "image/png",
+	}
 	/*{
 		var f, err = os.Create("d:/temp/"+ktmb+".png")
 		if err != nil {
@@ -143,13 +152,13 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) {
 		WriteJson(w, http.StatusNotFound, &AjaxErr{err, EC_thumbabsent})
 		return
 	}
-	var content, ok = val.([]byte)
+	var tmb, ok = val.(*Thumb)
 	if !ok {
 		WriteJson(w, http.StatusNotFound, &AjaxErr{err, EC_thumbbadcnt})
 		return
 	}
-	w.Header().Set("Content-Type", "image/png")
-	http.ServeContent(w, r, ktmb+".png", starttime, bytes.NewReader(content))
+	w.Header().Set("Content-Type", tmb.Mime)
+	http.ServeContent(w, r, ktmb, starttime, bytes.NewReader(tmb.Data))
 }
 
 // APIHANDLER

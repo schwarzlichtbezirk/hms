@@ -17,7 +17,7 @@
 				<div class="timer justify-content-center align-self-center d-flex position-absolute w-100">{{fmttimecur}}&nbsp/&nbsp{{fmttimeend}}</div>
 				<input class="seeker position-absolute w-100" min="0" type="range" v-bind:max="timeend" v-bind:value="timecur" v-bind:disabled="!ready" v-on:change="onseekerchange" v-on:input="onseekerinput">
 			</div>
-			<div>{{file.name}}</div>
+			<div>{{fmttrackinfo}}</div>
 		</div>
 		<ul class="navbar-nav flex-row">
 			<li class="btn-group dropup">
