@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"path/filepath"
 	"runtime"
 	"sort"
@@ -22,6 +21,7 @@ var (
 	ErrNoData = errors.New("data is empty")
 
 	ErrDeny      = errors.New("access denied")
+	ErrNotFound  = errors.New("404 page not found")
 	ErrShareNone = errors.New("404 share not found")
 	ErrShareGone = errors.New("410 share is closed and does not available any more")
 	ErrArgNoNum  = errors.New("'num' parameter not recognized")
@@ -45,7 +45,7 @@ func pageHandler(pref, name string) http.HandlerFunc {
 
 			http.ServeContent(w, r, routedpages[name], starttime, bytes.NewReader(content))
 		} else {
-			http.NotFound(w, r)
+			WriteJson(w, http.StatusNotFound, &AjaxErr{ErrNotFound, EC_pageabsent})
 		}
 	}
 }
@@ -64,7 +64,7 @@ func filecacheHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		http.ServeContent(w, r, route, starttime, bytes.NewReader(content))
 	} else {
-		http.NotFound(w, r)
+		WriteJson(w, http.StatusNotFound, &AjaxErr{ErrNotFound, EC_fileabsent})
 	}
 }
 
@@ -72,17 +72,17 @@ func filecacheHandler(w http.ResponseWriter, r *http.Request) {
 func shareHandler(w http.ResponseWriter, r *http.Request) {
 	incuint(&sharecallcount, 1)
 
-	var path = r.URL.Path[len(shareprefix):]
-	var prefend = strings.IndexByte(path, '/')
+	var shr = r.URL.Path[len(shareprefix):]
+	var prefend = strings.IndexByte(shr, '/')
 	var pref, suff string
 	if prefend == -1 {
-		pref, suff = path, ""
+		pref, suff = shr, ""
 	} else {
-		pref, suff = path[:prefend], path[prefend+1:]
+		pref, suff = shr[:prefend], shr[prefend+1:]
 	}
 
 	shrmux.RLock()
-	var shr, ok = sharespref[pref]
+	var path, ok = sharespref[pref]
 	shrmux.RUnlock()
 	if !ok {
 		shrmux.RLock()
@@ -98,7 +98,7 @@ func shareHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	WriteStdHeader(w)
-	http.ServeFile(w, r, shr.Path+suff)
+	http.ServeFile(w, r, path+suff)
 }
 
 // APIHANDLER
@@ -261,7 +261,7 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 	var sval = r.FormValue("sort")
 
 	shrmux.RLock()
-	var shrlst = make([]*FileProp, len(shareslist))
+	var shrlst = make([]FileProper, len(shareslist))
 	copy(shrlst, shareslist)
 	shrmux.RUnlock()
 
@@ -269,7 +269,7 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 	if !adm && len(path) > 0 {
 		var shared bool
 		for _, shr := range shrlst {
-			if strings.HasPrefix(path, shr.Path) {
+			if strings.HasPrefix(path, shr.Path()) {
 				shared = true
 				break
 			}
@@ -285,14 +285,8 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 			ret.Paths = getdrives()
 		}
 
-		for _, fp := range shrlst {
-			if fp.Type == FT_dir {
-				ret.Paths = append(ret.Paths, &DirProp{
-					FileProp: *fp,
-				})
-			} else {
-				ret.Files = append(ret.Files, fp)
-			}
+		for _, prop := range shrlst {
+			ret.AddProp(prop)
 		}
 	} else {
 		ret, err = readdir(path)
@@ -305,33 +299,33 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 			sort.Slice(ret.Files, func(i, j int) bool {
 				var pi = ret.Files[i]
 				var pj = ret.Files[j]
-				if (pi.Type == FT_dir) != (pj.Type == FT_dir) {
-					return pi.Type == FT_dir
+				if (pi.Type() == FT_dir) != (pj.Type() == FT_dir) {
+					return pi.Type() == FT_dir
 				} else {
-					return strings.ToLower(pi.Name) < strings.ToLower(pj.Name)
+					return strings.ToLower(pi.Name()) < strings.ToLower(pj.Name())
 				}
 			})
 		case "type":
 			sort.Slice(ret.Files, func(i, j int) bool {
 				var pi = ret.Files[i]
 				var pj = ret.Files[j]
-				if pi.Type != pj.Type {
-					return pi.Type < pj.Type
+				if pi.Type() != pj.Type() {
+					return pi.Type() < pj.Type()
 				} else {
-					return strings.ToLower(pi.Name) < strings.ToLower(pj.Name)
+					return strings.ToLower(pi.Name()) < strings.ToLower(pj.Name())
 				}
 			})
 		case "size":
 			sort.Slice(ret.Files, func(i, j int) bool {
 				var pi = ret.Files[i]
 				var pj = ret.Files[j]
-				if (pi.Type == FT_dir) != (pj.Type == FT_dir) {
-					return pi.Type < pj.Type
+				if (pi.Type() == FT_dir) != (pj.Type() == FT_dir) {
+					return pi.Type() < pj.Type()
 				} else {
-					if pi.Type == FT_dir {
-						return strings.ToLower(pi.Name) < strings.ToLower(pj.Name)
+					if pi.Type() == FT_dir {
+						return strings.ToLower(pi.Name()) < strings.ToLower(pj.Name())
 					} else {
-						return pi.Size < pj.Size
+						return pi.Size() < pj.Size()
 					}
 				}
 			})
@@ -341,7 +335,7 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 			sort.Slice(ret.Paths, func(i, j int) bool {
 				var pi = ret.Paths[i]
 				var pj = ret.Paths[j]
-				return strings.ToLower(pi.Name) < strings.ToLower(pj.Name)
+				return strings.ToLower(pi.Name()) < strings.ToLower(pj.Name())
 			})
 		}
 	}
@@ -366,33 +360,30 @@ func shrlstApi(w http.ResponseWriter, r *http.Request) {
 // APIHANDLER
 func shraddApi(w http.ResponseWriter, r *http.Request) {
 	// get arguments
-	var fpath = r.FormValue("path")
-	if len(fpath) == 0 {
+	var path = r.FormValue("path")
+	if len(path) == 0 {
 		WriteError400(w, ErrArgNoPath, EC_addshrnopath)
 		return
 	}
 
 	shrmux.RLock()
-	var _, shrok = sharespath[fpath]
+	var _, has = sharespath[path]
 	shrmux.RUnlock()
-	if shrok { // share already added
+	if has { // share already added
 		WriteJson(w, http.StatusOK, []byte("null"))
 		return
 	}
 
-	var file, err = os.Open(fpath)
+	var fi, err = FileStat(path)
 	if err != nil {
 		WriteJson(w, http.StatusNotFound, &AjaxErr{err, EC_addshrbadpath})
 		return
 	}
-	var fi, _ = file.Stat()
-	file.Close()
 
-	var fp FileProp
-	fp.Setup(fi, fpath)
-	fp.MakeShare()
+	var prop = MakeProp(fi, path)
+	MakeShare(prop)
 
-	WriteJson(w, http.StatusOK, fp)
+	WriteJson(w, http.StatusOK, prop)
 }
 
 // APIHANDLER

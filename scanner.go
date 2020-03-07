@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"github.com/dhowden/tag"
 )
 
 // File types
@@ -194,64 +196,206 @@ var (
 
 const shareprefix = "/share/"
 
-var shareslist []*FileProp              // plain list of active shares
-var sharespath = map[string]*FileProp{} // active shares by full path
-var sharespref = map[string]*FileProp{} // active shares by prefix
-var sharesgone = map[string]*FileProp{} // gone shares by prefix
+var shareslist = []FileProper{}      // plain list of active shares
+var sharespath = map[string]string{} // active shares by full path
+var sharespref = map[string]string{} // active shares by prefix
+var sharesgone = map[string]string{} // gone shares by prefix
 var shrmux sync.RWMutex
 
-var root = DirProp{}
+var root = DirProp{
+	FileProp: FileProp{
+		TypeVal: FT_dir,
+		KTmbVal: ThumbName(""),
+	},
+}
+
 var dircache = map[string]*DirProp{
 	"/": &root,
 }
+
 var dcmux sync.RWMutex
+
+// File properties interface.
+type FileProper interface {
+	Name() string
+	Path() string
+	Size() int64
+	Time() int64
+	Type() int
+	Pref() string
+	KTmb() string
+	NTmb() int
+	SetPref(string)
+	SetNTmb(int)
+}
 
 // Common file properties.
 type FileProp struct {
-	Name string `json:"name,omitempty"`
-	Path string `json:"path,omitempty"` // full path with name; folder ends with splash
-	Size int64  `json:"size,omitempty"`
-	Time int64  `json:"time,omitempty"`
-	Type int    `json:"type,omitempty"`
-	Pref string `json:"pref,omitempty"` // share prefix
-	KTmb string `json:"ktmb,omitempty"` // thumbnail key
-	NTmb int    `json:"ntmb,omitempty"` // thumbnail state, -1 impossible, 0 undefined, 1 ready
+	NameVal string `json:"name,omitempty"`
+	PathVal string `json:"path,omitempty"`
+	SizeVal int64  `json:"size,omitempty"`
+	TimeVal int64  `json:"time,omitempty"`
+	TypeVal int    `json:"type,omitempty"`
+	PrefVal string `json:"pref,omitempty"`
+	KTmbVal string `json:"ktmb,omitempty"`
+	NTmbVal int    `json:"ntmb,omitempty"`
+}
+
+// File name with extension without path.
+func (fp *FileProp) Name() string {
+	return fp.NameVal
+}
+
+// Full path with name; folder ends with splash.
+func (fp *FileProp) Path() (path string) {
+	return fp.PathVal
+}
+
+// File size in bytes.
+func (fp *FileProp) Size() int64 {
+	return fp.SizeVal
+}
+
+// File creation time in UNIX format, milliseconds.
+func (fp *FileProp) Time() int64 {
+	return fp.TimeVal
+}
+
+// Enumerated file type.
+func (fp *FileProp) Type() int {
+	return fp.TypeVal
+}
+
+// Share prefix.
+func (fp *FileProp) Pref() string {
+	return fp.PrefVal
+}
+
+// Thumbnail key, it's MD5-hash of full path.
+func (fp *FileProp) KTmb() string {
+	return fp.KTmbVal
+}
+
+// Thumbnail state, -1 impossible, 0 undefined, 1 ready.
+func (fp *FileProp) NTmb() int {
+	return fp.NTmbVal
+}
+
+// Sets new share prefix value.
+func (fp *FileProp) SetPref(pref string) {
+	fp.PrefVal = pref
+}
+
+// Updates thumbnail state to given value.
+func (fp *FileProp) SetNTmb(v int) {
+	fp.NTmbVal = v
 }
 
 // Fills fields from os.FileInfo structure. Do not looks for share.
-func (fp *FileProp) Setup(fi os.FileInfo, fpath string) {
-	fp.Name = fi.Name()
-	fp.Path = fpath
-	fp.Size = fi.Size()
-	fp.Time = UnixJS(fi.ModTime())
-	fp.KTmb = ThumbName(fpath)
+func (fp *FileProp) Setup(fi os.FileInfo, path string) {
+	var name, size = fi.Name(), fi.Size()
+	var ktmb = ThumbName(path)
+	fp.NameVal = name
+	fp.PathVal = path
+	fp.SizeVal = size
+	fp.TimeVal = UnixJS(fi.ModTime())
+	fp.KTmbVal = ktmb
 	if fi.IsDir() {
-		fp.Type = FT_dir
-		fp.NTmb = TMB_reject
+		fp.TypeVal = FT_dir
+		fp.NTmbVal = TMB_reject
 	} else {
-		fp.Type = extset[strings.ToLower(filepath.Ext(fp.Name))]
-		if (fp.Type == FT_jpeg && fp.Size > PhotoJPEG) || (fp.Type == FT_webp && fp.Size > PhotoWEBP) {
-			fp.Type = FT_photo
+		var ft = extset[strings.ToLower(filepath.Ext(name))]
+		if (ft == FT_jpeg && size > PhotoJPEG) || (ft == FT_webp && size > PhotoWEBP) {
+			ft = FT_photo
 		}
-		if tmb, err := thumbcache.Get(fp.KTmb); err == nil {
+		fp.TypeVal = ft
+		if tmb, err := thumbcache.Get(ktmb); err == nil {
 			if tmb != nil {
-				fp.NTmb = TMB_cached
+				fp.NTmbVal = TMB_cached
 			} else {
-				fp.NTmb = TMB_reject
+				fp.NTmbVal = TMB_reject
 			}
 		} else {
-			fp.NTmb = TMB_none
+			fp.NTmbVal = TMB_none
 		}
 	}
 }
 
-// Looks for correct prefix and add share with it.
-func (fp *FileProp) MakeShare() {
-	var pref string
-	if len(fp.Name) > 8 {
-		pref = fp.Name[:8]
+// Directory properties.
+type DirProp struct {
+	FileProp
+	// Directory scanning time in UNIX format, milliseconds.
+	Scan int64
+	// Directory file groups counters.
+	FGrp [FG_num]int
+}
+
+// Fills fields with given path. Do not looks for share.
+func (dp *DirProp) Setup(name, path string) {
+	dp.NameVal = name
+	dp.PathVal = path
+	dp.TypeVal = FT_dir
+	dp.KTmbVal = ThumbName(path)
+	dp.NTmbVal = TMB_reject
+}
+
+func MakeDirProp(fullpath string) *DirProp {
+	dcmux.RLock()
+	var dc, has = dircache[fullpath]
+	dcmux.RUnlock()
+	if has {
+		return dc
+	}
+
+	var _, name = path.Split(fullpath[:len(fullpath)-1])
+	var dp DirProp
+	dp.Setup(name, fullpath)
+
+	dcmux.Lock()
+	dircache[fullpath] = &dp
+	dcmux.Unlock()
+
+	return &dp
+}
+
+// Returns os.FileInfo for given full file name.
+func FileStat(path string) (fi os.FileInfo, err error) {
+	var file *os.File
+	file, err = os.Open(path)
+	if err != nil {
+		return
+	}
+	defer file.Close()
+	fi, err = file.Stat()
+	return
+}
+
+// File properties factory.
+func MakeProp(fi os.FileInfo, path string) (prop FileProper) {
+	if fi.IsDir() {
+		prop = MakeDirProp(path)
 	} else {
-		pref = fp.Name
+		var fp FileProp
+		fp.Setup(fi, path)
+		prop = &fp
+	}
+
+	shrmux.RLock()
+	if pref, ok := sharespath[path]; ok {
+		prop.SetPref(pref)
+	}
+	shrmux.RUnlock()
+	return
+}
+
+// Looks for correct prefix and add share with it.
+func MakeShare(prop FileProper) {
+	var pref string
+	var name = prop.Name()
+	if len(name) > 8 {
+		pref = name[:8]
+	} else {
+		pref = name
 	}
 	var fit = true
 	for _, b := range pref {
@@ -260,42 +404,30 @@ func (fp *FileProp) MakeShare() {
 		}
 	}
 
-	if fit && AddShare(pref, fp) {
+	if fit && AddShare(pref, prop) {
 		return
 	}
-	for i := 0; !AddShare(makerandstr(4), fp); i++ {
+	for i := 0; !AddShare(makerandstr(4), prop); i++ {
 		if i > 1000 {
 			panic("can not generate share prefix")
 		}
 	}
 }
 
-// Directory properties.
-type DirProp struct {
-	FileProp
-	Scan int64       `json:"scan"` // scanning time
-	FGrp [FG_num]int `json:"fgrp"` // file groups counters
-}
-
-// Returned data for "getdrv", "folder" API handlers.
-type folderRet struct {
-	Paths []*DirProp  `json:"paths"`
-	Files []*FileProp `json:"files"`
-}
-
 // Add share with given prefix.
-func AddShare(pref string, fp *FileProp) bool {
+func AddShare(pref string, prop FileProper) bool {
 	shrmux.RLock()
 	var _, ok = sharespref[pref]
 	shrmux.RUnlock()
 
 	if !ok {
-		fp.Pref = pref
+		prop.SetPref(pref)
+		var path = prop.Path()
 
 		shrmux.Lock()
-		shareslist = append(shareslist, fp)
-		sharespath[fp.Path] = fp
-		sharespref[pref] = fp
+		shareslist = append(shareslist, prop)
+		sharespath[path] = pref
+		sharespref[pref] = path
 		shrmux.Unlock()
 	}
 	return !ok
@@ -304,20 +436,20 @@ func AddShare(pref string, fp *FileProp) bool {
 // Delete share by given prefix.
 func DelSharePref(pref string) bool {
 	shrmux.RLock()
-	var shr, ok = sharespref[pref]
+	var path, ok = sharespref[pref]
 	shrmux.RUnlock()
 
 	if ok {
 		shrmux.Lock()
 		for i, fp := range shareslist {
-			if fp.Pref == pref {
+			if fp.Pref() == pref {
 				shareslist = append(shareslist[:i], shareslist[i+1:]...)
 				break
 			}
 		}
-		delete(sharespath, shr.Path)
+		delete(sharespath, path)
 		delete(sharespref, pref)
-		sharesgone[pref] = shr
+		sharesgone[pref] = path
 		shrmux.Unlock()
 	}
 	return ok
@@ -326,23 +458,37 @@ func DelSharePref(pref string) bool {
 // Delete share by given shared path.
 func DelSharePath(path string) bool {
 	shrmux.RLock()
-	var shr, ok = sharespath[path]
+	var pref, ok = sharespath[path]
 	shrmux.RUnlock()
 
 	if ok {
 		shrmux.Lock()
 		for i, fp := range shareslist {
-			if fp.Path == path {
+			if fp.Path() == path {
 				shareslist = append(shareslist[:i], shareslist[i+1:]...)
 				break
 			}
 		}
 		delete(sharespath, path)
-		delete(sharespref, shr.Pref)
-		sharesgone[shr.Pref] = shr
+		delete(sharespref, pref)
+		sharesgone[pref] = path
 		shrmux.Unlock()
 	}
 	return ok
+}
+
+// Returned data for "getdrv", "folder" API handlers.
+type folderRet struct {
+	Paths []*DirProp  `json:"paths"`
+	Files []*FileProp `json:"files"`
+}
+
+func (fr *folderRet) AddProp(prop FileProper) {
+	if dp, ok := prop.(*DirProp); ok {
+		fr.Paths = append(fr.Paths, dp)
+	} else if fp, ok := prop.(*FileProp); ok {
+		fr.Files = append(fr.Files, fp)
+	}
 }
 
 var sharecharset = []byte("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
@@ -360,26 +506,15 @@ func makerandstr(n int) string {
 // Scan all available drives installed on local machine.
 func getdrives() (drvs []*DirProp) {
 	for _, drive := range "ABCDEFGHIJKLMNOPQRSTUVWXYZ" {
-		var fname = string(drive) + ":"
-		var fpath = fname + "/"
-		var file, err = os.Open(fname)
+		var name = string(drive) + ":"
+		var path = name + "/"
+		var fi, err = FileStat(path)
 		if err == nil {
-			file.Close()
-			var dp = DirProp{
-				FileProp: FileProp{
-					Name: fname,
-					Path: fpath,
-					Type: FT_dir,
-					KTmb: ThumbName(fpath),
-					NTmb: TMB_reject,
-				},
+			var prop = MakeProp(fi, path)
+			if dp, ok := prop.(*DirProp); ok {
+				dp.NameVal = name
+				drvs = append(drvs, dp)
 			}
-			shrmux.RLock()
-			if shr, ok := sharespath[dp.Path]; ok {
-				dp.Pref = shr.Pref
-			}
-			shrmux.RUnlock()
-			drvs = append(drvs, &dp)
 		}
 	}
 
@@ -415,74 +550,41 @@ func readdir(dirname string) (ret folderRet, err error) {
 	if err != nil {
 		return
 	}
+
 	var fgrp = [FG_num]int{}
-	var scan = UnixJSNow()
 
 scanprop:
 	for _, fi := range fis {
-		var fname = fi.Name()
+		var name = fi.Name()
 		for _, pat := range hidden {
-			if matched, _ := path.Match(pat, strings.ToLower(fname)); matched {
+			if matched, _ := path.Match(pat, strings.ToLower(name)); matched {
 				continue scanprop
 			}
 		}
 
-		var fpath = dirname + fname
+		var path = dirname + name
 		if fi.IsDir() {
-			fpath += "/"
+			path += "/"
 		}
-		var fp FileProp
-		fp.Setup(fi, fpath)
 
-		fgrp[typetogroup[fp.Type]]++
+		var prop = MakeProp(fi, path)
+		fgrp[typetogroup[prop.Type()]]++
+		ret.AddProp(prop)
 
-		shrmux.RLock()
-		if shr, ok := sharespath[fpath]; ok {
-			fp.Pref = shr.Pref
-		}
-		shrmux.RUnlock()
-
-		if fp.Type == FT_dir {
-			dcmux.RLock()
-			var dc, ok = dircache[fpath]
-			dcmux.RUnlock()
-			var dp = DirProp{
-				FileProp: fp,
+		if prop.Type() == FT_mp3 {
+			var file, _ = os.Open(path)
+			var m, err = tag.ReadFrom(file)
+			file.Close()
+			if err == nil {
+				Log.Printf(`file: %s, title: %s, album-artist: %s, year: %d, genre: %s`, path,
+					m.Title(), m.AlbumArtist(), m.Year(), m.Genre())
 			}
-			if ok {
-				dp.Scan = dc.Scan
-				dp.FGrp = dc.FGrp
-			}
-			ret.Paths = append(ret.Paths, &dp)
-		} else {
-			ret.Files = append(ret.Files, &fp)
 		}
 	}
 
-	dcmux.RLock()
-	var cached, cchok = dircache[dirname]
-	dcmux.RUnlock()
-	if cchok {
-		cached.Scan = scan
-		cached.FGrp = fgrp
-	} else {
-		var _, fname = path.Split(dirname[:len(dirname)-1])
-		var dp = DirProp{
-			FileProp: FileProp{
-				Name: fname,
-				Path: dirname,
-				Type: FT_dir,
-				KTmb: ThumbName(dirname),
-				NTmb: TMB_reject,
-			},
-			Scan: scan,
-			FGrp: fgrp,
-		}
-
-		dcmux.Lock()
-		dircache[dirname] = &dp
-		dcmux.Unlock()
-	}
+	var dp = MakeDirProp(dirname)
+	dp.Scan = UnixJSNow()
+	dp.FGrp = fgrp
 
 	return
 }

@@ -55,42 +55,50 @@ const (
 	// admin
 	EC_admindeny = 1
 
+	// page/filecache
+	EC_pageabsent = 2
+	EC_fileabsent = 3
+
 	// share
-	EC_sharegone = 2
-	EC_sharenone = 3
+	EC_sharegone = 4
+	EC_sharenone = 5
 
 	// local
-	EC_localnopath = 4
+	EC_localnopath = 6
 
 	// reload
-	EC_reloadnoreq  = 5
-	EC_reloadbadreq = 6
-	EC_reloadnodata = 7
-	EC_reloadbadprf = 8
+	EC_reloadnoreq  = 7
+	EC_reloadbadreq = 8
+	EC_reloadnodata = 9
+	EC_reloadbadprf = 10
 
 	// getlog
-	EC_getlogbadnum = 9
+	EC_getlogbadnum = 11
 
 	// folder
-	EC_folderdeny   = 10
-	EC_folderabsent = 11
+	EC_folderdeny   = 12
+	EC_folderabsent = 13
 
 	// addshr
-	EC_addshrnopath  = 12
-	EC_addshrbadpath = 13
+	EC_addshrnopath  = 14
+	EC_addshrbadpath = 15
 
 	// delshr
-	EC_delshrnopath = 14
+	EC_delshrnopath = 16
+
+	// thumb
+	EC_thumbabsent = 20
+	EC_thumbbadcnt = 21
 
 	// tmbchk
-	EC_tmbchknoreq  = 20
-	EC_tmbchkbadreq = 21
-	EC_tmbchknodata = 22
+	EC_tmbchknoreq  = 30
+	EC_tmbchkbadreq = 31
+	EC_tmbchknodata = 32
 
 	// tmbscn
-	EC_tmbscnnoreq  = 30
-	EC_tmbscnbadreq = 31
-	EC_tmbscnnodata = 32
+	EC_tmbscnnoreq  = 40
+	EC_tmbscnbadreq = 41
+	EC_tmbscnnodata = 42
 )
 
 //////////////////
@@ -143,21 +151,19 @@ func RegisterRoutes(gmux *Router) {
 }
 
 func registershares() {
-	for i := 0; i < len(shareslist); {
-		var fp = shareslist[i]
-
-		var file, err = os.Open(fp.Path)
-		if err == nil { // check up share valid
-			file.Close()
-			sharespath[fp.Path] = fp
-			sharespref[fp.Pref] = fp
-			fp.NTmb = TMB_none
-			Log.Printf("created share '%s' on path '%s'", fp.Pref, fp.Path)
-			i++
-		} else {
-			Log.Printf("can not create share '%s' on path '%s'", fp.Pref, fp.Path)
-			shareslist = append(shareslist[:i], shareslist[i+1:]...)
+	for pref, path := range sharespref {
+		var fi, err = FileStat(path)
+		if err != nil {
+			Log.Printf("can not create share '%s' on path '%s'", pref, path)
+			delete(sharespref, pref)
+			continue
 		}
+
+		var prop = MakeProp(fi, path)
+		prop.SetPref(pref)
+		shareslist = append(shareslist, prop)
+		sharespath[path] = pref
+		Log.Printf("created share '%s' on path '%s'", pref, path)
 	}
 }
 

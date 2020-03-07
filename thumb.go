@@ -42,13 +42,13 @@ var thumbpngenc = png.Encoder{
 
 // Data for "entchk" API handler.
 type tmbchkArg struct {
-	ITmbs []FileProp `json:"itmbs"`
+	ITmbs []*FileProp `json:"itmbs"`
 }
 
 // Argument data for "tmbscn" API handler.
 type tmbscnArg struct {
-	ITmbs []FileProp `json:"itmbs"`
-	Force bool       `json:"force"`
+	ITmbs []*FileProp `json:"itmbs"`
+	Force bool        `json:"force"`
 }
 
 func ThumbName(fname string) string {
@@ -79,12 +79,13 @@ func ThumbImg(fname string) (img image.Image, ftype string, err error) {
 	return
 }
 
-func CacheImg(fp *FileProp, force bool) (ftmb []byte) {
+func CacheImg(fp FileProper, force bool) (ftmb []byte) {
 	var err error
+	var ktmb = fp.KTmb()
 
 	if !force {
 		var val interface{}
-		if val, err = thumbcache.Get(fp.KTmb); err == nil {
+		if val, err = thumbcache.Get(ktmb); err == nil {
 			if val != nil {
 				ftmb = val.([]byte)
 			}
@@ -94,24 +95,24 @@ func CacheImg(fp *FileProp, force bool) (ftmb []byte) {
 
 	defer func() {
 		if len(ftmb) > 0 {
-			fp.NTmb = TMB_cached
-			thumbcache.Set(fp.KTmb, ftmb)
+			fp.SetNTmb(TMB_cached)
+			thumbcache.Set(ktmb, ftmb)
 		} else {
-			fp.NTmb = TMB_reject
-			thumbcache.Set(fp.KTmb, nil)
+			fp.SetNTmb(TMB_reject)
+			thumbcache.Set(ktmb, nil)
 		}
 	}()
 
-	if typetogroup[fp.Type] != FG_image {
+	if typetogroup[fp.Type()] != FG_image {
 		return // file is not image
 	}
 
-	if fp.Size > thumbmaxfile {
+	if fp.Size() > thumbmaxfile {
 		return // file is too big
 	}
 
 	var img image.Image
-	if img, _, err = ThumbImg(fp.Path); err != nil {
+	if img, _, err = ThumbImg(fp.Path()); err != nil {
 		return // can not make thumbnail
 	}
 
@@ -121,7 +122,7 @@ func CacheImg(fp *FileProp, force bool) (ftmb []byte) {
 	}
 	ftmb = buf.Bytes()
 	/*{
-		var f, err = os.Create("d:/temp/"+fp.KTmb+".png")
+		var f, err = os.Create("d:/temp/"+ktmb+".png")
 		if err != nil {
 			Log.Println(err.Error())
 			return
@@ -139,12 +140,12 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) {
 	var ktmb = r.URL.Path[len(r.URL.Path)-32:]
 	var val interface{}
 	if val, err = thumbcache.Get(ktmb); err != nil {
-		http.NotFound(w, r)
+		WriteJson(w, http.StatusNotFound, &AjaxErr{err, EC_thumbabsent})
 		return
 	}
 	var content, ok = val.([]byte)
 	if !ok {
-		http.NotFound(w, r)
+		WriteJson(w, http.StatusNotFound, &AjaxErr{err, EC_thumbbadcnt})
 		return
 	}
 	w.Header().Set("Content-Type", "image/png")
@@ -171,16 +172,15 @@ func tmbchkApi(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for i := range arg.ITmbs {
-		var fp = &arg.ITmbs[i]
-		if tmb, err := thumbcache.Get(fp.KTmb); err == nil {
+	for _, fp := range arg.ITmbs {
+		if tmb, err := thumbcache.Get(fp.KTmbVal); err == nil {
 			if tmb != nil {
-				fp.NTmb = TMB_cached
+				fp.NTmbVal = TMB_cached
 			} else {
-				fp.NTmb = TMB_reject
+				fp.NTmbVal = TMB_reject
 			}
 		} else {
-			fp.NTmb = TMB_none
+			fp.NTmbVal = TMB_none
 		}
 	}
 
@@ -207,8 +207,7 @@ func tmbscnApi(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for i := range arg.ITmbs {
-		var fp = &arg.ITmbs[i]
+	for _, fp := range arg.ITmbs {
 		CacheImg(fp, arg.Force)
 	}
 

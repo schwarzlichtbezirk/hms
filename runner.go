@@ -93,9 +93,9 @@ func loadshared() {
 	}
 
 	var dec = json.NewDecoder(bytes.NewReader(body))
-	err = dec.Decode(&shareslist)
+	err = dec.Decode(&sharespref)
 	if err != nil {
-		Log.Fatal("can not decode shared array: " + err.Error())
+		Log.Fatal("can not decode shared list: " + err.Error())
 	}
 }
 
@@ -104,9 +104,9 @@ func saveshared() {
 	var buf bytes.Buffer
 	var enc = json.NewEncoder(&buf)
 	enc.SetIndent("", "\t")
-	err = enc.Encode(shareslist)
+	err = enc.Encode(sharespref)
 	if err != nil {
-		Log.Println("can not encode shared array: " + err.Error())
+		Log.Println("can not encode shared list: " + err.Error())
 		return
 	}
 	err = ioutil.WriteFile(confpath+"shared.json", buf.Bytes(), 0644)
