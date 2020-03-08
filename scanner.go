@@ -247,7 +247,7 @@ func (fp *FileProp) Name() string {
 }
 
 // Full path with name; folder ends with splash.
-func (fp *FileProp) Path() (path string) {
+func (fp *FileProp) Path() string {
 	return fp.PathVal
 }
 
@@ -292,11 +292,11 @@ func (fp *FileProp) SetNTmb(v int) {
 }
 
 // Fills fields from os.FileInfo structure. Do not looks for share.
-func (fp *FileProp) Setup(fi os.FileInfo, path string) {
-	var name, size = fi.Name(), fi.Size()
-	var ktmb = ThumbName(path)
-	fp.NameVal = name
-	fp.PathVal = path
+func (fp *FileProp) Setup(fi os.FileInfo, fpath string) {
+	var fname, size = fi.Name(), fi.Size()
+	var ktmb = ThumbName(fpath)
+	fp.NameVal = fname
+	fp.PathVal = fpath
 	fp.SizeVal = size
 	fp.TimeVal = UnixJS(fi.ModTime())
 	fp.KTmbVal = ktmb
@@ -304,7 +304,7 @@ func (fp *FileProp) Setup(fi os.FileInfo, path string) {
 		fp.TypeVal = FT_dir
 		fp.NTmbVal = TMB_reject
 	} else {
-		var ft = extset[strings.ToLower(filepath.Ext(name))]
+		var ft = extset[strings.ToLower(filepath.Ext(fname))]
 		if (ft == FT_jpeg && size > PhotoJPEG) || (ft == FT_webp && size > PhotoWEBP) {
 			ft = FT_photo
 		}
@@ -331,29 +331,29 @@ type DirProp struct {
 }
 
 // Fills fields with given path. Do not looks for share.
-func (dp *DirProp) Setup(name, path string) {
-	dp.NameVal = name
-	dp.PathVal = path
+func (dp *DirProp) Setup(fname, fpath string) {
+	dp.NameVal = fname
+	dp.PathVal = fpath
 	dp.TypeVal = FT_dir
-	dp.KTmbVal = ThumbName(path)
+	dp.KTmbVal = ThumbName(fpath)
 	dp.NTmbVal = TMB_reject
 }
 
 // Creates new DirProp or returns cached object with given full path.
-func MakeDirProp(fullpath string) *DirProp {
+func MakeDirProp(fpath string) *DirProp {
 	dcmux.RLock()
-	var dc, has = dircache[fullpath]
+	var dc, has = dircache[fpath]
 	dcmux.RUnlock()
 	if has {
 		return dc
 	}
 
-	var _, name = path.Split(fullpath[:len(fullpath)-1])
+	var _, fname = path.Split(fpath[:len(fpath)-1])
 	var dp DirProp
-	dp.Setup(name, fullpath)
+	dp.Setup(fname, fpath)
 
 	dcmux.Lock()
-	dircache[fullpath] = &dp
+	dircache[fpath] = &dp
 	dcmux.Unlock()
 
 	return &dp
@@ -381,18 +381,14 @@ type TagProp struct {
 }
 
 // Fills fields with given path. Do not looks for share.
-func (tp *TagProp) Setup(fullpath string) (err error) {
+func (tp *TagProp) Setup(fi os.FileInfo, fpath string) (err error) {
+	tp.FileProp.Setup(fi, fpath)
+
 	var file *os.File
-	if file, err = os.Open(fullpath); err != nil {
+	if file, err = os.Open(fpath); err != nil {
 		return err
 	}
 	defer file.Close()
-
-	var fi os.FileInfo
-	if fi, err = file.Stat(); err != nil {
-		return err
-	}
-	tp.FileProp.Setup(fi, fullpath)
 
 	var m tag.Metadata
 	if m, err = tag.ReadFrom(file); err != nil {
@@ -410,13 +406,22 @@ func (tp *TagProp) Setup(fullpath string) (err error) {
 	tp.Lyrics = m.Lyrics()
 	tp.Comment = m.Comment()
 
+	var pic = m.Picture()
+	if pic != nil {
+		tp.SetNTmb(TMB_cached)
+		thumbcache.Set(tp.KTmbVal, &Thumb{
+			Data: pic.Data,
+			Mime: pic.MIMEType,
+		})
+	}
+
 	return
 }
 
 // Returns os.FileInfo for given full file name.
-func FileStat(path string) (fi os.FileInfo, err error) {
+func FileStat(fpath string) (fi os.FileInfo, err error) {
 	var file *os.File
-	file, err = os.Open(path)
+	file, err = os.Open(fpath)
 	if err != nil {
 		return
 	}
@@ -426,24 +431,24 @@ func FileStat(path string) (fi os.FileInfo, err error) {
 }
 
 // File properties factory.
-func MakeProp(fi os.FileInfo, path string) (prop FileProper) {
+func MakeProp(fi os.FileInfo, fpath string) (prop FileProper) {
 	if fi.IsDir() {
-		prop = MakeDirProp(path)
+		prop = MakeDirProp(fpath)
 	} else {
-		var ft = extset[strings.ToLower(filepath.Ext(path))]
+		var ft = extset[strings.ToLower(filepath.Ext(fpath))]
 		if ft == FT_flac || ft == FT_mp3 || ft == FT_ogg || ft == FT_mp4 {
 			var tp TagProp
-			tp.Setup(path)
+			tp.Setup(fi, fpath)
 			prop = &tp
 		} else {
 			var fp FileProp
-			fp.Setup(fi, path)
+			fp.Setup(fi, fpath)
 			prop = &fp
 		}
 	}
 
 	shrmux.RLock()
-	if pref, ok := sharespath[path]; ok {
+	if pref, ok := sharespath[fpath]; ok {
 		prop.SetPref(pref)
 	}
 	shrmux.RUnlock()
@@ -568,14 +573,14 @@ func makerandstr(n int) string {
 // Scan all available drives installed on local machine.
 func getdrives() (drvs []*DirProp) {
 	for _, drive := range "ABCDEFGHIJKLMNOPQRSTUVWXYZ" {
-		var name = string(drive) + ":"
-		var path = name + "/"
-		var _, err = FileStat(path)
+		var fname = string(drive) + ":"
+		var fpath = fname + "/"
+		var _, err = FileStat(fpath)
 		if err != nil {
 			continue
 		}
-		var dp = MakeDirProp(path)
-		dp.NameVal = name
+		var dp = MakeDirProp(fpath)
+		dp.NameVal = fname
 		drvs = append(drvs, dp)
 	}
 
@@ -584,7 +589,7 @@ func getdrives() (drvs []*DirProp) {
 	return
 }
 
-// Reads directory with given name and returns fileinfo for each entry.
+// Reads directory with given name and returns FileProper for each entry.
 func readdir(dirname string) (ret folderRet, err error) {
 	defer func() {
 		// Remove from cache dir that can not be opened
@@ -595,14 +600,12 @@ func readdir(dirname string) (ret folderRet, err error) {
 		}
 	}()
 
-	var last = dirname[len(dirname)-1]
-	if last != '/' {
+	if !strings.HasSuffix(dirname, "/") {
 		dirname += "/"
 	}
 
 	var file *os.File
-	file, err = os.Open(dirname)
-	if err != nil {
+	if file, err = os.Open(dirname); err != nil {
 		return
 	}
 	var fis []os.FileInfo
@@ -616,19 +619,19 @@ func readdir(dirname string) (ret folderRet, err error) {
 
 scanprop:
 	for _, fi := range fis {
-		var name = fi.Name()
+		var fname = fi.Name()
 		for _, pat := range hidden {
-			if matched, _ := path.Match(pat, strings.ToLower(name)); matched {
+			if matched, _ := path.Match(pat, strings.ToLower(fname)); matched {
 				continue scanprop
 			}
 		}
 
-		var path = dirname + name
+		var fpath = dirname + fname
 		if fi.IsDir() {
-			path += "/"
+			fpath += "/"
 		}
 
-		var prop = MakeProp(fi, path)
+		var prop = MakeProp(fi, fpath)
 		fgrp[typetogroup[prop.Type()]]++
 		ret.AddProp(prop)
 	}

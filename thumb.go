@@ -24,12 +24,13 @@ const (
 	TMB_cached = 1
 )
 
+var ThumbMaxFile int64 = 4096*3072*4 + 16384 // 48M, max 4K image + 16K metadata
+
 const thumbside = 256
-const thumbmaxfile = 4096*3072*4 + 16384 // 48M, max 4K image + 16K metadata
 
 var thumbrect = image.Rect(0, 0, thumbside, thumbside)
 
-var thumbcache = gcache.New(50000).LRU().Build()
+var thumbcache = gcache.New(0).Simple().Build()
 
 var thumbfilter = gift.New(
 	gift.Resize(thumbside, 0, gift.NearestNeighborResampling),
@@ -113,7 +114,7 @@ func CacheImg(fp FileProper, force bool) (tmb *Thumb) {
 		return // file is not image
 	}
 
-	if fp.Size() > thumbmaxfile {
+	if fp.Size() > ThumbMaxFile {
 		return // file is too big
 	}
 

@@ -84,6 +84,7 @@ func opensettings() {
 	var photo = cfg.Section("photo")
 	PhotoJPEG = photo.Key("photo-jpeg").MustInt64(2097152)
 	PhotoWEBP = photo.Key("photo-webp").MustInt64(1572864)
+	ThumbMaxFile = photo.Key("thumb-max-file").MustInt64(4096*3072*4 + 16384)
 }
 
 func loadshared() {
