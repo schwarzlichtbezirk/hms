@@ -5,7 +5,7 @@ import (
 )
 
 const buildvers = "0.2.3"
-const builddate = "2020.03.08"
+const builddate = "2020.03.09"
 
 var log = hms.Log
 

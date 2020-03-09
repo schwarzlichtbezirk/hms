@@ -19,8 +19,8 @@ body {
 	flex-direction: row;
 	-ms-flex-pack: center;
 	justify-content: center;
-	-ms-flex-align: start;
-	align-items: flex-start;
+	-ms-flex-align: center;
+	align-items: center;
 }
 
 #accordion {

@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/bluele/gcache"
 	"github.com/dhowden/tag"
 )
 
@@ -189,12 +190,12 @@ var extset = map[string]int{
 	".rar": FT_rar,
 }
 
+const shareprefix = "/share/"
+
 var (
 	PhotoJPEG int64 = 2097152 // 2M
 	PhotoWEBP int64 = 1572864 // 1.5M
 )
-
-const shareprefix = "/share/"
 
 var shareslist = []FileProper{}      // plain list of active shares
 var sharespath = map[string]string{} // active shares by full path
@@ -202,18 +203,7 @@ var sharespref = map[string]string{} // active shares by prefix
 var sharesgone = map[string]string{} // gone shares by prefix
 var shrmux sync.RWMutex
 
-var root = DirProp{
-	FileProp: FileProp{
-		TypeVal: FT_dir,
-		KTmbVal: ThumbName(""),
-	},
-}
-
-var dircache = map[string]*DirProp{
-	"/": &root,
-}
-
-var dcmux sync.RWMutex
+var propcache = gcache.New(32 * 1024).LRU().Build()
 
 // File properties interface.
 type FileProper interface {
@@ -339,26 +329,6 @@ func (dp *DirProp) Setup(fname, fpath string) {
 	dp.NTmbVal = TMB_reject
 }
 
-// Creates new DirProp or returns cached object with given full path.
-func MakeDirProp(fpath string) *DirProp {
-	dcmux.RLock()
-	var dc, has = dircache[fpath]
-	dcmux.RUnlock()
-	if has {
-		return dc
-	}
-
-	var _, fname = path.Split(fpath[:len(fpath)-1])
-	var dp DirProp
-	dp.Setup(fname, fpath)
-
-	dcmux.Lock()
-	dircache[fpath] = &dp
-	dcmux.Unlock()
-
-	return &dp
-}
-
 // Descriptor for discs and tracks.
 type TagEnum struct {
 	Number int `json:"number,omitempty"`
@@ -432,8 +402,16 @@ func FileStat(fpath string) (fi os.FileInfo, err error) {
 
 // File properties factory.
 func MakeProp(fi os.FileInfo, fpath string) (prop FileProper) {
+	if cp, err := propcache.Get(fpath); err == nil {
+		return cp.(FileProper)
+	}
+
 	if fi.IsDir() {
-		prop = MakeDirProp(fpath)
+		var _, fname = path.Split(fpath[:len(fpath)-1])
+		var dp DirProp
+		dp.Setup(fname, fpath)
+
+		prop = &dp
 	} else {
 		var ft = extset[strings.ToLower(filepath.Ext(fpath))]
 		if ft == FT_flac || ft == FT_mp3 || ft == FT_ogg || ft == FT_mp4 {
@@ -452,6 +430,8 @@ func MakeProp(fi os.FileInfo, fpath string) (prop FileProper) {
 		prop.SetPref(pref)
 	}
 	shrmux.RUnlock()
+
+	propcache.Set(fpath, prop)
 	return
 }
 
@@ -575,43 +555,39 @@ func getdrives() (drvs []*DirProp) {
 	for _, drive := range "ABCDEFGHIJKLMNOPQRSTUVWXYZ" {
 		var fname = string(drive) + ":"
 		var fpath = fname + "/"
-		var _, err = FileStat(fpath)
-		if err != nil {
-			continue
+		if fi, err := FileStat(fpath); err == nil {
+			if dp, ok := MakeProp(fi, fpath).(*DirProp); ok {
+				dp.NameVal = fname
+				drvs = append(drvs, dp)
+			}
 		}
-		var dp = MakeDirProp(fpath)
-		dp.NameVal = fname
-		drvs = append(drvs, dp)
 	}
-
-	root.Scan = UnixJSNow()
-	root.FGrp[FG_dir] = len(drvs)
 	return
 }
 
 // Reads directory with given name and returns FileProper for each entry.
 func readdir(dirname string) (ret folderRet, err error) {
-	defer func() {
-		// Remove from cache dir that can not be opened
-		if err != nil {
-			dcmux.Lock()
-			delete(dircache, dirname)
-			dcmux.Unlock()
-		}
-	}()
-
 	if !strings.HasSuffix(dirname, "/") {
 		dirname += "/"
 	}
 
-	var file *os.File
-	if file, err = os.Open(dirname); err != nil {
-		return
-	}
+	var fi os.FileInfo
 	var fis []os.FileInfo
-	fis, err = file.Readdir(-1)
-	file.Close()
-	if err != nil {
+	if func() {
+		var file *os.File
+		if file, err = os.Open(dirname); err != nil {
+			return
+		}
+		defer file.Close()
+
+		if fi, err = file.Stat(); err != nil {
+			return
+		}
+		fis, err = file.Readdir(-1)
+		if err != nil {
+			return
+		}
+	}(); err != nil {
 		return
 	}
 
@@ -621,7 +597,7 @@ scanprop:
 	for _, fi := range fis {
 		var fname = fi.Name()
 		for _, pat := range hidden {
-			if matched, _ := path.Match(pat, strings.ToLower(fname)); matched {
+			if matched, _ := path.Match(pat, fname); matched {
 				continue scanprop
 			}
 		}
@@ -636,9 +612,10 @@ scanprop:
 		ret.AddProp(prop)
 	}
 
-	var dp = MakeDirProp(dirname)
-	dp.Scan = UnixJSNow()
-	dp.FGrp = fgrp
+	if dp, ok := MakeProp(fi, dirname).(*DirProp); ok {
+		dp.Scan = UnixJSNow()
+		dp.FGrp = fgrp
+	}
 
 	return
 }
