@@ -141,6 +141,7 @@ func RegisterRoutes(gmux *Router) {
 	api.Path("/getlog").HandlerFunc(AjaxWrap(getlogApi))
 	api.Path("/getdrv").HandlerFunc(AdminWrap(getdrvApi))
 	api.Path("/folder").HandlerFunc(AjaxWrap(folderApi))
+	api.Path("/purge").HandlerFunc(AdminWrap(purgeApi))
 	var shr = api.PathPrefix("/share").Subrouter()
 	shr.Path("/lst").HandlerFunc(AjaxWrap(shrlstApi))
 	shr.Path("/add").HandlerFunc(AdminWrap(shraddApi))

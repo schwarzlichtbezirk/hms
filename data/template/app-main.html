@@ -24,8 +24,8 @@
 			<li><button class="btn btn-link nav-link" v-bind:disabled="disback" v-on:click="onback" v-bind:title="hintback"><i class="material-icons">arrow_back</i></button></li>
 			<li><button class="btn btn-link nav-link" v-bind:disabled="disforward" v-on:click="onforward" v-bind:title="hintforward"><i class="material-icons">arrow_forward</i></button></li>
 			<li><button class="btn btn-link nav-link" v-bind:disabled="disparent" v-on:click="onparent" title="to parent folder"><i class="material-icons">subdirectory_arrow_left</i></button></li>
-			<li v-if="isadmin"><button class="btn btn-link nav-link" v-bind:disabled="disshared" v-bind:class="clsshared" v-on:click="onshare" title="share folder or file to get access from internet"><i class="material-icons">share</i></button></li>
-			<li><button class="btn btn-link nav-link" v-on:click="onrefresh" title="refresh"><i class="material-icons">refresh</i></button></li>
+			<li v-show="isadmin"><button class="btn btn-link nav-link" v-bind:disabled="disshared" v-bind:class="clsshared" v-on:click="onshare" title="share folder or file to get access from internet"><i class="material-icons">share</i></button></li>
+			<li v-show="isadmin"><button class="btn btn-link nav-link" v-on:click="onrefresh" title="refresh"><i class="material-icons">refresh</i></button></li>
 		</ul>
 		<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="nav.header > .navbar-collapse">
 			<span class="navbar-toggler-icon"></span>
@@ -59,7 +59,7 @@
 				<a class="card-link d-flex w-100" data-toggle="collapse" href="#collapse-sub">subfolders</a>
 			</div>
 			<div id="collapse-sub" class="collapse show">
-				<div class="card-body folder-list" v-on:click="ondelsel">
+				<div class="card-body folder-list" v-bind:class="clsfolderlist" v-on:click="ondelsel">
 					<template v-for="file in sortedsubfld">
 						<file-icon-tag v-bind:file="file" v-bind:state="{selected:selected===file,playback:false}" v-on:select="onfilesel" v-on:run="onfilerun" />
 					</template>
@@ -72,7 +72,7 @@
 				<a class="card-link d-flex w-100" data-toggle="collapse" href="#collapse-files">files</a>
 			</div>
 			<div id="collapse-files" class="collapse show">
-				<div class="card-body folder-list" v-on:click="ondelsel">
+				<div class="card-body folder-list" v-bind:class="clsfolderlist" v-on:click="ondelsel">
 					<template v-for="file in playlist">
 						<component v-bind:is="iconmodetag" v-bind:file="file" v-bind:state="{selected:selected===file,playback:playbackfile===file}" v-on:select="onfilesel" v-on:run="onfilerun" />
 					</template>

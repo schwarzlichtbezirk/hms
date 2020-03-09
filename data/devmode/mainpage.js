@@ -346,6 +346,14 @@ let app = new Vue({
 			return { active: this.selected && this.selected.pref };
 		},
 
+		clsfolderlist() {
+			switch (this.listmode) {
+				case "lgicon":
+					return 'align-items-center';
+				case "mdicon":
+					return 'align-items-start';
+			}
+		},
 		clsmusic() {
 			return { active: this.filter.music };
 		},
@@ -468,8 +476,6 @@ let app = new Vue({
 				};
 
 				if (xhr.status === 200) {
-					this.isadmin = true;
-
 					this.folderscan = new Date(Date.now());
 					// update folder settings
 					this.subfldlist = xhr.response.paths || [];
@@ -601,6 +607,8 @@ let app = new Vue({
 							Vue.set(this.selected, 'pref', shr.pref);
 							this.shared.push(shr);
 						}
+					} else if (xhr.status === 403) { // Forbidden
+						this.isadmin = false;
 					} else if (xhr.status === 404) { // Not Found
 						onerr404();
 						// clear folder history
@@ -625,6 +633,8 @@ let app = new Vue({
 							}
 							Vue.delete(this.selected, 'pref');
 						}
+					} else if (xhr.status === 403) { // Forbidden
+						this.isadmin = false;
 					} else if (xhr.status === 404) { // Not Found
 						onerr404();
 						// clear folder history
@@ -636,8 +646,15 @@ let app = new Vue({
 		},
 
 		onrefresh() {
-			let file = this.folderinfo;
-			this.gofolder(file);
+			ajaxjson("POST", "/api/purge", xhr => {
+				traceresponse(xhr);
+				if (xhr.status === 200) {
+					let file = this.folderinfo;
+					this.gofolder(file);
+				} else if (xhr.status === 403) { // Forbidden
+					this.isadmin = false;
+				}
+			});
 		},
 
 		onsettings() {

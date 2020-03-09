@@ -349,6 +349,14 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
+func purgeApi(w http.ResponseWriter, r *http.Request) {
+	propcache.Purge()
+	thumbcache.Purge()
+
+	WriteJson(w, http.StatusOK, nil)
+}
+
+// APIHANDLER
 func shrlstApi(w http.ResponseWriter, r *http.Request) {
 	shrmux.RLock()
 	var jb, _ = json.Marshal(shareslist)
