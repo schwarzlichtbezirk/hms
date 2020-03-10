@@ -80,7 +80,6 @@ const FTtoFV = {
 };
 
 const root = { name: "", path: "", size: 0, time: 0, type: FT.dir };
-const folderhist = [];
 
 const shareprefix = "/share/";
 
@@ -218,12 +217,13 @@ let app = new Vue({
 		loadcount: 0, // ajax working request count
 
 		// current opened folder data
-		subfldlist: [], // list of subfolders properties in current folder
+		pathlist: [], // list of subfolders properties in current folder
 		filelist: [], // list of files properties in current folder
-		folderinfo: root, // current folder properties
-		selected: null, // selected file properties
-		folderscan: new Date(), // time of last scanning of current folder
-		folderhistpos: 0, // position in history stack
+		curpath: root, // current folder properties
+		selfile: null, // selected file properties
+		curscan: new Date(), // time of last scanning of current folder
+		histpos: 0, // position in history stack
+		histlist: [], // history stack
 
 		// file viewers
 		viewer: null,
@@ -233,19 +233,19 @@ let app = new Vue({
 
 		// array of paths to current folder
 		folderpath() {
-			if (!this.folderinfo.name) {
+			if (!this.curpath.name) {
 				return [];
 			}
 
-			const arr = this.folderinfo.path.split('/');
+			const arr = this.curpath.path.split('/');
 			arr.pop(); // remove empty element from separator at the end
 			arr.pop(); // remove current name
 
-			const pathlist = [];
+			const lst = [];
 			let path = '';
 			for (const fn of arr) {
 				path += fn + '/';
-				pathlist.push({
+				lst.push({
 					name: fn,
 					path: path,
 					size: 0,
@@ -253,12 +253,12 @@ let app = new Vue({
 					type: FT.dir
 				});
 			}
-			return pathlist;
+			return lst;
 		},
 
 		// sorted subfolders list
 		sortedsubfld() {
-			return this.subfldlist.slice().sort((v1, v2) => {
+			return this.pathlist.slice().sort((v1, v2) => {
 				return v1.name.toLowerCase() > v2.name.toLowerCase() ? 1 : -1;
 			});
 		},
@@ -314,7 +314,7 @@ let app = new Vue({
 
 		foldershares() {
 			let shares = [];
-			let fldpath = this.folderinfo.path;
+			let fldpath = this.curpath.path;
 			for (let fp of this.shared) {
 				let shr = Object.assign({}, fp);
 				if (shr.path.length <= fldpath.length && fldpath.substr(0, shr.path.length) === shr.path) {
@@ -328,22 +328,22 @@ let app = new Vue({
 		// common buttons enablers
 
 		dishome() {
-			return !this.folderinfo.name;
+			return !this.curpath.name;
 		},
 		disback() {
-			return this.folderhistpos < 2;
+			return this.histpos < 2;
 		},
 		disforward() {
-			return this.folderhistpos > folderhist.length - 1;
+			return this.histpos > this.histlist.length - 1;
 		},
 		disparent() {
 			return !this.folderpath.length;
 		},
 		disshared() {
-			return !this.selected;
+			return !this.selfile;
 		},
 		clsshared() {
-			return { active: this.selected && this.selected.pref };
+			return { active: this.selfile && this.selfile.pref };
 		},
 
 		clsfolderlist() {
@@ -408,10 +408,10 @@ let app = new Vue({
 
 		// buttons hints
 		hintback() {
-			if (this.folderhistpos < 2) {
+			if (this.histpos < 2) {
 				return "go back";
 			} else {
-				let name = folderhist[this.folderhistpos - 2].name;
+				let name = this.histlist[this.histpos - 2].name;
 				if (!name) {
 					name = "root folder";
 				}
@@ -419,10 +419,10 @@ let app = new Vue({
 			}
 		},
 		hintforward() {
-			if (this.folderhistpos > folderhist.length - 1) {
+			if (this.histpos > this.histlist.length - 1) {
 				return "go forward";
 			} else {
-				let name = folderhist[this.folderhistpos].name;
+				let name = this.histlist[this.histpos].name;
 				if (!name) {
 					name = "root folder";
 				}
@@ -454,7 +454,7 @@ let app = new Vue({
 		},
 
 		isshowmp3() {
-			return this.selected && FTtoFV[this.selected.type] === FV.music;
+			return this.selfile && FTtoFV[this.selfile.type] === FV.music;
 		}
 	},
 	methods: {
@@ -468,17 +468,14 @@ let app = new Vue({
 			}), xhr => {
 				traceresponse(xhr);
 
-				this.subfldlist = [];
+				this.pathlist = [];
 				this.filelist = [];
-				this.folderinfo = file;
-
-				const scan = () => {
-				};
+				this.curpath = file;
 
 				if (xhr.status === 200) {
-					this.folderscan = new Date(Date.now());
+					this.curscan = new Date(Date.now());
 					// update folder settings
-					this.subfldlist = xhr.response.paths || [];
+					this.pathlist = xhr.response.paths || [];
 					this.filelist = xhr.response.files || [];
 				} else if (xhr.status === 403) { // Forbidden
 					this.isadmin = false;
@@ -506,7 +503,7 @@ let app = new Vue({
 										}
 									}
 								}
-								if (this.uncached.length && this.folderinfo === file) {
+								if (this.uncached.length && this.curpath === file) {
 									setTimeout(chktmb, 1500); // wait and run again
 								}
 							}
@@ -523,11 +520,11 @@ let app = new Vue({
 			this.gofolder(file);
 
 			// update folder history
-			if (this.folderhistpos < folderhist.length) {
-				folderhist.splice(this.folderhistpos, folderhist.length - this.folderhistpos);
+			if (this.histpos < this.histlist.length) {
+				this.histlist.splice(this.histpos, this.histlist.length - this.histpos);
 			}
-			folderhist.push(file);
-			this.folderhistpos = folderhist.length;
+			this.histlist.push(file);
+			this.histpos = this.histlist.length;
 		},
 
 		closeviewer() {
@@ -577,14 +574,14 @@ let app = new Vue({
 		},
 
 		onback() {
-			this.folderhistpos--;
-			const file = folderhist[this.folderhistpos - 1];
+			this.histpos--;
+			const file = this.histlist[this.histpos - 1];
 			this.gofolder(file);
 		},
 
 		onforward() {
-			this.folderhistpos++;
-			this.gofolder(folderhist[this.folderhistpos - 1]);
+			this.histpos++;
+			this.gofolder(this.histlist[this.histpos - 1]);
 		},
 
 		onparent() {
@@ -592,19 +589,19 @@ let app = new Vue({
 		},
 
 		onshare() {
-			if (!this.selected) {
+			if (!this.selfile) {
 				return;
 			}
-			if (!this.selected.pref) { // should add share
+			if (!this.selfile.pref) { // should add share
 				ajaxjson("PUT", "/api/share/add?" + $.param({
-					path: this.selected.path
+					path: this.selfile.path
 				}), xhr => {
 					traceresponse(xhr);
 					if (xhr.status === 200) {
 						let shr = xhr.response;
 						if (shr) {
 							// update folder settings
-							Vue.set(this.selected, 'pref', shr.pref);
+							Vue.set(this.selfile, 'pref', shr.pref);
 							this.shared.push(shr);
 						}
 					} else if (xhr.status === 403) { // Forbidden
@@ -612,13 +609,13 @@ let app = new Vue({
 					} else if (xhr.status === 404) { // Not Found
 						onerr404();
 						// clear folder history
-						folderhist.splice(0, folderhist.length);
-						this.folderhistpos = 0;
+						this.histlist.splice(0, this.histlist.length);
+						this.histpos = 0;
 					}
 				});
 			} else { // should remove share
 				ajaxjson("DELETE", "/api/share/del?" + $.param({
-					pref: this.selected.pref
+					pref: this.selfile.pref
 				}), xhr => {
 					traceresponse(xhr);
 					if (xhr.status === 200) {
@@ -626,20 +623,20 @@ let app = new Vue({
 						// update folder settings
 						if (ok) {
 							for (let i in this.shared) {
-								if (this.shared[i].pref === this.selected.pref) {
+								if (this.shared[i].pref === this.selfile.pref) {
 									this.shared.splice(i, 1);
 									break;
 								}
 							}
-							Vue.delete(this.selected, 'pref');
+							Vue.delete(this.selfile, 'pref');
 						}
 					} else if (xhr.status === 403) { // Forbidden
 						this.isadmin = false;
 					} else if (xhr.status === 404) { // Not Found
 						onerr404();
 						// clear folder history
-						folderhist.splice(0, folderhist.length);
-						this.folderhistpos = 0;
+						this.histlist.splice(0, this.histlist.length);
+						this.histpos = 0;
 					}
 				});
 			}
@@ -649,7 +646,7 @@ let app = new Vue({
 			ajaxjson("POST", "/api/purge", xhr => {
 				traceresponse(xhr);
 				if (xhr.status === 200) {
-					let file = this.folderinfo;
+					let file = this.curpath;
 					this.gofolder(file);
 				} else if (xhr.status === 403) { // Forbidden
 					this.isadmin = false;
@@ -670,13 +667,13 @@ let app = new Vue({
 		onsortmode() {
 			switch (this.filter.sortmode) {
 				case sortbyalpha:
-					this.filter.sortmode = sortbyalpha;
-					break;
-				case sortbysize:
 					this.filter.sortmode = sortbysize;
 					break;
-				case unsorted:
+				case sortbysize:
 					this.filter.sortmode = unsorted;
+					break;
+				case unsorted:
+					this.filter.sortmode = sortbyalpha;
 					break;
 			}
 		},
@@ -717,12 +714,12 @@ let app = new Vue({
 		},
 
 		ondelsel() {
-			this.selected = null;
+			this.selfile = null;
 			this.closeviewer();
 		},
 
 		onfilesel(file) {
-			this.selected = file;
+			this.selfile = file;
 
 			// Run viewer/player
 			switch (FTtoFV[file.type]) {

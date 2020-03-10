@@ -76,8 +76,8 @@ const (
 	EC_getlogbadnum = 11
 
 	// folder
-	EC_folderdeny   = 12
-	EC_folderabsent = 13
+	EC_folderdeny = 12
+	EC_folderfail = 13
 
 	// addshr
 	EC_addshrnopath  = 14

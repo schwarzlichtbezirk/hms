@@ -6,8 +6,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"image"
-	_ "image/gif"
-	_ "image/jpeg"
+	"image/gif"
+	"image/jpeg"
 	"image/png"
 	"io/ioutil"
 	"net/http"
@@ -33,8 +33,7 @@ var thumbrect = image.Rect(0, 0, thumbside, thumbside)
 var thumbcache = gcache.New(0).Simple().Build()
 
 var thumbfilter = gift.New(
-	gift.Resize(thumbside, 0, gift.NearestNeighborResampling),
-	gift.CropToSize(thumbside, thumbside, gift.CenterAnchor),
+	gift.ResizeToFit(thumbside, thumbside, gift.LinearResampling),
 )
 
 var thumbpngenc = png.Encoder{
@@ -43,8 +42,10 @@ var thumbpngenc = png.Encoder{
 
 // Thumbnails cache element.
 type Thumb struct {
-	Data []byte
-	Mime string
+	Data       []byte
+	Mime       string
+	OrgW, OrgH int
+	TmbW, TmbH int
 }
 
 // Data for "entchk" API handler.
@@ -61,29 +62,6 @@ type tmbscnArg struct {
 func ThumbName(fname string) string {
 	var h = md5.Sum([]byte(fname))
 	return hex.EncodeToString(h[:])
-}
-
-func ThumbImg(fname string) (img image.Image, ftype string, err error) {
-	var file *os.File
-	file, err = os.Open(fname)
-	if err != nil {
-		return
-	}
-	defer file.Close()
-
-	var src image.Image
-	src, ftype, err = image.Decode(file)
-	if err != nil {
-		return
-	}
-	if src.Bounds().In(thumbrect) {
-		img = src
-		return
-	}
-	var dst = image.NewRGBA(thumbfilter.Bounds(src.Bounds()))
-	thumbfilter.Draw(dst, src)
-	img = dst
-	return
 }
 
 func CacheImg(fp FileProper, force bool) (tmb *Thumb) {
@@ -118,28 +96,52 @@ func CacheImg(fp FileProper, force bool) (tmb *Thumb) {
 		return // file is too big
 	}
 
-	var img image.Image
-	if img, _, err = ThumbImg(fp.Path()); err != nil {
-		return // can not make thumbnail
+	var file *os.File
+	var ftype string
+	var src, dst image.Image
+	if file, err = os.Open(fp.Path()); err != nil {
+		return // can not open file
+	}
+	defer file.Close()
+
+	if src, ftype, err = image.Decode(file); err != nil {
+		return // can not decode file by any codec
+	}
+	if src.Bounds().In(thumbrect) {
+		dst = src
+	} else {
+		var img = image.NewRGBA(thumbfilter.Bounds(src.Bounds()))
+		thumbfilter.Draw(img, src)
+		dst = img
 	}
 
 	var buf bytes.Buffer
-	if err = thumbpngenc.Encode(&buf, img); err != nil {
-		return // can not write png
+	var mime string
+	switch ftype {
+	case "gif":
+		if err = gif.Encode(&buf, dst, nil); err != nil {
+			return // can not write gif
+		}
+		mime = "image/gif"
+	case "png":
+		if err = thumbpngenc.Encode(&buf, dst); err != nil {
+			return // can not write png
+		}
+		mime = "image/png"
+	default:
+		if err = jpeg.Encode(&buf, dst, &jpeg.Options{Quality: 80}); err != nil {
+			return // can not write jpeg
+		}
+		mime = "image/jpeg"
 	}
 	tmb = &Thumb{
 		Data: buf.Bytes(),
-		Mime: "image/png",
+		Mime: mime,
+		OrgW: src.Bounds().Dx(),
+		OrgH: src.Bounds().Dy(),
+		TmbW: dst.Bounds().Dx(),
+		TmbH: dst.Bounds().Dy(),
 	}
-	/*{
-		var f, err = os.Create("d:/temp/"+ktmb+".png")
-		if err != nil {
-			Log.Println(err.Error())
-			return
-		}
-		defer f.Close()
-		f.Write(buf.Bytes())
-	}*/
 	return // set valid thumbnail
 }
 
@@ -218,7 +220,13 @@ func tmbscnApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, fp := range arg.ITmbs {
-		CacheImg(fp, arg.Force)
+		var prop FileProper
+		if cp, err := propcache.Get(fp.Path()); err == nil {
+			prop = cp.(FileProper)
+		} else {
+			prop = fp
+		}
+		CacheImg(prop, arg.Force)
 	}
 
 	WriteJson(w, http.StatusOK, nil)

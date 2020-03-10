@@ -4,7 +4,7 @@
 		<nav aria-label="breadcrumb">
 			<ol class="breadcrumb">
 				<li v-for="file in folderpath" class="breadcrumb-item align-self-center"><a v-on:click="openfolder(file)" v-bind:title="file.path" href="javascript:void(0)">{{file.name}}</a></li>
-				<li class="breadcrumb-item align-self-center active" aria-current="page">{{folderinfo.name||'root folder'}}</li>
+				<li class="breadcrumb-item align-self-center active" aria-current="page">{{curpath.name||'root folder'}}</li>
 			</ol>
 		</nav>
 		<p v-for="shr in foldershares">
@@ -13,8 +13,8 @@
 		</p>
 		<p v-if="!foldershares.length">Folder does not shared</p>
 		<p class="small">
-			Total <span class="bg-stat">{{subfldlist.length}}</span> subfolders,
-			<span class="bg-stat">{{filelist.length}}</span> files on <span class="bg-stat">{{sumsize}}</span>, scanning time <span class="bg-stat">{{folderscan.toLocaleTimeString()}}</span>.
+			Total <span class="bg-stat">{{pathlist.length}}</span> subfolders,
+			<span class="bg-stat">{{filelist.length}}</span> files on <span class="bg-stat">{{sumsize}}</span>, scanning time <span class="bg-stat">{{curscan.toLocaleTimeString()}}</span>.
 		</p>
 	</div>
 
@@ -61,7 +61,7 @@
 			<div id="collapse-sub" class="collapse show">
 				<div class="card-body folder-list" v-bind:class="clsfolderlist" v-on:click="ondelsel">
 					<template v-for="file in sortedsubfld">
-						<file-icon-tag v-bind:file="file" v-bind:state="{selected:selected===file,playback:false}" v-on:select="onfilesel" v-on:run="onfilerun" />
+						<file-icon-tag v-bind:file="file" v-bind:state="{selected:selfile===file,playback:false}" v-on:select="onfilesel" v-on:run="onfilerun" />
 					</template>
 				</div>
 			</div>
@@ -74,7 +74,7 @@
 			<div id="collapse-files" class="collapse show">
 				<div class="card-body folder-list" v-bind:class="clsfolderlist" v-on:click="ondelsel">
 					<template v-for="file in playlist">
-						<component v-bind:is="iconmodetag" v-bind:file="file" v-bind:state="{selected:selected===file,playback:playbackfile===file}" v-on:select="onfilesel" v-on:run="onfilerun" />
+						<component v-bind:is="iconmodetag" v-bind:file="file" v-bind:state="{selected:selfile===file,playback:playbackfile===file}" v-on:select="onfilesel" v-on:run="onfilerun" />
 					</template>
 				</div>
 			</div>

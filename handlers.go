@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"path/filepath"
 	"runtime"
-	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -258,7 +257,6 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 
 	// get arguments
 	var path = r.FormValue("path")
-	var sval = r.FormValue("sort")
 
 	shrmux.RLock()
 	var shrlst = make([]FileProper, len(shareslist))
@@ -291,52 +289,8 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 	} else {
 		ret, err = readdir(path)
 		if err != nil {
-			WriteJson(w, http.StatusNotFound, &AjaxErr{err, EC_folderabsent})
+			WriteJson(w, http.StatusNotFound, &AjaxErr{err, EC_folderfail})
 			return
-		}
-		switch sval {
-		case "name":
-			sort.Slice(ret.Files, func(i, j int) bool {
-				var pi = ret.Files[i]
-				var pj = ret.Files[j]
-				if (pi.Type() == FT_dir) != (pj.Type() == FT_dir) {
-					return pi.Type() == FT_dir
-				} else {
-					return strings.ToLower(pi.Name()) < strings.ToLower(pj.Name())
-				}
-			})
-		case "type":
-			sort.Slice(ret.Files, func(i, j int) bool {
-				var pi = ret.Files[i]
-				var pj = ret.Files[j]
-				if pi.Type() != pj.Type() {
-					return pi.Type() < pj.Type()
-				} else {
-					return strings.ToLower(pi.Name()) < strings.ToLower(pj.Name())
-				}
-			})
-		case "size":
-			sort.Slice(ret.Files, func(i, j int) bool {
-				var pi = ret.Files[i]
-				var pj = ret.Files[j]
-				if (pi.Type() == FT_dir) != (pj.Type() == FT_dir) {
-					return pi.Type() < pj.Type()
-				} else {
-					if pi.Type() == FT_dir {
-						return strings.ToLower(pi.Name()) < strings.ToLower(pj.Name())
-					} else {
-						return pi.Size() < pj.Size()
-					}
-				}
-			})
-		}
-		// arrange folders by name on any case
-		if len(sval) > 0 {
-			sort.Slice(ret.Paths, func(i, j int) bool {
-				var pi = ret.Paths[i]
-				var pj = ret.Paths[j]
-				return strings.ToLower(pi.Name()) < strings.ToLower(pj.Name())
-			})
 		}
 	}
 	if len(path) > 0 {
