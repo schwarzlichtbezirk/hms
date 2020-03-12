@@ -41,22 +41,62 @@ var thumbpngenc = png.Encoder{
 }
 
 // Thumbnails cache element.
-type Thumb struct {
+type ThumbElem struct {
 	Data       []byte
 	Mime       string
 	OrgW, OrgH int
 	TmbW, TmbH int
 }
 
+// Thumbnails properties.
+type TmbProp struct {
+	KTmbVal string `json:"ktmb,omitempty"`
+	NTmbVal int    `json:"ntmb,omitempty"`
+}
+
+// Generates cache key as hash of path and updates cached state.
+func (tp *TmbProp) Setup(fpath string) {
+	tp.KTmbVal = ThumbName(fpath)
+	tp.UpdateTmb()
+}
+
+// Updates cached state for this cache key.
+func (tp *TmbProp) UpdateTmb() {
+	if tmb, err := thumbcache.Get(tp.KTmbVal); err == nil {
+		if tmb != nil {
+			tp.NTmbVal = TMB_cached
+		} else {
+			tp.NTmbVal = TMB_reject
+		}
+	} else {
+		tp.NTmbVal = TMB_none
+	}
+}
+
+// Thumbnail key, it's MD5-hash of full path.
+func (tp *TmbProp) KTmb() string {
+	return tp.KTmbVal
+}
+
+// Thumbnail state, -1 impossible, 0 undefined, 1 ready.
+func (tp *TmbProp) NTmb() int {
+	return tp.NTmbVal
+}
+
+// Updates thumbnail state to given value.
+func (tp *TmbProp) SetNTmb(v int) {
+	tp.NTmbVal = v
+}
+
 // Data for "entchk" API handler.
 type tmbchkArg struct {
-	ITmbs []*FileProp `json:"itmbs"`
+	Tmbs []*TmbProp `json:"tmbs"`
 }
 
 // Argument data for "tmbscn" API handler.
 type tmbscnArg struct {
-	ITmbs []*FileProp `json:"itmbs"`
-	Force bool        `json:"force"`
+	Paths []string `json:"paths"`
+	Force bool     `json:"force"`
 }
 
 func ThumbName(fname string) string {
@@ -64,7 +104,7 @@ func ThumbName(fname string) string {
 	return hex.EncodeToString(h[:])
 }
 
-func CacheImg(fp FileProper, force bool) (tmb *Thumb) {
+func CacheImg(fp FileProper, force bool) (tmb *ThumbElem) {
 	var err error
 	var ktmb = fp.KTmb()
 
@@ -72,7 +112,7 @@ func CacheImg(fp FileProper, force bool) (tmb *Thumb) {
 		var val interface{}
 		if val, err = thumbcache.Get(ktmb); err == nil {
 			if val != nil {
-				tmb = val.(*Thumb)
+				tmb = val.(*ThumbElem)
 			}
 			return // image already cached
 		}
@@ -134,7 +174,7 @@ func CacheImg(fp FileProper, force bool) (tmb *Thumb) {
 		}
 		mime = "image/jpeg"
 	}
-	tmb = &Thumb{
+	tmb = &ThumbElem{
 		Data: buf.Bytes(),
 		Mime: mime,
 		OrgW: src.Bounds().Dx(),
@@ -155,7 +195,7 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) {
 		WriteJson(w, http.StatusNotFound, &AjaxErr{err, EC_thumbabsent})
 		return
 	}
-	var tmb, ok = val.(*Thumb)
+	var tmb, ok = val.(*ThumbElem)
 	if !ok {
 		WriteJson(w, http.StatusNotFound, &AjaxErr{err, EC_thumbbadcnt})
 		return
@@ -175,7 +215,7 @@ func tmbchkApi(w http.ResponseWriter, r *http.Request) {
 			WriteError400(w, err, EC_tmbchkbadreq)
 			return
 		}
-		if len(arg.ITmbs) == 0 {
+		if len(arg.Tmbs) == 0 {
 			WriteError400(w, ErrNoData, EC_tmbchknodata)
 			return
 		}
@@ -184,16 +224,8 @@ func tmbchkApi(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for _, fp := range arg.ITmbs {
-		if tmb, err := thumbcache.Get(fp.KTmbVal); err == nil {
-			if tmb != nil {
-				fp.NTmbVal = TMB_cached
-			} else {
-				fp.NTmbVal = TMB_reject
-			}
-		} else {
-			fp.NTmbVal = TMB_none
-		}
+	for _, tp := range arg.Tmbs {
+		tp.UpdateTmb()
 	}
 
 	WriteJson(w, http.StatusOK, arg)
@@ -210,7 +242,7 @@ func tmbscnApi(w http.ResponseWriter, r *http.Request) {
 			WriteError400(w, err, EC_tmbscnbadreq)
 			return
 		}
-		if len(arg.ITmbs) == 0 {
+		if len(arg.Paths) == 0 {
 			WriteError400(w, ErrNoData, EC_tmbscnnodata)
 			return
 		}
@@ -219,15 +251,17 @@ func tmbscnApi(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for _, fp := range arg.ITmbs {
-		var prop FileProper
-		if cp, err := propcache.Get(fp.Path()); err == nil {
-			prop = cp.(FileProper)
-		} else {
-			prop = fp
+	go func() {
+		for _, fpath := range arg.Paths {
+			if cp, err := propcache.Get(fpath); err == nil { // extract from cache
+				var prop = cp.(FileProper)
+				CacheImg(prop, arg.Force)
+			} else if fi, err := FileStat(fpath); err == nil { // put into cache
+				var prop = MakeProp(fi, fpath)
+				CacheImg(prop, arg.Force)
+			}
 		}
-		CacheImg(prop, arg.Force)
-	}
+	}()
 
 	WriteJson(w, http.StatusOK, nil)
 }

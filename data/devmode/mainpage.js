@@ -483,21 +483,29 @@ let app = new Vue({
 
 				// cache folder thumnails
 				if (this.uncached.length) {
+					const paths = [];
+					for (const fp of this.uncached) {
+						paths.push(fp.path);
+					}
 					ajaxjson("POST", "/api/tmb/scn", xhr => { }, {
-						itmbs: this.uncached,
+						paths: paths,
 						force: false
 					}, true);
 					// check cached state loop
 					let chktmb;
 					chktmb = () => {
+						const tmbs = [];
+						for (const fp of this.uncached) {
+							tmbs.push({ ktmb: fp.ktmb });
+						}
 						ajaxjson("POST", "/api/tmb/chk", xhr => {
 							traceresponse(xhr);
 							if (xhr.status === 200) {
-								for (const itmb of xhr.response.itmbs) {
-									if (itmb.ntmb) {
+								for (const tp of xhr.response.tmbs) {
+									if (tp.ntmb) {
 										for (const file of this.filelist) {
-											if (file.ktmb === itmb.ktmb) {
-												Vue.set(file, 'ntmb', itmb.ntmb);
+											if (file.ktmb === tp.ktmb) {
+												Vue.set(file, 'ntmb', tp.ntmb);
 												break;
 											}
 										}
@@ -507,7 +515,7 @@ let app = new Vue({
 									setTimeout(chktmb, 1500); // wait and run again
 								}
 							}
-						}, { itmbs: this.uncached }, true);
+						}, { tmbs: tmbs }, true);
 					};
 					// gets thumbs
 					setTimeout(chktmb, 600);

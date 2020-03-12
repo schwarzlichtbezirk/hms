@@ -219,114 +219,100 @@ type FileProper interface {
 	SetNTmb(int)
 }
 
-// Common file properties.
-type FileProp struct {
+// Common file properties chunk.
+type StdProp struct {
 	NameVal string `json:"name,omitempty"`
 	PathVal string `json:"path,omitempty"`
 	SizeVal int64  `json:"size,omitempty"`
 	TimeVal int64  `json:"time,omitempty"`
 	TypeVal int    `json:"type,omitempty"`
 	PrefVal string `json:"pref,omitempty"`
-	KTmbVal string `json:"ktmb,omitempty"`
-	NTmbVal int    `json:"ntmb,omitempty"`
-}
-
-// File name with extension without path.
-func (fp *FileProp) Name() string {
-	return fp.NameVal
-}
-
-// Full path with name; folder ends with splash.
-func (fp *FileProp) Path() string {
-	return fp.PathVal
-}
-
-// File size in bytes.
-func (fp *FileProp) Size() int64 {
-	return fp.SizeVal
-}
-
-// File creation time in UNIX format, milliseconds.
-func (fp *FileProp) Time() int64 {
-	return fp.TimeVal
-}
-
-// Enumerated file type.
-func (fp *FileProp) Type() int {
-	return fp.TypeVal
-}
-
-// Share prefix.
-func (fp *FileProp) Pref() string {
-	return fp.PrefVal
-}
-
-// Thumbnail key, it's MD5-hash of full path.
-func (fp *FileProp) KTmb() string {
-	return fp.KTmbVal
-}
-
-// Thumbnail state, -1 impossible, 0 undefined, 1 ready.
-func (fp *FileProp) NTmb() int {
-	return fp.NTmbVal
-}
-
-// Sets new share prefix value.
-func (fp *FileProp) SetPref(pref string) {
-	fp.PrefVal = pref
-}
-
-// Updates thumbnail state to given value.
-func (fp *FileProp) SetNTmb(v int) {
-	fp.NTmbVal = v
 }
 
 // Fills fields from os.FileInfo structure. Do not looks for share.
-func (fp *FileProp) Setup(fi os.FileInfo, fpath string) {
+func (sp *StdProp) Setup(fi os.FileInfo, fpath string) {
 	var fname, size = fi.Name(), fi.Size()
-	var ktmb = ThumbName(fpath)
-	fp.NameVal = fname
-	fp.PathVal = fpath
-	fp.SizeVal = size
-	fp.TimeVal = UnixJS(fi.ModTime())
-	fp.KTmbVal = ktmb
-	if fi.IsDir() {
-		fp.TypeVal = FT_dir
-		fp.NTmbVal = TMB_reject
-	} else {
-		var ft = extset[strings.ToLower(filepath.Ext(fname))]
-		if (ft == FT_jpeg && size > PhotoJPEG) || (ft == FT_webp && size > PhotoWEBP) {
-			ft = FT_photo
-		}
-		fp.TypeVal = ft
-		if tmb, err := thumbcache.Get(ktmb); err == nil {
-			if tmb != nil {
-				fp.NTmbVal = TMB_cached
-			} else {
-				fp.NTmbVal = TMB_reject
-			}
-		} else {
-			fp.NTmbVal = TMB_none
-		}
+	var ft = extset[strings.ToLower(filepath.Ext(fname))]
+	if (ft == FT_jpeg && size > PhotoJPEG) || (ft == FT_webp && size > PhotoWEBP) {
+		ft = FT_photo
 	}
+
+	sp.NameVal = fname
+	sp.PathVal = fpath
+	sp.SizeVal = size
+	sp.TimeVal = UnixJS(fi.ModTime())
+	sp.TypeVal = ft
 }
 
-// Directory properties.
+// File name with extension without path.
+func (sp *StdProp) Name() string {
+	return sp.NameVal
+}
+
+// Full path with name; folder ends with splash.
+func (sp *StdProp) Path() string {
+	return sp.PathVal
+}
+
+// File size in bytes.
+func (sp *StdProp) Size() int64 {
+	return sp.SizeVal
+}
+
+// File creation time in UNIX format, milliseconds.
+func (sp *StdProp) Time() int64 {
+	return sp.TimeVal
+}
+
+// Enumerated file type.
+func (sp *StdProp) Type() int {
+	return sp.TypeVal
+}
+
+// Share prefix.
+func (sp *StdProp) Pref() string {
+	return sp.PrefVal
+}
+
+// Sets new share prefix value.
+func (sp *StdProp) SetPref(pref string) {
+	sp.PrefVal = pref
+}
+
+// Common files properties kit.
+type FileKit struct {
+	StdProp
+	TmbProp
+}
+
+// Calls nested structures setups.
+func (fk *FileKit) Setup(fi os.FileInfo, fpath string) {
+	fk.StdProp.Setup(fi, fpath)
+	fk.TmbProp.Setup(fpath)
+}
+
+// Directory properties chunk.
 type DirProp struct {
-	FileProp
 	// Directory scanning time in UNIX format, milliseconds.
 	Scan int64 `json:"scan"`
 	// Directory file groups counters.
 	FGrp [FG_num]int `json:"fgrp"`
 }
 
+// Directory properties kit.
+type DirKit struct {
+	StdProp
+	TmbProp
+	DirProp
+}
+
 // Fills fields with given path. Do not looks for share.
-func (dp *DirProp) Setup(fname, fpath string) {
-	dp.NameVal = fname
-	dp.PathVal = fpath
-	dp.TypeVal = FT_dir
-	dp.KTmbVal = ThumbName(fpath)
-	dp.NTmbVal = TMB_reject
+func (dk *DirKit) Setup(fname, fpath string) {
+	dk.NameVal = fname
+	dk.PathVal = fpath
+	dk.TypeVal = FT_dir
+	dk.KTmbVal = ThumbName(fpath)
+	dk.NTmbVal = TMB_reject
 }
 
 // Descriptor for discs and tracks.
@@ -335,9 +321,8 @@ type TagEnum struct {
 	Total  int `json:"total,omitempty"`
 }
 
-// Music file properties by file tags.
+// Music file tags properties chunk.
 type TagProp struct {
-	FileProp
 	Title    string  `json:"title,omitempty"`
 	Album    string  `json:"album,omitempty"`
 	Artist   string  `json:"artist,omitempty"`
@@ -350,21 +335,8 @@ type TagProp struct {
 	Comment  string  `json:"comment,omitempty"`
 }
 
-// Fills fields with given path. Do not looks for share.
-func (tp *TagProp) Setup(fi os.FileInfo, fpath string) (err error) {
-	tp.FileProp.Setup(fi, fpath)
-
-	var file *os.File
-	if file, err = os.Open(fpath); err != nil {
-		return err
-	}
-	defer file.Close()
-
-	var m tag.Metadata
-	if m, err = tag.ReadFrom(file); err != nil {
-		return err
-	}
-
+// Fills fields from tags metadata.
+func (tp *TagProp) Setup(m tag.Metadata) {
 	tp.Title = m.Title()
 	tp.Album = m.Album()
 	tp.Artist = m.Artist()
@@ -375,17 +347,37 @@ func (tp *TagProp) Setup(fi os.FileInfo, fpath string) (err error) {
 	tp.Disc.Number, tp.Disc.Total = m.Disc()
 	tp.Lyrics = m.Lyrics()
 	tp.Comment = m.Comment()
+}
 
-	var pic = m.Picture()
-	if pic != nil {
-		tp.SetNTmb(TMB_cached)
-		thumbcache.Set(tp.KTmbVal, &Thumb{
-			Data: pic.Data,
-			Mime: pic.MIMEType,
-		})
+// Music file tags properties kit.
+type TagKit struct {
+	StdProp
+	TmbProp
+	TagProp
+}
+
+// Fills fields with given path.
+// Puts into the cache nested at the tags thumbnail if it present.
+func (tk *TagKit) Setup(fi os.FileInfo, fpath string) {
+	tk.StdProp.Setup(fi, fpath)
+
+	if file, err := os.Open(fpath); err == nil {
+		defer file.Close()
+		if m, err := tag.ReadFrom(file); err == nil {
+			tk.TagProp.Setup(m)
+			var pic = m.Picture()
+			if pic != nil {
+				tk.KTmbVal = ThumbName(fpath)
+				thumbcache.Set(tk.KTmbVal, &ThumbElem{
+					Data: pic.Data,
+					Mime: pic.MIMEType,
+				})
+				tk.NTmbVal = TMB_cached
+				return
+			}
+		}
 	}
-
-	return
+	tk.TmbProp.Setup(fpath)
 }
 
 // Returns os.FileInfo for given full file name.
@@ -408,20 +400,20 @@ func MakeProp(fi os.FileInfo, fpath string) (prop FileProper) {
 
 	if fi.IsDir() {
 		var _, fname = path.Split(fpath[:len(fpath)-1])
-		var dp DirProp
-		dp.Setup(fname, fpath)
+		var dk DirKit
+		dk.Setup(fname, fpath)
 
-		prop = &dp
+		prop = &dk
 	} else {
 		var ft = extset[strings.ToLower(filepath.Ext(fpath))]
 		if ft == FT_flac || ft == FT_mp3 || ft == FT_ogg || ft == FT_mp4 {
-			var tp TagProp
-			tp.Setup(fi, fpath)
-			prop = &tp
+			var tk TagKit
+			tk.Setup(fi, fpath)
+			prop = &tk
 		} else {
-			var fp FileProp
-			fp.Setup(fi, fpath)
-			prop = &fp
+			var fk FileKit
+			fk.Setup(fi, fpath)
+			prop = &fk
 		}
 	}
 
@@ -526,13 +518,13 @@ func DelSharePath(path string) bool {
 
 // Returned data for "getdrv", "folder" API handlers.
 type folderRet struct {
-	Paths []*DirProp   `json:"paths"`
+	Paths []*DirKit    `json:"paths"`
 	Files []FileProper `json:"files"`
 }
 
 func (fr *folderRet) AddProp(prop FileProper) {
-	if dp, ok := prop.(*DirProp); ok {
-		fr.Paths = append(fr.Paths, dp)
+	if dk, ok := prop.(*DirKit); ok {
+		fr.Paths = append(fr.Paths, dk)
 	} else {
 		fr.Files = append(fr.Files, prop)
 	}
@@ -551,14 +543,14 @@ func makerandstr(n int) string {
 }
 
 // Scan all available drives installed on local machine.
-func getdrives() (drvs []*DirProp) {
+func getdrives() (drvs []*DirKit) {
 	for _, drive := range "ABCDEFGHIJKLMNOPQRSTUVWXYZ" {
 		var fname = string(drive) + ":"
 		var fpath = fname + "/"
 		if fi, err := FileStat(fpath); err == nil {
-			if dp, ok := MakeProp(fi, fpath).(*DirProp); ok {
-				dp.NameVal = fname
-				drvs = append(drvs, dp)
+			if dk, ok := MakeProp(fi, fpath).(*DirKit); ok {
+				dk.NameVal = fname
+				drvs = append(drvs, dk)
 			}
 		}
 	}
@@ -612,9 +604,9 @@ scanprop:
 		ret.AddProp(prop)
 	}
 
-	if dp, ok := MakeProp(fi, dirname).(*DirProp); ok {
-		dp.Scan = UnixJSNow()
-		dp.FGrp = fgrp
+	if dk, ok := MakeProp(fi, dirname).(*DirKit); ok {
+		dk.Scan = UnixJSNow()
+		dk.FGrp = fgrp
 	}
 
 	return
