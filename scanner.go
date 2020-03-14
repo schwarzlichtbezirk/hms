@@ -1,6 +1,7 @@
 package hms
 
 import (
+	"encoding/json"
 	"os"
 	"path"
 	"path/filepath"
@@ -244,6 +245,11 @@ func (sp *StdProp) Setup(fi os.FileInfo, fpath string) {
 	sp.TypeVal = ft
 }
 
+func (sp *StdProp) String() string {
+	var jb, _ = json.Marshal(sp)
+	return string(jb)
+}
+
 // File name with extension without path.
 func (sp *StdProp) Name() string {
 	return sp.NameVal
@@ -299,6 +305,11 @@ type DirProp struct {
 	FGrp [FG_num]int `json:"fgrp"`
 }
 
+func (dp *DirProp) String() string {
+	var jb, _ = json.Marshal(dp)
+	return string(jb)
+}
+
 // Directory properties kit.
 type DirKit struct {
 	StdProp
@@ -347,6 +358,11 @@ func (tp *TagProp) Setup(m tag.Metadata) {
 	tp.Disc.Number, tp.Disc.Total = m.Disc()
 	tp.Lyrics = m.Lyrics()
 	tp.Comment = m.Comment()
+}
+
+func (tp *TagProp) String() string {
+	var jb, _ = json.Marshal(tp)
+	return string(jb)
 }
 
 // Music file tags properties kit.
@@ -410,6 +426,10 @@ func MakeProp(fi os.FileInfo, fpath string) (prop FileProper) {
 			var tk TagKit
 			tk.Setup(fi, fpath)
 			prop = &tk
+		} else if ft == FT_photo || ft == FT_jpeg {
+			var ek ExifKit
+			ek.Setup(fi, fpath)
+			prop = &ek
 		} else {
 			var fk FileKit
 			fk.Setup(fi, fpath)

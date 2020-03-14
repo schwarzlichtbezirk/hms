@@ -60,6 +60,11 @@ func (tp *TmbProp) Setup(fpath string) {
 	tp.UpdateTmb()
 }
 
+func (tp *TmbProp) String() string {
+	var jb, _ = json.Marshal(tp)
+	return string(jb)
+}
+
 // Updates cached state for this cache key.
 func (tp *TmbProp) UpdateTmb() {
 	if tmb, err := thumbcache.Get(tp.KTmbVal); err == nil {

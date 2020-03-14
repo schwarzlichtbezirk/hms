@@ -268,6 +268,9 @@ func Init() {
 
 	// run meters updater
 	meterscanner = time.AfterFunc(time.Second, meterupdater)
+
+	// EXIF parsers
+	exifparsers()
 }
 
 // Launch server listeners.
