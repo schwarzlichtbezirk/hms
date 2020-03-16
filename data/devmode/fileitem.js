@@ -110,14 +110,17 @@ const filehint = file => {
 	if (file.exposuretime) {
 		lst.push(`exposure time: ${file.exposuretime} sec`);
 	}
+	if (file.fnumber) {
+		lst.push(`F-number: f/${file.fnumber}`);
+	}
 	if (file.isospeed) {
 		lst.push(`ISO speed: ISO-${file.isospeed}`);
 	}
 	if (file.shutterspeed) {
 		lst.push(`shutter speed: ${file.shutterspeed}`);
 	}
-	if (file.fnumber) {
-		lst.push(`lens aperture: f/${file.fnumber}`);
+	if (file.aperture) {
+		lst.push(`lens aperture: ${file.aperture}`);
 	}
 	if (file.exposurebias) {
 		lst.push(`exposure bias: ${file.exposurebias}`);
@@ -226,7 +229,7 @@ const filehint = file => {
 	if (file.uniqueid) {
 		lst.push(`unique ID: ${file.uniqueid}`);
 	}
-	return lst.join('\n');
+	return lst;
 };
 
 Vue.component('file-icon-tag', {
@@ -234,7 +237,7 @@ Vue.component('file-icon-tag', {
 	props: ["file", "state"],
 	computed: {
 		fmttitle() {
-			return filehint(this.file);
+			return filehint(this.file).join('\n');
 		},
 
 		webpicon() {
@@ -270,7 +273,7 @@ Vue.component('img-icon-tag', {
 	props: ["file", "state"],
 	computed: {
 		fmttitle() {
-			return filehint(this.file);
+			return filehint(this.file).join('\n');
 		},
 
 		webpicon() {

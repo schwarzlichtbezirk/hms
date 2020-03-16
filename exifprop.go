@@ -39,6 +39,14 @@ type ExifProp struct {
 	Satelites string  `json:"satelites,omitempty"`
 }
 
+func ratfloat(t *tiff.Tag) float64 {
+	var numer, denom, _ = t.Rat2(0)
+	if denom != 0 {
+		return float64(numer) / float64(denom)
+	}
+	return 0
+}
+
 // Fills fields from given EXIF structure.
 func (ep *ExifProp) Setup(x *exif.Exif) {
 	var err error
@@ -70,37 +78,31 @@ func (ep *ExifProp) Setup(x *exif.Exif) {
 		ep.ExposureProg, _ = t.Int(0)
 	}
 	if t, err = x.Get(exif.FNumber); err == nil {
-		var numer, denom, _ = t.Rat2(0)
-		ep.FNumber = float64(numer) / float64(denom)
+		ep.FNumber = ratfloat(t)
 	}
 	if t, err = x.Get(exif.ISOSpeedRatings); err == nil {
 		ep.ISOSpeed, _ = t.Int(0)
 	}
 	if t, err = x.Get(exif.ShutterSpeedValue); err == nil {
-		var numer, denom, _ = t.Rat2(0)
-		ep.ShutterSpeed = float64(numer) / float64(denom)
+		ep.ShutterSpeed = ratfloat(t)
 	}
 	if t, err = x.Get(exif.ApertureValue); err == nil {
-		var numer, denom, _ = t.Rat2(0)
-		ep.Aperture = float64(numer) / float64(denom)
+		ep.Aperture = ratfloat(t)
 	}
 	if t, err = x.Get(exif.ExposureBiasValue); err == nil {
-		var numer, denom, _ = t.Rat2(0)
-		ep.ExposureBias = float64(numer) / float64(denom)
+		ep.ExposureBias = ratfloat(t)
 	}
 	if t, err = x.Get(exif.LightSource); err == nil {
 		ep.LightSource, _ = t.Int(0)
 	}
 	if t, err = x.Get(exif.FocalLength); err == nil {
-		var numer, denom, _ = t.Rat2(0)
-		ep.Focal = float64(numer) / float64(denom)
+		ep.Focal = ratfloat(t)
 	}
 	if t, err = x.Get(exif.FocalLengthIn35mmFilm); err == nil {
 		ep.Focal35mm, _ = t.Int(0)
 	}
 	if t, err = x.Get(exif.DigitalZoomRatio); err == nil {
-		var numer, denom, _ = t.Rat2(0)
-		ep.DigitalZoom = float64(numer) / float64(denom)
+		ep.DigitalZoom = ratfloat(t)
 	}
 	if t, err = x.Get(exif.ImageLength); err == nil {
 		ep.Height, _ = t.Int(0)
@@ -115,8 +117,7 @@ func (ep *ExifProp) Setup(x *exif.Exif) {
 		ep.Latitude, ep.Longitude = lat, lng
 	}
 	if t, err = x.Get(exif.GPSAltitude); err == nil {
-		var numer, denom, _ = t.Rat2(0)
-		ep.Altitude = float64(numer) / float64(denom)
+		ep.Altitude = ratfloat(t)
 		if t, err = x.Get(exif.GPSAltitudeRef); err == nil {
 			var ref, _ = t.Int(0)
 			if ref == 1 {

@@ -225,6 +225,10 @@ let app = new Vue({
 		histpos: 0, // position in history stack
 		histlist: [], // history stack
 
+		// map data
+		map: null, // set it on mounted event
+		markers: null,
+
 		// file viewers
 		viewer: null,
 		playbackfile: null
@@ -257,21 +261,10 @@ let app = new Vue({
 		},
 
 		// sorted subfolders list
-		sortedsubfld() {
+		sortedpathlist() {
 			return this.pathlist.slice().sort((v1, v2) => {
 				return v1.name.toLowerCase() > v2.name.toLowerCase() ? 1 : -1;
 			});
-		},
-
-		// not cached files
-		uncached() {
-			const lst = [];
-			for (const file of this.filelist) {
-				if (!file.ntmb) {
-					lst.push(file);
-				}
-			}
-			return lst;
 		},
 
 		// display filtered sorted playlist
@@ -301,6 +294,28 @@ let app = new Vue({
 			return res;
 		},
 
+		// file list with GPS tags
+		gpslist() {
+			const lst = [];
+			for (const file of this.filelist) {
+				if (file.latitude && file.longitude) {
+					lst.push(file);
+				}
+			}
+			return lst;
+		},
+
+		// not cached files
+		uncached() {
+			const lst = [];
+			for (const file of this.filelist) {
+				if (!file.ntmb) {
+					lst.push(file);
+				}
+			}
+			return lst;
+		},
+
 		// files sum size
 		sumsize() {
 			let ss = 0;
@@ -311,7 +326,6 @@ let app = new Vue({
 		},
 
 		// get all folder shares
-
 		foldershares() {
 			let shares = [];
 			let fldpath = this.curpath.path;
@@ -477,6 +491,14 @@ let app = new Vue({
 					// update folder settings
 					this.pathlist = xhr.response.paths || [];
 					this.filelist = xhr.response.files || [];
+					// show/hide map card
+					if (this.gpslist.length > 0) {
+						this.updatemarkers();
+						$('#mapcard').show();
+						this.map.invalidateSize();
+					} else {
+						$('#mapcard').hide();
+					}
 				} else if (xhr.status === 403) { // Forbidden
 					this.isadmin = false;
 				}
@@ -575,6 +597,42 @@ let app = new Vue({
 				default:
 					return this.filter.other;
 			}
+		},
+
+		// setup markers on map, remove previous
+		updatemarkers() {
+			const markers = L.markerClusterGroup();
+			for (const file of this.gpslist) {
+				const props = filehint(file);
+				L.marker([file.latitude, file.longitude], {
+					title: file.name
+				})
+					.addTo(markers)
+					.bindPopup(`
+<div>
+	<ul class="nav nav-tabs" role="tablist">
+		<li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#pict">Thumbnail</a></li>
+		<li class="nav-item"><a class="nav-link" data-toggle="tab" href="#prop">Properties</a></li>
+	</ul>
+	<div class="tab-content">
+		<div class="tab-pane active" id="pict"><img class="rounded mapthumb" src="${'/thumb/' + file.ktmb}" alt="${file.name}"></div>
+		<div class="tab-pane fade" id="prop"><ul class="mapprop"><li>${props.join("</li><li>")}</li></ul></div>
+	</div>
+</div>
+`);
+			}
+
+			this.map.flyToBounds(markers.getBounds(), {
+				padding: [20, 20]
+			});
+
+			// remove previous set
+			if (this.markers) {
+				this.map.removeLayer(this.markers);
+			}
+			// add new set
+			this.map.addLayer(markers);
+			this.markers = markers;
 		},
 
 		onhome() {
@@ -762,6 +820,20 @@ let app = new Vue({
 		onplayback(file, playback) {
 			this.playbackfile = playback && file;
 		}
+	},
+	mounted() {
+		const tiles = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.jpg?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {
+			attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/" target="_blank">OpenStreetMap</a> contributors, ' +
+				'Imagery &copy <a href="https://www.mapbox.com/" target="_blank">Mapbox</a>',
+			minZoom: 2,
+			id: 'mapbox.streets-satellite'
+		});
+
+		this.map = L.map(this.$refs.map, {
+			center: [0, 0],
+			zoom: 8,
+			layers: [tiles]
+		});
 	}
 });
 

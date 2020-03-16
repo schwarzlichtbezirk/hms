@@ -60,7 +60,7 @@
 			</div>
 			<div id="collapse-sub" class="collapse show">
 				<div class="card-body folder-list" v-bind:class="clsfolderlist" v-on:click="ondelsel">
-					<template v-for="file in sortedsubfld">
+					<template v-for="file in sortedpathlist">
 						<file-icon-tag v-bind:file="file" v-bind:state="{selected:selfile===file,playback:false}" v-on:select="onfilesel" v-on:run="onfilerun" />
 					</template>
 				</div>
@@ -76,6 +76,17 @@
 					<template v-for="file in playlist">
 						<component v-bind:is="iconmodetag" v-bind:file="file" v-bind:state="{selected:selfile===file,playback:playbackfile===file}" v-on:select="onfilesel" v-on:run="onfilerun" />
 					</template>
+				</div>
+			</div>
+		</div>
+
+		<div class="card collapse" id="mapcard">
+			<div class="card-header">
+				<a class="card-link d-flex w-100" data-toggle="collapse" href="#collapse-map">map</a>
+			</div>
+			<div id="collapse-map" class="collapse show">
+				<div class="card-body">
+					<div ref="map" class="photomap"></div>
 				</div>
 			</div>
 		</div>
