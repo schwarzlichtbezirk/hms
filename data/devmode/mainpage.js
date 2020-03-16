@@ -603,23 +603,11 @@ let app = new Vue({
 		updatemarkers() {
 			const markers = L.markerClusterGroup();
 			for (const file of this.gpslist) {
-				const props = filehint(file);
 				L.marker([file.latitude, file.longitude], {
 					title: file.name
 				})
 					.addTo(markers)
-					.bindPopup(`
-<div>
-	<ul class="nav nav-tabs" role="tablist">
-		<li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#pict">Thumbnail</a></li>
-		<li class="nav-item"><a class="nav-link" data-toggle="tab" href="#prop">Properties</a></li>
-	</ul>
-	<div class="tab-content">
-		<div class="tab-pane active" id="pict"><img class="rounded mapthumb" src="${'/thumb/' + file.ktmb}" alt="${file.name}"></div>
-		<div class="tab-pane fade" id="prop"><ul class="mapprop"><li>${props.join("</li><li>")}</li></ul></div>
-	</div>
-</div>
-`);
+					.bindPopup(makemarkercontent(file));
 			}
 
 			this.map.flyToBounds(markers.getBounds(), {

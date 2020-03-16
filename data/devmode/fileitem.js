@@ -1,5 +1,27 @@
 "use strict";
 
+const makemarkercontent = file => `
+<div class="photoinfo">
+	<ul class="nav nav-tabs" role="tablist">
+		<li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#pict">Thumbnail</a></li>
+		<li class="nav-item"><a class="nav-link" data-toggle="tab" href="#prop">Properties</a></li>
+	</ul>
+	<div class="tab-content">
+		<div class="tab-pane active" id="pict">
+			<img class="rounded thumb" src="${'/thumb/' + file.ktmb}" alt="${file.name}">
+			<div class="d-flex flex-wrap latlng">
+				<div><div class="name">lat:</div> <div class="value">${file.latitude.toFixed(6)}</div></div>
+				<div><div class="name">lng:</div> <div class="value">${file.longitude.toFixed(6)}</div></div>
+				<div><div class="name">alt:</div> <div class="value">${file.altitude || "N/A"}</div></div>
+			</div>
+		</div>
+		<div class="tab-pane fade" id="prop">
+			<ul class="prop p-0 m-0"><li>${filehint(file).join("</li><li>")}</li></ul>
+		</div>
+	</div>
+</div>
+`;
+
 const filehint = file => {
 	const lst = [];
 	lst.push(file.name);
