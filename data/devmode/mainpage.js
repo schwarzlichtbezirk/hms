@@ -493,11 +493,10 @@ let app = new Vue({
 					this.filelist = xhr.response.files || [];
 					// show/hide map card
 					if (this.gpslist.length > 0) {
-						this.updatemarkers();
-						$('#mapcard').show();
-						this.map.invalidateSize();
-					} else {
-						$('#mapcard').hide();
+						Vue.nextTick(() => {
+							this.updatemarkers();
+							this.map.invalidateSize();
+						});
 					}
 				} else if (xhr.status === 403) { // Forbidden
 					this.isadmin = false;
@@ -706,12 +705,6 @@ let app = new Vue({
 					this.isadmin = false;
 				}
 			});
-		},
-
-		onsettings() {
-		},
-
-		onstatistics() {
 		},
 
 		onorder() {
