@@ -225,10 +225,6 @@ let app = new Vue({
 		histpos: 0, // position in history stack
 		histlist: [], // history stack
 
-		// map data
-		map: null, // set it on mounted event
-		markers: null,
-
 		// file viewers
 		viewer: null,
 		playbackfile: null
@@ -491,13 +487,6 @@ let app = new Vue({
 					// update folder settings
 					this.pathlist = xhr.response.paths || [];
 					this.filelist = xhr.response.files || [];
-					// show/hide map card
-					if (this.gpslist.length > 0) {
-						Vue.nextTick(() => {
-							this.updatemarkers();
-							this.map.invalidateSize();
-						});
-					}
 				} else if (xhr.status === 403) { // Forbidden
 					this.isadmin = false;
 				}
@@ -596,30 +585,6 @@ let app = new Vue({
 				default:
 					return this.filter.other;
 			}
-		},
-
-		// setup markers on map, remove previous
-		updatemarkers() {
-			const markers = L.markerClusterGroup();
-			for (const file of this.gpslist) {
-				L.marker([file.latitude, file.longitude], {
-					title: file.name
-				})
-					.addTo(markers)
-					.bindPopup(makemarkercontent(file));
-			}
-
-			this.map.flyToBounds(markers.getBounds(), {
-				padding: [20, 20]
-			});
-
-			// remove previous set
-			if (this.markers) {
-				this.map.removeLayer(this.markers);
-			}
-			// add new set
-			this.map.addLayer(markers);
-			this.markers = markers;
 		},
 
 		onhome() {
@@ -801,20 +766,6 @@ let app = new Vue({
 		onplayback(file, playback) {
 			this.playbackfile = playback && file;
 		}
-	},
-	mounted() {
-		const tiles = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.jpg?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {
-			attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/" target="_blank">OpenStreetMap</a> contributors, ' +
-				'Imagery &copy <a href="https://www.mapbox.com/" target="_blank">Mapbox</a>',
-			minZoom: 2,
-			id: 'mapbox.streets-satellite'
-		});
-
-		this.map = L.map(this.$refs.map, {
-			center: [0, 0],
-			zoom: 8,
-			layers: [tiles]
-		});
 	}
 });
 

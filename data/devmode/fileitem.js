@@ -326,19 +326,4 @@ Vue.component('img-icon-tag', {
 	}
 });
 
-// <file-page-tag v-bind:list="playlist">files</file-page-tag>
-Vue.component('file-page-tag', {
-	template: '#file-page-tpl',
-	props: ["list"],
-	data: function () {
-		return {
-			iid: makestrid(10) // instance ID
-		};
-	},
-	computed: {
-	},
-	methods: {
-	}
-});
-
 // The End.

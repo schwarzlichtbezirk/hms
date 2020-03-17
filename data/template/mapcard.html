@@ -1,0 +1,13 @@
+
+<div v-show="isvisible" class="card">
+	<div class="card-header d-flex flex-wrap navbar-dark">
+		<div class="navbar-text flex-grow-1 py-0">
+			<a class="card-link d-block" data-toggle="collapse" v-bind:href="'#card'+iid">map</a>
+		</div>
+	</div>
+	<div v-bind:id="'card'+iid" class="collapse show">
+		<div class="card-body">
+			<div ref="map" class="photomap"></div>
+		</div>
+	</div>
+</div>
