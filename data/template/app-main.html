@@ -35,7 +35,7 @@
 				<ul class="navbar-nav flex-row">
 					<li><button class="btn nav-link" v-on:click="onorder" v-bind:title="hintorder"><i class="material-icons">{{clsorder}}</i></button></li>
 					<li><button class="btn nav-link" v-on:click="onsortmode" v-bind:title="hintsortmode"><i class="material-icons">{{clssortmode}}</i></button></li>
-					<li><button class="btn nav-link" v-on:click="onlist" v-bind:title="hintlist"><i class="material-icons">{{clslistmode}}</i></button></li>
+					<li><button class="btn nav-link" v-on:click="onlistmode" v-bind:title="hintlist"><i class="material-icons">{{clslistmode}}</i></button></li>
 				</ul>
 			</div>
 		</div>
@@ -43,20 +43,7 @@
 
 	<div id="accordion">
 		<template>
-			<div v-show="sortedpathlist.length" class="card">
-				<div class="card-header d-flex flex-wrap navbar-dark">
-					<div class="navbar-text flex-grow-1 py-0">
-						<a class="card-link d-block" data-toggle="collapse" href="#collapse-sub">subfolders</a>
-					</div>
-				</div>
-				<div id="collapse-sub" class="collapse show">
-					<div class="card-body folder-list" v-bind:class="clsfolderlist" v-on:click="ondelsel">
-						<template v-for="file in sortedpathlist">
-							<file-icon-tag v-bind:file="file" v-bind:state="{selected:selfile===file,playback:false}" v-on:select="onfilesel" v-on:run="onfilerun" />
-						</template>
-					</div>
-				</div>
-			</div>
+			<dir-card-tag v-bind:list="pathlist" v-on:select="onpathselect" v-on:open="onpathopen" />
 		</template>
 
 		<template>
@@ -75,9 +62,9 @@
 					</ul>
 				</div>
 				<div id="collapse-files" class="collapse show">
-					<div class="card-body folder-list" v-bind:class="clsfolderlist" v-on:click="ondelsel">
+					<div class="card-body folder-list" v-bind:class="clsfilelist" v-on:click="onunselect">
 						<template v-for="file in playlist">
-							<component v-bind:is="iconmodetag" v-bind:file="file" v-bind:state="{selected:selfile===file,playback:playbackfile===file}" v-on:select="onfilesel" v-on:run="onfilerun" />
+							<component v-bind:is="iconmodetag" v-bind:file="file" v-bind:state="{selected:selfile===file,playback:playbackfile===file}" v-on:select="onfileselect" v-on:open="onfileopen" />
 						</template>
 					</div>
 				</div>
@@ -96,7 +83,7 @@
 
 	<nav class="footer bg-dark navbar-dark fixed-bottom">
 		<template>
-			<mp3-player-tag ref="mp3player" v-show="isshowmp3" v-bind:playlist="playlist" v-on:select="onfilesel" v-on:playback="onplayback" />
+			<mp3-player-tag ref="mp3player" v-show="isshowmp3" v-bind:playlist="playlist" v-on:select="onfileselect" v-on:playback="onplayback" />
 		</template>
 	</nav>
 

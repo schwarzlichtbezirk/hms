@@ -256,13 +256,6 @@ let app = new Vue({
 			return lst;
 		},
 
-		// sorted subfolders list
-		sortedpathlist() {
-			return this.pathlist.slice().sort((v1, v2) => {
-				return v1.name.toLowerCase() > v2.name.toLowerCase() ? 1 : -1;
-			});
-		},
-
 		// display filtered sorted playlist
 		playlist() {
 			const res = [];
@@ -356,7 +349,7 @@ let app = new Vue({
 			return { active: this.selfile && this.selfile.pref };
 		},
 
-		clsfolderlist() {
+		clsfilelist() {
 			switch (this.listmode) {
 				case "lgicon":
 					return 'align-items-center';
@@ -471,7 +464,7 @@ let app = new Vue({
 		// opens given folder cleary
 		gofolder(file) {
 			// remove selected state before request for any result
-			this.ondelsel();
+			this.onunselect();
 
 			ajaxjson("GET", "/api/folder?" + $.param({
 				path: file.path
@@ -690,7 +683,7 @@ let app = new Vue({
 			}
 		},
 
-		onlist() {
+		onlistmode() {
 			switch (this.listmode) {
 				case "lgicon":
 					this.listmode = 'mdicon';
@@ -725,12 +718,15 @@ let app = new Vue({
 			this.filter.other = !this.filter.other;
 		},
 
-		ondelsel() {
+		onunselect() {
 			this.selfile = null;
 			this.closeviewer();
 		},
 
-		onfilesel(file) {
+		onpathselect(file) {
+		},
+
+		onfileselect(file) {
 			this.selfile = file;
 
 			// Run viewer/player
@@ -754,13 +750,13 @@ let app = new Vue({
 			}
 		},
 
-		onfilerun(file) {
-			if (file.type === FT.dir) {
-				this.openfolder(file);
-			} else if (file.type !== FT.file) {
-				let url = getfileurl(file);
-				window.open(url, file.name);
-			}
+		onpathopen(file) {
+			this.openfolder(file);
+		},
+
+		onfileopen(file) {
+			let url = getfileurl(file);
+			window.open(url, file.name);
 		},
 
 		onplayback(file, playback) {

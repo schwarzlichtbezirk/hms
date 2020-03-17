@@ -284,8 +284,8 @@ Vue.component('file-icon-tag', {
 			this.$emit('select', this.file);
 		},
 
-		onrun() {
-			this.$emit('run', this.file);
+		onopen() {
+			this.$emit('open', this.file);
 		}
 	}
 });
@@ -320,8 +320,8 @@ Vue.component('img-icon-tag', {
 			this.$emit('select', this.file);
 		},
 
-		onrun() {
-			this.$emit('run', this.file);
+		onopen() {
+			this.$emit('open', this.file);
 		}
 	}
 });

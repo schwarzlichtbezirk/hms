@@ -1,5 +1,105 @@
 "use strict";
 
+Vue.component('dir-card-tag', {
+	template: '#dir-card-tpl',
+	props: ["list"],
+	data: function () {
+		return {
+			selfile: null, // current selected item
+			order: 1,
+			listmode: "mdicon",
+			iid: makestrid(10) // instance ID
+		};
+	},
+	computed: {
+		isvisible() {
+			this.selfile = null;
+			if (this.list.length > 0) {
+				return true;
+			}
+			return false;
+		},
+		// sorted subfolders list
+		sortedlist() {
+			return this.list.slice().sort((v1, v2) => {
+				return this.order*(v1.name.toLowerCase() > v2.name.toLowerCase() ? 1 : -1);
+			});
+		},
+
+		clsfilelist() {
+			switch (this.listmode) {
+				case "lgicon":
+					return 'align-items-center';
+				case "mdicon":
+					return 'align-items-start';
+			}
+		},
+
+		clsorder() {
+			return this.order > 0
+				? 'arrow_downward'
+				: 'arrow_upward';
+		},
+		clslistmode() {
+			switch (this.listmode) {
+				case "lgicon":
+					return 'view_module';
+				case "mdicon":
+					return 'subject';
+			}
+		},
+
+		iconmodetag() {
+			switch (this.listmode) {
+				case "lgicon":
+					return 'img-icon-tag';
+				case "mdicon":
+					return 'file-icon-tag';
+			}
+		},
+
+		hintorder() {
+			return this.order > 0
+				? "direct order"
+				: "reverse order";
+		},
+		hintlist() {
+			switch (this.listmode) {
+				case "lgicon":
+					return "large icons";
+				case "mdicon":
+					return "middle icons";
+			}
+		}
+	},
+	methods: {
+		onorder() {
+			this.order = -this.order;
+		},
+		onlistmode() {
+			switch (this.listmode) {
+				case "lgicon":
+					this.listmode = 'mdicon';
+					break;
+				case "mdicon":
+					this.listmode = 'lgicon';
+					break;
+			}
+		},
+
+		onselect(file) {
+			this.selfile = file;
+			this.$emit('select', file);
+		},
+		onopen(file) {
+			this.$emit('open', file);
+		},
+		onunselect() {
+			this.selfile = null;
+		}
+	}
+});
+
 Vue.component('map-card-tag', {
 	template: '#map-card-tpl',
 	props: ["list"],
