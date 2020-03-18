@@ -41,6 +41,10 @@ body {
 	background: rgba(75, 0, 130, 0.50); /*Indigo*/
 }
 
+	.card-header > .navbar-nav ~ .navbar-nav {
+		padding-left: 1.25rem;
+	}
+
 .breadcrumb-item.active {
 	font-size: 1.5rem;
 }

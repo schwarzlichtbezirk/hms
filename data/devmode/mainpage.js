@@ -83,10 +83,6 @@ const root = { name: "", path: "", size: 0, time: 0, type: FT.dir };
 
 const shareprefix = "/share/";
 
-const sortbyalpha = "name";
-const sortbysize = "size";
-const unsorted = "";
-
 const geticonname = (file) => {
 	switch (file.type) {
 		case FT.dir:
@@ -209,10 +205,6 @@ let app = new Vue({
 	data: {
 		isadmin: true, // is it running on localhost
 		shared: [], // list of shared folders and files
-		filter: { // main menu buttons flags
-			music: true, video: true, photo: true, pdf: true, books: true, other: false,
-			order: false, sortmode: sortbyalpha
-		},
 		listmode: "mdicon",
 		loadcount: 0, // ajax working request count
 
@@ -226,11 +218,9 @@ let app = new Vue({
 		histlist: [], // history stack
 
 		// file viewers
-		viewer: null,
-		playbackfile: null
+		viewer: null
 	},
 	computed: {
-
 		// array of paths to current folder
 		folderpath() {
 			if (!this.curpath.name) {
@@ -254,33 +244,6 @@ let app = new Vue({
 				});
 			}
 			return lst;
-		},
-
-		// display filtered sorted playlist
-		playlist() {
-			const res = [];
-			for (const file of this.filelist) {
-				if (this.showitem(file)) {
-					res.push(file);
-				}
-			}
-			if (this.filter.sortmode === sortbyalpha) {
-				res.sort((v1, v2) => {
-					return v1.name.toLowerCase() > v2.name.toLowerCase() ? 1 : -1;
-				});
-			} else if (this.filter.sortmode === sortbysize) {
-				res.sort((v1, v2) => {
-					if (v1.size === v2.size) {
-						return v1.name.toLowerCase() > v2.name.toLowerCase() ? 1 : -1;
-					} else {
-						return v1.size > v2.size ? 1 : -1;
-					}
-				});
-			}
-			if (this.filter.order) {
-				res.reverse();
-			}
-			return res;
 		},
 
 		// file list with GPS tags
@@ -349,66 +312,6 @@ let app = new Vue({
 			return { active: this.selfile && this.selfile.pref };
 		},
 
-		clsfilelist() {
-			switch (this.listmode) {
-				case "lgicon":
-					return 'align-items-center';
-				case "mdicon":
-					return 'align-items-start';
-			}
-		},
-		clsmusic() {
-			return { active: this.filter.music };
-		},
-		clsvideo() {
-			return { active: this.filter.video };
-		},
-		clsphoto() {
-			return { active: this.filter.photo };
-		},
-		clspdf() {
-			return { active: this.filter.pdf };
-		},
-		clsbooks() {
-			return { active: this.filter.books };
-		},
-		clsother() {
-			return { active: this.filter.other };
-		},
-
-		clsorder() {
-			return this.filter.order
-				? 'arrow_upward'
-				: 'arrow_downward';
-		},
-		clssortmode() {
-			switch (this.filter.sortmode) {
-				case sortbyalpha:
-					return "sort_by_alpha";
-				case sortbysize:
-					return "sort";
-				case unsorted:
-					return "reorder";
-			}
-		},
-		clslistmode() {
-			switch (this.listmode) {
-				case "lgicon":
-					return 'view_module';
-				case "mdicon":
-					return 'subject';
-			}
-		},
-
-		iconmodetag() {
-			switch (this.listmode) {
-				case "lgicon":
-					return 'img-icon-tag';
-				case "mdicon":
-					return 'file-icon-tag';
-			}
-		},
-
 		// buttons hints
 		hintback() {
 			if (this.histpos < 2) {
@@ -432,29 +335,6 @@ let app = new Vue({
 				return "go forward to " + name;
 			}
 		},
-		hintorder() {
-			return this.filter.order
-				? "reverse order"
-				: "direct order";
-		},
-		hintsortmode() {
-			switch (this.filter.sortmode) {
-				case sortbyalpha:
-					return "sort by alpha";
-				case sortbysize:
-					return "sort by size";
-				case unsorted:
-					return "as is unsorted";
-			}
-		},
-		hintlist() {
-			switch (this.listmode) {
-				case "lgicon":
-					return "large icons";
-				case "mdicon":
-					return "middle icons";
-			}
-		},
 
 		isshowmp3() {
 			return this.selfile && FTtoFV[this.selfile.type] === FV.music;
@@ -463,8 +343,8 @@ let app = new Vue({
 	methods: {
 		// opens given folder cleary
 		gofolder(file) {
-			// remove selected state before request for any result
-			this.onunselect();
+			// close any viewer for new opened folder
+			this.closeviewer();
 
 			ajaxjson("GET", "/api/folder?" + $.param({
 				path: file.path
@@ -542,41 +422,6 @@ let app = new Vue({
 			if (this.viewer) {
 				this.viewer.close();
 				this.viewer = null;
-			}
-		},
-
-		// show/hide functions
-		showitem(file) {
-			switch (file.type) {
-				case FT.dir:
-					return true;
-				case FT.wave:
-				case FT.flac:
-				case FT.mp3:
-					return this.filter.music;
-				case FT.ogg:
-				case FT.mp4:
-				case FT.webm:
-					return this.filter.video;
-				case FT.photo:
-				case FT.tga:
-				case FT.bmp:
-				case FT.gif:
-				case FT.png:
-				case FT.jpeg:
-				case FT.tiff:
-				case FT.webp:
-					return this.filter.photo;
-				case FT.pdf:
-				case FT.html:
-					return this.filter.pdf;
-				case FT.text:
-				case FT.scr:
-				case FT.cfg:
-				case FT.log:
-					return this.filter.books;
-				default:
-					return this.filter.other;
 			}
 		},
 
@@ -665,68 +510,15 @@ let app = new Vue({
 			});
 		},
 
-		onorder() {
-			this.filter.order = !this.filter.order;
-		},
-
-		onsortmode() {
-			switch (this.filter.sortmode) {
-				case sortbyalpha:
-					this.filter.sortmode = sortbysize;
-					break;
-				case sortbysize:
-					this.filter.sortmode = unsorted;
-					break;
-				case unsorted:
-					this.filter.sortmode = sortbyalpha;
-					break;
-			}
-		},
-
-		onlistmode() {
-			switch (this.listmode) {
-				case "lgicon":
-					this.listmode = 'mdicon';
-					break;
-				case "mdicon":
-					this.listmode = 'lgicon';
-					break;
-			}
-		},
-
-		onmusic() {
-			this.filter.music = !this.filter.music;
-		},
-
-		onvideo() {
-			this.filter.video = !this.filter.video;
-		},
-
-		onphoto() {
-			this.filter.photo = !this.filter.photo;
-		},
-
-		onpdf() {
-			this.filter.pdf = !this.filter.pdf;
-		},
-
-		onbooks() {
-			this.filter.books = !this.filter.books;
-		},
-
-		onother() {
-			this.filter.other = !this.filter.other;
-		},
-
-		onunselect() {
-			this.selfile = null;
-			this.closeviewer();
-		},
-
 		onpathselect(file) {
 		},
 
 		onfileselect(file) {
+			if (!file) {
+				this.selfile = null;
+				this.closeviewer();
+				return;
+			}
 			this.selfile = file;
 
 			// Run viewer/player
@@ -759,8 +551,22 @@ let app = new Vue({
 			window.open(url, file.name);
 		},
 
-		onplayback(file, playback) {
-			this.playbackfile = playback && file;
+		onplayback(file) {
+			this.$refs.filecard.playbackfile = file;
+		},
+
+		onprev(repeat) {
+			const file = this.$refs.filecard.getprev(repeat);
+			if (file) {
+				this.$refs.filecard.onselect(file);
+			}
+		},
+
+		onnext(repeat) {
+			const file = this.$refs.filecard.getnext(repeat);
+			if (file) {
+				this.$refs.filecard.onselect(file);
+			}
 		}
 	}
 });

@@ -2,7 +2,6 @@
 
 Vue.component('mp3-player-tag', {
 	template: '#mp3-player-tpl',
-	props: ["playlist"],
 	data: function () {
 		return {
 			file: {},
@@ -71,7 +70,7 @@ Vue.component('mp3-player-tag', {
 			if (this.media && this.media.paused) {
 				this.media.play();
 				this.isplay = true;
-				this.$emit('playback', this.file, true);
+				this.$emit('playback', this.file);
 				return true;
 			}
 			return false;
@@ -81,11 +80,11 @@ Vue.component('mp3-player-tag', {
 			if (this.media && !this.media.paused) {
 				this.media.pause();
 				this.isplay = false;
-				this.$emit('playback', this.file, false);
+				this.$emit('playback', null);
 				return true;
 			}
 			this.isplay = false;
-			this.$emit('playback', this.file, false);
+			this.$emit('playback', null);
 			return false;
 		},
 
@@ -126,35 +125,9 @@ Vue.component('mp3-player-tag', {
 			this.media.addEventListener('play', () => { });
 			this.media.addEventListener('pause', () => { });
 			this.media.addEventListener('ended', () => {
-				const filepos = () => {
-					for (const i in this.playlist) {
-						const file = this.playlist[i];
-						if (this.file.path === file.path) {
-							return Number(i);
-						}
-					}
-				};
-				const nextpos = (pos) => {
-					for (let i = pos + 1; i < this.playlist.length; i++) {
-						const file = this.playlist[i];
-						if (FTtoFV[file.type] === FV.music || FTtoFV[file.type] === FV.video) {
-							return file;
-						}
-					}
-				};
-				const next1 = nextpos(filepos());
-				if (next1) {
-					this.$emit('select', next1);
-					return;
-				} else if (this.repeatmode === 2) {
-					const next2 = nextpos(-1);
-					if (next2) {
-						this.$emit('select', next2);
-						return;
-					}
-				}
 				this.isplay = false;
-				this.$emit('playback', this.file, false);
+				this.$emit('next', this.repeatmode === 2);
+				this.$emit('playback', null);
 			});
 		},
 
@@ -171,12 +144,12 @@ Vue.component('mp3-player-tag', {
 				this.media.play();
 				this.isplay = true;
 				this.isflowing = true;
-				this.$emit('playback', this.file, true);
+				this.$emit('playback', this.file);
 			} else {
 				this.media.pause();
 				this.isplay = false;
 				this.isflowing = false;
-				this.$emit('playback', this.file, false);
+				this.$emit('playback', null);
 			}
 		},
 
@@ -203,31 +176,7 @@ Vue.component('mp3-player-tag', {
 		// user events responders
 
 		onprev() {
-			const filepos = () => {
-				for (const i in this.playlist) {
-					const file = this.playlist[i];
-					if (this.file.path === file.path) {
-						return Number(i);
-					}
-				}
-			};
-			const prevpos = (pos) => {
-				for (let i = pos - 1; i >= 0; i--) {
-					const file = this.playlist[i];
-					if (FTtoFV[file.type] === FV.music || FTtoFV[file.type] === FV.video) {
-						return file;
-					}
-				}
-			};
-			const prev1 = prevpos(filepos());
-			if (prev1) {
-				this.$emit('select', prev1);
-			} else {
-				const prev2 = prevpos(this.playlist.length);
-				if (prev2) {
-					this.$emit('select', prev2);
-				}
-			}
+			this.$emit('prev', this.repeatmode === 2);
 		},
 
 		onplay() {
@@ -235,31 +184,7 @@ Vue.component('mp3-player-tag', {
 		},
 
 		onnext() {
-			const filepos = () => {
-				for (const i in this.playlist) {
-					const file = this.playlist[i];
-					if (this.file.path === file.path) {
-						return Number(i);
-					}
-				}
-			};
-			const nextpos = (pos) => {
-				for (let i = pos + 1; i < this.playlist.length; i++) {
-					const file = this.playlist[i];
-					if (FTtoFV[file.type] === FV.music || FTtoFV[file.type] === FV.video) {
-						return file;
-					}
-				}
-			};
-			const next1 = nextpos(filepos());
-			if (next1) {
-				this.$emit('select', next1);
-			} else {
-				const next2 = nextpos(-1);
-				if (next2) {
-					this.$emit('select', next2);
-				}
-			}
+			this.$emit('next', this.repeatmode === 2);
 		},
 
 		onrepeat() {

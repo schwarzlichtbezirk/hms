@@ -36,6 +36,10 @@ body {
 	padding-bottom: 0.25rem;
 }
 
+	.card-header > .navbar-nav ~ .navbar-nav {
+		padding-left: 1.25rem;
+	}
+
 .breadcrumb-item.active {
 	font-size: 1.5rem;
 }

@@ -1,5 +1,9 @@
 "use strict";
 
+const sortbyalpha = "name";
+const sortbysize = "size";
+const unsorted = "";
+
 Vue.component('dir-card-tag', {
 	template: '#dir-card-tpl',
 	props: ["list"],
@@ -22,7 +26,7 @@ Vue.component('dir-card-tag', {
 		// sorted subfolders list
 		sortedlist() {
 			return this.list.slice().sort((v1, v2) => {
-				return this.order*(v1.name.toLowerCase() > v2.name.toLowerCase() ? 1 : -1);
+				return this.order * (v1.name.toLowerCase() > v2.name.toLowerCase() ? 1 : -1);
 			});
 		},
 
@@ -96,6 +100,265 @@ Vue.component('dir-card-tag', {
 		},
 		onunselect() {
 			this.selfile = null;
+			this.$emit('select', null);
+		}
+	}
+});
+
+Vue.component('file-card-tag', {
+	template: '#file-card-tpl',
+	props: ["list"],
+	data: function () {
+		return {
+			selfile: null, // current selected item
+			playbackfile: null,
+			order: 1,
+			sortmode: sortbyalpha,
+			listmode: "mdicon",
+			music: true, video: true, photo: true, pdf: true, books: true, other: false,
+			iid: makestrid(10) // instance ID
+		};
+	},
+	computed: {
+		isvisible() {
+			this.selfile = null;
+			if (this.playlist.length > 0) {
+				return true;
+			}
+			return false;
+		},
+		selfilepos() {
+			for (const i in this.playlist) {
+				if (this.selfile.path === this.playlist[i].path) {
+					return Number(i);
+				}
+			}
+		},
+		// filtered sorted playlist
+		playlist() {
+			const res = [];
+			for (const file of this.list) {
+				if (this.showitem(file)) {
+					res.push(file);
+				}
+			}
+			if (this.sortmode === sortbyalpha) {
+				res.sort((v1, v2) => {
+					return this.order * (v1.name.toLowerCase() > v2.name.toLowerCase() ? 1 : -1);
+				});
+			} else if (this.sortmode === sortbysize) {
+				res.sort((v1, v2) => {
+					if (v1.size === v2.size) {
+						return this.order * (v1.name.toLowerCase() > v2.name.toLowerCase() ? 1 : -1);
+					} else {
+						return this.order * (v1.size > v2.size ? 1 : -1);
+					}
+				});
+			}
+			return res;
+		},
+
+		clsfilelist() {
+			switch (this.listmode) {
+				case "lgicon":
+					return 'align-items-center';
+				case "mdicon":
+					return 'align-items-start';
+			}
+		},
+
+		clsorder() {
+			return this.order > 0
+				? 'arrow_downward'
+				: 'arrow_upward';
+		},
+		clssortmode() {
+			switch (this.sortmode) {
+				case sortbyalpha:
+					return "sort_by_alpha";
+				case sortbysize:
+					return "sort";
+				case unsorted:
+					return "reorder";
+			}
+		},
+		clslistmode() {
+			switch (this.listmode) {
+				case "lgicon":
+					return 'view_module';
+				case "mdicon":
+					return 'subject';
+			}
+		},
+
+		clsmusic() {
+			return { active: this.music };
+		},
+		clsvideo() {
+			return { active: this.video };
+		},
+		clsphoto() {
+			return { active: this.photo };
+		},
+		clspdf() {
+			return { active: this.pdf };
+		},
+		clsbooks() {
+			return { active: this.books };
+		},
+		clsother() {
+			return { active: this.other };
+		},
+
+		iconmodetag() {
+			switch (this.listmode) {
+				case "lgicon":
+					return 'img-icon-tag';
+				case "mdicon":
+					return 'file-icon-tag';
+			}
+		},
+
+		hintorder() {
+			return this.order > 0
+				? "direct order"
+				: "reverse order";
+		},
+		hintsortmode() {
+			switch (this.sortmode) {
+				case sortbyalpha:
+					return "sort by alpha";
+				case sortbysize:
+					return "sort by size";
+				case unsorted:
+					return "as is unsorted";
+			}
+		},
+		hintlist() {
+			switch (this.listmode) {
+				case "lgicon":
+					return "large icons";
+				case "mdicon":
+					return "middle icons";
+			}
+		}
+	},
+	methods: {
+		// show/hide functions
+		showitem(file) {
+			switch (file.type) {
+				case FT.dir:
+					return true;
+				case FT.wave:
+				case FT.flac:
+				case FT.mp3:
+					return this.music;
+				case FT.ogg:
+				case FT.mp4:
+				case FT.webm:
+					return this.video;
+				case FT.photo:
+				case FT.tga:
+				case FT.bmp:
+				case FT.gif:
+				case FT.png:
+				case FT.jpeg:
+				case FT.tiff:
+				case FT.webp:
+					return this.photo;
+				case FT.pdf:
+				case FT.html:
+					return this.pdf;
+				case FT.text:
+				case FT.scr:
+				case FT.cfg:
+				case FT.log:
+					return this.books;
+				default:
+					return this.other;
+			}
+		},
+		// returns previous file in playlist
+		getprev(repeat) {
+			const prevpos = (from, to) => {
+				for (let i = from - 1; i > to; i--) {
+					const file = this.playlist[i];
+					if (FTtoFV[file.type] === FV.music || FTtoFV[file.type] === FV.video) {
+						return file;
+					}
+				}
+			};
+			return prevpos(this.selfilepos, -1) || repeat && prevpos(this.playlist.length, this.selfilepos);
+		},
+		// returns next file in playlist
+		getnext(repeat) {
+			const nextpos = (from, to) => {
+				for (let i = from + 1; i < to; i++) {
+					const file = this.playlist[i];
+					if (FTtoFV[file.type] === FV.music || FTtoFV[file.type] === FV.video) {
+						return file;
+					}
+				}
+			};
+			return nextpos(this.selfilepos, this.playlist.length) || repeat && nextpos(-1, this.selfilepos);
+		},
+
+		onorder() {
+			this.order = -this.order;
+		},
+		onsortmode() {
+			switch (this.sortmode) {
+				case sortbyalpha:
+					this.sortmode = sortbysize;
+					break;
+				case sortbysize:
+					this.sortmode = unsorted;
+					break;
+				case unsorted:
+					this.sortmode = sortbyalpha;
+					break;
+			}
+		},
+		onlistmode() {
+			switch (this.listmode) {
+				case "lgicon":
+					this.listmode = 'mdicon';
+					break;
+				case "mdicon":
+					this.listmode = 'lgicon';
+					break;
+			}
+		},
+
+		onmusic() {
+			this.music = !this.music;
+		},
+		onvideo() {
+			this.video = !this.video;
+		},
+		onphoto() {
+			this.photo = !this.photo;
+		},
+		onpdf() {
+			this.pdf = !this.pdf;
+		},
+		onbooks() {
+			this.books = !this.books;
+		},
+		onother() {
+			this.other = !this.other;
+		},
+
+		onselect(file) {
+			this.selfile = file;
+			this.$emit('select', file);
+		},
+		onopen(file) {
+			this.$emit('open', file);
+		},
+		onunselect() {
+			this.selfile = null;
+			this.$emit('select', null);
 		}
 	}
 });

@@ -32,11 +32,6 @@
 		</button>
 		<div class="collapse navbar-collapse">
 			<div class="d-flex flex-wrap">
-				<ul class="navbar-nav flex-row">
-					<li><button class="btn nav-link" v-on:click="onorder" v-bind:title="hintorder"><i class="material-icons">{{clsorder}}</i></button></li>
-					<li><button class="btn nav-link" v-on:click="onsortmode" v-bind:title="hintsortmode"><i class="material-icons">{{clssortmode}}</i></button></li>
-					<li><button class="btn nav-link" v-on:click="onlistmode" v-bind:title="hintlist"><i class="material-icons">{{clslistmode}}</i></button></li>
-				</ul>
 			</div>
 		</div>
 	</nav>
@@ -47,28 +42,7 @@
 		</template>
 
 		<template>
-			<div v-show="playlist.length" class="card">
-				<div class="card-header d-flex flex-wrap navbar-dark">
-					<div class="navbar-text flex-grow-1 py-0">
-						<a class="card-link d-block" data-toggle="collapse" href="#collapse-files">files</a>
-					</div>
-					<ul class="navbar-nav flex-row">
-						<li><button class="btn nav-link p-0" v-bind:class="clsmusic" v-on:click="onmusic" title="show music files"><i class="material-icons">library_music</i></button></li>
-						<li><button class="btn nav-link p-0" v-bind:class="clsvideo" v-on:click="onvideo" title="show video files"><i class="material-icons">video_library</i></button></li>
-						<li><button class="btn nav-link p-0" v-bind:class="clsphoto" v-on:click="onphoto" title="show photos and images"><i class="material-icons">photo_library</i></button></li>
-						<li><button class="btn nav-link p-0" v-bind:class="clspdf" v-on:click="onpdf" title="show books and PDF files"><i class="material-icons">picture_as_pdf</i></button></li>
-						<li><button class="btn nav-link p-0" v-bind:class="clsbooks" v-on:click="onbooks" title="show plain text files"><i class="material-icons">library_books</i></button></li>
-						<li><button class="btn nav-link p-0" v-bind:class="clsother" v-on:click="onother" title="show other non-supported files"><i class="material-icons">library_add</i></button></li>
-					</ul>
-				</div>
-				<div id="collapse-files" class="collapse show">
-					<div class="card-body folder-list" v-bind:class="clsfilelist" v-on:click="onunselect">
-						<template v-for="file in playlist">
-							<component v-bind:is="iconmodetag" v-bind:file="file" v-bind:state="{selected:selfile===file,playback:playbackfile===file}" v-on:select="onfileselect" v-on:open="onfileopen" />
-						</template>
-					</div>
-				</div>
-			</div>
+			<file-card-tag ref="filecard" v-bind:list="filelist" v-on:select="onfileselect" v-on:open="onfileopen" />
 		</template>
 
 		<template>
@@ -83,7 +57,7 @@
 
 	<nav class="footer bg-dark navbar-dark fixed-bottom">
 		<template>
-			<mp3-player-tag ref="mp3player" v-show="isshowmp3" v-bind:playlist="playlist" v-on:select="onfileselect" v-on:playback="onplayback" />
+			<mp3-player-tag ref="mp3player" v-show="isshowmp3" v-on:playback="onplayback" v-on:prev="onprev" v-on:next="onnext" />
 		</template>
 	</nav>
 
