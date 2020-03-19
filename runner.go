@@ -88,44 +88,46 @@ func opensettings() {
 }
 
 func loadshared() {
-	var body, err = ioutil.ReadFile(confpath + "shared.json")
-	if err != nil {
+	var err error
+
+	var body []byte
+	if body, err = ioutil.ReadFile(confpath + "shared.json"); err != nil {
 		Log.Fatal("can not read shared resources list file: " + err.Error())
 	}
 
 	var dec = json.NewDecoder(bytes.NewReader(body))
-	err = dec.Decode(&sharespref)
-	if err != nil {
+	if err = dec.Decode(&sharespref); err != nil {
 		Log.Fatal("can not decode shared list: " + err.Error())
 	}
 }
 
 func saveshared() {
 	var err error
+
 	var buf bytes.Buffer
 	var enc = json.NewEncoder(&buf)
 	enc.SetIndent("", "\t")
-	err = enc.Encode(sharespref)
-	if err != nil {
+	if err = enc.Encode(sharespref); err != nil {
 		Log.Println("can not encode shared list: " + err.Error())
 		return
 	}
-	err = ioutil.WriteFile(confpath+"shared.json", buf.Bytes(), 0644)
-	if err != nil {
+
+	if err = ioutil.WriteFile(confpath+"shared.json", buf.Bytes(), 0644); err != nil {
 		Log.Println("can not write shared resources list file: " + err.Error())
 		return
 	}
 }
 
 func loadhidden() {
-	var body, err = ioutil.ReadFile(confpath + "hidden.json")
-	if err != nil {
+	var err error
+
+	var body []byte
+	if body, err = ioutil.ReadFile(confpath + "hidden.json"); err != nil {
 		Log.Fatal("can not read hidden filenames pattens: " + err.Error())
 	}
 
 	var dec = json.NewDecoder(bytes.NewReader(body))
-	err = dec.Decode(&hidden)
-	if err != nil {
+	if err = dec.Decode(&hidden); err != nil {
 		Log.Fatal("can not decode hidden filenames array: " + err.Error())
 	}
 
@@ -152,44 +154,37 @@ var dict = func(values ...interface{}) (map[string]interface{}, error) {
 
 // hot templates reload, during server running
 func loadtemplates() error {
-	var ts, tc *template.Template
 	var err error
+	var ts, tc *template.Template
 
 	ts = template.New("storage").Delims("[=[", "]=]")
-	_, err = ts.ParseGlob(tmplpath + "*.html")
-	if err != nil {
+	if _, err = ts.ParseGlob(tmplpath + "*.html"); err != nil {
 		return err
 	}
 
-	tc, err = ts.Clone()
-	if err != nil {
+	if tc, err = ts.Clone(); err != nil {
 		return err
 	}
-	_, err = tc.ParseGlob(devmpath + "*.html")
-	if err != nil {
+	if _, err = tc.ParseGlob(devmpath + "*.html"); err != nil {
 		return err
 	}
 	for _, fname := range routedpages {
 		var buf bytes.Buffer
-		err = tc.ExecuteTemplate(&buf, fname, nil)
-		if err != nil {
+		if err = tc.ExecuteTemplate(&buf, fname, nil); err != nil {
 			return err
 		}
 		filecache["/devm/"+fname] = buf.Bytes()
 	}
 
-	tc, err = ts.Clone()
-	if err != nil {
+	if tc, err = ts.Clone(); err != nil {
 		return err
 	}
-	_, err = tc.ParseGlob(devmpath + "*.html")
-	if err != nil {
+	if _, err = tc.ParseGlob(devmpath + "*.html"); err != nil {
 		return err
 	}
 	for _, fname := range routedpages {
 		var buf bytes.Buffer
-		err = tc.ExecuteTemplate(&buf, fname, nil)
-		if err != nil {
+		if err = tc.ExecuteTemplate(&buf, fname, nil); err != nil {
 			return err
 		}
 		filecache["/relm/"+fname] = buf.Bytes()
@@ -202,8 +197,8 @@ func loadtemplates() error {
 //////////////////////
 
 func pathexists(path string) (bool, error) {
-	var _, err = os.Stat(path)
-	if err == nil {
+	var err error
+	if _, err = os.Stat(path); err == nil {
 		return true, nil
 	}
 	if os.IsNotExist(err) {
@@ -375,6 +370,12 @@ func Done() {
 			}
 		}()
 	}
+
+	srvwg.Add(1)
+	go func() {
+		defer srvwg.Done()
+		saveshared()
+	}()
 
 	srvwg.Wait()
 }

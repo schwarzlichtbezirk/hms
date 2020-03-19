@@ -177,9 +177,9 @@ var filecache = map[string][]byte{}
 
 func LoadFiles(path, prefix string) (count, size uint64, errs []error) {
 	var err error
+
 	var files []os.FileInfo
-	files, err = ioutil.ReadDir(path)
-	if err != nil {
+	if files, err = ioutil.ReadDir(path); err != nil {
 		errs = append(errs, fmt.Errorf("failed path scanning \"%s\" for %s prefix: %s", path, prefix, err.Error()))
 		return
 	}

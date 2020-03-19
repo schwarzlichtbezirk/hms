@@ -381,8 +381,7 @@ func (tk *TagKit) Setup(fi os.FileInfo, fpath string) {
 		defer file.Close()
 		if m, err := tag.ReadFrom(file); err == nil {
 			tk.TagProp.Setup(m)
-			var pic = m.Picture()
-			if pic != nil {
+			if pic := m.Picture(); pic != nil {
 				tk.KTmbVal = ThumbName(fpath)
 				thumbcache.Set(tk.KTmbVal, &ThumbElem{
 					Data: pic.Data,
@@ -399,8 +398,7 @@ func (tk *TagKit) Setup(fi os.FileInfo, fpath string) {
 // Returns os.FileInfo for given full file name.
 func FileStat(fpath string) (fi os.FileInfo, err error) {
 	var file *os.File
-	file, err = os.Open(fpath)
-	if err != nil {
+	if file, err = os.Open(fpath); err != nil {
 		return
 	}
 	defer file.Close()
@@ -595,8 +593,7 @@ func readdir(dirname string) (ret folderRet, err error) {
 		if fi, err = file.Stat(); err != nil {
 			return
 		}
-		fis, err = file.Readdir(-1)
-		if err != nil {
+		if fis, err = file.Readdir(-1); err != nil {
 			return
 		}
 	}(); err != nil {

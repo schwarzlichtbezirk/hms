@@ -17,11 +17,13 @@ Vue.component('dir-card-tag', {
 	},
 	computed: {
 		isvisible() {
-			this.selfile = null;
-			if (this.list.length > 0) {
-				return true;
-			}
-			return false;
+			(() => {
+				for (const file of this.list) {
+					if (file === this.selfile) return;
+				}
+				this.selfile = null;
+			})();
+			return this.list.length > 0;
 		},
 		// sorted subfolders list
 		sortedlist() {
@@ -37,6 +39,13 @@ Vue.component('dir-card-tag', {
 				case "mdicon":
 					return 'align-items-start';
 			}
+		},
+
+		disshared() {
+			return !this.selfile;
+		},
+		clsshared() {
+			return { active: this.selfile && this.selfile.pref };
 		},
 
 		clsorder() {
@@ -77,6 +86,9 @@ Vue.component('dir-card-tag', {
 		}
 	},
 	methods: {
+		onshare() {
+			this.$emit('share', this.selfile);
+		},
 		onorder() {
 			this.order = -this.order;
 		},
@@ -121,11 +133,13 @@ Vue.component('file-card-tag', {
 	},
 	computed: {
 		isvisible() {
-			this.selfile = null;
-			if (this.playlist.length > 0) {
-				return true;
-			}
-			return false;
+			(() => {
+				for (const file of this.list) {
+					if (file === this.selfile) return;
+				}
+				this.selfile = null;
+			})();
+			return this.list.length > 0;
 		},
 		selfilepos() {
 			for (const i in this.playlist) {
@@ -165,6 +179,13 @@ Vue.component('file-card-tag', {
 				case "mdicon":
 					return 'align-items-start';
 			}
+		},
+
+		disshared() {
+			return !this.selfile;
+		},
+		clsshared() {
+			return { active: this.selfile && this.selfile.pref };
 		},
 
 		clsorder() {
@@ -278,6 +299,13 @@ Vue.component('file-card-tag', {
 					return this.other;
 			}
 		},
+		// playlist files attributes
+		getstate(file) {
+			return {
+				selected: this.selfile === file,
+				playback: this.playbackfile && this.playbackfile.name === file.name
+			};
+		},
 		// returns previous file in playlist
 		getprev(repeat) {
 			const prevpos = (from, to) => {
@@ -303,6 +331,9 @@ Vue.component('file-card-tag', {
 			return nextpos(this.selfilepos, this.playlist.length) || repeat && nextpos(-1, this.selfilepos);
 		},
 
+		onshare() {
+			this.$emit('share', this.selfile);
+		},
 		onorder() {
 			this.order = -this.order;
 		},
@@ -376,7 +407,7 @@ Vue.component('map-card-tag', {
 	},
 	computed: {
 		isvisible() {
-			if (this.list.length > 0) {
+			if (this.gpslist.length > 0) {
 				Vue.nextTick(() => {
 					this.updatemarkers();
 					this.map.invalidateSize();
@@ -384,13 +415,23 @@ Vue.component('map-card-tag', {
 				return true;
 			}
 			return false;
+		},
+		// file list with GPS tags
+		gpslist() {
+			const lst = [];
+			for (const file of this.list) {
+				if (file.latitude && file.longitude) {
+					lst.push(file);
+				}
+			}
+			return lst;
 		}
 	},
 	methods: {
 		// setup markers on map, remove previous
 		updatemarkers() {
 			const markers = L.markerClusterGroup();
-			for (const file of this.list) {
+			for (const file of this.gpslist) {
 				L.marker([file.latitude, file.longitude], {
 					title: file.name
 				})

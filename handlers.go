@@ -287,8 +287,7 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 			ret.AddProp(prop)
 		}
 	} else {
-		ret, err = readdir(path)
-		if err != nil {
+		if ret, err = readdir(path); err != nil {
 			WriteJson(w, http.StatusNotFound, &AjaxErr{err, EC_folderfail})
 			return
 		}
@@ -322,8 +321,8 @@ func shrlstApi(w http.ResponseWriter, r *http.Request) {
 // APIHANDLER
 func shraddApi(w http.ResponseWriter, r *http.Request) {
 	// get arguments
-	var path = r.FormValue("path")
-	if len(path) == 0 {
+	var path string
+	if path = r.FormValue("path"); len(path) == 0 {
 		WriteError400(w, ErrArgNoPath, EC_addshrnopath)
 		return
 	}
@@ -352,13 +351,11 @@ func shraddApi(w http.ResponseWriter, r *http.Request) {
 func shrdelApi(w http.ResponseWriter, r *http.Request) {
 	var ok bool
 
-	// get arguments
-	var pref = r.FormValue("pref")
-	var path = r.FormValue("path")
-
-	if len(pref) > 0 {
+	// get arguments & process
+	var pref, path string
+	if pref = r.FormValue("pref"); len(pref) > 0 {
 		ok = DelSharePref(pref)
-	} else if len(path) > 0 {
+	} else if path = r.FormValue("path"); len(path) > 0 {
 		ok = DelSharePath(path)
 	} else {
 		WriteError400(w, ErrArgNoPref, EC_delshrnopath)

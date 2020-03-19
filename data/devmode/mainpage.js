@@ -205,14 +205,12 @@ let app = new Vue({
 	data: {
 		isadmin: true, // is it running on localhost
 		shared: [], // list of shared folders and files
-		listmode: "mdicon",
 		loadcount: 0, // ajax working request count
 
 		// current opened folder data
 		pathlist: [], // list of subfolders properties in current folder
 		filelist: [], // list of files properties in current folder
 		curpath: root, // current folder properties
-		selfile: null, // selected file properties
 		curscan: new Date(), // time of last scanning of current folder
 		histpos: 0, // position in history stack
 		histlist: [], // history stack
@@ -242,17 +240,6 @@ let app = new Vue({
 					time: 0,
 					type: FT.dir
 				});
-			}
-			return lst;
-		},
-
-		// file list with GPS tags
-		gpslist() {
-			const lst = [];
-			for (const file of this.filelist) {
-				if (file.latitude && file.longitude) {
-					lst.push(file);
-				}
 			}
 			return lst;
 		},
@@ -305,12 +292,6 @@ let app = new Vue({
 		disparent() {
 			return !this.folderpath.length;
 		},
-		disshared() {
-			return !this.selfile;
-		},
-		clsshared() {
-			return { active: this.selfile && this.selfile.pref };
-		},
 
 		// buttons hints
 		hintback() {
@@ -335,9 +316,12 @@ let app = new Vue({
 				return "go forward to " + name;
 			}
 		},
-
-		isshowmp3() {
-			return this.selfile && FTtoFV[this.selfile.type] === FV.music;
+		hintparent() {
+			if (this.folderpath.length) {
+				return this.folderpath.map(e => e.name).join("/");
+			} else {
+				return "to parent folder";
+			}
 		}
 	},
 	methods: {
@@ -421,6 +405,7 @@ let app = new Vue({
 		closeviewer() {
 			if (this.viewer) {
 				this.viewer.close();
+				this.viewer.visible = false;
 				this.viewer = null;
 			}
 		},
@@ -444,60 +429,6 @@ let app = new Vue({
 			this.openfolder(this.folderpath[this.folderpath.length - 1]);
 		},
 
-		onshare() {
-			if (!this.selfile) {
-				return;
-			}
-			if (!this.selfile.pref) { // should add share
-				ajaxjson("PUT", "/api/share/add?" + $.param({
-					path: this.selfile.path
-				}), xhr => {
-					traceresponse(xhr);
-					if (xhr.status === 200) {
-						let shr = xhr.response;
-						if (shr) {
-							// update folder settings
-							Vue.set(this.selfile, 'pref', shr.pref);
-							this.shared.push(shr);
-						}
-					} else if (xhr.status === 403) { // Forbidden
-						this.isadmin = false;
-					} else if (xhr.status === 404) { // Not Found
-						onerr404();
-						// clear folder history
-						this.histlist.splice(0, this.histlist.length);
-						this.histpos = 0;
-					}
-				});
-			} else { // should remove share
-				ajaxjson("DELETE", "/api/share/del?" + $.param({
-					pref: this.selfile.pref
-				}), xhr => {
-					traceresponse(xhr);
-					if (xhr.status === 200) {
-						let ok = xhr.response;
-						// update folder settings
-						if (ok) {
-							for (let i in this.shared) {
-								if (this.shared[i].pref === this.selfile.pref) {
-									this.shared.splice(i, 1);
-									break;
-								}
-							}
-							Vue.delete(this.selfile, 'pref');
-						}
-					} else if (xhr.status === 403) { // Forbidden
-						this.isadmin = false;
-					} else if (xhr.status === 404) { // Not Found
-						onerr404();
-						// clear folder history
-						this.histlist.splice(0, this.histlist.length);
-						this.histpos = 0;
-					}
-				});
-			}
-		},
-
 		onrefresh() {
 			ajaxjson("POST", "/api/purge", xhr => {
 				traceresponse(xhr);
@@ -510,16 +441,73 @@ let app = new Vue({
 			});
 		},
 
+		onshare(file) {
+			if (!file.pref) { // should add share
+				ajaxjson("PUT", "/api/share/add?" + $.param({
+					path: file.path
+				}), xhr => {
+					traceresponse(xhr);
+					if (xhr.status === 200) {
+						let shr = xhr.response;
+						if (shr) {
+							// update folder settings
+							Vue.set(file, 'pref', shr.pref);
+							this.shared.push(shr);
+						}
+					} else if (xhr.status === 403) { // Forbidden
+						this.isadmin = false;
+					} else if (xhr.status === 404) { // Not Found
+						onerr404();
+						// remove file from list
+						for (const i in this.list) {
+							if (this.list[i] === file) {
+								this.list.splice(i, 1);
+								break;
+							}
+						}
+					}
+				});
+			} else { // should remove share
+				ajaxjson("DELETE", "/api/share/del?" + $.param({
+					pref: file.pref
+				}), xhr => {
+					traceresponse(xhr);
+					if (xhr.status === 200) {
+						let ok = xhr.response;
+						// update folder settings
+						if (ok) {
+							for (let i in this.shared) {
+								if (this.shared[i].pref === file.pref) {
+									this.shared.splice(i, 1);
+									break;
+								}
+							}
+							Vue.delete(file, 'pref');
+						}
+					} else if (xhr.status === 403) { // Forbidden
+						this.isadmin = false;
+					} else if (xhr.status === 404) { // Not Found
+						onerr404();
+						// remove file from list
+						for (const i in this.list) {
+							if (this.list[i] === file) {
+								this.list.splice(i, 1);
+								break;
+							}
+						}
+					}
+				});
+			}
+		},
+
 		onpathselect(file) {
 		},
 
 		onfileselect(file) {
 			if (!file) {
-				this.selfile = null;
 				this.closeviewer();
 				return;
 			}
-			this.selfile = file;
 
 			// Run viewer/player
 			switch (FTtoFV[file.type]) {
@@ -528,7 +516,8 @@ let app = new Vue({
 					break;
 				case FV.music:
 					this.viewer = this.$refs.mp3player;
-					this.viewer.setfile(file);
+					this.viewer.setup(file);
+					this.viewer.visible = true;
 					break;
 				case FV.video:
 					this.closeviewer();

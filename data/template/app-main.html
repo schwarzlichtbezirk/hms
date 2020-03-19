@@ -23,8 +23,7 @@
 			<li><button class="btn nav-link bg-secondary" v-bind:disabled="dishome" v-on:click="onhome" title="root folder"><i class="material-icons">home</i></button></li>
 			<li><button class="btn nav-link" v-bind:disabled="disback" v-on:click="onback" v-bind:title="hintback"><i class="material-icons">arrow_back</i></button></li>
 			<li><button class="btn nav-link" v-bind:disabled="disforward" v-on:click="onforward" v-bind:title="hintforward"><i class="material-icons">arrow_forward</i></button></li>
-			<li><button class="btn nav-link" v-bind:disabled="disparent" v-on:click="onparent" title="to parent folder"><i class="material-icons">subdirectory_arrow_left</i></button></li>
-			<li v-show="isadmin"><button class="btn nav-link" v-bind:disabled="disshared" v-bind:class="clsshared" v-on:click="onshare" title="share folder or file to get access from internet"><i class="material-icons">share</i></button></li>
+			<li><button class="btn nav-link" v-bind:disabled="disparent" v-on:click="onparent" v-bind:title="hintparent"><i class="material-icons">subdirectory_arrow_left</i></button></li>
 			<li v-show="isadmin"><button class="btn nav-link" v-on:click="onrefresh" title="refresh"><i class="material-icons">refresh</i></button></li>
 		</ul>
 		<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="nav.header > .navbar-collapse">
@@ -38,15 +37,15 @@
 
 	<div id="accordion">
 		<template>
-			<dir-card-tag v-bind:list="pathlist" v-on:select="onpathselect" v-on:open="onpathopen" />
+			<dir-card-tag v-bind:list="pathlist" v-on:select="onpathselect" v-on:open="onpathopen" v-on:share="onshare" />
 		</template>
 
 		<template>
-			<file-card-tag ref="filecard" v-bind:list="filelist" v-on:select="onfileselect" v-on:open="onfileopen" />
+			<file-card-tag ref="filecard" v-bind:list="filelist" v-on:select="onfileselect" v-on:open="onfileopen" v-on:share="onshare" />
 		</template>
 
 		<template>
-			<map-card-tag v-bind:list="gpslist" />
+			<map-card-tag v-bind:list="filelist" />
 		</template>
 	</div>
 
@@ -57,7 +56,7 @@
 
 	<nav class="footer bg-dark navbar-dark fixed-bottom">
 		<template>
-			<mp3-player-tag ref="mp3player" v-show="isshowmp3" v-on:playback="onplayback" v-on:prev="onprev" v-on:next="onnext" />
+			<mp3-player-tag ref="mp3player" v-on:playback="onplayback" v-on:prev="onprev" v-on:next="onnext" />
 		</template>
 	</nav>
 

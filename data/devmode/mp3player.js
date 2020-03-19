@@ -4,6 +4,7 @@ Vue.component('mp3-player-tag', {
 	template: '#mp3-player-tpl',
 	data: function () {
 		return {
+			visible: false,
 			file: {},
 			rate: 1.00,
 			volume: 1.00,
@@ -66,34 +67,13 @@ Vue.component('mp3-player-tag', {
 		}
 	},
 	methods: {
-		setup() {
-			if (this.media && this.media.paused) {
-				this.media.play();
-				this.isplay = true;
-				this.$emit('playback', this.file);
-				return true;
-			}
-			return false;
-		},
-
-		close() {
-			if (this.media && !this.media.paused) {
-				this.media.pause();
-				this.isplay = false;
-				this.$emit('playback', null);
-				return true;
-			}
-			this.isplay = false;
-			this.$emit('playback', null);
-			return false;
-		},
-
-		setfile(file) {
+		setup(file) {
 			if (this.file.path === file.path) { // do not set again same file
 				return;
 			}
-			const playonshow = this.close();
+			this.close();
 			this.file = file;
+
 			this.media = new Audio(getfileurl(file)); // API HTMLMediaElement, HTMLAudioElement
 			this.media.playbackRate = this.rate;
 			this.media.loop = this.repeatmode === 1;
@@ -116,7 +96,9 @@ Vue.component('mp3-player-tag', {
 				this.ready = true;
 
 				if (this.isflowing) {
-					this.setup();
+					this.media.play();
+					this.isplay = true;
+					this.$emit('playback', this.file);
 				}
 			});
 			this.media.addEventListener('timeupdate', () => this.updateprogress());
@@ -125,10 +107,19 @@ Vue.component('mp3-player-tag', {
 			this.media.addEventListener('play', () => { });
 			this.media.addEventListener('pause', () => { });
 			this.media.addEventListener('ended', () => {
-				this.isplay = false;
 				this.$emit('next', this.repeatmode === 2);
+				this.isplay = false;
 				this.$emit('playback', null);
 			});
+		},
+		close() {
+			if (this.media && !this.media.paused) {
+				this.media.pause();
+				this.isplay = false;
+				this.$emit('playback', null);
+				return true;
+			}
+			return false;
 		},
 
 		setrate(rate) {

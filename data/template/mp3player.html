@@ -1,5 +1,5 @@
 
-<div class="navbar navbar-expand-sm w-100">
+<div v-show="visible" class="navbar navbar-expand-sm w-100">
 	<ul class="navbar-nav flex-row">
 		<li><button class="btn nav-link" v-on:click="onprev" title="skip to previous"><i class="material-icons">skip_previous</i></button></li>
 		<li><button class="btn nav-link bg-secondary" v-on:click="onplay" v-bind:disabled="!ready" v-bind:title="hintplay"><i class="material-icons">{{iconplay}}</i></button></li>
