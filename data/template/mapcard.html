@@ -4,6 +4,9 @@
 		<div class="navbar-text flex-grow-1 py-0">
 			<a class="card-link d-block" data-toggle="collapse" v-bind:href="'#card'+iid">map</a>
 		</div>
+		<ul class="navbar-nav flex-row ml-auto">
+			<li><button class="btn nav-link p-0" v-on:click="onmarkermode" v-bind:title="hintmarkermode"><i class="material-icons">{{iconmarkermode}}</i></button></li>
+		</ul>
 	</div>
 	<div v-bind:id="'card'+iid" class="collapse show">
 		<div class="card-body">

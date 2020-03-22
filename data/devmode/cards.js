@@ -401,6 +401,7 @@ Vue.component('map-card-tag', {
 		return {
 			map: null, // set it on mounted event
 			markers: null,
+			markermode: "thumb",
 
 			iid: makestrid(10) // instance ID
 		};
@@ -425,16 +426,41 @@ Vue.component('map-card-tag', {
 				}
 			}
 			return lst;
+		},
+
+		iconmarkermode() {
+			switch (this.markermode) {
+				case 'marker': return 'place';
+				case 'thumb': return 'local_see';
+			}
+		},
+		hintmarkermode() {
+			switch (this.markermode) {
+				case 'marker': return "photo positions by markers";
+				case 'thumb': return "photo positions by thumbnails";
+			}
 		}
 	},
 	methods: {
 		// setup markers on map, remove previous
 		updatemarkers() {
+			const size = 60;
 			const markers = L.markerClusterGroup();
 			for (const file of this.gpslist) {
-				L.marker([file.latitude, file.longitude], {
-					title: file.name
-				})
+				const opt = {
+					title: file.name,
+					riseOnHover: true
+				};
+				if (this.markermode === 'thumb' && file.ktmb) {
+					opt.icon = L.divIcon({
+						html: `<img src="${'/thumb/' + file.ktmb}">`,
+						className: "photomarker",
+						iconSize: [size, size],
+						iconAnchor: [size / 2, size / 2],
+						popupAnchor: [0, -size / 4]
+					});
+				}
+				L.marker([file.latitude, file.longitude], opt)
 					.addTo(markers)
 					.bindPopup(makemarkercontent(file));
 			}
@@ -450,6 +476,18 @@ Vue.component('map-card-tag', {
 			// add new set
 			this.map.addLayer(markers);
 			this.markers = markers;
+		},
+
+		onmarkermode() {
+			switch (this.markermode) {
+				case 'marker':
+					this.markermode = 'thumb';
+					break;
+				case 'thumb':
+					this.markermode = 'marker';
+					break;
+			}
+			this.updatemarkers();
 		}
 	},
 	mounted() {
