@@ -488,6 +488,11 @@ Vue.component('map-card-tag', {
 					break;
 			}
 			this.updatemarkers();
+		},
+		onfitbounds() {
+			this.map.flyToBounds(this.markers.getBounds(), {
+				padding: [20, 20]
+			});
 		}
 	},
 	mounted() {

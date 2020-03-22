@@ -184,7 +184,7 @@ body {
 	top: 50%;
 	left: 50%;
 	transform: translate(-50%,-50%);
-	width: 60px;
+	width: 100%;
 	border: 3px solid azure;
 	border-radius: 0.25rem;
 }
