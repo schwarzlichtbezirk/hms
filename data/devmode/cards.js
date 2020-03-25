@@ -105,14 +105,12 @@ Vue.component('dir-card-tag', {
 
 		onselect(file) {
 			this.selfile = file;
-			this.$emit('select', file);
 		},
 		onopen(file) {
 			this.$emit('open', file);
 		},
 		onunselect() {
-			this.selfile = null;
-			this.$emit('select', null);
+			this.onselect(null);
 		}
 	}
 });
@@ -128,6 +126,8 @@ Vue.component('file-card-tag', {
 			sortmode: sortbyalpha,
 			listmode: "mdicon",
 			music: true, video: true, photo: true, pdf: true, books: true, other: false,
+			viewer: null, // file viewers
+
 			iid: makestrid(10) // instance ID
 		};
 	},
@@ -138,15 +138,9 @@ Vue.component('file-card-tag', {
 					if (file === this.selfile) return;
 				}
 				this.selfile = null;
+				this.closeviewer();
 			})();
 			return this.list.length > 0;
-		},
-		selfilepos() {
-			for (const i in this.playlist) {
-				if (this.selfile.path === this.playlist[i].path) {
-					return Number(i);
-				}
-			}
 		},
 		// filtered sorted playlist
 		playlist() {
@@ -306,29 +300,13 @@ Vue.component('file-card-tag', {
 				playback: this.playbackfile && this.playbackfile.name === file.name
 			};
 		},
-		// returns previous file in playlist
-		getprev(repeat) {
-			const prevpos = (from, to) => {
-				for (let i = from - 1; i > to; i--) {
-					const file = this.playlist[i];
-					if (FTtoFV[file.type] === FV.music || FTtoFV[file.type] === FV.video) {
-						return file;
-					}
-				}
-			};
-			return prevpos(this.selfilepos, -1) || repeat && prevpos(this.playlist.length, this.selfilepos);
-		},
-		// returns next file in playlist
-		getnext(repeat) {
-			const nextpos = (from, to) => {
-				for (let i = from + 1; i < to; i++) {
-					const file = this.playlist[i];
-					if (FTtoFV[file.type] === FV.music || FTtoFV[file.type] === FV.video) {
-						return file;
-					}
-				}
-			};
-			return nextpos(this.selfilepos, this.playlist.length) || repeat && nextpos(-1, this.selfilepos);
+		// close current single file viewer
+		closeviewer() {
+			if (this.viewer) {
+				this.viewer.close();
+				this.viewer.visible = false;
+				this.viewer = null;
+			}
 		},
 
 		onshare() {
@@ -382,14 +360,50 @@ Vue.component('file-card-tag', {
 
 		onselect(file) {
 			this.selfile = file;
-			this.$emit('select', file);
+
+			if (!file) {
+				this.closeviewer();
+				return;
+			}
+
+			// Run viewer/player
+			switch (FTtoFV[file.type]) {
+				case FV.none:
+					this.closeviewer();
+					break;
+				case FV.music:
+					this.viewer = this.$refs.mp3player;
+					this.viewer.setup(file);
+					this.viewer.visible = true;
+					break;
+				case FV.video:
+					this.closeviewer();
+					break;
+				case FV.image:
+					this.closeviewer();
+					break;
+				default:
+					this.closeviewer();
+					break;
+			}
 		},
 		onopen(file) {
-			this.$emit('open', file);
+			switch (FTtoFV[file.type]) {
+				case FV.image:
+					this.closeviewer();
+					this.$refs.slider.popup(file);
+					break;
+				default:
+					const url = getfileurl(file);
+					window.open(url, file.name);
+			}
 		},
 		onunselect() {
-			this.selfile = null;
-			this.$emit('select', null);
+			this.onselect(null);
+		},
+
+		onplayback(file) {
+			this.playbackfile = file;
 		}
 	}
 });
@@ -460,9 +474,17 @@ Vue.component('map-card-tag', {
 						popupAnchor: [0, -size / 4]
 					});
 				}
+
+				const template = document.createElement('template');
+				template.innerHTML = makemarkercontent(file).trim();
+				const popup = template.content.firstChild;
+				popup.querySelector(".photoinfo img.thumb").addEventListener('click', () => {
+					this.$refs.slider.popup(file);
+				});
+
 				L.marker([file.latitude, file.longitude], opt)
 					.addTo(markers)
-					.bindPopup(makemarkercontent(file));
+					.bindPopup(popup);
 			}
 
 			this.map.flyToBounds(markers.getBounds(), {

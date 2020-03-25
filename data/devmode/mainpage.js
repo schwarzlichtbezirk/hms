@@ -213,10 +213,7 @@ let app = new Vue({
 		curpath: root, // current folder properties
 		curscan: new Date(), // time of last scanning of current folder
 		histpos: 0, // position in history stack
-		histlist: [], // history stack
-
-		// file viewers
-		viewer: null
+		histlist: [] // history stack
 	},
 	computed: {
 		// array of paths to current folder
@@ -327,9 +324,6 @@ let app = new Vue({
 	methods: {
 		// opens given folder cleary
 		gofolder(file) {
-			// close any viewer for new opened folder
-			this.closeviewer();
-
 			ajaxjson("GET", "/api/folder?" + $.param({
 				path: file.path
 			}), xhr => {
@@ -400,14 +394,6 @@ let app = new Vue({
 			}
 			this.histlist.push(file);
 			this.histpos = this.histlist.length;
-		},
-
-		closeviewer() {
-			if (this.viewer) {
-				this.viewer.close();
-				this.viewer.visible = false;
-				this.viewer = null;
-			}
 		},
 
 		onhome() {
@@ -500,62 +486,8 @@ let app = new Vue({
 			}
 		},
 
-		onpathselect(file) {
-		},
-
-		onfileselect(file) {
-			if (!file) {
-				this.closeviewer();
-				return;
-			}
-
-			// Run viewer/player
-			switch (FTtoFV[file.type]) {
-				case FV.none:
-					this.closeviewer();
-					break;
-				case FV.music:
-					this.viewer = this.$refs.mp3player;
-					this.viewer.setup(file);
-					this.viewer.visible = true;
-					break;
-				case FV.video:
-					this.closeviewer();
-					break;
-				case FV.image:
-					this.closeviewer();
-					break;
-				default:
-					this.closeviewer();
-					break;
-			}
-		},
-
 		onpathopen(file) {
 			this.openfolder(file);
-		},
-
-		onfileopen(file) {
-			let url = getfileurl(file);
-			window.open(url, file.name);
-		},
-
-		onplayback(file) {
-			this.$refs.filecard.playbackfile = file;
-		},
-
-		onprev(repeat) {
-			const file = this.$refs.filecard.getprev(repeat);
-			if (file) {
-				this.$refs.filecard.onselect(file);
-			}
-		},
-
-		onnext(repeat) {
-			const file = this.$refs.filecard.getnext(repeat);
-			if (file) {
-				this.$refs.filecard.onselect(file);
-			}
 		}
 	}
 });

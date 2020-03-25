@@ -1,11 +1,14 @@
 "use strict";
 
+const mp3filter = file => FTtoFV[file.type] === FV.music || FTtoFV[file.type] === FV.video;
+
 Vue.component('mp3-player-tag', {
 	template: '#mp3-player-tpl',
+	props: ["list"],
 	data: function () {
 		return {
 			visible: false,
-			file: {},
+			selfile: {},
 			rate: 1.00,
 			volume: 1.00,
 			repeatmode: 0, // 0 - no any repeat, 1 - repeat single, 2 - repeat playlist
@@ -22,6 +25,39 @@ Vue.component('mp3-player-tag', {
 		};
 	},
 	computed: {
+		// index of selected file
+		selfilepos() {
+			for (const i in this.list) {
+				if (this.selfile.path === this.list[i].path) {
+					return Number(i);
+				}
+			}
+		},
+		// returns previous file in list
+		getprev() {
+			const prevpos = (from, to) => {
+				for (let i = from - 1; i > to; i--) {
+					const file = this.list[i];
+					if (mp3filter(file)) {
+						return file;
+					}
+				}
+			};
+			return prevpos(this.selfilepos, -1) || this.repeatmode === 2 && prevpos(this.list.length, this.selfilepos);
+		},
+		// returns next file in list
+		getnext() {
+			const nextpos = (from, to) => {
+				for (let i = from + 1; i < to; i++) {
+					const file = this.list[i];
+					if (mp3filter(file)) {
+						return file;
+					}
+				}
+			};
+			return nextpos(this.selfilepos, this.list.length) || this.repeatmode === 2 && nextpos(-1, this.selfilepos);
+		},
+
 		// music buttons
 		iconplay() {
 			return this.isplay ? 'pause' : 'play_arrow';
@@ -47,10 +83,10 @@ Vue.component('mp3-player-tag', {
 			return fmttime(this.timeend, this.timeend);
 		},
 		fmttrackinfo() {
-			if (this.file.title) {
-				return `${this.file.artist || this.file.album || this.file.genre || ''} - ${this.file.title}`;
+			if (this.selfile.title) {
+				return `${this.selfile.artist || this.selfile.album || this.selfile.genre || ''} - ${this.selfile.title}`;
 			} else {
-				return this.file.name;
+				return this.selfile.name;
 			}
 		},
 		stlbarcur() {
@@ -68,11 +104,11 @@ Vue.component('mp3-player-tag', {
 	},
 	methods: {
 		setup(file) {
-			if (this.file.path === file.path) { // do not set again same file
+			if (this.selfile.path === file.path) { // do not set again same file
 				return;
 			}
 			this.close();
-			this.file = file;
+			this.selfile = file;
 
 			this.media = new Audio(getfileurl(file)); // API HTMLMediaElement, HTMLAudioElement
 			this.media.playbackRate = this.rate;
@@ -98,7 +134,7 @@ Vue.component('mp3-player-tag', {
 				if (this.isflowing) {
 					this.media.play();
 					this.isplay = true;
-					this.$emit('playback', this.file);
+					this.$emit('playback', this.selfile);
 				}
 			});
 			this.media.addEventListener('timeupdate', () => this.updateprogress());
@@ -107,9 +143,9 @@ Vue.component('mp3-player-tag', {
 			this.media.addEventListener('play', () => { });
 			this.media.addEventListener('pause', () => { });
 			this.media.addEventListener('ended', () => {
-				this.$emit('next', this.repeatmode === 2);
 				this.isplay = false;
 				this.$emit('playback', null);
+				this.onnext();
 			});
 		},
 		close() {
@@ -135,7 +171,7 @@ Vue.component('mp3-player-tag', {
 				this.media.play();
 				this.isplay = true;
 				this.isflowing = true;
-				this.$emit('playback', this.file);
+				this.$emit('playback', this.selfile);
 			} else {
 				this.media.pause();
 				this.isplay = false;
@@ -167,7 +203,9 @@ Vue.component('mp3-player-tag', {
 		// user events responders
 
 		onprev() {
-			this.$emit('prev', this.repeatmode === 2);
+			if (this.getprev) {
+				this.$emit('select', this.getprev);
+			}
 		},
 
 		onplay() {
@@ -175,11 +213,13 @@ Vue.component('mp3-player-tag', {
 		},
 
 		onnext() {
-			this.$emit('next', this.repeatmode === 2);
+			if (this.getnext) {
+				this.$emit('select', this.getnext);
+			}
 		},
 
 		onrepeat() {
-			this.repeatmode = (this.repeatmode + 1) % 3;
+			this.repeatmode = (this.repeatmode + 1) % (this.list ? 3 : 2);
 			if (this.media) {
 				this.media.loop = this.repeatmode === 1;
 			}

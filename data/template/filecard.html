@@ -2,7 +2,7 @@
 <div v-show="isvisible" class="card">
 	<div class="card-header d-flex flex-wrap align-items-center navbar-dark">
 		<div class="navbar-text flex-grow-1 py-0">
-			<a class="card-link d-block" data-toggle="collapse" href="#collapse-files">files</a>
+			<a class="card-link d-block" data-toggle="collapse" v-bind:href="'#card'+iid">files</a>
 		</div>
 		<ul class="navbar-nav flex-row ml-auto">
 			<li><button class="btn nav-link p-0" v-on:click="onshare" v-bind:disabled="disshared" v-bind:class="clsshared" title="share folder or file to get access from internet"><i class="material-icons">share</i></button></li>
@@ -21,11 +21,21 @@
 			<li><button class="btn nav-link p-0" v-bind:class="clsother" v-on:click="onother" title="show other non-supported files"><i class="material-icons">library_add</i></button></li>
 		</ul>
 	</div>
-	<div id="collapse-files" class="collapse show">
+	<div v-bind:id="'card'+iid" class="collapse show">
 		<div class="card-body folder-list" v-bind:class="clsfilelist" v-on:click="onunselect">
 			<template v-for="file in playlist">
 				<component v-bind:is="iconmodetag" v-bind:file="file" v-bind:state="getstate(file)" v-on:select="onselect" v-on:open="onopen" />
 			</template>
 		</div>
 	</div>
+
+	<nav class="bg-dark navbar-dark fixed-bottom">
+		<template>
+			<mp3-player-tag ref="mp3player" v-bind:list="playlist" v-on:playback="onplayback" v-on:select="onselect" />
+		</template>
+	</nav>
+
+	<template>
+		<slider-tag ref="slider" v-bind:list="playlist" v-on:select="onselect" />
+	</template>
 </div>

@@ -37,11 +37,11 @@
 
 	<div id="accordion">
 		<template>
-			<dir-card-tag v-bind:list="pathlist" v-on:select="onpathselect" v-on:open="onpathopen" v-on:share="onshare" />
+			<dir-card-tag v-bind:list="pathlist" v-on:open="onpathopen" v-on:share="onshare" />
 		</template>
 
 		<template>
-			<file-card-tag ref="filecard" v-bind:list="filelist" v-on:select="onfileselect" v-on:open="onfileopen" v-on:share="onshare" />
+			<file-card-tag ref="filecard" v-bind:list="filelist" v-on:share="onshare" />
 		</template>
 
 		<template>
@@ -53,12 +53,6 @@
 	<div class="container-fluid">
 		<br>
 	</div>
-
-	<nav class="footer bg-dark navbar-dark fixed-bottom">
-		<template>
-			<mp3-player-tag ref="mp3player" v-on:playback="onplayback" v-on:prev="onprev" v-on:next="onnext" />
-		</template>
-	</nav>
 
 	<!-- Dialog managed by jQuery calls -->
 
