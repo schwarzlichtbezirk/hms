@@ -1,0 +1,8 @@
+
+<div class="thumbslider d-flex flex-nowrap">
+	<div v-if="isscroll" v-bind:class="clsprev" class="page-item h-100"><button v-bind:disabled="disprev" v-on:click="onprev" class="page-link mr-1 h-100" aria-label="Previous"><span aria-hidden="true">&laquo;</span><span class="sr-only">Previous</span></button></div>
+	<template v-for="file in slide">
+		<img v-if="file.ntmb===1" v-bind:src="'/thumb/'+file.ktmb" v-on:click="onthumb(file)" v-bind:class="{active:file===selfile}" class="thumb h-100">
+	</template>
+	<div v-if="isscroll" v-bind:class="clsnext" class="page-item h-100"><button v-bind:disabled="disnext" v-on:click="onnext" class="page-link ml-1 h-100" aria-label="Next"><span aria-hidden="true">&raquo;</span><span class="sr-only">Next</span></button></div>
+</div>

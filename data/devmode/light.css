@@ -168,10 +168,14 @@ body {
 	padding: 0px 4px;
 }
 
+/* leaflet container */
+
 .photomap {
 	width: 100%;
 	height: 80vh;
 }
+
+/* leaflet photo thumbnail marker */
 
 .photomarker > img {
 	position: absolute;
@@ -182,6 +186,8 @@ body {
 	border: 3px solid azure;
 	border-radius: 0.25rem;
 }
+
+/* leaflet popup */
 
 .photoinfo img.thumb {
 	max-width: 256px;
@@ -212,6 +218,8 @@ body {
 		display: inline-block;
 		font-weight: normal;
 	}
+
+/* track progress bar */
 
 .timescale {
 	margin: 0 8px;
@@ -263,6 +271,8 @@ body {
 	color: LightGray;
 }
 
+/* Photo slider section */
+
 .photoslider {
 	z-index: 1035; /* above sticked and fixed navbar */
 	position: fixed;
@@ -304,12 +314,27 @@ body {
 			color: #fff;
 		}
 
-	.photoslider > .close {
-		position: absolute;
-		top: 8px;
-		right: 8px;
-		padding: 0.5rem 0.75rem;
+	.photoslider > img.photo {
+		display: inline-block;
+		max-width: 100%;
+		max-height: 100%;
+		margin: auto;
 	}
+
+	.photoslider > .thumbs {
+		position: absolute;
+		bottom: 40px;
+		left: 50%;
+		transform: translate(-50%,0);
+		background-color: Tan;
+		border-radius: 0.25rem;
+		opacity: 0;
+		transition: 0.3s;
+	}
+
+		.photoslider > .thumbs:hover {
+			opacity: 1;
+		}
 
 	.photoslider > .prev {
 		position: absolute;
@@ -327,9 +352,29 @@ body {
 		padding: 4rem 0.75rem;
 	}
 
-	.photoslider > img.photo {
-		display: inline-block;
-		max-width: 100%;
-		max-height: 100%;
-		margin: auto;
+	.photoslider > .close {
+		position: absolute;
+		top: 8px;
+		right: 8px;
+		padding: 0.5rem 0.75rem;
 	}
+
+/* Thumbnail slider section */
+
+.thumbslider {
+	height: 80px;
+}
+
+	.thumbslider > .thumb {
+		opacity: 0.75;
+	}
+
+		.thumbslider > .thumb:hover {
+			opacity: 1;
+		}
+
+		.thumbslider > .thumb.active {
+			z-index: 1036;
+			opacity: 1;
+			outline: 0.25rem solid Ivory;
+		}

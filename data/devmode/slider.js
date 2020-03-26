@@ -2,8 +2,60 @@
 
 const photofilter = file => FTtoFV[file.type] === FV.image || FTtoFV[file.type] === FV.video;
 
-Vue.component('slider-tag', {
-	template: '#slider-tpl',
+Vue.component('thumbslider-tag', {
+	template: '#thumbslider-tpl',
+	props: ["selfile", "list", "size"],
+	data: function () {
+		return {
+			// pagination
+			left: 0
+		};
+	},
+	computed: {
+		maxleft() {
+			return this.list.length - this.size;
+		},
+		slide() {
+			if (this.left > this.maxleft) {
+				this.left = Math.max(this.maxleft, 0);
+			}
+			return this.list.slice(this.left, this.left + Number(this.size));
+		},
+		isscroll() {
+			return this.list.length > this.size;
+		},
+		clsprev() {
+			return { disabled: this.left <= 0 };
+		},
+		clsnext() {
+			return { disabled: this.left >= this.maxleft };
+		},
+		disprev() {
+			return this.left <= 0;
+		},
+		disnext() {
+			return this.left >= this.maxleft;
+		}
+	},
+	methods: {
+		onprev() {
+			this.left--;
+		},
+		onnext() {
+			this.left++;
+		},
+		onthumb(file) {
+			this.$emit('select', file);
+		}
+	},
+	mounted() {
+		console.log("thumbslider mounted");
+		console.log(this.list.length);
+	}
+});
+
+Vue.component('photoslider-tag', {
+	template: '#photoslider-tpl',
 	props: ["list"],
 	data: function () {
 		return {
@@ -84,6 +136,10 @@ Vue.component('slider-tag', {
 					}
 					break;
 			}
+		},
+		onselect(file) {
+			this.selfile = file;
+			this.$emit('select', this.selfile);
 		},
 		onprev() {
 			if (this.getprev) {

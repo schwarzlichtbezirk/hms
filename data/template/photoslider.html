@@ -1,6 +1,11 @@
 
 <div class="photoslider" tabindex="0" ref="wall" v-show="visible" v-on:keyup.stop="onkeyup">
 	<img v-bind:src="curimg" class="photo" />
+	<div class="thumbs p-2">
+		<template v-if="!!list">
+			<thumbslider-tag v-bind:selfile="selfile" v-bind:list="list" size="5" v-on:select="onselect" />
+		</template>
+	</div>
 	<div class="sliderbtn prev" v-show="!!list" v-on:click="onprev" v-bind:disabled="!getprev"><i class="material-icons">arrow_back</i></div>
 	<div class="sliderbtn next" v-show="!!list" v-on:click="onnext" v-bind:disabled="!getnext"><i class="material-icons">arrow_forward</i></div>
 	<div class="sliderbtn close" v-on:click="onclose">&times;</div>

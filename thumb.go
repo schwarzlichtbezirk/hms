@@ -5,6 +5,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"image"
 	"image/gif"
 	"image/jpeg"
@@ -39,6 +40,11 @@ var thumbfilter = gift.New(
 var thumbpngenc = png.Encoder{
 	CompressionLevel: png.BestCompression,
 }
+
+// HTTP error messages
+var (
+	ErrBadThumb = errors.New("thumbnail content not cached")
+)
 
 // Thumbnails cache element.
 type ThumbElem struct {
@@ -202,7 +208,7 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	var tmb, ok = val.(*ThumbElem)
 	if !ok {
-		WriteJson(w, http.StatusNotFound, &AjaxErr{err, EC_thumbbadcnt})
+		WriteJson(w, http.StatusNotFound, &AjaxErr{ErrBadThumb, EC_thumbbadcnt})
 		return
 	}
 	w.Header().Set("Content-Type", tmb.Mime)
