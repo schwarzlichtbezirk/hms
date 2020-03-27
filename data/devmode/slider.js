@@ -4,53 +4,28 @@ const photofilter = file => FTtoFV[file.type] === FV.image || FTtoFV[file.type] 
 
 Vue.component('thumbslider-tag', {
 	template: '#thumbslider-tpl',
-	props: ["selfile", "list", "size"],
-	data: function () {
-		return {
-			// pagination
-			left: 0
-		};
-	},
+	props: ["selfile", "list"],
 	computed: {
-		maxleft() {
-			return this.list.length - this.size;
-		},
 		slide() {
-			if (this.left > this.maxleft) {
-				this.left = Math.max(this.maxleft, 0);
+			const lst = [];
+			for (const file of this.list) {
+				if (file.ntmb === 1) {
+					lst.push(file);
+				}
 			}
-			return this.list.slice(this.left, this.left + Number(this.size));
-		},
-		isscroll() {
-			return this.list.length > this.size;
-		},
-		clsprev() {
-			return { disabled: this.left <= 0 };
-		},
-		clsnext() {
-			return { disabled: this.left >= this.maxleft };
-		},
-		disprev() {
-			return this.left <= 0;
-		},
-		disnext() {
-			return this.left >= this.maxleft;
+			return lst;
 		}
 	},
 	methods: {
 		onprev() {
-			this.left--;
+			this.$refs.slide.scrollBy({ left: -120, behavior: 'smooth' });
 		},
 		onnext() {
-			this.left++;
+			this.$refs.slide.scrollBy({ left: +120, behavior: 'smooth' });
 		},
 		onthumb(file) {
 			this.$emit('select', file);
 		}
-	},
-	mounted() {
-		console.log("thumbslider mounted");
-		console.log(this.list.length);
 	}
 });
 

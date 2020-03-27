@@ -326,6 +326,7 @@ body {
 		bottom: 40px;
 		left: 50%;
 		transform: translate(-50%,0);
+		max-width: 100%;
 		background-color: Tan;
 		border-radius: 0.25rem;
 		opacity: 0;
@@ -359,22 +360,34 @@ body {
 		padding: 0.5rem 0.75rem;
 	}
 
+@media screen and (max-width:768px) {
+	.photoslider > .thumbs {
+		opacity: 0.50;
+	}
+}
+
 /* Thumbnail slider section */
 
 .thumbslider {
 	height: 80px;
 }
 
-	.thumbslider > .thumb {
-		opacity: 0.75;
+	.thumbslider > .slide {
+		overflow-x: hidden;
 	}
 
-		.thumbslider > .thumb:hover {
-			opacity: 1;
+		.thumbslider > .slide > .thumb {
+			opacity: 0.75;
+			border: 0.25rem solid Silver;
 		}
 
-		.thumbslider > .thumb.active {
-			z-index: 1036;
-			opacity: 1;
-			outline: 0.25rem solid Ivory;
-		}
+			.thumbslider > .slide > .thumb:hover {
+				opacity: 1;
+				border: 0.25rem solid Wheat;
+			}
+
+			.thumbslider > .slide > .thumb.active {
+				z-index: 1036;
+				opacity: 1;
+				border: 0.25rem solid Ivory;
+			}

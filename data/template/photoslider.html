@@ -3,7 +3,7 @@
 	<img v-bind:src="curimg" class="photo" />
 	<div class="thumbs p-2">
 		<template v-if="!!list">
-			<thumbslider-tag v-bind:selfile="selfile" v-bind:list="list" size="5" v-on:select="onselect" />
+			<thumbslider-tag v-bind:selfile="selfile" v-bind:list="list" v-on:select="onselect" />
 		</template>
 	</div>
 	<div class="sliderbtn prev" v-show="!!list" v-on:click="onprev" v-bind:disabled="!getprev"><i class="material-icons">arrow_back</i></div>

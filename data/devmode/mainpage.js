@@ -338,6 +338,14 @@ let app = new Vue({
 					// update folder settings
 					this.pathlist = xhr.response.paths || [];
 					this.filelist = xhr.response.files || [];
+					if (!file.path) { // shares only at root
+						this.shared = [];
+						for (const file of this.pathlist) {
+							if (file.pref) {
+								this.shared.push(file);
+							}
+						}
+					}
 				} else if (xhr.status === 403) { // Forbidden
 					this.isadmin = false;
 				}
@@ -438,7 +446,9 @@ let app = new Vue({
 						if (shr) {
 							// update folder settings
 							Vue.set(file, 'pref', shr.pref);
-							this.shared.push(shr);
+							if (shr.type === FT.dir) {
+								this.shared.push(shr);
+							}
 						}
 					} else if (xhr.status === 403) { // Forbidden
 						this.isadmin = false;
@@ -462,10 +472,12 @@ let app = new Vue({
 						let ok = xhr.response;
 						// update folder settings
 						if (ok) {
-							for (let i in this.shared) {
-								if (this.shared[i].pref === file.pref) {
-									this.shared.splice(i, 1);
-									break;
+							if (file.type === FT.dir) {
+								for (let i in this.shared) {
+									if (this.shared[i].pref === file.pref) {
+										this.shared.splice(i, 1);
+										break;
+									}
 								}
 							}
 							Vue.delete(file, 'pref');
