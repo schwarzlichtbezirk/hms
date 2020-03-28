@@ -117,6 +117,8 @@ func RegisterRoutes(gmux *Router) {
 		devm.Path("/" + name).HandlerFunc(pageHandler("/devm/", name)) // development mode
 		gmux.Path("/" + name).HandlerFunc(pageHandler("/relm/", name)) // release mode
 	}
+	devm.PathPrefix("/path/").HandlerFunc(pageHandler("/devm/", "main"))
+	gmux.PathPrefix("/path/").HandlerFunc(pageHandler("/relm/", "main"))
 
 	// cached thumbs
 
@@ -160,7 +162,7 @@ func registershares() {
 			continue
 		}
 
-		var prop = MakeProp(fi, path)
+		var prop = MakeProp(path, fi)
 		prop.SetPref(pref)
 		shareslist = append(shareslist, prop)
 		sharespath[path] = pref

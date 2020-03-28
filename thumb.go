@@ -268,7 +268,7 @@ func tmbscnApi(w http.ResponseWriter, r *http.Request) {
 				var prop = cp.(FileProper)
 				CacheImg(prop, arg.Force)
 			} else if fi, err := FileStat(fpath); err == nil { // put into cache
-				var prop = MakeProp(fi, fpath)
+				var prop = MakeProp(fpath, fi)
 				CacheImg(prop, arg.Force)
 			}
 		}

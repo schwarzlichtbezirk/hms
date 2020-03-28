@@ -105,7 +105,7 @@ func localHandler(w http.ResponseWriter, r *http.Request) {
 	incuint(&localcallcount, 1)
 
 	// get arguments
-	var path = r.FormValue("path")
+	var path = filepath.ToSlash(r.FormValue("path"))
 	if len(path) == 0 {
 		WriteError400(w, ErrArgNoPath, EC_localnopath)
 		return
@@ -256,26 +256,31 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 	var ret folderRet
 
 	// get arguments
-	var path = r.FormValue("path")
+	var path = filepath.ToSlash(r.FormValue("path"))
 
 	shrmux.RLock()
 	var shrlst = make([]FileProper, len(shareslist))
 	copy(shrlst, shareslist)
 	shrmux.RUnlock()
 
+	var pref, suff = splitprefsuff(path)
+	var shared bool
+	for _, shr := range shrlst {
+		if pref != "" && shr.Pref() == pref {
+			path = shr.Path() + suff // convert share path to local path
+			shared = true
+			break
+		}
+		if strings.HasPrefix(path, shr.Path()) {
+			shared = true
+			break
+		}
+	}
+
 	var adm = IsAdmin(r)
-	if !adm && len(path) > 0 {
-		var shared bool
-		for _, shr := range shrlst {
-			if strings.HasPrefix(path, shr.Path()) {
-				shared = true
-				break
-			}
-		}
-		if !shared {
-			WriteJson(w, http.StatusForbidden, &AjaxErr{ErrDeny, EC_folderdeny})
-			return
-		}
+	if !adm && len(path) > 0 && !shared {
+		WriteJson(w, http.StatusForbidden, &AjaxErr{ErrDeny, EC_folderdeny})
+		return
 	}
 
 	if len(path) == 0 {
@@ -283,8 +288,8 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 			ret.Paths = getdrives()
 		}
 
-		for _, prop := range shrlst {
-			ret.AddProp(prop)
+		for _, shr := range shrlst {
+			ret.AddProp(shr)
 		}
 	} else {
 		if ret, err = readdir(path); err != nil {
@@ -322,7 +327,7 @@ func shrlstApi(w http.ResponseWriter, r *http.Request) {
 func shraddApi(w http.ResponseWriter, r *http.Request) {
 	// get arguments
 	var path string
-	if path = r.FormValue("path"); len(path) == 0 {
+	if path = filepath.ToSlash(r.FormValue("path")); len(path) == 0 {
 		WriteError400(w, ErrArgNoPath, EC_addshrnopath)
 		return
 	}
@@ -341,7 +346,7 @@ func shraddApi(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var prop = MakeProp(fi, path)
+	var prop = MakeProp(path, fi)
 	MakeShare(prop)
 
 	WriteJson(w, http.StatusOK, prop)
@@ -355,7 +360,7 @@ func shrdelApi(w http.ResponseWriter, r *http.Request) {
 	var pref, path string
 	if pref = r.FormValue("pref"); len(pref) > 0 {
 		ok = DelSharePref(pref)
-	} else if path = r.FormValue("path"); len(path) > 0 {
+	} else if path = filepath.ToSlash(r.FormValue("path")); len(path) > 0 {
 		ok = DelSharePath(path)
 	} else {
 		WriteError400(w, ErrArgNoPref, EC_delshrnopath)

@@ -87,7 +87,7 @@ const geticonname = (file) => {
 	switch (file.type) {
 		case FT.dir:
 			if (file.path.length > 3) {
-				let suff = app.foldershares.length ? "-pub" : "";
+				let suff = app.curpathshares.length ? "-pub" : "";
 				if (file.scan) {
 					let fnum = 0;
 					const fg = file.fgrp;
@@ -173,8 +173,8 @@ const getfileurl = (file) => {
 	if (file.pref) {
 		url = shareprefix + file.pref;
 	} else {
-		if (app.foldershares.length) {
-			const shr = app.foldershares[0]; // use any first available share
+		if (app.curpathshares.length) {
+			const shr = app.curpathshares[0]; // use any first available share
 			url = shareprefix + shr.pref + '/' + shr.suff + file.name;
 			if (file.type === FT.dir) {
 				url += '/';
@@ -217,14 +217,17 @@ let app = new Vue({
 	},
 	computed: {
 		// array of paths to current folder
-		folderpath() {
+		curpathway() {
 			if (!this.curpath.name) {
 				return [];
 			}
 
 			const arr = this.curpath.path.split('/');
-			arr.pop(); // remove empty element from separator at the end
-			arr.pop(); // remove current name
+			// remove empty element from separator at the end
+			// and remove current name
+			if (!arr.pop()) {
+				arr.pop();
+			}
 
 			const lst = [];
 			let path = '';
@@ -237,6 +240,20 @@ let app = new Vue({
 					time: 0,
 					type: FT.dir
 				});
+			}
+			return lst;
+		},
+
+		// get all folder shares
+		curpathshares() {
+			const lst = [];
+			const fldpath = this.curpath.path;
+			for (const fp of this.shared) {
+				if (fp.path.length <= fldpath.length && fldpath.substr(0, fp.path.length) === fp.path) {
+					const shr = Object.assign({}, fp);
+					shr.suff = fldpath.substr(shr.path.length, fldpath.length);
+					lst.push(shr);
+				}
 			}
 			return lst;
 		},
@@ -261,20 +278,6 @@ let app = new Vue({
 			return fmtitemsize(ss);
 		},
 
-		// get all folder shares
-		foldershares() {
-			let shares = [];
-			let fldpath = this.curpath.path;
-			for (let fp of this.shared) {
-				let shr = Object.assign({}, fp);
-				if (shr.path.length <= fldpath.length && fldpath.substr(0, shr.path.length) === shr.path) {
-					shr.suff = fldpath.substr(shr.path.length, fldpath.length);
-					shares.push(shr);
-				}
-			}
-			return shares;
-		},
-
 		// common buttons enablers
 
 		dishome() {
@@ -287,7 +290,7 @@ let app = new Vue({
 			return this.histpos > this.histlist.length - 1;
 		},
 		disparent() {
-			return !this.folderpath.length;
+			return !this.curpathway.length;
 		},
 
 		// buttons hints
@@ -314,8 +317,8 @@ let app = new Vue({
 			}
 		},
 		hintparent() {
-			if (this.folderpath.length) {
-				return this.folderpath.map(e => e.name).join("/");
+			if (this.curpathway.length) {
+				return this.curpathway.map(e => e.name).join("/");
 			} else {
 				return "to parent folder";
 			}
@@ -332,6 +335,7 @@ let app = new Vue({
 				this.pathlist = [];
 				this.filelist = [];
 				this.curpath = file;
+				//window.history.replaceState(null, file.path, "/path/" + file.path);
 
 				if (xhr.status === 200) {
 					this.curscan = new Date(Date.now());
@@ -420,7 +424,7 @@ let app = new Vue({
 		},
 
 		onparent() {
-			this.openfolder(this.folderpath[this.folderpath.length - 1]);
+			this.openfolder(this.curpathway[this.curpathway.length - 1]);
 		},
 
 		onrefresh() {
@@ -509,7 +513,21 @@ let app = new Vue({
 /////////////
 
 $(document).ready(() => {
-	app.openfolder(root);
+	console.log(window.location);
+	if (window.location.pathname.substr(0, 6) === "/path/") {
+		const path = window.location.pathname.substr(6);
+		const arr = path.split('/');
+		if (!arr[arr.length-1]) {
+			arr.pop();
+		}
+		app.openfolder({
+			name: arr[arr.length - 1],
+			path: path,
+			size: 0, time: 0, type: FT.dir
+		});
+	} else {
+		app.openfolder(root);
+	}
 
 	$('.preloader').hide("fast");
 	$('#app').show("fast");

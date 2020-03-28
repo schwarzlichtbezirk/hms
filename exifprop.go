@@ -144,8 +144,8 @@ type ExifKit struct {
 }
 
 // Fills fields with given path.
-func (ek *ExifKit) Setup(fi os.FileInfo, fpath string) {
-	ek.StdProp.Setup(fi, fpath)
+func (ek *ExifKit) Setup(fpath string, fi os.FileInfo) {
+	ek.StdProp.Setup(fpath, fi)
 
 	if file, err := os.Open(fpath); err == nil {
 		defer file.Close()

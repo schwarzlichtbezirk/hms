@@ -210,7 +210,7 @@ func pathexists(path string) (bool, error) {
 // Performs global data initialisation. Loads configuration files, initializes file cache.
 func Init() {
 	// inits program paths
-	destpath, _ = filepath.Split(os.Args[0])
+	destpath = filepath.ToSlash(filepath.Dir(os.Args[0]) + "/")
 	var gopath = os.Getenv("GOPATH")
 	var checkpath = func(suff string) (path string) {
 		path = destpath + rootsuff + suff

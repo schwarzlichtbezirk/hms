@@ -1,6 +1,6 @@
 
 <div class="photoslider" tabindex="0" ref="wall" v-show="visible" v-on:keyup.stop="onkeyup">
-	<img v-bind:src="curimg" class="photo" />
+	<img v-bind:src="selfileurl" class="photo" />
 	<div class="thumbs p-2">
 		<template v-if="!!list">
 			<thumbslider-tag v-bind:selfile="selfile" v-bind:list="list" v-on:select="onselect" />

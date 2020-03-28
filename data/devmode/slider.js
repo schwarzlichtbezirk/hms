@@ -36,6 +36,7 @@ Vue.component('photoslider-tag', {
 		return {
 			visible: false,
 			selfile: null,
+			selfileurl: null,
 			repeatmode: 0 // 0 - no any repeat, 1 - repeat single, 2 - repeat playlist
 		};
 	},
@@ -71,19 +72,21 @@ Vue.component('photoslider-tag', {
 				}
 			};
 			return this.selfile && (nextpos(this.selfilepos, this.list.length) || this.repeatmode === 2 && nextpos(-1, this.selfilepos));
-		},
-
-		curimg() {
-			return this.selfile && getfileurl(this.selfile);
 		}
 	},
 	methods: {
 		popup(file) {
 			this.selfile = file;
+			this.selfileurl = getfileurl(file);
 			this.visible = true;
 			Vue.nextTick(() => {
 				this.$refs.wall.focus();
 			});
+		},
+		close() {
+			this.selfile = null;
+			this.selfileurl = null;
+			this.visible = false;
 		},
 
 		onkeyup(e) {
@@ -129,7 +132,7 @@ Vue.component('photoslider-tag', {
 			}
 		},
 		onclose() {
-			this.visible = false;
+			this.close();
 		}
 	}
 });

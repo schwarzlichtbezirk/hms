@@ -3,7 +3,6 @@ package hms
 import (
 	"encoding/json"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -208,14 +207,14 @@ var propcache = gcache.New(32 * 1024).LRU().Build()
 
 // File properties interface.
 type FileProper interface {
-	Name() string
-	Path() string
-	Size() int64
-	Time() int64
-	Type() int
-	Pref() string
-	KTmb() string
-	NTmb() int
+	Name() string // string identifier
+	Path() string // full path with name
+	Size() int64  // size in bytes
+	Time() int64  // UNIX time in milliseconds
+	Type() int    // type identifier
+	Pref() string // share prefix
+	KTmb() string // thumbnail identifier (MD5-hash of full file path)
+	NTmb() int    // -1 - can not make thumbnail; 0 - not cached; 1 - cached
 	SetPref(string)
 	SetNTmb(int)
 }
@@ -231,7 +230,7 @@ type StdProp struct {
 }
 
 // Fills fields from os.FileInfo structure. Do not looks for share.
-func (sp *StdProp) Setup(fi os.FileInfo, fpath string) {
+func (sp *StdProp) Setup(fpath string, fi os.FileInfo) {
 	var fname, size = fi.Name(), fi.Size()
 	var ft = extset[strings.ToLower(filepath.Ext(fname))]
 	if (ft == FT_jpeg && size > PhotoJPEG) || (ft == FT_webp && size > PhotoWEBP) {
@@ -292,8 +291,8 @@ type FileKit struct {
 }
 
 // Calls nested structures setups.
-func (fk *FileKit) Setup(fi os.FileInfo, fpath string) {
-	fk.StdProp.Setup(fi, fpath)
+func (fk *FileKit) Setup(fpath string, fi os.FileInfo) {
+	fk.StdProp.Setup(fpath, fi)
 	fk.TmbProp.Setup(fpath)
 }
 
@@ -318,8 +317,8 @@ type DirKit struct {
 }
 
 // Fills fields with given path. Do not looks for share.
-func (dk *DirKit) Setup(fname, fpath string) {
-	dk.NameVal = fname
+func (dk *DirKit) Setup(fpath string) {
+	dk.NameVal = filepath.Base(fpath)
 	dk.PathVal = fpath
 	dk.TypeVal = FT_dir
 	dk.KTmbVal = ThumbName(fpath)
@@ -374,8 +373,8 @@ type TagKit struct {
 
 // Fills fields with given path.
 // Puts into the cache nested at the tags thumbnail if it present.
-func (tk *TagKit) Setup(fi os.FileInfo, fpath string) {
-	tk.StdProp.Setup(fi, fpath)
+func (tk *TagKit) Setup(fpath string, fi os.FileInfo) {
+	tk.StdProp.Setup(fpath, fi)
 
 	if file, err := os.Open(fpath); err == nil {
 		defer file.Close()
@@ -407,30 +406,29 @@ func FileStat(fpath string) (fi os.FileInfo, err error) {
 }
 
 // File properties factory.
-func MakeProp(fi os.FileInfo, fpath string) (prop FileProper) {
+func MakeProp(fpath string, fi os.FileInfo) (prop FileProper) {
 	if cp, err := propcache.Get(fpath); err == nil {
 		return cp.(FileProper)
 	}
 
 	if fi.IsDir() {
-		var _, fname = path.Split(fpath[:len(fpath)-1])
 		var dk DirKit
-		dk.Setup(fname, fpath)
+		dk.Setup(fpath)
 
 		prop = &dk
 	} else {
 		var ft = extset[strings.ToLower(filepath.Ext(fpath))]
 		if ft == FT_flac || ft == FT_mp3 || ft == FT_ogg || ft == FT_mp4 {
 			var tk TagKit
-			tk.Setup(fi, fpath)
+			tk.Setup(fpath, fi)
 			prop = &tk
 		} else if ft == FT_photo || ft == FT_jpeg {
 			var ek ExifKit
-			ek.Setup(fi, fpath)
+			ek.Setup(fpath, fi)
 			prop = &ek
 		} else {
 			var fk FileKit
-			fk.Setup(fi, fpath)
+			fk.Setup(fpath, fi)
 			prop = &fk
 		}
 	}
@@ -560,13 +558,25 @@ func makerandstr(n int) string {
 	return string(str)
 }
 
+// Returns name of volume or share prefix and remained suffix
+func splitprefsuff(fpath string) (string, string) {
+	for i, c := range fpath {
+		if c == '/' || c == '\\' {
+			return fpath[:i], fpath[i+1:]
+		} else if c == '.' { // prefix can not be with dot
+			return "", fpath
+		}
+	}
+	return fpath, ""
+}
+
 // Scan all available drives installed on local machine.
 func getdrives() (drvs []*DirKit) {
 	for _, drive := range "ABCDEFGHIJKLMNOPQRSTUVWXYZ" {
 		var fname = string(drive) + ":"
 		var fpath = fname + "/"
 		if fi, err := FileStat(fpath); err == nil {
-			if dk, ok := MakeProp(fi, fpath).(*DirKit); ok {
+			if dk, ok := MakeProp(fpath, fi).(*DirKit); ok {
 				dk.NameVal = fname
 				drvs = append(drvs, dk)
 			}
@@ -606,7 +616,7 @@ scanprop:
 	for _, fi := range fis {
 		var fname = fi.Name()
 		for _, pat := range hidden {
-			if matched, _ := path.Match(pat, fname); matched {
+			if matched, _ := filepath.Match(pat, fname); matched {
 				continue scanprop
 			}
 		}
@@ -616,12 +626,12 @@ scanprop:
 			fpath += "/"
 		}
 
-		var prop = MakeProp(fi, fpath)
+		var prop = MakeProp(fpath, fi)
 		fgrp[typetogroup[prop.Type()]]++
 		ret.AddProp(prop)
 	}
 
-	if dk, ok := MakeProp(fi, dirname).(*DirKit); ok {
+	if dk, ok := MakeProp(dirname, fi).(*DirKit); ok {
 		dk.Scan = UnixJSNow()
 		dk.FGrp = fgrp
 	}
