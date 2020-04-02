@@ -4,8 +4,8 @@ import (
 	"github.com/schwarzlichtbezirk/hms"
 )
 
-const buildvers = "0.3.2"
-const builddate = "2020.03.19"
+const buildvers = "0.4.0"
+const builddate = "2020.04.02"
 
 var log = hms.Log
 

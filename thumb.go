@@ -115,7 +115,7 @@ func ThumbName(fname string) string {
 	return hex.EncodeToString(h[:])
 }
 
-func CacheImg(fp FileProper, force bool) (tmb *ThumbElem) {
+func CacheImg(fp FileProper, fpath string, force bool) (tmb *ThumbElem) {
 	var err error
 	var ktmb = fp.KTmb()
 
@@ -150,7 +150,7 @@ func CacheImg(fp FileProper, force bool) (tmb *ThumbElem) {
 	var file *os.File
 	var ftype string
 	var src, dst image.Image
-	if file, err = os.Open(fp.Path()); err != nil {
+	if file, err = os.Open(fpath); err != nil {
 		return // can not open file
 	}
 	defer file.Close()
@@ -264,12 +264,13 @@ func tmbscnApi(w http.ResponseWriter, r *http.Request) {
 
 	go func() {
 		for _, fpath := range arg.Paths {
+			var fpath = getsharepath(fpath)
 			if cp, err := propcache.Get(fpath); err == nil { // extract from cache
 				var prop = cp.(FileProper)
-				CacheImg(prop, arg.Force)
+				CacheImg(prop, fpath, arg.Force)
 			} else if fi, err := FileStat(fpath); err == nil { // put into cache
 				var prop = MakeProp(fpath, fi)
-				CacheImg(prop, arg.Force)
+				CacheImg(prop, fpath, arg.Force)
 			}
 		}
 	}()

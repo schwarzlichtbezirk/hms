@@ -72,9 +72,17 @@ Vue.component('photoslider-tag', {
 				}
 			};
 			return this.selfile && (nextpos(this.selfilepos, this.list.length) || this.repeatmode === 2 && nextpos(-1, this.selfilepos));
+		},
+		islist() {
+			return this.list && this.list.length > 1;
 		}
 	},
 	methods: {
+		select(file) {
+			this.selfile = file;
+			this.selfileurl = getfileurl(file);
+			this.$emit('select', file);
+		},
 		popup(file) {
 			this.selfile = file;
 			this.selfileurl = getfileurl(file);
@@ -92,7 +100,7 @@ Vue.component('photoslider-tag', {
 		onkeyup(e) {
 			switch (e.code) {
 				case 'Escape':
-					this.visible = false;
+					this.close();
 					break;
 				case 'ArrowLeft':
 					this.onprev();
@@ -103,32 +111,27 @@ Vue.component('photoslider-tag', {
 					break;
 				case 'Home':
 					if (this.list) {
-						this.selfile = this.list[0];
-						this.$emit('select', this.selfile);
+						this.select(this.list[0]);
 					}
 					break;
 				case 'End':
 					if (this.list) {
-						this.selfile = this.list[this.list.length - 1];
-						this.$emit('select', this.selfile);
+						this.select(this.list[this.list.length - 1]);
 					}
 					break;
 			}
 		},
 		onselect(file) {
-			this.selfile = file;
-			this.$emit('select', this.selfile);
+			this.select(file);
 		},
 		onprev() {
 			if (this.getprev) {
-				this.selfile = this.getprev;
-				this.$emit('select', this.selfile);
+				this.select(this.getprev);
 			}
 		},
 		onnext() {
 			if (this.getnext) {
-				this.selfile = this.getnext;
-				this.$emit('select', this.selfile);
+				this.select(this.getnext);
 			}
 		},
 		onclose() {

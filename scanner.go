@@ -208,7 +208,6 @@ var propcache = gcache.New(32 * 1024).LRU().Build()
 // File properties interface.
 type FileProper interface {
 	Name() string // string identifier
-	Path() string // full path with name
 	Size() int64  // size in bytes
 	Time() int64  // UNIX time in milliseconds
 	Type() int    // type identifier
@@ -222,7 +221,6 @@ type FileProper interface {
 // Common file properties chunk.
 type StdProp struct {
 	NameVal string `json:"name,omitempty"`
-	PathVal string `json:"path,omitempty"`
 	SizeVal int64  `json:"size,omitempty"`
 	TimeVal int64  `json:"time,omitempty"`
 	TypeVal int    `json:"type,omitempty"`
@@ -230,7 +228,7 @@ type StdProp struct {
 }
 
 // Fills fields from os.FileInfo structure. Do not looks for share.
-func (sp *StdProp) Setup(fpath string, fi os.FileInfo) {
+func (sp *StdProp) Setup(fi os.FileInfo) {
 	var fname, size = fi.Name(), fi.Size()
 	var ft = extset[strings.ToLower(filepath.Ext(fname))]
 	if (ft == FT_jpeg && size > PhotoJPEG) || (ft == FT_webp && size > PhotoWEBP) {
@@ -238,7 +236,6 @@ func (sp *StdProp) Setup(fpath string, fi os.FileInfo) {
 	}
 
 	sp.NameVal = fname
-	sp.PathVal = fpath
 	sp.SizeVal = size
 	sp.TimeVal = UnixJS(fi.ModTime())
 	sp.TypeVal = ft
@@ -252,11 +249,6 @@ func (sp *StdProp) String() string {
 // File name with extension without path.
 func (sp *StdProp) Name() string {
 	return sp.NameVal
-}
-
-// Full path with name; folder ends with splash.
-func (sp *StdProp) Path() string {
-	return sp.PathVal
 }
 
 // File size in bytes.
@@ -292,7 +284,7 @@ type FileKit struct {
 
 // Calls nested structures setups.
 func (fk *FileKit) Setup(fpath string, fi os.FileInfo) {
-	fk.StdProp.Setup(fpath, fi)
+	fk.StdProp.Setup(fi)
 	fk.TmbProp.Setup(fpath)
 }
 
@@ -319,7 +311,6 @@ type DirKit struct {
 // Fills fields with given path. Do not looks for share.
 func (dk *DirKit) Setup(fpath string) {
 	dk.NameVal = filepath.Base(fpath)
-	dk.PathVal = fpath
 	dk.TypeVal = FT_dir
 	dk.KTmbVal = ThumbName(fpath)
 	dk.NTmbVal = TMB_reject
@@ -374,7 +365,7 @@ type TagKit struct {
 // Fills fields with given path.
 // Puts into the cache nested at the tags thumbnail if it present.
 func (tk *TagKit) Setup(fpath string, fi os.FileInfo) {
-	tk.StdProp.Setup(fpath, fi)
+	tk.StdProp.Setup(fi)
 
 	if file, err := os.Open(fpath); err == nil {
 		defer file.Close()
@@ -444,7 +435,7 @@ func MakeProp(fpath string, fi os.FileInfo) (prop FileProper) {
 }
 
 // Looks for correct prefix and add share with it.
-func MakeShare(prop FileProper) {
+func MakeShare(path string, prop FileProper) {
 	var pref string
 	var name = prop.Name()
 	if len(name) > 8 {
@@ -459,10 +450,10 @@ func MakeShare(prop FileProper) {
 		}
 	}
 
-	if fit && AddShare(pref, prop) {
+	if fit && AddShare(pref, path, prop) {
 		return
 	}
-	for i := 0; !AddShare(makerandstr(4), prop); i++ {
+	for i := 0; !AddShare(makerandstr(4), path, prop); i++ {
 		if i > 1000 {
 			panic("can not generate share prefix")
 		}
@@ -470,14 +461,13 @@ func MakeShare(prop FileProper) {
 }
 
 // Add share with given prefix.
-func AddShare(pref string, prop FileProper) bool {
+func AddShare(pref string, path string, prop FileProper) bool {
 	shrmux.RLock()
 	var _, ok = sharespref[pref]
 	shrmux.RUnlock()
 
 	if !ok {
 		prop.SetPref(pref)
-		var path = prop.Path()
 
 		shrmux.Lock()
 		shareslist = append(shareslist, prop)
@@ -519,7 +509,7 @@ func DelSharePath(path string) bool {
 	if ok {
 		shrmux.Lock()
 		for i, fp := range shareslist {
-			if fp.Path() == path {
+			if fp.Pref() == pref {
 				shareslist = append(shareslist[:i], shareslist[i+1:]...)
 				break
 			}
@@ -558,16 +548,53 @@ func makerandstr(n int) string {
 	return string(str)
 }
 
-// Returns name of volume or share prefix and remained suffix
-func splitprefsuff(fpath string) (string, string) {
-	for i, c := range fpath {
+// Returns share prefix and remained suffix
+func splitprefsuff(share string) (string, string) {
+	for i, c := range share {
 		if c == '/' || c == '\\' {
-			return fpath[:i], fpath[i+1:]
-		} else if c == '.' { // prefix can not be with dot
-			return "", fpath
+			return share[:i], share[i+1:]
+		} else if c == '.' || c == ':' { // prefix can not be with dots
+			return "", share
 		}
 	}
-	return fpath, ""
+	return share, ""
+}
+
+func getsharepath(argpath string) string {
+	var pref, suff = splitprefsuff(argpath)
+	if pref == "" {
+		return argpath
+	}
+	shrmux.RLock()
+	var path, ok = sharespref[pref]
+	shrmux.RUnlock()
+	if !ok {
+		return argpath
+	}
+	return path + suff
+}
+
+func checksharepath(argpath string) (string, bool) {
+	var pref, suff = splitprefsuff(argpath)
+	if pref == "" {
+		var shared bool
+		shrmux.RLock()
+		for _, path := range sharespref {
+			if strings.HasPrefix(argpath, path) {
+				shared = true
+				break
+			}
+		}
+		shrmux.RUnlock()
+		return argpath, shared
+	}
+	shrmux.RLock()
+	var path, ok = sharespref[pref]
+	shrmux.RUnlock()
+	if !ok {
+		return argpath, false
+	}
+	return path + suff, true
 }
 
 // Scan all available drives installed on local machine.

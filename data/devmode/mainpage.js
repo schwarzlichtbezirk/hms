@@ -339,17 +339,37 @@ let app = new Vue({
 
 				if (xhr.status === 200) {
 					this.curscan = new Date(Date.now());
+					// update path for each item
+					const pathlist = xhr.response.paths || [];
+					for (const fp of pathlist) {
+						fp.path = fp.pref ? fp.pref : file.path + fp.name;
+						fp.path += '/';
+					}
+					const filelist = xhr.response.files || [];
+					for (const fp of filelist) {
+						fp.path = fp.pref ? fp.pref : file.path + fp.name;
+					}
 					// update folder settings
-					this.pathlist = xhr.response.paths || [];
-					this.filelist = xhr.response.files || [];
+					this.pathlist = pathlist;
+					this.filelist = filelist;
+					// update shares
 					if (!file.path) { // shares only at root
 						this.shared = [];
-						for (const file of this.pathlist) {
-							if (file.pref) {
-								this.shared.push(file);
+						for (const fp of this.pathlist) {
+							if (fp.pref) {
+								this.shared.push(fp);
 							}
 						}
 					}
+					// update map card
+					const gpslist = [];
+					for (const fp of filelist) {
+						if (fp.latitude && fp.longitude && fp.ntmb === 1) {
+							gpslist.push(fp);
+						}
+					}
+					this.$refs.mapcard.new();
+					this.$refs.mapcard.addmarkers(gpslist);
 				} else if (xhr.status === 403) { // Forbidden
 					this.isadmin = false;
 				}
@@ -374,16 +394,22 @@ let app = new Vue({
 						ajaxjson("POST", "/api/tmb/chk", xhr => {
 							traceresponse(xhr);
 							if (xhr.status === 200) {
+								const gpslist = [];
 								for (const tp of xhr.response.tmbs) {
 									if (tp.ntmb) {
-										for (const file of this.filelist) {
-											if (file.ktmb === tp.ktmb) {
-												Vue.set(file, 'ntmb', tp.ntmb);
+										for (const fp of this.filelist) {
+											if (fp.ktmb === tp.ktmb) {
+												Vue.set(fp, 'ntmb', tp.ntmb);
+												// add gps-item
+												if (fp.latitude && fp.longitude && fp.ntmb === 1) {
+													gpslist.push(fp);
+												}
 												break;
 											}
 										}
 									}
 								}
+								this.$refs.mapcard.addmarkers(gpslist); // update map card
 								if (this.uncached.length && this.curpath === file) {
 									setTimeout(chktmb, 1500); // wait and run again
 								}

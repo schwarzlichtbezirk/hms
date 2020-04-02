@@ -256,51 +256,37 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 	var ret folderRet
 
 	// get arguments
-	var path = filepath.ToSlash(r.FormValue("path"))
+	var argpath = filepath.ToSlash(r.FormValue("path"))
 
-	shrmux.RLock()
-	var shrlst = make([]FileProper, len(shareslist))
-	copy(shrlst, shareslist)
-	shrmux.RUnlock()
-
-	var pref, suff = splitprefsuff(path)
-	var shared bool
-	for _, shr := range shrlst {
-		if pref != "" && shr.Pref() == pref {
-			path = shr.Path() + suff // convert share path to local path
-			shared = true
-			break
-		}
-		if strings.HasPrefix(path, shr.Path()) {
-			shared = true
-			break
-		}
-	}
+	var isroot = len(argpath) == 0
+	var fpath, shared = checksharepath(argpath)
 
 	var adm = IsAdmin(r)
-	if !adm && len(path) > 0 && !shared {
+	if !adm && !isroot && !shared {
 		WriteJson(w, http.StatusForbidden, &AjaxErr{ErrDeny, EC_folderdeny})
 		return
 	}
 
-	if len(path) == 0 {
+	if isroot {
 		if adm {
 			ret.Paths = getdrives()
 		}
 
-		for _, shr := range shrlst {
+		shrmux.RLock()
+		for _, shr := range shareslist {
 			ret.AddProp(shr)
 		}
+		shrmux.RUnlock()
 	} else {
-		if ret, err = readdir(path); err != nil {
+		if ret, err = readdir(fpath); err != nil {
 			WriteJson(w, http.StatusNotFound, &AjaxErr{err, EC_folderfail})
 			return
 		}
 	}
-	if len(path) > 0 {
-		Log.Printf("navigate to: %s", path)
-	} else {
+	if isroot {
 		Log.Printf("navigate to root")
+	} else {
+		Log.Printf("navigate to: %s", fpath)
 	}
 
 	WriteJson(w, http.StatusOK, ret)
@@ -347,7 +333,7 @@ func shraddApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var prop = MakeProp(path, fi)
-	MakeShare(prop)
+	MakeShare(path, prop)
 
 	WriteJson(w, http.StatusOK, prop)
 }

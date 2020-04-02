@@ -1,5 +1,9 @@
 "use strict";
 
+const filetmb = file => file.ntmb === 1
+	? '/thumb/' + file.ktmb
+	: '/asst/file-png/' + geticonname(file) + '.png';
+
 const makemarkercontent = file => `
 <div class="photoinfo">
 	<ul class="nav nav-tabs" role="tablist">
@@ -8,7 +12,7 @@ const makemarkercontent = file => `
 	</ul>
 	<div class="tab-content">
 		<div class="tab-pane active" id="pict">
-			<img class="rounded thumb" src="${'/thumb/' + file.ktmb}" alt="${file.name}">
+			<img class="rounded thumb" src="${'/thumb/' + file.ktmb}" alt="${file.name} ">
 			<div class="d-flex flex-wrap latlng">
 				<div><div class="name">lat:</div> <div class="value">${file.latitude.toFixed(6)}</div></div>
 				<div><div class="name">lng:</div> <div class="value">${file.longitude.toFixed(6)}</div></div>

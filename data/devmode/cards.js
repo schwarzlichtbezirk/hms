@@ -410,36 +410,19 @@ Vue.component('file-card-tag', {
 
 Vue.component('map-card-tag', {
 	template: '#map-card-tpl',
-	props: ["list"],
 	data: function () {
 		return {
 			map: null, // set it on mounted event
 			markers: null,
 			markermode: "thumb",
+			gpslist: [],
 
 			iid: makestrid(10) // instance ID
 		};
 	},
 	computed: {
 		isvisible() {
-			if (this.gpslist.length > 0) {
-				Vue.nextTick(() => {
-					this.updatemarkers();
-					this.map.invalidateSize();
-				});
-				return true;
-			}
-			return false;
-		},
-		// file list with GPS tags
-		gpslist() {
-			const lst = [];
-			for (const file of this.list) {
-				if (file.latitude && file.longitude) {
-					lst.push(file);
-				}
-			}
-			return lst;
+			return this.gpslist.length > 0;
 		},
 
 		iconmarkermode() {
@@ -456,18 +439,34 @@ Vue.component('map-card-tag', {
 		}
 	},
 	methods: {
+		// create new opened folder
+		new() {
+			if (!this.markers || this.gpslist.length > 0) {
+				// remove previous set
+				if (this.markers) {
+					this.map.removeLayer(this.markers);
+				}
+				// create new group
+				this.markers = L.markerClusterGroup();
+				// add new set
+				this.map.addLayer(this.markers);
+				this.gpslist = [];
+			}
+		},
 		// setup markers on map, remove previous
-		updatemarkers() {
+		addmarkers(gpslist) {
+			if (!gpslist.length) {
+				return;
+			}
 			const size = 60;
-			const markers = L.markerClusterGroup();
-			for (const file of this.gpslist) {
+			for (const file of gpslist) {
 				const opt = {
 					title: file.name,
 					riseOnHover: true
 				};
 				if (this.markermode === 'thumb' && file.ktmb) {
 					opt.icon = L.divIcon({
-						html: `<img src="${'/thumb/' + file.ktmb}">`,
+						html: `<img src="${filetmb(file)}">`,
 						className: "photomarker",
 						iconSize: [size, size],
 						iconAnchor: [size / 2, size / 2],
@@ -483,21 +482,20 @@ Vue.component('map-card-tag', {
 				});
 
 				L.marker([file.latitude, file.longitude], opt)
-					.addTo(markers)
+					.addTo(this.markers)
 					.bindPopup(popup);
 			}
 
-			this.map.flyToBounds(markers.getBounds(), {
+			this.map.flyToBounds(this.markers.getBounds(), {
 				padding: [20, 20]
 			});
 
-			// remove previous set
-			if (this.markers) {
-				this.map.removeLayer(this.markers);
+			if (!this.gpslist.length) {
+				Vue.nextTick(() => {
+					this.map.invalidateSize();
+				});
 			}
-			// add new set
-			this.map.addLayer(markers);
-			this.markers = markers;
+			this.gpslist.push(...gpslist);
 		},
 
 		onmarkermode() {
@@ -509,7 +507,9 @@ Vue.component('map-card-tag', {
 					this.markermode = 'marker';
 					break;
 			}
-			this.updatemarkers();
+			const gpslist = this.gpslist;
+			this.new();
+			this.addmarkers(gpslist);
 		},
 		onfitbounds() {
 			this.map.flyToBounds(this.markers.getBounds(), {
