@@ -20,7 +20,7 @@
 
 	<nav class="navbar navbar-expand-sm bg-dark navbar-dark sticky-top">
 		<ul class="navbar-nav flex-row">
-			<li><button class="btn nav-link bg-secondary" v-bind:disabled="dishome" v-on:click="onhome" title="root folder"><i class="material-icons">home</i></button></li>
+			<li v-show="isadmin"><button class="btn nav-link bg-secondary" v-bind:disabled="dishome" v-on:click="onhome" title="root folder"><i class="material-icons">home</i></button></li>
 			<li><button class="btn nav-link" v-bind:disabled="disback" v-on:click="onback" v-bind:title="hintback"><i class="material-icons">arrow_back</i></button></li>
 			<li><button class="btn nav-link" v-bind:disabled="disforward" v-on:click="onforward" v-bind:title="hintforward"><i class="material-icons">arrow_forward</i></button></li>
 			<li><button class="btn nav-link" v-bind:disabled="disparent" v-on:click="onparent" v-bind:title="hintparent"><i class="material-icons">subdirectory_arrow_left</i></button></li>

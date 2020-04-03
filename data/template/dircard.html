@@ -5,7 +5,7 @@
 			<a class="card-link d-block" data-toggle="collapse" v-bind:href="'#card'+iid">subfolders</a>
 		</div>
 		<ul class="navbar-nav flex-row ml-auto">
-			<li><button class="btn nav-link p-0" v-on:click="onshare" v-bind:disabled="disshared" v-bind:class="clsshared" title="share folder or file to get access from internet"><i class="material-icons">share</i></button></li>
+			<li v-show="isadmin"><button class="btn nav-link p-0" v-on:click="onshare" v-bind:disabled="disshared" v-bind:class="clsshared" title="share folder to get access from internet"><i class="material-icons">share</i></button></li>
 		</ul>
 		<ul class="navbar-nav flex-row ml-auto">
 			<li><button class="btn nav-link p-0" v-on:click="onorder" v-bind:title="hintorder"><i class="material-icons">{{clsorder}}</i></button></li>

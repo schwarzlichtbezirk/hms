@@ -175,7 +175,7 @@ const getfileurl = (file) => {
 	} else {
 		if (app.curpathshares.length) {
 			const shr = app.curpathshares[0]; // use any first available share
-			url = shareprefix + shr.pref + '/' + shr.suff + file.name;
+			url = shareprefix + encodeURI(shr.pref + '/' + shr.suff + file.name);
 			if (file.type === FT.dir) {
 				url += '/';
 			}
@@ -203,7 +203,6 @@ let app = new Vue({
 	el: '#app',
 	template: '#app-tpl',
 	data: {
-		isadmin: true, // is it running on localhost
 		shared: [], // list of shared folders and files
 		loadcount: 0, // ajax working request count
 
@@ -216,6 +215,10 @@ let app = new Vue({
 		histlist: [] // history stack
 	},
 	computed: {
+		// is it running on localhost
+		isadmin() {
+			return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+		},
 		// array of paths to current folder
 		curpathway() {
 			if (!this.curpath.name) {
@@ -335,7 +338,7 @@ let app = new Vue({
 				this.pathlist = [];
 				this.filelist = [];
 				this.curpath = file;
-				//window.history.replaceState(null, file.path, "/path/" + file.path);
+				window.history.replaceState(file, file.path, "/path/" + file.path);
 
 				if (xhr.status === 200) {
 					this.curscan = new Date(Date.now());
@@ -371,7 +374,6 @@ let app = new Vue({
 					this.$refs.mapcard.new();
 					this.$refs.mapcard.addmarkers(gpslist);
 				} else if (xhr.status === 403) { // Forbidden
-					this.isadmin = false;
 				}
 
 				// cache folder thumnails
@@ -460,7 +462,6 @@ let app = new Vue({
 					let file = this.curpath;
 					this.gofolder(file);
 				} else if (xhr.status === 403) { // Forbidden
-					this.isadmin = false;
 				}
 			});
 		},
@@ -481,7 +482,6 @@ let app = new Vue({
 							}
 						}
 					} else if (xhr.status === 403) { // Forbidden
-						this.isadmin = false;
 					} else if (xhr.status === 404) { // Not Found
 						onerr404();
 						// remove file from list
@@ -513,7 +513,6 @@ let app = new Vue({
 							Vue.delete(file, 'pref');
 						}
 					} else if (xhr.status === 403) { // Forbidden
-						this.isadmin = false;
 					} else if (xhr.status === 404) { // Not Found
 						onerr404();
 						// remove file from list
@@ -539,18 +538,23 @@ let app = new Vue({
 /////////////
 
 $(document).ready(() => {
-	console.log(window.location);
-	if (window.location.pathname.substr(0, 6) === "/path/") {
-		const path = window.location.pathname.substr(6);
+	const path = decodeURI(window.location.pathname.substr(6));
+	if (path && window.location.pathname.substr(0, 6) === "/path/") {
 		const arr = path.split('/');
-		if (!arr[arr.length-1]) {
-			arr.pop();
-		}
+		const isslash = !arr[arr.length - 1];
 		app.openfolder({
-			name: arr[arr.length - 1],
-			path: path,
+			name: arr[arr.length - (isslash ? 2 : 1)],
+			path: path + (isslash ? '' : '/'),
 			size: 0, time: 0, type: FT.dir
 		});
+		// update shares
+		app.shared = [{
+			name: arr[0],
+			path: arr[0] + '/',
+			pref: arr[0],
+			ntmb: -1,
+			size: 0, time: 0, type: FT.dir
+		}];
 	} else {
 		app.openfolder(root);
 	}

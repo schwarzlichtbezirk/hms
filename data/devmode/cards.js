@@ -4,6 +4,25 @@ const sortbyalpha = "name";
 const sortbysize = "size";
 const unsorted = "";
 
+const copyTextToClipboard = text => {
+	const elem = document.createElement("textarea");
+	elem.value = text;
+	elem.style.position = 'fixed'; // prevent to scroll content to the end
+	elem.style.left = '0px';
+	elem.style.top = '0px';
+	document.body.appendChild(elem);
+	elem.focus();
+	elem.select();
+
+	try {
+		return !document.execCommand('copy') && "copying text command was failed";
+	} catch (err) {
+		return err;
+	} finally {
+		document.body.removeChild(elem);
+	}
+};
+
 Vue.component('dir-card-tag', {
 	template: '#dir-card-tpl',
 	props: ["list"],
@@ -16,6 +35,10 @@ Vue.component('dir-card-tag', {
 		};
 	},
 	computed: {
+		// is it running on localhost
+		isadmin() {
+			return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+		},
 		isvisible() {
 			(() => {
 				for (const file of this.list) {
@@ -132,6 +155,10 @@ Vue.component('file-card-tag', {
 		};
 	},
 	computed: {
+		// is it running on localhost
+		isadmin() {
+			return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+		},
 		isvisible() {
 			(() => {
 				for (const file of this.list) {
@@ -175,6 +202,9 @@ Vue.component('file-card-tag', {
 			}
 		},
 
+		dislink() {
+			return !this.selfile;
+		},
 		disshared() {
 			return !this.selfile;
 		},
@@ -309,6 +339,9 @@ Vue.component('file-card-tag', {
 			}
 		},
 
+		onlink() {
+			copyTextToClipboard(window.location.origin + getfileurl(this.selfile));
+		},
 		onshare() {
 			this.$emit('share', this.selfile);
 		},
