@@ -59,46 +59,43 @@ const (
 	EC_pageabsent = 2
 	EC_fileabsent = 3
 
-	// share
-	EC_sharegone = 4
-	EC_sharenone = 5
-
-	// local
-	EC_localnopath = 6
+	// file
+	EC_filebadurl = 4
+	EC_filedeny   = 5
 
 	// reload
-	EC_reloadnoreq  = 7
-	EC_reloadbadreq = 8
-	EC_reloadnodata = 9
-	EC_reloadbadprf = 10
+	EC_reloadnoreq  = 10
+	EC_reloadbadreq = 11
+	EC_reloadnodata = 12
+	EC_reloadbadprf = 13
 
 	// getlog
-	EC_getlogbadnum = 11
+	EC_getlogbadnum = 14
 
 	// folder
-	EC_folderdeny = 12
-	EC_folderfail = 13
+	EC_folderdeny = 20
+	EC_folderfail = 21
 
 	// addshr
-	EC_addshrnopath  = 14
-	EC_addshrbadpath = 15
+	EC_addshrnopath  = 22
+	EC_addshrbadpath = 23
 
 	// delshr
-	EC_delshrnopath = 16
+	EC_delshrnopath = 24
 
 	// thumb
-	EC_thumbabsent = 20
-	EC_thumbbadcnt = 21
+	EC_thumbabsent = 30
+	EC_thumbbadcnt = 31
 
 	// tmbchk
-	EC_tmbchknoreq  = 30
-	EC_tmbchkbadreq = 31
-	EC_tmbchknodata = 32
+	EC_tmbchknoreq  = 32
+	EC_tmbchkbadreq = 33
+	EC_tmbchknodata = 34
 
 	// tmbscn
-	EC_tmbscnnoreq  = 40
-	EC_tmbscnbadreq = 41
-	EC_tmbscnnodata = 42
+	EC_tmbscnnoreq  = 35
+	EC_tmbscnbadreq = 36
+	EC_tmbscnnodata = 37
 )
 
 //////////////////
@@ -129,9 +126,7 @@ func RegisterRoutes(gmux *Router) {
 	for prefix := range routedpaths {
 		gmux.PathPrefix(prefix).HandlerFunc(filecacheHandler)
 	}
-
-	gmux.PathPrefix(shareprefix).HandlerFunc(AjaxWrap(shareHandler))
-	gmux.PathPrefix("/local").HandlerFunc(AdminWrap(localHandler))
+	gmux.PathPrefix("/file").HandlerFunc(AjaxWrap(fileHandler))
 
 	// API routes
 

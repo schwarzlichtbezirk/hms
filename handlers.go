@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -21,8 +22,6 @@ var (
 
 	ErrDeny      = errors.New("access denied")
 	ErrNotFound  = errors.New("404 page not found")
-	ErrShareNone = errors.New("404 share not found")
-	ErrShareGone = errors.New("410 share is closed and does not available any more")
 	ErrArgNoNum  = errors.New("'num' parameter not recognized")
 	ErrArgNoPath = errors.New("'path' argument required")
 	ErrArgNoPref = errors.New("'pref' or 'path' argument required")
@@ -68,49 +67,28 @@ func filecacheHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
-func shareHandler(w http.ResponseWriter, r *http.Request) {
+func fileHandler(w http.ResponseWriter, r *http.Request) {
 	incuint(&sharecallcount, 1)
+	var err error
 
-	var shr = r.URL.Path[len(shareprefix):]
-	var prefend = strings.IndexByte(shr, '/')
-	var pref, suff string
-	if prefend == -1 {
-		pref, suff = shr, ""
-	} else {
-		pref, suff = shr[:prefend], shr[prefend+1:]
+	var shr string
+	if shr, err = url.QueryUnescape(r.URL.Path[len(shareprefix):]); err != nil {
+		WriteError400(w, err, EC_filebadurl)
+		return
 	}
-
-	shrmux.RLock()
-	var path, ok = sharespref[pref]
-	shrmux.RUnlock()
-	if !ok {
-		shrmux.RLock()
-		_, ok = sharesgone[pref]
-		shrmux.RUnlock()
-		if ok {
-			WriteJson(w, http.StatusGone, &AjaxErr{ErrShareGone, EC_sharegone})
-			return
-		} else {
-			WriteJson(w, http.StatusNotFound, &AjaxErr{ErrShareNone, EC_sharenone})
-			return
-		}
-	}
-
-	WriteStdHeader(w)
-	http.ServeFile(w, r, path+suff)
-}
-
-// APIHANDLER
-func localHandler(w http.ResponseWriter, r *http.Request) {
-	incuint(&localcallcount, 1)
-
-	// get arguments
-	var path = filepath.ToSlash(r.FormValue("path"))
-	if len(path) == 0 {
-		WriteError400(w, ErrArgNoPath, EC_localnopath)
+	var path, shared = checksharepath(shr)
+	if !shared && !IsAdmin(r) {
+		WriteJson(w, http.StatusForbidden, &AjaxErr{ErrDeny, EC_filedeny})
 		return
 	}
 
+	if _, ok := r.Header["If-Range"]; !ok { // not partial content
+		Log.Printf("serve: %s", path)
+	}
+
+	if ct, ok := mimeext[strings.ToLower(filepath.Ext(path))]; ok {
+		w.Header().Set("Content-Type", ct)
+	}
 	WriteStdHeader(w)
 	http.ServeFile(w, r, path)
 }

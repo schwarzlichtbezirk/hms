@@ -190,7 +190,7 @@ var extset = map[string]int{
 	".rar": FT_rar,
 }
 
-const shareprefix = "/share/"
+const shareprefix = "/file/"
 
 var (
 	PhotoJPEG int64 = 2097152 // 2M
@@ -200,7 +200,6 @@ var (
 var shareslist = []FileProper{}      // plain list of active shares
 var sharespath = map[string]string{} // active shares by full path
 var sharespref = map[string]string{} // active shares by prefix
-var sharesgone = map[string]string{} // gone shares by prefix
 var shrmux sync.RWMutex
 
 var propcache = gcache.New(32 * 1024).LRU().Build()
@@ -494,7 +493,6 @@ func DelSharePref(pref string) bool {
 		}
 		delete(sharespath, path)
 		delete(sharespref, pref)
-		sharesgone[pref] = path
 		shrmux.Unlock()
 	}
 	return ok
@@ -516,7 +514,6 @@ func DelSharePath(path string) bool {
 		}
 		delete(sharespath, path)
 		delete(sharespref, pref)
-		sharesgone[pref] = path
 		shrmux.Unlock()
 	}
 	return ok

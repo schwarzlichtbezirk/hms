@@ -81,7 +81,7 @@ const FTtoFV = {
 
 const root = { name: "", path: "", size: 0, time: 0, type: FT.dir };
 
-const shareprefix = "/share/";
+const shareprefix = "/file/";
 
 const geticonname = (file) => {
 	switch (file.type) {
@@ -168,21 +168,20 @@ const geticonname = (file) => {
 	}
 };
 
-const getfileurl = (file) => {
-	let url = undefined;
+const getfileurl = (file, pref) => {
+	pref = pref || shareprefix;
+	let url;
 	if (file.pref) {
-		url = shareprefix + file.pref;
+		url = pref + file.pref;
 	} else {
 		if (app.curpathshares.length) {
 			const shr = app.curpathshares[0]; // use any first available share
-			url = shareprefix + encodeURI(shr.pref + '/' + shr.suff + file.name);
+			url = pref + encodeURI(shr.pref + '/' + shr.suff + file.name);
 			if (file.type === FT.dir) {
 				url += '/';
 			}
 		} else {
-			url = "/local?" + $.param({
-				path: file.path
-			});
+			url = pref + encodeURI(file.path);
 		}
 	}
 	return url;

@@ -9,7 +9,7 @@
 		</nav>
 		<p v-for="shr in curpathshares">
 			Shared at <span class="bg-stat">{{shr.path}}</span> as
-			<span class="bg-stat"><a v-bind:href="'/share/'+shr.pref+'/'+shr.suff" target="_blank"><strong>{{'/share/'+shr.pref+'/'}}</strong>{{shr.suff}}</a></span>
+			<span class="bg-stat"><a v-bind:href="'/file/'+shr.pref+'/'+shr.suff" target="_blank"><strong>{{'/file/'+shr.pref+'/'}}</strong>{{shr.suff}}</a></span>
 		</p>
 		<p v-if="!curpathshares.length">Folder does not shared</p>
 		<p class="small">

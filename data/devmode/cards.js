@@ -64,6 +64,9 @@ Vue.component('dir-card-tag', {
 			}
 		},
 
+		dislink() {
+			return !this.selfile;
+		},
 		disshared() {
 			return !this.selfile;
 		},
@@ -109,6 +112,9 @@ Vue.component('dir-card-tag', {
 		}
 	},
 	methods: {
+		onlink() {
+			copyTextToClipboard(window.location.origin + getfileurl(this.selfile, "/path/"));
+		},
 		onshare() {
 			this.$emit('share', this.selfile);
 		},
