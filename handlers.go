@@ -83,7 +83,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, ok := r.Header["If-Range"]; !ok { // not partial content
-		Log.Printf("serve: %s", path)
+		Log.Printf("serve: %s", filepath.Base(path))
 	}
 
 	if ct, ok := mimeext[strings.ToLower(filepath.Ext(path))]; ok {
@@ -221,7 +221,7 @@ func getlogApi(w http.ResponseWriter, r *http.Request) {
 
 // APIHANDLER
 func getdrvApi(w http.ResponseWriter, r *http.Request) {
-	var ret = getdrives()
+	var ret = scanroots()
 	Log.Printf("navigate to root")
 	WriteJson(w, http.StatusOK, ret)
 }
@@ -247,7 +247,7 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 
 	if isroot {
 		if adm {
-			ret.Paths = getdrives()
+			ret.Paths = scanroots()
 		}
 
 		shrmux.RLock()

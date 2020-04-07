@@ -59,6 +59,9 @@ var Log = NewLogger(os.Stderr, LstdFlags, 300)
 var starttime = time.Now() // save server start time
 var httpsrv, tlssrv []*http.Server
 
+// roots list
+var roots []string
+
 // patterns for hidden files
 var hidden []string
 
@@ -82,9 +85,45 @@ func opensettings() {
 	MaxHeaderBytes = ws.Key("max-header-bytes").MustInt(1 << 20)
 
 	var photo = cfg.Section("photo")
-	PhotoJPEG = photo.Key("photo-jpeg").MustInt64(2097152)
-	PhotoWEBP = photo.Key("photo-webp").MustInt64(1572864)
 	ThumbMaxFile = photo.Key("thumb-max-file").MustInt64(4096*3072*4 + 16384)
+}
+
+func loadroots() {
+	var err error
+
+	var body []byte
+	if body, err = ioutil.ReadFile(confpath + "roots.json"); err != nil {
+		Log.Fatal("can not read roots list file: " + err.Error())
+	}
+
+	var dec = json.NewDecoder(bytes.NewReader(body))
+	if err = dec.Decode(&roots); err != nil {
+		Log.Fatal("can not decode roots list: " + err.Error())
+	}
+
+	// bring all to valid slashes
+	for i, root := range roots {
+		roots[i] = filepath.ToSlash(root)
+	}
+}
+
+func loadhidden() {
+	var err error
+
+	var body []byte
+	if body, err = ioutil.ReadFile(confpath + "hidden.json"); err != nil {
+		Log.Fatal("can not read hidden filenames patterns: " + err.Error())
+	}
+
+	var dec = json.NewDecoder(bytes.NewReader(body))
+	if err = dec.Decode(&hidden); err != nil {
+		Log.Fatal("can not decode hidden filenames array: " + err.Error())
+	}
+
+	// bring all to lowercase
+	for i, path := range hidden {
+		hidden[i] = strings.ToLower(path)
+	}
 }
 
 func loadshared() {
@@ -115,25 +154,6 @@ func saveshared() {
 	if err = ioutil.WriteFile(confpath+"shared.json", buf.Bytes(), 0644); err != nil {
 		Log.Println("can not write shared resources list file: " + err.Error())
 		return
-	}
-}
-
-func loadhidden() {
-	var err error
-
-	var body []byte
-	if body, err = ioutil.ReadFile(confpath + "hidden.json"); err != nil {
-		Log.Fatal("can not read hidden filenames pattens: " + err.Error())
-	}
-
-	var dec = json.NewDecoder(bytes.NewReader(body))
-	if err = dec.Decode(&hidden); err != nil {
-		Log.Fatal("can not decode hidden filenames array: " + err.Error())
-	}
-
-	// Bring all to lowercase
-	for i, path := range hidden {
-		hidden[i] = strings.ToLower(path)
 	}
 }
 
@@ -238,8 +258,9 @@ func Init() {
 
 	// open settings
 	opensettings()
-	loadshared()
+	loadroots()
 	loadhidden()
+	loadshared()
 	// make paths routes table
 	routedpaths = map[string]string{
 		"/devm/": devmpath,

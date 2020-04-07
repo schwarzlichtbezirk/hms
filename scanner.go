@@ -13,6 +13,7 @@ import (
 
 // File types
 const (
+	FT_drive = -2
 	FT_dir   = -1
 	FT_file  = 0
 	FT_wave  = 1
@@ -55,6 +56,7 @@ const (
 const FG_num = 8
 
 var typetogroup = map[int]int{
+	FT_drive: FG_dir,
 	FT_dir:   FG_dir,
 	FT_file:  FG_other,
 	FT_wave:  FG_music,
@@ -192,11 +194,6 @@ var extset = map[string]int{
 
 const shareprefix = "/file/"
 
-var (
-	PhotoJPEG int64 = 2097152 // 2M
-	PhotoWEBP int64 = 1572864 // 1.5M
-)
-
 var shareslist = []FileProper{}      // plain list of active shares
 var sharespath = map[string]string{} // active shares by full path
 var sharespref = map[string]string{} // active shares by prefix
@@ -228,16 +225,9 @@ type StdProp struct {
 
 // Fills fields from os.FileInfo structure. Do not looks for share.
 func (sp *StdProp) Setup(fi os.FileInfo) {
-	var fname, size = fi.Name(), fi.Size()
-	var ft = extset[strings.ToLower(filepath.Ext(fname))]
-	if (ft == FT_jpeg && size > PhotoJPEG) || (ft == FT_webp && size > PhotoWEBP) {
-		ft = FT_photo
-	}
-
-	sp.NameVal = fname
-	sp.SizeVal = size
+	sp.NameVal = fi.Name()
+	sp.SizeVal = fi.Size()
 	sp.TimeVal = UnixJS(fi.ModTime())
-	sp.TypeVal = ft
 }
 
 func (sp *StdProp) String() string {
@@ -410,14 +400,17 @@ func MakeProp(fpath string, fi os.FileInfo) (prop FileProper) {
 		var ft = extset[strings.ToLower(filepath.Ext(fpath))]
 		if ft == FT_flac || ft == FT_mp3 || ft == FT_ogg || ft == FT_mp4 {
 			var tk TagKit
+			tk.TypeVal = ft
 			tk.Setup(fpath, fi)
 			prop = &tk
-		} else if ft == FT_photo || ft == FT_jpeg {
+		} else if ft == FT_png || ft == FT_jpeg || ft == FT_tiff || ft == FT_webp {
 			var ek ExifKit
+			ek.TypeVal = ft
 			ek.Setup(fpath, fi)
 			prop = &ek
 		} else {
 			var fk FileKit
+			fk.TypeVal = ft
 			fk.Setup(fpath, fi)
 			prop = &fk
 		}
@@ -595,15 +588,16 @@ func checksharepath(argpath string) (string, bool) {
 }
 
 // Scan all available drives installed on local machine.
-func getdrives() (drvs []*DirKit) {
-	for _, drive := range "ABCDEFGHIJKLMNOPQRSTUVWXYZ" {
-		var fname = string(drive) + ":"
-		var fpath = fname + "/"
-		if fi, err := FileStat(fpath); err == nil {
-			if dk, ok := MakeProp(fpath, fi).(*DirKit); ok {
-				dk.NameVal = fname
-				drvs = append(drvs, dk)
-			}
+func scanroots() (drvs []*DirKit) {
+	for _, root := range roots {
+		var fpath = root + "/"
+		if _, err := FileStat(fpath); err == nil {
+			var dk DirKit
+			dk.NameVal = root
+			dk.TypeVal = FT_drive
+			dk.KTmbVal = ThumbName(fpath)
+			dk.NTmbVal = TMB_reject
+			drvs = append(drvs, &dk)
 		}
 	}
 	return

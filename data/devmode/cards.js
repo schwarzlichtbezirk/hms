@@ -297,33 +297,18 @@ Vue.component('file-card-tag', {
 	methods: {
 		// show/hide functions
 		showitem(file) {
-			switch (file.type) {
-				case FT.dir:
+			switch (FTtoFG[file.type]) {
+				case FG.dir:
 					return true;
-				case FT.wave:
-				case FT.flac:
-				case FT.mp3:
+				case FG.music:
 					return this.music;
-				case FT.ogg:
-				case FT.mp4:
-				case FT.webm:
+				case FG.video:
 					return this.video;
-				case FT.photo:
-				case FT.tga:
-				case FT.bmp:
-				case FT.gif:
-				case FT.png:
-				case FT.jpeg:
-				case FT.tiff:
-				case FT.webp:
+				case FG.image:
 					return this.photo;
-				case FT.pdf:
-				case FT.html:
+				case FG.books:
 					return this.pdf;
-				case FT.text:
-				case FT.scr:
-				case FT.cfg:
-				case FT.log:
+				case FG.texts:
 					return this.books;
 				default:
 					return this.other;

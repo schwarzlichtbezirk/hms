@@ -4,6 +4,7 @@
 
 // File types
 const FT = {
+	drive: -2,
 	dir: -1,
 	file: 0,
 	wave: 1,
@@ -43,6 +44,35 @@ const FG = {
 	dir: 7
 };
 
+const FTtoFG = {
+	[FT.drive]: FG.dir,
+	[FT.dir]: FG.dir,
+	[FT.file]: FG.other,
+	[FT.wave]: FG.music,
+	[FT.flac]: FG.music,
+	[FT.mp3]: FG.music,
+	[FT.ogg]: FG.video,
+	[FT.mp4]: FG.video,
+	[FT.webm]: FG.video,
+	[FT.photo]: FG.image,
+	[FT.tga]: FG.image,
+	[FT.bmp]: FG.image,
+	[FT.gif]: FG.image,
+	[FT.png]: FG.image,
+	[FT.jpeg]: FG.image,
+	[FT.tiff]: FG.image,
+	[FT.webp]: FG.image,
+	[FT.pdf]: FG.books,
+	[FT.html]: FG.books,
+	[FT.text]: FG.texts,
+	[FT.scr]: FG.texts,
+	[FT.cfg]: FG.texts,
+	[FT.log]: FG.texts,
+	[FT.cab]: FG.store,
+	[FT.zip]: FG.store,
+	[FT.rar]: FG.store
+};
+
 // File viewers
 const FV = {
 	none: 0,
@@ -52,6 +82,7 @@ const FV = {
 };
 
 const FTtoFV = {
+	[FT.drive]: FV.none,
 	[FT.dir]: FV.none,
 	[FT.file]: FV.none,
 	[FT.wave]: FV.music,
@@ -83,41 +114,39 @@ const root = { name: "", path: "", size: 0, time: 0, type: FT.dir };
 
 const shareprefix = "/file/";
 
-const geticonname = (file) => {
+const geticonname = file => {
 	switch (file.type) {
+		case FT.drive:
+			return "drive";
 		case FT.dir:
-			if (file.path.length > 3) {
-				let suff = app.curpathshares.length ? "-pub" : "";
-				if (file.scan) {
-					let fnum = 0;
-					const fg = file.fgrp;
-					for (let n of fg) {
-						fnum += n;
-					}
-					if (!fnum) {
-						return "folder-empty" + suff;
-					} else if (fg[FG.music] / fnum > 0.5) {
-						return "folder-mp3" + suff;
-					} else if (fg[FG.video] / fnum > 0.5) {
-						return "folder-movies" + suff;
-					} else if (fg[FG.image] / fnum > 0.5) {
-						return "folder-photo" + suff;
-					} else if (fg[FG.books] / fnum > 0.5) {
-						return "folder-doc" + suff;
-					} else if (fg[FG.texts] / fnum > 0.5) {
-						return "folder-doc" + suff;
-					} else if (fg[FG.dir] / fnum > 0.5) {
-						return "folder-sub" + suff;
-					} else if ((fg[FG.music] + fg[FG.video] + fg[FG.image]) / fnum > 0.5) {
-						return "folder-media" + suff;
-					} else {
-						return "folder-empty" + suff;
-					}
+			let suff = app.curpathshares.length ? "-pub" : "";
+			if (file.scan) {
+				let fnum = 0;
+				const fg = file.fgrp;
+				for (let n of fg) {
+					fnum += n;
+				}
+				if (!fnum) {
+					return "folder-empty" + suff;
+				} else if (fg[FG.music] / fnum > 0.5) {
+					return "folder-mp3" + suff;
+				} else if (fg[FG.video] / fnum > 0.5) {
+					return "folder-movies" + suff;
+				} else if (fg[FG.image] / fnum > 0.5) {
+					return "folder-photo" + suff;
+				} else if (fg[FG.books] / fnum > 0.5) {
+					return "folder-doc" + suff;
+				} else if (fg[FG.texts] / fnum > 0.5) {
+					return "folder-doc" + suff;
+				} else if (fg[FG.dir] / fnum > 0.5) {
+					return "folder-sub" + suff;
+				} else if ((fg[FG.music] + fg[FG.video] + fg[FG.image]) / fnum > 0.5) {
+					return "folder-media" + suff;
 				} else {
-					return "folder-close" + suff;
+					return "folder-empty" + suff;
 				}
 			} else {
-				return "drive";
+				return "folder-close" + suff;
 			}
 		case FT.wave:
 			return "doc-wave";
@@ -177,7 +206,7 @@ const getfileurl = (file, pref) => {
 		if (app.curpathshares.length) {
 			const shr = app.curpathshares[0]; // use any first available share
 			url = pref + encodeURI(shr.pref + '/' + shr.suff + file.name);
-			if (file.type === FT.dir) {
+			if (FTtoFG[file.type] === FG.dir) {
 				url += '/';
 			}
 		} else {
@@ -476,7 +505,7 @@ let app = new Vue({
 						if (shr) {
 							// update folder settings
 							Vue.set(file, 'pref', shr.pref);
-							if (shr.type === FT.dir) {
+							if (FTtoFG[shr.type] === FG.dir) {
 								this.shared.push(shr);
 							}
 						}
@@ -501,7 +530,7 @@ let app = new Vue({
 						let ok = xhr.response;
 						// update folder settings
 						if (ok) {
-							if (file.type === FT.dir) {
+							if (FTtoFG[file.type] === FG.dir) {
 								for (let i in this.shared) {
 									if (this.shared[i].pref === file.pref) {
 										this.shared.splice(i, 1);

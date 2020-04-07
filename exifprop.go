@@ -151,6 +151,9 @@ func (ek *ExifKit) Setup(fpath string, fi os.FileInfo) {
 		defer file.Close()
 		if x, err := exif.Decode(file); err == nil {
 			ek.ExifProp.Setup(x)
+			if len(ek.Model) > 0 {
+				ek.TypeVal = FT_photo
+			}
 			if pic, err := x.JpegThumbnail(); err == nil {
 				ek.KTmbVal = ThumbName(fpath)
 				thumbcache.Set(ek.KTmbVal, &ThumbElem{

@@ -33,7 +33,7 @@ const filehint = file => {
 	if (file.pref) {
 		lst.push('share: ' + shareprefix + file.pref);
 	}
-	if (file.type !== FT.dir) {
+	if (FTtoFG[file.type] !== FG.dir) {
 		lst.push('size: ' + fmtitemsize(file.size));
 	}
 	if (file.time) {
