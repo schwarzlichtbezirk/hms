@@ -27,7 +27,7 @@ body {
 	margin: 8px;
 }
 
-.folder-head .breadcrumb, .card {
+.folder-head .breadcrumb, .card, .modal-content {
 	background-image: url("/asst/nightglow-rainbow.jpg");
 	background-position: center center;
 	background-repeat: no-repeat;

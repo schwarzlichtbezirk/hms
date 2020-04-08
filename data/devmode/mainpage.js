@@ -321,7 +321,7 @@ let app = new Vue({
 			return this.histpos > this.histlist.length - 1;
 		},
 		disparent() {
-			return !this.curpathway.length;
+			return !this.curpath.path;
 		},
 
 		// buttons hints
@@ -351,7 +351,7 @@ let app = new Vue({
 			if (this.curpathway.length) {
 				return this.curpathway.map(e => e.name).join("/");
 			} else {
-				return "to parent folder";
+				return "to root folder";
 			}
 		}
 	},
@@ -402,6 +402,9 @@ let app = new Vue({
 					this.$refs.mapcard.new();
 					this.$refs.mapcard.addmarkers(gpslist);
 				} else if (xhr.status === 403) { // Forbidden
+					onerr404();
+				} else if (xhr.status === 404) { // Not Found
+					onerr404();
 				}
 
 				// cache folder thumnails
@@ -480,18 +483,14 @@ let app = new Vue({
 		},
 
 		onparent() {
-			this.openfolder(this.curpathway[this.curpathway.length - 1]);
+			this.openfolder(this.curpathway.length
+				? this.curpathway[this.curpathway.length - 1]
+				: root);
 		},
 
 		onrefresh() {
-			ajaxjson("POST", "/api/purge", xhr => {
-				traceresponse(xhr);
-				if (xhr.status === 200) {
-					let file = this.curpath;
-					this.gofolder(file);
-				} else if (xhr.status === 403) { // Forbidden
-				}
-			});
+			const file = this.curpath;
+			this.gofolder(file);
 		},
 
 		onshare(file) {
@@ -575,14 +574,19 @@ $(document).ready(() => {
 			path: path + (isslash ? '' : '/'),
 			size: 0, time: 0, type: FT.dir
 		});
-		// update shares
-		app.shared = [{
-			name: arr[0],
-			path: arr[0] + '/',
-			pref: arr[0],
-			ntmb: -1,
-			size: 0, time: 0, type: FT.dir
-		}];
+		// get shares
+		ajaxjson("PUT", "/api/share/lst", xhr => {
+			traceresponse(xhr);
+			if (xhr.status === 200) {
+				const lst = xhr.response;
+				this.shared = [];
+				for (const shr of lst) {
+					if (FTtoFG[shr.type] === FG.dir) {
+						this.shared.push(shr);
+					}
+				}
+			}
+		});
 	} else {
 		app.openfolder(root);
 	}
