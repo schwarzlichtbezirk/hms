@@ -122,7 +122,7 @@ func loadhidden() {
 
 	// bring all to lowercase
 	for i, path := range hidden {
-		hidden[i] = strings.ToLower(path)
+		hidden[i] = filepath.ToSlash(strings.ToLower(path))
 	}
 }
 

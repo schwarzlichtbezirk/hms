@@ -1,13 +1,15 @@
 [
-	"System Volume Information",
+	"?:/System Volume Information",
 	"*.sys",
 	"*.tmp",
-	".*",
-	"Windows",
-	"$Recycle.Bin",
-	"Program Files",
-	"Program Files (x86)",
-	"ProgramData",
-	"Recovery",
-	"Thumb.db"
+	"*/.*",
+	"?:/Windows",
+	"?:/WindowsApps",
+	"?:/$Recycle.Bin",
+	"?:/Program Files",
+	"?:/Program Files (x86)",
+	"?:/ProgramData",
+	"?:/Recovery",
+	"?:/Config.Msi",
+	"*/Thumb.db"
 ]

@@ -34,7 +34,7 @@ const filehint = file => {
 		lst.push('share: ' + shareprefix + file.pref);
 	}
 	if (FTtoFG[file.type] !== FG.dir) {
-		lst.push('size: ' + fmtitemsize(file.size));
+		lst.push('size: ' + fmtitemsize(file.size || 0));
 	}
 	if (file.time) {
 		lst.push('time: ' + (new Date(file.time)).toLocaleString());

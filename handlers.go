@@ -251,8 +251,10 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 		}
 
 		shrmux.RLock()
-		for _, shr := range shareslist {
-			ret.AddProp(shr)
+		for _, fpath := range sharespref {
+			if cp, err := propcache.Get(fpath); err == nil {
+				ret.AddProp(cp.(FileProper))
+			}
 		}
 		shrmux.RUnlock()
 	} else {
@@ -274,6 +276,7 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 func purgeApi(w http.ResponseWriter, r *http.Request) {
 	propcache.Purge()
 	thumbcache.Purge()
+	registershares()
 
 	WriteJson(w, http.StatusOK, nil)
 }
@@ -281,8 +284,16 @@ func purgeApi(w http.ResponseWriter, r *http.Request) {
 // APIHANDLER
 func shrlstApi(w http.ResponseWriter, r *http.Request) {
 	shrmux.RLock()
-	var jb, _ = json.Marshal(shareslist)
+	var lst = make([]FileProper, len(sharespref))
+	var i int
+	for _, fpath := range sharespref {
+		if cp, err := propcache.Get(fpath); err == nil {
+			lst[i] = cp.(FileProper)
+		}
+		i++
+	}
 	shrmux.RUnlock()
+	var jb, _ = json.Marshal(lst)
 
 	WriteJson(w, http.StatusOK, jb)
 }

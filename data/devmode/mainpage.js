@@ -304,7 +304,7 @@ let app = new Vue({
 		sumsize() {
 			let ss = 0;
 			for (let file of this.filelist) {
-				ss += file.size;
+				ss += file.size || 0;
 			}
 			return fmtitemsize(ss);
 		},
@@ -581,7 +581,8 @@ $(document).ready(() => {
 				const lst = xhr.response;
 				this.shared = [];
 				for (const shr of lst) {
-					if (FTtoFG[shr.type] === FG.dir) {
+					// check on cached value exist & it is directory
+					if (shr && FTtoFG[shr.type] === FG.dir) {
 						this.shared.push(shr);
 					}
 				}

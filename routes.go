@@ -159,7 +159,7 @@ func registershares() {
 
 		var prop = MakeProp(path, fi)
 		prop.SetPref(pref)
-		shareslist = append(shareslist, prop)
+		propcache.Set(path, prop)
 		sharespath[path] = pref
 		Log.Printf("created share '%s' on path '%s'", pref, path)
 	}

@@ -194,12 +194,20 @@ var extset = map[string]int{
 
 const shareprefix = "/file/"
 
-var shareslist = []FileProper{}      // plain list of active shares
 var sharespath = map[string]string{} // active shares by full path
 var sharespref = map[string]string{} // active shares by prefix
 var shrmux sync.RWMutex
 
 var propcache = gcache.New(32 * 1024).LRU().Build()
+
+type Account struct {
+	Login    string            `json:"login"`
+	Password string            `json:"password"`
+	Roots    []string          `json:"roots"`
+	Shares   map[string]string `json:"shares"`
+}
+
+var Accs []Account
 
 // File properties interface.
 type FileProper interface {
@@ -462,7 +470,6 @@ func AddShare(pref string, path string, prop FileProper) bool {
 		prop.SetPref(pref)
 
 		shrmux.Lock()
-		shareslist = append(shareslist, prop)
 		sharespath[path] = pref
 		sharespref[pref] = path
 		shrmux.Unlock()
@@ -478,12 +485,6 @@ func DelSharePref(pref string) bool {
 
 	if ok {
 		shrmux.Lock()
-		for i, fp := range shareslist {
-			if fp.Pref() == pref {
-				shareslist = append(shareslist[:i], shareslist[i+1:]...)
-				break
-			}
-		}
 		delete(sharespath, path)
 		delete(sharespref, pref)
 		shrmux.Unlock()
@@ -499,12 +500,6 @@ func DelSharePath(path string) bool {
 
 	if ok {
 		shrmux.Lock()
-		for i, fp := range shareslist {
-			if fp.Pref() == pref {
-				shareslist = append(shareslist[:i], shareslist[i+1:]...)
-				break
-			}
-		}
 		delete(sharespath, path)
 		delete(sharespref, pref)
 		shrmux.Unlock()
@@ -632,14 +627,15 @@ func readdir(dirname string) (ret folderRet, err error) {
 
 scanprop:
 	for _, fi := range fis {
-		var fname = fi.Name()
+		var fpath = dirname + fi.Name()
+		var cmppath = filepath.ToSlash(strings.ToLower(fpath))
 		for _, pat := range hidden {
-			if matched, _ := filepath.Match(pat, fname); matched {
+			var matched bool
+			if matched, _ = filepath.Match(pat, cmppath); matched {
 				continue scanprop
 			}
 		}
 
-		var fpath = dirname + fname
 		if fi.IsDir() {
 			fpath += "/"
 		}
