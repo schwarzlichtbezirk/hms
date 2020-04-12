@@ -200,15 +200,6 @@ var shrmux sync.RWMutex
 
 var propcache = gcache.New(32 * 1024).LRU().Build()
 
-type Account struct {
-	Login    string            `json:"login"`
-	Password string            `json:"password"`
-	Roots    []string          `json:"roots"`
-	Shares   map[string]string `json:"shares"`
-}
-
-var Accs []Account
-
 // File properties interface.
 type FileProper interface {
 	Name() string // string identifier

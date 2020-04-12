@@ -231,6 +231,14 @@ let app = new Vue({
 	el: '#app',
 	template: '#app-tpl',
 	data: {
+		isauth: false, // is authorized
+		password: "", // authorization password
+		passstate: 0, // -1 invalid password, 0 ambiguous, 1 valid password
+		token: {
+			access: null,
+			refresh: null
+		},
+
 		shared: [], // list of shared folders and files
 		loadcount: 0, // ajax working request count
 
@@ -321,7 +329,12 @@ let app = new Vue({
 			return this.histpos > this.histlist.length - 1;
 		},
 		disparent() {
-			return !this.curpath.path;
+			return !this.curpathway.length;
+		},
+
+		clspass() {
+			return !this.passstate ? ''
+				: this.passstate === -1 ? 'is-invalid' : 'is-valid';
 		},
 
 		// buttons hints
@@ -556,6 +569,28 @@ let app = new Vue({
 
 		onpathopen(file) {
 			this.openfolder(file);
+		},
+
+		onpasschange() {
+			this.passstate = 0;
+		},
+		onlogin() {
+			ajaxjson("POST", "/api/auth", xhr => {
+				traceresponse(xhr);
+				if (xhr.status === 200) {
+					this.token = xhr.response;
+					this.passstate = 1;
+				} else if (xhr.status === 403) { // Forbidden
+					this.token.access = null;
+					this.token.refresh = null;
+					this.passstate = -1;
+				}
+			}, {
+				pass: this.password
+			}, true);
+		},
+		onlogout() {
+
 		}
 	}
 });

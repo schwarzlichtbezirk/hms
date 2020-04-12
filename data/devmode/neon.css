@@ -23,6 +23,12 @@ body {
 	align-items: center;
 }
 
+@media (min-width: 576px) {
+	.authgrp {
+		max-width: 160px;
+	}
+}
+
 #accordion {
 	margin: 8px;
 }
@@ -367,7 +373,7 @@ body {
 		padding: 0.5rem 0.75rem;
 	}
 
-@media screen and (max-width:768px) {
+@media (max-width:768px) {
 	.photoslider > .thumbs {
 		opacity: 0.50;
 	}

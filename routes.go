@@ -72,30 +72,35 @@ const (
 	// getlog
 	EC_getlogbadnum = 14
 
+	// auth
+	EC_authnoreq  = 20
+	EC_authbadreq = 21
+	EC_authnodata = 22
+
 	// folder
-	EC_folderdeny = 20
-	EC_folderfail = 21
+	EC_folderdeny = 30
+	EC_folderfail = 31
 
 	// addshr
-	EC_addshrnopath  = 22
-	EC_addshrbadpath = 23
+	EC_addshrnopath  = 32
+	EC_addshrbadpath = 33
 
 	// delshr
-	EC_delshrnopath = 24
+	EC_delshrnopath = 34
 
 	// thumb
-	EC_thumbabsent = 30
-	EC_thumbbadcnt = 31
+	EC_thumbabsent = 40
+	EC_thumbbadcnt = 41
 
 	// tmbchk
-	EC_tmbchknoreq  = 32
-	EC_tmbchkbadreq = 33
-	EC_tmbchknodata = 34
+	EC_tmbchknoreq  = 42
+	EC_tmbchkbadreq = 43
+	EC_tmbchknodata = 44
 
 	// tmbscn
-	EC_tmbscnnoreq  = 35
-	EC_tmbscnbadreq = 36
-	EC_tmbscnnodata = 37
+	EC_tmbscnnoreq  = 45
+	EC_tmbscnbadreq = 46
+	EC_tmbscnnodata = 47
 )
 
 //////////////////
@@ -136,6 +141,7 @@ func RegisterRoutes(gmux *Router) {
 	api.Path("/servinfo").HandlerFunc(AjaxWrap(servinfoApi))
 	api.Path("/memusage").HandlerFunc(AjaxWrap(memusageApi))
 	api.Path("/getlog").HandlerFunc(AjaxWrap(getlogApi))
+	api.Path("/auth").HandlerFunc(AjaxWrap(authApi))
 	api.Path("/getdrv").HandlerFunc(AdminWrap(getdrvApi))
 	api.Path("/folder").HandlerFunc(AjaxWrap(folderApi))
 	api.Path("/purge").HandlerFunc(AdminWrap(purgeApi))

@@ -99,17 +99,6 @@ func (tp *TmbProp) SetNTmb(v int) {
 	tp.NTmbVal = v
 }
 
-// Data for "entchk" API handler.
-type tmbchkArg struct {
-	Tmbs []*TmbProp `json:"tmbs"`
-}
-
-// Argument data for "tmbscn" API handler.
-type tmbscnArg struct {
-	Paths []string `json:"paths"`
-	Force bool     `json:"force"`
-}
-
 func ThumbName(fname string) string {
 	var h = md5.Sum([]byte(fname))
 	return hex.EncodeToString(h[:])
@@ -218,7 +207,9 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) {
 // APIHANDLER
 func tmbchkApi(w http.ResponseWriter, r *http.Request) {
 	var err error
-	var arg tmbchkArg
+	var arg struct {
+		Tmbs []*TmbProp `json:"tmbs"`
+	}
 
 	// get arguments
 	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
@@ -245,7 +236,10 @@ func tmbchkApi(w http.ResponseWriter, r *http.Request) {
 // APIHANDLER
 func tmbscnApi(w http.ResponseWriter, r *http.Request) {
 	var err error
-	var arg tmbscnArg
+	var arg struct {
+		Paths []string `json:"paths"`
+		Force bool     `json:"force"`
+	}
 
 	// get arguments
 	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {

@@ -43,7 +43,7 @@ var routedpages = map[string]string{
 }
 var routedpaths = map[string]string{}
 
-// settings
+// web server settings
 var (
 	AddrHTTP          []string
 	AddrTLS           []string
@@ -52,6 +52,11 @@ var (
 	WriteTimeout      int = 15
 	IdleTimeout       int = 60 // in seconds
 	MaxHeaderBytes    int = 1 << 20
+)
+
+// authentication
+var (
+	ShowSharesUser bool = true
 )
 
 var Log = NewLogger(os.Stderr, LstdFlags, 300)
@@ -75,6 +80,12 @@ func opensettings() {
 		Log.Fatal("can not read settings file: " + err.Error())
 	}
 
+	var auth = cfg.Section("authentication")
+	ShowSharesUser = auth.Key("show-shares-user").MustBool(true)
+
+	var photo = cfg.Section("photo")
+	ThumbMaxFile = photo.Key("thumb-max-file").MustInt64(4096*3072*4 + 16384)
+
 	var ws = cfg.Section("webserver")
 	AddrHTTP = ws.Key("addr-http").Strings(",")
 	AddrTLS = ws.Key("addr-tls").Strings(",")
@@ -83,9 +94,6 @@ func opensettings() {
 	WriteTimeout = ws.Key("write-timeout").MustInt(15)
 	IdleTimeout = ws.Key("idle-timeout").MustInt(60)
 	MaxHeaderBytes = ws.Key("max-header-bytes").MustInt(1 << 20)
-
-	var photo = cfg.Section("photo")
-	ThumbMaxFile = photo.Key("thumb-max-file").MustInt64(4096*3072*4 + 16384)
 }
 
 func loadroots() {

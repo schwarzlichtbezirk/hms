@@ -219,6 +219,28 @@ func getlogApi(w http.ResponseWriter, r *http.Request) {
 	WriteJson(w, http.StatusOK, ret)
 }
 
+func authApi(w http.ResponseWriter, r *http.Request) {
+	var err error
+	var arg struct {
+		Password string `json:"pass"`
+	}
+
+	// get arguments
+	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
+		if err = json.Unmarshal(jb, &arg); err != nil {
+			WriteError400(w, err, EC_authbadreq)
+			return
+		}
+		if len(arg.Password) == 0 {
+			WriteError400(w, ErrNoData, EC_authnodata)
+			return
+		}
+	} else {
+		WriteError400(w, ErrNoJson, EC_authnoreq)
+		return
+	}
+}
+
 // APIHANDLER
 func getdrvApi(w http.ResponseWriter, r *http.Request) {
 	var ret = scanroots()
@@ -250,13 +272,15 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 			ret.Paths = scanroots()
 		}
 
-		shrmux.RLock()
-		for _, fpath := range sharespref {
-			if cp, err := propcache.Get(fpath); err == nil {
-				ret.AddProp(cp.(FileProper))
+		if adm || ShowSharesUser {
+			shrmux.RLock()
+			for _, fpath := range sharespref {
+				if cp, err := propcache.Get(fpath); err == nil {
+					ret.AddProp(cp.(FileProper))
+				}
 			}
+			shrmux.RUnlock()
 		}
-		shrmux.RUnlock()
 	} else {
 		if ret, err = readdir(fpath); err != nil {
 			WriteJson(w, http.StatusNotFound, &AjaxErr{err, EC_folderfail})
