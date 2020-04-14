@@ -20,7 +20,6 @@ var (
 	ErrNoJson = errors.New("data not given")
 	ErrNoData = errors.New("data is empty")
 
-	ErrDeny      = errors.New("access denied")
 	ErrNotFound  = errors.New("404 page not found")
 	ErrArgNoNum  = errors.New("'num' parameter not recognized")
 	ErrArgNoPath = errors.New("'path' argument required")
@@ -77,8 +76,11 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var path, shared = checksharepath(shr)
-	if !shared && !IsAdmin(r) {
-		WriteJson(w, http.StatusForbidden, &AjaxErr{ErrDeny, EC_filedeny})
+	if !shared {
+		if err = CheckAuth(r); err != nil {
+			WriteJson(w, http.StatusUnauthorized, err)
+			return
+		}
 		return
 	}
 
@@ -219,28 +221,6 @@ func getlogApi(w http.ResponseWriter, r *http.Request) {
 	WriteJson(w, http.StatusOK, ret)
 }
 
-func authApi(w http.ResponseWriter, r *http.Request) {
-	var err error
-	var arg struct {
-		Password string `json:"pass"`
-	}
-
-	// get arguments
-	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
-		if err = json.Unmarshal(jb, &arg); err != nil {
-			WriteError400(w, err, EC_authbadreq)
-			return
-		}
-		if len(arg.Password) == 0 {
-			WriteError400(w, ErrNoData, EC_authnodata)
-			return
-		}
-	} else {
-		WriteError400(w, ErrNoJson, EC_authnoreq)
-		return
-	}
-}
-
 // APIHANDLER
 func getdrvApi(w http.ResponseWriter, r *http.Request) {
 	var ret = scanroots()
@@ -261,18 +241,18 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 	var isroot = len(argpath) == 0
 	var fpath, shared = checksharepath(argpath)
 
-	var adm = IsAdmin(r)
-	if !adm && !isroot && !shared {
-		WriteJson(w, http.StatusForbidden, &AjaxErr{ErrDeny, EC_folderdeny})
+	var admerr = CheckAuth(r)
+	if admerr != nil && !isroot && !shared {
+		WriteJson(w, http.StatusUnauthorized, admerr)
 		return
 	}
 
 	if isroot {
-		if adm {
+		if admerr == nil {
 			ret.Paths = scanroots()
 		}
 
-		if adm || ShowSharesUser {
+		if admerr == nil || ShowSharesUser {
 			shrmux.RLock()
 			for _, fpath := range sharespref {
 				if cp, err := propcache.Get(fpath); err == nil {

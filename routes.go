@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -52,30 +51,37 @@ var NewRouter = mux.NewRouter
 const (
 	EC_null = 0
 
-	// admin
-	EC_admindeny = 1
+	// auth
+	EC_noauth     = 1
+	EC_tokenless  = 2
+	EC_tokenerror = 3
+	EC_tokenbad   = 4
+
+	// pubkey
+	EC_pubkeyrand = 5
+
+	// signin
+	EC_signinnoreq  = 10
+	EC_signinbadreq = 11
+	EC_signinnodata = 12
+	EC_signinpkey   = 13
+	EC_signindeny   = 14
 
 	// page/filecache
-	EC_pageabsent = 2
-	EC_fileabsent = 3
+	EC_pageabsent = 20
+	EC_fileabsent = 21
 
 	// file
-	EC_filebadurl = 4
-	EC_filedeny   = 5
+	EC_filebadurl = 22
 
 	// reload
-	EC_reloadnoreq  = 10
-	EC_reloadbadreq = 11
-	EC_reloadnodata = 12
-	EC_reloadbadprf = 13
+	EC_reloadnoreq  = 24
+	EC_reloadbadreq = 25
+	EC_reloadnodata = 26
+	EC_reloadbadprf = 27
 
 	// getlog
-	EC_getlogbadnum = 14
-
-	// auth
-	EC_authnoreq  = 20
-	EC_authbadreq = 21
-	EC_authnodata = 22
+	EC_getlogbadnum = 28
 
 	// folder
 	EC_folderdeny = 30
@@ -141,14 +147,15 @@ func RegisterRoutes(gmux *Router) {
 	api.Path("/servinfo").HandlerFunc(AjaxWrap(servinfoApi))
 	api.Path("/memusage").HandlerFunc(AjaxWrap(memusageApi))
 	api.Path("/getlog").HandlerFunc(AjaxWrap(getlogApi))
-	api.Path("/auth").HandlerFunc(AjaxWrap(authApi))
-	api.Path("/getdrv").HandlerFunc(AdminWrap(getdrvApi))
+	api.Path("/pubkey").HandlerFunc(AjaxWrap(pubkeyApi))
+	api.Path("/signin").HandlerFunc(AjaxWrap(signinApi))
+	api.Path("/getdrv").HandlerFunc(AuthWrap(getdrvApi))
 	api.Path("/folder").HandlerFunc(AjaxWrap(folderApi))
-	api.Path("/purge").HandlerFunc(AdminWrap(purgeApi))
+	api.Path("/purge").HandlerFunc(AuthWrap(purgeApi))
 	var shr = api.PathPrefix("/share").Subrouter()
 	shr.Path("/lst").HandlerFunc(AjaxWrap(shrlstApi))
-	shr.Path("/add").HandlerFunc(AdminWrap(shraddApi))
-	shr.Path("/del").HandlerFunc(AdminWrap(shrdelApi))
+	shr.Path("/add").HandlerFunc(AuthWrap(shraddApi))
+	shr.Path("/del").HandlerFunc(AuthWrap(shrdelApi))
 	var tmb = api.PathPrefix("/tmb").Subrouter()
 	tmb.Path("/chk").HandlerFunc(AjaxWrap(tmbchkApi))
 	tmb.Path("/scn").HandlerFunc(AjaxWrap(tmbscnApi))
@@ -225,44 +232,6 @@ func AjaxWrap(fn http.HandlerFunc) http.HandlerFunc {
 		incuint(&ajaxcallcount, 1)
 		fn(w, r)
 	}
-}
-
-// Handler wrapper for API with admin checkup.
-func AdminWrap(fn http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		incuint(&ajaxcallcount, 1)
-
-		if !IsAdmin(r) {
-			WriteJson(w, http.StatusForbidden, &AjaxErr{ErrDeny, EC_admindeny})
-			return
-		}
-
-		fn(w, r)
-	}
-}
-
-func StripPort(hostport string) string {
-	var colon = strings.IndexByte(hostport, ':')
-	if colon == -1 {
-		return hostport
-	}
-	if i := strings.IndexByte(hostport, ']'); i != -1 {
-		return strings.TrimPrefix(hostport[:i], "[")
-	}
-	return hostport[:colon]
-}
-
-func IsLocalhost(host string) bool {
-	host = StripPort(host)
-	if host == "localhost" {
-		return true
-	}
-	var ip = net.ParseIP(host)
-	return ip.IsLoopback()
-}
-
-func IsAdmin(r *http.Request) bool {
-	return IsLocalhost(r.Host)
 }
 
 const (

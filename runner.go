@@ -56,6 +56,7 @@ var (
 
 // authentication
 var (
+	AuthPass       string
 	ShowSharesUser bool = true
 )
 
@@ -81,6 +82,7 @@ func opensettings() {
 	}
 
 	var auth = cfg.Section("authentication")
+	AuthPass = auth.Key("password").String()
 	ShowSharesUser = auth.Key("show-shares-user").MustBool(true)
 
 	var photo = cfg.Section("photo")
@@ -337,7 +339,7 @@ func Run(gmux *Router) {
 		}
 		tlssrv[i] = srv
 		go func() {
-			if err := srv.ListenAndServeTLS(rootpath+"serv.crt", rootpath+"pkey.pem"); err != http.ErrServerClosed {
+			if err := srv.ListenAndServeTLS(rootpath+"serv.crt", rootpath+"prvk.pem"); err != http.ErrServerClosed {
 				tlssrv[i] = nil
 				Log.Println(err)
 				return

@@ -414,7 +414,7 @@ let app = new Vue({
 					}
 					this.$refs.mapcard.new();
 					this.$refs.mapcard.addmarkers(gpslist);
-				} else if (xhr.status === 403) { // Forbidden
+				} else if (xhr.status === 401) { // Unauthorized
 					onerr404();
 				} else if (xhr.status === 404) { // Not Found
 					onerr404();
@@ -521,7 +521,6 @@ let app = new Vue({
 								this.shared.push(shr);
 							}
 						}
-					} else if (xhr.status === 403) { // Forbidden
 					} else if (xhr.status === 404) { // Not Found
 						onerr404();
 						// remove file from list
@@ -552,7 +551,6 @@ let app = new Vue({
 							}
 							Vue.delete(file, 'pref');
 						}
-					} else if (xhr.status === 403) { // Forbidden
 					} else if (xhr.status === 404) { // Not Found
 						onerr404();
 						// remove file from list
@@ -575,19 +573,25 @@ let app = new Vue({
 			this.passstate = 0;
 		},
 		onlogin() {
-			ajaxjson("POST", "/api/auth", xhr => {
+			ajaxjson("POST", "/api/pubkey", xhr => {
 				traceresponse(xhr);
 				if (xhr.status === 200) {
-					this.token = xhr.response;
-					this.passstate = 1;
-				} else if (xhr.status === 403) { // Forbidden
-					this.token.access = null;
-					this.token.refresh = null;
-					this.passstate = -1;
+					const pubk = xhr.response;
+					const hash = sha256.hmac.create(pubk);
+					hash.update(this.password);
+					ajaxjson("POST", "/api/signin", xhr => {
+						traceresponse(xhr);
+						if (xhr.status === 200) {
+							this.token = xhr.response;
+							this.passstate = 1;
+						} else if (xhr.status === 403) { // Forbidden
+							this.token.access = null;
+							this.token.refresh = null;
+							this.passstate = -1;
+						}
+					}, { pubk: pubk, hash: hash.digest() });
 				}
-			}, {
-				pass: this.password
-			}, true);
+			});
 		},
 		onlogout() {
 
