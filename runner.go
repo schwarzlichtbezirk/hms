@@ -57,6 +57,8 @@ var (
 // authentication
 var (
 	AuthPass       string
+	AccessTTL      int  = 1 * 24 * 60 * 60
+	RefreshTTL     int  = 3 * 24 * 60 * 60
 	ShowSharesUser bool = true
 )
 
@@ -83,6 +85,8 @@ func opensettings() {
 
 	var auth = cfg.Section("authentication")
 	AuthPass = auth.Key("password").String()
+	AccessTTL = auth.Key("access-ttl").MustInt(1 * 24 * 60 * 60)
+	RefreshTTL = auth.Key("refresh-ttl").MustInt(3 * 24 * 60 * 60)
 	ShowSharesUser = auth.Key("show-shares-user").MustBool(true)
 
 	var photo = cfg.Section("photo")

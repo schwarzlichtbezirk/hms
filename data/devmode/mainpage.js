@@ -234,10 +234,6 @@ let app = new Vue({
 		isauth: false, // is authorized
 		password: "", // authorization password
 		passstate: 0, // -1 invalid password, 0 ambiguous, 1 valid password
-		token: {
-			access: null,
-			refresh: null
-		},
 
 		shared: [], // list of shared folders and files
 		loadcount: 0, // ajax working request count
@@ -577,16 +573,19 @@ let app = new Vue({
 				traceresponse(xhr);
 				if (xhr.status === 200) {
 					const pubk = xhr.response;
+					// github.com/emn178/js-sha256
 					const hash = sha256.hmac.create(pubk);
 					hash.update(this.password);
 					ajaxjson("POST", "/api/signin", xhr => {
 						traceresponse(xhr);
 						if (xhr.status === 200) {
-							this.token = xhr.response;
+							token.access = xhr.response.access;
+							token.refrsh = xhr.response.refrsh;
+							sessionStorage.setItem('token', JSON.stringify(token));
+							this.isauth = true;
 							this.passstate = 1;
 						} else if (xhr.status === 403) { // Forbidden
-							this.token.access = null;
-							this.token.refresh = null;
+							logout();
 							this.passstate = -1;
 						}
 					}, { pubk: pubk, hash: hash.digest() });

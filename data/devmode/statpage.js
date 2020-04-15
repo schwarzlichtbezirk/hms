@@ -121,7 +121,7 @@ $(document).ready(() => {
 	$('.preloader').hide("fast");
 	$('#app').show("fast");
 
-	ajaxjson("GET", "/api/servinfo", xhr => {
+	ajaxjson("GET", "/api/srvinf", xhr => {
 		if (xhr.status === 200) { // OK
 			app.servinfo = xhr.response;
 			app.servinfo.buildvers = buildvers;
@@ -130,7 +130,7 @@ $(document).ready(() => {
 
 	$("#collapse-memory").on('show.bs.collapse', () => {
 		const scanner = () => {
-			ajaxjson("GET", "/api/memusage", xhr => {
+			ajaxjson("GET", "/api/memusg", xhr => {
 				if (xhr.status === 200) { // OK
 					app.memgc = xhr.response;
 				}

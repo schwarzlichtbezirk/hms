@@ -158,7 +158,7 @@ func reloadApi(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
-func servinfoApi(w http.ResponseWriter, r *http.Request) {
+func srvinfApi(w http.ResponseWriter, r *http.Request) {
 	var ret = map[string]interface{}{
 		"started":  UnixJS(starttime),
 		"govers":   runtime.Version(),
@@ -173,7 +173,7 @@ func servinfoApi(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
-func memusageApi(w http.ResponseWriter, r *http.Request) {
+func memusgApi(w http.ResponseWriter, r *http.Request) {
 	var mem runtime.MemStats
 	runtime.ReadMemStats(&mem)
 

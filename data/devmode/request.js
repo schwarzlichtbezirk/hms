@@ -2,10 +2,10 @@
 // All what is need for ajax.
 
 // Authorization shared object, contains access and refresh tokens.
-const token = {};
-
-// URI to jump on logout
-const signuri = devmode ? "/dev/sign" : "/sign";
+const token = {
+	access: null,
+	refrsh: null
+};
 
 // Sends given request with optional JSON object
 const sendjson = (xhr, body) => {
@@ -60,16 +60,17 @@ const ajaxjsonauth = (method, url, onload, body) => {
 			xhr.onload = () => {
 				if (xhr.status === 200) { // OK
 					token.access = xhr.response.access;
+					token.refrsh = xhr.response.refrsh;
 					sessionStorage.setItem('token', JSON.stringify(token));
+					app.isauth = true;
 
 					{
 						const xhr = new XMLHttpRequest();
 						xhr.onload = () => {
 							if (xhr.status === 401) { // Unauthorized
-								logout(); // unauthorized again, something wrong on STS
-							} else {
-								onload(xhr);
+								logout(); // unauthorized again, refresh is outdated
 							}
+							onload(xhr);
 						};
 						xhr.open(method, url, true);
 						sendjsonauth(xhr, body); // 2-nd try
@@ -78,8 +79,8 @@ const ajaxjsonauth = (method, url, onload, body) => {
 					logout();
 				}
 			};
-			xhr.open("POST", "/api/refresh", true);
-			sendjson(xhr, { refresh: token.refresh });
+			xhr.open("POST", "/api/refrsh", true);
+			sendjson(xhr, { refrsh: token.refrsh });
 		} else {
 			onload(xhr);
 		}
@@ -90,9 +91,9 @@ const ajaxjsonauth = (method, url, onload, body) => {
 
 const logout = () => {
 	token.access = null;
-	token.refresh = null;
+	token.refrsh = null;
 	sessionStorage.removeItem('token');
-	window.location.assign(signuri); // jump to sign-in page
+	app.isauth = false;
 };
 
 // The End.

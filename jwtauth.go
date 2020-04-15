@@ -3,9 +3,7 @@ package hms
 import (
 	"bytes"
 	"crypto/hmac"
-	"crypto/md5"
 	"crypto/sha256"
-	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -21,15 +19,17 @@ import (
 // jwt-go docs:
 // https://godoc.org/github.com/dgrijalva/jwt-go
 
-// Key for HS-256 JWT-tokens.
-const authkey = "skJgM4NsbP3fs4k7vh0gfdkgGl8dJTszdLxZ1sQ9ksFnxbgvw2RsGH8xxddUV479"
+// "sub" field for this tokens.
+const jwtsubject = "hms"
 
-// Key for JWT ID.
-const jwtidkey = "zxK4dUnuq3Lhd1Gzhpr3usI5lAzgvy2t3fmxld2spzz7a5nfv0hsksm9cheyutie"
+// Key for access HS-256 JWT-tokens.
+const accesskey = "skJgM4NsbP3fs4k7vh0gfdkgGl8dJTszdLxZ1sQ9ksFnxbgvw2RsGH8xxddUV479"
+
+// Key for refresh HS-256 JWT-tokens.
+const refrshkey = "zxK4dUnuq3Lhd1Gzhpr3usI5lAzgvy2t3fmxld2spzz7a5nfv0hsksm9cheyutie"
 
 // Claims of JWT-tokens. Contains additional user identifier.
 type HMSClaims struct {
-	UID uint64 `json:"user_id,omitempty"`
 	jwt.StandardClaims
 }
 
@@ -37,13 +37,35 @@ var (
 	ErrNoAuth   = errors.New("authorization is absent")
 	ErrNoBearer = errors.New("authorization does not have bearer format")
 	ErrNoUserID = errors.New("token does not have user id")
-	ErrNoPKey   = errors.New("public key does not exist any more")
+	ErrNoPubKey = errors.New("public key does not exist any more")
 	ErrNotPass  = errors.New("password is incorrect")
 	ErrDeny     = errors.New("access denied")
 )
 
-// Zero hash
+// Public keys cache for authorization.
+var pubkeycache = gcache.New(10).LRU().Expiration(15 * time.Second).Build()
+
+// Zero hash value.
 var zero [32]byte
+
+type Tokens struct {
+	Access string `json:"access"`
+	Refrsh string `json:"refrsh"`
+}
+
+func (t *Tokens) Make() {
+	var now = time.Now()
+	t.Access, _ = jwt.NewWithClaims(jwt.SigningMethodHS256, &jwt.StandardClaims{
+		NotBefore: now.Unix(),
+		ExpiresAt: now.Add(time.Duration(AccessTTL) * time.Second).Unix(),
+		Subject:   jwtsubject,
+	}).SignedString([]byte(accesskey))
+	t.Refrsh, _ = jwt.NewWithClaims(jwt.SigningMethodHS256, &jwt.StandardClaims{
+		NotBefore: now.Unix(),
+		ExpiresAt: now.Add(time.Duration(RefreshTTL) * time.Second).Unix(),
+		Subject:   jwtsubject,
+	}).SignedString([]byte(refrshkey))
+}
 
 func StripPort(hostport string) string {
 	var colon = strings.IndexByte(hostport, ':')
@@ -69,13 +91,12 @@ func CheckAuth(r *http.Request) (aerr *AjaxErr) {
 	var claims *HMSClaims
 	if pool, ok := r.Header["Authorization"]; ok {
 		var err error // stores last bearer error
-		var token *jwt.Token
 		for _, val := range pool {
 			if strings.HasPrefix(val, "Bearer ") {
 				claims = &HMSClaims{}
-				if token, err = jwt.ParseWithClaims(val[7:], claims, func(token *jwt.Token) (interface{}, error) {
-					return []byte(authkey), nil
-				}); token.Valid {
+				if _, err = jwt.ParseWithClaims(val[7:], claims, func(token *jwt.Token) (interface{}, error) {
+					return []byte(accesskey), nil
+				}); err != nil {
 					break
 				}
 			}
@@ -110,17 +131,6 @@ func AuthWrap(fn http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func makeJWTID(t time.Time) []byte {
-	var buf [8]byte
-	binary.LittleEndian.PutUint64(buf[:], uint64(UnixJS(t)))
-	var h = md5.New()
-	h.Write([]byte(jwtidkey))
-	h.Write(buf[:])
-	return h.Sum(nil)
-}
-
-var pubkeycache = gcache.New(10).LRU().Expiration(15 * time.Second).Build()
-
 func pubkeyApi(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var buf [32]byte
@@ -140,10 +150,7 @@ func signinApi(w http.ResponseWriter, r *http.Request) {
 		PubK [32]byte `json:"pubk"`
 		Hash [32]byte `json:"hash"`
 	}
-	var res struct {
-		Access  string `json:"access"`
-		Refresh string `json:"refresh"`
-	}
+	var res Tokens
 
 	// get arguments
 	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
@@ -161,7 +168,7 @@ func signinApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, err = pubkeycache.Get(tohex(arg.PubK[:])); err != nil {
-		WriteJson(w, http.StatusForbidden, &AjaxErr{ErrNoPKey, EC_signinpkey})
+		WriteJson(w, http.StatusForbidden, &AjaxErr{ErrNoPubKey, EC_signinpkey})
 		return
 	}
 
@@ -173,6 +180,41 @@ func signinApi(w http.ResponseWriter, r *http.Request) {
 		WriteJson(w, http.StatusForbidden, &AjaxErr{ErrNotPass, EC_signindeny})
 		return
 	}
+
+	res.Make()
+
+	WriteJson(w, http.StatusOK, &res)
+}
+
+func refrshApi(w http.ResponseWriter, r *http.Request) {
+	var err error
+	var arg Tokens
+	var res Tokens
+
+	// get arguments
+	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
+		if err = json.Unmarshal(jb, &arg); err != nil {
+			WriteError400(w, err, EC_refrshbadreq)
+			return
+		}
+		if len(arg.Refrsh) == 0 {
+			WriteError400(w, ErrNoData, EC_refrshnodata)
+			return
+		}
+	} else {
+		WriteError400(w, ErrNoJson, EC_refrshnoreq)
+		return
+	}
+
+	var claims = &HMSClaims{}
+	if _, err = jwt.ParseWithClaims(arg.Refrsh, claims, func(token *jwt.Token) (interface{}, error) {
+		return []byte(refrshkey), nil
+	}); err != nil {
+		WriteError400(w, err, EC_refrshparse)
+		return
+	}
+
+	res.Make()
 
 	WriteJson(w, http.StatusOK, &res)
 }

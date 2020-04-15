@@ -67,46 +67,52 @@ const (
 	EC_signinpkey   = 13
 	EC_signindeny   = 14
 
+	// refrsh
+	EC_refrshnoreq  = 20
+	EC_refrshbadreq = 21
+	EC_refrshnodata = 22
+	EC_refrshparse  = 23
+
 	// page/filecache
-	EC_pageabsent = 20
-	EC_fileabsent = 21
+	EC_pageabsent = 30
+	EC_fileabsent = 31
 
 	// file
-	EC_filebadurl = 22
+	EC_filebadurl = 32
 
 	// reload
-	EC_reloadnoreq  = 24
-	EC_reloadbadreq = 25
-	EC_reloadnodata = 26
-	EC_reloadbadprf = 27
+	EC_reloadnoreq  = 34
+	EC_reloadbadreq = 35
+	EC_reloadnodata = 36
+	EC_reloadbadprf = 37
 
 	// getlog
-	EC_getlogbadnum = 28
+	EC_getlogbadnum = 38
 
 	// folder
-	EC_folderdeny = 30
-	EC_folderfail = 31
+	EC_folderdeny = 40
+	EC_folderfail = 41
 
 	// addshr
-	EC_addshrnopath  = 32
-	EC_addshrbadpath = 33
+	EC_addshrnopath  = 42
+	EC_addshrbadpath = 43
 
 	// delshr
-	EC_delshrnopath = 34
+	EC_delshrnopath = 44
 
 	// thumb
-	EC_thumbabsent = 40
-	EC_thumbbadcnt = 41
+	EC_thumbabsent = 50
+	EC_thumbbadcnt = 51
 
 	// tmbchk
-	EC_tmbchknoreq  = 42
-	EC_tmbchkbadreq = 43
-	EC_tmbchknodata = 44
+	EC_tmbchknoreq  = 52
+	EC_tmbchkbadreq = 53
+	EC_tmbchknodata = 54
 
 	// tmbscn
-	EC_tmbscnnoreq  = 45
-	EC_tmbscnbadreq = 46
-	EC_tmbscnnodata = 47
+	EC_tmbscnnoreq  = 55
+	EC_tmbscnbadreq = 56
+	EC_tmbscnnodata = 57
 )
 
 //////////////////
@@ -144,11 +150,12 @@ func RegisterRoutes(gmux *Router) {
 	var api = gmux.PathPrefix("/api").Subrouter()
 	api.Path("/ping").HandlerFunc(AjaxWrap(pingApi))
 	api.Path("/reload").HandlerFunc(AjaxWrap(reloadApi))
-	api.Path("/servinfo").HandlerFunc(AjaxWrap(servinfoApi))
-	api.Path("/memusage").HandlerFunc(AjaxWrap(memusageApi))
+	api.Path("/srvinf").HandlerFunc(AjaxWrap(srvinfApi))
+	api.Path("/memusg").HandlerFunc(AjaxWrap(memusgApi))
 	api.Path("/getlog").HandlerFunc(AjaxWrap(getlogApi))
 	api.Path("/pubkey").HandlerFunc(AjaxWrap(pubkeyApi))
 	api.Path("/signin").HandlerFunc(AjaxWrap(signinApi))
+	api.Path("/refrsh").HandlerFunc(AjaxWrap(refrshApi))
 	api.Path("/getdrv").HandlerFunc(AuthWrap(getdrvApi))
 	api.Path("/folder").HandlerFunc(AjaxWrap(folderApi))
 	api.Path("/purge").HandlerFunc(AuthWrap(purgeApi))
