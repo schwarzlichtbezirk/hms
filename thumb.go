@@ -25,7 +25,11 @@ const (
 	TMB_cached = 1
 )
 
-var ThumbMaxFile int64 = 4096*3072*4 + 16384 // 48M, max 4K image + 16K metadata
+// photos settings
+var (
+	// Maximum image size to make thumbnail.
+	ThumbMaxFile int64
+)
 
 const thumbside = 256
 

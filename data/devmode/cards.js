@@ -28,6 +28,7 @@ Vue.component('dir-card-tag', {
 	props: ["list"],
 	data: function () {
 		return {
+			isauth: false, // is authorized
 			selfile: null, // current selected item
 			order: 1,
 			listmode: "mdicon",
@@ -35,9 +36,9 @@ Vue.component('dir-card-tag', {
 		};
 	},
 	computed: {
-		// is it running on localhost
-		isadmin() {
-			return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+		// is it authorized or running on localhost
+		signed() {
+			return this.isauth || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 		},
 		isvisible() {
 			(() => {
@@ -141,6 +142,9 @@ Vue.component('dir-card-tag', {
 		onunselect() {
 			this.onselect(null);
 		}
+	},
+	mounted() {
+		auth.on('auth', is => this.isauth = is);
 	}
 });
 
@@ -149,6 +153,7 @@ Vue.component('file-card-tag', {
 	props: ["list"],
 	data: function () {
 		return {
+			isauth: false, // is authorized
 			selfile: null, // current selected item
 			playbackfile: null,
 			order: 1,
@@ -161,9 +166,9 @@ Vue.component('file-card-tag', {
 		};
 	},
 	computed: {
-		// is it running on localhost
-		isadmin() {
-			return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+		// is it authorized or running on localhost
+		signed() {
+			return this.isauth || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 		},
 		isvisible() {
 			(() => {
@@ -429,6 +434,9 @@ Vue.component('file-card-tag', {
 		onplayback(file) {
 			this.playbackfile = file;
 		}
+	},
+	mounted() {
+		auth.on('auth', is => this.isauth = is);
 	}
 });
 

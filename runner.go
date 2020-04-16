@@ -54,14 +54,6 @@ var (
 	MaxHeaderBytes    int = 1 << 20
 )
 
-// authentication
-var (
-	AuthPass       string
-	AccessTTL      int  = 1 * 24 * 60 * 60
-	RefreshTTL     int  = 3 * 24 * 60 * 60
-	ShowSharesUser bool = true
-)
-
 var Log = NewLogger(os.Stderr, LstdFlags, 300)
 
 var starttime = time.Now() // save server start time
@@ -84,13 +76,15 @@ func opensettings() {
 	}
 
 	var auth = cfg.Section("authentication")
-	AuthPass = auth.Key("password").String()
+	AuthPass = auth.Key("password").MustString("dag qus fly in the sky")
 	AccessTTL = auth.Key("access-ttl").MustInt(1 * 24 * 60 * 60)
 	RefreshTTL = auth.Key("refresh-ttl").MustInt(3 * 24 * 60 * 60)
+	AccessKey = auth.Key("access-key").MustString("skJgM4NsbP3fs4k7vh0gfdkgGl8dJTszdLxZ1sQ9ksFnxbgvw2RsGH8xxddUV479")
+	RefreshKey = auth.Key("refresh-key").MustString("zxK4dUnuq3Lhd1Gzhpr3usI5lAzgvy2t3fmxld2spzz7a5nfv0hsksm9cheyutie")
 	ShowSharesUser = auth.Key("show-shares-user").MustBool(true)
 
 	var photo = cfg.Section("photo")
-	ThumbMaxFile = photo.Key("thumb-max-file").MustInt64(4096*3072*4 + 16384)
+	ThumbMaxFile = photo.Key("thumb-max-file").MustInt64(4096*3072*4 + 65536)
 
 	var ws = cfg.Section("webserver")
 	AddrHTTP = ws.Key("addr-http").Strings(",")

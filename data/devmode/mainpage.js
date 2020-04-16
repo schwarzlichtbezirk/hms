@@ -235,8 +235,8 @@ let app = new Vue({
 		password: "", // authorization password
 		passstate: 0, // -1 invalid password, 0 ambiguous, 1 valid password
 
-		shared: [], // list of shared folders and files
 		loadcount: 0, // ajax working request count
+		shared: [], // list of shared folders
 
 		// current opened folder data
 		pathlist: [], // list of subfolders properties in current folder
@@ -249,7 +249,11 @@ let app = new Vue({
 	computed: {
 		// is it running on localhost
 		isadmin() {
-			return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+			return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+		},
+		// is it authorized or running on localhost
+		signed() {
+			return this.isauth || this.isadmin;
 		},
 		// array of paths to current folder
 		curpathway() {
@@ -367,7 +371,7 @@ let app = new Vue({
 	methods: {
 		// opens given folder cleary
 		gofolder(file) {
-			ajaxjson("GET", "/api/folder?" + $.param({
+			ajaxjsonauth("GET", "/api/folder?" + $.param({
 				path: file.path
 			}), xhr => {
 				traceresponse(xhr);
@@ -376,6 +380,8 @@ let app = new Vue({
 				this.filelist = [];
 				this.curpath = file;
 				window.history.replaceState(file, file.path, "/path/" + file.path);
+				// init map card
+				this.$refs.mapcard.new();
 
 				if (xhr.status === 200) {
 					this.curscan = new Date(Date.now());
@@ -408,7 +414,6 @@ let app = new Vue({
 							gpslist.push(fp);
 						}
 					}
-					this.$refs.mapcard.new();
 					this.$refs.mapcard.addmarkers(gpslist);
 				} else if (xhr.status === 401) { // Unauthorized
 					onerr404();
@@ -422,7 +427,7 @@ let app = new Vue({
 					for (const fp of this.uncached) {
 						paths.push(fp.path);
 					}
-					ajaxjson("POST", "/api/tmb/scn", xhr => { }, {
+					ajaxjsonauth("POST", "/api/tmb/scn", xhr => { }, {
 						paths: paths,
 						force: false
 					}, true);
@@ -433,7 +438,7 @@ let app = new Vue({
 						for (const fp of this.uncached) {
 							tmbs.push({ ktmb: fp.ktmb });
 						}
-						ajaxjson("POST", "/api/tmb/chk", xhr => {
+						ajaxjsonauth("POST", "/api/tmb/chk", xhr => {
 							traceresponse(xhr);
 							if (xhr.status === 200) {
 								const gpslist = [];
@@ -500,11 +505,26 @@ let app = new Vue({
 		onrefresh() {
 			const file = this.curpath;
 			this.gofolder(file);
+			// get shares
+			ajaxjsonauth("PUT", "/api/share/lst", xhr => {
+				traceresponse(xhr);
+				if (xhr.status === 200) {
+					const lst = xhr.response;
+					this.shared = [];
+					for (const shr of lst) {
+						// check on cached value exist & it is directory
+						if (shr && FTtoFG[shr.type] === FG.dir) {
+							shr.path = shr.pref + '/';
+							this.shared.push(shr);
+						}
+					}
+				}
+			});
 		},
 
 		onshare(file) {
 			if (!file.pref) { // should add share
-				ajaxjson("PUT", "/api/share/add?" + $.param({
+				ajaxjsonauth("PUT", "/api/share/add?" + $.param({
 					path: file.path
 				}), xhr => {
 					traceresponse(xhr);
@@ -529,7 +549,7 @@ let app = new Vue({
 					}
 				});
 			} else { // should remove share
-				ajaxjson("DELETE", "/api/share/del?" + $.param({
+				ajaxjsonauth("DELETE", "/api/share/del?" + $.param({
 					pref: file.pref
 				}), xhr => {
 					traceresponse(xhr);
@@ -579,13 +599,11 @@ let app = new Vue({
 					ajaxjson("POST", "/api/signin", xhr => {
 						traceresponse(xhr);
 						if (xhr.status === 200) {
-							token.access = xhr.response.access;
-							token.refrsh = xhr.response.refrsh;
-							sessionStorage.setItem('token', JSON.stringify(token));
-							this.isauth = true;
+							auth.signin(xhr.response);
 							this.passstate = 1;
+							this.onrefresh();
 						} else if (xhr.status === 403) { // Forbidden
-							logout();
+							auth.signout();
 							this.passstate = -1;
 						}
 					}, { pubk: pubk, hash: hash.digest() });
@@ -593,8 +611,14 @@ let app = new Vue({
 			});
 		},
 		onlogout() {
-
+			auth.signout();
+			this.passstate = 0;
+			this.onrefresh();
 		}
+	},
+	mounted() {
+		auth.on('auth', is => this.isauth = is);
+		ajax.on('ajax', count => this.loadcount += count);
 	}
 });
 
@@ -603,6 +627,11 @@ let app = new Vue({
 /////////////
 
 $(document).ready(() => {
+	auth.signload();
+	if (devmode) {
+		console.log("token:", auth.token);
+	}
+
 	const path = decodeURI(window.location.pathname.substr(6));
 	if (path && window.location.pathname.substr(0, 6) === "/path/") {
 		const arr = path.split('/');
@@ -613,7 +642,7 @@ $(document).ready(() => {
 			size: 0, time: 0, type: FT.dir
 		});
 		// get shares
-		ajaxjson("PUT", "/api/share/lst", xhr => {
+		ajaxjsonauth("PUT", "/api/share/lst", xhr => {
 			traceresponse(xhr);
 			if (xhr.status === 200) {
 				const lst = xhr.response;
@@ -621,6 +650,7 @@ $(document).ready(() => {
 				for (const shr of lst) {
 					// check on cached value exist & it is directory
 					if (shr && FTtoFG[shr.type] === FG.dir) {
+						shr.path = shr.pref + '/';
 						this.shared.push(shr);
 					}
 				}

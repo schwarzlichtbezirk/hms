@@ -22,16 +22,26 @@ import (
 // "sub" field for this tokens.
 const jwtsubject = "hms"
 
-// Key for access HS-256 JWT-tokens.
-const accesskey = "skJgM4NsbP3fs4k7vh0gfdkgGl8dJTszdLxZ1sQ9ksFnxbgvw2RsGH8xxddUV479"
-
-// Key for refresh HS-256 JWT-tokens.
-const refrshkey = "zxK4dUnuq3Lhd1Gzhpr3usI5lAzgvy2t3fmxld2spzz7a5nfv0hsksm9cheyutie"
-
 // Claims of JWT-tokens. Contains additional user identifier.
 type HMSClaims struct {
 	jwt.StandardClaims
 }
+
+// authentication settings
+var (
+	// Authorization password.
+	AuthPass string
+	// Access token time to live.
+	AccessTTL int
+	// Refresh token time to live.
+	RefreshTTL int
+	// Key for access HS-256 JWT-tokens.
+	AccessKey string
+	// Key for refresh HS-256 JWT-tokens.
+	RefreshKey string
+	// Can list of all shares be visible for unauthorized user.
+	ShowSharesUser bool
+)
 
 var (
 	ErrNoAuth   = errors.New("authorization is absent")
@@ -59,12 +69,12 @@ func (t *Tokens) Make() {
 		NotBefore: now.Unix(),
 		ExpiresAt: now.Add(time.Duration(AccessTTL) * time.Second).Unix(),
 		Subject:   jwtsubject,
-	}).SignedString([]byte(accesskey))
+	}).SignedString([]byte(AccessKey))
 	t.Refrsh, _ = jwt.NewWithClaims(jwt.SigningMethodHS256, &jwt.StandardClaims{
 		NotBefore: now.Unix(),
 		ExpiresAt: now.Add(time.Duration(RefreshTTL) * time.Second).Unix(),
 		Subject:   jwtsubject,
-	}).SignedString([]byte(refrshkey))
+	}).SignedString([]byte(RefreshKey))
 }
 
 func StripPort(hostport string) string {
@@ -95,7 +105,7 @@ func CheckAuth(r *http.Request) (aerr *AjaxErr) {
 			if strings.HasPrefix(val, "Bearer ") {
 				claims = &HMSClaims{}
 				if _, err = jwt.ParseWithClaims(val[7:], claims, func(token *jwt.Token) (interface{}, error) {
-					return []byte(accesskey), nil
+					return []byte(AccessKey), nil
 				}); err != nil {
 					break
 				}
@@ -208,7 +218,7 @@ func refrshApi(w http.ResponseWriter, r *http.Request) {
 
 	var claims = &HMSClaims{}
 	if _, err = jwt.ParseWithClaims(arg.Refrsh, claims, func(token *jwt.Token) (interface{}, error) {
-		return []byte(refrshkey), nil
+		return []byte(RefreshKey), nil
 	}); err != nil {
 		WriteError400(w, err, EC_refrshparse)
 		return
