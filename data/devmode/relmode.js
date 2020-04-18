@@ -7,5 +7,6 @@ const builddate = "2020.04.16";
 const devmode = false;
 
 const traceresponse = () => undefined;
+const traceajax = () => undefined;
 
 // The End.

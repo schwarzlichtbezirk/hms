@@ -18,4 +18,13 @@ const traceresponse = xhr => {
 	}
 };
 
+const traceajax = response => {
+	if (response.status >= 200 && response.status < 300) {
+		console.log(response.status, response.url);
+	}
+	if (response.data) {
+		console.log(response.data);
+	}
+};
+
 // The End.

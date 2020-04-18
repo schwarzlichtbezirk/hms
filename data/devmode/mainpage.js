@@ -589,26 +589,29 @@ let app = new Vue({
 			this.passstate = 0;
 		},
 		onlogin() {
-			ajaxjson("POST", "/api/pubkey", xhr => {
-				traceresponse(xhr);
-				if (xhr.status === 200) {
-					const pubk = xhr.response;
+			ajaxcc.emit('ajax', +1);
+			fetchajax("POST", "/api/pubkey").then(response => {
+				traceajax(response);
+				if (response.ok) {
 					// github.com/emn178/js-sha256
-					const hash = sha256.hmac.create(pubk);
+					const hash = sha256.hmac.create(response.data);
 					hash.update(this.password);
-					ajaxjson("POST", "/api/signin", xhr => {
-						traceresponse(xhr);
-						if (xhr.status === 200) {
-							auth.signin(xhr.response);
-							this.passstate = 1;
-							this.onrefresh();
-						} else if (xhr.status === 403) { // Forbidden
-							auth.signout();
-							this.passstate = -1;
-						}
-					}, { pubk: pubk, hash: hash.digest() });
+					return fetchajax("POST", "/api/signin", {
+						pubk: response.data, hash: hash.digest()
+					});
 				}
-			});
+				return Promise.reject();
+			}).then(response => {
+				traceajax(response);
+				if (response.status === 200) {
+					auth.signin(response.data);
+					this.passstate = 1;
+					this.onrefresh();
+				} else if (response.status === 403) { // Forbidden
+					auth.signout();
+					this.passstate = -1;
+				}
+			}).catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
 		},
 		onlogout() {
 			auth.signout();
@@ -618,7 +621,7 @@ let app = new Vue({
 	},
 	mounted() {
 		auth.on('auth', is => this.isauth = is);
-		ajax.on('ajax', count => this.loadcount += count);
+		ajaxcc.on('ajax', count => this.loadcount += count);
 	}
 });
 

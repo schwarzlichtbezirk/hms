@@ -15,17 +15,19 @@ if (!String.prototype.format) {
 		});
 	};
 }
+
+// Printf for javasript
 if (!String.prototype.printf) {
 	String.prototype.printf = function () {
 		var arr = Array.prototype.slice.call(arguments);
 		var i = -1;
-		function callback(sym, plus, flag, size, exp, base, type) {
-			if (sym === '%%') return '%';
+		function callback(exp, p0, p1, p2, p3, p4) {
+			if (exp === '%%') return '%';
 			if (arr[++i] === undefined) return undefined;
-			exp = exp ? parseInt(exp.substr(1)) : undefined;
-			base = base ? parseInt(base.substr(1)) : undefined;
+			exp = p2 ? parseInt(p2.substr(1)) : undefined;
+			var base = p3 ? parseInt(p3.substr(1)) : undefined;
 			var val;
-			switch (type) {
+			switch (p4) {
 				case 's': val = arr[i]; break;
 				case 'c': val = arr[i][0]; break;
 				case 'f': val = parseFloat(arr[i]).toFixed(exp); break;
@@ -34,19 +36,13 @@ if (!String.prototype.printf) {
 				case 'x': val = parseInt(arr[i]).toString(base ? base : 16); break;
 				case 'd': val = parseFloat(parseInt(arr[i], base ? base : 10).toPrecision(exp)).toFixed(0); break;
 			}
-			val = typeof val === 'object' ? JSON.stringify(val) : val.toString(base);
-			size = parseInt(size); /* padding size */
-			if (plus && val[0] !== '-') {
-				val = '+' + val;
-			}
-			switch (flag) {
-				case '-': val += ' '.repeat(size - val.length); break;
-				case ' ': val = ' '.repeat(size - val.length) + val; break;
-				case '0': val = '0'.repeat(size - val.length) + val; break;
-			}
+			val = typeof (val) === 'object' ? JSON.stringify(val) : val.toString(base);
+			var sz = parseInt(p1); /* padding size */
+			var ch = p1 && p1[0] === '0' ? '0' : ' '; /* isnull? */
+			while (val.length < sz) val = p0 !== undefined ? val + ch : ch + val; /* isminus? */
 			return val;
 		}
-		var regex = /%([+])?([- 0])?([1-9][0-9]*)?([.][0-9]+)?([#][0-9]+)?([scfpexd%])/g;
+		var regex = /%(-)?(0?[0-9]+)?([.][0-9]+)?([#][0-9]+)?([scfpexd%])/g;
 		return this.replace(regex, callback);
 	};
 }

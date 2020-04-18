@@ -37,7 +37,33 @@ const auth = extend({
 	}
 }, makeeventmodel());
 
-const ajax = extend({}, makeeventmodel());
+// ajax calls counter
+const ajaxcc = extend({}, makeeventmodel());
+
+const ajaxfail = () => {
+	showmsgbox(
+		"Server unavailable",
+		"Server is currently not available, action can not be done now."
+	);
+};
+
+const fetchajax = (method, url, body) => {
+	let resp;
+	return fetch(url, {
+		method: method,
+		headers: {
+			'Accept': 'application/json; charset=utf-8',
+			'Content-Type': 'application/json; charset=utf-8'
+		},
+		body: body && JSON.stringify(body)
+	}).then(response => {
+		resp = response;
+		return response.json();
+	}).then(data => {
+		resp.data = data;
+		return resp;
+	});
+};
 
 // Sends given request with optional JSON object
 const sendjson = (xhr, body) => {
@@ -62,43 +88,16 @@ const sendjsonauth = (xhr, body) => {
 	sendjson(xhr, body);
 };
 
-const ajaxjson = (method, url, onload, body, silent) => {
-	if (!silent) {
-		ajax.emit('ajax', +1);
-	}
-	const xhr = new XMLHttpRequest();
-	xhr.onload = () => {
-		onload(xhr);
-		if (!silent) {
-			ajax.emit('ajax', -1);
-		}
-	};
-	xhr.onerror = () => {
-		if (!silent) {
-			ajax.emit('ajax', -1);
-		}
-		showmsgbox(
-			"Server unavailable",
-			"Server is currently not available, action can not be done now."
-		);
-	};
-	xhr.open(method, url, true);
-	sendjson(xhr, body);
-};
-
 const ajaxjsonauth = (method, url, onload, body, silent) => {
 	const onerror = () => {
 		if (!silent) {
-			ajax.emit('ajax', -1);
+			ajaxcc.emit('ajax', -1);
 		}
-		showmsgbox(
-			"Server unavailable",
-			"Server is currently not available, action can not be done now."
-		);
+		ajaxfail();
 	};
 
 	if (!silent) {
-		ajax.emit('ajax', +1);
+		ajaxcc.emit('ajax', +1);
 	}
 	const xhr = new XMLHttpRequest();
 	xhr.onload = () => {
@@ -116,7 +115,7 @@ const ajaxjsonauth = (method, url, onload, body, silent) => {
 							}
 							onload(xhr);
 							if (!silent) {
-								ajax.emit('ajax', -1);
+								ajaxcc.emit('ajax', -1);
 							}
 						};
 						xhr.onerror = onerror;
@@ -126,7 +125,7 @@ const ajaxjsonauth = (method, url, onload, body, silent) => {
 				} else {
 					auth.signout();
 					if (!silent) {
-						ajax.emit('ajax', -1);
+						ajaxcc.emit('ajax', -1);
 					}
 				}
 			};
@@ -136,7 +135,7 @@ const ajaxjsonauth = (method, url, onload, body, silent) => {
 		} else {
 			onload(xhr);
 			if (!silent) {
-				ajax.emit('ajax', -1);
+				ajaxcc.emit('ajax', -1);
 			}
 		}
 	};

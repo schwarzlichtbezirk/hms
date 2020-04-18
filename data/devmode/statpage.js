@@ -3,37 +3,6 @@
 // Scanning frequency
 const scanfreq = 2000;
 
-// Printf for javasript
-if (!String.prototype.printf) {
-	String.prototype.printf = function () {
-		var arr = Array.prototype.slice.call(arguments);
-		var i = -1;
-		function callback(exp, p0, p1, p2, p3, p4) {
-			if (exp === '%%') return '%';
-			if (arr[++i] === undefined) return undefined;
-			exp = p2 ? parseInt(p2.substr(1)) : undefined;
-			var base = p3 ? parseInt(p3.substr(1)) : undefined;
-			var val;
-			switch (p4) {
-				case 's': val = arr[i]; break;
-				case 'c': val = arr[i][0]; break;
-				case 'f': val = parseFloat(arr[i]).toFixed(exp); break;
-				case 'p': val = parseFloat(arr[i]).toPrecision(exp); break;
-				case 'e': val = parseFloat(arr[i]).toExponential(exp); break;
-				case 'x': val = parseInt(arr[i]).toString(base ? base : 16); break;
-				case 'd': val = parseFloat(parseInt(arr[i], base ? base : 10).toPrecision(exp)).toFixed(0); break;
-			}
-			val = typeof (val) === 'object' ? JSON.stringify(val) : val.toString(base);
-			var sz = parseInt(p1); /* padding size */
-			var ch = p1 && p1[0] === '0' ? '0' : ' '; /* isnull? */
-			while (val.length < sz) val = p0 !== undefined ? val + ch : ch + val; /* isminus? */
-			return val;
-		}
-		var regex = /%(-)?(0?[0-9]+)?([.][0-9]+)?([#][0-9]+)?([scfpexd%])/g;
-		return this.replace(regex, callback);
-	};
-}
-
 const app = new Vue({
 	el: '#app',
 	template: '#app-tpl',
@@ -96,9 +65,9 @@ const app = new Vue({
 		},
 
 		ongetlog() {
-			ajaxjson("GET", "/api/getlog", xhr => {
-				if (xhr.status === 200) { // OK
-					this.log = xhr.response;
+			fetchajax("GET", "/api/getlog").then(response => {
+				if (response.ok) {
+					this.log = response.data;
 				}
 			});
 		},
@@ -114,39 +83,40 @@ const app = new Vue({
 		ondatetime() {
 			this.timemode = 2;
 		}
+	},
+	mounted() {
+		fetchajax("GET", "/api/srvinf").then(response => {
+			if (response.ok) {
+				this.servinfo = response.data;
+				this.servinfo.buildvers = buildvers;
+			}
+		});
+
+		$("#collapse-memory").on('show.bs.collapse', () => {
+			const scanner = () => {
+				fetchajax("GET", "/api/memusg").then(response => {
+					if (response.ok) {
+						this.memgc = response.data;
+					}
+				});
+			};
+
+			scanner();
+			const id = setInterval(scanner, scanfreq);
+			$("#collapse-memory").on('hide.bs.collapse', () => {
+				clearInterval(id);
+			});
+		});
+
+		$("#collapse-console").on('show.bs.collapse', () => {
+			this.ongetlog();
+		});
 	}
 }); // end of vue application
 
 $(document).ready(() => {
 	$('.preloader').hide("fast");
 	$('#app').show("fast");
-
-	ajaxjson("GET", "/api/srvinf", xhr => {
-		if (xhr.status === 200) { // OK
-			app.servinfo = xhr.response;
-			app.servinfo.buildvers = buildvers;
-		}
-	});
-
-	$("#collapse-memory").on('show.bs.collapse', () => {
-		const scanner = () => {
-			ajaxjson("GET", "/api/memusg", xhr => {
-				if (xhr.status === 200) { // OK
-					app.memgc = xhr.response;
-				}
-			});
-		};
-
-		scanner();
-		const id = setInterval(scanner, scanfreq);
-		$("#collapse-memory").on('hide.bs.collapse', () => {
-			clearInterval(id);
-		});
-	});
-
-	$("#collapse-console").on('show.bs.collapse', () => {
-		app.ongetlog();
-	});
 });
 
 // The End.
