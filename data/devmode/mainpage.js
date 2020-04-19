@@ -370,11 +370,11 @@ let app = new Vue({
 	},
 	methods: {
 		// opens given folder cleary
-		gofolder(file) {
-			ajaxjsonauth("GET", "/api/folder?" + $.param({
+		fetchfolder(file) {
+			return fetchajaxauth("GET", "/api/folder?" + $.param({
 				path: file.path
-			}), xhr => {
-				traceresponse(xhr);
+			})).then(response => {
+				traceajax(response);
 
 				this.pathlist = [];
 				this.filelist = [];
@@ -383,15 +383,15 @@ let app = new Vue({
 				// init map card
 				this.$refs.mapcard.new();
 
-				if (xhr.status === 200) {
+				if (response.ok) {
 					this.curscan = new Date(Date.now());
 					// update path for each item
-					const pathlist = xhr.response.paths || [];
+					const pathlist = response.data.paths || [];
 					for (const fp of pathlist) {
 						fp.path = fp.pref ? fp.pref : file.path + fp.name;
 						fp.path += '/';
 					}
-					const filelist = xhr.response.files || [];
+					const filelist = response.data.files || [];
 					for (const fp of filelist) {
 						fp.path = fp.pref ? fp.pref : file.path + fp.name;
 					}
@@ -415,22 +415,14 @@ let app = new Vue({
 						}
 					}
 					this.$refs.mapcard.addmarkers(gpslist);
-				} else if (xhr.status === 401) { // Unauthorized
+				} else if (response.status === 401) { // Unauthorized
 					onerr404();
-				} else if (xhr.status === 404) { // Not Found
+				} else if (response.status === 404) { // Not Found
 					onerr404();
 				}
 
 				// cache folder thumnails
 				if (this.uncached.length) {
-					const paths = [];
-					for (const fp of this.uncached) {
-						paths.push(fp.path);
-					}
-					ajaxjsonauth("POST", "/api/tmb/scn", xhr => { }, {
-						paths: paths,
-						force: false
-					}, true);
 					// check cached state loop
 					let chktmb;
 					chktmb = () => {
@@ -438,11 +430,13 @@ let app = new Vue({
 						for (const fp of this.uncached) {
 							tmbs.push({ ktmb: fp.ktmb });
 						}
-						ajaxjsonauth("POST", "/api/tmb/chk", xhr => {
-							traceresponse(xhr);
-							if (xhr.status === 200) {
+						fetchajaxauth("POST", "/api/tmb/chk", {
+							tmbs: tmbs
+						}).then(response => {
+							traceajax(response);
+							if (response.ok) {
 								const gpslist = [];
-								for (const tp of xhr.response.tmbs) {
+								for (const tp of response.data.tmbs) {
 									if (tp.ntmb) {
 										for (const fp of this.filelist) {
 											if (fp.ktmb === tp.ktmb) {
@@ -461,57 +455,44 @@ let app = new Vue({
 									setTimeout(chktmb, 1500); // wait and run again
 								}
 							}
-						}, { tmbs: tmbs }, true);
+						});
 					};
 					// gets thumbs
 					setTimeout(chktmb, 600);
+
+					const paths = [];
+					for (const fp of this.uncached) {
+						paths.push(fp.path);
+					}
+					fetchajaxauth("POST", "/api/tmb/scn", {
+						paths: paths,
+						force: false
+					}).then(response => {
+						traceajax(response);
+					});
 				}
 			});
 		},
 
 		// opens given folder and push history step
-		openfolder(file) {
-			this.gofolder(file);
-
-			// update folder history
-			if (this.histpos < this.histlist.length) {
-				this.histlist.splice(this.histpos, this.histlist.length - this.histpos);
-			}
-			this.histlist.push(file);
-			this.histpos = this.histlist.length;
+		fetchopenfolder(file) {
+			return this.fetchfolder(file)
+				.then(() => {
+					// update folder history
+					if (this.histpos < this.histlist.length) {
+						this.histlist.splice(this.histpos, this.histlist.length - this.histpos);
+					}
+					this.histlist.push(file);
+					this.histpos = this.histlist.length;
+				});
 		},
 
-		onhome() {
-			this.openfolder(root);
-		},
-
-		onback() {
-			this.histpos--;
-			const file = this.histlist[this.histpos - 1];
-			this.gofolder(file);
-		},
-
-		onforward() {
-			this.histpos++;
-			this.gofolder(this.histlist[this.histpos - 1]);
-		},
-
-		onparent() {
-			this.openfolder(this.curpathway.length
-				? this.curpathway[this.curpathway.length - 1]
-				: root);
-		},
-
-		onrefresh() {
-			const file = this.curpath;
-			this.gofolder(file);
-			// get shares
-			ajaxjsonauth("PUT", "/api/share/lst", xhr => {
-				traceresponse(xhr);
-				if (xhr.status === 200) {
-					const lst = xhr.response;
+		fetchsharelist() {
+			return fetchajaxauth("POST", "/api/share/lst").then(response => {
+				traceajax(response);
+				if (response.ok) {
 					this.shared = [];
-					for (const shr of lst) {
+					for (const shr of response.data) {
 						// check on cached value exist & it is directory
 						if (shr && FTtoFG[shr.type] === FG.dir) {
 							shr.path = shr.pref + '/';
@@ -522,67 +503,124 @@ let app = new Vue({
 			});
 		},
 
-		onshare(file) {
-			if (!file.pref) { // should add share
-				ajaxjsonauth("PUT", "/api/share/add?" + $.param({
-					path: file.path
-				}), xhr => {
-					traceresponse(xhr);
-					if (xhr.status === 200) {
-						let shr = xhr.response;
-						if (shr) {
-							// update folder settings
-							Vue.set(file, 'pref', shr.pref);
-							if (FTtoFG[shr.type] === FG.dir) {
-								this.shared.push(shr);
-							}
-						}
-					} else if (xhr.status === 404) { // Not Found
-						onerr404();
-						// remove file from list
-						for (const i in this.list) {
-							if (this.list[i] === file) {
-								this.list.splice(i, 1);
-								break;
-							}
+		fetchshareadd(file) {
+			return fetchajaxauth("POST", "/api/share/add?" + $.param({
+				path: file.path
+			})).then(response => {
+				traceajax(response);
+				if (response.ok) {
+					const shr = response.data;
+					if (shr) {
+						// update folder settings
+						Vue.set(file, 'pref', shr.pref);
+						if (FTtoFG[shr.type] === FG.dir) {
+							this.shared.push(shr);
 						}
 					}
-				});
-			} else { // should remove share
-				ajaxjsonauth("DELETE", "/api/share/del?" + $.param({
-					pref: file.pref
-				}), xhr => {
-					traceresponse(xhr);
-					if (xhr.status === 200) {
-						let ok = xhr.response;
-						// update folder settings
-						if (ok) {
-							if (FTtoFG[file.type] === FG.dir) {
-								for (let i in this.shared) {
-									if (this.shared[i].pref === file.pref) {
-										this.shared.splice(i, 1);
-										break;
-									}
+				} else if (response.status === 404) { // Not Found
+					onerr404();
+					// remove file from list
+					for (const i in this.list) {
+						if (this.list[i] === file) {
+							this.list.splice(i, 1);
+							break;
+						}
+					}
+				}
+			});
+		},
+
+		fetchsharedel(file) {
+			return fetchajaxauth("DELETE", "/api/share/del?" + $.param({
+				pref: file.pref
+			})).then(response => {
+				traceajax(response);
+				if (response.ok) {
+					const ok = response.data;
+					// update folder settings
+					if (ok) {
+						if (FTtoFG[file.type] === FG.dir) {
+							for (let i in this.shared) {
+								if (this.shared[i].pref === file.pref) {
+									this.shared.splice(i, 1);
+									break;
 								}
 							}
-							Vue.delete(file, 'pref');
 						}
-					} else if (xhr.status === 404) { // Not Found
-						onerr404();
-						// remove file from list
-						for (const i in this.list) {
-							if (this.list[i] === file) {
-								this.list.splice(i, 1);
-								break;
-							}
+						Vue.delete(file, 'pref');
+					}
+				} else if (xhr.status === 404) { // Not Found
+					onerr404();
+					// remove file from list
+					for (const i in this.list) {
+						if (this.list[i] === file) {
+							this.list.splice(i, 1);
+							break;
 						}
 					}
-				});
+				}
+			});
+		},
+
+		onhome() {
+			ajaxcc.emit('ajax', +1);
+			this.fetchopenfolder(root)
+				.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
+		},
+
+		onback() {
+			this.histpos--;
+			const file = this.histlist[this.histpos - 1];
+
+			ajaxcc.emit('ajax', +1);
+			this.fetchfolder(file)
+				.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
+		},
+
+		onforward() {
+			this.histpos++;
+			const file = this.histlist[this.histpos - 1];
+
+			ajaxcc.emit('ajax', +1);
+			this.fetchfolder(file)
+				.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
+		},
+
+		onparent() {
+			const file = this.curpathway.length
+				? this.curpathway[this.curpathway.length - 1]
+				: root;
+
+			ajaxcc.emit('ajax', +1);
+			this.fetchopenfolder(file)
+				.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
+		},
+
+		onrefresh() {
+			const file = this.curpath;
+
+			ajaxcc.emit('ajax', +1);
+			this.fetchfolder(file)
+				.then(() => this.fetchsharelist()) // get shares
+				.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
+		},
+
+		onshare(file) {
+			if (!file.pref) { // should add share
+				ajaxcc.emit('ajax', +1);
+				this.fetchshareadd(file)
+					.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
+			} else { // should remove share
+				ajaxcc.emit('ajax', +1);
+				this.fetchsharedel(file)
+					.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
 			}
 		},
 
 		onpathopen(file) {
-			this.openfolder(file);
+			ajaxcc.emit('ajax', +1);
+			this.fetchopenfolder(file)
+				.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
 		},
 
 		onpasschange() {
@@ -639,28 +677,20 @@ $(document).ready(() => {
 	if (path && window.location.pathname.substr(0, 6) === "/path/") {
 		const arr = path.split('/');
 		const isslash = !arr[arr.length - 1];
-		app.openfolder({
+		const file = {
 			name: arr[arr.length - (isslash ? 2 : 1)],
 			path: path + (isslash ? '' : '/'),
 			size: 0, time: 0, type: FT.dir
-		});
-		// get shares
-		ajaxjsonauth("PUT", "/api/share/lst", xhr => {
-			traceresponse(xhr);
-			if (xhr.status === 200) {
-				const lst = xhr.response;
-				this.shared = [];
-				for (const shr of lst) {
-					// check on cached value exist & it is directory
-					if (shr && FTtoFG[shr.type] === FG.dir) {
-						shr.path = shr.pref + '/';
-						this.shared.push(shr);
-					}
-				}
-			}
-		});
+		};
+
+		ajaxcc.emit('ajax', +1);
+		app.fetchopenfolder(file)
+			.then(() => app.fetchsharelist()) // get shares
+			.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
 	} else {
-		app.openfolder(root);
+		ajaxcc.emit('ajax', +1);
+		app.fetchopenfolder(root)
+			.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
 	}
 
 	$('.preloader').hide("fast");

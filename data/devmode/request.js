@@ -52,96 +52,75 @@ const fetchajax = (method, url, body) => {
 	return fetch(url, {
 		method: method,
 		headers: {
-			'Accept': 'application/json; charset=utf-8',
-			'Content-Type': 'application/json; charset=utf-8'
+			'Accept': 'application/json;charset=utf-8',
+			'Content-Type': 'application/json;charset=utf-8'
 		},
 		body: body && JSON.stringify(body)
 	}).then(response => {
 		resp = response;
-		return response.json();
+		// returns undefined on empty body or error in json
+		return new Promise((resolve) => response.json()
+			.then(json => resolve(json))
+			.catch(() => resolve(undefined)));
 	}).then(data => {
 		resp.data = data;
 		return resp;
 	});
 };
 
-// Sends given request with optional JSON object
-const sendjson = (xhr, body) => {
-	xhr.responseType = "json";
-
-	xhr.setRequestHeader("Accept", "application/json; charset=utf-8");
-	if (body) {
-		if (body.constructor.name !== 'FormData') {
-			xhr.setRequestHeader("Content-Type", "application/json; charset=utf-8");
-			body = JSON.stringify(body);
-		} else {
-			xhr.setRequestHeader("Content-Type", "multipart/form-data");
-		}
-	}
-	xhr.send(body);
-};
-
-const sendjsonauth = (xhr, body) => {
+const fetchajaxauth = (method, url, body) => {
+	let resp;
+	const hdr = {
+		'Accept': 'application/json;charset=utf-8',
+		'Content-Type': 'application/json;charset=utf-8'
+	};
 	if (auth.token.access) {
-		xhr.setRequestHeader("Authorization", "Bearer " + auth.token.access);
+		hdr['Authorization'] = 'Bearer ' + auth.token.access;
 	}
-	sendjson(xhr, body);
-};
-
-const ajaxjsonauth = (method, url, onload, body, silent) => {
-	const onerror = () => {
-		if (!silent) {
-			ajaxcc.emit('ajax', -1);
-		}
-		ajaxfail();
-	};
-
-	if (!silent) {
-		ajaxcc.emit('ajax', +1);
-	}
-	const xhr = new XMLHttpRequest();
-	xhr.onload = () => {
-		if (xhr.status === 401 && auth.token.refrsh) { // Unauthorized
-			const xhr = new XMLHttpRequest();
-			xhr.onload = () => {
-				if (xhr.status === 200) { // OK
-					auth.signin(xhr.response);
-
-					{
-						const xhr = new XMLHttpRequest();
-						xhr.onload = () => {
-							if (xhr.status === 401) { // Unauthorized
-								auth.signout(); // unauthorized again, refresh is outdated
-							}
-							onload(xhr);
-							if (!silent) {
-								ajaxcc.emit('ajax', -1);
-							}
-						};
-						xhr.onerror = onerror;
-						xhr.open(method, url, true);
-						sendjsonauth(xhr, body); // 2-nd try
+	return fetch(url, { // 1-st try
+		method: method,
+		headers: hdr,
+		body: body && JSON.stringify(body)
+	}).then(response => {
+		if (response.status === 401 && auth.token.refrsh) { // Unauthorized
+			return fetchajax("POST", "/api/refrsh", {
+				refrsh: auth.token.refrsh
+			}).then(response => {
+				if (response.ok) {
+					auth.signin(response.data);
+					const hdr = {
+						'Accept': 'application/json;charset=utf-8',
+						'Content-Type': 'application/json;charset=utf-8'
+					};
+					if (auth.token.access) {
+						hdr['Authorization'] = 'Bearer ' + auth.token.access;
 					}
+					return fetch(url, { // 2-nd try
+						method: method,
+						headers: hdr,
+						body: body && JSON.stringify(body)
+					}).then(response => {
+						resp = response;
+						// returns undefined on empty body or error in json
+						return new Promise((resolve) => response.json()
+							.then(json => resolve(json))
+							.catch(() => resolve(undefined)));
+					});
 				} else {
-					auth.signout();
-					if (!silent) {
-						ajaxcc.emit('ajax', -1);
-					}
+					return Promise.reject();
 				}
-			};
-			xhr.onerror = onerror;
-			xhr.open("POST", "/api/refrsh", true);
-			sendjson(xhr, { refrsh: auth.token.refrsh });
+			});
 		} else {
-			onload(xhr);
-			if (!silent) {
-				ajaxcc.emit('ajax', -1);
-			}
+			resp = response;
+			// returns undefined on empty body or error in json
+			return new Promise((resolve) => response.json()
+				.then(json => resolve(json))
+				.catch(() => resolve(undefined)));
 		}
-	};
-	xhr.onerror = onerror;
-	xhr.open(method, url, true);
-	sendjsonauth(xhr, body); // 1-st try
+	}).then(data => {
+		resp.data = data;
+		return resp;
+	});
 };
 
 // The End.
