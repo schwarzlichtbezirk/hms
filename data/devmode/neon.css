@@ -55,6 +55,19 @@ body {
 	font-size: 1.5rem;
 }
 
+.cardbtn {
+	text-decoration: none;
+	padding: 0;
+}
+
+	.cardbtn:hover, .cardbtn:focus {
+		background-color: rgba(153, 102, 204, 0.5); /* RebeccaPurple 60% */
+	}
+
+	.cardbtn:disabled, cardbtn.disabled {
+		background-color: transparent;
+	}
+
 .fileitem {
 	border: 1px solid rgba(25, 25, 112, 0);
 	border-radius: 4px;

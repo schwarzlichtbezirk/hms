@@ -223,8 +223,18 @@ const showmsgbox = (title, body) => {
 	dlg.modal("show");
 };
 
+const ajaxfail = () => {
+	showmsgbox(
+		"Server unavailable",
+		"Server is currently not available, action can not be done now."
+	);
+};
+
 const onerr404 = () => {
-	showmsgbox("Invalid path", "Specified path cannot be accessed now.");
+	showmsgbox(
+		"Invalid path",
+		"Specified path cannot be accessed now."
+	);
 };
 
 let app = new Vue({

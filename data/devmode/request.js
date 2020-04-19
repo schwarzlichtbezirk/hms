@@ -40,13 +40,6 @@ const auth = extend({
 // ajax calls counter
 const ajaxcc = extend({}, makeeventmodel());
 
-const ajaxfail = () => {
-	showmsgbox(
-		"Server unavailable",
-		"Server is currently not available, action can not be done now."
-	);
-};
-
 const fetchajax = (method, url, body) => {
 	let resp;
 	return fetch(url, {

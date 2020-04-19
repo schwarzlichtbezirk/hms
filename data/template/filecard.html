@@ -5,21 +5,21 @@
 			<a class="card-link d-block" data-toggle="collapse" v-bind:href="'#card'+iid">files</a>
 		</div>
 		<ul class="navbar-nav flex-row ml-auto">
-			<li><button class="btn nav-link p-0" v-on:click="onlink" v-bind:disabled="dislink" title="copy direct link to file"><i class="material-icons">link</i></button></li>
-			<li v-show="signed"><button class="btn nav-link p-0" v-on:click="onshare" v-bind:disabled="disshared" v-bind:class="clsshared" title="share file to get access from internet"><i class="material-icons">share</i></button></li>
+			<li><button class="btn nav-link cardbtn" v-on:click="onlink" v-bind:disabled="dislink" title="copy direct link to file"><i class="material-icons">link</i></button></li>
+			<li v-show="signed"><button class="btn nav-link cardbtn" v-on:click="onshare" v-bind:disabled="disshared" v-bind:class="clsshared" title="share file to get access from internet"><i class="material-icons">share</i></button></li>
 		</ul>
 		<ul class="navbar-nav flex-row ml-auto">
-			<li><button class="btn nav-link p-0" v-on:click="onorder" v-bind:title="hintorder"><i class="material-icons">{{clsorder}}</i></button></li>
-			<li><button class="btn nav-link p-0" v-on:click="onsortmode" v-bind:title="hintsortmode"><i class="material-icons">{{clssortmode}}</i></button></li>
-			<li><button class="btn nav-link p-0" v-on:click="onlistmode" v-bind:title="hintlist"><i class="material-icons">{{clslistmode}}</i></button></li>
+			<li><button class="btn nav-link cardbtn" v-on:click="onorder" v-bind:title="hintorder"><i class="material-icons">{{clsorder}}</i></button></li>
+			<li><button class="btn nav-link cardbtn" v-on:click="onsortmode" v-bind:title="hintsortmode"><i class="material-icons">{{clssortmode}}</i></button></li>
+			<li><button class="btn nav-link cardbtn" v-on:click="onlistmode" v-bind:title="hintlist"><i class="material-icons">{{clslistmode}}</i></button></li>
 		</ul>
 		<ul class="navbar-nav flex-row ml-auto">
-			<li><button class="btn nav-link p-0" v-bind:class="clsmusic" v-on:click="onmusic" title="show music files"><i class="material-icons">library_music</i></button></li>
-			<li><button class="btn nav-link p-0" v-bind:class="clsvideo" v-on:click="onvideo" title="show video files"><i class="material-icons">video_library</i></button></li>
-			<li><button class="btn nav-link p-0" v-bind:class="clsphoto" v-on:click="onphoto" title="show photos and images"><i class="material-icons">photo_library</i></button></li>
-			<li><button class="btn nav-link p-0" v-bind:class="clspdf" v-on:click="onpdf" title="show books and PDF files"><i class="material-icons">picture_as_pdf</i></button></li>
-			<li><button class="btn nav-link p-0" v-bind:class="clsbooks" v-on:click="onbooks" title="show plain text files"><i class="material-icons">library_books</i></button></li>
-			<li><button class="btn nav-link p-0" v-bind:class="clsother" v-on:click="onother" title="show other non-supported files"><i class="material-icons">library_add</i></button></li>
+			<li><button class="btn nav-link cardbtn" v-bind:class="clsmusic" v-on:click="onmusic" title="show music files"><i class="material-icons">library_music</i></button></li>
+			<li><button class="btn nav-link cardbtn" v-bind:class="clsvideo" v-on:click="onvideo" title="show video files"><i class="material-icons">video_library</i></button></li>
+			<li><button class="btn nav-link cardbtn" v-bind:class="clsphoto" v-on:click="onphoto" title="show photos and images"><i class="material-icons">photo_library</i></button></li>
+			<li><button class="btn nav-link cardbtn" v-bind:class="clspdf" v-on:click="onpdf" title="show books and PDF files"><i class="material-icons">picture_as_pdf</i></button></li>
+			<li><button class="btn nav-link cardbtn" v-bind:class="clsbooks" v-on:click="onbooks" title="show plain text files"><i class="material-icons">library_books</i></button></li>
+			<li><button class="btn nav-link cardbtn" v-bind:class="clsother" v-on:click="onother" title="show other non-supported files"><i class="material-icons">library_add</i></button></li>
 		</ul>
 	</div>
 	<div v-bind:id="'card'+iid" class="collapse show">

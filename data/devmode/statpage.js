@@ -69,7 +69,7 @@ const app = new Vue({
 				if (response.ok) {
 					this.log = response.data;
 				}
-			});
+			}).catch(() => {});
 		},
 
 		onnoprefix() {
@@ -90,7 +90,7 @@ const app = new Vue({
 				this.servinfo = response.data;
 				this.servinfo.buildvers = buildvers;
 			}
-		});
+		}).catch(() => { });
 
 		$("#collapse-memory").on('show.bs.collapse', () => {
 			const scanner = () => {
@@ -98,7 +98,7 @@ const app = new Vue({
 					if (response.ok) {
 						this.memgc = response.data;
 					}
-				});
+				}).catch(() => { });
 			};
 
 			scanner();
