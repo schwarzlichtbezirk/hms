@@ -524,17 +524,17 @@ let app = new Vue({
 						// update folder settings
 						Vue.set(file, 'pref', shr.pref);
 						if (FTtoFG[shr.type] === FG.dir) {
+							shr.path = shr.pref + '/';
 							this.shared.push(shr);
 						}
 					}
 				} else if (response.status === 404) { // Not Found
 					onerr404();
-					// remove file from list
-					for (const i in this.list) {
-						if (this.list[i] === file) {
-							this.list.splice(i, 1);
-							break;
-						}
+					// remove file from folder
+					if (FTtoFG[file.type] === FG.dir) {
+						this.pathlist.splice(this.pathlist.findIndex(elem => elem === file), 1);
+					} else {
+						this.filelist.splice(this.filelist.findIndex(elem => elem === file), 1);
 					}
 				}
 			});
@@ -549,7 +549,8 @@ let app = new Vue({
 					const ok = response.data;
 					// update folder settings
 					if (ok) {
-						if (FTtoFG[file.type] === FG.dir) {
+						const isdir = FTtoFG[file.type] === FG.dir;
+						if (isdir) {
 							for (let i in this.shared) {
 								if (this.shared[i].pref === file.pref) {
 									this.shared.splice(i, 1);
@@ -558,15 +559,29 @@ let app = new Vue({
 							}
 						}
 						Vue.delete(file, 'pref');
+
+						if (this.curpath.path) {
+							// adjust file path to current path
+							file.path = this.curpath.path + file.name;
+							if (isdir) {
+								file.path += '/';
+							}
+						} else {
+							// remove item from root folder
+							if (isdir) {
+								this.pathlist.splice(this.pathlist.findIndex(elem => elem === file), 1);
+							} else {
+								this.filelist.splice(this.filelist.findIndex(elem => elem === file), 1);
+							}
+						}
 					}
 				} else if (xhr.status === 404) { // Not Found
 					onerr404();
-					// remove file from list
-					for (const i in this.list) {
-						if (this.list[i] === file) {
-							this.list.splice(i, 1);
-							break;
-						}
+					// remove file from folder
+					if (FTtoFG[file.type] === FG.dir) {
+						this.pathlist.splice(this.pathlist.findIndex(elem => elem === file), 1);
+					} else {
+						this.filelist.splice(this.filelist.findIndex(elem => elem === file), 1);
 					}
 				}
 			});

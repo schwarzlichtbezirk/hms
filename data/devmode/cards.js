@@ -42,8 +42,8 @@ Vue.component('dir-card-tag', {
 		},
 		isvisible() {
 			(() => {
-				for (const file of this.list) {
-					if (file === this.selfile) return;
+				if (this.list.find(file => file === this.selfile)) {
+					return;
 				}
 				this.selfile = null;
 			})();
@@ -172,8 +172,8 @@ Vue.component('file-card-tag', {
 		},
 		isvisible() {
 			(() => {
-				for (const file of this.list) {
-					if (file === this.selfile) return;
+				if (this.list.find(file => file === this.selfile)) {
+					return;
 				}
 				this.selfile = null;
 				this.closeviewer();

@@ -475,6 +475,10 @@ func DelSharePref(pref string) bool {
 	shrmux.RUnlock()
 
 	if ok {
+		if cp, err := propcache.Get(path); err == nil {
+			cp.(FileProper).SetPref("")
+		}
+
 		shrmux.Lock()
 		delete(sharespath, path)
 		delete(sharespref, pref)
@@ -490,6 +494,10 @@ func DelSharePath(path string) bool {
 	shrmux.RUnlock()
 
 	if ok {
+		if cp, err := propcache.Get(path); err == nil {
+			cp.(FileProper).SetPref("")
+		}
+
 		shrmux.Lock()
 		delete(sharespath, path)
 		delete(sharespref, pref)

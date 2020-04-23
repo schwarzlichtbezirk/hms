@@ -77,7 +77,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	var path, shared = checksharepath(shr)
 	if !shared {
-		if err = CheckAuth(r); err != nil {
+		if err, _ = CheckAuth(r); err != nil {
 			WriteJson(w, http.StatusUnauthorized, err)
 			return
 		}
@@ -241,8 +241,8 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 	var isroot = len(argpath) == 0
 	var fpath, shared = checksharepath(argpath)
 
-	var admerr = CheckAuth(r)
-	if admerr != nil && !isroot && !shared {
+	var admerr, auth = CheckAuth(r)
+	if admerr != nil && (auth || (!isroot && !shared)) {
 		WriteJson(w, http.StatusUnauthorized, admerr)
 		return
 	}
@@ -328,6 +328,8 @@ func shraddApi(w http.ResponseWriter, r *http.Request) {
 	var prop = MakeProp(path, fi)
 	MakeShare(path, prop)
 
+	Log.Printf("add share: %s as %s", path, prop.Pref())
+
 	WriteJson(w, http.StatusOK, prop)
 }
 
@@ -339,8 +341,14 @@ func shrdelApi(w http.ResponseWriter, r *http.Request) {
 	var pref, path string
 	if pref = r.FormValue("pref"); len(pref) > 0 {
 		ok = DelSharePref(pref)
+		if ok {
+			Log.Printf("delete share: %s", pref)
+		}
 	} else if path = filepath.ToSlash(r.FormValue("path")); len(path) > 0 {
 		ok = DelSharePath(path)
+		if ok {
+			Log.Printf("delete share: %s", path)
+		}
 	} else {
 		WriteError400(w, ErrArgNoPref, EC_delshrnopath)
 		return

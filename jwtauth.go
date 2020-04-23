@@ -97,9 +97,10 @@ func IsLocalhost(host string) bool {
 	return ip.IsLoopback()
 }
 
-func CheckAuth(r *http.Request) (aerr *AjaxErr) {
+func CheckAuth(r *http.Request) (aerr *AjaxErr, auth bool) {
+	var pool []string
 	var claims *HMSClaims
-	if pool, ok := r.Header["Authorization"]; ok {
+	if pool, auth = r.Header["Authorization"]; auth {
 		var err error // stores last bearer error
 		for _, val := range pool {
 			if strings.HasPrefix(val, "Bearer ") {
@@ -132,7 +133,7 @@ func AuthWrap(fn http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		incuint(&ajaxcallcount, 1)
 
-		if err := CheckAuth(r); err != nil {
+		if err, _ := CheckAuth(r); err != nil {
 			WriteJson(w, http.StatusUnauthorized, err)
 			return
 		}
