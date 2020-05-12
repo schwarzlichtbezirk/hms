@@ -11,6 +11,7 @@ var log = hms.Log
 
 func main() {
 	log.Printf("version: %s, builton: %s", buildvers, builddate)
+	hms.MakeServerLabel("hms", buildvers)
 	log.Println("starts")
 	hms.Init()
 	var gmux = hms.NewRouter()

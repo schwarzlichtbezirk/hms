@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -170,7 +171,7 @@ func RegisterRoutes(gmux *Router) {
 
 func registershares() {
 	for pref, path := range sharespref {
-		var fi, err = FileStat(path)
+		var fi, err = os.Stat(path)
 		if err != nil {
 			Log.Printf("can not create share '%s' on path '%s'", pref, path)
 			delete(sharespref, pref)
@@ -241,8 +242,13 @@ func AjaxWrap(fn http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+var serverlabel string
+
+func MakeServerLabel(label, version string) {
+	serverlabel = fmt.Sprintf("%s/%s (%s)", label, version, runtime.GOOS)
+}
+
 const (
-	serverlabel = "hms-go"
 	keepconn    = "keep-alive"
 	xframe      = "sameorigin"
 	jsoncontent = "application/json;charset=utf-8"
@@ -280,11 +286,12 @@ var mimeext = map[string]string{
 	".ico":  "image/x-icon",
 	".cur":  "image/x-icon",
 	// Audio types
-	".aac": "audio/aac",
-	".mp3": "audio/mpeg",
-	".wav": "audio/wav",
-	".wma": "audio/x-ms-wma",
-	".ogg": "audio/ogg",
+	".aac":  "audio/aac",
+	".mp3":  "audio/mpeg",
+	".wav":  "audio/wav",
+	".wma":  "audio/x-ms-wma",
+	".ogg":  "audio/ogg",
+	".flac": "audio/x-flac",
 	// Video types, multimedia containers
 	".mpg":  "video/mpeg",
 	".mp4":  "video/mp4",

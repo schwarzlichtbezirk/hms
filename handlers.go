@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -319,7 +320,7 @@ func shraddApi(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var fi, err = FileStat(path)
+	var fi, err = os.Stat(path)
 	if err != nil {
 		WriteJson(w, http.StatusNotFound, &AjaxErr{err, EC_addshrbadpath})
 		return

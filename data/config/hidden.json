@@ -2,6 +2,7 @@
 	"?:/System Volume Information",
 	"*.sys",
 	"*.tmp",
+	"*.bak",
 	"*/.*",
 	"?:/Windows",
 	"?:/WindowsApps",

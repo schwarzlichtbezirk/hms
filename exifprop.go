@@ -16,6 +16,7 @@ type ExifProp struct {
 	Height int `json:"height,omitempty"`
 	// Photo
 	Model        string  `json:"model,omitempty"`
+	Make         string  `json:"make,omitempty"`
 	Software     string  `json:"software,omitempty"`
 	DateTime     int64   `json:"datetime,omitempty"`
 	Orientation  int     `json:"orientation,omitempty"`
@@ -60,6 +61,9 @@ func (ep *ExifProp) Setup(x *exif.Exif) {
 	}
 	if t, err = x.Get(exif.Model); err == nil {
 		ep.Model, _ = t.StringVal()
+	}
+	if t, err = x.Get(exif.Make); err == nil {
+		ep.Make, _ = t.StringVal()
 	}
 	if t, err = x.Get(exif.Software); err == nil {
 		ep.Software, _ = t.StringVal()

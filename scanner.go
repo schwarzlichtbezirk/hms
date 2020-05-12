@@ -373,17 +373,6 @@ func (tk *TagKit) Setup(fpath string, fi os.FileInfo) {
 	tk.TmbProp.Setup(fpath)
 }
 
-// Returns os.FileInfo for given full file name.
-func FileStat(fpath string) (fi os.FileInfo, err error) {
-	var file *os.File
-	if file, err = os.Open(fpath); err != nil {
-		return
-	}
-	defer file.Close()
-	fi, err = file.Stat()
-	return
-}
-
 // File properties factory.
 func MakeProp(fpath string, fi os.FileInfo) (prop FileProper) {
 	if cp, err := propcache.Get(fpath); err == nil {
@@ -585,7 +574,7 @@ func checksharepath(argpath string) (string, bool) {
 func scanroots() (drvs []*DirKit) {
 	for _, root := range roots {
 		var fpath = root + "/"
-		if _, err := FileStat(fpath); err == nil {
+		if _, err := os.Stat(fpath); err == nil {
 			var dk DirKit
 			dk.NameVal = root
 			dk.TypeVal = FT_drive

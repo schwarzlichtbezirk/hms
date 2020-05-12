@@ -68,8 +68,14 @@ const filehint = file => {
 		lst.push('comment: ' + file.comment.substring(0, 80));
 	}
 	// EXIF tags properties
+	if (file.width && file.height) {
+		lst.push(`dimension: ${file.width}x${file.height}`);
+	}
 	if (file.model) {
 		lst.push(`model: ${file.model}`);
+	}
+	if (file.make) {
+		lst.push(`manufacturer: ${file.make}`);
 	}
 	/*if (file.software) {
 		lst.push(`software: ${file.software}`);
@@ -140,7 +146,7 @@ const filehint = file => {
 		lst.push(`F-number: f/${file.fnumber}`);
 	}
 	if (file.isospeed) {
-		lst.push(`ISO speed: ISO-${file.isospeed}`);
+		lst.push(`ISO speed rating: ISO-${file.isospeed}`);
 	}
 	if (file.shutterspeed) {
 		lst.push(`shutter speed: ${file.shutterspeed}`);
