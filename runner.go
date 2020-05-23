@@ -264,11 +264,12 @@ func Init() {
 
 	var err error
 
-	// open settings
+	// read data files
 	opensettings()
 	loadroots()
 	loadhidden()
 	loadshared()
+	LoadPackage()
 	// make paths routes table
 	routedpaths = map[string]string{
 		"/devm/": devmpath,

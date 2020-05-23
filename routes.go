@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
+	"github.com/schwarzlichtbezirk/wpk"
 )
 
 type void = struct{}
@@ -144,6 +145,8 @@ func RegisterRoutes(gmux *Router) {
 	for prefix := range routedpaths {
 		gmux.PathPrefix(prefix).HandlerFunc(filecacheHandler)
 	}
+	gmux.Path("/pack").HandlerFunc(packageHandler)
+	gmux.PathPrefix("/data").Handler(http.StripPrefix("/data", http.FileServer(&datapack)))
 	gmux.PathPrefix("/file").HandlerFunc(AjaxWrap(fileHandler))
 
 	// API routes
@@ -234,6 +237,51 @@ func LogErrors(errs []error) {
 	}
 }
 
+type Package struct {
+	wpk.Package
+	body []byte
+}
+
+func (pack *Package) Open(fname string) (http.File, error) {
+	var key = strings.TrimPrefix(strings.ToLower(filepath.ToSlash(fname)), "/")
+	if key == "" {
+		return wpk.NewDir(key, &pack.Package), nil
+	}
+	var tags, is = pack.Tags[key]
+	if !is {
+		key += "/"
+		for k := range pack.Tags {
+			if strings.HasPrefix(k, key) {
+				return wpk.NewDir(key, &pack.Package), nil
+			}
+		}
+		return nil, ErrNotFound
+	}
+	var fid = tags.FID()
+	var rec = pack.FAT[fid]
+	return &wpk.File{
+		Reader: *bytes.NewReader(pack.body[uint64(rec.Offset) : uint64(rec.Offset)+uint64(rec.Size)]),
+		Tagset: tags,
+		Pack:   &pack.Package,
+	}, nil
+}
+
+var datapack Package
+
+func LoadPackage() {
+	var err error
+
+	if datapack.body, err = ioutil.ReadFile(destpath + "hms.wpk"); err != nil {
+		Log.Fatal("can not read wpk-package: " + err.Error())
+	}
+
+	if err = datapack.Load(bytes.NewReader(datapack.body)); err != nil {
+		Log.Fatal("can not open wpk-package: " + err.Error())
+	}
+
+	Log.Printf("cached %d files to %d aliases on sum %d bytes", len(datapack.FAT), len(datapack.Tags), datapack.DataSize())
+}
+
 // Handler wrapper for AJAX API calls without authorization.
 func AjaxWrap(fn http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -313,19 +361,19 @@ func WriteStdHeader(w http.ResponseWriter) {
 }
 
 func WriteHtmlHeader(w http.ResponseWriter) {
-	w.Header().Set("Content-Type", htmlcontent)
 	WriteStdHeader(w)
+	w.Header().Set("Content-Type", htmlcontent)
 }
 
 func WriteJsonHeader(w http.ResponseWriter) {
-	w.Header().Set("Content-Type", jsoncontent)
 	WriteStdHeader(w)
+	w.Header().Set("Content-Type", jsoncontent)
 }
 
 func WriteErrHeader(w http.ResponseWriter) {
+	WriteStdHeader(w)
 	w.Header().Set("Content-Type", jsoncontent)
 	w.Header().Set("X-Content-Type-Options", "nosniff")
-	WriteStdHeader(w)
 }
 
 func WriteJson(w http.ResponseWriter, status int, body interface{}) {

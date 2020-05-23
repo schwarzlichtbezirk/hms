@@ -1,7 +1,5 @@
 ﻿"use strict";
 
-//@ sourceMappingURL=mainpage.min.map
-
 // File types
 const FT = {
 	drive: -2,

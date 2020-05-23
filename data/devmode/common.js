@@ -1,7 +1,5 @@
 "use strict";
 
-//@ sourceMappingURL=main.min.map
-
 if (typeof $.fn.popover === 'undefined') {
 	throw new Error("Bootstrap library required");
 }

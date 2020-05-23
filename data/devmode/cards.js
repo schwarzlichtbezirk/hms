@@ -518,15 +518,15 @@ Vue.component('map-card-tag', {
 					.bindPopup(popup);
 			}
 
-			this.map.flyToBounds(this.markers.getBounds(), {
-				padding: [20, 20]
-			});
-
-			if (!this.gpslist.length) {
-				Vue.nextTick(() => {
+			const mustsize = !this.gpslist.length;
+			Vue.nextTick(() => {
+				if (mustsize) {
 					this.map.invalidateSize();
+				}
+				this.map.flyToBounds(this.markers.getBounds(), {
+					padding: [20, 20]
 				});
-			}
+			});
 			this.gpslist.push(...gpslist);
 		},
 
