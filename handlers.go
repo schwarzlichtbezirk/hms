@@ -62,11 +62,9 @@ func filecacheHandler(w http.ResponseWriter, r *http.Request) {
 		WriteJson(w, http.StatusNotFound, &AjaxErr{ErrNotFound, EC_fileabsent})
 		return
 	}
-	var fid, _ = tags.Uint32(wpk.TID_FID)
 	var mime, _ = tags.String(wpk.TID_mime)
 	var crt, _ = tags.Uint64(wpk.TID_created)
-	var rec = datapack.FAT[fid]
-	var content = datapack.body[rec.Offset : uint64(rec.Offset)+uint64(rec.Size)]
+	var content = datapack.Extract(tags)
 
 	WriteStdHeader(w)
 	w.Header().Set("Content-Type", mime)
@@ -162,7 +160,7 @@ func reloadApi(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if reloadtpl {
-		loadtemplates()
+		LoadTemplates()
 	}
 
 	WriteJson(w, http.StatusOK, ret)

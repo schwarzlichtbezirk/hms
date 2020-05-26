@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -242,8 +243,13 @@ type Package struct {
 	body []byte
 }
 
-func (pack *Package) Open(fname string) (http.File, error) {
-	var key = strings.TrimPrefix(strings.ToLower(filepath.ToSlash(fname)), "/")
+func (pack *Package) Extract(tags wpk.Tagset) []byte {
+	var offset, size = tags.Record()
+	return pack.body[uint64(offset) : uint64(offset)+uint64(size)]
+}
+
+func (pack *Package) Open(kpath string) (http.File, error) {
+	var key = strings.TrimPrefix(strings.ToLower(filepath.ToSlash(kpath)), "/")
 	if key == "" {
 		return wpk.NewDir(key, &pack.Package), nil
 	}
@@ -257,10 +263,9 @@ func (pack *Package) Open(fname string) (http.File, error) {
 		}
 		return nil, ErrNotFound
 	}
-	var fid = tags.FID()
-	var rec = pack.FAT[fid]
+
 	return &wpk.File{
-		Reader: *bytes.NewReader(pack.body[uint64(rec.Offset) : uint64(rec.Offset)+uint64(rec.Size)]),
+		Reader: *bytes.NewReader(pack.Extract(tags)),
 		Tagset: tags,
 		Pack:   &pack.Package,
 	}, nil
@@ -279,7 +284,59 @@ func LoadPackage() {
 		Log.Fatal("can not open wpk-package: " + err.Error())
 	}
 
-	Log.Printf("cached %d files to %d aliases on sum %d bytes", len(datapack.FAT), len(datapack.Tags), datapack.DataSize())
+	Log.Printf("cached %d files to %d aliases on %d bytes", datapack.RecNumber, datapack.TagNumber, datapack.TagOffset-wpk.PackHdrSize)
+}
+
+// hot templates reload, during server running
+func LoadTemplates() error {
+	var err error
+	var ts, tc *template.Template
+	var load = func(tb *template.Template, pattern string) error {
+		if err = datapack.Glob(pattern, func(key string) error {
+			var t = tb.New(key)
+			if _, err = t.Parse(string(datapack.Extract(datapack.Tags[key]))); err != nil {
+				return err
+			}
+			return nil
+		}); err != nil {
+			return err
+		}
+		return nil
+	}
+
+	ts = template.New("storage").Delims("[=[", "]=]")
+	if err = load(ts, "tmpl/*.html"); err != nil {
+		return err
+	}
+
+	if tc, err = ts.Clone(); err != nil {
+		return err
+	}
+	if err = load(tc, "devm/*.html"); err != nil {
+		return err
+	}
+	for _, fname := range routedpages {
+		var buf bytes.Buffer
+		if err = tc.ExecuteTemplate(&buf, "devm/"+fname, nil); err != nil {
+			return err
+		}
+		filecache["/devm/"+fname] = buf.Bytes()
+	}
+
+	if tc, err = ts.Clone(); err != nil {
+		return err
+	}
+	if err = load(tc, "devm/*.html"); err != nil {
+		return err
+	}
+	for _, fname := range routedpages {
+		var buf bytes.Buffer
+		if err = tc.ExecuteTemplate(&buf, "devm/"+fname, nil); err != nil {
+			return err
+		}
+		filecache["/relm/"+fname] = buf.Bytes()
+	}
+	return nil
 }
 
 // Handler wrapper for AJAX API calls without authorization.

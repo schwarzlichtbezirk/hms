@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"html/template"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -180,46 +179,6 @@ var dict = func(values ...interface{}) (map[string]interface{}, error) {
 	return dict, nil
 }
 
-// hot templates reload, during server running
-func loadtemplates() error {
-	var err error
-	var ts, tc *template.Template
-
-	ts = template.New("storage").Delims("[=[", "]=]")
-	if _, err = ts.ParseGlob(tmplpath + "*.html"); err != nil {
-		return err
-	}
-
-	if tc, err = ts.Clone(); err != nil {
-		return err
-	}
-	if _, err = tc.ParseGlob(devmpath + "*.html"); err != nil {
-		return err
-	}
-	for _, fname := range routedpages {
-		var buf bytes.Buffer
-		if err = tc.ExecuteTemplate(&buf, fname, nil); err != nil {
-			return err
-		}
-		filecache["/devm/"+fname] = buf.Bytes()
-	}
-
-	if tc, err = ts.Clone(); err != nil {
-		return err
-	}
-	if _, err = tc.ParseGlob(devmpath + "*.html"); err != nil {
-		return err
-	}
-	for _, fname := range routedpages {
-		var buf bytes.Buffer
-		if err = tc.ExecuteTemplate(&buf, fname, nil); err != nil {
-			return err
-		}
-		filecache["/relm/"+fname] = buf.Bytes()
-	}
-	return nil
-}
-
 //////////////////////
 // Start web server //
 //////////////////////
@@ -285,7 +244,7 @@ func Init() {
 	}
 
 	// insert components templates into pages
-	if err = loadtemplates(); err != nil {
+	if err = LoadTemplates(); err != nil {
 		Log.Fatal(err)
 	}
 

@@ -25,8 +25,10 @@ pkg.sha256 = true -- generate SHA256 hash for each file
 pkg:begin(envfmt"$(GOPATH)/bin/hms.wpk")
 
 -- write record log
-local function logfile(fname)
-	logfmt("packed %d file %s, crc=%s", pkg:gettag(fname, "fid").uint32, fname, tostring(pkg:gettag(fname, "crc32")))
+local function logfile(kpath)
+	logfmt("#%d %s, %d bytes, %s",
+		pkg:gettag(kpath, "fid").uint32, kpath,
+		pkg:filesize(kpath), pkg:gettag(kpath, "mime").string)
 end
 -- check file names can be included to package
 local function checkname(name)
@@ -41,28 +43,29 @@ end
 -- pack given directory and add to each file name given prefix
 local function packdir(dir, prefix)
 	for i, name in ipairs(path.enum(dir)) do
-		local fname = prefix..name
+		local kpath = prefix..name
 		local fpath = dir..name
 		local access, isdir = checkfile(fpath)
 		if access and checkname(name) then
 			if isdir then
-				packdir(fpath.."/", fname.."/")
+				packdir(fpath.."/", kpath.."/")
 			else
-				local tags = {name=fname}
+				pkg:putfile(kpath, fpath)
 				if prefix == "devmode/" then
-					tags.author = "schwarzlichtbezirk"
+					pkg:settag(kpath, "author", "schwarzlichtbezirk")
 				end
-				pkg:putfile(tags, fpath)
-				if logrec then logfile(fname) end
+				if logrec then logfile(kpath) end
 				-- make aliases
-				if string.sub(fname, 1, 8) == "devmode/" then
-					pkg:putalias(fname, "devm"..string.sub(fname, 8))
-				elseif string.sub(fname, 1, 6) == "build/" then
-					pkg:putalias(fname, "relm"..string.sub(fname, 6))
-				elseif string.sub(fname, 1, 7) == "plugin/" then
-					pkg:putalias(fname, "plug"..string.sub(fname, 7))
-				elseif string.sub(fname, 1, 7) == "assets/" then
-					pkg:putalias(fname, "asst"..string.sub(fname, 7))
+				if string.sub(kpath, 1, 8) == "devmode/" then
+					pkg:putalias(kpath, "devm"..string.sub(kpath, 8))
+				elseif string.sub(kpath, 1, 6) == "build/" then
+					pkg:putalias(kpath, "relm"..string.sub(kpath, 6))
+				elseif string.sub(kpath, 1, 7) == "plugin/" then
+					pkg:putalias(kpath, "plug"..string.sub(kpath, 7))
+				elseif string.sub(kpath, 1, 7) == "assets/" then
+					pkg:putalias(kpath, "asst"..string.sub(kpath, 7))
+				elseif string.sub(kpath, 1, 9) == "template/" then
+					pkg:putalias(kpath, "tmpl"..string.sub(kpath, 9))
 				end
 			end
 		end
@@ -74,15 +77,16 @@ if logdir then logfmt("writes %s package", pkg.path) end
 
 packdir(scrdir, "")
 for i, fpath in ipairs{path.glob(scrdir.."../?*.?*")} do
-	local fname = "src/"..string.match(fpath, "/([%w_]+%.%w+)$")
-	pkg:putfile({name=fname, author="schwarzlichtbezirk"}, fpath)
-	if logrec then logfile(fname) end
+	local kpath = "src/"..string.match(fpath, "/([%w_]+%.%w+)$")
+	pkg:putfile(kpath, fpath)
+	pkg:settag(kpath, "author", "schwarzlichtbezirk")
+	if logrec then logfile(kpath) end
 end
 
 if logdir then
-	logfmt("packaged %d files to %d aliases on sum %d bytes", pkg.recnum, pkg.tagnum, pkg.datasize)
+	logfmt("packaged %d files to %d aliases on %d bytes", pkg.recnum, pkg.tagnum, pkg.datasize)
 else
-	logfmt("%s package: %d files, %d aliases, sum %d bytes", pkg.path, pkg.recnum, pkg.tagnum, pkg.datasize)
+	logfmt("%s package: %d files, %d aliases, %d bytes", pkg.path, pkg.recnum, pkg.tagnum, pkg.datasize)
 end
 
 -- write records table, tags table and finalize wpk-file
