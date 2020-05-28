@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -76,7 +75,7 @@ const (
 	EC_refrshnodata = 22
 	EC_refrshparse  = 23
 
-	// page/filecache
+	// page
 	EC_pageabsent = 30
 	EC_fileabsent = 31
 
@@ -122,20 +121,36 @@ const (
 // Routes table //
 //////////////////
 
+// HTTP distribution cache
+var pagecache = map[string][]byte{}
+
+var pagealias = map[string]string{
+	"main": "main.html",
+	"stat": "stat.html",
+}
+
+// routes aliases
+var routealias = map[string]string{
+	"/devm/": devmsuff,
+	"/relm/": devmsuff, /*relmpath*/ // TODO: put release mode when it will be ready
+	"/plug/": plugsuff,
+	"/asst/": asstsuff,
+}
+
 // Puts application routes to given router.
 func RegisterRoutes(gmux *Router) {
 
 	// UI routes
 
 	var devm = gmux.PathPrefix("/dev").Subrouter()
-	devm.Path("/").HandlerFunc(pageHandler("/devm/", "main"))
-	gmux.Path("/").HandlerFunc(pageHandler("/relm/", "main"))
-	for name := range routedpages {
-		devm.Path("/" + name).HandlerFunc(pageHandler("/devm/", name)) // development mode
-		gmux.Path("/" + name).HandlerFunc(pageHandler("/relm/", name)) // release mode
+	devm.Path("/").HandlerFunc(pageHandler(devmsuff, "main"))
+	gmux.Path("/").HandlerFunc(pageHandler(relmsuff, "main"))
+	for name := range pagealias {
+		devm.Path("/" + name).HandlerFunc(pageHandler(devmsuff, name)) // development mode
+		gmux.Path("/" + name).HandlerFunc(pageHandler(relmsuff, name)) // release mode
 	}
-	devm.PathPrefix("/path/").HandlerFunc(pageHandler("/devm/", "main"))
-	gmux.PathPrefix("/path/").HandlerFunc(pageHandler("/relm/", "main"))
+	devm.PathPrefix("/path/").HandlerFunc(pageHandler(devmsuff, "main"))
+	gmux.PathPrefix("/path/").HandlerFunc(pageHandler(relmsuff, "main"))
 
 	// cached thumbs
 
@@ -143,12 +158,12 @@ func RegisterRoutes(gmux *Router) {
 
 	// files sharing
 
-	for prefix := range routedpaths {
-		gmux.PathPrefix(prefix).HandlerFunc(filecacheHandler)
+	gmux.PathPrefix("/data/").Handler(http.StripPrefix("/data/", http.FileServer(&datapack)))
+	for alias, prefix := range routealias {
+		gmux.PathPrefix(alias).Handler(http.StripPrefix(alias, http.FileServer(datapack.Dir(prefix))))
 	}
 	gmux.Path("/pack").HandlerFunc(packageHandler)
-	gmux.PathPrefix("/data").Handler(http.StripPrefix("/data", http.FileServer(&datapack)))
-	gmux.PathPrefix("/file").HandlerFunc(AjaxWrap(fileHandler))
+	gmux.PathPrefix("/file/").HandlerFunc(AjaxWrap(fileHandler))
 
 	// API routes
 
@@ -194,53 +209,18 @@ func registershares() {
 // Routes API //
 ////////////////
 
-// HTTP distribution cache
-var filecache = map[string][]byte{}
-
-func LoadFiles(path, prefix string) (count, size uint64, errs []error) {
-	var err error
-
-	var files []os.FileInfo
-	if files, err = ioutil.ReadDir(path); err != nil {
-		errs = append(errs, fmt.Errorf("failed path scanning \"%s\" for %s prefix: %s", path, prefix, err.Error()))
-		return
-	}
-	for _, file := range files {
-		if file.IsDir() {
-			var count1, size1 uint64
-			var errs1 []error
-			count1, size1, errs1 = LoadFiles(path+file.Name()+"/", prefix+file.Name()+"/")
-			count += count1
-			size += size1
-			errs = append(errs, errs1...)
-		} else {
-			var content []byte
-			content, err = ioutil.ReadFile(path + file.Name())
-			if err != nil {
-				errs = append(errs, fmt.Errorf("failed read file \"%s\" for %s prefix: %s", path+file.Name(), prefix, err.Error()))
-			} else {
-				var ext = strings.ToLower(filepath.Ext(file.Name()))
-				if ext == ".htm" || ext == ".html" {
-					content = bytes.TrimPrefix(content, []byte("\xef\xbb\xbf")) // remove UTF-8 format BOM header
-				}
-				filecache[prefix+file.Name()] = content
-				count++
-				size += uint64(len(content))
-			}
-		}
-	}
-	return
-}
-
-func LogErrors(errs []error) {
-	for _, err := range errs {
-		Log.Logln("error", err.Error())
-	}
-}
-
 type Package struct {
-	wpk.Package
+	*wpk.Package
 	body []byte
+	pref string
+}
+
+func (pack *Package) Dir(pref string) *Package {
+	return &Package{
+		pack.Package,
+		pack.body,
+		pack.pref + wpk.ToKey(pref),
+	}
 }
 
 func (pack *Package) Extract(tags wpk.Tagset) []byte {
@@ -249,16 +229,16 @@ func (pack *Package) Extract(tags wpk.Tagset) []byte {
 }
 
 func (pack *Package) Open(kpath string) (http.File, error) {
-	var key = strings.TrimPrefix(strings.ToLower(filepath.ToSlash(kpath)), "/")
+	var key = pack.pref + strings.TrimPrefix(wpk.ToKey(kpath), "/")
 	if key == "" {
-		return wpk.NewDir(key, &pack.Package), nil
+		return wpk.NewDir(key, pack.Package), nil
 	}
 	var tags, is = pack.Tags[key]
 	if !is {
 		key += "/"
 		for k := range pack.Tags {
 			if strings.HasPrefix(k, key) {
-				return wpk.NewDir(key, &pack.Package), nil
+				return wpk.NewDir(key, pack.Package), nil
 			}
 		}
 		return nil, ErrNotFound
@@ -267,11 +247,13 @@ func (pack *Package) Open(kpath string) (http.File, error) {
 	return &wpk.File{
 		Reader: *bytes.NewReader(pack.Extract(tags)),
 		Tagset: tags,
-		Pack:   &pack.Package,
+		Pack:   pack.Package,
 	}, nil
 }
 
-var datapack Package
+var datapack = Package{
+	Package: &wpk.Package{},
+}
 
 func LoadPackage() {
 	var err error
@@ -294,7 +276,9 @@ func LoadTemplates() error {
 	var load = func(tb *template.Template, pattern string) error {
 		if err = datapack.Glob(pattern, func(key string) error {
 			var t = tb.New(key)
-			if _, err = t.Parse(string(datapack.Extract(datapack.Tags[key]))); err != nil {
+			var content = string(datapack.Extract(datapack.Tags[key]))
+			content = strings.TrimPrefix(content, "\xef\xbb\xbf") // remove UTF-8 format BOM header
+			if _, err = t.Parse(content); err != nil {
 				return err
 			}
 			return nil
@@ -312,29 +296,29 @@ func LoadTemplates() error {
 	if tc, err = ts.Clone(); err != nil {
 		return err
 	}
-	if err = load(tc, "devm/*.html"); err != nil {
+	if err = load(tc, devmsuff+"*.html"); err != nil {
 		return err
 	}
-	for _, fname := range routedpages {
+	for _, fname := range pagealias {
 		var buf bytes.Buffer
-		if err = tc.ExecuteTemplate(&buf, "devm/"+fname, nil); err != nil {
+		if err = tc.ExecuteTemplate(&buf, devmsuff+fname, nil); err != nil {
 			return err
 		}
-		filecache["/devm/"+fname] = buf.Bytes()
+		pagecache[devmsuff+fname] = buf.Bytes()
 	}
 
 	if tc, err = ts.Clone(); err != nil {
 		return err
 	}
-	if err = load(tc, "devm/*.html"); err != nil {
+	if err = load(tc, devmsuff+"*.html"); err != nil {
 		return err
 	}
-	for _, fname := range routedpages {
+	for _, fname := range pagealias {
 		var buf bytes.Buffer
-		if err = tc.ExecuteTemplate(&buf, "devm/"+fname, nil); err != nil {
+		if err = tc.ExecuteTemplate(&buf, devmsuff+fname, nil); err != nil {
 			return err
 		}
-		filecache["/relm/"+fname] = buf.Bytes()
+		pagecache[relmsuff+fname] = buf.Bytes()
 	}
 	return nil
 }
@@ -353,68 +337,10 @@ func MakeServerLabel(label, version string) {
 	serverlabel = fmt.Sprintf("%s/%s (%s)", label, version, runtime.GOOS)
 }
 
-const (
-	keepconn    = "keep-alive"
-	xframe      = "sameorigin"
-	jsoncontent = "application/json;charset=utf-8"
-	htmlcontent = "text/html;charset=utf-8"
-	csscontent  = "text/css;charset=utf-8"
-	jscontent   = "text/javascript;charset=utf-8"
-)
-
-var mimeext = map[string]string{
-	// Common text content
-	".json": jsoncontent,
-	".html": htmlcontent,
-	".htm":  htmlcontent,
-	".css":  csscontent,
-	".js":   jscontent,
-	".mjs":  jscontent,
-	".map":  jsoncontent,
-	".txt":  "text/plain;charset=utf-8",
-	".pdf":  "application/pdf",
-	// Image types
-	".tga":  "image/x-tga",
-	".bmp":  "image/bmp",
-	".dib":  "image/bmp",
-	".gif":  "image/gif",
-	".png":  "image/png",
-	".apng": "image/apng",
-	".jpg":  "image/jpeg",
-	".jpe":  "image/jpeg",
-	".jpeg": "image/jpeg",
-	".jfif": "image/jpeg",
-	".tif":  "image/tiff",
-	".tiff": "image/tiff",
-	".webp": "image/webp",
-	".svg":  "image/svg+xml",
-	".ico":  "image/x-icon",
-	".cur":  "image/x-icon",
-	// Audio types
-	".aac":  "audio/aac",
-	".mp3":  "audio/mpeg",
-	".wav":  "audio/wav",
-	".wma":  "audio/x-ms-wma",
-	".ogg":  "audio/ogg",
-	".flac": "audio/x-flac",
-	// Video types, multimedia containers
-	".mpg":  "video/mpeg",
-	".mp4":  "video/mp4",
-	".webm": "video/webm",
-	".wmv":  "video/x-ms-wmv",
-	".flv":  "video/x-flv",
-	".3gp":  "video/3gpp",
-	// Fonts types
-	".ttf":   "font/ttf",
-	".otf":   "font/otf",
-	".woff":  "font/woff",
-	".woff2": "font/woff2",
-}
-
 func WriteStdHeader(w http.ResponseWriter) {
-	w.Header().Set("Connection", keepconn)
+	w.Header().Set("Connection", "keep-alive")
 	w.Header().Set("Server", serverlabel)
-	w.Header().Set("X-Frame-Options", xframe)
+	w.Header().Set("X-Frame-Options", "sameorigin")
 }
 
 func WriteHtmlHeader(w http.ResponseWriter) {

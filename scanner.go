@@ -616,7 +616,7 @@ func readdir(dirname string) (ret folderRet, err error) {
 scanprop:
 	for _, fi := range fis {
 		var fpath = dirname + fi.Name()
-		var cmppath = filepath.ToSlash(strings.ToLower(fpath))
+		var cmppath = strings.ToLower(filepath.ToSlash(fpath))
 		for _, pat := range hidden {
 			var matched bool
 			if matched, _ = filepath.Match(pat, cmppath); matched {

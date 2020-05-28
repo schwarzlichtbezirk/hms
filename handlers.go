@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -14,8 +13,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
-	"github.com/schwarzlichtbezirk/wpk"
 )
 
 // HTTP error messages
@@ -36,13 +33,14 @@ var (
 // APIHANDLER
 func pageHandler(pref, name string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if content, ok := filecache[pref+routedpages[name]]; ok {
+		var alias = pagealias[name]
+		if content, ok := pagecache[pref+alias]; ok {
 			pccmux.Lock()
 			pagecallcount[name]++
 			pccmux.Unlock()
 
 			WriteHtmlHeader(w)
-			http.ServeContent(w, r, routedpages[name], starttime, bytes.NewReader(content))
+			http.ServeContent(w, r, alias, starttime, bytes.NewReader(content))
 		} else {
 			WriteJson(w, http.StatusNotFound, &AjaxErr{ErrNotFound, EC_pageabsent})
 		}
@@ -52,26 +50,6 @@ func pageHandler(pref, name string) http.HandlerFunc {
 // APIHANDLER
 func packageHandler(w http.ResponseWriter, r *http.Request) {
 	http.ServeContent(w, r, "hms.wpk", starttime, bytes.NewReader(datapack.body))
-}
-
-// APIHANDLER
-func filecacheHandler(w http.ResponseWriter, r *http.Request) {
-	var key = strings.TrimPrefix(strings.ToLower(filepath.ToSlash(r.URL.Path)), "/")
-	var tags, is = datapack.Tags[key]
-	if !is {
-		WriteJson(w, http.StatusNotFound, &AjaxErr{ErrNotFound, EC_fileabsent})
-		return
-	}
-	var mime, _ = tags.String(wpk.TID_mime)
-	var crt, _ = tags.Uint64(wpk.TID_created)
-	var content = datapack.Extract(tags)
-
-	WriteStdHeader(w)
-	w.Header().Set("Content-Type", mime)
-	if strings.HasPrefix(key, "plug") {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-	}
-	http.ServeContent(w, r, key, time.Unix(int64(crt), 0), bytes.NewReader(content))
 }
 
 // APIHANDLER
@@ -139,7 +117,7 @@ func reloadApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var reloadtpl = false
-	for _, prefix := range arg {
+	/*for _, prefix := range arg {
 		var path, ok = routedpaths[prefix]
 		if !ok {
 			prefix = "/" + prefix + "/"
@@ -158,7 +136,7 @@ func reloadApi(w http.ResponseWriter, r *http.Request) {
 		if prefix == "/devm/" || prefix == "/relm/" {
 			reloadtpl = true
 		}
-	}
+	}*/
 	if reloadtpl {
 		LoadTemplates()
 	}

@@ -19,12 +19,12 @@ import (
 
 const (
 	rootsuff = "hms/"
-	asstsuff = "assets/"   // relative path to assets folder
-	devmsuff = "devmode/"  // relative path to folder with development mode code files
-	relmsuff = "build/"    // relative path to folder with compiled code files
-	plugsuff = "plugin/"   // relative path to third party code
-	confsuff = "config/"   // relative path to configuration files folder
-	tmplsuff = "template/" // relative path to html templates folder
+	asstsuff = "assets/"  // relative path to assets folder
+	devmsuff = "devmode/" // relative path to folder with development mode code files
+	relmsuff = "build/"   // relative path to folder with compiled code files
+	plugsuff = "plugin/"  // relative path to third party code
+	confsuff = "config/"  // relative path to configuration files folder
+	tmplsuff = "tmpl/"    // relative path to html templates folder
 	dsrcsuff = "/src/github.com/schwarzlichtbezirk/hms/data/"
 )
 
@@ -32,15 +32,7 @@ var (
 	destpath string // contains program destination path
 	rootpath string
 	confpath string
-	tmplpath string
-	devmpath string
 )
-
-var routedpages = map[string]string{
-	"main": "main.html",
-	"stat": "stat.html",
-}
-var routedpaths = map[string]string{}
 
 // web server settings
 var (
@@ -129,7 +121,7 @@ func loadhidden() {
 
 	// bring all to lowercase
 	for i, path := range hidden {
-		hidden[i] = filepath.ToSlash(strings.ToLower(path))
+		hidden[i] = strings.ToLower(filepath.ToSlash(path))
 	}
 }
 
@@ -215,11 +207,6 @@ func Init() {
 	}
 	rootpath = checkpath("")
 	confpath = checkpath(confsuff)
-	tmplpath = checkpath(tmplsuff)
-	devmpath = checkpath(devmsuff)
-	//var relmpath = checkpath(relmsuff)
-	var plugpath = checkpath(plugsuff)
-	var asstpath = checkpath(asstsuff)
 
 	var err error
 
@@ -229,19 +216,6 @@ func Init() {
 	loadhidden()
 	loadshared()
 	LoadPackage()
-	// make paths routes table
-	routedpaths = map[string]string{
-		"/devm/": devmpath,
-		"/relm/": devmpath, /*relmpath*/ // TODO: put release mode when it will be ready
-		"/plug/": plugpath,
-		"/asst/": asstpath,
-	}
-	// cache routed files
-	for prefix, path := range routedpaths {
-		var count, size, errs = LoadFiles(path, prefix)
-		LogErrors(errs)
-		Log.Printf("cached %d files on %d bytes for %s route", count, size, prefix)
-	}
 
 	// insert components templates into pages
 	if err = LoadTemplates(); err != nil {

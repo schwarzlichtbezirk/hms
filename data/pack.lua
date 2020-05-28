@@ -30,14 +30,36 @@ local function logfile(kpath)
 		pkg:gettag(kpath, "fid").uint32, kpath,
 		pkg:filesize(kpath), pkg:gettag(kpath, "mime").string)
 end
+-- patterns for ignored files
+local skippattern = {
+	"^pack%.lua$", -- script that generate this package
+	"^thumb%.db$",
+	"^rca%w+$",
+	"^%$recycle%.bin$",
+}
+-- extensions of files that should not be included to package
+local skipext = {
+	wpk = true,
+	sys = true,
+	tmp = true,
+	bak = true,
+	-- compiler intermediate output
+	log = true, tlog = true, lastbuildstate = true, unsuccessfulbuild = true,
+	obj = true, lib = true, res = true,
+	ilk = true, idb = true, ipdb = true, iobj = true, pdb = true, pgc = true, pgd = true,
+	pch = true, ipch = true,
+	cache = true,
+}
 -- check file names can be included to package
 local function checkname(name)
 	local fc = string.sub(name, 1, 1) -- first char
 	if fc == "." or fc == "~" then return false end
 	name = string.lower(name)
-	if name == "thumb.db" then return false end
-	local ext = string.sub(name, -4, -1) -- file extension
-	if ext == ".sys" or ext == ".tmp" or ext == ".bak" or ext == ".wpk" then return false end
+	for i, pattern in ipairs(skippattern) do
+		if string.match(name, pattern) then return false end
+	end
+	local ext = string.match(name, "%.(%w+)$") -- file extension
+	if ext and skipext[ext] then return false end
 	return true
 end
 -- pack given directory and add to each file name given prefix
@@ -55,18 +77,6 @@ local function packdir(dir, prefix)
 					pkg:settag(kpath, "author", "schwarzlichtbezirk")
 				end
 				if logrec then logfile(kpath) end
-				-- make aliases
-				if string.sub(kpath, 1, 8) == "devmode/" then
-					pkg:putalias(kpath, "devm"..string.sub(kpath, 8))
-				elseif string.sub(kpath, 1, 6) == "build/" then
-					pkg:putalias(kpath, "relm"..string.sub(kpath, 6))
-				elseif string.sub(kpath, 1, 7) == "plugin/" then
-					pkg:putalias(kpath, "plug"..string.sub(kpath, 7))
-				elseif string.sub(kpath, 1, 7) == "assets/" then
-					pkg:putalias(kpath, "asst"..string.sub(kpath, 7))
-				elseif string.sub(kpath, 1, 9) == "template/" then
-					pkg:putalias(kpath, "tmpl"..string.sub(kpath, 9))
-				end
 			end
 		end
 	end
