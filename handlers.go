@@ -90,58 +90,16 @@ func pingApi(w http.ResponseWriter, r *http.Request) {
 
 // APIHANDLER
 func reloadApi(w http.ResponseWriter, r *http.Request) {
-	type cached struct {
-		Prefix string  `json:"prefix"`
-		Count  uint64  `json:"count"`
-		Size   uint64  `json:"size"`
-		Errors []error `json:"errors"`
+	if err := LoadPackage(); err != nil {
+		WriteError500(w, err, EC_reloadload)
+		return
 	}
-
-	var err error
-	var arg []string
-	var ret []cached
-
-	// get arguments
-	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
-		if err = json.Unmarshal(jb, &arg); err != nil {
-			WriteError400(w, err, EC_reloadbadreq)
-			return
-		}
-		if len(arg) == 0 {
-			WriteError400(w, ErrNoData, EC_reloadnodata)
-			return
-		}
-	} else {
-		WriteError500(w, ErrNoJson, EC_reloadnoreq)
+	if err := LoadTemplates(); err != nil {
+		WriteError500(w, err, EC_reloadtmpl)
 		return
 	}
 
-	var reloadtpl = false
-	/*for _, prefix := range arg {
-		var path, ok = routedpaths[prefix]
-		if !ok {
-			prefix = "/" + prefix + "/"
-			path, ok = routedpaths[prefix]
-			if !ok {
-				WriteError400(w, fmt.Errorf("given routes prefix \"%s\" does not assigned to any file path", prefix), EC_reloadbadprf)
-				return
-			}
-		}
-		var res cached
-		res.Prefix = prefix
-		res.Count, res.Size, res.Errors = LoadFiles(path, prefix)
-		ret = append(ret, res)
-		LogErrors(res.Errors)
-		Log.Printf("reloaded cache of %d files on %d bytes for %s route", res.Count, res.Size, prefix)
-		if prefix == "/devm/" || prefix == "/relm/" {
-			reloadtpl = true
-		}
-	}*/
-	if reloadtpl {
-		LoadTemplates()
-	}
-
-	WriteJson(w, http.StatusOK, ret)
+	WriteJson(w, http.StatusOK, &datapack.PackHdr)
 }
 
 // APIHANDLER
@@ -153,7 +111,7 @@ func srvinfApi(w http.ResponseWriter, r *http.Request) {
 		"numcpu":   runtime.NumCPU(),
 		"maxprocs": runtime.GOMAXPROCS(0),
 		"destpath": destpath,
-		"rootpath": rootpath,
+		"confpath": confpath,
 	}
 
 	WriteJson(w, http.StatusOK, ret)
@@ -223,10 +181,10 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 	var ret folderRet
 
 	// get arguments
-	var argpath = filepath.ToSlash(r.FormValue("path"))
+	var spath = filepath.ToSlash(r.FormValue("path"))
 
-	var isroot = len(argpath) == 0
-	var fpath, shared = checksharepath(argpath)
+	var isroot = len(spath) == 0
+	var fpath, shared = checksharepath(spath)
 
 	var admerr, auth = CheckAuth(r)
 	if admerr != nil && (auth || (!isroot && !shared)) {
@@ -292,30 +250,31 @@ func shrlstApi(w http.ResponseWriter, r *http.Request) {
 // APIHANDLER
 func shraddApi(w http.ResponseWriter, r *http.Request) {
 	// get arguments
-	var path string
-	if path = filepath.ToSlash(r.FormValue("path")); len(path) == 0 {
+	var spath string
+	if spath = filepath.ToSlash(r.FormValue("path")); len(spath) == 0 {
 		WriteError400(w, ErrArgNoPath, EC_addshrnopath)
 		return
 	}
 
 	shrmux.RLock()
-	var _, has = sharespath[path]
+	var _, has = sharespath[spath]
 	shrmux.RUnlock()
 	if has { // share already added
 		WriteJson(w, http.StatusOK, []byte("null"))
 		return
 	}
 
-	var fi, err = os.Stat(path)
+	var fpath = getsharepath(spath)
+	var fi, err = os.Stat(fpath)
 	if err != nil {
 		WriteJson(w, http.StatusNotFound, &AjaxErr{err, EC_addshrbadpath})
 		return
 	}
 
-	var prop = MakeProp(path, fi)
-	MakeShare(path, prop)
+	var prop = MakeProp(fpath, fi)
+	MakeShare(fpath, prop)
 
-	Log.Printf("add share: %s as %s", path, prop.Pref())
+	Log.Printf("add share: %s as %s", fpath, prop.Pref())
 
 	WriteJson(w, http.StatusOK, prop)
 }

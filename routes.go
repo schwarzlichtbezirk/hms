@@ -83,13 +83,11 @@ const (
 	EC_filebadurl = 32
 
 	// reload
-	EC_reloadnoreq  = 34
-	EC_reloadbadreq = 35
-	EC_reloadnodata = 36
-	EC_reloadbadprf = 37
+	EC_reloadload = 33
+	EC_reloadtmpl = 34
 
 	// getlog
-	EC_getlogbadnum = 38
+	EC_getlogbadnum = 35
 
 	// folder
 	EC_folderdeny = 40
@@ -255,26 +253,24 @@ var datapack = Package{
 	Package: &wpk.Package{},
 }
 
-func LoadPackage() {
-	var err error
-
+func LoadPackage() (err error) {
 	if datapack.body, err = ioutil.ReadFile(destpath + "hms.wpk"); err != nil {
-		Log.Fatal("can not read wpk-package: " + err.Error())
+		return
 	}
 
 	if err = datapack.Load(bytes.NewReader(datapack.body)); err != nil {
-		Log.Fatal("can not open wpk-package: " + err.Error())
+		return
 	}
 
 	Log.Printf("cached %d files to %d aliases on %d bytes", datapack.RecNumber, datapack.TagNumber, datapack.TagOffset-wpk.PackHdrSize)
+	return
 }
 
 // hot templates reload, during server running
-func LoadTemplates() error {
-	var err error
+func LoadTemplates() (err error) {
 	var ts, tc *template.Template
-	var load = func(tb *template.Template, pattern string) error {
-		if err = datapack.Glob(pattern, func(key string) error {
+	var load = func(tb *template.Template, pattern string) {
+		err = datapack.Glob(pattern, func(key string) error {
 			var t = tb.New(key)
 			var content = string(datapack.Extract(datapack.Tags[key]))
 			content = strings.TrimPrefix(content, "\xef\xbb\xbf") // remove UTF-8 format BOM header
@@ -282,45 +278,42 @@ func LoadTemplates() error {
 				return err
 			}
 			return nil
-		}); err != nil {
-			return err
-		}
-		return nil
+		})
 	}
 
 	ts = template.New("storage").Delims("[=[", "]=]")
-	if err = load(ts, "tmpl/*.html"); err != nil {
-		return err
+	if load(ts, tmplsuff+"*.html"); err != nil {
+		return
 	}
 
 	if tc, err = ts.Clone(); err != nil {
-		return err
+		return
 	}
-	if err = load(tc, devmsuff+"*.html"); err != nil {
-		return err
+	if load(tc, devmsuff+"*.html"); err != nil {
+		return
 	}
 	for _, fname := range pagealias {
 		var buf bytes.Buffer
 		if err = tc.ExecuteTemplate(&buf, devmsuff+fname, nil); err != nil {
-			return err
+			return
 		}
 		pagecache[devmsuff+fname] = buf.Bytes()
 	}
 
 	if tc, err = ts.Clone(); err != nil {
-		return err
+		return
 	}
-	if err = load(tc, devmsuff+"*.html"); err != nil {
-		return err
+	if load(tc, devmsuff+"*.html"); err != nil {
+		return
 	}
 	for _, fname := range pagealias {
 		var buf bytes.Buffer
 		if err = tc.ExecuteTemplate(&buf, devmsuff+fname, nil); err != nil {
-			return err
+			return
 		}
 		pagecache[relmsuff+fname] = buf.Bytes()
 	}
-	return nil
+	return
 }
 
 // Handler wrapper for AJAX API calls without authorization.

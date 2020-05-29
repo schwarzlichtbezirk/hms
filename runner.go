@@ -23,14 +23,13 @@ const (
 	devmsuff = "devmode/" // relative path to folder with development mode code files
 	relmsuff = "build/"   // relative path to folder with compiled code files
 	plugsuff = "plugin/"  // relative path to third party code
-	confsuff = "config/"  // relative path to configuration files folder
+	confsuff = "conf/"    // relative path to configuration files folder
 	tmplsuff = "tmpl/"    // relative path to html templates folder
-	dsrcsuff = "/src/github.com/schwarzlichtbezirk/hms/data/"
+	csrcsuff = "src/github.com/schwarzlichtbezirk/hms/"
 )
 
 var (
 	destpath string // contains program destination path
-	rootpath string
 	confpath string
 )
 
@@ -188,35 +187,35 @@ func pathexists(path string) (bool, error) {
 
 // Performs global data initialisation. Loads configuration files, initializes file cache.
 func Init() {
-	// inits program paths
-	destpath = filepath.ToSlash(filepath.Dir(os.Args[0]) + "/")
-	var gopath = os.Getenv("GOPATH")
-	var checkpath = func(suff string) (path string) {
-		path = destpath + rootsuff + suff
-		if ok, _ := pathexists(path); !ok {
-			path = gopath + dsrcsuff + suff
-			if ok, _ := pathexists(path); !ok {
-				if suff != "" {
-					Log.Fatalf("data folder \"%s\" does not found", suff)
-				} else {
-					Log.Fatal("root data folder does not found")
-				}
-			}
-		}
-		return
-	}
-	rootpath = checkpath("")
-	confpath = checkpath(confsuff)
-
 	var err error
+	var path string
+	var gopath = filepath.ToSlash(os.Getenv("GOPATH"))
+	if !strings.HasSuffix(gopath, "/") {
+		gopath += "/"
+	}
 
-	// read data files
+	// fetch program path
+	destpath = filepath.ToSlash(filepath.Dir(os.Args[0]) + "/")
+
+	// fetch configuration path
+	path = destpath + rootsuff
+	if ok, _ := pathexists(path); !ok {
+		path = gopath + csrcsuff + confsuff
+		if ok, _ := pathexists(path); !ok {
+			Log.Fatalf("config folder does not found")
+		}
+	}
+	confpath = path
+
+	// load settings files
 	opensettings()
 	loadroots()
 	loadhidden()
 	loadshared()
-	LoadPackage()
-
+	// load package with data files
+	if err = LoadPackage(); err != nil {
+		Log.Fatal("can not load wpk-package: " + err.Error())
+	}
 	// insert components templates into pages
 	if err = LoadTemplates(); err != nil {
 		Log.Fatal(err)
@@ -271,7 +270,7 @@ func Run(gmux *Router) {
 		}
 		tlssrv[i] = srv
 		go func() {
-			if err := srv.ListenAndServeTLS(rootpath+"serv.crt", rootpath+"prvk.pem"); err != http.ErrServerClosed {
+			if err := srv.ListenAndServeTLS(confpath+"serv.crt", confpath+"prvk.pem"); err != http.ErrServerClosed {
 				tlssrv[i] = nil
 				Log.Println(err)
 				return

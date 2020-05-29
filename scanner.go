@@ -533,41 +533,41 @@ func splitprefsuff(share string) (string, string) {
 	return share, ""
 }
 
-func getsharepath(argpath string) string {
-	var pref, suff = splitprefsuff(argpath)
+func getsharepath(spath string) string {
+	var pref, suff = splitprefsuff(spath)
 	if pref == "" {
-		return argpath
+		return spath
 	}
 	shrmux.RLock()
 	var path, ok = sharespref[pref]
 	shrmux.RUnlock()
 	if !ok {
-		return argpath
+		return spath
 	}
 	return path + suff
 }
 
-func checksharepath(argpath string) (string, bool) {
-	var pref, suff = splitprefsuff(argpath)
+func checksharepath(spath string) (string, bool) {
+	var pref, suff = splitprefsuff(spath)
 	if pref == "" {
 		var shared bool
 		shrmux.RLock()
-		for _, path := range sharespref {
-			if strings.HasPrefix(argpath, path) {
+		for _, fpath := range sharespref {
+			if strings.HasPrefix(spath, fpath) {
 				shared = true
 				break
 			}
 		}
 		shrmux.RUnlock()
-		return argpath, shared
+		return spath, shared
 	}
 	shrmux.RLock()
-	var path, ok = sharespref[pref]
+	var fpath, ok = sharespref[pref]
 	shrmux.RUnlock()
 	if !ok {
-		return argpath, false
+		return spath, false
 	}
-	return path + suff, true
+	return fpath + suff, true
 }
 
 // Scan all available drives installed on local machine.
