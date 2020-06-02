@@ -33,6 +33,7 @@ end
 -- patterns for ignored files
 local skippattern = {
 	"^pack%.lua$", -- script that generate this package
+	"^build%.%w+%.cmd$",
 	"^thumb%.db$",
 	"^rca%w+$",
 	"^%$recycle%.bin$",

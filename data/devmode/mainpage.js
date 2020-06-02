@@ -387,7 +387,8 @@ let app = new Vue({
 				this.pathlist = [];
 				this.filelist = [];
 				this.curpath = file;
-				window.history.replaceState(file, file.path, "/path/" + file.path);
+				window.history.replaceState(file, file.path,
+					(devmode ? "/dev" : "") + "/path/" + file.path);
 				// init map card
 				this.$refs.mapcard.new();
 
@@ -696,8 +697,12 @@ $(document).ready(() => {
 		console.log("token:", auth.token);
 	}
 
-	const path = decodeURI(window.location.pathname.substr(6));
-	if (path && window.location.pathname.substr(0, 6) === "/path/") {
+	let uri = window.location.pathname;
+	if (devmode) {
+		uri = uri.substr(4); // cut "/dev" prefix
+	}
+	const path = decodeURI(uri.substr(6));
+	if (path && uri.substr(0, 6) === "/path/") {
 		const arr = path.split('/');
 		const isslash = !arr[arr.length - 1];
 		const file = {

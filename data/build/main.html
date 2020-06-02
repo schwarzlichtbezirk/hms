@@ -10,7 +10,7 @@
 	<link rel="apple-touch-icon" href="/asst/hms.256.png" />
 
 	<!-- Preloader at first -->
-	<link rel="stylesheet" type="text/css" href="/devm/preloader.css">
+	<link rel="stylesheet" type="text/css" href="/relm/preloader.css">
 </head>
 <body>
 	<div class="preloader">
@@ -68,28 +68,13 @@
 
 	<div id="app"></div>
 
-	<!-- jQuery first, then Popper.js, then Bootstrap JS -->
-	<script src="/plug/jquery.slim.min.js?3.4.1"></script>
-	<script src="/plug/popper.min.js?1.15.0"></script>
-	<script src="/plug/bootstrap.min.js?4.3.1"></script>
-	<!-- Vue.js development version, includes helpful console warnings -->
-	<script src="/plug/vue.js?2.6.11"></script>
-	<!-- Leaflet API -->
-	<script src="/plug/leaflet.js?1.6.0"></script>
-	<script src="/plug/leaflet.markercluster.js?1.4.1"></script>
-	<!-- miscellaneous -->
-	<script src="/plug/sha256.min.js?0.9.0"></script>
-
-	<!-- common functionality used in all components -->
-	<script src="/devm/devmode.js?0.4.4"></script>
-	<script src="/devm/common.js?0.4.4"></script>
-	<script src="/devm/request.js?0.4.4"></script>
-	<!-- register Vue.js components -->
-	<script src="/devm/fileitem.js?0.4.1"></script>
-	<script src="/devm/cards.js?0.4.2"></script>
-	<script src="/devm/mp3player.js?0.3.4"></script>
-	<script src="/devm/slider.js?0.4.0"></script>
-	<!-- load application script -->
-	<script src="/devm/mainpage.js?0.4.4"></script>
+	<!-- base bundle: jQuery, Popper.js, Bootstrap -->
+	<script src="/relm/base.bundle.js?0.4.4"></script>
+	<!-- Vue.js release version -->
+	<script src="/plug/vue.min.js?2.6.11"></script>
+	<!-- application bundle: leaflet, sha256 -->
+	<script src="/relm/app.bundle.js?0.4.4"></script>
+	<!-- page bundle -->
+	<script src="/relm/main.bundle.js?0.4.4"></script>
 </body>
 </html>

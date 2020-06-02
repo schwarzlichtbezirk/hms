@@ -130,7 +130,7 @@ var pagealias = map[string]string{
 // routes aliases
 var routealias = map[string]string{
 	"/devm/": devmsuff,
-	"/relm/": devmsuff, /*relmpath*/ // TODO: put release mode when it will be ready
+	"/relm/": relmsuff,
 	"/plug/": plugsuff,
 	"/asst/": asstsuff,
 }
@@ -303,12 +303,12 @@ func LoadTemplates() (err error) {
 	if tc, err = ts.Clone(); err != nil {
 		return
 	}
-	if load(tc, devmsuff+"*.html"); err != nil {
+	if load(tc, relmsuff+"*.html"); err != nil {
 		return
 	}
 	for _, fname := range pagealias {
 		var buf bytes.Buffer
-		if err = tc.ExecuteTemplate(&buf, devmsuff+fname, nil); err != nil {
+		if err = tc.ExecuteTemplate(&buf, relmsuff+fname, nil); err != nil {
 			return
 		}
 		pagecache[relmsuff+fname] = buf.Bytes()
