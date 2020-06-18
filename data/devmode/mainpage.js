@@ -195,6 +195,8 @@ const geticonname = file => {
 	}
 };
 
+const encode = (uri) => encodeURI(uri).replace('#', '%23').replace('&', '%26').replace('+', '%2B');
+
 const getfileurl = (file, pref) => {
 	pref = pref || shareprefix;
 	let url;
@@ -203,12 +205,12 @@ const getfileurl = (file, pref) => {
 	} else {
 		if (app.curpathshares.length) {
 			const shr = app.curpathshares[0]; // use any first available share
-			url = pref + encodeURI(shr.pref + '/' + shr.suff + file.name);
+			url = pref + encode(shr.pref + '/' + shr.suff + file.name);
 			if (FTtoFG[file.type] === FG.dir) {
 				url += '/';
 			}
 		} else {
-			url = pref + encodeURI(file.path);
+			url = pref + encode(file.path);
 		}
 	}
 	return url;

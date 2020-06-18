@@ -6,7 +6,6 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -57,11 +56,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 	incuint(&sharecallcount, 1)
 	var err error
 
-	var shr string
-	if shr, err = url.QueryUnescape(r.URL.Path[len(shareprefix):]); err != nil {
-		WriteError400(w, err, EC_filebadurl)
-		return
-	}
+	var shr = r.URL.Path[len(shareprefix):]
 	var path, shared = checksharepath(shr)
 	if !shared {
 		if err, _ = CheckAuth(r); err != nil {

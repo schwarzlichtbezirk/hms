@@ -160,6 +160,7 @@ Vue.component('file-card-tag', {
 			sortmode: sortbyalpha,
 			listmode: "mdicon",
 			music: true, video: true, photo: true, pdf: true, books: true, other: false,
+			audioonly: true,
 			viewer: null, // file viewers
 
 			iid: makestrid(10) // instance ID
@@ -247,6 +248,9 @@ Vue.component('file-card-tag', {
 			}
 		},
 
+		clsaudio() {
+			return { active: this.audioonly };
+		},
 		clsmusic() {
 			return { active: this.music };
 		},
@@ -368,6 +372,9 @@ Vue.component('file-card-tag', {
 			}
 		},
 
+		onaudio() {
+			this.audioonly = !this.audioonly;
+		},
 		onmusic() {
 			this.music = !this.music;
 		},
@@ -406,7 +413,13 @@ Vue.component('file-card-tag', {
 					this.viewer.visible = true;
 					break;
 				case FV.video:
-					this.closeviewer();
+					if (this.audioonly) {
+						this.closeviewer();
+					} else {
+						this.viewer = this.$refs.mp3player;
+						this.viewer.setup(file);
+						this.viewer.visible = true;
+					}
 					break;
 				case FV.image:
 					this.closeviewer();

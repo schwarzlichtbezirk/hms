@@ -14,6 +14,7 @@
 			<li><button class="btn nav-link cardbtn" v-on:click="onlistmode" v-bind:title="hintlist"><i class="material-icons">{{clslistmode}}</i></button></li>
 		</ul>
 		<ul class="navbar-nav flex-row ml-auto">
+			<li><button class="btn nav-link cardbtn" v-bind:class="clsaudio" v-on:click="onaudio" title="play audio only"><i class="material-icons">headset</i></button></li>
 			<li><button class="btn nav-link cardbtn" v-bind:class="clsmusic" v-on:click="onmusic" title="show music files"><i class="material-icons">library_music</i></button></li>
 			<li><button class="btn nav-link cardbtn" v-bind:class="clsvideo" v-on:click="onvideo" title="show video files"><i class="material-icons">video_library</i></button></li>
 			<li><button class="btn nav-link cardbtn" v-bind:class="clsphoto" v-on:click="onphoto" title="show photos and images"><i class="material-icons">photo_library</i></button></li>

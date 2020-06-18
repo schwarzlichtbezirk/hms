@@ -79,15 +79,12 @@ const (
 	EC_pageabsent = 30
 	EC_fileabsent = 31
 
-	// file
-	EC_filebadurl = 32
-
 	// reload
-	EC_reloadload = 33
-	EC_reloadtmpl = 34
+	EC_reloadload = 32
+	EC_reloadtmpl = 33
 
 	// getlog
-	EC_getlogbadnum = 35
+	EC_getlogbadnum = 34
 
 	// folder
 	EC_folderdeny = 40
