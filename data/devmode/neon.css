@@ -68,6 +68,36 @@ body {
 		background-color: transparent;
 	}
 
+.smoverlay {
+	width: 96px;
+	height: 96px;
+}
+
+.smimage {
+	max-width: 96px;
+	max-height: 96px;
+}
+
+.mdoverlay {
+	width: 176px;
+	height: 176px;
+}
+
+.mdimage {
+	max-width: 176px;
+	max-height: 176px;
+}
+
+.lgoverlay {
+	width: 256px;
+	height: 256px;
+}
+
+.lgimage {
+	max-width: 256px;
+	max-height: 256px;
+}
+
 .fileitem {
 	border: 1px solid rgba(25, 25, 112, 0);
 	border-radius: 4px;
@@ -90,31 +120,22 @@ body {
 			border: 1px solid DarkTurquoise;
 		}
 
-	.fileitem > .overlay {
+	.fileitem > div {
 		display: block;
 		position: relative;
-		width: 96px;
-		height: 96px;
 	}
 
-		.fileitem > .overlay > * {
+		.fileitem > div > * {
 			position: absolute;
 			top: 50%;
 			left: 50%;
 			transform: translate(-50%,-50%);
 		}
 
-		.fileitem > .overlay > picture > *, .fileitem > .overlay > img {
-			max-width: 96px;
-			max-height: 96px;
-		}
-
 	.fileitem > .tag {
-		display: block;
 		text-align: center;
 		color: Aquamarine;
 		background: rgba(102, 51, 153, 0.50); /*RebeccaPurple*/
-		max-width: 96px;
 		max-height: 3.8rem;
 		line-height: 1.25;
 		font-size: 0.72rem;

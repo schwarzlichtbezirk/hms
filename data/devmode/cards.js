@@ -4,6 +4,32 @@ const sortbyalpha = "name";
 const sortbysize = "size";
 const unsorted = "";
 
+const listmodetag = {
+	smicon: 'file-icon-tag',
+	mdicon: 'file-icon-tag',
+	lgicon: 'img-icon-tag'
+};
+const listmoderow = {
+	smicon: 'align-items-start',
+	mdicon: 'align-items-start',
+	lgicon: 'align-items-center'
+};
+const listmodeicon = {
+	smicon: 'format_align_justify',
+	mdicon: 'view_comfy',
+	lgicon: 'view_module'
+};
+const listmodehint = {
+	smicon: "small icons",
+	mdicon: "middle icons",
+	lgicon: "large icons"
+};
+const listmodenext = {
+	smicon: 'mdicon',
+	mdicon: 'lgicon',
+	lgicon: 'smicon'
+};
+
 const copyTextToClipboard = text => {
 	const elem = document.createElement("textarea");
 	elem.value = text;
@@ -31,7 +57,7 @@ Vue.component('dir-card-tag', {
 			isauth: false, // is authorized
 			selfile: null, // current selected item
 			order: 1,
-			listmode: "mdicon",
+			listmode: "smicon",
 			iid: makestrid(10) // instance ID
 		};
 	},
@@ -57,12 +83,7 @@ Vue.component('dir-card-tag', {
 		},
 
 		clsfilelist() {
-			switch (this.listmode) {
-				case "lgicon":
-					return 'align-items-center';
-				case "mdicon":
-					return 'align-items-start';
-			}
+			return listmoderow[this.listmode];
 		},
 
 		dislink() {
@@ -81,21 +102,11 @@ Vue.component('dir-card-tag', {
 				: 'arrow_upward';
 		},
 		clslistmode() {
-			switch (this.listmode) {
-				case "lgicon":
-					return 'view_module';
-				case "mdicon":
-					return 'subject';
-			}
+			return listmodeicon[this.listmode];
 		},
 
 		iconmodetag() {
-			switch (this.listmode) {
-				case "lgicon":
-					return 'img-icon-tag';
-				case "mdicon":
-					return 'file-icon-tag';
-			}
+			return listmodetag[this.listmode];
 		},
 
 		hintorder() {
@@ -104,12 +115,7 @@ Vue.component('dir-card-tag', {
 				: "reverse order";
 		},
 		hintlist() {
-			switch (this.listmode) {
-				case "lgicon":
-					return "large icons";
-				case "mdicon":
-					return "middle icons";
-			}
+			return listmodehint[this.listmode];
 		}
 	},
 	methods: {
@@ -123,14 +129,7 @@ Vue.component('dir-card-tag', {
 			this.order = -this.order;
 		},
 		onlistmode() {
-			switch (this.listmode) {
-				case "lgicon":
-					this.listmode = 'mdicon';
-					break;
-				case "mdicon":
-					this.listmode = 'lgicon';
-					break;
-			}
+			this.listmode = listmodenext[this.listmode];
 		},
 
 		onselect(file) {
@@ -158,7 +157,7 @@ Vue.component('file-card-tag', {
 			playbackfile: null,
 			order: 1,
 			sortmode: sortbyalpha,
-			listmode: "mdicon",
+			listmode: "smicon",
 			music: true, video: true, photo: true, pdf: true, books: true, other: false,
 			audioonly: true,
 			viewer: null, // file viewers
@@ -206,12 +205,7 @@ Vue.component('file-card-tag', {
 		},
 
 		clsfilelist() {
-			switch (this.listmode) {
-				case "lgicon":
-					return 'align-items-center';
-				case "mdicon":
-					return 'align-items-start';
-			}
+			return listmoderow[this.listmode];
 		},
 
 		dislink() {
@@ -240,12 +234,7 @@ Vue.component('file-card-tag', {
 			}
 		},
 		clslistmode() {
-			switch (this.listmode) {
-				case "lgicon":
-					return 'view_module';
-				case "mdicon":
-					return 'subject';
-			}
+			return listmodeicon[this.listmode];
 		},
 
 		clsaudio() {
@@ -271,12 +260,7 @@ Vue.component('file-card-tag', {
 		},
 
 		iconmodetag() {
-			switch (this.listmode) {
-				case "lgicon":
-					return 'img-icon-tag';
-				case "mdicon":
-					return 'file-icon-tag';
-			}
+			return listmodetag[this.listmode];
 		},
 
 		hintorder() {
@@ -295,12 +279,7 @@ Vue.component('file-card-tag', {
 			}
 		},
 		hintlist() {
-			switch (this.listmode) {
-				case "lgicon":
-					return "large icons";
-				case "mdicon":
-					return "middle icons";
-			}
+			return listmodehint[this.listmode];
 		}
 	},
 	methods: {
@@ -362,14 +341,7 @@ Vue.component('file-card-tag', {
 			}
 		},
 		onlistmode() {
-			switch (this.listmode) {
-				case "lgicon":
-					this.listmode = 'mdicon';
-					break;
-				case "mdicon":
-					this.listmode = 'lgicon';
-					break;
-			}
+			this.listmode = listmodenext[this.listmode];
 		},
 
 		onaudio() {

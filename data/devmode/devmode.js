@@ -3,7 +3,7 @@
 // This file is included only for developer mode linkage
 
 const buildvers = "0.4.4";
-const builddate = "2020.06.18";
+const builddate = "2020.06.21";
 console.info("version: %s, builton: %s", buildvers, builddate);
 console.info("starts in developer mode");
 

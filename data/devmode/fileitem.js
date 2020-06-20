@@ -266,7 +266,7 @@ const filehint = file => {
 
 Vue.component('file-icon-tag', {
 	template: '#file-icon-tpl',
-	props: ["file", "state"],
+	props: ["file", "state", "size"],
 	computed: {
 		fmttitle() {
 			return filehint(this.file).join('\n');
@@ -282,6 +282,28 @@ Vue.component('file-icon-tag', {
 			return this.file.ntmb === 1
 				? '/thumb/' + this.file.ktmb
 				: '/asst/file-png/' + geticonname(this.file) + '.png';
+		},
+
+		clsoverlay() {
+			switch (this.size) {
+				case "smicon":
+					return "smoverlay";
+				case "mdicon":
+					return "mdoverlay";
+				case "lgicon":
+					return "lgoverlay";
+			}
+		},
+
+		clsimage() {
+			switch (this.size) {
+				case "smicon":
+					return "smimage";
+				case "mdicon":
+					return "mdimage";
+				case "lgicon":
+					return "lgimage";
+			}
 		},
 
 		// manage items classes

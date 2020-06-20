@@ -54,16 +54,14 @@ func packageHandler(w http.ResponseWriter, r *http.Request) {
 // APIHANDLER
 func fileHandler(w http.ResponseWriter, r *http.Request) {
 	incuint(&sharecallcount, 1)
-	var err error
 
 	var shr = r.URL.Path[len(shareprefix):]
 	var path, shared = checksharepath(shr)
 	if !shared {
-		if err, _ = CheckAuth(r); err != nil {
+		if err, _ := CheckAuth(r); err != nil {
 			WriteJson(w, http.StatusUnauthorized, err)
 			return
 		}
-		return
 	}
 
 	if _, ok := r.Header["If-Range"]; !ok { // not partial content

@@ -1,17 +1,17 @@
 
 <div class="fileitem" v-bind:class="itemview" v-on:click.stop="onselect" v-on:dblclick.stop="onopen" v-bind:title="fmttitle">
-	<div class="overlay">
+	<div v-bind:class="clsoverlay">
 		<picture>
-			<source v-bind:srcset="webpicon" type="image/webp">
-			<source v-bind:srcset="pngicon" type="image/png">
-			<img src="/asst/file-png/doc-file.png" v-bind:alt="file.name">
+			<source v-bind:srcset="webpicon" v-bind:class="clsimage" type="image/webp">
+			<source v-bind:srcset="pngicon" v-bind:class="clsimage" type="image/png">
+			<img src="/asst/file-png/doc-file.png" v-bind:class="clsimage" v-bind:alt="file.name">
 		</picture>
 		<picture v-if="file.pref">
-			<source srcset="/asst/file-webp/shared.webp" type="image/webp">
-			<source srcset="/asst/file-png/shared.png" type="image/png">
-			<img src="/asst/file-png/shared.png" alt="shared">
+			<source srcset="/asst/file-webp/shared.webp" v-bind:class="clsimage" type="image/webp">
+			<source srcset="/asst/file-png/shared.png" v-bind:class="clsimage" type="image/png">
+			<img src="/asst/file-png/shared.png" v-bind:class="clsimage" alt="shared">
 		</picture>
-		<img v-if="state.playback" src="/asst/equalizer-bars.gif" alt="shared">
+		<img v-if="state.playback" src="/asst/equalizer-bars.gif" v-bind:class="clsimage" alt="shared">
 	</div>
-	<div class="tag">{{file.name}}</div>
+	<div v-bind:class="clsimage" class="tag">{{file.name}}</div>
 </div>

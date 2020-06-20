@@ -89,6 +89,7 @@ const app = new Vue({
 			if (response.ok) {
 				this.servinfo = response.data;
 				this.servinfo.buildvers = buildvers;
+				this.servinfo.builddate = builddate;
 			}
 		}).catch(() => { });
 
