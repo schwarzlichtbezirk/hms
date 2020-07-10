@@ -23,10 +23,33 @@ body {
   align-items: center;
 }
 
+.dropdown-menu.bg-dark > .dropdown-item {
+	color: rgba(255, 255, 255, 0.5);
+}
+
+	.dropdown-menu.bg-dark > .dropdown-item:hover,
+	.dropdown-menu.bg-dark > .dropdown-item:focus {
+		color: rgba(255, 255, 255, 0.75);
+		background-color: #484e53;
+	}
+
+	.dropdown-menu.bg-dark > .dropdown-item:disabled {
+		color: rgba(255, 255, 255, 0.25);
+	}
+
+	.dropdown-menu.bg-dark > .dropdown-item.active {
+		color: #fff;
+		background-color: #676b70;
+	}
+
 @media (min-width: 576px) {
 	.authgrp {
 		max-width: 160px;
 	}
+}
+
+.breadcrumb-item.active {
+	font-size: 1.5rem;
 }
 
 #accordion {
@@ -37,29 +60,42 @@ body {
 	background-color: LemonChiffon;
 }
 
-.card-header {
+.hmscard > .card-header {
 	padding-top: 0.25rem;
 	padding-bottom: 0.25rem;
 }
 
-	.card-header > .navbar-nav ~ .navbar-nav {
+	.hmscard > .card-header > .navbar-nav ~ .navbar-nav {
 		padding-left: 1.25rem;
 	}
 
-.breadcrumb-item.active {
-	font-size: 1.5rem;
+.hmscard .navbar-text {
+	color: rgba(0, 0, 0, 0.5);
 }
+
+	.hmscard .navbar-text a {
+		color: rgba(0, 0, 0, 0.9);
+	}
+
+		.hmscard .navbar-text a:hover, .hmscard .navbar-text a:focus {
+			color: rgba(0, 0, 0, 0.9);
+		}
 
 .cardbtn {
 	text-decoration: none;
 	padding: 0;
+	color: rgba(0, 0, 0, 0.5);
 }
 
 	.cardbtn:hover, .cardbtn:focus {
+		color: rgba(0, 0, 0, 0.7);
 		background-color: rgba(189, 183, 107, 0.5); /* DarkKhaki */
 	}
 
 	.cardbtn:disabled, cardbtn.disabled {
+		pointer-events: none;
+		cursor: default;
+		color: rgba(0, 0, 0, 0.3);
 		background-color: transparent;
 	}
 

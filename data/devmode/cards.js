@@ -158,7 +158,7 @@ Vue.component('file-card-tag', {
 			order: 1,
 			sortmode: sortbyalpha,
 			listmode: "smicon",
-			music: true, video: true, photo: true, pdf: true, books: true, other: false,
+			music: true, video: true, image: true, books: true, texts: true, other: false,
 			audioonly: true,
 			viewer: null, // file viewers
 
@@ -237,6 +237,27 @@ Vue.component('file-card-tag', {
 			return listmodeicon[this.listmode];
 		},
 
+		showmusic() {
+			return !!this.list.find(file => FTtoFG[file.type] === FG.music);
+		},
+		showvideo() {
+			return !!this.list.find(file => FTtoFG[file.type] === FG.video);
+		},
+		showphoto() {
+			return !!this.list.find(file => FTtoFG[file.type] === FG.image);
+		},
+		showbooks() {
+			return !!this.list.find(file => FTtoFG[file.type] === FG.books);
+		},
+		showtexts() {
+			return !!this.list.find(file => FTtoFG[file.type] === FG.texts);
+		},
+		showother() {
+			return !!this.list.find(file => !file.type
+				|| FTtoFG[file.type] === FG.store
+				|| FTtoFG[file.type] === FG.other);
+		},
+
 		clsaudio() {
 			return { active: this.audioonly };
 		},
@@ -247,13 +268,13 @@ Vue.component('file-card-tag', {
 			return { active: this.video };
 		},
 		clsphoto() {
-			return { active: this.photo };
-		},
-		clspdf() {
-			return { active: this.pdf };
+			return { active: this.image };
 		},
 		clsbooks() {
 			return { active: this.books };
+		},
+		clstexts() {
+			return { active: this.texts };
 		},
 		clsother() {
 			return { active: this.other };
@@ -293,11 +314,11 @@ Vue.component('file-card-tag', {
 				case FG.video:
 					return this.video;
 				case FG.image:
-					return this.photo;
+					return this.image;
 				case FG.books:
-					return this.pdf;
-				case FG.texts:
 					return this.books;
+				case FG.texts:
+					return this.texts;
 				default:
 					return this.other;
 			}
@@ -354,13 +375,13 @@ Vue.component('file-card-tag', {
 			this.video = !this.video;
 		},
 		onphoto() {
-			this.photo = !this.photo;
-		},
-		onpdf() {
-			this.pdf = !this.pdf;
+			this.image = !this.image;
 		},
 		onbooks() {
 			this.books = !this.books;
+		},
+		ontexts() {
+			this.texts = !this.texts;
 		},
 		onother() {
 			this.other = !this.other;

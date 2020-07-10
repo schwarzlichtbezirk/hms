@@ -588,6 +588,18 @@ let app = new Vue({
 			});
 		},
 
+		onneon() {
+			const skinlink = "/devm/neon.css";
+			$("#skinlink").attr("href", skinlink);
+			sessionStorage.setItem('skinlink', skinlink);
+		},
+
+		ondaylight() {
+			const skinlink = "/devm/light.css";
+			$("#skinlink").attr("href", skinlink);
+			sessionStorage.setItem('skinlink', skinlink);
+		},
+
 		onhome() {
 			ajaxcc.emit('ajax', +1);
 			this.fetchopenfolder(root)
@@ -684,45 +696,43 @@ let app = new Vue({
 		}
 	},
 	mounted() {
+		const skinlink = sessionStorage.getItem('skinlink') || "/devm/neon.css";
+		$("#skinlink").attr("href", skinlink);
+
+		auth.signload();
+		if (devmode) {
+			console.log("token:", auth.token);
+		}
 		auth.on('auth', is => this.isauth = is);
 		ajaxcc.on('ajax', count => this.loadcount += count);
+
+		let uri = window.location.pathname;
+		if (devmode) {
+			uri = uri.substr(4); // cut "/dev" prefix
+		}
+		const path = decodeURI(uri.substr(6));
+		if (path && uri.substr(0, 6) === "/path/") {
+			const arr = path.split('/');
+			const isslash = !arr[arr.length - 1];
+			const file = {
+				name: arr[arr.length - (isslash ? 2 : 1)],
+				path: path + (isslash ? '' : '/'),
+				size: 0, time: 0, type: FT.dir
+			};
+
+			ajaxcc.emit('ajax', +1);
+			this.fetchopenfolder(file)
+				.then(() => this.fetchsharelist()) // get shares
+				.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
+		} else {
+			ajaxcc.emit('ajax', +1);
+			this.fetchopenfolder(root)
+				.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
+		}
 	}
 });
 
-/////////////
-// Startup //
-/////////////
-
 $(document).ready(() => {
-	auth.signload();
-	if (devmode) {
-		console.log("token:", auth.token);
-	}
-
-	let uri = window.location.pathname;
-	if (devmode) {
-		uri = uri.substr(4); // cut "/dev" prefix
-	}
-	const path = decodeURI(uri.substr(6));
-	if (path && uri.substr(0, 6) === "/path/") {
-		const arr = path.split('/');
-		const isslash = !arr[arr.length - 1];
-		const file = {
-			name: arr[arr.length - (isslash ? 2 : 1)],
-			path: path + (isslash ? '' : '/'),
-			size: 0, time: 0, type: FT.dir
-		};
-
-		ajaxcc.emit('ajax', +1);
-		app.fetchopenfolder(file)
-			.then(() => app.fetchsharelist()) // get shares
-			.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
-	} else {
-		ajaxcc.emit('ajax', +1);
-		app.fetchopenfolder(root)
-			.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
-	}
-
 	$('.preloader').hide("fast");
 	$('#app').show("fast");
 });

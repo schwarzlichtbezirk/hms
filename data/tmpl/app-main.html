@@ -9,7 +9,7 @@
 		</nav>
 		<p v-for="shr in curpathshares">
 			Shared at <span class="bg-stat">{{shr.path}}</span> as
-			<span class="bg-stat"><a v-bind:href="'/file/'+shr.pref+'/'+shr.suff" target="_blank"><strong>{{'/file/'+shr.pref+'/'}}</strong>{{shr.suff}}</a></span>
+			<span class="bg-stat"><a v-bind:href="'/path/'+shr.pref+'/'+shr.suff" target="_blank"><strong>{{'/path/'+shr.pref+'/'}}</strong>{{shr.suff}}</a></span>
 		</p>
 		<p v-if="!curpathshares.length">Folder does not shared</p>
 		<p class="small">
@@ -29,11 +29,22 @@
 		<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#menuaddon">
 			<span class="navbar-toggler-icon"></span>
 		</button>
-		<div class="d-flex flex-row collapse navbar-collapse" id="menuaddon">
-			<div v-show="!isadmin" class="navbar-nav flex-row align-items-center ml-auto authgrp">
-				<input v-show="!isauth" v-model="password" v-bind:class="clspass" v-on:keyup.enter.prevent="onlogin" v-on:keyup="onpasschange" class="form-control bg-dark text-white" type="password" maxlength="80" placeholder="password">
-				<button v-show="!isauth" class="btn nav-link" v-on:click="onlogin" title="sign-in with given password"><i class="material-icons">account_box</i></button>
-				<button v-show="isauth" class="btn nav-link" v-on:click="onlogout" title="sign-out"><i class="material-icons">exit_to_app</i></button>
+		<div class="collapse navbar-collapse" id="menuaddon">
+			<div class="navbar-nav flex-row ml-auto">
+				<div v-show="!isadmin" class="navbar-nav flex-row align-items-center">
+					<input v-show="!isauth" v-model="password" v-bind:class="clspass" v-on:keyup.enter.prevent="onlogin" v-on:keyup="onpasschange" class="form-control bg-dark text-white authgrp" type="password" maxlength="80" placeholder="password">
+					<button v-show="!isauth" class="btn nav-link" v-on:click="onlogin" title="sign-in with given password"><i class="material-icons">account_box</i></button>
+					<button v-show="isauth" class="btn nav-link" v-on:click="onlogout" title="sign-out"><i class="material-icons">exit_to_app</i></button>
+				</div>
+				<ul class="navbar-nav flex-row">
+					<li class="btn-group">
+						<button class="btn nav-link dropdown-toggle" data-toggle="dropdown" title="choose skin"><i class="material-icons">color_lens</i></button>
+						<div class="dropdown-menu bg-dark dropdown-menu-right">
+							<button class="dropdown-item" v-on:click="onneon">neon</button>
+							<button class="dropdown-item" v-on:click="ondaylight">daylight</button>
+						</div>
+					</li>
+				</ul>
 			</div>
 		</div>
 </nav>

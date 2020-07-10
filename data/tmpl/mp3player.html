@@ -22,7 +22,7 @@
 		<ul class="navbar-nav flex-row">
 			<li class="btn-group dropup">
 				<button class="btn nav-link dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="playback rate"><i class="material-icons">slow_motion_video</i></button>
-				<ul class="dropdown-menu dropdown-menu-right" id="rate">
+				<ul class="dropdown-menu bg-dark dropdown-menu-right" id="rate">
 					<li class="dropdown-item" v-on:click="setrate(2.50)" v-bind:class="{active:rate===2.50}">&times;2.50</li>
 					<li class="dropdown-item" v-on:click="setrate(2.00)" v-bind:class="{active:rate===2.00}">&times;2.00</li>
 					<li class="dropdown-item" v-on:click="setrate(1.75)" v-bind:class="{active:rate===1.75}">&times;1.75</li>
