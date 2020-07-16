@@ -31,11 +31,11 @@
 		</div>
 	</div>
 
-	<nav class="bg-dark navbar-dark fixed-bottom">
+	<div class="fixed-bottom">
 		<template>
 			<mp3-player-tag ref="mp3player" v-bind:list="playlist" v-on:playback="onplayback" v-on:select="onselect" />
 		</template>
-	</nav>
+	</div>
 
 	<template>
 		<photoslider-tag ref="slider" v-bind:list="playlist" v-on:select="onselect" />

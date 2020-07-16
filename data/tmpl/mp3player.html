@@ -1,10 +1,10 @@
 
-<div v-show="visible" class="navbar navbar-expand-sm w-100">
+<nav v-show="visible" class="navbar navbar-expand-sm bg-tool w-100">
 	<ul class="navbar-nav flex-row">
-		<li><button class="btn nav-link" v-show="!!list" v-on:click="onprev" v-bind:disabled="!getprev" title="skip to previous"><i class="material-icons">skip_previous</i></button></li>
-		<li><button class="btn nav-link bg-secondary" v-on:click="onplay" v-bind:disabled="!ready" v-bind:title="hintplay"><i class="material-icons">{{iconplay}}</i></button></li>
-		<li><button class="btn nav-link" v-show="!!list" v-on:click="onnext" v-bind:disabled="!getnext" title="skip to next"><i class="material-icons">skip_next</i></button></li>
-		<li><button class="btn nav-link" v-on:click="onrepeat" v-bind:class="{active:repeatmode>0}" v-bind:title="hintrepeat"><i class="material-icons">{{iconrepeat}}</i></button></li>
+		<li><button class="btn toolbtn fg-tool" v-show="!!list" v-on:click="onprev" v-bind:disabled="!getprev" title="skip to previous"><i class="material-icons">skip_previous</i></button></li>
+		<li><button class="btn toolbtn fg-tool bg-highlight" v-on:click="onplay" v-bind:disabled="!ready" v-bind:title="hintplay"><i class="material-icons">{{iconplay}}</i></button></li>
+		<li><button class="btn toolbtn fg-tool" v-show="!!list" v-on:click="onnext" v-bind:disabled="!getnext" title="skip to next"><i class="material-icons">skip_next</i></button></li>
+		<li><button class="btn toolbtn fg-tool" v-on:click="onrepeat" v-bind:class="{active:repeatmode>0}" v-bind:title="hintrepeat"><i class="material-icons">{{iconrepeat}}</i></button></li>
 	</ul>
 	<button class="navbar-toggler" type="button" data-toggle="collapse" v-bind:data-target="'#nav'+iid">
 		<span class="navbar-toggler-icon"></span>
@@ -21,8 +21,8 @@
 		</div>
 		<ul class="navbar-nav flex-row">
 			<li class="btn-group dropup">
-				<button class="btn nav-link dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="playback rate"><i class="material-icons">slow_motion_video</i></button>
-				<ul class="dropdown-menu bg-dark dropdown-menu-right" id="rate">
+				<button class="btn toolbtn fg-tool dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="playback rate"><i class="material-icons">slow_motion_video</i></button>
+				<ul class="dropdown-menu bg-tool dropdown-menu-right" id="rate">
 					<li class="dropdown-item" v-on:click="setrate(2.50)" v-bind:class="{active:rate===2.50}">&times;2.50</li>
 					<li class="dropdown-item" v-on:click="setrate(2.00)" v-bind:class="{active:rate===2.00}">&times;2.00</li>
 					<li class="dropdown-item" v-on:click="setrate(1.75)" v-bind:class="{active:rate===1.75}">&times;1.75</li>
@@ -40,4 +40,4 @@
 			</li>
 		</ul>
 	</div>
-</div>
+</nav>

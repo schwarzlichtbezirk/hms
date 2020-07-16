@@ -18,36 +18,38 @@
 		</p>
 	</div>
 
-	<nav class="navbar navbar-expand-sm bg-dark navbar-dark sticky-top">
-		<ul class="navbar-nav flex-row">
-			<li v-show="signed"><button class="btn nav-link bg-secondary" v-bind:disabled="dishome" v-on:click="onhome" title="root folder"><i class="material-icons">home</i></button></li>
-			<li><button class="btn nav-link" v-bind:disabled="disback" v-on:click="onback" v-bind:title="hintback"><i class="material-icons">arrow_back</i></button></li>
-			<li><button class="btn nav-link" v-bind:disabled="disforward" v-on:click="onforward" v-bind:title="hintforward"><i class="material-icons">arrow_forward</i></button></li>
-			<li><button class="btn nav-link" v-bind:disabled="disparent" v-on:click="onparent" v-bind:title="hintparent"><i class="material-icons">subdirectory_arrow_left</i></button></li>
-			<li><button class="btn nav-link" v-on:click="onrefresh" title="refresh"><i class="material-icons">refresh</i></button></li>
-		</ul>
-		<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#menuaddon">
-			<span class="navbar-toggler-icon"></span>
-		</button>
-		<div class="collapse navbar-collapse" id="menuaddon">
-			<div class="navbar-nav flex-row ml-auto">
-				<div v-show="!isadmin" class="navbar-nav flex-row align-items-center">
-					<input v-show="!isauth" v-model="password" v-bind:class="clspass" v-on:keyup.enter.prevent="onlogin" v-on:keyup="onpasschange" class="form-control bg-dark text-white authgrp" type="password" maxlength="80" placeholder="password">
-					<button v-show="!isauth" class="btn nav-link" v-on:click="onlogin" title="sign-in with given password"><i class="material-icons">account_box</i></button>
-					<button v-show="isauth" class="btn nav-link" v-on:click="onlogout" title="sign-out"><i class="material-icons">exit_to_app</i></button>
+	<div class="sticky-top">
+		<nav class="navbar navbar-expand-sm bg-tool w-100">
+			<ul class="navbar-nav flex-row">
+				<li v-show="signed"><button class="btn toolbtn fg-tool bg-highlight" v-bind:disabled="dishome" v-on:click="onhome" title="root folder"><i class="material-icons">home</i></button></li>
+				<li><button class="btn toolbtn fg-tool" v-bind:disabled="disback" v-on:click="onback" v-bind:title="hintback"><i class="material-icons">arrow_back</i></button></li>
+				<li><button class="btn toolbtn fg-tool" v-bind:disabled="disforward" v-on:click="onforward" v-bind:title="hintforward"><i class="material-icons">arrow_forward</i></button></li>
+				<li><button class="btn toolbtn fg-tool" v-bind:disabled="disparent" v-on:click="onparent" v-bind:title="hintparent"><i class="material-icons">subdirectory_arrow_left</i></button></li>
+				<li><button class="btn toolbtn fg-tool" v-on:click="onrefresh" title="refresh"><i class="material-icons">refresh</i></button></li>
+			</ul>
+			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#menuaddon">
+				<span class="navbar-toggler-icon"></span>
+			</button>
+			<div class="collapse navbar-collapse" id="menuaddon">
+				<div class="navbar-nav flex-row ml-auto">
+					<div v-show="!isadmin" class="navbar-nav flex-row align-items-center">
+						<input v-show="!isauth" v-model="password" v-bind:class="clspass" v-on:keyup.enter.prevent="onlogin" v-on:keyup="onpasschange" class="form-control bg-tool fg-tool auth-control" type="password" maxlength="80" placeholder="password">
+						<button v-show="!isauth" class="btn toolbtn fg-tool" v-on:click="onlogin" title="sign-in with given password"><i class="material-icons">account_box</i></button>
+						<button v-show="isauth" class="btn toolbtn fg-tool" v-on:click="onlogout" title="sign-out"><i class="material-icons">exit_to_app</i></button>
+					</div>
+					<ul class="navbar-nav flex-row">
+						<li class="btn-group">
+							<button class="btn toolbtn fg-tool dropdown-toggle" data-toggle="dropdown" title="choose skin"><i class="material-icons">color_lens</i></button>
+							<div class="dropdown-menu bg-tool dropdown-menu-right">
+								<button class="dropdown-item" v-on:click="onneon">neon</button>
+								<button class="dropdown-item" v-on:click="ondaylight">daylight</button>
+							</div>
+						</li>
+					</ul>
 				</div>
-				<ul class="navbar-nav flex-row">
-					<li class="btn-group">
-						<button class="btn nav-link dropdown-toggle" data-toggle="dropdown" title="choose skin"><i class="material-icons">color_lens</i></button>
-						<div class="dropdown-menu bg-dark dropdown-menu-right">
-							<button class="dropdown-item" v-on:click="onneon">neon</button>
-							<button class="dropdown-item" v-on:click="ondaylight">daylight</button>
-						</div>
-					</li>
-				</ul>
 			</div>
-		</div>
-</nav>
+		</nav>
+	</div>
 
 	<div id="accordion">
 		<template>

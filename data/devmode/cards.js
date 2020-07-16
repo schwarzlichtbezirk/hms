@@ -159,7 +159,7 @@ Vue.component('file-card-tag', {
 			sortmode: sortbyalpha,
 			listmode: "smicon",
 			music: true, video: true, image: true, books: true, texts: true, other: false,
-			audioonly: true,
+			audioonly: false,
 			viewer: null, // file viewers
 
 			iid: makestrid(10) // instance ID
