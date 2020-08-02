@@ -33,7 +33,7 @@ body {
 	.fg-tool:hover, .fg-tool:focus,
 	.dropdown-menu.bg-tool > .dropdown-item:hover, .dropdown-menu.bg-tool > .dropdown-item:focus {
 		color: rgba(255, 255, 255, 0.75);
-		background-color: rgba(255, 255, 255, 0.15); /*#484e53*/
+		background-color: rgba(255, 255, 255, 0.15); /* #484e53 */
 	}
 
 	.fg-tool:disabled, .fg-tool.disabled,
@@ -46,7 +46,7 @@ body {
 	.fg-tool.active,
 	.dropdown-menu.bg-tool > .dropdown-item.active {
 		color: #fff;
-		background-color: rgba(255, 255, 255, 0.25); /*#676b70*/
+		background-color: rgba(255, 255, 255, 0.25); /* #676b70 */
 	}
 
 .toolbtn {
@@ -117,7 +117,7 @@ body {
 }
 
 .folder-head .breadcrumb, .card, .modal-content {
-	background-image: url("/asst/nightglow-rainbow.jpg");
+	background-image: url("/data/skin/nightglow-rainbow.jpg");
 	background-position: center center;
 	background-repeat: no-repeat;
 	background-attachment: fixed;
@@ -127,7 +127,7 @@ body {
 .hmscard > .card-header {
 	padding-top: 0.25rem;
 	padding-bottom: 0.25rem;
-	background: rgba(75, 0, 130, 0.50); /*Indigo*/
+	background: rgba(75, 0, 130, 0.5); /* Indigo */
 }
 
 	.hmscard > .card-header > .navbar-nav ~ .navbar-nav {
@@ -183,18 +183,18 @@ body {
 }
 
 	.fileitem:hover {
-		background: rgba(25, 25, 112, 0.5); /*MidnightBlue*/
+		background: rgba(25, 25, 112, 0.5); /* MidnightBlue */
 		border: 1px solid DarkTurquoise;
 		cursor: pointer;
 	}
 
 	.fileitem.selected {
-		background: rgba(75, 0, 130, 0.50); /*Indigo*/
+		background: rgba(75, 0, 130, 0.5); /* Indigo */
 		border: 1px solid DarkTurquoise;
 	}
 
 		.fileitem.selected:hover {
-			background: rgba(106, 90, 205, 0.5); /*SlateBlue*/
+			background: rgba(106, 90, 205, 0.5); /* SlateBlue */
 			border: 1px solid DarkTurquoise;
 		}
 
@@ -213,7 +213,7 @@ body {
 	.fileitem > .tag {
 		text-align: center;
 		color: Aquamarine;
-		background: rgba(102, 51, 153, 0.50); /*RebeccaPurple*/
+		background: rgba(102, 51, 153, 0.5); /* RebeccaPurple */
 		max-height: 3.8rem;
 		line-height: 1.25;
 		font-size: 0.72rem;
@@ -226,20 +226,20 @@ body {
 
 	.imgitem:hover {
 		z-index: 1;
-		background: rgba(25, 25, 112, 0.5); /*MidnightBlue*/
+		background: rgba(25, 25, 112, 0.5); /* MidnightBlue */
 		box-shadow: 0px 0px 12px DarkTurquoise;
 		cursor: pointer;
 	}
 
 	.imgitem.selected {
 		z-index: 1;
-		background: rgba(75, 0, 130, 0.50); /*Indigo*/
+		background: rgba(75, 0, 130, 0.5); /* Indigo */
 		box-shadow: 0px 0px 12px Azure;
 	}
 
 		.imgitem.selected:hover {
 			z-index: 1;
-			background: rgba(106, 90, 205, 0.5); /*SlateBlue*/
+			background: rgba(106, 90, 205, 0.5); /* SlateBlue */
 			box-shadow: 0px 0px 12px Azure;
 		}
 
@@ -275,7 +275,7 @@ body {
 		display: block;
 		text-align: center;
 		color: Aquamarine;
-		background: rgba(102, 51, 153, 0.50); /*RebeccaPurple*/
+		background: rgba(102, 51, 153, 0.5); /* RebeccaPurple */
 		max-width: 112px;
 		max-height: 3.8rem;
 		line-height: 1.25;
@@ -288,7 +288,7 @@ body {
 	}
 
 .bg-stat {
-	background: #2d004d; /*dark indigo*/
+	background: rgba(75, 0, 130, 0.5); /* Indigo */
 	padding: 0px 4px;
 }
 

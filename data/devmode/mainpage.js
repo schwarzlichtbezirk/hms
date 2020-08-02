@@ -241,6 +241,7 @@ let app = new Vue({
 	el: '#app',
 	template: '#app-tpl',
 	data: {
+		skinlink: "", // URL of skin CSS
 		isauth: false, // is authorized
 		password: "", // authorization password
 		passstate: 0, // -1 invalid password, 0 ambiguous, 1 valid password
@@ -325,6 +326,20 @@ let app = new Vue({
 				ss += file.size || 0;
 			}
 			return fmtitemsize(ss);
+		},
+
+		// skins
+
+		clsneon() {
+			return { active: this.skinlink === "/data/skin/neon.css" };
+		},
+
+		clsdaylight() {
+			return { active: this.skinlink === "/data/skin/daylight.css" };
+		},
+
+		clscupofcoffee() {
+			return { active: this.skinlink === "/data/skin/cupofcoffee.css" };
 		},
 
 		// common buttons enablers
@@ -588,16 +603,22 @@ let app = new Vue({
 			});
 		},
 
-		onneon() {
-			const skinlink = "/devm/neon.css";
+		setskin(skinlink) {
+			this.skinlink = skinlink;
 			$("#skinlink").attr("href", skinlink);
 			sessionStorage.setItem('skinlink', skinlink);
 		},
 
+		onneon() {
+			this.setskin("/data/skin/neon.css");
+		},
+
 		ondaylight() {
-			const skinlink = "/devm/light.css";
-			$("#skinlink").attr("href", skinlink);
-			sessionStorage.setItem('skinlink', skinlink);
+			this.setskin("/data/skin/daylight.css");
+		},
+
+		oncupofcoffee() {
+			this.setskin("/data/skin/cupofcoffee.css");
 		},
 
 		onhome() {
@@ -696,8 +717,8 @@ let app = new Vue({
 		}
 	},
 	mounted() {
-		const skinlink = sessionStorage.getItem('skinlink') || "/devm/neon.css";
-		$("#skinlink").attr("href", skinlink);
+		this.skinlink = sessionStorage.getItem('skinlink') || "/data/skin/neon.css";
+		$("#skinlink").attr("href", this.skinlink);
 
 		auth.signload();
 		if (devmode) {

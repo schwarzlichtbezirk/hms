@@ -41,8 +41,9 @@
 						<li class="btn-group">
 							<button class="btn toolbtn fg-tool dropdown-toggle" data-toggle="dropdown" title="choose skin"><i class="material-icons">color_lens</i></button>
 							<div class="dropdown-menu bg-tool dropdown-menu-right">
-								<button class="dropdown-item" v-on:click="onneon">neon</button>
-								<button class="dropdown-item" v-on:click="ondaylight">daylight</button>
+								<button class="dropdown-item" v-on:click="onneon" v-bind:class="clsneon">neon</button>
+								<button class="dropdown-item" v-on:click="ondaylight" v-bind:class="clsdaylight">daylight</button>
+								<button class="dropdown-item" v-on:click="oncupofcoffee" v-bind:class="clscupofcoffee">cup of coffee</button>
 							</div>
 						</li>
 					</ul>
