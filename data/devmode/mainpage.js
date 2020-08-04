@@ -1,5 +1,24 @@
 ﻿"use strict";
 
+const skinlist = [
+	{
+		name: "neon",
+		link: "/data/skin/neon.css"
+	},
+	{
+		name: "daylight",
+		link: "/data/skin/daylight.css"
+	},
+	{
+		name: "cup of coffee",
+		link: "/data/skin/cupofcoffee.css"
+	},
+	{
+		name: "coffee beans",
+		link: "/data/skin/coffeebeans.css"
+	}
+];
+
 // File types
 const FT = {
 	drive: -2,
@@ -242,6 +261,7 @@ let app = new Vue({
 	template: '#app-tpl',
 	data: {
 		skinlink: "", // URL of skin CSS
+		skinlist: skinlist,
 		isauth: false, // is authorized
 		password: "", // authorization password
 		passstate: 0, // -1 invalid password, 0 ambiguous, 1 valid password
@@ -326,20 +346,6 @@ let app = new Vue({
 				ss += file.size || 0;
 			}
 			return fmtitemsize(ss);
-		},
-
-		// skins
-
-		clsneon() {
-			return { active: this.skinlink === "/data/skin/neon.css" };
-		},
-
-		clsdaylight() {
-			return { active: this.skinlink === "/data/skin/daylight.css" };
-		},
-
-		clscupofcoffee() {
-			return { active: this.skinlink === "/data/skin/cupofcoffee.css" };
 		},
 
 		// common buttons enablers
@@ -607,18 +613,6 @@ let app = new Vue({
 			this.skinlink = skinlink;
 			$("#skinlink").attr("href", skinlink);
 			sessionStorage.setItem('skinlink', skinlink);
-		},
-
-		onneon() {
-			this.setskin("/data/skin/neon.css");
-		},
-
-		ondaylight() {
-			this.setskin("/data/skin/daylight.css");
-		},
-
-		oncupofcoffee() {
-			this.setskin("/data/skin/cupofcoffee.css");
 		},
 
 		onhome() {

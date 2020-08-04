@@ -1,11 +1,11 @@
 body {
-	color: rgb(74, 26, 3);
-	background-color: #e4a44c;
+	color: #e0a854;
+	background-color: #582c18;
 	font-family: Verdana, Geneva, sans-serif;
 }
 
 .bg-tool {
-	background-color: #b46a20;
+	background-color: #754b28;
 }
 
 	.bg-tool .navbar-toggler {
@@ -117,7 +117,7 @@ body {
 }
 
 .folder-head .breadcrumb, .card, .modal-content {
-	background-image: url("/data/skin/cup-of-coffee.jpg");
+	background-image: url("/data/skin/coffee-beans.jpg");
 	background-position: center center;
 	background-repeat: no-repeat;
 	background-attachment: fixed;
@@ -295,7 +295,7 @@ body {
 	}
 
 .bg-stat {
-	background: rgba(102, 51, 153, 0.5); /* RebeccaPurple */
+	background: rgba(141, 113, 71, 0.5); /* coffee with milk */
 	padding: 0px 4px;
 }
 
