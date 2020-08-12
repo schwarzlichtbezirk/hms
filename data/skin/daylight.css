@@ -172,7 +172,7 @@ body {
 }
 
 .fileitem {
-	border: 1px solid rgba(189, 183, 107, 0);
+	border: 1px solid transparent;
 	padding: 4px;
 }
 
@@ -301,7 +301,7 @@ body {
 	left: 50%;
 	transform: translate(-50%,-50%);
 	width: 100%;
-	border: 3px solid azure;
+	border: 3px solid PaleGoldenRod;
 	border-radius: 0.25rem;
 }
 

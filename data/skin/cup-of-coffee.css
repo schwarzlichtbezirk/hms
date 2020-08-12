@@ -1,11 +1,11 @@
 body {
-	color: #e0a854;
-	background-color: #582c18;
+	color: rgb(74, 26, 3);
+	background-color: #e4a44c;
 	font-family: Verdana, Geneva, sans-serif;
 }
 
 .bg-tool {
-	background-color: #754b28;
+	background-color: #b46a20;
 }
 
 	.bg-tool .navbar-toggler {
@@ -117,7 +117,7 @@ body {
 }
 
 .folder-head .breadcrumb, .card, .modal-content {
-	background-image: url("/data/skin/coffee-beans.jpg");
+	background-image: url("/data/skin/cup-of-coffee.jpg");
 	background-position: center center;
 	background-repeat: no-repeat;
 	background-attachment: fixed;
@@ -177,7 +177,7 @@ body {
 }
 
 .fileitem {
-	border: 1px solid rgba(184, 134, 11, 0); /* DarkGoldenRod */
+	border: 1px solid transparent;
 	border-radius: 4px;
 	padding: 4px;
 }
@@ -295,7 +295,7 @@ body {
 	}
 
 .bg-stat {
-	background: rgba(141, 113, 71, 0.5); /* coffee with milk */
+	background: rgba(102, 51, 153, 0.25); /* RebeccaPurple */
 	padding: 0px 4px;
 }
 
@@ -314,7 +314,7 @@ body {
 	left: 50%;
 	transform: translate(-50%,-50%);
 	width: 100%;
-	border: 3px solid azure;
+	border: 3px solid Thistle;
 	border-radius: 0.25rem;
 }
 

@@ -1,11 +1,30 @@
 body {
-	color: rgb(74, 26, 3);
-	background-color: #e4a44c;
-	font-family: Verdana, Geneva, sans-serif;
+	color: #00a000;
+	background-color: #003000;
+	font-family: Monospace;
+	font-size: 1.25rem;
+}
+
+a, .btn-link {
+	color: LightGreen;
+	text-decoration: none;
+}
+
+	a:hover, .btn-link:hover {
+		color: LimeGreen;
+		text-decoration: underline;
+	}
+
+.breadcrumb-item.active {
+	color: #20c020;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+	color: Green;
 }
 
 .bg-tool {
-	background-color: #b46a20;
+	background-color: DarkGreen;
 }
 
 	.bg-tool .navbar-toggler {
@@ -52,18 +71,19 @@ body {
 .toolbtn {
 	text-decoration: none;
 	padding: 0.25rem;
-	border-radius: 25%;
+	border-radius: 0;
 }
 
 .cardbtn {
 	text-decoration: none;
 	padding: 0;
 	color: rgba(255, 255, 255, 0.5);
+	border-radius: 0;
 }
 
 	.cardbtn:hover, .cardbtn:focus {
 		color: rgba(255, 255, 255, 0.75);
-		background-color: rgba(175, 86, 4, 0.5); /* body 35%, #af5604 */
+		background-color: rgba(0, 128, 0, 0.5); /* Green */
 	}
 
 	.cardbtn:disabled, cardbtn.disabled {
@@ -79,7 +99,7 @@ body {
 
 .auth-control {
 	border: 1px solid rgba(255, 255, 255, 0.1);
-	border-radius: 1.25rem;
+	border-radius: 0;
 }
 
 @media (min-width: 576px) {
@@ -117,17 +137,14 @@ body {
 }
 
 .folder-head .breadcrumb, .card, .modal-content {
-	background-image: url("/data/skin/cup-of-coffee.jpg");
-	background-position: center center;
-	background-repeat: no-repeat;
-	background-attachment: fixed;
-	background-size: cover;
+	background-color: #001c00;
 }
 
 .hmscard > .card-header {
 	padding-top: 0.25rem;
 	padding-bottom: 0.25rem;
-	background: rgba(75, 0, 130, 0.5); /* Indigo */
+	background: rgba(0, 128, 0, 0.5); /* Green */
+	font-size: 1.25rem;
 }
 
 	.hmscard > .card-header > .navbar-nav ~ .navbar-nav {
@@ -177,26 +194,26 @@ body {
 }
 
 .fileitem {
-	border: 1px solid rgba(184, 134, 11, 0); /* DarkGoldenRod */
-	border-radius: 4px;
+	border: 1px solid transparent;
+	border-radius: 0;
 	padding: 4px;
 }
 
 	.fileitem:hover {
-		background: rgba(184, 134, 11, 0.5); /* DarkGoldenRod */
-		border: 1px solid Indigo;
+		background: ForestGreen;
+		border: 1px solid LimeGreen;
 		cursor: pointer;
 	}
 
 	.fileitem.selected {
-		background: rgba(255, 215, 0, 0.5); /* Gold */
-		border: 1px solid RebeccaPurple;
+		background: SeaGreen;
+		border: 1px solid SpringGreen;
 		box-shadow: 0px 0px 8px rgba(255, 255, 255, 0.5);
 	}
 
 		.fileitem.selected:hover {
-			background: rgba(255, 232, 102, 0.5); /* Gold 70%, #ffe866 */
-			border: 1px solid RebeccaPurple;
+			background: MediumSeaGreen;
+			border: 1px solid SpringGreen;
 			box-shadow: 0px 0px 12px rgba(255, 255, 255, 0.5);
 		}
 
@@ -214,8 +231,8 @@ body {
 
 	.fileitem > .tag {
 		text-align: center;
-		color: PaleGoldenRod;
-		background: rgba(102, 51, 153, 0.33); /* RebeccaPurple */
+		color: Lime;
+		background: #003800;
 		max-height: 3.8rem;
 		line-height: 1.25;
 		font-size: 0.72rem;
@@ -223,7 +240,7 @@ body {
 	}
 
 	.fileitem:hover > .tag {
-		background: rgba(102, 51, 153, 0.67); /* RebeccaPurple */
+		background: #004c00;
 	}
 
 .imgitem {
@@ -232,21 +249,18 @@ body {
 
 	.imgitem:hover {
 		z-index: 1;
-		background: rgba(25, 25, 112, 0.5); /* MidnightBlue */
-		box-shadow: 0px 0px 12px Moccasin;
+		box-shadow: 0px 0px 12px LawnGreen;
 		cursor: pointer;
 	}
 
 	.imgitem.selected {
 		z-index: 1;
-		background: rgba(75, 0, 130, 0.5); /* Indigo */
-		box-shadow: 0px 0px 12px Coral;
+		box-shadow: 0px 0px 12px GreenYellow;
 	}
 
 		.imgitem.selected:hover {
 			z-index: 1;
-			background: rgba(106, 90, 205, 0.5); /* SlateBlue */
-			box-shadow: 0px 0px 12px Tomato;
+			box-shadow: 0px 0px 12px White;
 		}
 
 	.imgitem > .pict > * {
@@ -280,8 +294,8 @@ body {
 		bottom: 16px;
 		display: block;
 		text-align: center;
-		color: PaleGoldenRod;
-		background: rgba(102, 51, 153, 0.33); /* RebeccaPurple */
+		color: Lime;
+		background: rgba(0, 56, 0, 0.33);
 		max-width: 112px;
 		max-height: 3.8rem;
 		line-height: 1.25;
@@ -290,12 +304,11 @@ body {
 	}
 
 	.imgitem:hover > .tag {
-		color: LightGoldenRodYellow;
-		background: rgba(102, 51, 153, 0.67); /* RebeccaPurple */
+		background: rgba(0, 56, 0, 0.67);
 	}
 
 .bg-stat {
-	background: rgba(102, 51, 153, 0.5); /* RebeccaPurple */
+	background: rgba(255, 255, 255, 0.15);
 	padding: 0px 4px;
 }
 
@@ -314,7 +327,7 @@ body {
 	left: 50%;
 	transform: translate(-50%,-50%);
 	width: 100%;
-	border: 3px solid azure;
+	border: 3px solid LightGreen;
 	border-radius: 0.25rem;
 }
 
@@ -362,19 +375,19 @@ body {
 		padding: 2px;
 		height: 24px;
 		cursor: pointer;
-		background-color: Tan;
+		background-color: #004000;
 	}
 
 		.timescale > .progress > .current {
-			background-color: Sienna;
+			background-color: #00c000;
 		}
 
 		.timescale > .progress > .buffer {
-			background-color: Peru;
+			background-color: Green;
 		}
 
 		.timescale > .progress > .timer {
-			color: HoneyDew;
+			color: PaleGreen;
 		}
 
 		.timescale > .progress > .seeker {
@@ -396,7 +409,7 @@ body {
 				width: 20px;
 				height: 20px;
 				border-radius: 50%;
-				background: RebeccaPurple;
+				background: SpringGreen;
 			}
 
 /* Photo slider section */
@@ -511,11 +524,11 @@ body {
 
 			.thumbslider > .slide > .thumb:hover {
 				opacity: 1;
-				border: 0.25rem solid LemonChiffon;
+				border: 0.25rem solid SpringGreen;
 			}
 
 			.thumbslider > .slide > .thumb.active {
 				z-index: 1036;
 				opacity: 1;
-				border: 0.25rem solid Gold;
+				border: 0.25rem solid MediumSpringGreen;
 			}

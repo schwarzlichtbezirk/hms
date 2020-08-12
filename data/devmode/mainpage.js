@@ -2,20 +2,24 @@
 
 const skinlist = [
 	{
-		name: "neon",
-		link: "/data/skin/neon.css"
-	},
-	{
 		name: "daylight",
 		link: "/data/skin/daylight.css"
 	},
 	{
+		name: "neon",
+		link: "/data/skin/neon.css"
+	},
+	{
 		name: "cup of coffee",
-		link: "/data/skin/cupofcoffee.css"
+		link: "/data/skin/cup-of-coffee.css"
 	},
 	{
 		name: "coffee beans",
-		link: "/data/skin/coffeebeans.css"
+		link: "/data/skin/coffee-beans.css"
+	},
+	{
+		name: "old monitor",
+		link: "/data/skin/old-monitor.css"
 	}
 ];
 
