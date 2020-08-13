@@ -6,6 +6,10 @@ const skinlist = [
 		link: "/data/skin/daylight.css"
 	},
 	{
+		name: "blue",
+		link: "/data/skin/blue.css"
+	},
+	{
 		name: "neon",
 		link: "/data/skin/neon.css"
 	},
