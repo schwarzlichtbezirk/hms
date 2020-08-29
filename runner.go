@@ -3,6 +3,7 @@ package hms
 import (
 	"bytes"
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -15,6 +16,7 @@ import (
 	"time"
 
 	"github.com/go-ini/ini"
+	"golang.org/x/crypto/acme/autocert" // from vendor
 )
 
 const (
@@ -37,11 +39,12 @@ var (
 var (
 	AddrHTTP          []string
 	AddrTLS           []string
-	ReadTimeout       int = 15
-	ReadHeaderTimeout int = 15
-	WriteTimeout      int = 15
-	IdleTimeout       int = 60 // in seconds
-	MaxHeaderBytes    int = 1 << 20
+	AutoCert          bool = false
+	ReadTimeout       int  = 15
+	ReadHeaderTimeout int  = 15
+	WriteTimeout      int  = 15
+	IdleTimeout       int  = 60 // in seconds
+	MaxHeaderBytes    int  = 1 << 20
 )
 
 var Log = NewLogger(os.Stderr, LstdFlags, 300)
@@ -79,6 +82,7 @@ func opensettings() {
 	var ws = cfg.Section("webserver")
 	AddrHTTP = ws.Key("addr-http").Strings(",")
 	AddrTLS = ws.Key("addr-tls").Strings(",")
+	AutoCert = ws.Key("auto-cert").MustBool(false)
 	ReadTimeout = ws.Key("read-timeout").MustInt(15)
 	ReadHeaderTimeout = ws.Key("read-header-timeout").MustInt(15)
 	WriteTimeout = ws.Key("write-timeout").MustInt(15)
@@ -259,9 +263,25 @@ func Run(gmux *Router) {
 	for i, addr := range AddrTLS {
 		var i = i // make valid access in goroutine
 		Log.Println("starts tls on " + addr)
+		var cfg *tls.Config
+		if AutoCert { // get certificate from letsencrypt.org
+			var m = &autocert.Manager{
+				Prompt: autocert.AcceptTOS,
+				Cache:  autocert.DirCache(confpath + "cert/"),
+			}
+			cfg = &tls.Config{
+				PreferServerCipherSuites: true,
+				CurvePreferences: []tls.CurveID{
+					tls.CurveP256,
+					tls.X25519,
+				},
+				GetCertificate: m.GetCertificate,
+			}
+		}
 		var srv = &http.Server{
 			Addr:              addr,
 			Handler:           gmux,
+			TLSConfig:         cfg,
 			ReadTimeout:       time.Duration(ReadTimeout) * time.Second,
 			ReadHeaderTimeout: time.Duration(ReadHeaderTimeout) * time.Second,
 			WriteTimeout:      time.Duration(WriteTimeout) * time.Second,
