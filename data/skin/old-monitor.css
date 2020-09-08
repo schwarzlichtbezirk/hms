@@ -1,6 +1,6 @@
 body {
 	color: #00a000;
-	background-color: #003000;
+	background-color: #002400;
 	font-family: Monospace;
 	font-size: 1.25rem;
 }
@@ -24,7 +24,7 @@ a, .btn-link {
 }
 
 .bg-tool {
-	background-color: DarkGreen;
+	background-color: #004c00;
 }
 
 	.bg-tool .navbar-toggler {
@@ -64,7 +64,7 @@ a, .btn-link {
 
 	.fg-tool.active,
 	.dropdown-menu.bg-tool > .dropdown-item.active {
-		color: #fff;
+		color: PaleGreen;
 		background-color: rgba(255, 255, 255, 0.25);
 	}
 
@@ -94,7 +94,7 @@ a, .btn-link {
 	}
 
 	.cardbtn.active, .active > .cardbtn {
-		color: #fff;
+		color: PaleGreen;
 	}
 
 .auth-control {
@@ -137,13 +137,13 @@ a, .btn-link {
 }
 
 .folder-head .breadcrumb, .card, .modal-content {
-	background-color: #001c00;
+	background-color: #001800;
 }
 
 .hmscard > .card-header {
 	padding-top: 0.25rem;
 	padding-bottom: 0.25rem;
-	background: rgba(0, 128, 0, 0.5); /* Green */
+	background: #003c00;
 	font-size: 1.25rem;
 }
 
@@ -156,11 +156,11 @@ a, .btn-link {
 }
 
 	.hmscard .navbar-text a {
-		color: #fff;
+		color: LightGreen;
 	}
 
 		.hmscard .navbar-text a:hover, .hmscard .navbar-text a:focus {
-			color: #fff;
+			color: LightGreen;
 		}
 
 .smoverlay {
@@ -232,7 +232,7 @@ a, .btn-link {
 	.fileitem > .tag {
 		text-align: center;
 		color: Lime;
-		background: #003800;
+		background: #003000;
 		max-height: 3.8rem;
 		line-height: 1.25;
 		font-size: 0.72rem;
@@ -240,7 +240,7 @@ a, .btn-link {
 	}
 
 	.fileitem:hover > .tag {
-		background: #004c00;
+		background: #004800;
 	}
 
 .imgitem {
@@ -295,7 +295,7 @@ a, .btn-link {
 		display: block;
 		text-align: center;
 		color: Lime;
-		background: rgba(0, 56, 0, 0.33);
+		background: rgba(0, 48, 0, 0.33);
 		max-width: 112px;
 		max-height: 3.8rem;
 		line-height: 1.25;
@@ -304,7 +304,7 @@ a, .btn-link {
 	}
 
 	.imgitem:hover > .tag {
-		background: rgba(0, 56, 0, 0.67);
+		background: rgba(0, 48, 0, 0.67);
 	}
 
 .bg-stat {
@@ -327,7 +327,7 @@ a, .btn-link {
 	left: 50%;
 	transform: translate(-50%,-50%);
 	width: 100%;
-	border: 3px solid LightGreen;
+	border: 3px solid PaleGreen;
 	border-radius: 0.25rem;
 }
 
@@ -452,7 +452,7 @@ a, .btn-link {
 		}
 
 		.photoslider > .sliderbtn.active {
-			color: #fff;
+			color: PaleGreen;
 		}
 
 	.photoslider > img.photo {

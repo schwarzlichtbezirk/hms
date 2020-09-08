@@ -1,18 +1,14 @@
 package hms
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"html/template"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"runtime"
-	"strings"
 
 	"github.com/gorilla/mux"
-	"github.com/schwarzlichtbezirk/wpk"
+	"github.com/schwarzlichtbezirk/wpk/bulk"
 )
 
 type void = struct{}
@@ -119,18 +115,22 @@ const (
 // HTTP distribution cache
 var pagecache = map[string][]byte{}
 
+// Pages aliases.
 var pagealias = map[string]string{
 	"main": "main.html",
 	"stat": "stat.html",
 }
 
-// routes aliases
+// Routes aliases.
 var routealias = map[string]string{
 	"/devm/": devmsuff,
 	"/relm/": relmsuff,
 	"/plug/": plugsuff,
 	"/asst/": asstsuff,
 }
+
+// Package root dir.
+var datapack bulk.PackDir
 
 // Puts application routes to given router.
 func RegisterRoutes(gmux *Router) {
@@ -155,9 +155,8 @@ func RegisterRoutes(gmux *Router) {
 
 	gmux.PathPrefix("/data/").Handler(http.StripPrefix("/data/", http.FileServer(&datapack)))
 	for alias, prefix := range routealias {
-		gmux.PathPrefix(alias).Handler(http.StripPrefix(alias, http.FileServer(datapack.Dir(prefix))))
+		gmux.PathPrefix(alias).Handler(http.StripPrefix(alias, http.FileServer(datapack.SubDir(prefix))))
 	}
-	gmux.Path("/pack").HandlerFunc(packageHandler)
 	gmux.PathPrefix("/file/").HandlerFunc(AjaxWrap(fileHandler))
 
 	// API routes
@@ -204,115 +203,6 @@ func registershares() {
 // Routes API //
 ////////////////
 
-type Package struct {
-	*wpk.Package
-	body []byte
-	pref string
-}
-
-func (pack *Package) Dir(pref string) *Package {
-	return &Package{
-		pack.Package,
-		pack.body,
-		pack.pref + wpk.ToKey(pref),
-	}
-}
-
-func (pack *Package) Extract(tags wpk.Tagset) []byte {
-	var offset, size = tags.Record()
-	return pack.body[uint64(offset) : uint64(offset)+uint64(size)]
-}
-
-func (pack *Package) Open(kpath string) (http.File, error) {
-	var key = pack.pref + strings.TrimPrefix(wpk.ToKey(kpath), "/")
-	if key == "" {
-		return wpk.NewDir(key, pack.Package), nil
-	}
-	var tags, is = pack.Tags[key]
-	if !is {
-		key += "/"
-		for k := range pack.Tags {
-			if strings.HasPrefix(k, key) {
-				return wpk.NewDir(key, pack.Package), nil
-			}
-		}
-		return nil, ErrNotFound
-	}
-
-	return &wpk.File{
-		Reader: *bytes.NewReader(pack.Extract(tags)),
-		Tagset: tags,
-		Pack:   pack.Package,
-	}, nil
-}
-
-var datapack = Package{
-	Package: &wpk.Package{},
-}
-
-func LoadPackage() (err error) {
-	if datapack.body, err = ioutil.ReadFile(destpath + "hms.wpk"); err != nil {
-		return
-	}
-
-	if err = datapack.Load(bytes.NewReader(datapack.body)); err != nil {
-		return
-	}
-
-	Log.Printf("cached %d files to %d aliases on %d bytes", datapack.RecNumber, datapack.TagNumber, datapack.TagOffset-wpk.PackHdrSize)
-	return
-}
-
-// hot templates reload, during server running
-func LoadTemplates() (err error) {
-	var ts, tc *template.Template
-	var load = func(tb *template.Template, pattern string) {
-		err = datapack.Glob(pattern, func(key string) error {
-			var t = tb.New(key)
-			var content = string(datapack.Extract(datapack.Tags[key]))
-			content = strings.TrimPrefix(content, "\xef\xbb\xbf") // remove UTF-8 format BOM header
-			if _, err = t.Parse(content); err != nil {
-				return err
-			}
-			return nil
-		})
-	}
-
-	ts = template.New("storage").Delims("[=[", "]=]")
-	if load(ts, tmplsuff+"*.html"); err != nil {
-		return
-	}
-
-	if tc, err = ts.Clone(); err != nil {
-		return
-	}
-	if load(tc, devmsuff+"*.html"); err != nil {
-		return
-	}
-	for _, fname := range pagealias {
-		var buf bytes.Buffer
-		if err = tc.ExecuteTemplate(&buf, devmsuff+fname, nil); err != nil {
-			return
-		}
-		pagecache[devmsuff+fname] = buf.Bytes()
-	}
-
-	if tc, err = ts.Clone(); err != nil {
-		return
-	}
-	if load(tc, relmsuff+"*.html"); err != nil {
-		return
-	}
-	for _, fname := range pagealias {
-		var buf bytes.Buffer
-		if err = tc.ExecuteTemplate(&buf, relmsuff+fname, nil); err != nil {
-			return
-		}
-		pagecache[relmsuff+fname] = buf.Bytes()
-	}
-	return
-}
-
 // Handler wrapper for AJAX API calls without authorization.
 func AjaxWrap(fn http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -320,6 +210,13 @@ func AjaxWrap(fn http.HandlerFunc) http.HandlerFunc {
 		fn(w, r)
 	}
 }
+
+const (
+	jsoncontent = "application/json;charset=utf-8"
+	htmlcontent = "text/html;charset=utf-8"
+	csscontent  = "text/css;charset=utf-8"
+	jscontent   = "text/javascript;charset=utf-8"
+)
 
 var serverlabel string
 

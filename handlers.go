@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -47,11 +46,6 @@ func pageHandler(pref, name string) http.HandlerFunc {
 }
 
 // APIHANDLER
-func packageHandler(w http.ResponseWriter, r *http.Request) {
-	http.ServeContent(w, r, "hms.wpk", starttime, bytes.NewReader(datapack.body))
-}
-
-// APIHANDLER
 func fileHandler(w http.ResponseWriter, r *http.Request) {
 	incuint(&sharecallcount, 1)
 
@@ -69,9 +63,6 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	WriteStdHeader(w)
-	if ct, ok := mimeext[strings.ToLower(filepath.Ext(path))]; ok {
-		w.Header().Set("Content-Type", ct)
-	}
 	http.ServeFile(w, r, path)
 }
 
@@ -83,11 +74,13 @@ func pingApi(w http.ResponseWriter, r *http.Request) {
 
 // APIHANDLER
 func reloadApi(w http.ResponseWriter, r *http.Request) {
-	if err := LoadPackage(); err != nil {
+	var err error
+
+	if err = datapack.ReadWPK(destpath + "hms.wpk"); err != nil {
 		WriteError500(w, err, EC_reloadload)
 		return
 	}
-	if err := LoadTemplates(); err != nil {
+	if err = loadtemplates(); err != nil {
 		WriteError500(w, err, EC_reloadtmpl)
 		return
 	}

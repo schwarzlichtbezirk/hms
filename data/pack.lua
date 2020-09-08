@@ -88,10 +88,13 @@ if logdir then logfmt("writes %s package", pkg.path) end
 
 packdir(scrdir, "")
 for i, fpath in ipairs{path.glob(scrdir.."../?*.?*")} do
-	local kpath = "src/"..string.match(fpath, "/([%w_]+%.%w+)$")
-	pkg:putfile(kpath, fpath)
-	pkg:settag(kpath, "author", "schwarzlichtbezirk")
-	if logrec then logfile(kpath) end
+	local fname = string.match(fpath, "/([%w_]+%.%w+)$")
+	if fname then
+		local kpath = "src/"..fname
+		pkg:putfile(kpath, fpath)
+		pkg:settag(kpath, "author", "schwarzlichtbezirk")
+		if logrec then logfile(kpath) end
+	end
 end
 
 if logdir then

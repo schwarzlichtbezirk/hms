@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"errors"
+	"html/template"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -16,7 +17,7 @@ import (
 	"time"
 
 	"github.com/go-ini/ini"
-	"golang.org/x/crypto/acme/autocert" // from vendor
+	"golang.org/x/crypto/acme/autocert"
 )
 
 const (
@@ -174,6 +175,58 @@ var dict = func(values ...interface{}) (map[string]interface{}, error) {
 	return dict, nil
 }
 
+// hot templates reload, during server running
+func loadtemplates() (err error) {
+	var ts, tc *template.Template
+	var load = func(tb *template.Template, pattern string) {
+		err = datapack.Glob(pattern, func(key string) (err error) {
+			var bcnt []byte
+			if bcnt, err = datapack.Extract(datapack.Tags[key]); err != nil {
+				return
+			}
+			var content = strings.TrimPrefix(string(bcnt), "\xef\xbb\xbf") // remove UTF-8 format BOM header
+			if _, err = tb.New(key).Parse(content); err != nil {
+				return
+			}
+			return
+		})
+	}
+
+	ts = template.New("storage").Delims("[=[", "]=]")
+	if load(ts, tmplsuff+"*.html"); err != nil {
+		return
+	}
+
+	if tc, err = ts.Clone(); err != nil {
+		return
+	}
+	if load(tc, devmsuff+"*.html"); err != nil {
+		return
+	}
+	for _, fname := range pagealias {
+		var buf bytes.Buffer
+		if err = tc.ExecuteTemplate(&buf, devmsuff+fname, nil); err != nil {
+			return
+		}
+		pagecache[devmsuff+fname] = buf.Bytes()
+	}
+
+	if tc, err = ts.Clone(); err != nil {
+		return
+	}
+	if load(tc, relmsuff+"*.html"); err != nil {
+		return
+	}
+	for _, fname := range pagealias {
+		var buf bytes.Buffer
+		if err = tc.ExecuteTemplate(&buf, relmsuff+fname, nil); err != nil {
+			return
+		}
+		pagecache[relmsuff+fname] = buf.Bytes()
+	}
+	return
+}
+
 //////////////////////
 // Start web server //
 //////////////////////
@@ -217,11 +270,12 @@ func Init() {
 	loadhidden()
 	loadshared()
 	// load package with data files
-	if err = LoadPackage(); err != nil {
+	if err = datapack.ReadWPK(destpath + "hms.wpk"); err != nil {
 		Log.Fatal("can not load wpk-package: " + err.Error())
 	}
+	Log.Printf("cached %d files to %d aliases on %d bytes", datapack.RecNumber, datapack.TagNumber, datapack.TagOffset)
 	// insert components templates into pages
-	if err = LoadTemplates(); err != nil {
+	if err = loadtemplates(); err != nil {
 		Log.Fatal(err)
 	}
 
@@ -358,6 +412,8 @@ func Done() {
 		defer srvwg.Done()
 		saveshared()
 	}()
+
+	datapack.Close()
 
 	srvwg.Wait()
 }
