@@ -25,20 +25,22 @@ const (
 	FT_photo = 7
 	FT_tga   = 8
 	FT_bmp   = 9
-	FT_gif   = 10
-	FT_png   = 11
+	FT_dds   = 10
+	FT_tiff  = 11
 	FT_jpeg  = 12
-	FT_tiff  = 13
-	FT_webp  = 14
-	FT_pdf   = 15
-	FT_html  = 16
-	FT_text  = 17
-	FT_scr   = 18
-	FT_cfg   = 19
-	FT_log   = 20
-	FT_cab   = 21
-	FT_zip   = 22
-	FT_rar   = 23
+	FT_gif   = 13
+	FT_png   = 14
+	FT_webp  = 15
+	FT_psd   = 16
+	FT_pdf   = 17
+	FT_html  = 18
+	FT_text  = 19
+	FT_scr   = 20
+	FT_cfg   = 21
+	FT_log   = 22
+	FT_cab   = 23
+	FT_zip   = 24
+	FT_rar   = 25
 )
 
 // File groups
@@ -68,11 +70,13 @@ var typetogroup = map[int]int{
 	FT_photo: FG_image,
 	FT_tga:   FG_image,
 	FT_bmp:   FG_image,
+	FT_dds:   FG_image,
+	FT_tiff:  FG_image,
+	FT_jpeg:  FG_image,
 	FT_gif:   FG_image,
 	FT_png:   FG_image,
-	FT_jpeg:  FG_image,
-	FT_tiff:  FG_image,
 	FT_webp:  FG_image,
+	FT_psd:   FG_image,
 	FT_pdf:   FG_books,
 	FT_html:  FG_books,
 	FT_text:  FG_texts,
@@ -99,15 +103,18 @@ var extset = map[string]int{
 	".tga":  FT_tga,
 	".bmp":  FT_bmp,
 	".dib":  FT_bmp,
-	".gif":  FT_gif,
-	".png":  FT_png,
+	".dds":  FT_dds,
+	".tif":  FT_tiff,
+	".tiff": FT_tiff,
 	".jpg":  FT_jpeg,
 	".jpe":  FT_jpeg,
 	".jpeg": FT_jpeg,
 	".jfif": FT_jpeg,
-	".tif":  FT_tiff,
-	".tiff": FT_tiff,
+	".gif":  FT_gif,
+	".png":  FT_png,
 	".webp": FT_webp,
+	".psd":  FT_psd,
+	".psb":  FT_psd,
 
 	// Text
 	".pdf":   FT_pdf,
@@ -391,7 +398,7 @@ func MakeProp(fpath string, fi os.FileInfo) (prop FileProper) {
 			tk.TypeVal = ft
 			tk.Setup(fpath, fi)
 			prop = &tk
-		} else if ft == FT_png || ft == FT_jpeg || ft == FT_tiff || ft == FT_webp {
+		} else if ft == FT_jpeg || ft == FT_tiff || ft == FT_png || ft == FT_webp {
 			var ek ExifKit
 			ek.TypeVal = ft
 			ek.Setup(fpath, fi)

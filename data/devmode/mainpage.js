@@ -41,20 +41,22 @@ const FT = {
 	photo: 7,
 	tga: 8,
 	bmp: 9,
-	gif: 10,
-	png: 11,
+	dds: 10,
+	tiff: 11,
 	jpeg: 12,
-	tiff: 13,
-	webp: 14,
-	pdf: 15,
-	html: 16,
-	text: 17,
-	scr: 18,
-	cfg: 19,
-	log: 20,
-	cab: 21,
-	zip: 22,
-	rar: 23
+	gif: 13,
+	png: 14,
+	webp: 15,
+	psd: 16,
+	pdf: 17,
+	html: 18,
+	text: 19,
+	scr: 20,
+	cfg: 21,
+	log: 22,
+	cab: 23,
+	zip: 24,
+	rar: 25
 };
 
 // File groups
@@ -82,11 +84,13 @@ const FTtoFG = {
 	[FT.photo]: FG.image,
 	[FT.tga]: FG.image,
 	[FT.bmp]: FG.image,
+	[FT.dds]: FG.image,
+	[FT.tiff]: FG.image,
+	[FT.jpeg]: FG.image,
 	[FT.gif]: FG.image,
 	[FT.png]: FG.image,
-	[FT.jpeg]: FG.image,
-	[FT.tiff]: FG.image,
 	[FT.webp]: FG.image,
+	[FT.psd]: FG.image,
 	[FT.pdf]: FG.books,
 	[FT.html]: FG.books,
 	[FT.text]: FG.texts,
@@ -119,11 +123,13 @@ const FTtoFV = {
 	[FT.photo]: FV.image,
 	[FT.tga]: FV.image,
 	[FT.bmp]: FV.image,
+	[FT.dds]: FV.image,
+	[FT.tiff]: FV.image,
+	[FT.jpeg]: FV.image,
 	[FT.gif]: FV.image,
 	[FT.png]: FV.image,
-	[FT.jpeg]: FV.image,
-	[FT.tiff]: FV.image,
 	[FT.webp]: FV.image,
+	[FT.psd]: FV.image,
 	[FT.pdf]: FV.none,
 	[FT.html]: FV.none,
 	[FT.text]: FV.none,
@@ -189,16 +195,19 @@ const geticonname = file => {
 			return "doc-photo";
 		case FT.tga:
 		case FT.bmp:
+		case FT.dds:
 			return "doc-bitmap";
+		case FT.tiff:
+		case FT.jpeg:
+			return "doc-jpeg";
 		case FT.gif:
 			return "doc-gif";
 		case FT.png:
 			return "doc-png";
-		case FT.jpeg:
-		case FT.tiff:
-			return "doc-jpeg";
 		case FT.webp:
 			return "doc-webp";
+		case FT.psd:
+			return "doc-psd";
 		case FT.pdf:
 			return "doc-pdf";
 		case FT.html:

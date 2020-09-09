@@ -16,7 +16,13 @@ import (
 
 	"github.com/bluele/gcache"
 	"github.com/disintegration/gift"
-	_ "github.com/ftrvxmtrx/tga"
+	_ "github.com/oov/psd"
+	_ "github.com/spate/glimage/dds"
+	_ "golang.org/x/image/bmp"
+	_ "golang.org/x/image/tiff"
+	_ "golang.org/x/image/webp"
+
+	_ "github.com/ftrvxmtrx/tga" // put TGA to end, decoder does not register magic prefix
 )
 
 const (
@@ -167,7 +173,7 @@ func CacheImg(fp FileProper, fpath string, force bool) (tmb *ThumbElem) {
 			return // can not write gif
 		}
 		mime = "image/gif"
-	case "png":
+	case "png", "dds", "webp", "psd":
 		if err = thumbpngenc.Encode(&buf, dst); err != nil {
 			return // can not write png
 		}
