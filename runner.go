@@ -53,12 +53,6 @@ var Log = NewLogger(os.Stderr, LstdFlags, 300)
 var starttime = time.Now() // save server start time
 var httpsrv, tlssrv []*http.Server
 
-// roots list
-var roots []string
-
-// patterns for hidden files
-var hidden []string
-
 ///////////////////////////////
 // Startup opening functions //
 ///////////////////////////////
@@ -91,71 +85,59 @@ func opensettings() {
 	MaxHeaderBytes = ws.Key("max-header-bytes").MustInt(1 << 20)
 }
 
-func loadroots() {
+func loadaccounts() {
 	var err error
 
 	var body []byte
-	if body, err = ioutil.ReadFile(confpath + "roots.json"); err != nil {
-		Log.Fatal("can not read roots list file: " + err.Error())
+	if body, err = ioutil.ReadFile(confpath + "accounts.json"); err != nil {
+		Log.Fatal("can not read accounts: " + err.Error())
 	}
 
 	var dec = json.NewDecoder(bytes.NewReader(body))
-	if err = dec.Decode(&roots); err != nil {
-		Log.Fatal("can not decode roots list: " + err.Error())
+	if err = dec.Decode(&AccList); err != nil {
+		Log.Fatal("can not decode accounts array: " + err.Error())
 	}
 
-	// bring all to valid slashes
-	for i, root := range roots {
-		roots[i] = filepath.ToSlash(root)
-	}
-}
+	AccMap = make(map[int]*Account, len(AccList))
+	for _, acc := range AccList {
+		Log.Printf("created account id=%d, login='%s'", acc.ID, acc.Login)
+		// bring all roots to valid slashes
+		for i, path := range acc.Roots {
+			acc.Roots[i] = filepath.ToSlash(path)
+		}
 
-func loadhidden() {
-	var err error
+		// bring all hissen to lowercase
+		for i, path := range acc.Hidden {
+			acc.Hidden[i] = strings.ToLower(filepath.ToSlash(path))
+		}
 
-	var body []byte
-	if body, err = ioutil.ReadFile(confpath + "hidden.json"); err != nil {
-		Log.Fatal("can not read hidden filenames patterns: " + err.Error())
-	}
+		// build shares tables
+		acc.UpdateShares()
 
-	var dec = json.NewDecoder(bytes.NewReader(body))
-	if err = dec.Decode(&hidden); err != nil {
-		Log.Fatal("can not decode hidden filenames array: " + err.Error())
-	}
-
-	// bring all to lowercase
-	for i, path := range hidden {
-		hidden[i] = strings.ToLower(filepath.ToSlash(path))
-	}
-}
-
-func loadshared() {
-	var err error
-
-	var body []byte
-	if body, err = ioutil.ReadFile(confpath + "shared.json"); err != nil {
-		Log.Fatal("can not read shared resources list file: " + err.Error())
+		// build accounts map
+		AccMap[acc.ID] = acc
 	}
 
-	var dec = json.NewDecoder(bytes.NewReader(body))
-	if err = dec.Decode(&sharespref); err != nil {
-		Log.Fatal("can not decode shared list: " + err.Error())
+	// init default account
+	var ok bool
+	if DefAcc, ok = AccMap[0]; !ok {
+		Log.Fatal("default account is not found")
 	}
 }
 
-func saveshared() {
+func saveaccounts() {
 	var err error
 
 	var buf bytes.Buffer
 	var enc = json.NewEncoder(&buf)
 	enc.SetIndent("", "\t")
-	if err = enc.Encode(sharespref); err != nil {
-		Log.Println("can not encode shared list: " + err.Error())
+	if err = enc.Encode(AccList); err != nil {
+		Log.Println("can not encode accounts list: " + err.Error())
 		return
 	}
 
-	if err = ioutil.WriteFile(confpath+"shared.json", buf.Bytes(), 0644); err != nil {
-		Log.Println("can not write shared resources list file: " + err.Error())
+	if err = ioutil.WriteFile(confpath+"accounts.json", buf.Bytes(), 0644); err != nil {
+		Log.Println("can not write accounts list file: " + err.Error())
 		return
 	}
 }
@@ -266,9 +248,8 @@ func Init() {
 
 	// load settings files
 	opensettings()
-	loadroots()
-	loadhidden()
-	loadshared()
+	// load accounts with roots, hidden and shares lists
+	loadaccounts()
 	// load package with data files
 	if err = datapack.ReadWPK(destpath + "hms.wpk"); err != nil {
 		Log.Fatal("can not load wpk-package: " + err.Error())
@@ -278,8 +259,6 @@ func Init() {
 	if err = loadtemplates(); err != nil {
 		Log.Fatal(err)
 	}
-
-	registershares()
 
 	// run meters updater
 	meterscanner = time.AfterFunc(time.Second, meterupdater)
@@ -410,7 +389,7 @@ func Done() {
 	srvwg.Add(1)
 	go func() {
 		defer srvwg.Done()
-		saveshared()
+		saveaccounts()
 	}()
 
 	datapack.Close()

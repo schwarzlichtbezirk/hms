@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"os"
 	"runtime"
 
 	"github.com/gorilla/mux"
@@ -180,23 +179,6 @@ func RegisterRoutes(gmux *Router) {
 	var tmb = api.PathPrefix("/tmb").Subrouter()
 	tmb.Path("/chk").HandlerFunc(AjaxWrap(tmbchkApi))
 	tmb.Path("/scn").HandlerFunc(AjaxWrap(tmbscnApi))
-}
-
-func registershares() {
-	for pref, path := range sharespref {
-		var fi, err = os.Stat(path)
-		if err != nil {
-			Log.Printf("can not create share '%s' on path '%s'", pref, path)
-			delete(sharespref, pref)
-			continue
-		}
-
-		var prop = MakeProp(path, fi)
-		prop.SetPref(pref)
-		propcache.Set(path, prop)
-		sharespath[path] = pref
-		Log.Printf("created share '%s' on path '%s'", pref, path)
-	}
 }
 
 ////////////////

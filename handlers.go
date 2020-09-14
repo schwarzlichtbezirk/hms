@@ -184,13 +184,13 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if admerr == nil || ShowSharesUser {
-			shrmux.RLock()
-			for _, fpath := range sharespref {
+			DefAcc.shrmux.RLock()
+			for _, fpath := range DefAcc.sharespref {
 				if cp, err := propcache.Get(fpath); err == nil {
 					ret.AddProp(cp.(FileProper))
 				}
 			}
-			shrmux.RUnlock()
+			DefAcc.shrmux.RUnlock()
 		}
 	} else {
 		if ret, err = readdir(fpath); err != nil {
@@ -211,23 +211,25 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 func purgeApi(w http.ResponseWriter, r *http.Request) {
 	propcache.Purge()
 	thumbcache.Purge()
-	registershares()
+	for _, acc := range AccList {
+		acc.UpdateShares()
+	}
 
 	WriteJson(w, http.StatusOK, nil)
 }
 
 // APIHANDLER
 func shrlstApi(w http.ResponseWriter, r *http.Request) {
-	shrmux.RLock()
-	var lst = make([]FileProper, len(sharespref))
+	DefAcc.shrmux.RLock()
+	var lst = make([]FileProper, len(DefAcc.sharespref))
 	var i int
-	for _, fpath := range sharespref {
+	for _, fpath := range DefAcc.sharespref {
 		if cp, err := propcache.Get(fpath); err == nil {
 			lst[i] = cp.(FileProper)
 		}
 		i++
 	}
-	shrmux.RUnlock()
+	DefAcc.shrmux.RUnlock()
 	var jb, _ = json.Marshal(lst)
 
 	WriteJson(w, http.StatusOK, jb)
@@ -242,9 +244,9 @@ func shraddApi(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	shrmux.RLock()
-	var _, has = sharespath[spath]
-	shrmux.RUnlock()
+	DefAcc.shrmux.RLock()
+	var _, has = DefAcc.sharespath[spath]
+	DefAcc.shrmux.RUnlock()
 	if has { // share already added
 		WriteJson(w, http.StatusOK, []byte("null"))
 		return
@@ -258,7 +260,7 @@ func shraddApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var prop = MakeProp(fpath, fi)
-	MakeShare(fpath, prop)
+	DefAcc.MakeShare(fpath, prop)
 
 	Log.Printf("add share: %s as %s", fpath, prop.Pref())
 
@@ -272,12 +274,12 @@ func shrdelApi(w http.ResponseWriter, r *http.Request) {
 	// get arguments & process
 	var pref, path string
 	if pref = r.FormValue("pref"); len(pref) > 0 {
-		ok = DelSharePref(pref)
+		ok = DefAcc.DelSharePref(pref)
 		if ok {
 			Log.Printf("delete share: %s", pref)
 		}
 	} else if path = filepath.ToSlash(r.FormValue("path")); len(path) > 0 {
-		ok = DelSharePath(path)
+		ok = DefAcc.DelSharePath(path)
 		if ok {
 			Log.Printf("delete share: %s", path)
 		}

@@ -5,7 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 
 	"github.com/bluele/gcache"
 	"github.com/dhowden/tag"
@@ -200,10 +199,6 @@ var extset = map[string]int{
 }
 
 const shareprefix = "/file/"
-
-var sharespath = map[string]string{} // active shares by full path
-var sharespref = map[string]string{} // active shares by prefix
-var shrmux sync.RWMutex
 
 var propcache = gcache.New(32 * 1024).LRU().Build()
 
@@ -411,95 +406,8 @@ func MakeProp(fpath string, fi os.FileInfo) (prop FileProper) {
 		}
 	}
 
-	shrmux.RLock()
-	if pref, ok := sharespath[fpath]; ok {
-		prop.SetPref(pref)
-	}
-	shrmux.RUnlock()
-
 	propcache.Set(fpath, prop)
 	return
-}
-
-// Looks for correct prefix and add share with it.
-func MakeShare(path string, prop FileProper) {
-	var pref string
-	var name = prop.Name()
-	if len(name) > 8 {
-		pref = name[:8]
-	} else {
-		pref = name
-	}
-	var fit = true
-	for _, b := range pref {
-		if (b < '0' || b > '9') && (b < 'a' || b > 'z') && (b < 'A' || b > 'Z') && b != '-' && b != '_' {
-			fit = false
-		}
-	}
-
-	if fit && AddShare(pref, path, prop) {
-		return
-	}
-	for i := 0; !AddShare(makerandstr(4), path, prop); i++ {
-		if i > 1000 {
-			panic("can not generate share prefix")
-		}
-	}
-}
-
-// Add share with given prefix.
-func AddShare(pref string, path string, prop FileProper) bool {
-	shrmux.RLock()
-	var _, ok = sharespref[pref]
-	shrmux.RUnlock()
-
-	if !ok {
-		prop.SetPref(pref)
-
-		shrmux.Lock()
-		sharespath[path] = pref
-		sharespref[pref] = path
-		shrmux.Unlock()
-	}
-	return !ok
-}
-
-// Delete share by given prefix.
-func DelSharePref(pref string) bool {
-	shrmux.RLock()
-	var path, ok = sharespref[pref]
-	shrmux.RUnlock()
-
-	if ok {
-		if cp, err := propcache.Get(path); err == nil {
-			cp.(FileProper).SetPref("")
-		}
-
-		shrmux.Lock()
-		delete(sharespath, path)
-		delete(sharespref, pref)
-		shrmux.Unlock()
-	}
-	return ok
-}
-
-// Delete share by given shared path.
-func DelSharePath(path string) bool {
-	shrmux.RLock()
-	var pref, ok = sharespath[path]
-	shrmux.RUnlock()
-
-	if ok {
-		if cp, err := propcache.Get(path); err == nil {
-			cp.(FileProper).SetPref("")
-		}
-
-		shrmux.Lock()
-		delete(sharespath, path)
-		delete(sharespref, pref)
-		shrmux.Unlock()
-	}
-	return ok
 }
 
 // Returned data for "getdrv", "folder" API handlers.
@@ -545,9 +453,9 @@ func getsharepath(spath string) string {
 	if pref == "" {
 		return spath
 	}
-	shrmux.RLock()
-	var path, ok = sharespref[pref]
-	shrmux.RUnlock()
+	DefAcc.shrmux.RLock()
+	var path, ok = DefAcc.sharespref[pref]
+	DefAcc.shrmux.RUnlock()
 	if !ok {
 		return spath
 	}
@@ -558,19 +466,19 @@ func checksharepath(spath string) (string, bool) {
 	var pref, suff = splitprefsuff(spath)
 	if pref == "" {
 		var shared bool
-		shrmux.RLock()
-		for _, fpath := range sharespref {
+		DefAcc.shrmux.RLock()
+		for _, fpath := range DefAcc.sharespref {
 			if strings.HasPrefix(spath, fpath) {
 				shared = true
 				break
 			}
 		}
-		shrmux.RUnlock()
+		DefAcc.shrmux.RUnlock()
 		return spath, shared
 	}
-	shrmux.RLock()
-	var fpath, ok = sharespref[pref]
-	shrmux.RUnlock()
+	DefAcc.shrmux.RLock()
+	var fpath, ok = DefAcc.sharespref[pref]
+	DefAcc.shrmux.RUnlock()
 	if !ok {
 		return spath, false
 	}
@@ -579,7 +487,7 @@ func checksharepath(spath string) (string, bool) {
 
 // Scan all available drives installed on local machine.
 func scanroots() (drvs []*DirKit) {
-	for _, root := range roots {
+	for _, root := range DefAcc.Roots {
 		var fpath = root + "/"
 		if _, err := os.Stat(fpath); err == nil {
 			var dk DirKit
@@ -624,7 +532,7 @@ scanprop:
 	for _, fi := range fis {
 		var fpath = dirname + fi.Name()
 		var cmppath = strings.ToLower(filepath.ToSlash(fpath))
-		for _, pat := range hidden {
+		for _, pat := range DefAcc.Hidden {
 			var matched bool
 			if matched, _ = filepath.Match(pat, cmppath); matched {
 				continue scanprop

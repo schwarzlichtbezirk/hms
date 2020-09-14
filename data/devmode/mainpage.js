@@ -280,6 +280,8 @@ let app = new Vue({
 		skinlink: "", // URL of skin CSS
 		skinlist: skinlist,
 		isauth: false, // is authorized
+		showauth: false, // display authorization form
+		login: "", // authorization login
 		password: "", // authorization password
 		passstate: 0, // -1 invalid password, 0 ambiguous, 1 valid password
 
@@ -380,6 +382,9 @@ let app = new Vue({
 			return !this.curpathway.length;
 		},
 
+		textauthcaret() {
+			return this.showauth ? 'arrow_right' : 'arrow_left';
+		},
 		clspass() {
 			return !this.passstate ? ''
 				: this.passstate === -1 ? 'is-invalid' : 'is-valid';
@@ -414,6 +419,9 @@ let app = new Vue({
 			} else {
 				return "to root folder";
 			}
+		},
+		hintauthcaret() {
+			return this.showauth ? "hide login fields" : "show login fields";
 		}
 	},
 	methods: {
@@ -693,6 +701,9 @@ let app = new Vue({
 				.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
 		},
 
+		onauthcaret() {
+			this.showauth = !this.showauth;
+		},
 		onpasschange() {
 			this.passstate = 0;
 		},
@@ -705,7 +716,9 @@ let app = new Vue({
 					const hash = sha256.hmac.create(response.data);
 					hash.update(this.password);
 					return fetchajax("POST", "/api/signin", {
-						pubk: response.data, hash: hash.digest()
+						pubk: response.data,
+						name: this.login,
+						hash: hash.digest()
 					});
 				}
 				return Promise.reject();

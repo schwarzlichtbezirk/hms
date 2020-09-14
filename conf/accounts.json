@@ -1,0 +1,61 @@
+[
+	{
+		"id": 0,
+		"login": "admin",
+		"password": "dag qus fly in the sky",
+		"roots": [
+			"C:",
+			"D:",
+			"E:",
+			"F:",
+			"G:",
+			"H:",
+			"I:",
+			"J:",
+			"K:",
+			"L:",
+			"M:",
+			"N:",
+			"O:",
+			"P:",
+			"Q:",
+			"R:",
+			"S:",
+			"T:",
+			"U:",
+			"V:",
+			"W:",
+			"X:",
+			"Y:",
+			"Z:"
+		],
+		"hidden": [
+			"?:/System Volume Information",
+			"*.sys",
+			"*.tmp",
+			"*.bak",
+			"*/.*",
+			"?:/Windows",
+			"?:/WindowsApps",
+			"?:/$Recycle.Bin",
+			"?:/Program Files",
+			"?:/Program Files (x86)",
+			"?:/ProgramData",
+			"?:/Recovery",
+			"?:/Config.Msi",
+			"*/Thumb.db"
+		],
+		"shares": [
+			{
+				"path": "H:/Sadness (violent mix).mp3",
+				"pref": "K547",
+				"name": "Sadness (violent mix).mp3"
+			},
+			{
+				"path": "E:/Music/",
+				"pref": "Music",
+				"name": "Music"
+			}
+		]
+	}
+]
