@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -18,6 +19,7 @@ var (
 	ErrNoJson = errors.New("data not given")
 	ErrNoData = errors.New("data is empty")
 
+	ErrAccAbsent = errors.New("account with given id is not found")
 	ErrNotFound  = errors.New("404 page not found")
 	ErrArgNoNum  = errors.New("'num' parameter not recognized")
 	ErrArgNoPath = errors.New("'path' argument required")
@@ -49,8 +51,26 @@ func pageHandler(pref, name string) http.HandlerFunc {
 func fileHandler(w http.ResponseWriter, r *http.Request) {
 	incuint(&sharecallcount, 1)
 
-	var shr = r.URL.Path[len(shareprefix):]
-	var path, shared = checksharepath(shr)
+	var chunks = strings.Split(r.URL.Path, "/")
+	if len(chunks) < 4 {
+		panic("bad route for URL " + r.URL.Path)
+	}
+
+	var accid uint64
+	var err error
+	if accid, err = strconv.ParseUint(chunks[1][2:], 10, 32); err != nil {
+		WriteError400(w, err, EC_filebadaccid)
+		return
+	}
+
+	var acc *Account
+	var isacc bool
+	if acc, isacc = AccMap[int(accid)]; !isacc {
+		WriteError400(w, ErrAccAbsent, EC_filenoacc)
+		return
+	}
+
+	var path, shared = acc.CheckSharePath(strings.Join(chunks[3:], "/"))
 	if !shared {
 		if err, _ := CheckAuth(r); err != nil {
 			WriteJson(w, http.StatusUnauthorized, err)
@@ -170,7 +190,7 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 	var spath = filepath.ToSlash(r.FormValue("path"))
 
 	var isroot = len(spath) == 0
-	var fpath, shared = checksharepath(spath)
+	var fpath, shared = DefAcc.CheckSharePath(spath)
 
 	var admerr, auth = CheckAuth(r)
 	if admerr != nil && (auth || (!isroot && !shared)) {
@@ -252,7 +272,7 @@ func shraddApi(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var fpath = getsharepath(spath)
+	var fpath = DefAcc.GetSharePath(spath)
 	var fi, err = os.Stat(fpath)
 	if err != nil {
 		WriteJson(w, http.StatusNotFound, &AjaxErr{err, EC_addshrbadpath})

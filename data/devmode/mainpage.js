@@ -234,7 +234,7 @@ const geticonname = file => {
 const encode = (uri) => encodeURI(uri).replace('#', '%23').replace('&', '%26').replace('+', '%2B');
 
 const getfileurl = (file, pref) => {
-	pref = pref || shareprefix;
+	pref = "/id" + app.accid + (pref || shareprefix);
 	let url;
 	if (file.pref) {
 		url = pref + file.pref;
@@ -280,6 +280,7 @@ let app = new Vue({
 		skinlink: "", // URL of skin CSS
 		skinlist: skinlist,
 		isauth: false, // is authorized
+		accid: 0, // account ID
 		showauth: false, // display authorization form
 		login: "", // authorization login
 		password: "", // authorization password
@@ -436,7 +437,7 @@ let app = new Vue({
 				this.filelist = [];
 				this.curpath = file;
 				window.history.replaceState(file, file.path,
-					(devmode ? "/dev" : "") + "/path/" + file.path);
+					`${(devmode ? "/dev" : "")}/id${this.accid}/path/${file.path}`);
 				// init map card
 				this.$refs.mapcard.new();
 
@@ -751,17 +752,30 @@ let app = new Vue({
 		auth.on('auth', is => this.isauth = is);
 		ajaxcc.on('ajax', count => this.loadcount += count);
 
-		let uri = window.location.pathname;
-		if (devmode) {
-			uri = uri.substr(4); // cut "/dev" prefix
+		const chunks = decodeURI(window.location.pathname).split('/');
+		chunks.shift(); // remove first empty element
+		if (chunks[0] === "dev") {
+			chunks.shift(); // cut "dev" prefix
 		}
-		const path = decodeURI(uri.substr(6));
-		if (path && uri.substr(0, 6) === "/path/") {
-			const arr = path.split('/');
-			const isslash = !arr[arr.length - 1];
+		console.log(chunks);
+
+		// get account id
+		if (chunks[0].substr(0, 2) === "id") {
+			this.accid = Number(chunks[0].substr(2));
+			chunks.shift();
+		} else {
+			this.accid = 0;
+		}
+
+		// open path
+		if (chunks[0] === "path") {
+			chunks.shift();
+			if (chunks[chunks.length - 1].length > 0) {
+				chunks.push(""); // bring it to true path
+			}
 			const file = {
-				name: arr[arr.length - (isslash ? 2 : 1)],
-				path: path + (isslash ? '' : '/'),
+				name: chunks[chunks.length - 2],
+				path: chunks.join("/"),
 				size: 0, time: 0, type: FT.dir
 			};
 

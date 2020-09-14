@@ -120,7 +120,7 @@ func loadaccounts() {
 
 	// init default account
 	var ok bool
-	if DefAcc, ok = AccMap[0]; !ok {
+	if DefAcc, ok = AccMap[DefAccID]; !ok {
 		Log.Fatal("default account is not found")
 	}
 }

@@ -198,8 +198,6 @@ var extset = map[string]int{
 	".rar": FT_rar,
 }
 
-const shareprefix = "/file/"
-
 var propcache = gcache.New(32 * 1024).LRU().Build()
 
 // File properties interface.
@@ -422,67 +420,6 @@ func (fr *folderRet) AddProp(prop FileProper) {
 	} else {
 		fr.Files = append(fr.Files, prop)
 	}
-}
-
-var sharecharset = []byte("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
-
-func makerandstr(n int) string {
-	var l = byte(len(sharecharset))
-	var str = make([]byte, n)
-	randbytes(str)
-	for i := 0; i < n; i++ {
-		str[i] = sharecharset[str[i]%l]
-	}
-	return string(str)
-}
-
-// Returns share prefix and remained suffix
-func splitprefsuff(share string) (string, string) {
-	for i, c := range share {
-		if c == '/' || c == '\\' {
-			return share[:i], share[i+1:]
-		} else if c == '.' || c == ':' { // prefix can not be with dots
-			return "", share
-		}
-	}
-	return share, ""
-}
-
-func getsharepath(spath string) string {
-	var pref, suff = splitprefsuff(spath)
-	if pref == "" {
-		return spath
-	}
-	DefAcc.shrmux.RLock()
-	var path, ok = DefAcc.sharespref[pref]
-	DefAcc.shrmux.RUnlock()
-	if !ok {
-		return spath
-	}
-	return path + suff
-}
-
-func checksharepath(spath string) (string, bool) {
-	var pref, suff = splitprefsuff(spath)
-	if pref == "" {
-		var shared bool
-		DefAcc.shrmux.RLock()
-		for _, fpath := range DefAcc.sharespref {
-			if strings.HasPrefix(spath, fpath) {
-				shared = true
-				break
-			}
-		}
-		DefAcc.shrmux.RUnlock()
-		return spath, shared
-	}
-	DefAcc.shrmux.RLock()
-	var fpath, ok = DefAcc.sharespref[pref]
-	DefAcc.shrmux.RUnlock()
-	if !ok {
-		return spath, false
-	}
-	return fpath + suff, true
 }
 
 // Scan all available drives installed on local machine.

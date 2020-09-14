@@ -74,12 +74,16 @@ const (
 	EC_pageabsent = 30
 	EC_fileabsent = 31
 
+	// file
+	EC_filebadaccid = 32
+	EC_filenoacc    = 33
+
 	// reload
-	EC_reloadload = 32
-	EC_reloadtmpl = 33
+	EC_reloadload = 34
+	EC_reloadtmpl = 35
 
 	// getlog
-	EC_getlogbadnum = 34
+	EC_getlogbadnum = 36
 
 	// folder
 	EC_folderdeny = 40
@@ -143,8 +147,11 @@ func RegisterRoutes(gmux *Router) {
 		devm.Path("/" + name).HandlerFunc(pageHandler(devmsuff, name)) // development mode
 		gmux.Path("/" + name).HandlerFunc(pageHandler(relmsuff, name)) // release mode
 	}
-	devm.PathPrefix("/path/").HandlerFunc(pageHandler(devmsuff, "main"))
-	gmux.PathPrefix("/path/").HandlerFunc(pageHandler(relmsuff, "main"))
+
+	var dacc = devm.PathPrefix("/id{id}/").Subrouter()
+	var gacc = gmux.PathPrefix("/id{id}/").Subrouter()
+	dacc.PathPrefix("/path/").HandlerFunc(pageHandler(devmsuff, "main"))
+	gacc.PathPrefix("/path/").HandlerFunc(pageHandler(relmsuff, "main"))
 
 	// cached thumbs
 
@@ -156,7 +163,7 @@ func RegisterRoutes(gmux *Router) {
 	for alias, prefix := range routealias {
 		gmux.PathPrefix(alias).Handler(http.StripPrefix(alias, http.FileServer(datapack.SubDir(prefix))))
 	}
-	gmux.PathPrefix("/file/").HandlerFunc(AjaxWrap(fileHandler))
+	gacc.PathPrefix("/file/").HandlerFunc(AjaxWrap(fileHandler))
 
 	// API routes
 

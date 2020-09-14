@@ -2,6 +2,7 @@ package hms
 
 import (
 	"os"
+	"strings"
 	"sync"
 )
 
@@ -44,7 +45,10 @@ type Account struct {
 }
 
 // Default account for user on localhost.
-var DefAcc *Account
+var (
+	DefAccID = 0
+	DefAcc   *Account
+)
 
 // Accounts list.
 var AccList []*Account
@@ -70,6 +74,18 @@ func (acc *Account) UpdateShares() {
 		acc.sharespref[shr.Pref] = shr.Path
 		Log.Printf("created share '%s' on path '%s' for id=%d", shr.Pref, shr.Path, acc.ID)
 	}
+}
+
+var sharecharset = []byte("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
+
+func makerandstr(n int) string {
+	var l = byte(len(sharecharset))
+	var str = make([]byte, n)
+	randbytes(str)
+	for i := 0; i < n; i++ {
+		str[i] = sharecharset[str[i]%l]
+	}
+	return string(str)
 }
 
 // Looks for correct prefix and add share with it.
@@ -166,6 +182,57 @@ func (acc *Account) DelSharePath(path string) bool {
 		acc.shrmux.Unlock()
 	}
 	return ok
+}
+
+// Returns share prefix and remained suffix
+func splitprefsuff(share string) (string, string) {
+	for i, c := range share {
+		if c == '/' || c == '\\' {
+			return share[:i], share[i+1:]
+		} else if c == ':' { // prefix can not be with colons
+			return "", share
+		}
+	}
+	return share, "" // root of share
+}
+
+// Brings share path to local file path.
+func (acc *Account) GetSharePath(spath string) string {
+	var pref, suff = splitprefsuff(spath)
+	if pref == "" {
+		return spath
+	}
+	acc.shrmux.RLock()
+	var path, ok = acc.sharespref[pref]
+	acc.shrmux.RUnlock()
+	if !ok {
+		return spath
+	}
+	return path + suff
+}
+
+// Brings share path to local file path and signal that it shared.
+func (acc *Account) CheckSharePath(spath string) (string, bool) {
+	var pref, suff = splitprefsuff(spath)
+	if pref == "" {
+		var shared bool
+		acc.shrmux.RLock()
+		for _, fpath := range acc.sharespref {
+			if strings.HasPrefix(spath, fpath) {
+				shared = true
+				break
+			}
+		}
+		acc.shrmux.RUnlock()
+		return spath, shared
+	}
+	acc.shrmux.RLock()
+	var fpath, ok = acc.sharespref[pref]
+	acc.shrmux.RUnlock()
+	if !ok {
+		return spath, false
+	}
+	return fpath + suff, true
 }
 
 // The End.

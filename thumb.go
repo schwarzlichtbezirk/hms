@@ -268,7 +268,7 @@ func tmbscnApi(w http.ResponseWriter, r *http.Request) {
 
 	go func() {
 		for _, fpath := range arg.Paths {
-			var fpath = getsharepath(fpath)
+			var fpath = DefAcc.GetSharePath(fpath)
 			if cp, err := propcache.Get(fpath); err == nil { // extract from cache
 				var prop = cp.(FileProper)
 				CacheImg(prop, fpath, arg.Force)
