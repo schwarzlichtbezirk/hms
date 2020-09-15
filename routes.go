@@ -53,16 +53,18 @@ const (
 	EC_tokenless  = 2
 	EC_tokenerror = 3
 	EC_tokenbad   = 4
+	EC_tokennoacc = 5
 
 	// pubkey
-	EC_pubkeyrand = 5
+	EC_pubkeyrand = 6
 
 	// signin
 	EC_signinnoreq  = 10
 	EC_signinbadreq = 11
 	EC_signinnodata = 12
-	EC_signinpkey   = 13
-	EC_signindeny   = 14
+	EC_signinnoacc  = 13
+	EC_signinpkey   = 14
+	EC_signindeny   = 15
 
 	// refrsh
 	EC_refrshnoreq  = 20
@@ -77,13 +79,14 @@ const (
 	// file
 	EC_filebadaccid = 32
 	EC_filenoacc    = 33
+	EC_filedeny     = 34
 
 	// reload
-	EC_reloadload = 34
-	EC_reloadtmpl = 35
+	EC_reloadload = 35
+	EC_reloadtmpl = 36
 
 	// getlog
-	EC_getlogbadnum = 36
+	EC_getlogbadnum = 37
 
 	// folder
 	EC_folderdeny = 40
@@ -169,6 +172,7 @@ func RegisterRoutes(gmux *Router) {
 
 	var api = gmux.PathPrefix("/api").Subrouter()
 	api.Path("/ping").HandlerFunc(AjaxWrap(pingApi))
+	api.Path("/purge").HandlerFunc(AuthWrap(purgeApi))
 	api.Path("/reload").HandlerFunc(AjaxWrap(reloadApi))
 	api.Path("/srvinf").HandlerFunc(AjaxWrap(srvinfApi))
 	api.Path("/memusg").HandlerFunc(AjaxWrap(memusgApi))
@@ -178,7 +182,6 @@ func RegisterRoutes(gmux *Router) {
 	api.Path("/refrsh").HandlerFunc(AjaxWrap(refrshApi))
 	api.Path("/getdrv").HandlerFunc(AuthWrap(getdrvApi))
 	api.Path("/folder").HandlerFunc(AjaxWrap(folderApi))
-	api.Path("/purge").HandlerFunc(AuthWrap(purgeApi))
 	var shr = api.PathPrefix("/share").Subrouter()
 	shr.Path("/lst").HandlerFunc(AjaxWrap(shrlstApi))
 	shr.Path("/add").HandlerFunc(AuthWrap(shraddApi))

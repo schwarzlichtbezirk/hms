@@ -50,11 +50,28 @@ var (
 	DefAcc   *Account
 )
 
-// Accounts list.
-var AccList []*Account
+type Accounts []*Account
 
-// Accounts map by IDs
-var AccMap map[int]*Account
+func (al *Accounts) ByID(aid int) *Account {
+	for _, acc := range AccList {
+		if acc.ID == aid {
+			return acc
+		}
+	}
+	return nil
+}
+
+func (al *Accounts) ByLogin(login string) *Account {
+	for _, acc := range AccList {
+		if acc.Login == login {
+			return acc
+		}
+	}
+	return nil
+}
+
+// Accounts list.
+var AccList Accounts
 
 // Recreates shares maps, puts share property to cache.
 func (acc *Account) UpdateShares() {

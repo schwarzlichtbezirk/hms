@@ -31,7 +31,7 @@ const filehint = file => {
 	lst.push(file.name);
 	// Std properties
 	if (file.pref) {
-		lst.push('share: ' + "/id" + app.accid + shareprefix + file.pref);
+		lst.push('share: ' + "/id" + app.aid + shareprefix + file.pref);
 	}
 	if (FTtoFG[file.type] !== FG.dir) {
 		lst.push('size: ' + fmtitemsize(file.size || 0));

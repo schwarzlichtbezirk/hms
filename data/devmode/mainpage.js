@@ -234,7 +234,7 @@ const geticonname = file => {
 const encode = (uri) => encodeURI(uri).replace('#', '%23').replace('&', '%26').replace('+', '%2B');
 
 const getfileurl = (file, pref) => {
-	pref = "/id" + app.accid + (pref || shareprefix);
+	pref = "/id" + app.aid + (pref || shareprefix);
 	let url;
 	if (file.pref) {
 		url = pref + file.pref;
@@ -280,10 +280,11 @@ let app = new Vue({
 		skinlink: "", // URL of skin CSS
 		skinlist: skinlist,
 		isauth: false, // is authorized
-		accid: 0, // account ID
+		aid: 0, // account ID
 		showauth: false, // display authorization form
 		login: "", // authorization login
 		password: "", // authorization password
+		namestate: 0, // -1 invalid login, 0 ambiguous, 1 valid login
 		passstate: 0, // -1 invalid password, 0 ambiguous, 1 valid password
 
 		loadcount: 0, // ajax working request count
@@ -386,6 +387,10 @@ let app = new Vue({
 		textauthcaret() {
 			return this.showauth ? 'arrow_right' : 'arrow_left';
 		},
+		clsname() {
+			return !this.namestate ? ''
+				: this.namestate === -1 ? 'is-invalid' : 'is-valid';
+		},
 		clspass() {
 			return !this.passstate ? ''
 				: this.passstate === -1 ? 'is-invalid' : 'is-valid';
@@ -437,7 +442,7 @@ let app = new Vue({
 				this.filelist = [];
 				this.curpath = file;
 				window.history.replaceState(file, file.path,
-					`${(devmode ? "/dev" : "")}/id${this.accid}/path/${file.path}`);
+					`${(devmode ? "/dev" : "")}/id${this.aid}/path/${file.path}`);
 				// init map card
 				this.$refs.mapcard.new();
 
@@ -705,7 +710,8 @@ let app = new Vue({
 		onauthcaret() {
 			this.showauth = !this.showauth;
 		},
-		onpasschange() {
+		onauthchange() {
+			this.namestate = 0;
 			this.passstate = 0;
 		},
 		onlogin() {
@@ -717,8 +723,8 @@ let app = new Vue({
 					const hash = sha256.hmac.create(response.data);
 					hash.update(this.password);
 					return fetchajax("POST", "/api/signin", {
-						pubk: response.data,
 						name: this.login,
+						pubk: response.data,
 						hash: hash.digest()
 					});
 				}
@@ -727,16 +733,30 @@ let app = new Vue({
 				traceajax(response);
 				if (response.status === 200) {
 					auth.signin(response.data);
+					this.namestate = 1;
 					this.passstate = 1;
 					this.onrefresh();
 				} else if (response.status === 403) { // Forbidden
 					auth.signout();
-					this.passstate = -1;
+					switch (response.data.code) {
+						case 13:
+							this.namestate = -1;
+							this.passstate = 0;
+							break;
+						case 15:
+							this.namestate = 1;
+							this.passstate = -1;
+							break;
+						default:
+							this.namestate = -1;
+							this.passstate = -1;
+					}
 				}
 			}).catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
 		},
 		onlogout() {
 			auth.signout();
+			this.namestate = 0;
 			this.passstate = 0;
 			this.onrefresh();
 		}
@@ -757,14 +777,13 @@ let app = new Vue({
 		if (chunks[0] === "dev") {
 			chunks.shift(); // cut "dev" prefix
 		}
-		console.log(chunks);
 
 		// get account id
 		if (chunks[0].substr(0, 2) === "id") {
-			this.accid = Number(chunks[0].substr(2));
+			this.aid = Number(chunks[0].substr(2));
 			chunks.shift();
 		} else {
-			this.accid = 0;
+			this.aid = 0;
 		}
 
 		// open path

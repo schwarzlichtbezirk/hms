@@ -22,15 +22,14 @@ import (
 // "sub" field for this tokens.
 const jwtsubject = "hms"
 
-// Claims of JWT-tokens. Contains additional user identifier.
+// Claims of JWT-tokens. Contains additional account identifier.
 type HMSClaims struct {
 	jwt.StandardClaims
+	AID int `json:"aid"`
 }
 
 // authentication settings
 var (
-	// Authorization password.
-	AuthPass string
 	// Access token time to live.
 	AccessTTL int
 	// Refresh token time to live.
@@ -48,8 +47,9 @@ var (
 	ErrNoBearer = errors.New("authorization does not have bearer format")
 	ErrNoUserID = errors.New("token does not have user id")
 	ErrNoPubKey = errors.New("public key does not exist any more")
-	ErrNotPass  = errors.New("password is incorrect")
+	ErrBadPass  = errors.New("password is incorrect")
 	ErrDeny     = errors.New("access denied")
+	ErrNoAcc    = errors.New("account is absent")
 )
 
 // Public keys cache for authorization.
@@ -97,11 +97,10 @@ func IsLocalhost(host string) bool {
 	return ip.IsLoopback()
 }
 
-func CheckAuth(r *http.Request) (aerr *AjaxErr, auth bool) {
-	var pool []string
-	var claims *HMSClaims
-	if pool, auth = r.Header["Authorization"]; auth {
+func CheckAuth(r *http.Request) (auth *Account, aerr error) {
+	if pool, is := r.Header["Authorization"]; is {
 		var err error // stores last bearer error
+		var claims *HMSClaims
 		for _, val := range pool {
 			if strings.HasPrefix(val, "Bearer ") {
 				claims = &HMSClaims{}
@@ -121,9 +120,15 @@ func CheckAuth(r *http.Request) (aerr *AjaxErr, auth bool) {
 		} else if err != nil {
 			aerr = &AjaxErr{err, EC_tokenbad}
 			return
+		} else if auth = AccList.ByID(claims.AID); auth == nil {
+			aerr = &AjaxErr{ErrNoAcc, EC_tokennoacc}
+			return
 		}
 	} else if !IsLocalhost(r.Host) {
 		aerr = &AjaxErr{ErrNoAuth, EC_noauth}
+		return
+	} else {
+		auth = AccList.ByID(DefAccID)
 	}
 	return
 }
@@ -133,7 +138,7 @@ func AuthWrap(fn http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		incuint(&ajaxcallcount, 1)
 
-		if err, _ := CheckAuth(r); err != nil {
+		if _, err := CheckAuth(r); err != nil {
 			WriteJson(w, http.StatusUnauthorized, err)
 			return
 		}
@@ -158,6 +163,7 @@ func pubkeyApi(w http.ResponseWriter, r *http.Request) {
 func signinApi(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
+		Name string   `json:"name"`
 		PubK [32]byte `json:"pubk"`
 		Hash [32]byte `json:"hash"`
 	}
@@ -169,12 +175,18 @@ func signinApi(w http.ResponseWriter, r *http.Request) {
 			WriteError400(w, err, EC_signinbadreq)
 			return
 		}
-		if bytes.Equal(arg.PubK[:], zero[:]) || bytes.Equal(arg.Hash[:], zero[:]) {
+		if arg.Name == "" || bytes.Equal(arg.PubK[:], zero[:]) || bytes.Equal(arg.Hash[:], zero[:]) {
 			WriteError400(w, ErrNoData, EC_signinnodata)
 			return
 		}
 	} else {
 		WriteError400(w, ErrNoJson, EC_signinnoreq)
+		return
+	}
+
+	var acc *Account
+	if acc = AccList.ByLogin(arg.Name); acc == nil {
+		WriteJson(w, http.StatusForbidden, &AjaxErr{ErrNoAcc, EC_signinnoacc})
 		return
 	}
 
@@ -184,11 +196,10 @@ func signinApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var mac = hmac.New(sha256.New, arg.PubK[:])
-	mac.Write([]byte(AuthPass))
+	mac.Write([]byte(acc.Password))
 	var cmp = mac.Sum(nil)
-
 	if !hmac.Equal(arg.Hash[:], cmp) {
-		WriteJson(w, http.StatusForbidden, &AjaxErr{ErrNotPass, EC_signindeny})
+		WriteJson(w, http.StatusForbidden, &AjaxErr{ErrBadPass, EC_signindeny})
 		return
 	}
 
@@ -217,8 +228,7 @@ func refrshApi(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var claims = &HMSClaims{}
-	if _, err = jwt.ParseWithClaims(arg.Refrsh, claims, func(token *jwt.Token) (interface{}, error) {
+	if _, err = jwt.ParseWithClaims(arg.Refrsh, &HMSClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(RefreshKey), nil
 	}); err != nil {
 		WriteError400(w, err, EC_refrshparse)

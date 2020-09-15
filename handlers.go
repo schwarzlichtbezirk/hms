@@ -56,24 +56,28 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 		panic("bad route for URL " + r.URL.Path)
 	}
 
-	var accid uint64
+	var aid uint64
 	var err error
-	if accid, err = strconv.ParseUint(chunks[1][2:], 10, 32); err != nil {
+	if aid, err = strconv.ParseUint(chunks[1][2:], 10, 32); err != nil {
 		WriteError400(w, err, EC_filebadaccid)
 		return
 	}
 
 	var acc *Account
-	var isacc bool
-	if acc, isacc = AccMap[int(accid)]; !isacc {
+	if acc = AccList.ByID(int(aid)); acc == nil {
 		WriteError400(w, ErrAccAbsent, EC_filenoacc)
 		return
 	}
 
 	var path, shared = acc.CheckSharePath(strings.Join(chunks[3:], "/"))
 	if !shared {
-		if err, _ := CheckAuth(r); err != nil {
+		var auth *Account
+		if auth, err = CheckAuth(r); err != nil {
 			WriteJson(w, http.StatusUnauthorized, err)
+			return
+		}
+		if acc.ID != auth.ID {
+			WriteJson(w, http.StatusForbidden, &AjaxErr{ErrDeny, EC_filedeny})
 			return
 		}
 	}
@@ -90,6 +94,17 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 func pingApi(w http.ResponseWriter, r *http.Request) {
 	var body, _ = ioutil.ReadAll(r.Body)
 	WriteJson(w, http.StatusOK, body)
+}
+
+// APIHANDLER
+func purgeApi(w http.ResponseWriter, r *http.Request) {
+	propcache.Purge()
+	thumbcache.Purge()
+	for _, acc := range AccList {
+		acc.UpdateShares()
+	}
+
+	WriteJson(w, http.StatusOK, nil)
 }
 
 // APIHANDLER
@@ -192,25 +207,25 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 	var isroot = len(spath) == 0
 	var fpath, shared = DefAcc.CheckSharePath(spath)
 
-	var admerr, auth = CheckAuth(r)
-	if admerr != nil && (auth || (!isroot && !shared)) {
-		WriteJson(w, http.StatusUnauthorized, admerr)
+	var auth *Account
+	if auth, err = CheckAuth(r); err != nil && !isroot && !shared {
+		WriteJson(w, http.StatusUnauthorized, err)
 		return
 	}
 
 	if isroot {
-		if admerr == nil {
+		if auth != nil {
 			ret.Paths = scanroots()
 		}
 
-		if admerr == nil || ShowSharesUser {
-			DefAcc.shrmux.RLock()
-			for _, fpath := range DefAcc.sharespref {
+		if auth != nil || ShowSharesUser {
+			auth.shrmux.RLock()
+			for _, fpath := range auth.sharespref {
 				if cp, err := propcache.Get(fpath); err == nil {
 					ret.AddProp(cp.(FileProper))
 				}
 			}
-			DefAcc.shrmux.RUnlock()
+			auth.shrmux.RUnlock()
 		}
 	} else {
 		if ret, err = readdir(fpath); err != nil {
@@ -225,17 +240,6 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	WriteJson(w, http.StatusOK, ret)
-}
-
-// APIHANDLER
-func purgeApi(w http.ResponseWriter, r *http.Request) {
-	propcache.Purge()
-	thumbcache.Purge()
-	for _, acc := range AccList {
-		acc.UpdateShares()
-	}
-
-	WriteJson(w, http.StatusOK, nil)
 }
 
 // APIHANDLER

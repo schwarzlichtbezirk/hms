@@ -44,8 +44,8 @@
 					</ul>
 					<div class="navbar-nav flex-row align-items-center">
 						<div v-show="showauth && !isauth" class="form-inline">
-							<input v-model="login" v-bind:class="clspass" v-on:keyup.enter.prevent="onlogin" v-on:keyup="onpasschange" class="form-control bg-tool fg-tool auth-control" type="text" maxlength="16" placeholder="login">
-							<input v-model="password" v-bind:class="clspass" v-on:keyup.enter.prevent="onlogin" v-on:keyup="onpasschange" class="form-control bg-tool fg-tool auth-control" type="password" maxlength="80" placeholder="password">
+							<input v-model="login" v-bind:class="clsname" v-on:keyup.enter.prevent="onlogin" v-on:keyup="onauthchange" class="form-control bg-tool fg-tool auth-control" type="text" maxlength="16" placeholder="login">
+							<input v-model="password" v-bind:class="clspass" v-on:keyup.enter.prevent="onlogin" v-on:keyup="onauthchange" class="form-control bg-tool fg-tool auth-control" type="password" maxlength="80" placeholder="password">
 							<button class="btn toolbtn fg-tool" v-on:click="onlogin" title="sign-in with given password"><i class="material-icons">account_box</i></button>
 						</div>
 						<div v-show="showauth && isauth" class="form-inline">

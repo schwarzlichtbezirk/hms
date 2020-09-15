@@ -64,7 +64,7 @@ func opensettings() {
 	}
 
 	var auth = cfg.Section("authentication")
-	AuthPass = auth.Key("password").MustString("dag qus fly in the sky")
+	DefAccID = auth.Key("default-account-id").MustInt(0)
 	AccessTTL = auth.Key("access-ttl").MustInt(1 * 24 * 60 * 60)
 	RefreshTTL = auth.Key("refresh-ttl").MustInt(3 * 24 * 60 * 60)
 	AccessKey = auth.Key("access-key").MustString("skJgM4NsbP3fs4k7vh0gfdkgGl8dJTszdLxZ1sQ9ksFnxbgvw2RsGH8xxddUV479")
@@ -98,7 +98,6 @@ func loadaccounts() {
 		Log.Fatal("can not decode accounts array: " + err.Error())
 	}
 
-	AccMap = make(map[int]*Account, len(AccList))
 	for _, acc := range AccList {
 		Log.Printf("created account id=%d, login='%s'", acc.ID, acc.Login)
 		// bring all roots to valid slashes
@@ -113,14 +112,10 @@ func loadaccounts() {
 
 		// build shares tables
 		acc.UpdateShares()
-
-		// build accounts map
-		AccMap[acc.ID] = acc
 	}
 
 	// init default account
-	var ok bool
-	if DefAcc, ok = AccMap[DefAccID]; !ok {
+	if DefAcc = AccList.ByID(DefAccID); DefAcc == nil {
 		Log.Fatal("default account is not found")
 	}
 }
