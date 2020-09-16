@@ -433,9 +433,10 @@ let app = new Vue({
 	methods: {
 		// opens given folder cleary
 		fetchfolder(file) {
-			return fetchajaxauth("GET", "/api/folder?" + $.param({
+			return fetchajaxauth("POST", "/api/folder", {
+				aid: this.aid,
 				path: file.path
-			})).then(response => {
+			}).then(response => {
 				traceajax(response);
 
 				this.pathlist = [];
@@ -551,7 +552,9 @@ let app = new Vue({
 		},
 
 		fetchsharelist() {
-			return fetchajaxauth("POST", "/api/share/lst").then(response => {
+			return fetchajaxauth("POST", "/api/share/lst", {
+				aid: this.aid
+			}).then(response => {
 				traceajax(response);
 				if (response.ok) {
 					this.shared = [];
@@ -567,9 +570,10 @@ let app = new Vue({
 		},
 
 		fetchshareadd(file) {
-			return fetchajaxauth("POST", "/api/share/add?" + $.param({
+			return fetchajaxauth("POST", "/api/share/add", {
+				aid: this.aid,
 				path: file.path
-			})).then(response => {
+			}).then(response => {
 				traceajax(response);
 				if (response.ok) {
 					const shr = response.data;
@@ -594,9 +598,10 @@ let app = new Vue({
 		},
 
 		fetchsharedel(file) {
-			return fetchajaxauth("DELETE", "/api/share/del?" + $.param({
+			return fetchajaxauth("DELETE", "/api/share/del", {
+				aid: this.aid,
 				pref: file.pref
-			})).then(response => {
+			}).then(response => {
 				traceajax(response);
 				if (response.ok) {
 					const ok = response.data;

@@ -83,7 +83,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, ok := r.Header["If-Range"]; !ok { // not partial content
-		Log.Printf("serve: %s", filepath.Base(path))
+		Log.Printf("id%d: serve %s", acc.ID, filepath.Base(path))
 	}
 
 	WriteStdHeader(w)
@@ -100,9 +100,12 @@ func pingApi(w http.ResponseWriter, r *http.Request) {
 func purgeApi(w http.ResponseWriter, r *http.Request) {
 	propcache.Purge()
 	thumbcache.Purge()
-	for _, acc := range AccList {
+
+	AccList.mux.RLock()
+	for _, acc := range AccList.list {
 		acc.UpdateShares()
 	}
+	AccList.mux.RUnlock()
 
 	WriteJson(w, http.StatusOK, nil)
 }
@@ -199,13 +202,31 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 	incuint(&foldercallcout, 1)
 
 	var err error
+	var arg struct {
+		AID  int    `json:"aid"`
+		Path string `json:"path"`
+	}
 	var ret folderRet
 
 	// get arguments
-	var spath = filepath.ToSlash(r.FormValue("path"))
+	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
+		if err = json.Unmarshal(jb, &arg); err != nil {
+			WriteError400(w, err, EC_folderbadreq)
+			return
+		}
+	} else {
+		WriteError400(w, ErrNoJson, EC_foldernoreq)
+		return
+	}
 
-	var isroot = len(spath) == 0
-	var fpath, shared = DefAcc.CheckSharePath(spath)
+	var acc *Account
+	if acc = AccList.ByID(int(arg.AID)); acc == nil {
+		WriteError400(w, ErrAccAbsent, EC_foldernoacc)
+		return
+	}
+
+	var isroot = len(arg.Path) == 0
+	var fpath, shared = acc.CheckSharePath(arg.Path)
 
 	var auth *Account
 	if auth, err = CheckAuth(r); err != nil && !isroot && !shared {
@@ -218,14 +239,14 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 			ret.Paths = scanroots()
 		}
 
-		if auth != nil || ShowSharesUser {
-			auth.shrmux.RLock()
-			for _, fpath := range auth.sharespref {
+		if acc == auth || ShowSharesUser {
+			acc.mux.RLock()
+			for _, fpath := range acc.sharespref {
 				if cp, err := propcache.Get(fpath); err == nil {
 					ret.AddProp(cp.(FileProper))
 				}
 			}
-			auth.shrmux.RUnlock()
+			acc.mux.RUnlock()
 		}
 	} else {
 		if ret, err = readdir(fpath); err != nil {
@@ -244,16 +265,49 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 
 // APIHANDLER
 func shrlstApi(w http.ResponseWriter, r *http.Request) {
-	DefAcc.shrmux.RLock()
-	var lst = make([]FileProper, len(DefAcc.sharespref))
+	var err error
+	var arg struct {
+		AID int `json:"aid"`
+	}
+
+	// get arguments
+	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
+		if err = json.Unmarshal(jb, &arg); err != nil {
+			WriteError400(w, err, EC_shrlstbadreq)
+			return
+		}
+	} else {
+		WriteError400(w, ErrNoJson, EC_shrlstnoreq)
+		return
+	}
+
+	var acc *Account
+	if acc = AccList.ByID(int(arg.AID)); acc == nil {
+		WriteError400(w, ErrAccAbsent, EC_shrlstnoacc)
+		return
+	}
+
+	var auth *Account
+	if auth, err = CheckAuth(r); !(auth == acc || ShowSharesUser) {
+		if err != nil {
+			WriteJson(w, http.StatusUnauthorized, err)
+			return
+		} else {
+			WriteJson(w, http.StatusForbidden, &AjaxErr{ErrDeny, EC_shrlstdeny})
+			return
+		}
+	}
+
+	acc.mux.RLock()
+	var lst = make([]FileProper, len(acc.sharespref))
 	var i int
-	for _, fpath := range DefAcc.sharespref {
+	for _, fpath := range acc.sharespref {
 		if cp, err := propcache.Get(fpath); err == nil {
 			lst[i] = cp.(FileProper)
 		}
 		i++
 	}
-	DefAcc.shrmux.RUnlock()
+	acc.mux.RUnlock()
 	var jb, _ = json.Marshal(lst)
 
 	WriteJson(w, http.StatusOK, jb)
@@ -261,54 +315,118 @@ func shrlstApi(w http.ResponseWriter, r *http.Request) {
 
 // APIHANDLER
 func shraddApi(w http.ResponseWriter, r *http.Request) {
+	var err error
+	var arg struct {
+		AID  int    `json:"aid"`
+		Path string `json:"path"`
+	}
+
 	// get arguments
-	var spath string
-	if spath = filepath.ToSlash(r.FormValue("path")); len(spath) == 0 {
-		WriteError400(w, ErrArgNoPath, EC_addshrnopath)
+	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
+		if err = json.Unmarshal(jb, &arg); err != nil {
+			WriteError400(w, err, EC_shraddbadreq)
+			return
+		}
+		if len(arg.Path) == 0 {
+			WriteError400(w, ErrArgNoPath, EC_shraddnodata)
+			return
+		}
+	} else {
+		WriteError400(w, ErrNoJson, EC_shraddnoreq)
 		return
 	}
 
-	DefAcc.shrmux.RLock()
-	var _, has = DefAcc.sharespath[spath]
-	DefAcc.shrmux.RUnlock()
+	var acc *Account
+	if acc = AccList.ByID(int(arg.AID)); acc == nil {
+		WriteError400(w, ErrAccAbsent, EC_shraddnoacc)
+		return
+	}
+
+	var auth *Account
+	if auth, err = CheckAuth(r); err != nil {
+		WriteJson(w, http.StatusUnauthorized, err)
+		return
+	}
+	if auth != acc {
+		WriteJson(w, http.StatusForbidden, &AjaxErr{ErrDeny, EC_shradddeny})
+		return
+	}
+
+	acc.mux.RLock()
+	var _, has = acc.sharespath[arg.Path]
+	acc.mux.RUnlock()
 	if has { // share already added
 		WriteJson(w, http.StatusOK, []byte("null"))
 		return
 	}
 
-	var fpath = DefAcc.GetSharePath(spath)
-	var fi, err = os.Stat(fpath)
-	if err != nil {
-		WriteJson(w, http.StatusNotFound, &AjaxErr{err, EC_addshrbadpath})
+	var fpath = acc.GetSharePath(arg.Path)
+
+	var fi os.FileInfo
+	if fi, err = os.Stat(fpath); err != nil {
+		WriteJson(w, http.StatusNotFound, &AjaxErr{err, EC_shraddbadpath})
 		return
 	}
 
 	var prop = MakeProp(fpath, fi)
-	DefAcc.MakeShare(fpath, prop)
+	acc.MakeShare(fpath, prop)
 
-	Log.Printf("add share: %s as %s", fpath, prop.Pref())
+	Log.Printf("id%d: add share %s as %s", acc.ID, fpath, prop.Pref())
 
 	WriteJson(w, http.StatusOK, prop)
 }
 
 // APIHANDLER
 func shrdelApi(w http.ResponseWriter, r *http.Request) {
+	var err error
+	var arg struct {
+		AID  int    `json:"aid"`
+		Path string `json:"path,omitempty"`
+		Pref string `json:"pref,omitempty"`
+	}
 	var ok bool
 
-	// get arguments & process
-	var pref, path string
-	if pref = r.FormValue("pref"); len(pref) > 0 {
-		ok = DefAcc.DelSharePref(pref)
-		if ok {
-			Log.Printf("delete share: %s", pref)
+	// get arguments
+	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
+		if err = json.Unmarshal(jb, &arg); err != nil {
+			WriteError400(w, err, EC_shrdelbadreq)
+			return
 		}
-	} else if path = filepath.ToSlash(r.FormValue("path")); len(path) > 0 {
-		ok = DefAcc.DelSharePath(path)
-		if ok {
-			Log.Printf("delete share: %s", path)
+		if len(arg.Path) == 0 && len(arg.Pref) == 0 {
+			WriteError400(w, ErrArgNoPath, EC_shrdelnodata)
+			return
 		}
 	} else {
-		WriteError400(w, ErrArgNoPref, EC_delshrnopath)
+		WriteError400(w, ErrNoJson, EC_shrdelnoreq)
+		return
+	}
+
+	var acc *Account
+	if acc = AccList.ByID(int(arg.AID)); acc == nil {
+		WriteError400(w, ErrAccAbsent, EC_shrdelnoacc)
+		return
+	}
+
+	var auth *Account
+	if auth, err = CheckAuth(r); err != nil {
+		WriteJson(w, http.StatusUnauthorized, err)
+		return
+	}
+	if auth != acc {
+		WriteJson(w, http.StatusForbidden, &AjaxErr{ErrDeny, EC_shrdeldeny})
+		return
+	}
+
+	if len(arg.Pref) > 0 {
+		if ok = acc.DelSharePref(arg.Pref); ok {
+			Log.Printf("id%d: delete share %s", acc.ID, arg.Pref)
+		}
+	} else if len(arg.Path) > 0 {
+		if ok = acc.DelSharePath(arg.Path); ok {
+			Log.Printf("id%d: delete share %s", acc.ID, arg.Path)
+		}
+	} else {
+		WriteError400(w, ErrArgNoPref, EC_shrdelnopath)
 		return
 	}
 

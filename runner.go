@@ -94,12 +94,12 @@ func loadaccounts() {
 	}
 
 	var dec = json.NewDecoder(bytes.NewReader(body))
-	if err = dec.Decode(&AccList); err != nil {
+	if err = dec.Decode(&AccList.list); err != nil {
 		Log.Fatal("can not decode accounts array: " + err.Error())
 	}
 
-	for _, acc := range AccList {
-		Log.Printf("created account id=%d, login='%s'", acc.ID, acc.Login)
+	for _, acc := range AccList.list {
+		Log.Printf("created account id%d, login='%s'", acc.ID, acc.Login)
 		// bring all roots to valid slashes
 		for i, path := range acc.Roots {
 			acc.Roots[i] = filepath.ToSlash(path)
@@ -126,7 +126,7 @@ func saveaccounts() {
 	var buf bytes.Buffer
 	var enc = json.NewEncoder(&buf)
 	enc.SetIndent("", "\t")
-	if err = enc.Encode(AccList); err != nil {
+	if err = enc.Encode(AccList.list); err != nil {
 		Log.Println("can not encode accounts list: " + err.Error())
 		return
 	}

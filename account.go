@@ -41,7 +41,8 @@ type Account struct {
 	Shares     []Share           `json:"shares"`
 	sharespath map[string]string // active shares by full path
 	sharespref map[string]string // active shares by prefix
-	shrmux     sync.RWMutex
+
+	mux sync.RWMutex
 }
 
 // Default account for user on localhost.
@@ -50,10 +51,15 @@ var (
 	DefAcc   *Account
 )
 
-type Accounts []*Account
+type Accounts struct {
+	list []*Account
+	mux  sync.RWMutex
+}
 
 func (al *Accounts) ByID(aid int) *Account {
-	for _, acc := range AccList {
+	al.mux.RLock()
+	defer al.mux.RUnlock()
+	for _, acc := range AccList.list {
 		if acc.ID == aid {
 			return acc
 		}
@@ -62,7 +68,9 @@ func (al *Accounts) ByID(aid int) *Account {
 }
 
 func (al *Accounts) ByLogin(login string) *Account {
-	for _, acc := range AccList {
+	al.mux.RLock()
+	defer al.mux.RUnlock()
+	for _, acc := range AccList.list {
 		if acc.Login == login {
 			return acc
 		}
@@ -80,7 +88,7 @@ func (acc *Account) UpdateShares() {
 	for _, shr := range acc.Shares {
 		var fi, err = os.Stat(shr.Path)
 		if err != nil {
-			Log.Printf("can not create share '%s' on path '%s' for id=%d", shr.Pref, shr.Path, acc.ID)
+			Log.Printf("id%d: can not create share '%s' on path '%s'", acc.ID, shr.Pref, shr.Path)
 			continue
 		}
 
@@ -89,7 +97,7 @@ func (acc *Account) UpdateShares() {
 		propcache.Set(shr.Path, prop)
 		acc.sharespath[shr.Path] = shr.Pref
 		acc.sharespref[shr.Pref] = shr.Path
-		Log.Printf("created share '%s' on path '%s' for id=%d", shr.Pref, shr.Path, acc.ID)
+		Log.Printf("id%d: created share '%s' on path '%s'", acc.ID, shr.Pref, shr.Path)
 	}
 }
 
@@ -133,14 +141,14 @@ func (acc *Account) MakeShare(path string, prop FileProper) {
 
 // Add share with given prefix.
 func (acc *Account) AddShare(pref string, path string, prop FileProper) bool {
-	acc.shrmux.RLock()
+	acc.mux.RLock()
 	var _, ok = acc.sharespref[pref]
-	acc.shrmux.RUnlock()
+	acc.mux.RUnlock()
 
 	if !ok {
 		prop.SetPref(pref)
 
-		acc.shrmux.Lock()
+		acc.mux.Lock()
 		acc.Shares = append(acc.Shares, Share{
 			Path: path,
 			Pref: pref,
@@ -148,23 +156,23 @@ func (acc *Account) AddShare(pref string, path string, prop FileProper) bool {
 		})
 		acc.sharespath[path] = pref
 		acc.sharespref[pref] = path
-		acc.shrmux.Unlock()
+		acc.mux.Unlock()
 	}
 	return !ok
 }
 
 // Delete share by given prefix.
 func (acc *Account) DelSharePref(pref string) bool {
-	acc.shrmux.RLock()
+	acc.mux.RLock()
 	var path, ok = acc.sharespref[pref]
-	acc.shrmux.RUnlock()
+	acc.mux.RUnlock()
 
 	if ok {
 		if cp, err := propcache.Get(path); err == nil {
 			cp.(FileProper).SetPref("")
 		}
 
-		acc.shrmux.Lock()
+		acc.mux.Lock()
 		for i, shr := range acc.Shares {
 			if shr.Pref == pref {
 				acc.Shares = append(acc.Shares[:i], acc.Shares[i+1:]...)
@@ -172,23 +180,23 @@ func (acc *Account) DelSharePref(pref string) bool {
 		}
 		delete(acc.sharespath, path)
 		delete(acc.sharespref, pref)
-		acc.shrmux.Unlock()
+		acc.mux.Unlock()
 	}
 	return ok
 }
 
 // Delete share by given shared path.
 func (acc *Account) DelSharePath(path string) bool {
-	acc.shrmux.RLock()
+	acc.mux.RLock()
 	var pref, ok = acc.sharespath[path]
-	acc.shrmux.RUnlock()
+	acc.mux.RUnlock()
 
 	if ok {
 		if cp, err := propcache.Get(path); err == nil {
 			cp.(FileProper).SetPref("")
 		}
 
-		acc.shrmux.Lock()
+		acc.mux.Lock()
 		for i, shr := range acc.Shares {
 			if shr.Path == path {
 				acc.Shares = append(acc.Shares[:i], acc.Shares[i+1:]...)
@@ -196,7 +204,7 @@ func (acc *Account) DelSharePath(path string) bool {
 		}
 		delete(acc.sharespath, path)
 		delete(acc.sharespref, pref)
-		acc.shrmux.Unlock()
+		acc.mux.Unlock()
 	}
 	return ok
 }
@@ -219,9 +227,9 @@ func (acc *Account) GetSharePath(spath string) string {
 	if pref == "" {
 		return spath
 	}
-	acc.shrmux.RLock()
+	acc.mux.RLock()
 	var path, ok = acc.sharespref[pref]
-	acc.shrmux.RUnlock()
+	acc.mux.RUnlock()
 	if !ok {
 		return spath
 	}
@@ -233,19 +241,19 @@ func (acc *Account) CheckSharePath(spath string) (string, bool) {
 	var pref, suff = splitprefsuff(spath)
 	if pref == "" {
 		var shared bool
-		acc.shrmux.RLock()
+		acc.mux.RLock()
 		for _, fpath := range acc.sharespref {
 			if strings.HasPrefix(spath, fpath) {
 				shared = true
 				break
 			}
 		}
-		acc.shrmux.RUnlock()
+		acc.mux.RUnlock()
 		return spath, shared
 	}
-	acc.shrmux.RLock()
+	acc.mux.RLock()
 	var fpath, ok = acc.sharespref[pref]
-	acc.shrmux.RUnlock()
+	acc.mux.RUnlock()
 	if !ok {
 		return spath, false
 	}

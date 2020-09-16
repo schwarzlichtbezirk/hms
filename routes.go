@@ -89,29 +89,46 @@ const (
 	EC_getlogbadnum = 37
 
 	// folder
-	EC_folderdeny = 40
-	EC_folderfail = 41
+	EC_foldernoreq  = 40
+	EC_folderbadreq = 41
+	EC_foldernoacc  = 42
+	EC_folderfail   = 43
 
-	// addshr
-	EC_addshrnopath  = 42
-	EC_addshrbadpath = 43
+	// shrlst
+	EC_shrlstnoreq  = 50
+	EC_shrlstbadreq = 51
+	EC_shrlstnoacc  = 52
+	EC_shrlstdeny   = 53
 
-	// delshr
-	EC_delshrnopath = 44
+	// shradd
+	EC_shraddnoreq   = 60
+	EC_shraddbadreq  = 61
+	EC_shraddnodata  = 62
+	EC_shraddnoacc   = 63
+	EC_shradddeny    = 64
+	EC_shraddbadpath = 65
+
+	// shrdel
+	EC_shrdelnoreq  = 70
+	EC_shrdelbadreq = 71
+	EC_shrdelnodata = 72
+	EC_shrdelnoacc  = 73
+	EC_shrdeldeny   = 74
+	EC_shrdelnopath = 75
 
 	// thumb
-	EC_thumbabsent = 50
-	EC_thumbbadcnt = 51
+	EC_thumbabsent = 80
+	EC_thumbbadcnt = 81
 
 	// tmbchk
-	EC_tmbchknoreq  = 52
-	EC_tmbchkbadreq = 53
-	EC_tmbchknodata = 54
+	EC_tmbchknoreq  = 82
+	EC_tmbchkbadreq = 83
+	EC_tmbchknodata = 84
 
 	// tmbscn
-	EC_tmbscnnoreq  = 55
-	EC_tmbscnbadreq = 56
-	EC_tmbscnnodata = 57
+	EC_tmbscnnoreq  = 85
+	EC_tmbscnbadreq = 86
+	EC_tmbscnnodata = 87
 )
 
 //////////////////
