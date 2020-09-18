@@ -106,7 +106,8 @@ const (
 	EC_shraddnodata  = 62
 	EC_shraddnoacc   = 63
 	EC_shradddeny    = 64
-	EC_shraddbadpath = 65
+	EC_shraddnopath  = 65
+	EC_shraddbadpath = 66
 
 	// shrdel
 	EC_shrdelnoreq  = 70
@@ -129,6 +130,7 @@ const (
 	EC_tmbscnnoreq  = 85
 	EC_tmbscnbadreq = 86
 	EC_tmbscnnodata = 87
+	EC_tmbscnnoacc  = 88
 )
 
 //////////////////

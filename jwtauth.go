@@ -63,17 +63,25 @@ type Tokens struct {
 	Refrsh string `json:"refrsh"`
 }
 
-func (t *Tokens) Make() {
+type AuthHandlerFunc func(w http.ResponseWriter, r *http.Request, auth *Account)
+
+func (t *Tokens) Make(aid int) {
 	var now = time.Now()
-	t.Access, _ = jwt.NewWithClaims(jwt.SigningMethodHS256, &jwt.StandardClaims{
-		NotBefore: now.Unix(),
-		ExpiresAt: now.Add(time.Duration(AccessTTL) * time.Second).Unix(),
-		Subject:   jwtsubject,
+	t.Access, _ = jwt.NewWithClaims(jwt.SigningMethodHS256, &HMSClaims{
+		StandardClaims: jwt.StandardClaims{
+			NotBefore: now.Unix(),
+			ExpiresAt: now.Add(time.Duration(AccessTTL) * time.Second).Unix(),
+			Subject:   jwtsubject,
+		},
+		AID: aid,
 	}).SignedString([]byte(AccessKey))
-	t.Refrsh, _ = jwt.NewWithClaims(jwt.SigningMethodHS256, &jwt.StandardClaims{
-		NotBefore: now.Unix(),
-		ExpiresAt: now.Add(time.Duration(RefreshTTL) * time.Second).Unix(),
-		Subject:   jwtsubject,
+	t.Refrsh, _ = jwt.NewWithClaims(jwt.SigningMethodHS256, &HMSClaims{
+		StandardClaims: jwt.StandardClaims{
+			NotBefore: now.Unix(),
+			ExpiresAt: now.Add(time.Duration(RefreshTTL) * time.Second).Unix(),
+			Subject:   jwtsubject,
+		},
+		AID: aid,
 	}).SignedString([]byte(RefreshKey))
 }
 
@@ -100,18 +108,19 @@ func IsLocalhost(host string) bool {
 func CheckAuth(r *http.Request) (auth *Account, aerr error) {
 	if pool, is := r.Header["Authorization"]; is {
 		var err error // stores last bearer error
-		var claims *HMSClaims
+		var claims HMSClaims
+		var bearer = false
 		for _, val := range pool {
 			if strings.HasPrefix(val, "Bearer ") {
-				claims = &HMSClaims{}
-				if _, err = jwt.ParseWithClaims(val[7:], claims, func(token *jwt.Token) (interface{}, error) {
+				bearer = true
+				if _, err = jwt.ParseWithClaims(val[7:], &claims, func(token *jwt.Token) (interface{}, error) {
 					return []byte(AccessKey), nil
 				}); err != nil {
 					break
 				}
 			}
 		}
-		if claims == nil {
+		if !bearer {
 			aerr = &AjaxErr{ErrNoBearer, EC_tokenless}
 			return
 		} else if _, is := err.(*jwt.ValidationError); is {
@@ -134,16 +143,18 @@ func CheckAuth(r *http.Request) (auth *Account, aerr error) {
 }
 
 // Handler wrapper for API with admin checkup.
-func AuthWrap(fn http.HandlerFunc) http.HandlerFunc {
+func AuthWrap(fn AuthHandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		incuint(&ajaxcallcount, 1)
 
-		if _, err := CheckAuth(r); err != nil {
+		var err error
+		var auth *Account
+		if auth, err = CheckAuth(r); err != nil {
 			WriteJson(w, http.StatusUnauthorized, err)
 			return
 		}
 
-		fn(w, r)
+		fn(w, r, auth)
 	}
 }
 
@@ -203,7 +214,7 @@ func signinApi(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res.Make()
+	res.Make(acc.ID)
 
 	WriteJson(w, http.StatusOK, &res)
 }
@@ -228,14 +239,15 @@ func refrshApi(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err = jwt.ParseWithClaims(arg.Refrsh, &HMSClaims{}, func(token *jwt.Token) (interface{}, error) {
+	var claims HMSClaims
+	if _, err = jwt.ParseWithClaims(arg.Refrsh, &claims, func(token *jwt.Token) (interface{}, error) {
 		return []byte(RefreshKey), nil
 	}); err != nil {
 		WriteError400(w, err, EC_refrshparse)
 		return
 	}
 
-	res.Make()
+	res.Make(claims.AID)
 
 	WriteJson(w, http.StatusOK, &res)
 }

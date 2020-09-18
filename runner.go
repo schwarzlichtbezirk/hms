@@ -60,7 +60,8 @@ var httpsrv, tlssrv []*http.Server
 func opensettings() {
 	var cfg, err = ini.Load(confpath + "settings.ini")
 	if err != nil {
-		Log.Fatal("can not read settings file: " + err.Error())
+		Log.Println("can not read settings file, default settings accepted: " + err.Error())
+		return
 	}
 
 	var auth = cfg.Section("authentication")
@@ -87,36 +88,47 @@ func opensettings() {
 
 func loadaccounts() {
 	var err error
-
 	var body []byte
-	if body, err = ioutil.ReadFile(confpath + "accounts.json"); err != nil {
-		Log.Fatal("can not read accounts: " + err.Error())
+	if body, err = ioutil.ReadFile(confpath + "accounts.json"); err == nil {
+		var dec = json.NewDecoder(bytes.NewReader(body))
+		if err = dec.Decode(&AccList.list); err != nil {
+			Log.Fatal("can not decode accounts array: " + err.Error())
+		}
+	} else {
+		Log.Println("can not read accounts: " + err.Error())
 	}
 
-	var dec = json.NewDecoder(bytes.NewReader(body))
-	if err = dec.Decode(&AccList.list); err != nil {
-		Log.Fatal("can not decode accounts array: " + err.Error())
-	}
+	if len(AccList.list) > 0 {
+		for _, acc := range AccList.list {
+			Log.Printf("loaded account id%d, login='%s'", acc.ID, acc.Login)
+			// bring all roots to valid slashes
+			for i, path := range acc.Roots {
+				acc.Roots[i] = filepath.ToSlash(path)
+			}
 
-	for _, acc := range AccList.list {
+			// bring all hissen to lowercase
+			for i, path := range acc.Hidden {
+				acc.Hidden[i] = strings.ToLower(filepath.ToSlash(path))
+			}
+
+			// build shares tables
+			acc.UpdateShares()
+		}
+
+		// check up default account
+		if acc := AccList.ByID(DefAccID); acc != nil {
+			if len(acc.Roots) == 0 {
+				acc.FindRoots()
+			}
+		} else {
+			Log.Fatal("default account is not found")
+		}
+	} else {
+		var acc = AccList.NewAccount("admin", "dag qus fly in the sky")
+		acc.ID = DefAccID
 		Log.Printf("created account id%d, login='%s'", acc.ID, acc.Login)
-		// bring all roots to valid slashes
-		for i, path := range acc.Roots {
-			acc.Roots[i] = filepath.ToSlash(path)
-		}
-
-		// bring all hissen to lowercase
-		for i, path := range acc.Hidden {
-			acc.Hidden[i] = strings.ToLower(filepath.ToSlash(path))
-		}
-
-		// build shares tables
-		acc.UpdateShares()
-	}
-
-	// init default account
-	if DefAcc = AccList.ByID(DefAccID); DefAcc == nil {
-		Log.Fatal("default account is not found")
+		acc.SetDefaultHidden()
+		acc.FindRoots()
 	}
 }
 

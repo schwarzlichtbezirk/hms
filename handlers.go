@@ -19,7 +19,6 @@ var (
 	ErrNoJson = errors.New("data not given")
 	ErrNoData = errors.New("data is empty")
 
-	ErrAccAbsent = errors.New("account with given id is not found")
 	ErrNotFound  = errors.New("404 page not found")
 	ErrArgNoNum  = errors.New("'num' parameter not recognized")
 	ErrArgNoPath = errors.New("'path' argument required")
@@ -65,7 +64,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 
 	var acc *Account
 	if acc = AccList.ByID(int(aid)); acc == nil {
-		WriteError400(w, ErrAccAbsent, EC_filenoacc)
+		WriteError400(w, ErrNoAcc, EC_filenoacc)
 		return
 	}
 
@@ -97,7 +96,7 @@ func pingApi(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
-func purgeApi(w http.ResponseWriter, r *http.Request) {
+func purgeApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 	propcache.Purge()
 	thumbcache.Purge()
 
@@ -191,8 +190,8 @@ func getlogApi(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
-func getdrvApi(w http.ResponseWriter, r *http.Request) {
-	var ret = scanroots()
+func getdrvApi(w http.ResponseWriter, r *http.Request, auth *Account) {
+	var ret = auth.ScanRoots()
 	Log.Printf("navigate to root")
 	WriteJson(w, http.StatusOK, ret)
 }
@@ -221,7 +220,7 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 
 	var acc *Account
 	if acc = AccList.ByID(int(arg.AID)); acc == nil {
-		WriteError400(w, ErrAccAbsent, EC_foldernoacc)
+		WriteError400(w, ErrNoAcc, EC_foldernoacc)
 		return
 	}
 
@@ -236,7 +235,7 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 
 	if isroot {
 		if auth != nil {
-			ret.Paths = scanroots()
+			ret.Paths = auth.ScanRoots()
 		}
 
 		if acc == auth || ShowSharesUser {
@@ -249,7 +248,7 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 			acc.mux.RUnlock()
 		}
 	} else {
-		if ret, err = readdir(fpath); err != nil {
+		if ret, err = readdir(fpath, acc.Hidden); err != nil {
 			WriteJson(w, http.StatusNotFound, &AjaxErr{err, EC_folderfail})
 			return
 		}
@@ -283,7 +282,7 @@ func shrlstApi(w http.ResponseWriter, r *http.Request) {
 
 	var acc *Account
 	if acc = AccList.ByID(int(arg.AID)); acc == nil {
-		WriteError400(w, ErrAccAbsent, EC_shrlstnoacc)
+		WriteError400(w, ErrNoAcc, EC_shrlstnoacc)
 		return
 	}
 
@@ -314,7 +313,7 @@ func shrlstApi(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
-func shraddApi(w http.ResponseWriter, r *http.Request) {
+func shraddApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 	var err error
 	var arg struct {
 		AID  int    `json:"aid"`
@@ -338,13 +337,7 @@ func shraddApi(w http.ResponseWriter, r *http.Request) {
 
 	var acc *Account
 	if acc = AccList.ByID(int(arg.AID)); acc == nil {
-		WriteError400(w, ErrAccAbsent, EC_shraddnoacc)
-		return
-	}
-
-	var auth *Account
-	if auth, err = CheckAuth(r); err != nil {
-		WriteJson(w, http.StatusUnauthorized, err)
+		WriteError400(w, ErrNoAcc, EC_shraddnoacc)
 		return
 	}
 	if auth != acc {
@@ -364,8 +357,13 @@ func shraddApi(w http.ResponseWriter, r *http.Request) {
 
 	var fi os.FileInfo
 	if fi, err = os.Stat(fpath); err != nil {
-		WriteJson(w, http.StatusNotFound, &AjaxErr{err, EC_shraddbadpath})
-		return
+		if os.IsNotExist(err) {
+			WriteJson(w, http.StatusNotFound, &AjaxErr{err, EC_shraddnopath})
+			return
+		} else {
+			WriteError500(w, err, EC_shraddbadpath)
+			return
+		}
 	}
 
 	var prop = MakeProp(fpath, fi)
@@ -377,7 +375,7 @@ func shraddApi(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
-func shrdelApi(w http.ResponseWriter, r *http.Request) {
+func shrdelApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 	var err error
 	var arg struct {
 		AID  int    `json:"aid"`
@@ -403,13 +401,7 @@ func shrdelApi(w http.ResponseWriter, r *http.Request) {
 
 	var acc *Account
 	if acc = AccList.ByID(int(arg.AID)); acc == nil {
-		WriteError400(w, ErrAccAbsent, EC_shrdelnoacc)
-		return
-	}
-
-	var auth *Account
-	if auth, err = CheckAuth(r); err != nil {
-		WriteJson(w, http.StatusUnauthorized, err)
+		WriteError400(w, ErrNoAcc, EC_shrdelnoacc)
 		return
 	}
 	if auth != acc {

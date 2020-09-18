@@ -247,6 +247,7 @@ func tmbchkApi(w http.ResponseWriter, r *http.Request) {
 func tmbscnApi(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
+		AID   int      `json:"aid"`
 		Paths []string `json:"paths"`
 		Force bool     `json:"force"`
 	}
@@ -266,9 +267,15 @@ func tmbscnApi(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var acc *Account
+	if acc = AccList.ByID(int(arg.AID)); acc == nil {
+		WriteError400(w, ErrNoAcc, EC_tmbscnnoacc)
+		return
+	}
+
 	go func() {
 		for _, fpath := range arg.Paths {
-			var fpath = DefAcc.GetSharePath(fpath)
+			var fpath = acc.GetSharePath(fpath)
 			if cp, err := propcache.Get(fpath); err == nil { // extract from cache
 				var prop = cp.(FileProper)
 				CacheImg(prop, fpath, arg.Force)

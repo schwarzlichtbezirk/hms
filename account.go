@@ -7,20 +7,20 @@ import (
 )
 
 var DefHidden = []string{
-	"?:/System Volume Information",
+	"?:/system volume information",
 	"*.sys",
 	"*.tmp",
 	"*.bak",
 	"*/.*",
-	"?:/Windows",
-	"?:/WindowsApps",
-	"?:/$Recycle.Bin",
-	"?:/Program Files",
-	"?:/Program Files (x86)",
-	"?:/ProgramData",
-	"?:/Recovery",
-	"?:/Config.Msi",
-	"*/Thumb.db",
+	"?:/windows",
+	"?:/windowsapps",
+	"?:/$recycle.bin",
+	"?:/program files",
+	"?:/program files (x86)",
+	"?:/programdata",
+	"?:/recovery",
+	"?:/config.msi",
+	"*/thumb.db",
 }
 
 // Share description for json-file.
@@ -46,20 +46,35 @@ type Account struct {
 }
 
 // Default account for user on localhost.
-var (
-	DefAccID = 0
-	DefAcc   *Account
-)
+var DefAccID = 0
 
 type Accounts struct {
 	list []*Account
 	mux  sync.RWMutex
 }
 
+func (al *Accounts) NewAccount(login, password string) *Account {
+	var acc = &Account{
+		Login:      login,
+		Password:   password,
+		Roots:      []string{},
+		Hidden:     []string{},
+		Shares:     []Share{},
+		sharespath: map[string]string{},
+		sharespref: map[string]string{},
+	}
+	if len(al.list) > 0 {
+		acc.ID = al.list[len(al.list)-1].ID + 1
+	}
+
+	al.Insert(acc)
+	return acc
+}
+
 func (al *Accounts) ByID(aid int) *Account {
 	al.mux.RLock()
 	defer al.mux.RUnlock()
-	for _, acc := range AccList.list {
+	for _, acc := range al.list {
 		if acc.ID == aid {
 			return acc
 		}
@@ -70,7 +85,7 @@ func (al *Accounts) ByID(aid int) *Account {
 func (al *Accounts) ByLogin(login string) *Account {
 	al.mux.RLock()
 	defer al.mux.RUnlock()
-	for _, acc := range AccList.list {
+	for _, acc := range al.list {
 		if acc.Login == login {
 			return acc
 		}
@@ -78,8 +93,67 @@ func (al *Accounts) ByLogin(login string) *Account {
 	return nil
 }
 
+func (al *Accounts) Insert(acc *Account) {
+	al.mux.Lock()
+	defer al.mux.Unlock()
+	al.list = append(al.list, acc)
+}
+
+func (al *Accounts) Delete(aid int) bool {
+	al.mux.RLock()
+	defer al.mux.RUnlock()
+	for i, acc := range al.list {
+		if acc.ID == aid {
+			al.list = append(al.list[:i], al.list[i+1:]...)
+			return true
+		}
+	}
+	return false
+}
+
 // Accounts list.
 var AccList Accounts
+
+// Set hidden files array to default predefined list.
+func (acc *Account) SetDefaultHidden() {
+	acc.Hidden = make([]string, len(DefHidden))
+	copy(acc.Hidden, DefHidden)
+}
+
+// Scan all available drives installed on local machine.
+func (acc *Account) FindRoots() {
+	const windisks = "CDEFGHIJKLMNOPQRSTUVWXYZ"
+	for _, d := range windisks {
+		var path = string(d) + ":/"
+		if _, err := os.Stat(path); err == nil {
+			var found = false
+			for _, root := range acc.Roots {
+				if root == path {
+					found = true
+					break
+				}
+			}
+			if !found {
+				acc.Roots = append(acc.Roots, path)
+			}
+		}
+	}
+}
+
+// Scan drives from roots list.
+func (acc *Account) ScanRoots() (drvs []*DirKit) {
+	for _, root := range acc.Roots {
+		if _, err := os.Stat(root); err == nil {
+			var dk DirKit
+			dk.NameVal = root[:len(root)-1]
+			dk.TypeVal = FT_drive
+			dk.KTmbVal = ThumbName(root)
+			dk.NTmbVal = TMB_reject
+			drvs = append(drvs, &dk)
+		}
+	}
+	return
+}
 
 // Recreates shares maps, puts share property to cache.
 func (acc *Account) UpdateShares() {

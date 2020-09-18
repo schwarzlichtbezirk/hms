@@ -422,24 +422,8 @@ func (fr *folderRet) AddProp(prop FileProper) {
 	}
 }
 
-// Scan all available drives installed on local machine.
-func scanroots() (drvs []*DirKit) {
-	for _, root := range DefAcc.Roots {
-		var fpath = root + "/"
-		if _, err := os.Stat(fpath); err == nil {
-			var dk DirKit
-			dk.NameVal = root
-			dk.TypeVal = FT_drive
-			dk.KTmbVal = ThumbName(fpath)
-			dk.NTmbVal = TMB_reject
-			drvs = append(drvs, &dk)
-		}
-	}
-	return
-}
-
 // Reads directory with given name and returns FileProper for each entry.
-func readdir(dirname string) (ret folderRet, err error) {
+func readdir(dirname string, hidden []string) (ret folderRet, err error) {
 	if !strings.HasSuffix(dirname, "/") {
 		dirname += "/"
 	}
@@ -469,7 +453,7 @@ scanprop:
 	for _, fi := range fis {
 		var fpath = dirname + fi.Name()
 		var cmppath = strings.ToLower(filepath.ToSlash(fpath))
-		for _, pat := range DefAcc.Hidden {
+		for _, pat := range hidden {
 			var matched bool
 			if matched, _ = filepath.Match(pat, cmppath); matched {
 				continue scanprop

@@ -529,6 +529,7 @@ let app = new Vue({
 						paths.push(fp.path);
 					}
 					fetchajaxauth("POST", "/api/tmb/scn", {
+						aid: this.aid,
 						paths: paths,
 						force: false
 					}).then(response => {
