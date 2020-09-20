@@ -148,9 +148,9 @@ const shareprefix = "/file/";
 const geticonname = file => {
 	switch (file.type) {
 		case FT.drive:
-			return "drive";
+			return file.offline ? "drive-off" : "drive";
 		case FT.dir:
-			let suff = app.curpathshares.length ? "-pub" : "";
+			const suff = app.curpathshares.length ? "-pub" : "";
 			if (file.scan) {
 				let fnum = 0;
 				const fg = file.fgrp;
@@ -299,13 +299,9 @@ let app = new Vue({
 		histlist: [] // history stack
 	},
 	computed: {
-		// is it running on localhost
-		isadmin() {
-			return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-		},
 		// is it authorized or running on localhost
-		signed() {
-			return this.isauth || this.isadmin;
+		isadmin() {
+			return this.isauth || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 		},
 		// array of paths to current folder
 		curpathway() {
@@ -708,9 +704,11 @@ let app = new Vue({
 		},
 
 		onpathopen(file) {
-			ajaxcc.emit('ajax', +1);
-			this.fetchopenfolder(file)
-				.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
+			if (!file.offline) {
+				ajaxcc.emit('ajax', +1);
+				this.fetchopenfolder(file)
+					.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
+			}
 		},
 
 		onauthcaret() {

@@ -94,43 +94,57 @@ const (
 	EC_foldernoacc  = 42
 	EC_folderfail   = 43
 
-	// shrlst
-	EC_shrlstnoreq  = 50
-	EC_shrlstbadreq = 51
-	EC_shrlstnoacc  = 52
-	EC_shrlstdeny   = 53
-
-	// shradd
-	EC_shraddnoreq   = 60
-	EC_shraddbadreq  = 61
-	EC_shraddnodata  = 62
-	EC_shraddnoacc   = 63
-	EC_shradddeny    = 64
-	EC_shraddnopath  = 65
-	EC_shraddbadpath = 66
-
-	// shrdel
-	EC_shrdelnoreq  = 70
-	EC_shrdelbadreq = 71
-	EC_shrdelnodata = 72
-	EC_shrdelnoacc  = 73
-	EC_shrdeldeny   = 74
-	EC_shrdelnopath = 75
-
 	// thumb
-	EC_thumbabsent = 80
-	EC_thumbbadcnt = 81
+	EC_thumbabsent = 50
+	EC_thumbbadcnt = 51
 
-	// tmbchk
-	EC_tmbchknoreq  = 82
-	EC_tmbchkbadreq = 83
-	EC_tmbchknodata = 84
+	// tmb/chk
+	EC_tmbchknoreq  = 52
+	EC_tmbchkbadreq = 53
+	EC_tmbchknodata = 54
 
-	// tmbscn
-	EC_tmbscnnoreq  = 85
-	EC_tmbscnbadreq = 86
-	EC_tmbscnnodata = 87
-	EC_tmbscnnoacc  = 88
+	// tmb/scn
+	EC_tmbscnnoreq  = 55
+	EC_tmbscnbadreq = 56
+	EC_tmbscnnodata = 57
+	EC_tmbscnnoacc  = 58
+
+	// share/lst
+	EC_shrlstnoreq  = 60
+	EC_shrlstbadreq = 61
+	EC_shrlstnoacc  = 62
+	EC_shrlstdeny   = 63
+
+	// share/add
+	EC_shraddnoreq   = 70
+	EC_shraddbadreq  = 71
+	EC_shraddnodata  = 72
+	EC_shraddnoacc   = 73
+	EC_shradddeny    = 74
+	EC_shraddnopath  = 75
+	EC_shraddbadpath = 76
+
+	// share/del
+	EC_shrdelnoreq  = 80
+	EC_shrdelbadreq = 81
+	EC_shrdelnodata = 82
+	EC_shrdelnoacc  = 83
+	EC_shrdeldeny   = 84
+	EC_shrdelnopath = 85
+
+	// drive/add
+	EC_drvaddnoreq  = 90
+	EC_drvaddbadreq = 91
+	EC_drvaddnodata = 92
+	EC_drvaddnoacc  = 93
+	EC_drvadddeny   = 94
+
+	// drive/del
+	EC_drvdelnoreq  = 100
+	EC_drvdelbadreq = 101
+	EC_drvdelnodata = 102
+	EC_drvdelnoacc  = 103
+	EC_drvdeldeny   = 104
 )
 
 //////////////////
@@ -199,15 +213,18 @@ func RegisterRoutes(gmux *Router) {
 	api.Path("/pubkey").HandlerFunc(AjaxWrap(pubkeyApi))
 	api.Path("/signin").HandlerFunc(AjaxWrap(signinApi))
 	api.Path("/refrsh").HandlerFunc(AjaxWrap(refrshApi))
-	api.Path("/getdrv").HandlerFunc(AuthWrap(getdrvApi))
 	api.Path("/folder").HandlerFunc(AjaxWrap(folderApi))
+	var tmb = api.PathPrefix("/tmb").Subrouter()
+	tmb.Path("/chk").HandlerFunc(AjaxWrap(tmbchkApi))
+	tmb.Path("/scn").HandlerFunc(AjaxWrap(tmbscnApi))
 	var shr = api.PathPrefix("/share").Subrouter()
 	shr.Path("/lst").HandlerFunc(AjaxWrap(shrlstApi))
 	shr.Path("/add").HandlerFunc(AuthWrap(shraddApi))
 	shr.Path("/del").HandlerFunc(AuthWrap(shrdelApi))
-	var tmb = api.PathPrefix("/tmb").Subrouter()
-	tmb.Path("/chk").HandlerFunc(AjaxWrap(tmbchkApi))
-	tmb.Path("/scn").HandlerFunc(AjaxWrap(tmbscnApi))
+	var drv = api.PathPrefix("/drive").Subrouter()
+	drv.Path("/lst").HandlerFunc(AuthWrap(drvlstApi))
+	drv.Path("/add").HandlerFunc(AuthWrap(drvaddApi))
+	drv.Path("/del").HandlerFunc(AuthWrap(drvdelApi))
 }
 
 ////////////////

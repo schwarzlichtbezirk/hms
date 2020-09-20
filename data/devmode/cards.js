@@ -63,7 +63,7 @@ Vue.component('dir-card-tag', {
 	},
 	computed: {
 		// is it authorized or running on localhost
-		signed() {
+		isadmin() {
 			return this.isauth || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 		},
 		isvisible() {
@@ -94,6 +94,9 @@ Vue.component('dir-card-tag', {
 		},
 		clsshared() {
 			return { active: this.selfile && this.selfile.pref };
+		},
+		disdiskremove() {
+			return !this.selfile || this.selfile.type !== FT.drive;
 		},
 
 		clsorder() {
@@ -132,6 +135,27 @@ Vue.component('dir-card-tag', {
 			this.listmode = listmodenext[this.listmode];
 		},
 
+		ondiskadd() {
+
+		},
+		ondiskremove() {
+			ajaxcc.emit('ajax', +1);
+			fetchajaxauth("POST", "/api/drive/del", {
+				aid: this.aid,
+				path: this.selfile.path
+			}).then(response => {
+				traceajax(response);
+				if (response.ok) {
+					if (response.data) {
+						this.list.splice(this.list.findIndex(elem => elem === this.selfile), 1);
+						if (this.selfile.pref) {
+							this.fetchsharedel(this.selfile);
+						}
+					}
+				}
+			}).catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
+		},
+
 		onselect(file) {
 			this.selfile = file;
 		},
@@ -167,7 +191,7 @@ Vue.component('file-card-tag', {
 	},
 	computed: {
 		// is it authorized or running on localhost
-		signed() {
+		isadmin() {
 			return this.isauth || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 		},
 		isvisible() {

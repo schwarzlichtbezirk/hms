@@ -141,16 +141,13 @@ func (acc *Account) FindRoots() {
 }
 
 // Scan drives from roots list.
-func (acc *Account) ScanRoots() (drvs []*DirKit) {
-	for _, root := range acc.Roots {
-		if _, err := os.Stat(root); err == nil {
-			var dk DirKit
-			dk.NameVal = root[:len(root)-1]
-			dk.TypeVal = FT_drive
-			dk.KTmbVal = ThumbName(root)
-			dk.NTmbVal = TMB_reject
-			drvs = append(drvs, &dk)
-		}
+func (acc *Account) ScanRoots() (drvs []FileProper) {
+	drvs = make([]FileProper, len(acc.Roots), len(acc.Roots))
+	for i, root := range acc.Roots {
+		_, err := os.Stat(root)
+		var dk DriveKit
+		dk.Setup(root, err != nil)
+		drvs[i] = &dk
 	}
 	return
 }

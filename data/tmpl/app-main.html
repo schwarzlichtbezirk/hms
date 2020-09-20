@@ -21,7 +21,7 @@
 	<div class="sticky-top">
 		<nav class="navbar navbar-expand-sm bg-tool w-100">
 			<ul class="navbar-nav flex-row">
-				<li v-show="signed"><button class="btn toolbtn fg-tool bg-highlight" v-bind:disabled="dishome" v-on:click="onhome" title="root folder"><i class="material-icons">home</i></button></li>
+				<li v-show="isadmin"><button class="btn toolbtn fg-tool bg-highlight" v-bind:disabled="dishome" v-on:click="onhome" title="root folder"><i class="material-icons">home</i></button></li>
 				<li><button class="btn toolbtn fg-tool" v-bind:disabled="disback" v-on:click="onback" v-bind:title="hintback"><i class="material-icons">arrow_back</i></button></li>
 				<li><button class="btn toolbtn fg-tool" v-bind:disabled="disforward" v-on:click="onforward" v-bind:title="hintforward"><i class="material-icons">arrow_forward</i></button></li>
 				<li><button class="btn toolbtn fg-tool" v-bind:disabled="disparent" v-on:click="onparent" v-bind:title="hintparent"><i class="material-icons">subdirectory_arrow_left</i></button></li>
@@ -49,11 +49,12 @@
 							<button class="btn toolbtn fg-tool" v-on:click="onlogin" title="sign-in with given password"><i class="material-icons">account_box</i></button>
 						</div>
 						<div v-show="showauth && isauth" class="form-inline">
+							<span class="navbar-text ml-md-3">{{login}}</span>
 							<button class="btn toolbtn fg-tool" v-on:click="onlogout" title="sign-out"><i class="material-icons">exit_to_app</i></button>
 						</div>
 						<button class="btn toolbtn fg-tool" v-on:click="onauthcaret" v-bind:title="hintauthcaret"><i class="material-icons">{{textauthcaret}}</i></button>
 					</div>
-					</div>
+				</div>
 			</div>
 		</nav>
 	</div>
@@ -64,7 +65,7 @@
 		</template>
 
 		<template>
-			<file-card-tag ref="filecard" v-bind:list="filelist" v-on:share="onshare" />
+			<file-card-tag v-bind:list="filelist" v-on:share="onshare" />
 		</template>
 
 		<template>

@@ -190,13 +190,6 @@ func getlogApi(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
-func getdrvApi(w http.ResponseWriter, r *http.Request, auth *Account) {
-	var ret = auth.ScanRoots()
-	Log.Printf("navigate to root")
-	WriteJson(w, http.StatusOK, ret)
-}
-
-// APIHANDLER
 func folderApi(w http.ResponseWriter, r *http.Request) {
 	incuint(&foldercallcout, 1)
 
@@ -423,6 +416,99 @@ func shrdelApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 	}
 
 	WriteJson(w, http.StatusOK, ok)
+}
+
+// APIHANDLER
+func drvlstApi(w http.ResponseWriter, r *http.Request, auth *Account) {
+	var ret = auth.ScanRoots()
+	Log.Printf("navigate to root")
+	WriteJson(w, http.StatusOK, ret)
+}
+
+// APIHANDLER
+func drvaddApi(w http.ResponseWriter, r *http.Request, auth *Account) {
+	var err error
+	var arg struct {
+		AID  int    `json:"aid"`
+		Path string `json:"path"`
+	}
+
+	// get arguments
+	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
+		if err = json.Unmarshal(jb, &arg); err != nil {
+			WriteError400(w, err, EC_drvaddbadreq)
+			return
+		}
+		if len(arg.Path) == 0 {
+			WriteError400(w, ErrArgNoPath, EC_drvaddnodata)
+			return
+		}
+	} else {
+		WriteError400(w, ErrNoJson, EC_drvaddnoreq)
+		return
+	}
+
+	var acc *Account
+	if acc = AccList.ByID(int(arg.AID)); acc == nil {
+		WriteError400(w, ErrNoAcc, EC_drvaddnoacc)
+		return
+	}
+	if auth != acc {
+		WriteJson(w, http.StatusForbidden, &AjaxErr{ErrDeny, EC_drvadddeny})
+		return
+	}
+
+	_, err = os.Stat(arg.Path)
+	var dk DriveKit
+	dk.Setup(arg.Path, err != nil)
+	acc.Roots = append(acc.Roots, arg.Path)
+
+	WriteJson(w, http.StatusOK, dk)
+}
+
+// APIHANDLER
+func drvdelApi(w http.ResponseWriter, r *http.Request, auth *Account) {
+	var err error
+	var arg struct {
+		AID  int    `json:"aid"`
+		Path string `json:"path"`
+	}
+
+	// get arguments
+	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
+		if err = json.Unmarshal(jb, &arg); err != nil {
+			WriteError400(w, err, EC_drvdelbadreq)
+			return
+		}
+		if len(arg.Path) == 0 {
+			WriteError400(w, ErrArgNoPath, EC_drvdelnodata)
+			return
+		}
+	} else {
+		WriteError400(w, ErrNoJson, EC_drvdelnoreq)
+		return
+	}
+
+	var acc *Account
+	if acc = AccList.ByID(int(arg.AID)); acc == nil {
+		WriteError400(w, ErrNoAcc, EC_drvdelnoacc)
+		return
+	}
+	if auth != acc {
+		WriteJson(w, http.StatusForbidden, &AjaxErr{ErrDeny, EC_drvdeldeny})
+		return
+	}
+
+	var found = false
+	for i, root := range acc.Roots {
+		if root == arg.Path {
+			acc.Roots = append(acc.Roots[:i], acc.Roots[i+1:]...)
+			found = true
+			break
+		}
+	}
+
+	WriteJson(w, http.StatusOK, found)
 }
 
 // The End.

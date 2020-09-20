@@ -304,6 +304,20 @@ func (dk *DirKit) Setup(fpath string) {
 	dk.NTmbVal = TMB_reject
 }
 
+type DriveKit struct {
+	DirKit
+	Offline bool `json:"offline"`
+}
+
+// Fills fields with given path. Do not looks for share.
+func (dk *DriveKit) Setup(fpath string, offline bool) {
+	dk.NameVal = fpath[:len(fpath)-1]
+	dk.TypeVal = FT_drive
+	dk.KTmbVal = ThumbName(fpath)
+	dk.NTmbVal = TMB_reject
+	dk.Offline = offline
+}
+
 // Descriptor for discs and tracks.
 type TagEnum struct {
 	Number int `json:"number,omitempty"`
@@ -408,15 +422,15 @@ func MakeProp(fpath string, fi os.FileInfo) (prop FileProper) {
 	return
 }
 
-// Returned data for "getdrv", "folder" API handlers.
+// Returned data for "drive/lst", "folder" API handlers.
 type folderRet struct {
-	Paths []*DirKit    `json:"paths"`
+	Paths []FileProper `json:"paths"`
 	Files []FileProper `json:"files"`
 }
 
 func (fr *folderRet) AddProp(prop FileProper) {
-	if dk, ok := prop.(*DirKit); ok {
-		fr.Paths = append(fr.Paths, dk)
+	if prop.Type() < 0 {
+		fr.Paths = append(fr.Paths, prop)
 	} else {
 		fr.Files = append(fr.Files, prop)
 	}
