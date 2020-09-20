@@ -279,9 +279,10 @@ let app = new Vue({
 	data: {
 		skinlink: "", // URL of skin CSS
 		skinlist: skinlist,
-		isauth: false, // is authorized
-		aid: 0, // account ID
 		showauth: false, // display authorization form
+		isauth: false, // is authorized
+		authid: 0, // authorized ID
+		aid: 0, // account ID
 		login: "", // authorization login
 		password: "", // authorization password
 		namestate: 0, // -1 invalid login, 0 ambiguous, 1 valid login
@@ -736,7 +737,7 @@ let app = new Vue({
 			}).then(response => {
 				traceajax(response);
 				if (response.status === 200) {
-					auth.signin(response.data);
+					auth.signin(response.data, this.login);
 					this.namestate = 1;
 					this.passstate = 1;
 					this.onrefresh();
@@ -769,12 +770,23 @@ let app = new Vue({
 		this.skinlink = sessionStorage.getItem('skinlink') || "/data/skin/neon.css";
 		$("#skinlink").attr("href", this.skinlink);
 
-		auth.signload();
-		if (devmode) {
-			console.log("token:", auth.token);
-		}
-		auth.on('auth', is => this.isauth = is);
+		auth.on('auth', is => {
+			this.isauth = is;
+			if (is) {
+				const claims = auth.claims();
+				if (claims && 'aid' in claims) {
+					this.authid = claims.aid;
+				}
+			}
+		});
 		ajaxcc.on('ajax', count => this.loadcount += count);
+
+		auth.signload();
+		this.login = auth.login;
+		if (devmode && this.isauth) {
+			console.log("token:", auth.token);
+			console.log("login:", auth.login);
+		}
 
 		const chunks = decodeURI(window.location.pathname).split('/');
 		chunks.shift(); // remove first empty element

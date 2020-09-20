@@ -6,32 +6,47 @@ const auth = extend({
 		access: null,
 		refrsh: null
 	},
+	login: "",
 
 	signed() {
 		return !!this.token.access;
 	},
-	signin(t) {
-		sessionStorage.setItem('token', JSON.stringify(t));
-		this.token.access = t.access;
-		this.token.refrsh = t.refrsh;
+	claims() {
+		try {
+			const p = this.token.access.split('.');
+			return JSON.parse(atob(p[1]));
+		} catch {
+			return null;
+		}
+	},
+	signin(tok, lgn) {
+		sessionStorage.setItem('token', JSON.stringify(tok));
+		this.token.access = tok.access;
+		this.token.refrsh = tok.refrsh;
+		if (lgn) {
+			sessionStorage.setItem('login', lgn);
+			this.login = lgn;
+		}
 		this.emit('auth', true);
 	},
 	signout() {
 		sessionStorage.removeItem('token');
 		this.token.access = null;
 		this.token.refrsh = null;
+		// login remains unchanged
 		this.emit('auth', false);
 	},
 	signload() {
 		try {
-			// Load from storage
-			const t = JSON.parse(sessionStorage.getItem('token'));
-			this.token.access = t.access;
-			this.token.refrsh = t.refrsh;
+			const tok = JSON.parse(sessionStorage.getItem('token'));
+			this.token.access = tok.access;
+			this.token.refrsh = tok.refrsh;
+			this.login = sessionStorage.getItem('login') || "";
 			this.emit('auth', true);
-		} catch (e) {
+		} catch {
 			this.token.access = null;
 			this.token.refrsh = null;
+			this.login = "";
 			this.emit('auth', false);
 		}
 	}

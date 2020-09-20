@@ -23,6 +23,7 @@ var (
 	ErrArgNoNum  = errors.New("'num' parameter not recognized")
 	ErrArgNoPath = errors.New("'path' argument required")
 	ErrArgNoPref = errors.New("'pref' or 'path' argument required")
+	ErrNotPath   = errors.New("path is not directory")
 )
 
 //////////////////////////
@@ -256,6 +257,58 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
+func ispathApi(w http.ResponseWriter, r *http.Request, auth *Account) {
+	var err error
+	var arg struct {
+		AID  int    `json:"aid"`
+		Path string `json:"path"`
+		Prop bool   `json:"prop,omitempty"`
+	}
+
+	// get arguments
+	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
+		if err = json.Unmarshal(jb, &arg); err != nil {
+			WriteError400(w, err, EC_ispathbadreq)
+			return
+		}
+		if len(arg.Path) == 0 {
+			WriteError400(w, ErrArgNoPath, EC_ispathnodata)
+			return
+		}
+	} else {
+		WriteError400(w, ErrNoJson, EC_ispathnoreq)
+		return
+	}
+
+	var acc *Account
+	if acc = AccList.ByID(int(arg.AID)); acc == nil {
+		WriteError400(w, ErrNoAcc, EC_ispathnoacc)
+		return
+	}
+	if auth != acc {
+		WriteJson(w, http.StatusForbidden, &AjaxErr{ErrDeny, EC_ispathdeny})
+		return
+	}
+
+	var fi os.FileInfo
+	var prop interface{}
+	if fi, err = os.Stat(arg.Path); err == nil {
+		if arg.Prop {
+			prop = MakeProp(arg.Path, fi)
+		} else {
+			prop = true
+		}
+	} else {
+		if os.IsNotExist(err) {
+			prop = false
+		} else {
+			prop = nil
+		}
+	}
+	WriteJson(w, http.StatusOK, prop)
+}
+
+// APIHANDLER
 func shrlstApi(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
@@ -443,6 +496,10 @@ func drvaddApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 			WriteError400(w, ErrArgNoPath, EC_drvaddnodata)
 			return
 		}
+		arg.Path = filepath.ToSlash(arg.Path)
+		if arg.Path[len(arg.Path)-1] != '/' {
+			arg.Path += "/"
+		}
 	} else {
 		WriteError400(w, ErrNoJson, EC_drvaddnoreq)
 		return
@@ -458,10 +515,21 @@ func drvaddApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 		return
 	}
 
-	_, err = os.Stat(arg.Path)
+	if acc.RootIndex(arg.Path) >= 0 {
+		WriteJson(w, http.StatusOK, nil)
+		return
+	}
+
+	var fi os.FileInfo
+	if fi, err = os.Stat(arg.Path); err == nil && !fi.IsDir() {
+		WriteError400(w, ErrNotPath, EC_drvaddfile)
+		return
+	}
 	var dk DriveKit
 	dk.Setup(arg.Path, err != nil)
+	acc.mux.Lock()
 	acc.Roots = append(acc.Roots, arg.Path)
+	acc.mux.Unlock()
 
 	WriteJson(w, http.StatusOK, dk)
 }
@@ -499,16 +567,14 @@ func drvdelApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 		return
 	}
 
-	var found = false
-	for i, root := range acc.Roots {
-		if root == arg.Path {
-			acc.Roots = append(acc.Roots[:i], acc.Roots[i+1:]...)
-			found = true
-			break
-		}
+	var i int
+	if i = acc.RootIndex(arg.Path); i >= 0 {
+		acc.mux.Lock()
+		acc.Roots = append(acc.Roots[:i], acc.Roots[i+1:]...)
+		acc.mux.Unlock()
 	}
 
-	WriteJson(w, http.StatusOK, found)
+	WriteJson(w, http.StatusOK, i >= 0)
 }
 
 // The End.

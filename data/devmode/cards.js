@@ -58,6 +58,8 @@ Vue.component('dir-card-tag', {
 			selfile: null, // current selected item
 			order: 1,
 			listmode: "smicon",
+			diskpath: "", // path to disk to add
+			diskpathstate: 0,
 			iid: makestrid(10) // instance ID
 		};
 	},
@@ -95,6 +97,9 @@ Vue.component('dir-card-tag', {
 		clsshared() {
 			return { active: this.selfile && this.selfile.pref };
 		},
+		disdiskadd() {
+			return !this.diskpath.length;
+		},
 		disdiskremove() {
 			return !this.selfile || this.selfile.type !== FT.drive;
 		},
@@ -106,6 +111,10 @@ Vue.component('dir-card-tag', {
 		},
 		clslistmode() {
 			return listmodeicon[this.listmode];
+		},
+		clsdiskpathedt() {
+			return !this.diskpathstate ? ''
+				: this.passstate === -1 ? 'is-invalid' : 'is-valid';
 		},
 
 		iconmodetag() {
@@ -136,12 +145,28 @@ Vue.component('dir-card-tag', {
 		},
 
 		ondiskadd() {
-
+			ajaxcc.emit('ajax', +1);
+			fetchajaxauth("POST", "/api/drive/add", {
+				aid: app.aid,
+				path: this.diskpath
+			}).then(response => {
+				traceajax(response);
+				if (response.ok) {
+					const file = response.data;
+					if (file) {
+						file.path = file.name + '/';
+						this.list.push(file);
+					}
+					$("#diskadd" + this.iid).modal('hide');
+				} else {
+					this.diskpathstate = -1;
+				}
+			}).catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
 		},
 		ondiskremove() {
 			ajaxcc.emit('ajax', +1);
 			fetchajaxauth("POST", "/api/drive/del", {
-				aid: this.aid,
+				aid: app.aid,
 				path: this.selfile.path
 			}).then(response => {
 				traceajax(response);
@@ -152,6 +177,20 @@ Vue.component('dir-card-tag', {
 							this.fetchsharedel(this.selfile);
 						}
 					}
+				}
+			}).catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
+		},
+		ondiskpathchange(e) {
+			ajaxcc.emit('ajax', +1);
+			fetchajaxauth("POST", "/api/ispath", {
+				aid: app.aid,
+				path: this.diskpath,
+				prop: false
+			}).then(response => {
+				if (response.ok) {
+					this.diskpathstate = response.data ? 1 : 0;
+				} else {
+					this.diskpathstate = -1;
 				}
 			}).catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
 		},

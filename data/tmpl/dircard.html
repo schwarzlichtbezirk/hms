@@ -5,7 +5,7 @@
 			<a class="card-link d-block" data-toggle="collapse" v-bind:href="'#card'+iid">subfolders</a>
 		</div>
 		<ul v-show="isadmin" class="navbar-nav flex-row ml-auto">
-			<li><button class="btn cardbtn fg-tool" v-on:click="ondiskadd" title="add disk"><i class="material-icons">add_circle_outline</i></button></li>
+			<li><button class="btn cardbtn fg-tool" title="add disk" data-toggle="modal" v-bind:data-target="'#diskadd'+iid"><i class="material-icons">add_circle_outline</i></button></li>
 			<li><button class="btn cardbtn fg-tool" v-bind:disabled="disdiskremove" v-on:click="ondiskremove" title="remove disk"><i class="material-icons">remove_circle_outline</i></button></li>
 		</ul>
 		<ul class="navbar-nav flex-row ml-auto">
@@ -22,6 +22,18 @@
 			<template v-for="file in sortedlist">
 				<component v-bind:is="iconmodetag" v-bind:file="file" v-bind:state="{selected:selfile===file,playback:false}" v-bind:size="listmode" v-on:select="onselect" v-on:open="onopen" />
 			</template>
+		</div>
+		<div class="modal fade" v-bind:id="'diskadd'+iid" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+			<div class="modal-dialog modal-dialog-centered" role="document">
+				<div class="modal-content">
+					<div class="input-group">
+						<input v-model="diskpath" v-bind:class="clsdiskpathedt" v-on:keyup.enter.prevent="ondiskadd" v-on:keyup="ondiskpathchange" class="form-control" type="text" maxlength="256" placeholder="destination path" aria-label="destination path" required>
+						<div class="input-group-append">
+							<button class="btn btn-secondary" v-on:click="ondiskadd" v-bind:disabled="disdiskadd">Add disk</button>
+						</div>
+					</div>
+				</div>
+			</div>
 		</div>
 	</div>
 </div>

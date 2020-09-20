@@ -20,7 +20,7 @@ var DefHidden = []string{
 	"?:/programdata",
 	"?:/recovery",
 	"?:/config.msi",
-	"*/thumb.db",
+	"*/thumbs.db",
 }
 
 // Share description for json-file.
@@ -116,8 +116,24 @@ var AccList Accounts
 
 // Set hidden files array to default predefined list.
 func (acc *Account) SetDefaultHidden() {
+	acc.mux.Lock()
+	defer acc.mux.Unlock()
+
 	acc.Hidden = make([]string, len(DefHidden))
 	copy(acc.Hidden, DefHidden)
+}
+
+// Returns index of given path in roots list or -1 if not found.
+func (acc *Account) RootIndex(path string) int {
+	acc.mux.RLock()
+	defer acc.mux.RUnlock()
+
+	for i, root := range acc.Roots {
+		if root == path {
+			return i
+		}
+	}
+	return -1
 }
 
 // Scan all available drives installed on local machine.
@@ -126,39 +142,43 @@ func (acc *Account) FindRoots() {
 	for _, d := range windisks {
 		var path = string(d) + ":/"
 		if _, err := os.Stat(path); err == nil {
-			var found = false
-			for _, root := range acc.Roots {
-				if root == path {
-					found = true
-					break
-				}
-			}
-			if !found {
+			if acc.RootIndex(path) < 0 {
+				acc.mux.Lock()
 				acc.Roots = append(acc.Roots, path)
+				acc.mux.Unlock()
 			}
 		}
 	}
 }
 
 // Scan drives from roots list.
-func (acc *Account) ScanRoots() (drvs []FileProper) {
-	drvs = make([]FileProper, len(acc.Roots), len(acc.Roots))
+func (acc *Account) ScanRoots() []FileProper {
+	acc.mux.RLock()
+	defer acc.mux.RUnlock()
+
+	var drvs = make([]FileProper, len(acc.Roots), len(acc.Roots))
+
 	for i, root := range acc.Roots {
 		_, err := os.Stat(root)
 		var dk DriveKit
 		dk.Setup(root, err != nil)
 		drvs[i] = &dk
 	}
-	return
+	return drvs
 }
 
 // Recreates shares maps, puts share property to cache.
 func (acc *Account) UpdateShares() {
+	var err error
+	var fi os.FileInfo
+
+	acc.mux.Lock()
+	defer acc.mux.Unlock()
+
 	acc.sharespath = map[string]string{}
 	acc.sharespref = map[string]string{}
 	for _, shr := range acc.Shares {
-		var fi, err = os.Stat(shr.Path)
-		if err != nil {
+		if fi, err = os.Stat(shr.Path); err != nil {
 			Log.Printf("id%d: can not create share '%s' on path '%s'", acc.ID, shr.Pref, shr.Path)
 			continue
 		}
@@ -298,37 +318,38 @@ func (acc *Account) GetSharePath(spath string) string {
 	if pref == "" {
 		return spath
 	}
+
 	acc.mux.RLock()
-	var path, ok = acc.sharespref[pref]
-	acc.mux.RUnlock()
-	if !ok {
-		return spath
+	defer acc.mux.RUnlock()
+
+	if path, ok := acc.sharespref[pref]; ok {
+		return path + suff
 	}
-	return path + suff
+	return spath
 }
 
 // Brings share path to local file path and signal that it shared.
 func (acc *Account) CheckSharePath(spath string) (string, bool) {
 	var pref, suff = splitprefsuff(spath)
+
+	acc.mux.RLock()
+	defer acc.mux.RUnlock()
+
 	if pref == "" {
 		var shared bool
-		acc.mux.RLock()
 		for _, fpath := range acc.sharespref {
 			if strings.HasPrefix(spath, fpath) {
 				shared = true
 				break
 			}
 		}
-		acc.mux.RUnlock()
 		return spath, shared
 	}
-	acc.mux.RLock()
-	var fpath, ok = acc.sharespref[pref]
-	acc.mux.RUnlock()
-	if !ok {
-		return spath, false
+
+	if fpath, ok := acc.sharespref[pref]; ok {
+		return fpath + suff, true
 	}
-	return fpath + suff, true
+	return spath, false
 }
 
 // The End.

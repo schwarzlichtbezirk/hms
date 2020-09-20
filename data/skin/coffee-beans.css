@@ -100,12 +100,6 @@ a, .btn-link {
 	border-radius: 1.25rem;
 }
 
-@media (min-width: 576px) {
-	.auth-control {
-		max-width: 160px;
-	}
-}
-
 
 .folder-head {
 	margin: 8px 0px;

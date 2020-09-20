@@ -94,57 +94,65 @@ const (
 	EC_foldernoacc  = 42
 	EC_folderfail   = 43
 
+	// ispath
+	EC_ispathnoreq  = 50
+	EC_ispathbadreq = 51
+	EC_ispathnodata = 52
+	EC_ispathnoacc  = 53
+	EC_ispathdeny   = 54
+
 	// thumb
-	EC_thumbabsent = 50
-	EC_thumbbadcnt = 51
+	EC_thumbabsent = 60
+	EC_thumbbadcnt = 61
 
 	// tmb/chk
-	EC_tmbchknoreq  = 52
-	EC_tmbchkbadreq = 53
-	EC_tmbchknodata = 54
+	EC_tmbchknoreq  = 62
+	EC_tmbchkbadreq = 63
+	EC_tmbchknodata = 64
 
 	// tmb/scn
-	EC_tmbscnnoreq  = 55
-	EC_tmbscnbadreq = 56
-	EC_tmbscnnodata = 57
-	EC_tmbscnnoacc  = 58
+	EC_tmbscnnoreq  = 65
+	EC_tmbscnbadreq = 66
+	EC_tmbscnnodata = 67
+	EC_tmbscnnoacc  = 68
 
 	// share/lst
-	EC_shrlstnoreq  = 60
-	EC_shrlstbadreq = 61
-	EC_shrlstnoacc  = 62
-	EC_shrlstdeny   = 63
+	EC_shrlstnoreq  = 70
+	EC_shrlstbadreq = 71
+	EC_shrlstnoacc  = 72
+	EC_shrlstdeny   = 73
 
 	// share/add
-	EC_shraddnoreq   = 70
-	EC_shraddbadreq  = 71
-	EC_shraddnodata  = 72
-	EC_shraddnoacc   = 73
-	EC_shradddeny    = 74
-	EC_shraddnopath  = 75
-	EC_shraddbadpath = 76
+	EC_shraddnoreq   = 80
+	EC_shraddbadreq  = 81
+	EC_shraddnodata  = 82
+	EC_shraddnoacc   = 83
+	EC_shradddeny    = 84
+	EC_shraddnopath  = 85
+	EC_shraddbadpath = 86
 
 	// share/del
-	EC_shrdelnoreq  = 80
-	EC_shrdelbadreq = 81
-	EC_shrdelnodata = 82
-	EC_shrdelnoacc  = 83
-	EC_shrdeldeny   = 84
-	EC_shrdelnopath = 85
+	EC_shrdelnoreq  = 90
+	EC_shrdelbadreq = 91
+	EC_shrdelnodata = 92
+	EC_shrdelnoacc  = 93
+	EC_shrdeldeny   = 94
+	EC_shrdelnopath = 95
 
 	// drive/add
-	EC_drvaddnoreq  = 90
-	EC_drvaddbadreq = 91
-	EC_drvaddnodata = 92
-	EC_drvaddnoacc  = 93
-	EC_drvadddeny   = 94
+	EC_drvaddnoreq  = 100
+	EC_drvaddbadreq = 101
+	EC_drvaddnodata = 102
+	EC_drvaddnoacc  = 103
+	EC_drvadddeny   = 104
+	EC_drvaddfile   = 105
 
 	// drive/del
-	EC_drvdelnoreq  = 100
-	EC_drvdelbadreq = 101
-	EC_drvdelnodata = 102
-	EC_drvdelnoacc  = 103
-	EC_drvdeldeny   = 104
+	EC_drvdelnoreq  = 110
+	EC_drvdelbadreq = 111
+	EC_drvdelnodata = 112
+	EC_drvdelnoacc  = 113
+	EC_drvdeldeny   = 114
 )
 
 //////////////////
@@ -214,6 +222,7 @@ func RegisterRoutes(gmux *Router) {
 	api.Path("/signin").HandlerFunc(AjaxWrap(signinApi))
 	api.Path("/refrsh").HandlerFunc(AjaxWrap(refrshApi))
 	api.Path("/folder").HandlerFunc(AjaxWrap(folderApi))
+	api.Path("/ispath").HandlerFunc(AuthWrap(ispathApi))
 	var tmb = api.PathPrefix("/tmb").Subrouter()
 	tmb.Path("/chk").HandlerFunc(AjaxWrap(tmbchkApi))
 	tmb.Path("/scn").HandlerFunc(AjaxWrap(tmbscnApi))
