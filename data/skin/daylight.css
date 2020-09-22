@@ -5,6 +5,7 @@ body {
 }
 
 .bg-tool {
+	color: Tan;
 	background-color: #343a40;
 }
 
@@ -378,6 +379,12 @@ body {
 				border-radius: 50%;
 				background: SaddleBrown;
 			}
+
+.range-label {
+	width: 3.5rem;
+	text-align: right;
+	white-space: nowrap;
+}
 
 /* Photo slider section */
 

@@ -9,8 +9,8 @@ Vue.component('mp3-player-tag', {
 		return {
 			visible: false,
 			selfile: {},
-			rate: 1.00,
-			volume: 1.00,
+			volval: 100,
+			ratval: 6,
 			repeatmode: 0, // 0 - no any repeat, 1 - repeat single, 2 - repeat playlist
 			seeking: false,
 			media: null,
@@ -20,6 +20,9 @@ Vue.component('mp3-player-tag', {
 			timecur: 0,
 			timebuf: 0,
 			timeend: 0,
+			ratevals: [ // rate predefined values
+				1 / 2.50, 1 / 2.00, 1 / 1.75, 1 / 1.50, 1 / 1.25, 1 /1.15, 1, 1.15, 1.25, 1.50, 1.75, 2.00, 2.50
+			],
 
 			iid: makestrid(10) // instance ID
 		};
@@ -56,6 +59,13 @@ Vue.component('mp3-player-tag', {
 				}
 			};
 			return nextpos(this.selfilepos, this.list.length) || this.repeatmode === 2 && nextpos(-1, this.selfilepos);
+		},
+
+		volumelabel() {
+			return this.volval;
+		},
+		ratelabel() {
+			return this.ratevals[this.ratval].toFixed(2);
 		},
 
 		// music buttons
@@ -111,7 +121,8 @@ Vue.component('mp3-player-tag', {
 			this.selfile = file;
 
 			this.media = new Audio(getfileurl(file)); // API HTMLMediaElement, HTMLAudioElement
-			this.media.playbackRate = this.rate;
+			this.media.volume = this.volval / 100;
+			this.media.playbackRate = this.ratevals[this.ratval];
 			this.media.loop = this.repeatmode === 1;
 
 			// disable UI for not ready media
@@ -156,13 +167,6 @@ Vue.component('mp3-player-tag', {
 				return true;
 			}
 			return false;
-		},
-
-		setrate(rate) {
-			this.rate = rate;
-			if (this.media) {
-				this.media.playbackRate = rate;
-			}
 		},
 
 		play() {
@@ -232,6 +236,23 @@ Vue.component('mp3-player-tag', {
 		onseekerinput(e) {
 			this.seeking = true;
 			this.timecur = Number(e.target.value);
+		},
+
+		onvolinp(e) {
+			this.volval = Number(e.target.value);
+		},
+		onvolval(e) {
+			if (this.media) {
+				this.media.volume = this.volval / 100;
+			}
+		},
+		onratinp(e) {
+			this.ratval = Number(e.target.value);
+		},
+		onratval(e) {
+			if (this.media) {
+				this.media.playbackRate = this.ratevals[this.ratval];
+			}
 		}
 	}
 });

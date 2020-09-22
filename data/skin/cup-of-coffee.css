@@ -5,6 +5,7 @@ body {
 }
 
 .bg-tool {
+	color: Tan;
 	background-color: #b46a20;
 }
 
@@ -392,6 +393,12 @@ body {
 				border-radius: 50%;
 				background: RebeccaPurple;
 			}
+
+.range-label {
+	width: 3.5rem;
+	text-align: right;
+	white-space: nowrap;
+}
 
 /* Photo slider section */
 

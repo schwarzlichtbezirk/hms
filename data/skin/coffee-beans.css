@@ -411,6 +411,12 @@ a, .btn-link {
 				background: RebeccaPurple;
 			}
 
+.range-label {
+	width: 3.5rem;
+	text-align: right;
+	white-space: nowrap;
+}
+
 /* Photo slider section */
 
 .photoslider {

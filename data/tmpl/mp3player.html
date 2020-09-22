@@ -19,24 +19,14 @@
 			</div>
 			<div>{{fmttrackinfo}}</div>
 		</div>
-		<ul class="navbar-nav flex-row">
-			<li class="btn-group dropup">
-				<button class="btn toolbtn fg-tool dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false" title="playback rate"><i class="material-icons">slow_motion_video</i></button>
-				<ul class="dropdown-menu bg-tool dropdown-menu-right" id="rate">
-					<li class="dropdown-item" v-on:click="setrate(2.50)" v-bind:class="{active:rate===2.50}">&times;2.50</li>
-					<li class="dropdown-item" v-on:click="setrate(2.00)" v-bind:class="{active:rate===2.00}">&times;2.00</li>
-					<li class="dropdown-item" v-on:click="setrate(1.75)" v-bind:class="{active:rate===1.75}">&times;1.75</li>
-					<li class="dropdown-item" v-on:click="setrate(1.50)" v-bind:class="{active:rate===1.50}">&times;1.50</li>
-					<li class="dropdown-item" v-on:click="setrate(1.25)" v-bind:class="{active:rate===1.25}">&times;1.25</li>
-					<li class="dropdown-item" v-on:click="setrate(1.15)" v-bind:class="{active:rate===1.15}">&times;1.15</li>
-					<li class="dropdown-item" v-on:click="setrate(1.00)" v-bind:class="{active:rate===1.00}">normal</li>
-					<li class="dropdown-item" v-on:click="setrate(0.90)" v-bind:class="{active:rate===0.90}">&times;0.90</li>
-					<li class="dropdown-item" v-on:click="setrate(0.80)" v-bind:class="{active:rate===0.80}">&times;0.80</li>
-					<li class="dropdown-item" v-on:click="setrate(0.70)" v-bind:class="{active:rate===0.70}">&times;0.70</li>
-					<li class="dropdown-item" v-on:click="setrate(0.60)" v-bind:class="{active:rate===0.60}">&times;0.60</li>
-					<li class="dropdown-item" v-on:click="setrate(0.50)" v-bind:class="{active:rate===0.50}">&times;0.50</li>
-					<li class="dropdown-item" v-on:click="setrate(0.40)" v-bind:class="{active:rate===0.40}">&times;0.40</li>
-				</ul>
+		<ul class="navbar-nav flex-row flex-md-column">
+			<li class="d-flex flex-nowrap align-items-baseline" title="volume">
+				<input type="range" class="mp3range" v-on:input="onvolinp" v-on:change="onvolval" min="0" max="100" value="100">
+				<output class="range-label">{{volumelabel}}%</output>
+			</li>
+			<li class="d-flex flex-nowrap align-items-baseline" title="rate">
+				<input type="range" class="mp3range" v-on:input="onratinp" v-on:change="onratval" min="0" v-bind:max="ratevals.length-1" value="6">
+				<output class="range-label">&times;{{ratelabel}}</output>
 			</li>
 		</ul>
 	</div>

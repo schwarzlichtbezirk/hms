@@ -397,6 +397,12 @@ body {
 				background: rgb(255, 242, 157);
 			}
 
+.range-label {
+	width: 3.5rem;
+	text-align: right;
+	white-space: nowrap;
+}
+
 /* Photo slider section */
 
 .photoslider {

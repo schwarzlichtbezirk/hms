@@ -406,6 +406,12 @@ a, .btn-link {
 				background: SpringGreen;
 			}
 
+.range-label {
+	width: 3.5rem;
+	text-align: right;
+	white-space: nowrap;
+}
+
 /* Photo slider section */
 
 .photoslider {

@@ -27,7 +27,7 @@
 			<div class="modal-dialog modal-dialog-centered" role="document">
 				<div class="modal-content">
 					<div class="input-group">
-						<input v-model="diskpath" v-bind:class="clsdiskpathedt" v-on:keyup.enter.prevent="ondiskadd" v-on:keyup="ondiskpathchange" class="form-control" type="text" maxlength="256" placeholder="destination path" aria-label="destination path" required>
+						<input v-model.trim="diskpath" v-bind:class="clsdiskpathedt" v-on:keyup.enter.prevent="ondiskadd" v-on:keyup="ondiskpathchange" class="form-control" type="text" maxlength="256" placeholder="destination path" aria-label="destination path" required>
 						<div class="input-group-append">
 							<button class="btn btn-secondary" v-on:click="ondiskadd" v-bind:disabled="disdiskadd">Add disk</button>
 						</div>
