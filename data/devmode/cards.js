@@ -206,7 +206,15 @@ Vue.component('dir-card-tag', {
 		}
 	},
 	mounted() {
-		auth.on('auth', is => this.isauth = is);
+		this._authclosure = is => this.isauth = is;
+		auth.on('auth', this._authclosure);
+		$('#diskadd' + this.iid).on('shown.bs.modal', function () {
+			$(this).find('input').trigger('focus');
+		});
+	},
+	beforeDestroy() {
+		auth.off('auth', this._authclosure);
+		$('#diskadd' + this.iid).off('shown.bs.modal');
 	}
 });
 
@@ -505,7 +513,11 @@ Vue.component('file-card-tag', {
 		}
 	},
 	mounted() {
-		auth.on('auth', is => this.isauth = is);
+		this._authclosure = is => this.isauth = is;
+		auth.on('auth', this._authclosure);
+	},
+	beforeDestroy() {
+		auth.off('auth', this._authclosure);
 	}
 });
 

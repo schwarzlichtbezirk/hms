@@ -34,7 +34,6 @@ Vue.component('photoslider-tag', {
 	props: ["list"],
 	data: function () {
 		return {
-			visible: false,
 			selfile: null,
 			selfileurl: null,
 			repeatmode: 0 // 0 - no any repeat, 1 - repeat single, 2 - repeat playlist
@@ -86,22 +85,16 @@ Vue.component('photoslider-tag', {
 		popup(file) {
 			this.selfile = file;
 			this.selfileurl = getfileurl(file);
-			this.visible = true;
-			Vue.nextTick(() => {
-				this.$refs.wall.focus();
-			});
+			$(this.$refs.modal).modal('show');
 		},
 		close() {
 			this.selfile = null;
 			this.selfileurl = null;
-			this.visible = false;
+			$(this.$refs.modal).modal('hide');
 		},
 
 		onkeyup(e) {
 			switch (e.code) {
-				case 'Escape':
-					this.close();
-					break;
 				case 'ArrowLeft':
 					this.onprev();
 					break;

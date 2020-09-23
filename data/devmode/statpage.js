@@ -104,7 +104,7 @@ const app = new Vue({
 
 			scanner();
 			const id = setInterval(scanner, scanfreq);
-			$("#collapse-memory").on('hide.bs.collapse', () => {
+			$("#collapse-memory").one('hide.bs.collapse', () => {
 				clearInterval(id);
 			});
 		});
@@ -112,6 +112,11 @@ const app = new Vue({
 		$("#collapse-console").on('show.bs.collapse', () => {
 			this.ongetlog();
 		});
+	},
+	beforeDestroy() {
+		$("#collapse-memory").off('show.bs.collapse');
+		$("#collapse-memory").off('hide.bs.collapse');
+		$("#collapse-console").off('show.bs.collapse');
 	}
 }); // end of vue application
 
