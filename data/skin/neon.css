@@ -480,11 +480,11 @@ body {
 	}
 
 	.mp3range:hover::-ms-fill-upper {
-		background: orchid;
+		background-color: orchid;
 	}
 
 	.mp3range:focus::-ms-fill-upper {
-		background: mediumorchid;
+		background-color: mediumorchid;
 	}
 
 .range-label {
@@ -534,13 +534,6 @@ body {
 		.photoslider > .sliderbtn.active {
 			color: #fff;
 		}
-
-	.photoslider > img.photo {
-		display: inline-block;
-		max-width: 100%;
-		max-height: 100%;
-		margin: auto;
-	}
 
 	.photoslider > .thumbs {
 		position: absolute;
