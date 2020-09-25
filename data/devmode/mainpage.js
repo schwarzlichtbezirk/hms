@@ -259,11 +259,12 @@ const showmsgbox = (title, body) => {
 	dlg.modal("show");
 };
 
-const ajaxfail = () => {
+const ajaxfail = what => {
 	showmsgbox(
 		"Server unavailable",
 		"Server is currently not available, action can not be done now."
 	);
+	console.error(what);
 };
 
 const onerr404 = () => {
@@ -439,8 +440,7 @@ let app = new Vue({
 				this.pathlist = [];
 				this.filelist = [];
 				this.curpath = file;
-				window.history.replaceState(file, file.path,
-					`${(devmode ? "/dev" : "")}/id${this.aid}/path/${file.path}`);
+				this.seturl();
 				// init map card
 				this.$refs.mapcard.new();
 
@@ -643,6 +643,11 @@ let app = new Vue({
 			});
 		},
 
+		seturl() {
+			window.history.replaceState(this.curpath, this.curpath.path,
+				`${(devmode ? "/dev" : "")}/id${this.aid}/path/${this.curpath.path}`);
+		},
+
 		setskin(skinlink) {
 			this.skinlink = skinlink;
 			$("#skinlink").attr("href", skinlink);
@@ -738,6 +743,7 @@ let app = new Vue({
 				traceajax(response);
 				if (response.status === 200) {
 					auth.signin(response.data, this.login);
+					this.seturl();
 					this.namestate = 1;
 					this.passstate = 1;
 					this.onrefresh();
@@ -776,6 +782,7 @@ let app = new Vue({
 				const claims = auth.claims();
 				if (claims && 'aid' in claims) {
 					this.authid = claims.aid;
+					this.aid = claims.aid;
 				}
 			}
 		});

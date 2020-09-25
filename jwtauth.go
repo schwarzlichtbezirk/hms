@@ -58,13 +58,16 @@ var pubkeycache = gcache.New(10).LRU().Expiration(15 * time.Second).Build()
 // Zero hash value.
 var zero [32]byte
 
+// Access and refresh tokens pair.
 type Tokens struct {
 	Access string `json:"access"`
 	Refrsh string `json:"refrsh"`
 }
 
+// Type of handler for authorized API calls.
 type AuthHandlerFunc func(w http.ResponseWriter, r *http.Request, auth *Account)
 
+// Creates access and refresh tokens pair for given AID.
 func (t *Tokens) Make(aid int) {
 	var now = time.Now()
 	t.Access, _ = jwt.NewWithClaims(jwt.SigningMethodHS256, &HMSClaims{
@@ -85,26 +88,25 @@ func (t *Tokens) Make(aid int) {
 	}).SignedString([]byte(RefreshKey))
 }
 
-func StripPort(hostport string) string {
-	var colon = strings.IndexByte(hostport, ':')
-	if colon == -1 {
-		return hostport
+// Fast IP-address extract from valid host:port string.
+func StripPort(addrport string) string {
+	// IPv6
+	if pos := strings.IndexByte(addrport, ']'); pos != -1 {
+		return addrport[1:pos] // trim first '[' and after ']'
 	}
-	if i := strings.IndexByte(hostport, ']'); i != -1 {
-		return strings.TrimPrefix(hostport[:i], "[")
+	// IPv4
+	if pos := strings.IndexByte(addrport, ':'); pos != -1 {
+		return addrport[:pos]
 	}
-	return hostport[:colon]
+	return addrport // return as is otherwise
 }
 
-func IsLocalhost(host string) bool {
-	host = StripPort(host)
-	if host == "localhost" {
-		return true
-	}
-	var ip = net.ParseIP(host)
-	return ip.IsLoopback()
+// Check up host:port string refer is to localhost.
+func IsLocalhost(addrport string) bool {
+	return net.ParseIP(StripPort(addrport)).IsLoopback()
 }
 
+// Returns authorized account or error otherwise.
 func CheckAuth(r *http.Request) (auth *Account, aerr error) {
 	if pool, is := r.Header["Authorization"]; is {
 		var err error // stores last bearer error
@@ -133,7 +135,7 @@ func CheckAuth(r *http.Request) (auth *Account, aerr error) {
 			aerr = &AjaxErr{ErrNoAcc, EC_tokennoacc}
 			return
 		}
-	} else if !IsLocalhost(r.Host) {
+	} else if !IsLocalhost(r.RemoteAddr) {
 		aerr = &AjaxErr{ErrNoAuth, EC_noauth}
 		return
 	} else {

@@ -1,28 +1,26 @@
 package main
 
 import (
-	"github.com/schwarzlichtbezirk/hms"
+	. "github.com/schwarzlichtbezirk/hms"
 )
 
 const buildvers = "0.5.2"
 const builddate = "2020.09.23"
 
-var log = hms.Log
-
 func main() {
-	log.Printf("version: %s, builton: %s", buildvers, builddate)
-	hms.MakeServerLabel("hms", buildvers)
-	log.Println("starts")
-	hms.Init()
-	var gmux = hms.NewRouter()
-	hms.RegisterRoutes(gmux)
-	hms.Run(gmux)
-	log.Printf("ready")
-	log.Printf("hint: Open localhost page in browser to view the player. If you want to stop the server, press 'Ctrl+C' for graceful network shutdown.")
-	hms.WaitBreak()
-	log.Println("shutting down")
-	hms.Done()
-	log.Println("server stopped")
+	Log.Printf("version: %s, builton: %s", buildvers, builddate)
+	MakeServerLabel("hms", buildvers)
+	Log.Println("starts")
+	Init()
+	var gmux = NewRouter()
+	RegisterRoutes(gmux)
+	Run(gmux)
+	Log.Printf("ready")
+	Log.Printf("hint: Open localhost page in browser to view the player. If you want to stop the server, press 'Ctrl+C' for graceful network shutdown.")
+	WaitBreak()
+	Log.Println("shutting down")
+	Done()
+	Log.Println("server stopped")
 }
 
 // The End.
