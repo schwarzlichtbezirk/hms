@@ -252,6 +252,17 @@ const getfileurl = (file, pref) => {
 	return url;
 };
 
+const tofp = sk => {
+	const fp = sk.prop;
+	if ('path' in sk) {
+		fp.path = sk.path;
+	}
+	if ('pref' in sk) {
+		fp.pref = sk.pref;
+	}
+	return fp
+};
+
 const showmsgbox = (title, body) => {
 	const dlg = $("#msgbox");
 	dlg.find(".modal-title").html(title);
@@ -446,19 +457,17 @@ let app = new Vue({
 
 				if (response.ok) {
 					this.curscan = new Date(Date.now());
-					// update path for each item
-					const pathlist = response.data.paths || [];
-					for (const fp of pathlist) {
-						fp.path = fp.pref ? fp.pref : file.path + fp.name;
-						fp.path += '/';
-					}
-					const filelist = response.data.files || [];
-					for (const fp of filelist) {
-						fp.path = fp.pref ? fp.pref : file.path + fp.name;
-					}
 					// update folder settings
-					this.pathlist = pathlist;
-					this.filelist = filelist;
+					for (const sk of response.data) {
+						if (sk) {
+							const fp = tofp(sk);
+							if (fp.type < 0) {
+								this.pathlist.push(fp);
+							} else {
+								this.filelist.push(fp);
+							}
+						}
+					}
 					// update shares
 					if (!file.path) { // shares only at root
 						this.shared = [];
@@ -470,7 +479,7 @@ let app = new Vue({
 					}
 					// update map card
 					const gpslist = [];
-					for (const fp of filelist) {
+					for (const fp of this.filelist) {
 						if (fp.latitude && fp.longitude && fp.ntmb === 1) {
 							gpslist.push(fp);
 						}
@@ -556,11 +565,13 @@ let app = new Vue({
 				traceajax(response);
 				if (response.ok) {
 					this.shared = [];
-					for (const shr of response.data) {
+					for (const sk of response.data) {
 						// check on cached value exist & it is directory
-						if (shr && FTtoFG[shr.type] === FG.dir) {
-							shr.path = shr.pref + '/';
-							this.shared.push(shr);
+						if (sk) {
+							const fp = tofp(sk);
+							if (fp && FTtoFG[fp.type] === FG.dir) {
+								this.shared.push(fp);
+							}
 						}
 					}
 				}
@@ -574,13 +585,15 @@ let app = new Vue({
 			}).then(response => {
 				traceajax(response);
 				if (response.ok) {
-					const shr = response.data;
-					if (shr) {
+					const sk = response.data;
+					if (sk) {
+						const fp = tofp(sk);
 						// update folder settings
-						Vue.set(file, 'pref', shr.pref);
-						if (FTtoFG[shr.type] === FG.dir) {
-							shr.path = shr.pref + '/';
-							this.shared.push(shr);
+						if (FTtoFG[fp.type] === FG.dir) {
+							if ('pref' in fp) {
+								Vue.set(file, 'pref', fp.pref);
+							}
+							this.shared.push(fp);
 						}
 					}
 				} else if (response.status === 404) { // Not Found

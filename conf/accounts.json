@@ -22,9 +22,9 @@
 		],
 		"shares": [
 			{
-				"path": "E:/Music/",
+				"name": "Music",
 				"pref": "Music",
-				"name": "Music"
+				"path": "E:/Music/"
 			}
 		]
 	}

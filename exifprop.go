@@ -1,7 +1,6 @@
 package hms
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
@@ -134,17 +133,17 @@ func (ep *ExifProp) Setup(x *exif.Exif) {
 	}
 }
 
-// Pretty text representation of the decoded exif data.
-func (ep *ExifProp) String() string {
-	var jb, _ = json.Marshal(ep)
-	return string(jb)
-}
-
 // File with EXIF tags.
 type ExifKit struct {
 	StdProp
 	TmbProp
 	ExifProp
+}
+
+// Creates copy of it self.
+func (ek *ExifKit) Clone() Proper {
+	var c = *ek
+	return &c
 }
 
 // Fills fields with given path.

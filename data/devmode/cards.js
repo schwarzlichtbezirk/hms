@@ -154,7 +154,6 @@ Vue.component('dir-card-tag', {
 				if (response.ok) {
 					const file = response.data;
 					if (file) {
-						file.path = file.name + '/';
 						this.list.push(file);
 					}
 					$("#diskadd" + this.iid).modal('hide');

@@ -71,14 +71,9 @@ type TmbProp struct {
 }
 
 // Generates cache key as hash of path and updates cached state.
-func (tp *TmbProp) Setup(fpath string) {
-	tp.KTmbVal = ThumbName(fpath)
+func (tp *TmbProp) Setup(syspath string) {
+	tp.KTmbVal = ThumbName(syspath)
 	tp.UpdateTmb()
-}
-
-func (tp *TmbProp) String() string {
-	var jb, _ = json.Marshal(tp)
-	return string(jb)
 }
 
 // Updates cached state for this cache key.
@@ -109,12 +104,12 @@ func (tp *TmbProp) SetNTmb(v int) {
 	tp.NTmbVal = v
 }
 
-func ThumbName(fname string) string {
-	var h = md5.Sum([]byte(fname))
+func ThumbName(syspath string) string {
+	var h = md5.Sum([]byte(syspath))
 	return hex.EncodeToString(h[:])
 }
 
-func CacheImg(fp FileProper, fpath string, force bool) (tmb *ThumbElem) {
+func CacheImg(fp Proper, syspath string, force bool) (tmb *ThumbElem) {
 	var err error
 	var ktmb = fp.KTmb()
 
@@ -149,7 +144,7 @@ func CacheImg(fp FileProper, fpath string, force bool) (tmb *ThumbElem) {
 	var file *os.File
 	var ftype string
 	var src, dst image.Image
-	if file, err = os.Open(fpath); err != nil {
+	if file, err = os.Open(syspath); err != nil {
 		return // can not open file
 	}
 	defer file.Close()
@@ -274,14 +269,14 @@ func tmbscnApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	go func() {
-		for _, fpath := range arg.Paths {
-			var fpath = acc.GetSharePath(fpath)
-			if cp, err := propcache.Get(fpath); err == nil { // extract from cache
-				var prop = cp.(FileProper)
-				CacheImg(prop, fpath, arg.Force)
-			} else if fi, err := os.Stat(fpath); err == nil { // put into cache
-				var prop = MakeProp(fpath, fi)
-				CacheImg(prop, fpath, arg.Force)
+		for _, shrpath := range arg.Paths {
+			var syspath = acc.GetSharePath(shrpath)
+			if cp, err := propcache.Get(syspath); err == nil { // extract from cache
+				var prop = cp.(Proper)
+				CacheImg(prop, syspath, arg.Force)
+			} else if fi, err := os.Stat(syspath); err == nil { // put into cache
+				var prop = MakeProp(syspath, fi)
+				CacheImg(prop, syspath, arg.Force)
 			}
 		}
 	}()

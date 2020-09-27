@@ -69,7 +69,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var path, shared = acc.CheckSharePath(strings.Join(chunks[3:], "/"))
+	var syspath, shared = acc.CheckSharePath(strings.Join(chunks[3:], "/"))
 	if !shared {
 		var auth *Account
 		if auth, err = CheckAuth(r); err != nil {
@@ -83,11 +83,11 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, ok := r.Header["If-Range"]; !ok { // not partial content
-		Log.Printf("id%d: serve %s", acc.ID, filepath.Base(path))
+		Log.Printf("id%d: serve %s", acc.ID, filepath.Base(syspath))
 	}
 
 	WriteStdHeader(w)
-	http.ServeFile(w, r, path)
+	http.ServeFile(w, r, syspath)
 }
 
 // APIHANDLER
@@ -199,7 +199,7 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 		AID  int    `json:"aid"`
 		Path string `json:"path"`
 	}
-	var ret folderRet
+	var ret []ShareKit
 
 	// get arguments
 	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
@@ -219,7 +219,7 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var isroot = len(arg.Path) == 0
-	var fpath, shared = acc.CheckSharePath(arg.Path)
+	var _, shared = acc.CheckSharePath(arg.Path)
 
 	var auth *Account
 	if auth, err = CheckAuth(r); err != nil && !isroot && !shared {
@@ -229,28 +229,27 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 
 	if isroot {
 		if auth != nil {
-			ret.Paths = auth.ScanRoots()
+			ret = auth.ScanRoots()
 		}
 
 		if acc == auth || ShowSharesUser {
 			acc.mux.RLock()
-			for _, fpath := range acc.sharespref {
-				if cp, err := propcache.Get(fpath); err == nil {
-					ret.AddProp(cp.(FileProper))
+			for pref, syspath := range acc.sharespref {
+				if cp, err := propcache.Get(syspath); err == nil {
+					var sk = ShareKit{cp.(Proper), "", ""}
+					sk.SetPref(pref)
+					ret = append(ret, sk)
 				}
 			}
 			acc.mux.RUnlock()
 		}
+		Log.Printf("navigate to root")
 	} else {
-		if ret, err = readdir(fpath, acc.Hidden); err != nil {
+		if ret, err = acc.Readdir(arg.Path); err != nil {
 			WriteJson(w, http.StatusNotFound, &AjaxErr{err, EC_folderfail})
 			return
 		}
-	}
-	if isroot {
-		Log.Printf("navigate to root")
-	} else {
-		Log.Printf("navigate to: %s", fpath)
+		Log.Printf("navigate to: %s", arg.Path)
 	}
 
 	WriteJson(w, http.StatusOK, ret)
@@ -291,21 +290,23 @@ func ispathApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 	}
 
 	var fi os.FileInfo
-	var prop interface{}
+	var ret interface{}
 	if fi, err = os.Stat(arg.Path); err == nil {
 		if arg.Prop {
-			prop = MakeProp(arg.Path, fi)
+			var sk = ShareKit{MakeProp(arg.Path, fi), arg.Path, ""}
+			acc.SetupPref(&sk, arg.Path)
+			ret = sk
 		} else {
-			prop = true
+			ret = true
 		}
 	} else {
 		if os.IsNotExist(err) {
-			prop = false
+			ret = false
 		} else {
-			prop = nil
+			ret = nil
 		}
 	}
-	WriteJson(w, http.StatusOK, prop)
+	WriteJson(w, http.StatusOK, ret)
 }
 
 // APIHANDLER
@@ -344,18 +345,28 @@ func shrlstApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	acc.mux.RLock()
-	var lst = make([]FileProper, len(acc.sharespref))
+	var lst = make([]ShareKit, len(acc.sharespref))
 	var i int
-	for _, fpath := range acc.sharespref {
-		if cp, err := propcache.Get(fpath); err == nil {
-			lst[i] = cp.(FileProper)
+	for pref, fpath := range acc.sharespref {
+		var prop Proper
+		var cp interface{}
+		if cp, err = propcache.Get(fpath); err == nil {
+			prop = cp.(Proper)
+		} else {
+			var fi os.FileInfo
+			if fi, err = os.Stat(fpath); err != nil {
+				continue
+			}
+			prop = MakeProp(fpath, fi)
 		}
+		var sk = ShareKit{prop, fpath, ""}
+		sk.SetPref(pref)
+		lst[i] = sk
 		i++
 	}
 	acc.mux.RUnlock()
-	var jb, _ = json.Marshal(lst)
 
-	WriteJson(w, http.StatusOK, jb)
+	WriteJson(w, http.StatusOK, lst)
 }
 
 // APIHANDLER
@@ -412,12 +423,14 @@ func shraddApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 		}
 	}
 
-	var prop = MakeProp(fpath, fi)
-	acc.MakeShare(fpath, prop)
+	var pref = acc.MakeShare(fi.Name(), fpath)
 
-	Log.Printf("id%d: add share %s as %s", acc.ID, fpath, prop.Pref())
+	var sk = ShareKit{MakeProp(fpath, fi), arg.Path, ""}
+	sk.SetPref(pref)
 
-	WriteJson(w, http.StatusOK, prop)
+	Log.Printf("id%d: add share %s as %s", acc.ID, fpath, pref)
+
+	WriteJson(w, http.StatusOK, sk)
 }
 
 // APIHANDLER
@@ -525,13 +538,16 @@ func drvaddApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 		WriteError400(w, ErrNotPath, EC_drvaddfile)
 		return
 	}
-	var dk DriveKit
-	dk.Setup(arg.Path, err != nil)
+
 	acc.mux.Lock()
 	acc.Roots = append(acc.Roots, arg.Path)
 	acc.mux.Unlock()
 
-	WriteJson(w, http.StatusOK, dk)
+	var dk DriveKit
+	dk.Setup(arg.Path, err != nil)
+	var sk = ShareKit{&dk, arg.Path, ""}
+
+	WriteJson(w, http.StatusOK, sk)
 }
 
 // APIHANDLER

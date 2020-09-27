@@ -2,6 +2,7 @@ package hms
 
 import (
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 )
@@ -25,9 +26,9 @@ var DefHidden = []string{
 
 // Share description for json-file.
 type Share struct {
-	Path string `json:"path"`
-	Pref string `json:"pref"`
 	Name string `json:"name"`
+	Pref string `json:"pref"`
+	Path string `json:"path"`
 }
 
 type Account struct {
@@ -39,8 +40,8 @@ type Account struct {
 	Hidden []string `json:"hidden"` // patterns for hidden files
 
 	Shares     []Share           `json:"shares"`
-	sharespath map[string]string // active shares by full path
-	sharespref map[string]string // active shares by prefix
+	sharespath map[string]string // shares prefix by system path
+	sharespref map[string]string // shares system path by prefix
 
 	mux sync.RWMutex
 }
@@ -123,6 +124,22 @@ func (acc *Account) SetDefaultHidden() {
 	copy(acc.Hidden, DefHidden)
 }
 
+// Check up that file path is in hidden list.
+func (acc *Account) IsHidden(fpath string) bool {
+	var matched bool
+	var kpath = strings.TrimSuffix(strings.ToLower(filepath.ToSlash(fpath)), "/")
+
+	acc.mux.RLock()
+	defer acc.mux.RUnlock()
+
+	for _, pattern := range acc.Hidden {
+		if matched, _ = filepath.Match(pattern, kpath); matched {
+			break
+		}
+	}
+	return matched
+}
+
 // Returns index of given path in roots list or -1 if not found.
 func (acc *Account) RootIndex(path string) int {
 	acc.mux.RLock()
@@ -140,11 +157,11 @@ func (acc *Account) RootIndex(path string) int {
 func (acc *Account) FindRoots() {
 	const windisks = "CDEFGHIJKLMNOPQRSTUVWXYZ"
 	for _, d := range windisks {
-		var path = string(d) + ":/"
-		if _, err := os.Stat(path); err == nil {
-			if acc.RootIndex(path) < 0 {
+		var root = string(d) + ":/"
+		if _, err := os.Stat(root); err == nil {
+			if acc.RootIndex(root) < 0 {
 				acc.mux.Lock()
-				acc.Roots = append(acc.Roots, path)
+				acc.Roots = append(acc.Roots, root)
 				acc.mux.Unlock()
 			}
 		}
@@ -152,44 +169,44 @@ func (acc *Account) FindRoots() {
 }
 
 // Scan drives from roots list.
-func (acc *Account) ScanRoots() []FileProper {
+func (acc *Account) ScanRoots() []ShareKit {
 	acc.mux.RLock()
 	defer acc.mux.RUnlock()
 
-	var drvs = make([]FileProper, len(acc.Roots), len(acc.Roots))
-
+	var drvs = make([]ShareKit, len(acc.Roots), len(acc.Roots))
 	for i, root := range acc.Roots {
 		_, err := os.Stat(root)
 		var dk DriveKit
 		dk.Setup(root, err != nil)
-		drvs[i] = &dk
+		var sk = ShareKit{&dk, root, ""}
+		acc.SetupPref(&sk, root)
+		drvs[i] = sk
 	}
 	return drvs
 }
 
 // Recreates shares maps, puts share property to cache.
 func (acc *Account) UpdateShares() {
-	var err error
-	var fi os.FileInfo
-
 	acc.mux.Lock()
-	defer acc.mux.Unlock()
 
 	acc.sharespath = map[string]string{}
 	acc.sharespref = map[string]string{}
 	for _, shr := range acc.Shares {
+		var shr = shr
+		var err error
+		var fi os.FileInfo
 		if fi, err = os.Stat(shr.Path); err != nil {
-			Log.Printf("id%d: can not create share '%s' on path '%s'", acc.ID, shr.Pref, shr.Path)
+			defer Log.Printf("id%d: can not create share '%s' on path '%s'", acc.ID, shr.Pref, shr.Path)
 			continue
 		}
 
-		var prop = MakeProp(shr.Path, fi)
-		prop.SetPref(shr.Pref)
-		propcache.Set(shr.Path, prop)
 		acc.sharespath[shr.Path] = shr.Pref
 		acc.sharespref[shr.Pref] = shr.Path
-		Log.Printf("id%d: created share '%s' on path '%s'", acc.ID, shr.Pref, shr.Path)
+		defer MakeProp(shr.Path, fi) // put prop to cache
+		defer Log.Printf("id%d: created share '%s' on path '%s'", acc.ID, shr.Pref, shr.Path)
 	}
+
+	acc.mux.Unlock()
 }
 
 var sharecharset = []byte("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
@@ -205,9 +222,7 @@ func makerandstr(n int) string {
 }
 
 // Looks for correct prefix and add share with it.
-func (acc *Account) MakeShare(path string, prop FileProper) {
-	var pref string
-	var name = prop.Name()
+func (acc *Account) MakeShare(name, path string) (pref string) {
 	if len(name) > 8 {
 		pref = name[:8]
 	} else {
@@ -220,50 +235,41 @@ func (acc *Account) MakeShare(path string, prop FileProper) {
 		}
 	}
 
-	if fit && acc.AddShare(pref, path, prop) {
+	if fit && acc.AddShare(name, pref, path) {
 		return
 	}
-	for i := 0; !acc.AddShare(makerandstr(4), path, prop); i++ {
+	for i := 0; !acc.AddShare(name, makerandstr(4), path); i++ {
 		if i > 1000 {
 			panic("can not generate share prefix")
 		}
 	}
+	return
 }
 
 // Add share with given prefix.
-func (acc *Account) AddShare(pref string, path string, prop FileProper) bool {
-	acc.mux.RLock()
-	var _, ok = acc.sharespref[pref]
-	acc.mux.RUnlock()
+func (acc *Account) AddShare(name, pref, path string) bool {
+	acc.mux.Lock()
+	defer acc.mux.Unlock()
 
-	if !ok {
-		prop.SetPref(pref)
-
-		acc.mux.Lock()
+	if _, ok := acc.sharespref[pref]; !ok {
 		acc.Shares = append(acc.Shares, Share{
-			Path: path,
+			Name: name,
 			Pref: pref,
-			Name: prop.Name(),
+			Path: path,
 		})
 		acc.sharespath[path] = pref
 		acc.sharespref[pref] = path
-		acc.mux.Unlock()
+		return true
 	}
-	return !ok
+	return false
 }
 
 // Delete share by given prefix.
 func (acc *Account) DelSharePref(pref string) bool {
-	acc.mux.RLock()
-	var path, ok = acc.sharespref[pref]
-	acc.mux.RUnlock()
+	acc.mux.Lock()
+	defer acc.mux.Unlock()
 
-	if ok {
-		if cp, err := propcache.Get(path); err == nil {
-			cp.(FileProper).SetPref("")
-		}
-
-		acc.mux.Lock()
+	if path, ok := acc.sharespref[pref]; ok {
 		for i, shr := range acc.Shares {
 			if shr.Pref == pref {
 				acc.Shares = append(acc.Shares[:i], acc.Shares[i+1:]...)
@@ -271,23 +277,17 @@ func (acc *Account) DelSharePref(pref string) bool {
 		}
 		delete(acc.sharespath, path)
 		delete(acc.sharespref, pref)
-		acc.mux.Unlock()
+		return true
 	}
-	return ok
+	return false
 }
 
 // Delete share by given shared path.
 func (acc *Account) DelSharePath(path string) bool {
-	acc.mux.RLock()
-	var pref, ok = acc.sharespath[path]
-	acc.mux.RUnlock()
+	acc.mux.Lock()
+	defer acc.mux.Unlock()
 
-	if ok {
-		if cp, err := propcache.Get(path); err == nil {
-			cp.(FileProper).SetPref("")
-		}
-
-		acc.mux.Lock()
+	if pref, ok := acc.sharespath[path]; ok {
 		for i, shr := range acc.Shares {
 			if shr.Path == path {
 				acc.Shares = append(acc.Shares[:i], acc.Shares[i+1:]...)
@@ -295,28 +295,37 @@ func (acc *Account) DelSharePath(path string) bool {
 		}
 		delete(acc.sharespath, path)
 		delete(acc.sharespref, pref)
-		acc.mux.Unlock()
+		return true
 	}
-	return ok
+	return false
 }
 
-// Returns share prefix and remained suffix
-func splitprefsuff(share string) (string, string) {
-	for i, c := range share {
+func (acc *Account) SetupPref(sk *ShareKit, path string) {
+	acc.mux.RLock()
+	defer acc.mux.RUnlock()
+
+	if pref, ok := acc.sharespath[path]; ok {
+		sk.SetPref(pref)
+	}
+}
+
+// Splits given share path to share prefix and remained suffix.
+func splitprefsuff(shrpath string) (string, string) {
+	for i, c := range shrpath {
 		if c == '/' || c == '\\' {
-			return share[:i], share[i+1:]
+			return shrpath[:i], shrpath[i+1:]
 		} else if c == ':' { // prefix can not be with colons
-			return "", share
+			return "", shrpath
 		}
 	}
-	return share, "" // root of share
+	return shrpath, "" // root of share
 }
 
 // Brings share path to local file path.
-func (acc *Account) GetSharePath(spath string) string {
-	var pref, suff = splitprefsuff(spath)
+func (acc *Account) GetSharePath(shrpath string) string {
+	var pref, suff = splitprefsuff(shrpath)
 	if pref == "" {
-		return spath
+		return shrpath
 	}
 
 	acc.mux.RLock()
@@ -325,31 +334,84 @@ func (acc *Account) GetSharePath(spath string) string {
 	if path, ok := acc.sharespref[pref]; ok {
 		return path + suff
 	}
-	return spath
+	return shrpath
 }
 
 // Brings share path to local file path and signal that it shared.
-func (acc *Account) CheckSharePath(spath string) (string, bool) {
-	var pref, suff = splitprefsuff(spath)
+func (acc *Account) CheckSharePath(shrpath string) (string, bool) {
+	var pref, suff = splitprefsuff(shrpath)
 
 	acc.mux.RLock()
 	defer acc.mux.RUnlock()
 
 	if pref == "" {
 		var shared bool
-		for _, fpath := range acc.sharespref {
-			if strings.HasPrefix(spath, fpath) {
+		for _, syspath := range acc.sharespref {
+			if strings.HasPrefix(shrpath, syspath) {
 				shared = true
 				break
 			}
 		}
-		return spath, shared
+		return shrpath, shared
 	}
 
-	if fpath, ok := acc.sharespref[pref]; ok {
-		return fpath + suff, true
+	if syspath, ok := acc.sharespref[pref]; ok {
+		return syspath + suff, true
 	}
-	return spath, false
+	return shrpath, false
+}
+
+// Reads directory with given share path and returns ShareKit for each entry.
+func (acc *Account) Readdir(shrpath string) (ret []ShareKit, err error) {
+	var syspath = acc.GetSharePath(shrpath)
+	if !strings.HasSuffix(syspath, "/") {
+		syspath += "/"
+	}
+
+	var di os.FileInfo
+	var fis []os.FileInfo
+	if func() {
+		var file *os.File
+		if file, err = os.Open(syspath); err != nil {
+			return
+		}
+		defer file.Close()
+
+		if di, err = file.Stat(); err != nil {
+			return
+		}
+		if fis, err = file.Readdir(-1); err != nil {
+			return
+		}
+	}(); err != nil {
+		return
+	}
+
+	var fgrp = [FG_num]int{}
+
+	for _, fi := range fis {
+		if fi != nil {
+			var fpath = syspath + fi.Name()
+			var spath = shrpath + fi.Name()
+			if fi.IsDir() {
+				fpath += "/"
+				spath += "/"
+			}
+			if !acc.IsHidden(fpath) {
+				var sk = ShareKit{MakeProp(fpath, fi), spath, ""}
+				acc.SetupPref(&sk, fpath)
+				ret = append(ret, sk)
+				fgrp[typetogroup[sk.Prop.Type()]]++
+			}
+		}
+	}
+
+	if dk, ok := MakeProp(syspath, di).(*DirKit); ok {
+		dk.Scan = UnixJSNow()
+		dk.FGrp = fgrp
+	}
+
+	return
 }
 
 // The End.

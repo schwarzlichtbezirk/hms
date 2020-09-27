@@ -1,6 +1,6 @@
 "use strict";
 
-const photofilter = file => FTtoFV[file.type] === FV.image || FTtoFV[file.type] === FV.video;
+const photofilter = file => FTtoFV[file.type] === FV.image;
 
 Vue.component('thumbslider-tag', {
 	template: '#thumbslider-tpl',
@@ -9,7 +9,7 @@ Vue.component('thumbslider-tag', {
 		slide() {
 			const lst = [];
 			for (const file of this.list) {
-				if (file.ntmb === 1) {
+				if (photofilter(file)) {
 					lst.push(file);
 				}
 			}
@@ -17,6 +17,12 @@ Vue.component('thumbslider-tag', {
 		}
 	},
 	methods: {
+		getthumb(file) {
+			return file.ntmb === 1
+				? '/thumb/' + file.ktmb
+				: '/asst/file-png/' + geticonname(file) + '.png';
+		},
+
 		onprev() {
 			this.$refs.slide.scrollBy({ left: -120, behavior: 'smooth' });
 		},
