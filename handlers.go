@@ -533,9 +533,10 @@ func drvaddApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 		return
 	}
 
-	var fi os.FileInfo
-	if fi, err = os.Stat(arg.Path); err == nil && !fi.IsDir() {
-		WriteError400(w, ErrNotPath, EC_drvaddfile)
+	var dk DriveKit
+	dk.Setup(arg.Path)
+	if err = dk.Scan(arg.Path); err == nil {
+		WriteError400(w, err, EC_drvaddfile)
 		return
 	}
 
@@ -543,8 +544,6 @@ func drvaddApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 	acc.Roots = append(acc.Roots, arg.Path)
 	acc.mux.Unlock()
 
-	var dk DriveKit
-	dk.Setup(arg.Path, err != nil)
 	var sk = ShareKit{&dk, arg.Path, ""}
 
 	WriteJson(w, http.StatusOK, sk)

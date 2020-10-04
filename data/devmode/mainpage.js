@@ -141,6 +141,12 @@ const FTtoFV = {
 	[FT.rar]: FV.none
 };
 
+// Drive state
+const DS = {
+	yellow: 3000,
+	red: 10000
+};
+
 const root = { name: "", path: "", size: 0, time: 0, type: FT.dir };
 
 const shareprefix = "/file/";
@@ -148,7 +154,15 @@ const shareprefix = "/file/";
 const geticonname = file => {
 	switch (file.type) {
 		case FT.drive:
-			return file.offline ? "drive-off" : "drive";
+			if (file.latency < 0) {
+				return "drive-off";
+			} else if (file.latency < DS.yellow) {
+				return "drive";
+			} else if (file.latency < DS.red) {
+				return "drive-yellow";
+			} else {
+				return "drive-red";
+			}
 		case FT.dir:
 			const suff = app.curpathshares.length ? "-pub" : "";
 			if (file.scan) {

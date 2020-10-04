@@ -175,9 +175,9 @@ func (acc *Account) ScanRoots() []ShareKit {
 
 	var drvs = make([]ShareKit, len(acc.Roots), len(acc.Roots))
 	for i, root := range acc.Roots {
-		_, err := os.Stat(root)
 		var dk DriveKit
-		dk.Setup(root, err != nil)
+		dk.Setup(root)
+		dk.Scan(root)
 		var sk = ShareKit{&dk, root, ""}
 		acc.SetupPref(&sk, root)
 		drvs[i] = sk

@@ -4,6 +4,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/bluele/gcache"
 	"github.com/dhowden/tag"
@@ -318,7 +319,7 @@ func (dk *DirKit) Setup(syspath string) {
 
 type DriveKit struct {
 	DirKit
-	Offline bool `json:"offline"`
+	Latency int `json:"latency"` // drive connection latency in ms, or -1 on error
 }
 
 // Creates copy of it self.
@@ -328,12 +329,25 @@ func (dk *DriveKit) Clone() Proper {
 }
 
 // Fills fields with given path. Do not looks for share.
-func (dk *DriveKit) Setup(syspath string, offline bool) {
+func (dk *DriveKit) Setup(syspath string) {
 	dk.NameVal = syspath[:len(syspath)-1]
 	dk.TypeVal = FT_drive
 	dk.KTmbVal = ThumbName(syspath)
 	dk.NTmbVal = TMB_reject
-	dk.Offline = offline
+}
+
+func (dk *DriveKit) Scan(syspath string) error {
+	var t1 = time.Now()
+	var fi, err = os.Stat(syspath)
+	if err == nil && !fi.IsDir() {
+		err = ErrNotPath
+	}
+	if err == nil {
+		dk.Latency = int(t1.Sub(time.Now()) / 1000000)
+	} else {
+		dk.Latency = -1
+	}
+	return err
 }
 
 // Descriptor for discs and tracks.
