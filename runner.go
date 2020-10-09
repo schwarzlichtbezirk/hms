@@ -17,6 +17,9 @@ import (
 	"time"
 
 	"github.com/go-ini/ini"
+	"github.com/schwarzlichtbezirk/wpk"
+	"github.com/schwarzlichtbezirk/wpk/bulk"
+	"github.com/schwarzlichtbezirk/wpk/mmap"
 	"golang.org/x/crypto/acme/autocert"
 )
 
@@ -53,6 +56,10 @@ var Log = NewLogger(os.Stderr, LstdFlags, 300)
 var starttime = time.Now() // save server start time
 var httpsrv, tlssrv []*http.Server
 
+// Package root dir.
+var datapack *wpk.Package
+var packager wpk.Packager
+
 ///////////////////////////////
 // Startup opening functions //
 ///////////////////////////////
@@ -84,6 +91,15 @@ func opensettings() {
 	WriteTimeout = ws.Key("write-timeout").MustInt(15)
 	IdleTimeout = ws.Key("idle-timeout").MustInt(60)
 	MaxHeaderBytes = ws.Key("max-header-bytes").MustInt(1 << 20)
+	if ws.Key("wpk-mmap").MustBool(false) {
+		var pack = mmap.PackDir{Package: &wpk.Package{}}
+		datapack = pack.Package
+		packager = &pack
+	} else {
+		var pack = bulk.PackDir{Package: &wpk.Package{}}
+		datapack = pack.Package
+		packager = &pack
+	}
 }
 
 func loadaccounts() {
@@ -170,7 +186,7 @@ func loadtemplates() (err error) {
 	var load = func(tb *template.Template, pattern string) {
 		err = datapack.Glob(pattern, func(key string) (err error) {
 			var bcnt []byte
-			if bcnt, err = datapack.Extract(datapack.Tags[key]); err != nil {
+			if bcnt, err = packager.Extract(key); err != nil {
 				return
 			}
 			var content = strings.TrimPrefix(string(bcnt), "\xef\xbb\xbf") // remove UTF-8 format BOM header
@@ -258,7 +274,7 @@ func Init() {
 	// load accounts with roots, hidden and shares lists
 	loadaccounts()
 	// load package with data files
-	if err = datapack.ReadWPK(destpath + "hms.wpk"); err != nil {
+	if err = packager.OpenWPK(destpath + "hms.wpk"); err != nil {
 		Log.Fatal("can not load wpk-package: " + err.Error())
 	}
 	Log.Printf("cached %d files to %d aliases on %d bytes", datapack.RecNumber, datapack.TagNumber, datapack.TagOffset)
@@ -399,7 +415,7 @@ func Done() {
 		saveaccounts()
 	}()
 
-	datapack.Close()
+	packager.Close()
 
 	srvwg.Wait()
 }

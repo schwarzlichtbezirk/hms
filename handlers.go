@@ -114,7 +114,7 @@ func purgeApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 func reloadApi(w http.ResponseWriter, r *http.Request) {
 	var err error
 
-	if err = datapack.ReadWPK(destpath + "hms.wpk"); err != nil {
+	if err = packager.OpenWPK(destpath + "hms.wpk"); err != nil {
 		WriteError500(w, err, EC_reloadload)
 		return
 	}

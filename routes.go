@@ -7,7 +7,6 @@ import (
 	"runtime"
 
 	"github.com/gorilla/mux"
-	"github.com/schwarzlichtbezirk/wpk/bulk"
 )
 
 type void = struct{}
@@ -176,9 +175,6 @@ var routealias = map[string]string{
 	"/asst/": asstsuff,
 }
 
-// Package root dir.
-var datapack bulk.PackDir
-
 // Puts application routes to given router.
 func RegisterRoutes(gmux *Router) {
 
@@ -203,9 +199,9 @@ func RegisterRoutes(gmux *Router) {
 
 	// files sharing
 
-	gmux.PathPrefix("/data/").Handler(http.StripPrefix("/data/", http.FileServer(&datapack)))
+	gmux.PathPrefix("/data/").Handler(http.StripPrefix("/data/", http.FileServer(packager)))
 	for alias, prefix := range routealias {
-		gmux.PathPrefix(alias).Handler(http.StripPrefix(alias, http.FileServer(datapack.SubDir(prefix))))
+		gmux.PathPrefix(alias).Handler(http.StripPrefix(alias, http.FileServer(packager.SubDir(prefix))))
 	}
 	gacc.PathPrefix("/file/").HandlerFunc(AjaxWrap(fileHandler))
 
