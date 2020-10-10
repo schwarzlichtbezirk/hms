@@ -272,10 +272,6 @@ func ispathApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 			WriteError400(w, err, EC_ispathbadreq)
 			return
 		}
-		if len(arg.Path) == 0 {
-			WriteError400(w, ErrArgNoPath, EC_ispathnodata)
-			return
-		}
 	} else {
 		WriteError400(w, ErrNoJson, EC_ispathnoreq)
 		return

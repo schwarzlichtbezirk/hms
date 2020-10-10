@@ -32,7 +32,7 @@
 							<div class="input-group">
 								<input v-model.trim="diskpath" v-bind:class="clsdiskpathedt" v-bind:id="'inp'+iid" v-on:keyup.enter.prevent="ondiskadd" v-on:keyup="ondiskpathchange" class="form-control toolinp bg-tool" type="text" maxlength="256" placeholder="destination path" aria-label="destination path" required>
 								<div class="input-group-append">
-									<button class="btn toolbtn" v-on:click="ondiskadd" v-bind:disabled="disdiskadd">Add disk</button>
+									<button class="btn toolbtn bg-high" v-on:click="ondiskadd" v-bind:disabled="disdiskadd">Add disk</button>
 								</div>
 							</div>
 						</div>

@@ -180,8 +180,7 @@ Vue.component('dir-card-tag', {
 			}).catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
 		},
 		ondiskpathchange(e) {
-			ajaxcc.emit('ajax', +1);
-			fetchajaxauth("POST", "/api/ispath", {
+			fetchajaxauth("GET", "/api/ispath", {
 				aid: app.aid,
 				path: this.diskpath,
 				prop: false
@@ -191,7 +190,7 @@ Vue.component('dir-card-tag', {
 				} else {
 					this.diskpathstate = -1;
 				}
-			}).catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
+			}).catch(ajaxfail);
 		},
 
 		onselect(file) {

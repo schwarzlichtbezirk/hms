@@ -22,33 +22,33 @@ body {
 		color: rgba(255, 255, 255, 0.5);
 	}
 
-.bg-highlight {
+	.bg-tool button,
+	.bg-tool input {
+		color: rgba(255, 255, 255, 0.5);
+	}
+
+		.bg-tool button:hover, .bg-tool button:focus,
+		.bg-tool input:hover, .bg-tool input:focus {
+			color: rgba(255, 255, 255, 0.75);
+			background-color: rgba(255, 255, 255, 0.15);
+		}
+
+		.bg-tool button:disabled, .bg-tool button.disabled,
+		.bg-tool input:disabled, .bg-tool input.disabled {
+			color: rgba(255, 255, 255, 0.25);
+			pointer-events: none;
+			cursor: default;
+		}
+
+		.bg-tool button.active,
+		.bg-tool input.active {
+			color: #fff;
+			background-color: rgba(255, 255, 255, 0.25);
+		}
+
+.bg-high {
 	background-color: rgba(255, 255, 255, 0.25);
 }
-
-.bg-tool button,
-.bg-tool input {
-	color: rgba(255, 255, 255, 0.5);
-}
-
-	.bg-tool button:hover, .bg-tool button:focus,
-	.bg-tool input:hover, .bg-tool input:focus {
-		color: rgba(255, 255, 255, 0.75);
-		background-color: rgba(255, 255, 255, 0.15);
-	}
-
-	.bg-tool button:disabled, .bg-tool button.disabled,
-	.bg-tool input:disabled, .bg-tool input.disabled {
-		color: rgba(255, 255, 255, 0.25);
-		pointer-events: none;
-		cursor: default;
-	}
-
-	.bg-tool button.active,
-	.bg-tool input.active {
-		color: #fff;
-		background-color: rgba(255, 255, 255, 0.25);
-	}
 
 .toolbtn {
 	text-decoration: none;

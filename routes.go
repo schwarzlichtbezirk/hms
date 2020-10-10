@@ -97,9 +97,8 @@ const (
 	// ispath
 	EC_ispathnoreq  = 50
 	EC_ispathbadreq = 51
-	EC_ispathnodata = 52
-	EC_ispathnoacc  = 53
-	EC_ispathdeny   = 54
+	EC_ispathnoacc  = 52
+	EC_ispathdeny   = 53
 
 	// thumb
 	EC_thumbabsent = 60
