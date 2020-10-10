@@ -11,29 +11,29 @@ import (
 
 type void = struct{}
 
-// Error on API handlers
-type AjaxErr struct {
-	what error
-	code int
+// Error on AJAX API handlers calls.
+type ErrAjax struct {
+	What error
+	Code int
 }
 
-func (e *AjaxErr) Error() string {
-	return fmt.Sprintf("error with code %d: %s", e.code, e.what.Error())
+func (e *ErrAjax) Error() string {
+	return fmt.Sprintf("error with code %d: %s", e.Code, e.What.Error())
 }
 
-func (e *AjaxErr) Unwrap() error {
-	return e.what
+func (e *ErrAjax) Unwrap() error {
+	return e.What
 }
 
-func (e *AjaxErr) MarshalJSON() ([]byte, error) {
+func (e *ErrAjax) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		What string `json:"what"`
 		When int64  `json:"when"`
 		Code int    `json:"code,omitempty"`
 	}{
-		e.what.Error(),
+		e.What.Error(),
 		UnixJSNow(),
-		e.code,
+		e.Code,
 	})
 }
 
@@ -45,17 +45,18 @@ var NewRouter = mux.NewRouter
 
 // API error codes
 const (
-	EC_null = 0
+	EC_null    = 0
+	EC_badjson = 1
 
 	// auth
-	EC_noauth     = 1
-	EC_tokenless  = 2
-	EC_tokenerror = 3
-	EC_tokenbad   = 4
-	EC_tokennoacc = 5
+	EC_noauth     = 2
+	EC_tokenless  = 3
+	EC_tokenerror = 4
+	EC_tokenbad   = 5
+	EC_tokennoacc = 6
 
 	// pubkey
-	EC_pubkeyrand = 6
+	EC_pubkeyrand = 7
 
 	// signin
 	EC_signinnoreq  = 10
@@ -271,38 +272,44 @@ func WriteHtmlHeader(w http.ResponseWriter) {
 func WriteJsonHeader(w http.ResponseWriter) {
 	WriteStdHeader(w)
 	w.Header().Set("Content-Type", jsoncontent)
-}
-
-func WriteErrHeader(w http.ResponseWriter) {
-	WriteStdHeader(w)
-	w.Header().Set("Content-Type", jsoncontent)
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 }
 
 func WriteJson(w http.ResponseWriter, status int, body interface{}) {
-	if status == http.StatusOK {
-		WriteJsonHeader(w)
-	} else {
-		WriteErrHeader(w)
-	}
-	w.WriteHeader(status)
+	WriteJsonHeader(w)
 
 	if body != nil {
-		if b, ok := body.([]byte); ok {
+		var b, err = json.Marshal(body)
+		if err == nil {
+			w.WriteHeader(status)
 			w.Write(b)
 		} else {
-			var b, _ = json.Marshal(body)
+			b, _ = json.Marshal(&ErrAjax{err, EC_badjson})
+			w.WriteHeader(http.StatusInternalServerError)
 			w.Write(b)
 		}
+	} else {
+		w.WriteHeader(status)
 	}
+}
+
+func WriteOK(w http.ResponseWriter, body interface{}) {
+	WriteJson(w, http.StatusOK, body)
+}
+
+func WriteError(w http.ResponseWriter, status int, err error, code int) {
+	WriteJsonHeader(w)
+	w.WriteHeader(status)
+	var b, _ = json.Marshal(&ErrAjax{err, code})
+	w.Write(b)
 }
 
 func WriteError400(w http.ResponseWriter, err error, code int) {
-	WriteJson(w, http.StatusBadRequest, &AjaxErr{err, code})
+	WriteError(w, http.StatusBadRequest, err, code)
 }
 
 func WriteError500(w http.ResponseWriter, err error, code int) {
-	WriteJson(w, http.StatusInternalServerError, &AjaxErr{err, code})
+	WriteError(w, http.StatusInternalServerError, err, code)
 }
 
 // The End.

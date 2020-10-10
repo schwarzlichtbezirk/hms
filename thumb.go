@@ -197,12 +197,12 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) {
 	var ktmb = r.URL.Path[len(r.URL.Path)-32:]
 	var val interface{}
 	if val, err = thumbcache.Get(ktmb); err != nil {
-		WriteJson(w, http.StatusNotFound, &AjaxErr{err, EC_thumbabsent})
+		WriteError(w, http.StatusNotFound, err, EC_thumbabsent)
 		return
 	}
 	var tmb, ok = val.(*ThumbElem)
 	if !ok {
-		WriteJson(w, http.StatusNotFound, &AjaxErr{ErrBadThumb, EC_thumbbadcnt})
+		WriteError(w, http.StatusNotFound, ErrBadThumb, EC_thumbbadcnt)
 		return
 	}
 	w.Header().Set("Content-Type", tmb.Mime)
@@ -235,7 +235,7 @@ func tmbchkApi(w http.ResponseWriter, r *http.Request) {
 		tp.UpdateTmb()
 	}
 
-	WriteJson(w, http.StatusOK, arg)
+	WriteOK(w, arg)
 }
 
 // APIHANDLER
@@ -281,7 +281,7 @@ func tmbscnApi(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	WriteJson(w, http.StatusOK, nil)
+	WriteOK(w, nil)
 }
 
 // The End.

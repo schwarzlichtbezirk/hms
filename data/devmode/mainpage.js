@@ -472,7 +472,7 @@ let app = new Vue({
 				if (response.ok) {
 					this.curscan = new Date(Date.now());
 					// update folder settings
-					for (const sk of response.data) {
+					for (const sk of response.data || []) {
 						if (sk) {
 							const fp = tofp(sk);
 							if (fp.type < 0) {

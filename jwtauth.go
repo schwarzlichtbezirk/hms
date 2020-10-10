@@ -123,20 +123,20 @@ func CheckAuth(r *http.Request) (auth *Account, aerr error) {
 			}
 		}
 		if !bearer {
-			aerr = &AjaxErr{ErrNoBearer, EC_tokenless}
+			aerr = &ErrAjax{ErrNoBearer, EC_tokenless}
 			return
 		} else if _, is := err.(*jwt.ValidationError); is {
-			aerr = &AjaxErr{err, EC_tokenerror}
+			aerr = &ErrAjax{err, EC_tokenerror}
 			return
 		} else if err != nil {
-			aerr = &AjaxErr{err, EC_tokenbad}
+			aerr = &ErrAjax{err, EC_tokenbad}
 			return
 		} else if auth = AccList.ByID(claims.AID); auth == nil {
-			aerr = &AjaxErr{ErrNoAcc, EC_tokennoacc}
+			aerr = &ErrAjax{ErrNoAcc, EC_tokennoacc}
 			return
 		}
 	} else if !IsLocalhost(r.RemoteAddr) {
-		aerr = &AjaxErr{ErrNoAuth, EC_noauth}
+		aerr = &ErrAjax{ErrNoAuth, EC_noauth}
 		return
 	} else {
 		auth = AccList.ByID(DefAccID)
@@ -170,7 +170,7 @@ func pubkeyApi(w http.ResponseWriter, r *http.Request) {
 
 	pubkeycache.Set(tohex(buf[:]), struct{}{})
 
-	WriteJson(w, http.StatusOK, buf)
+	WriteOK(w, buf)
 }
 
 func signinApi(w http.ResponseWriter, r *http.Request) {
@@ -199,12 +199,12 @@ func signinApi(w http.ResponseWriter, r *http.Request) {
 
 	var acc *Account
 	if acc = AccList.ByLogin(arg.Name); acc == nil {
-		WriteJson(w, http.StatusForbidden, &AjaxErr{ErrNoAcc, EC_signinnoacc})
+		WriteError(w, http.StatusForbidden, ErrNoAcc, EC_signinnoacc)
 		return
 	}
 
 	if _, err = pubkeycache.Get(tohex(arg.PubK[:])); err != nil {
-		WriteJson(w, http.StatusForbidden, &AjaxErr{ErrNoPubKey, EC_signinpkey})
+		WriteError(w, http.StatusForbidden, ErrNoPubKey, EC_signinpkey)
 		return
 	}
 
@@ -212,13 +212,13 @@ func signinApi(w http.ResponseWriter, r *http.Request) {
 	mac.Write([]byte(acc.Password))
 	var cmp = mac.Sum(nil)
 	if !hmac.Equal(arg.Hash[:], cmp) {
-		WriteJson(w, http.StatusForbidden, &AjaxErr{ErrBadPass, EC_signindeny})
+		WriteError(w, http.StatusForbidden, ErrBadPass, EC_signindeny)
 		return
 	}
 
 	res.Make(acc.ID)
 
-	WriteJson(w, http.StatusOK, &res)
+	WriteOK(w, &res)
 }
 
 func refrshApi(w http.ResponseWriter, r *http.Request) {
@@ -251,7 +251,7 @@ func refrshApi(w http.ResponseWriter, r *http.Request) {
 
 	res.Make(claims.AID)
 
-	WriteJson(w, http.StatusOK, &res)
+	WriteOK(w, &res)
 }
 
 // The End.

@@ -42,7 +42,7 @@ func pageHandler(pref, name string) http.HandlerFunc {
 			WriteHtmlHeader(w)
 			http.ServeContent(w, r, alias, starttime, bytes.NewReader(content))
 		} else {
-			WriteJson(w, http.StatusNotFound, &AjaxErr{ErrNotFound, EC_pageabsent})
+			WriteError(w, http.StatusNotFound, ErrNotFound, EC_pageabsent)
 		}
 	}
 }
@@ -77,7 +77,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if acc.ID != auth.ID {
-			WriteJson(w, http.StatusForbidden, &AjaxErr{ErrDeny, EC_filedeny})
+			WriteError(w, http.StatusForbidden, ErrDeny, EC_filedeny)
 			return
 		}
 	}
@@ -93,7 +93,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 // APIHANDLER
 func pingApi(w http.ResponseWriter, r *http.Request) {
 	var body, _ = ioutil.ReadAll(r.Body)
-	WriteJson(w, http.StatusOK, body)
+	WriteOK(w, body)
 }
 
 // APIHANDLER
@@ -107,7 +107,7 @@ func purgeApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 	}
 	AccList.mux.RUnlock()
 
-	WriteJson(w, http.StatusOK, nil)
+	WriteOK(w, nil)
 }
 
 // APIHANDLER
@@ -123,7 +123,7 @@ func reloadApi(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	WriteJson(w, http.StatusOK, &datapack.PackHdr)
+	WriteOK(w, &datapack.PackHdr)
 }
 
 // APIHANDLER
@@ -138,7 +138,7 @@ func srvinfApi(w http.ResponseWriter, r *http.Request) {
 		"confpath": confpath,
 	}
 
-	WriteJson(w, http.StatusOK, ret)
+	WriteOK(w, ret)
 }
 
 // APIHANDLER
@@ -157,7 +157,7 @@ func memusgApi(w http.ResponseWriter, r *http.Request) {
 		"gccpufraction": mem.GCCPUFraction,
 	}
 
-	WriteJson(w, http.StatusOK, ret)
+	WriteOK(w, ret)
 }
 
 // APIHANDLER
@@ -187,7 +187,7 @@ func getlogApi(w http.ResponseWriter, r *http.Request) {
 		h = h.Prev()
 	}
 
-	WriteJson(w, http.StatusOK, ret)
+	WriteOK(w, ret)
 }
 
 // APIHANDLER
@@ -230,6 +230,8 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 	if isroot {
 		if auth != nil {
 			ret = auth.ScanRoots()
+		} else {
+			ret = []ShareKit{}
 		}
 
 		if acc == auth || ShowSharesUser {
@@ -246,13 +248,13 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 		Log.Printf("navigate to root")
 	} else {
 		if ret, err = acc.Readdir(arg.Path); err != nil {
-			WriteJson(w, http.StatusNotFound, &AjaxErr{err, EC_folderfail})
+			WriteError(w, http.StatusNotFound, err, EC_folderfail)
 			return
 		}
 		Log.Printf("navigate to: %s", arg.Path)
 	}
 
-	WriteJson(w, http.StatusOK, ret)
+	WriteOK(w, ret)
 }
 
 // APIHANDLER
@@ -285,7 +287,7 @@ func ispathApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 		return
 	}
 	if auth != acc {
-		WriteJson(w, http.StatusForbidden, &AjaxErr{ErrDeny, EC_ispathdeny})
+		WriteError(w, http.StatusForbidden, ErrDeny, EC_ispathdeny)
 		return
 	}
 
@@ -306,7 +308,7 @@ func ispathApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 			ret = nil
 		}
 	}
-	WriteJson(w, http.StatusOK, ret)
+	WriteOK(w, ret)
 }
 
 // APIHANDLER
@@ -339,7 +341,7 @@ func shrlstApi(w http.ResponseWriter, r *http.Request) {
 			WriteJson(w, http.StatusUnauthorized, err)
 			return
 		} else {
-			WriteJson(w, http.StatusForbidden, &AjaxErr{ErrDeny, EC_shrlstdeny})
+			WriteError(w, http.StatusForbidden, ErrDeny, EC_shrlstdeny)
 			return
 		}
 	}
@@ -366,7 +368,7 @@ func shrlstApi(w http.ResponseWriter, r *http.Request) {
 	}
 	acc.mux.RUnlock()
 
-	WriteJson(w, http.StatusOK, lst)
+	WriteOK(w, lst)
 }
 
 // APIHANDLER
@@ -398,7 +400,7 @@ func shraddApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 		return
 	}
 	if auth != acc {
-		WriteJson(w, http.StatusForbidden, &AjaxErr{ErrDeny, EC_shradddeny})
+		WriteError(w, http.StatusForbidden, ErrDeny, EC_shradddeny)
 		return
 	}
 
@@ -406,7 +408,7 @@ func shraddApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 	var _, has = acc.sharespath[arg.Path]
 	acc.mux.RUnlock()
 	if has { // share already added
-		WriteJson(w, http.StatusOK, []byte("null"))
+		WriteOK(w, []byte("null"))
 		return
 	}
 
@@ -415,7 +417,7 @@ func shraddApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 	var fi os.FileInfo
 	if fi, err = os.Stat(fpath); err != nil {
 		if os.IsNotExist(err) {
-			WriteJson(w, http.StatusNotFound, &AjaxErr{err, EC_shraddnopath})
+			WriteError(w, http.StatusNotFound, err, EC_shraddnopath)
 			return
 		} else {
 			WriteError500(w, err, EC_shraddbadpath)
@@ -430,7 +432,7 @@ func shraddApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 
 	Log.Printf("id%d: add share %s as %s", acc.ID, fpath, pref)
 
-	WriteJson(w, http.StatusOK, sk)
+	WriteOK(w, sk)
 }
 
 // APIHANDLER
@@ -464,7 +466,7 @@ func shrdelApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 		return
 	}
 	if auth != acc {
-		WriteJson(w, http.StatusForbidden, &AjaxErr{ErrDeny, EC_shrdeldeny})
+		WriteError(w, http.StatusForbidden, ErrDeny, EC_shrdeldeny)
 		return
 	}
 
@@ -481,14 +483,14 @@ func shrdelApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 		return
 	}
 
-	WriteJson(w, http.StatusOK, ok)
+	WriteOK(w, ok)
 }
 
 // APIHANDLER
 func drvlstApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 	var ret = auth.ScanRoots()
 	Log.Printf("navigate to root")
-	WriteJson(w, http.StatusOK, ret)
+	WriteOK(w, ret)
 }
 
 // APIHANDLER
@@ -524,12 +526,12 @@ func drvaddApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 		return
 	}
 	if auth != acc {
-		WriteJson(w, http.StatusForbidden, &AjaxErr{ErrDeny, EC_drvadddeny})
+		WriteError(w, http.StatusForbidden, ErrDeny, EC_drvadddeny)
 		return
 	}
 
 	if acc.RootIndex(arg.Path) >= 0 {
-		WriteJson(w, http.StatusOK, nil)
+		WriteOK(w, nil)
 		return
 	}
 
@@ -546,7 +548,7 @@ func drvaddApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 
 	var sk = ShareKit{&dk, arg.Path, ""}
 
-	WriteJson(w, http.StatusOK, sk)
+	WriteOK(w, sk)
 }
 
 // APIHANDLER
@@ -578,7 +580,7 @@ func drvdelApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 		return
 	}
 	if auth != acc {
-		WriteJson(w, http.StatusForbidden, &AjaxErr{ErrDeny, EC_drvdeldeny})
+		WriteError(w, http.StatusForbidden, ErrDeny, EC_drvdeldeny)
 		return
 	}
 
@@ -589,7 +591,7 @@ func drvdelApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 		acc.mux.Unlock()
 	}
 
-	WriteJson(w, http.StatusOK, i >= 0)
+	WriteOK(w, i >= 0)
 }
 
 // The End.

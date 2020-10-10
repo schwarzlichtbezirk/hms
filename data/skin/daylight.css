@@ -26,26 +26,26 @@ body {
 	background-color: rgba(255, 255, 255, 0.25);
 }
 
-.fg-tool,
-.dropdown-menu.bg-tool > .dropdown-item {
+.bg-tool button,
+.bg-tool input {
 	color: rgba(255, 255, 255, 0.5);
 }
 
-	.fg-tool:hover, .fg-tool:focus,
-	.dropdown-menu.bg-tool > .dropdown-item:hover, .dropdown-menu.bg-tool > .dropdown-item:focus {
+	.bg-tool button:hover, .bg-tool button:focus,
+	.bg-tool input:hover, .bg-tool input:focus {
 		color: rgba(255, 255, 255, 0.75);
-		background-color: rgba(255, 255, 255, 0.15); /*#484e53*/
+		background-color: rgba(255, 255, 255, 0.15);
 	}
 
-	.fg-tool:disabled, .fg-tool.disabled,
-	.dropdown-menu.bg-tool > .dropdown-item:disabled {
+	.bg-tool button:disabled, .bg-tool button.disabled,
+	.bg-tool input:disabled, .bg-tool input.disabled {
 		color: rgba(255, 255, 255, 0.25);
 		pointer-events: none;
 		cursor: default;
 	}
 
-	.fg-tool.active,
-	.dropdown-menu.bg-tool > .dropdown-item.active {
+	.bg-tool button.active,
+	.bg-tool input.active {
 		color: #fff;
 		background-color: rgba(255, 255, 255, 0.25); /*#676b70*/
 	}
@@ -78,7 +78,7 @@ body {
 		color: rgba(0, 0, 0, 0.8);
 	}
 
-.auth-control {
+.toolinp {
 	border: 1px solid rgba(255, 255, 255, 0.1);
 	border-radius: 0.25rem;
 }
