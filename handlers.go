@@ -234,7 +234,7 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 			ret = []ShareKit{}
 		}
 
-		if acc == auth || ShowSharesUser {
+		if acc == auth || cfg.ShowSharesUser {
 			acc.mux.RLock()
 			for pref, syspath := range acc.sharespref {
 				if cp, err := propcache.Get(syspath); err == nil {
@@ -332,7 +332,7 @@ func shrlstApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var auth *Account
-	if auth, err = CheckAuth(r); !(auth == acc || ShowSharesUser) {
+	if auth, err = CheckAuth(r); !(auth == acc || cfg.ShowSharesUser) {
 		if err != nil {
 			WriteJson(w, http.StatusUnauthorized, err)
 			return

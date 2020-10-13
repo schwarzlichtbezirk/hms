@@ -46,9 +46,6 @@ type Account struct {
 	mux sync.RWMutex
 }
 
-// Default account for user on localhost.
-var DefAccID = 0
-
 type Accounts struct {
 	list []*Account
 	mux  sync.RWMutex

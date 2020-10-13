@@ -39,17 +39,33 @@ var (
 	confpath string
 )
 
-// web server settings
-var (
-	AddrHTTP          []string
-	AddrTLS           []string
-	AutoCert          bool = false
-	ReadTimeout       int  = 15
-	ReadHeaderTimeout int  = 15
-	WriteTimeout      int  = 15
-	IdleTimeout       int  = 60 // in seconds
-	MaxHeaderBytes    int  = 1 << 20
-)
+// Web server settings.
+type CfgServ struct {
+	AddrHTTP          []string `json:"addr-http"`
+	AddrTLS           []string `json:"addr-tls"`
+	AutoCert          bool     `json:"auto-cert"`
+	ReadTimeout       int      `json:"read-timeout"`
+	ReadHeaderTimeout int      `json:"read-header-timeout"`
+	WriteTimeout      int      `json:"write-timeout"`
+	IdleTimeout       int      `json:"idle-timeout"`
+	MaxHeaderBytes    int      `json:"max-header-bytes"`
+}
+
+type CfgSpec struct {
+	// Memory mapping technology for WPK, or load into one solid byte slice otherwise.
+	WPKmmap bool `json:"wpk-mmap"`
+	// Default account for user on localhost.
+	DefAccID int `json:"default-account-id"`
+	// Maximum image size to make thumbnail.
+	ThumbMaxFile int64 `json:"thumb-max-file"`
+}
+
+// Common server settings.
+var cfg struct {
+	CfgAuth `json:"authentication"`
+	CfgSpec `json:"specification"`
+	CfgServ `json:"webserver"`
+}
 
 var Log = NewLogger(os.Stderr, LstdFlags, 300)
 
@@ -65,33 +81,21 @@ var packager wpk.Packager
 ///////////////////////////////
 
 func opensettings() {
-	var cfg, err = ini.Load(confpath + "settings.ini")
+	var file, err = ini.Load(confpath + "settings.ini")
 	if err != nil {
 		Log.Println("can not read settings file, default settings accepted: " + err.Error())
 		return
 	}
 
-	var auth = cfg.Section("authentication")
-	DefAccID = auth.Key("default-account-id").MustInt(0)
-	AccessTTL = auth.Key("access-ttl").MustInt(1 * 24 * 60 * 60)
-	RefreshTTL = auth.Key("refresh-ttl").MustInt(3 * 24 * 60 * 60)
-	AccessKey = auth.Key("access-key").MustString("skJgM4NsbP3fs4k7vh0gfdkgGl8dJTszdLxZ1sQ9ksFnxbgvw2RsGH8xxddUV479")
-	RefreshKey = auth.Key("refresh-key").MustString("zxK4dUnuq3Lhd1Gzhpr3usI5lAzgvy2t3fmxld2spzz7a5nfv0hsksm9cheyutie")
-	ShowSharesUser = auth.Key("show-shares-user").MustBool(true)
+	var auth = file.Section("authentication")
+	cfg.AccessTTL = auth.Key("access-ttl").MustInt(1 * 24 * 60 * 60)
+	cfg.RefreshTTL = auth.Key("refresh-ttl").MustInt(3 * 24 * 60 * 60)
+	cfg.AccessKey = auth.Key("access-key").MustString("skJgM4NsbP3fs4k7vh0gfdkgGl8dJTszdLxZ1sQ9ksFnxbgvw2RsGH8xxddUV479")
+	cfg.RefreshKey = auth.Key("refresh-key").MustString("zxK4dUnuq3Lhd1Gzhpr3usI5lAzgvy2t3fmxld2spzz7a5nfv0hsksm9cheyutie")
+	cfg.ShowSharesUser = auth.Key("show-shares-user").MustBool(true)
 
-	var photo = cfg.Section("photo")
-	ThumbMaxFile = photo.Key("thumb-max-file").MustInt64(4096*3072*4 + 65536)
-
-	var ws = cfg.Section("webserver")
-	AddrHTTP = ws.Key("addr-http").Strings(",")
-	AddrTLS = ws.Key("addr-tls").Strings(",")
-	AutoCert = ws.Key("auto-cert").MustBool(false)
-	ReadTimeout = ws.Key("read-timeout").MustInt(15)
-	ReadHeaderTimeout = ws.Key("read-header-timeout").MustInt(15)
-	WriteTimeout = ws.Key("write-timeout").MustInt(15)
-	IdleTimeout = ws.Key("idle-timeout").MustInt(60)
-	MaxHeaderBytes = ws.Key("max-header-bytes").MustInt(1 << 20)
-	if ws.Key("wpk-mmap").MustBool(false) {
+	var spec = file.Section("specification")
+	if spec.Key("wpk-mmap").MustBool(false) {
 		var pack = mmap.PackDir{Package: &wpk.Package{}}
 		datapack = pack.Package
 		packager = &pack
@@ -100,6 +104,18 @@ func opensettings() {
 		datapack = pack.Package
 		packager = &pack
 	}
+	cfg.DefAccID = spec.Key("default-account-id").MustInt(0)
+	cfg.ThumbMaxFile = spec.Key("thumb-max-file").MustInt64(4096*3072*4 + 65536)
+
+	var ws = file.Section("webserver")
+	cfg.AddrHTTP = ws.Key("addr-http").Strings(",")
+	cfg.AddrTLS = ws.Key("addr-tls").Strings(",")
+	cfg.AutoCert = ws.Key("auto-cert").MustBool(false)
+	cfg.ReadTimeout = ws.Key("read-timeout").MustInt(15)
+	cfg.ReadHeaderTimeout = ws.Key("read-header-timeout").MustInt(15)
+	cfg.WriteTimeout = ws.Key("write-timeout").MustInt(15)
+	cfg.IdleTimeout = ws.Key("idle-timeout").MustInt(60)
+	cfg.MaxHeaderBytes = ws.Key("max-header-bytes").MustInt(1 << 20)
 }
 
 func loadaccounts() {
@@ -132,7 +148,7 @@ func loadaccounts() {
 		}
 
 		// check up default account
-		if acc := AccList.ByID(DefAccID); acc != nil {
+		if acc := AccList.ByID(cfg.DefAccID); acc != nil {
 			if len(acc.Roots) == 0 {
 				acc.FindRoots()
 			}
@@ -141,7 +157,7 @@ func loadaccounts() {
 		}
 	} else {
 		var acc = AccList.NewAccount("admin", "dag qus fly in the sky")
-		acc.ID = DefAccID
+		acc.ID = cfg.DefAccID
 		Log.Printf("created account id%d, login='%s'", acc.ID, acc.Login)
 		acc.SetDefaultHidden()
 		acc.FindRoots()
@@ -292,18 +308,18 @@ func Init() {
 
 // Launch server listeners.
 func Run(gmux *Router) {
-	httpsrv = make([]*http.Server, len(AddrHTTP))
-	for i, addr := range AddrHTTP {
+	httpsrv = make([]*http.Server, len(cfg.AddrHTTP))
+	for i, addr := range cfg.AddrHTTP {
 		var i = i // make valid access in goroutine
 		Log.Println("starts http on " + addr)
 		var srv = &http.Server{
 			Addr:              addr,
 			Handler:           gmux,
-			ReadTimeout:       time.Duration(ReadTimeout) * time.Second,
-			ReadHeaderTimeout: time.Duration(ReadHeaderTimeout) * time.Second,
-			WriteTimeout:      time.Duration(WriteTimeout) * time.Second,
-			IdleTimeout:       time.Duration(IdleTimeout) * time.Second,
-			MaxHeaderBytes:    MaxHeaderBytes,
+			ReadTimeout:       time.Duration(cfg.ReadTimeout) * time.Second,
+			ReadHeaderTimeout: time.Duration(cfg.ReadHeaderTimeout) * time.Second,
+			WriteTimeout:      time.Duration(cfg.WriteTimeout) * time.Second,
+			IdleTimeout:       time.Duration(cfg.IdleTimeout) * time.Second,
+			MaxHeaderBytes:    cfg.MaxHeaderBytes,
 		}
 		httpsrv[i] = srv
 		go func() {
@@ -315,17 +331,17 @@ func Run(gmux *Router) {
 		}()
 	}
 
-	tlssrv = make([]*http.Server, len(AddrTLS))
-	for i, addr := range AddrTLS {
+	tlssrv = make([]*http.Server, len(cfg.AddrTLS))
+	for i, addr := range cfg.AddrTLS {
 		var i = i // make valid access in goroutine
 		Log.Println("starts tls on " + addr)
-		var cfg *tls.Config
-		if AutoCert { // get certificate from letsencrypt.org
+		var config *tls.Config
+		if cfg.AutoCert { // get certificate from letsencrypt.org
 			var m = &autocert.Manager{
 				Prompt: autocert.AcceptTOS,
 				Cache:  autocert.DirCache(confpath + "cert/"),
 			}
-			cfg = &tls.Config{
+			config = &tls.Config{
 				PreferServerCipherSuites: true,
 				CurvePreferences: []tls.CurveID{
 					tls.CurveP256,
@@ -337,12 +353,12 @@ func Run(gmux *Router) {
 		var srv = &http.Server{
 			Addr:              addr,
 			Handler:           gmux,
-			TLSConfig:         cfg,
-			ReadTimeout:       time.Duration(ReadTimeout) * time.Second,
-			ReadHeaderTimeout: time.Duration(ReadHeaderTimeout) * time.Second,
-			WriteTimeout:      time.Duration(WriteTimeout) * time.Second,
-			IdleTimeout:       time.Duration(IdleTimeout) * time.Second,
-			MaxHeaderBytes:    MaxHeaderBytes,
+			TLSConfig:         config,
+			ReadTimeout:       time.Duration(cfg.ReadTimeout) * time.Second,
+			ReadHeaderTimeout: time.Duration(cfg.ReadHeaderTimeout) * time.Second,
+			WriteTimeout:      time.Duration(cfg.WriteTimeout) * time.Second,
+			IdleTimeout:       time.Duration(cfg.IdleTimeout) * time.Second,
+			MaxHeaderBytes:    cfg.MaxHeaderBytes,
 		}
 		tlssrv[i] = srv
 		go func() {
@@ -374,7 +390,7 @@ func Done() {
 	// Create a deadline to wait for.
 	var ctx, cancel = context.WithTimeout(
 		context.Background(),
-		time.Duration(ReadTimeout)*time.Second)
+		time.Duration(cfg.ReadTimeout)*time.Second)
 	defer cancel()
 
 	var srvwg sync.WaitGroup

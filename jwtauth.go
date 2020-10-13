@@ -28,19 +28,19 @@ type HMSClaims struct {
 	AID int `json:"aid"`
 }
 
-// authentication settings
-var (
+// Authentication settings.
+type CfgAuth struct {
 	// Access token time to live.
-	AccessTTL int
+	AccessTTL int `json:"access-ttl"`
 	// Refresh token time to live.
-	RefreshTTL int
+	RefreshTTL int `json:"refresh-ttl"`
 	// Key for access HS-256 JWT-tokens.
-	AccessKey string
+	AccessKey string `json:"access-key"`
 	// Key for refresh HS-256 JWT-tokens.
-	RefreshKey string
+	RefreshKey string `json:"refresh-key"`
 	// Can list of all shares be visible for unauthorized user.
-	ShowSharesUser bool
-)
+	ShowSharesUser bool `json:"show-shares-user"`
+}
 
 var (
 	ErrNoAuth   = errors.New("authorization is absent")
@@ -73,19 +73,19 @@ func (t *Tokens) Make(aid int) {
 	t.Access, _ = jwt.NewWithClaims(jwt.SigningMethodHS256, &HMSClaims{
 		StandardClaims: jwt.StandardClaims{
 			NotBefore: now.Unix(),
-			ExpiresAt: now.Add(time.Duration(AccessTTL) * time.Second).Unix(),
+			ExpiresAt: now.Add(time.Duration(cfg.AccessTTL) * time.Second).Unix(),
 			Subject:   jwtsubject,
 		},
 		AID: aid,
-	}).SignedString([]byte(AccessKey))
+	}).SignedString([]byte(cfg.AccessKey))
 	t.Refrsh, _ = jwt.NewWithClaims(jwt.SigningMethodHS256, &HMSClaims{
 		StandardClaims: jwt.StandardClaims{
 			NotBefore: now.Unix(),
-			ExpiresAt: now.Add(time.Duration(RefreshTTL) * time.Second).Unix(),
+			ExpiresAt: now.Add(time.Duration(cfg.RefreshTTL) * time.Second).Unix(),
 			Subject:   jwtsubject,
 		},
 		AID: aid,
-	}).SignedString([]byte(RefreshKey))
+	}).SignedString([]byte(cfg.RefreshKey))
 }
 
 // Fast IP-address extract from valid host:port string.
@@ -116,7 +116,7 @@ func CheckAuth(r *http.Request) (auth *Account, aerr error) {
 			if strings.HasPrefix(val, "Bearer ") {
 				bearer = true
 				if _, err = jwt.ParseWithClaims(val[7:], &claims, func(token *jwt.Token) (interface{}, error) {
-					return []byte(AccessKey), nil
+					return []byte(cfg.AccessKey), nil
 				}); err != nil {
 					break
 				}
@@ -139,7 +139,7 @@ func CheckAuth(r *http.Request) (auth *Account, aerr error) {
 		aerr = &ErrAjax{ErrNoAuth, EC_noauth}
 		return
 	} else {
-		auth = AccList.ByID(DefAccID)
+		auth = AccList.ByID(cfg.DefAccID)
 	}
 	return
 }
@@ -243,7 +243,7 @@ func refrshApi(w http.ResponseWriter, r *http.Request) {
 
 	var claims HMSClaims
 	if _, err = jwt.ParseWithClaims(arg.Refrsh, &claims, func(token *jwt.Token) (interface{}, error) {
-		return []byte(RefreshKey), nil
+		return []byte(cfg.RefreshKey), nil
 	}); err != nil {
 		WriteError400(w, err, EC_refrshparse)
 		return

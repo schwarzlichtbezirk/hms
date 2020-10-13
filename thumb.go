@@ -31,12 +31,6 @@ const (
 	TMB_cached = 1
 )
 
-// photos settings
-var (
-	// Maximum image size to make thumbnail.
-	ThumbMaxFile int64
-)
-
 const thumbside = 256
 
 var thumbrect = image.Rect(0, 0, thumbside, thumbside)
@@ -137,7 +131,7 @@ func CacheImg(fp Proper, syspath string, force bool) (tmb *ThumbElem) {
 		return // file is not image
 	}
 
-	if fp.Size() > ThumbMaxFile {
+	if fp.Size() > cfg.ThumbMaxFile {
 		return // file is too big
 	}
 
