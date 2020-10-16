@@ -31,15 +31,15 @@ type HMSClaims struct {
 // Authentication settings.
 type CfgAuth struct {
 	// Access token time to live.
-	AccessTTL int `json:"access-ttl"`
+	AccessTTL int `json:"access-ttl" yaml:"access-ttl"`
 	// Refresh token time to live.
-	RefreshTTL int `json:"refresh-ttl"`
+	RefreshTTL int `json:"refresh-ttl" yaml:"refresh-ttl"`
 	// Key for access HS-256 JWT-tokens.
-	AccessKey string `json:"access-key"`
+	AccessKey string `json:"access-key" yaml:"access-key"`
 	// Key for refresh HS-256 JWT-tokens.
-	RefreshKey string `json:"refresh-key"`
+	RefreshKey string `json:"refresh-key" yaml:"refresh-key"`
 	// Can list of all shares be visible for unauthorized user.
-	ShowSharesUser bool `json:"show-shares-user"`
+	ShowSharesUser bool `json:"show-shares-user" yaml:"show-shares-user"`
 }
 
 var (

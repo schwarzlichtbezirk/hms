@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
-	"encoding/json"
 	"errors"
 	"html/template"
 	"io/ioutil"
@@ -16,11 +15,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-ini/ini"
 	"github.com/schwarzlichtbezirk/wpk"
 	"github.com/schwarzlichtbezirk/wpk/bulk"
 	"github.com/schwarzlichtbezirk/wpk/mmap"
 	"golang.org/x/crypto/acme/autocert"
+	"gopkg.in/yaml.v3"
 )
 
 const (
@@ -41,30 +40,53 @@ var (
 
 // Web server settings.
 type CfgServ struct {
-	AddrHTTP          []string `json:"addr-http"`
-	AddrTLS           []string `json:"addr-tls"`
-	AutoCert          bool     `json:"auto-cert"`
-	ReadTimeout       int      `json:"read-timeout"`
-	ReadHeaderTimeout int      `json:"read-header-timeout"`
-	WriteTimeout      int      `json:"write-timeout"`
-	IdleTimeout       int      `json:"idle-timeout"`
-	MaxHeaderBytes    int      `json:"max-header-bytes"`
+	AutoCert          bool     `json:"auto-cert" yaml:"auto-cert"`
+	AddrHTTP          []string `json:"addr-http" yaml:"addr-http"`
+	AddrTLS           []string `json:"addr-tls" yaml:"addr-tls"`
+	ReadTimeout       int      `json:"read-timeout" yaml:"read-timeout"`
+	ReadHeaderTimeout int      `json:"read-header-timeout" yaml:"read-header-timeout"`
+	WriteTimeout      int      `json:"write-timeout" yaml:"write-timeout"`
+	IdleTimeout       int      `json:"idle-timeout" yaml:"idle-timeout"`
+	MaxHeaderBytes    int      `json:"max-header-bytes" yaml:"max-header-bytes"`
 }
 
 type CfgSpec struct {
 	// Memory mapping technology for WPK, or load into one solid byte slice otherwise.
-	WPKmmap bool `json:"wpk-mmap"`
+	WPKmmap bool `json:"wpk-mmap" yaml:"wpk-mmap"`
 	// Default account for user on localhost.
-	DefAccID int `json:"default-account-id"`
+	DefAccID int `json:"default-account-id" yaml:"default-account-id"`
 	// Maximum image size to make thumbnail.
-	ThumbMaxFile int64 `json:"thumb-max-file"`
+	ThumbMaxFile int64 `json:"thumb-max-file" yaml:"thumb-max-file"`
 }
 
 // Common server settings.
-var cfg struct {
-	CfgAuth `json:"authentication"`
-	CfgSpec `json:"specification"`
-	CfgServ `json:"webserver"`
+var cfg = struct {
+	CfgAuth `json:"authentication" yaml:"authentication"`
+	CfgSpec `json:"specification" yaml:"specification"`
+	CfgServ `json:"webserver" yaml:"webserver"`
+}{ // inits default values:
+	CfgAuth: CfgAuth{
+		AccessTTL:      1 * 24 * 60 * 60,
+		RefreshTTL:     3 * 24 * 60 * 60,
+		AccessKey:      "skJgM4NsbP3fs4k7vh0gfdkgGl8dJTszdLxZ1sQ9ksFnxbgvw2RsGH8xxddUV479",
+		RefreshKey:     "zxK4dUnuq3Lhd1Gzhpr3usI5lAzgvy2t3fmxld2spzz7a5nfv0hsksm9cheyutie",
+		ShowSharesUser: true,
+	},
+	CfgSpec: CfgSpec{
+		WPKmmap:      false,
+		DefAccID:     0,
+		ThumbMaxFile: 4096*3072*4 + 65536,
+	},
+	CfgServ: CfgServ{
+		AutoCert:          false,
+		AddrHTTP:          []string{},
+		AddrTLS:           []string{},
+		ReadTimeout:       15,
+		ReadHeaderTimeout: 15,
+		WriteTimeout:      15,
+		IdleTimeout:       60,
+		MaxHeaderBytes:    1 << 20,
+	},
 }
 
 var Log = NewLogger(os.Stderr, LstdFlags, 300)
@@ -81,21 +103,17 @@ var packager wpk.Packager
 ///////////////////////////////
 
 func opensettings() {
-	var file, err = ini.Load(confpath + "settings.ini")
-	if err != nil {
-		Log.Println("can not read settings file, default settings accepted: " + err.Error())
-		return
+	var err error
+	var body []byte
+	if body, err = ioutil.ReadFile(confpath + "settings.yaml"); err == nil {
+		if err = yaml.Unmarshal(body, &cfg); err != nil {
+			Log.Fatal("can not decode settings: " + err.Error())
+		}
+	} else {
+		Log.Println("can not read settings: " + err.Error())
 	}
 
-	var auth = file.Section("authentication")
-	cfg.AccessTTL = auth.Key("access-ttl").MustInt(1 * 24 * 60 * 60)
-	cfg.RefreshTTL = auth.Key("refresh-ttl").MustInt(3 * 24 * 60 * 60)
-	cfg.AccessKey = auth.Key("access-key").MustString("skJgM4NsbP3fs4k7vh0gfdkgGl8dJTszdLxZ1sQ9ksFnxbgvw2RsGH8xxddUV479")
-	cfg.RefreshKey = auth.Key("refresh-key").MustString("zxK4dUnuq3Lhd1Gzhpr3usI5lAzgvy2t3fmxld2spzz7a5nfv0hsksm9cheyutie")
-	cfg.ShowSharesUser = auth.Key("show-shares-user").MustBool(true)
-
-	var spec = file.Section("specification")
-	if spec.Key("wpk-mmap").MustBool(false) {
+	if cfg.AutoCert {
 		var pack = mmap.PackDir{Package: &wpk.Package{}}
 		datapack = pack.Package
 		packager = &pack
@@ -104,26 +122,28 @@ func opensettings() {
 		datapack = pack.Package
 		packager = &pack
 	}
-	cfg.DefAccID = spec.Key("default-account-id").MustInt(0)
-	cfg.ThumbMaxFile = spec.Key("thumb-max-file").MustInt64(4096*3072*4 + 65536)
+}
 
-	var ws = file.Section("webserver")
-	cfg.AddrHTTP = ws.Key("addr-http").Strings(",")
-	cfg.AddrTLS = ws.Key("addr-tls").Strings(",")
-	cfg.AutoCert = ws.Key("auto-cert").MustBool(false)
-	cfg.ReadTimeout = ws.Key("read-timeout").MustInt(15)
-	cfg.ReadHeaderTimeout = ws.Key("read-header-timeout").MustInt(15)
-	cfg.WriteTimeout = ws.Key("write-timeout").MustInt(15)
-	cfg.IdleTimeout = ws.Key("idle-timeout").MustInt(60)
-	cfg.MaxHeaderBytes = ws.Key("max-header-bytes").MustInt(1 << 20)
+func savesettings() {
+	var err error
+
+	var body []byte
+	if body, err = yaml.Marshal(&cfg); err != nil {
+		Log.Println("can not encode settings: " + err.Error())
+		return
+	}
+
+	if err = ioutil.WriteFile(confpath+"settings.yaml", body, 0644); err != nil {
+		Log.Println("can not write settings file: " + err.Error())
+		return
+	}
 }
 
 func loadaccounts() {
 	var err error
 	var body []byte
-	if body, err = ioutil.ReadFile(confpath + "accounts.json"); err == nil {
-		var dec = json.NewDecoder(bytes.NewReader(body))
-		if err = dec.Decode(&AccList.list); err != nil {
+	if body, err = ioutil.ReadFile(confpath + "accounts.yaml"); err == nil {
+		if err = yaml.Unmarshal(body, &AccList.list); err != nil {
 			Log.Fatal("can not decode accounts array: " + err.Error())
 		}
 	} else {
@@ -167,15 +187,13 @@ func loadaccounts() {
 func saveaccounts() {
 	var err error
 
-	var buf bytes.Buffer
-	var enc = json.NewEncoder(&buf)
-	enc.SetIndent("", "\t")
-	if err = enc.Encode(AccList.list); err != nil {
+	var body []byte
+	if body, err = yaml.Marshal(AccList.list); err != nil {
 		Log.Println("can not encode accounts list: " + err.Error())
 		return
 	}
 
-	if err = ioutil.WriteFile(confpath+"accounts.json", buf.Bytes(), 0644); err != nil {
+	if err = ioutil.WriteFile(confpath+"accounts.yaml", body, 0644); err != nil {
 		Log.Println("can not write accounts list file: " + err.Error())
 		return
 	}

@@ -1,0 +1,44 @@
+authentication:
+    # Access token time to live, in seconds.
+    access-ttl: 86400 # 1*24*60*60 = 1 day
+    # Refresh token time to live, in seconds.
+    refresh-ttl: 259200 # 3*24*60*60 = 3 days
+    # Key for access HS-256 JWT-tokens.
+    access-key: skJgM4NsbP3fs4k7vh0gfdkgGl8dJTszdLxZ1sQ9ksFnxbgvw2RsGH8xxddUV479
+    # Key for refresh HS-256 JWT-tokens.
+    refresh-key: zxK4dUnuq3Lhd1Gzhpr3usI5lAzgvy2t3fmxld2spzz7a5nfv0hsksm9cheyutie
+    # Can list of all shares be visible for unauthorized user for root path.
+    show-shares-user: false
+specification:
+    # On 'true' use memory mapping technology for access to wpk-package nested files.
+    # On 'false' use wpk-package loaded into one solid byte slice.
+    wpk-mmap: false
+    # Default account ID for user on localhost.
+    default-account-id: 0
+    # Maximum image size to make thumbnail.
+    thumb-max-file: 50397184 # 4096*3072*4 + 65536, 48M, max 4K image + 64K exif metadata
+webserver: # See https://golang.org/pkg/net/http/#Server for details.
+    # Indicates to get TLS-certificate from letsencrypt.org service
+    # if this value is true. Uses local TLS-certificate otherwise.
+    auto-cert: false
+    # List of address:port values for non-encrypted connections.
+    addr-http:
+        - :80
+        - :8080
+    # List of address:port values for encrypted connections.
+    addr-tls:
+        - :443
+        - :4804
+    # Maximum duration for reading the entire request, including the body,
+    # in seconds.
+    read-timeout: 15
+    # Amount of time allowed to read request headers, in seconds.
+    read-header-timeout: 15
+    # Maximum duration before timing out writes of the response, in seconds.
+    write-timeout: 15
+    # Maximum amount of time to wait for the next request when keep-alives
+    # are enabled, in seconds.
+    idle-timeout: 60
+    # Controls the maximum number of bytes the server will read parsing
+    # the request header's keys and values, including the request line, in bytes.
+    max-header-bytes: 1048576 # 1M

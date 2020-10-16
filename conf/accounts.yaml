@@ -1,0 +1,23 @@
+- id: 0
+  login: admin
+  password: dag qus fly in the sky
+  roots:
+  hidden:
+    - ?:/system volume information
+    - '*.sys'
+    - '*.tmp'
+    - '*.bak'
+    - '*/.*'
+    - ?:/windows
+    - ?:/windowsapps
+    - ?:/$recycle.bin
+    - ?:/program files
+    - ?:/program files (x86)
+    - ?:/programdata
+    - ?:/recovery
+    - ?:/config.msi
+    - '*/thumbs.db'
+  shares:
+    - name: Music
+      pref: Music
+      path: E:/Music/
