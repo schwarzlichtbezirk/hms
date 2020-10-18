@@ -180,10 +180,9 @@ Vue.component('dir-card-tag', {
 			}).catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
 		},
 		ondiskpathchange(e) {
-			fetchajaxauth("GET", "/api/ispath", {
+			fetchajaxauth("POST", "/api/ispath", {
 				aid: app.aid,
-				path: this.diskpath,
-				prop: false
+				path: this.diskpath
 			}).then(response => {
 				if (response.ok) {
 					this.diskpathstate = response.data ? 1 : 0;

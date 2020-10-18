@@ -15,6 +15,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/bluele/gcache"
 	"github.com/schwarzlichtbezirk/wpk"
 	"github.com/schwarzlichtbezirk/wpk/bulk"
 	"github.com/schwarzlichtbezirk/wpk/mmap"
@@ -57,6 +58,8 @@ type CfgSpec struct {
 	DefAccID int `json:"default-account-id" yaml:"default-account-id"`
 	// Maximum image size to make thumbnail.
 	ThumbMaxFile int64 `json:"thumb-max-file" yaml:"thumb-max-file"`
+	// Size of files properties cache.
+	PropCacheSize int `json:"prop-cache-size" yaml:"prop-cache-size"`
 }
 
 // Common server settings.
@@ -73,9 +76,10 @@ var cfg = struct {
 		ShowSharesUser: true,
 	},
 	CfgSpec: CfgSpec{
-		WPKmmap:      false,
-		DefAccID:     0,
-		ThumbMaxFile: 4096*3072*4 + 65536,
+		WPKmmap:       false,
+		DefAccID:      0,
+		ThumbMaxFile:  4096*3072*4 + 65536,
+		PropCacheSize: 32 * 1024,
 	},
 	CfgServ: CfgServ{
 		AutoCert:          false,
@@ -98,6 +102,9 @@ var httpsrv, tlssrv []*http.Server
 var datapack *wpk.Package
 var packager wpk.Packager
 
+// Files properties cache.
+var propcache gcache.Cache
+
 ///////////////////////////////
 // Startup opening functions //
 ///////////////////////////////
@@ -111,16 +118,6 @@ func opensettings() {
 		}
 	} else {
 		Log.Println("can not read settings: " + err.Error())
-	}
-
-	if cfg.AutoCert {
-		var pack = mmap.PackDir{Package: &wpk.Package{}}
-		datapack = pack.Package
-		packager = &pack
-	} else {
-		var pack = bulk.PackDir{Package: &wpk.Package{}}
-		datapack = pack.Package
-		packager = &pack
 	}
 }
 
@@ -305,17 +302,43 @@ func Init() {
 
 	// load settings files
 	opensettings()
-	// load accounts with roots, hidden and shares lists
-	loadaccounts()
+
 	// load package with data files
+	if cfg.AutoCert {
+		var pack = mmap.PackDir{Package: &wpk.Package{}}
+		datapack = pack.Package
+		packager = &pack
+	} else {
+		var pack = bulk.PackDir{Package: &wpk.Package{}}
+		datapack = pack.Package
+		packager = &pack
+	}
 	if err = packager.OpenWPK(destpath + "hms.wpk"); err != nil {
 		Log.Fatal("can not load wpk-package: " + err.Error())
 	}
 	Log.Printf("cached %d files to %d aliases on %d bytes", datapack.RecNumber, datapack.TagNumber, datapack.TagOffset)
+
 	// insert components templates into pages
 	if err = loadtemplates(); err != nil {
 		Log.Fatal(err)
 	}
+
+	// init properties cache
+	propcache = gcache.New(cfg.PropCacheSize).
+		LRU().
+		LoaderFunc(func(key interface{}) (ret interface{}, err error) {
+			var syspath = key.(string)
+			var fi os.FileInfo
+			if fi, err = os.Stat(syspath); err != nil {
+				return
+			}
+			ret = MakeProp(syspath, fi)
+			return
+		}).
+		Build()
+
+	// load accounts with roots, hidden and shares lists
+	loadaccounts()
 
 	// run meters updater
 	meterscanner = time.AfterFunc(time.Second, meterupdater)

@@ -190,16 +190,13 @@ func (acc *Account) UpdateShares() {
 	acc.sharespref = map[string]string{}
 	for _, shr := range acc.Shares {
 		var shr = shr
-		var err error
-		var fi os.FileInfo
-		if fi, err = os.Stat(shr.Path); err != nil {
+		if _, err := propcache.Get(shr.Path); err != nil {
 			defer Log.Printf("id%d: can not create share '%s' on path '%s'", acc.ID, shr.Pref, shr.Path)
 			continue
 		}
 
 		acc.sharespath[shr.Path] = shr.Pref
 		acc.sharespref[shr.Pref] = shr.Path
-		defer MakeProp(shr.Path, fi) // put prop to cache
 		defer Log.Printf("id%d: created share '%s' on path '%s'", acc.ID, shr.Pref, shr.Path)
 	}
 
@@ -395,7 +392,7 @@ func (acc *Account) Readdir(shrpath string) (ret []ShareKit, err error) {
 				spath += "/"
 			}
 			if !acc.IsHidden(fpath) {
-				var sk = ShareKit{MakeProp(fpath, fi), spath, ""}
+				var sk = ShareKit{CacheProp(fpath, fi), spath, ""}
 				acc.SetupPref(&sk, fpath)
 				ret = append(ret, sk)
 				fgrp[typetogroup[sk.Prop.Type()]]++
@@ -403,7 +400,7 @@ func (acc *Account) Readdir(shrpath string) (ret []ShareKit, err error) {
 		}
 	}
 
-	if dk, ok := MakeProp(syspath, di).(*DirKit); ok {
+	if dk, ok := CacheProp(syspath, di).(*DirKit); ok {
 		dk.Scan = UnixJSNow()
 		dk.FGrp = fgrp
 	}

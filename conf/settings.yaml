@@ -17,6 +17,8 @@ specification:
     default-account-id: 0
     # Maximum image size to make thumbnail.
     thumb-max-file: 50397184 # 4096*3072*4 + 65536, 48M, max 4K image + 64K exif metadata
+    # Size of files properties cache.
+    prop-cache-size: 32768
 webserver: # See https://golang.org/pkg/net/http/#Server for details.
     # Indicates to get TLS-certificate from letsencrypt.org service
     # if this value is true. Uses local TLS-certificate otherwise.

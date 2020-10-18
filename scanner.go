@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bluele/gcache"
 	"github.com/dhowden/tag"
 )
 
@@ -198,8 +197,6 @@ var extset = map[string]int{
 	".rar": FT_rar,
 }
 
-var propcache = gcache.New(32 * 1024).LRU().Build()
-
 // File properties interface.
 type Proper interface {
 	Name() string // string identifier
@@ -313,7 +310,7 @@ func (dk *DirKit) Clone() Proper {
 func (dk *DirKit) Setup(syspath string) {
 	dk.NameVal = filepath.Base(syspath)
 	dk.TypeVal = FT_dir
-	dk.KTmbVal = ThumbName(syspath)
+	dk.KTmbVal = ktmbcache.Cache(syspath)
 	dk.NTmbVal = TMB_reject
 }
 
@@ -332,7 +329,7 @@ func (dk *DriveKit) Clone() Proper {
 func (dk *DriveKit) Setup(syspath string) {
 	dk.NameVal = syspath[:len(syspath)-1]
 	dk.TypeVal = FT_drive
-	dk.KTmbVal = ThumbName(syspath)
+	dk.KTmbVal = ktmbcache.Cache(syspath)
 	dk.NTmbVal = TMB_reject
 }
 
@@ -407,7 +404,7 @@ func (tk *TagKit) Setup(syspath string, fi os.FileInfo) {
 		if m, err := tag.ReadFrom(file); err == nil {
 			tk.TagProp.Setup(m)
 			if pic := m.Picture(); pic != nil {
-				tk.KTmbVal = ThumbName(syspath)
+				tk.KTmbVal = ktmbcache.Cache(syspath)
 				thumbcache.Set(tk.KTmbVal, &ThumbElem{
 					Data: pic.Data,
 					Mime: pic.MIMEType,
@@ -421,38 +418,41 @@ func (tk *TagKit) Setup(syspath string, fi os.FileInfo) {
 }
 
 // File properties factory.
-func MakeProp(syspath string, fi os.FileInfo) (prop Proper) {
-	if cp, err := propcache.Get(syspath); err == nil {
-		return cp.(Proper)
-	}
-
+func MakeProp(syspath string, fi os.FileInfo) Proper {
 	if fi.IsDir() {
 		var dk DirKit
 		dk.Setup(syspath)
-
-		prop = &dk
+		return &dk
 	} else {
 		var ft = extset[strings.ToLower(filepath.Ext(syspath))]
 		if ft == FT_flac || ft == FT_mp3 || ft == FT_ogg || ft == FT_mp4 {
 			var tk TagKit
 			tk.TypeVal = ft
 			tk.Setup(syspath, fi)
-			prop = &tk
+			return &tk
 		} else if ft == FT_jpeg || ft == FT_tiff || ft == FT_png || ft == FT_webp {
 			var ek ExifKit
 			ek.TypeVal = ft
 			ek.Setup(syspath, fi)
-			prop = &ek
+			return &ek
 		} else {
 			var fk FileKit
 			fk.TypeVal = ft
 			fk.Setup(syspath, fi)
-			prop = &fk
+			return &fk
 		}
 	}
+}
 
+// File properties factory.
+func CacheProp(syspath string, fi os.FileInfo) Proper {
+	if propcache.Has(syspath) {
+		var cp, _ = propcache.Get(syspath)
+		return cp.(Proper)
+	}
+	var prop = MakeProp(syspath, fi)
 	propcache.Set(syspath, prop)
-	return
+	return prop
 }
 
 // The End.

@@ -147,10 +147,10 @@ func (ek *ExifKit) Clone() Proper {
 }
 
 // Fills fields with given path.
-func (ek *ExifKit) Setup(fpath string, fi os.FileInfo) {
+func (ek *ExifKit) Setup(syspath string, fi os.FileInfo) {
 	ek.StdProp.Setup(fi)
 
-	if file, err := os.Open(fpath); err == nil {
+	if file, err := os.Open(syspath); err == nil {
 		defer file.Close()
 		if x, err := exif.Decode(file); err == nil {
 			ek.ExifProp.Setup(x)
@@ -158,7 +158,7 @@ func (ek *ExifKit) Setup(fpath string, fi os.FileInfo) {
 				ek.TypeVal = FT_photo
 			}
 			if pic, err := x.JpegThumbnail(); err == nil {
-				ek.KTmbVal = ThumbName(fpath)
+				ek.KTmbVal = ktmbcache.Cache(syspath)
 				thumbcache.Set(ek.KTmbVal, &ThumbElem{
 					Data: pic,
 					Mime: "image/jpeg",
@@ -168,7 +168,7 @@ func (ek *ExifKit) Setup(fpath string, fi os.FileInfo) {
 			}
 		}
 	}
-	ek.TmbProp.Setup(fpath)
+	ek.TmbProp.Setup(syspath)
 }
 
 func exifparsers() {

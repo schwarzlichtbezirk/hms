@@ -13,6 +13,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"sync"
 
 	"github.com/bluele/gcache"
 	"github.com/disintegration/gift"
@@ -45,6 +46,45 @@ var thumbpngenc = png.Encoder{
 	CompressionLevel: png.BestCompression,
 }
 
+// Cache with hash/syspath and syspath/hash values.
+type KeyThumbCache struct {
+	keypath map[string]string
+	pathkey map[string]string
+	mux     sync.RWMutex
+}
+
+func (c *KeyThumbCache) Key(syspath string) (ktmb string, ok bool) {
+	c.mux.RLock()
+	defer c.mux.RUnlock()
+	ktmb, ok = c.pathkey[syspath]
+	return
+}
+
+func (c *KeyThumbCache) Path(ktmb string) (syspath string, ok bool) {
+	c.mux.RLock()
+	defer c.mux.RUnlock()
+	syspath, ok = c.keypath[ktmb]
+	return
+}
+
+func (c *KeyThumbCache) Cache(syspath string) string {
+	if ktmb, ok := c.Key(syspath); ok {
+		return ktmb
+	}
+	var h = md5.Sum([]byte(syspath))
+	var ktmb = hex.EncodeToString(h[:])
+	c.mux.Lock()
+	defer c.mux.Unlock()
+	c.pathkey[syspath] = ktmb
+	c.keypath[ktmb] = syspath
+	return ktmb
+}
+
+var ktmbcache = KeyThumbCache{
+	keypath: map[string]string{},
+	pathkey: map[string]string{},
+}
+
 // HTTP error messages
 var (
 	ErrBadThumb = errors.New("thumbnail content not cached")
@@ -66,14 +106,14 @@ type TmbProp struct {
 
 // Generates cache key as hash of path and updates cached state.
 func (tp *TmbProp) Setup(syspath string) {
-	tp.KTmbVal = ThumbName(syspath)
+	tp.KTmbVal = ktmbcache.Cache(syspath)
 	tp.UpdateTmb()
 }
 
 // Updates cached state for this cache key.
 func (tp *TmbProp) UpdateTmb() {
-	if tmb, err := thumbcache.Get(tp.KTmbVal); err == nil {
-		if tmb != nil {
+	if thumbcache.Has(tp.KTmbVal) {
+		if tmb, _ := thumbcache.Get(tp.KTmbVal); tmb != nil {
 			tp.NTmbVal = TMB_cached
 		} else {
 			tp.NTmbVal = TMB_reject
@@ -96,11 +136,6 @@ func (tp *TmbProp) NTmb() int {
 // Updates thumbnail state to given value.
 func (tp *TmbProp) SetNTmb(v int) {
 	tp.NTmbVal = v
-}
-
-func ThumbName(syspath string) string {
-	var h = md5.Sum([]byte(syspath))
-	return hex.EncodeToString(h[:])
 }
 
 func CacheImg(fp Proper, syspath string, force bool) (tmb *ThumbElem) {
@@ -265,12 +300,8 @@ func tmbscnApi(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		for _, shrpath := range arg.Paths {
 			var syspath = acc.GetSharePath(shrpath)
-			if cp, err := propcache.Get(syspath); err == nil { // extract from cache
-				var prop = cp.(Proper)
-				CacheImg(prop, syspath, arg.Force)
-			} else if fi, err := os.Stat(syspath); err == nil { // put into cache
-				var prop = MakeProp(syspath, fi)
-				CacheImg(prop, syspath, arg.Force)
+			if prop, err := propcache.Get(syspath); err == nil {
+				CacheImg(prop.(Proper), syspath, arg.Force)
 			}
 		}
 	}()
