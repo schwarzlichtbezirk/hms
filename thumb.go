@@ -36,7 +36,37 @@ const thumbside = 256
 
 var thumbrect = image.Rect(0, 0, thumbside, thumbside)
 
-var thumbcache = gcache.New(0).Simple().Build()
+// Thumbnails cache.
+// Key - thumbnail key (syspath MD5-hash), value - thumbnail image.
+var thumbcache = gcache.New(0).
+	Simple().
+	LoaderFunc(func(key interface{}) (ret interface{}, err error) {
+		var syspath, ok = ktmbcache.Path(key.(string))
+		if !ok {
+			err = ErrNoHash
+			return // file path not found
+		}
+
+		var cp interface{}
+		if cp, err = propcache.Get(syspath); err != nil {
+			return // can not get properties
+		}
+		var prop = cp.(Proper)
+		if prop.NTmb() == TMB_reject {
+			err = ErrNotThumb
+			return // thumbnail rejected
+		}
+
+		var tmb *ThumbElem
+		if tmb, err = FindTmb(prop, syspath); tmb != nil {
+			prop.SetNTmb(TMB_cached)
+			ret = tmb
+		} else {
+			prop.SetNTmb(TMB_reject)
+		}
+		return // ok
+	}).
+	Build()
 
 var thumbfilter = gift.New(
 	gift.ResizeToFit(thumbside, thumbside, gift.LinearResampling),
@@ -87,7 +117,11 @@ var ktmbcache = KeyThumbCache{
 
 // HTTP error messages
 var (
-	ErrBadThumb = errors.New("thumbnail content not cached")
+	ErrNoHash   = errors.New("file with given hash not found")
+	ErrBadThumb = errors.New("thumbnail cache is corrupted")
+	ErrNotThumb = errors.New("thumbnail content can not be created")
+	ErrNotImg   = errors.New("file is not image")
+	ErrTooBig   = errors.New("file is too big")
 )
 
 // Thumbnails cache element.
@@ -107,17 +141,13 @@ type TmbProp struct {
 // Generates cache key as hash of path and updates cached state.
 func (tp *TmbProp) Setup(syspath string) {
 	tp.KTmbVal = ktmbcache.Cache(syspath)
-	tp.UpdateTmb()
+	tp.NTmbCached()
 }
 
 // Updates cached state for this cache key.
-func (tp *TmbProp) UpdateTmb() {
+func (tp *TmbProp) NTmbCached() {
 	if thumbcache.Has(tp.KTmbVal) {
-		if tmb, _ := thumbcache.Get(tp.KTmbVal); tmb != nil {
-			tp.NTmbVal = TMB_cached
-		} else {
-			tp.NTmbVal = TMB_reject
-		}
+		tp.NTmbVal = TMB_cached
 	} else {
 		tp.NTmbVal = TMB_none
 	}
@@ -138,46 +168,44 @@ func (tp *TmbProp) SetNTmb(v int) {
 	tp.NTmbVal = v
 }
 
-func CacheImg(fp Proper, syspath string, force bool) (tmb *ThumbElem) {
-	var err error
-	var ktmb = fp.KTmb()
-
-	if !force {
-		var val interface{}
-		if val, err = thumbcache.Get(ktmb); err == nil {
-			if val != nil {
-				tmb = val.(*ThumbElem)
-			}
-			return // image already cached
+func FindTmb(prop Proper, syspath string) (tmb *ThumbElem, err error) {
+	// try to extract from EXIF
+	if _, ok := prop.(*ExifKit); ok { // skip non-EXIF properties
+		if tmb, err = GetExifTmb(syspath); err == nil {
+			return // thumbnail from EXIF
 		}
 	}
 
-	defer func() {
-		if tmb != nil {
-			fp.SetNTmb(TMB_cached)
-			thumbcache.Set(ktmb, tmb)
-		} else {
-			fp.SetNTmb(TMB_reject)
-			thumbcache.Set(ktmb, nil)
+	// try to extract from ID3
+	if _, ok := prop.(*TagKit); ok { // skip non-ID3 properties
+		if tmb, err = GetTagTmb(syspath); err == nil {
+			return // thumbnail from ID3
 		}
-	}()
-
-	if typetogroup[fp.Type()] != FG_image {
-		return // file is not image
 	}
 
-	if fp.Size() > cfg.ThumbMaxFile {
+	if prop.Size() > cfg.ThumbMaxFile {
+		err = ErrTooBig
 		return // file is too big
 	}
 
+	// check all others are images
+	if typetogroup[prop.Type()] != FG_image {
+		err = ErrNotImg
+		return // file is not image
+	}
+
+	return MakeTmb(syspath)
+}
+
+func MakeTmb(syspath string) (tmb *ThumbElem, err error) {
 	var file *os.File
-	var ftype string
-	var src, dst image.Image
 	if file, err = os.Open(syspath); err != nil {
 		return // can not open file
 	}
 	defer file.Close()
 
+	var ftype string
+	var src, dst image.Image
 	if src, ftype, err = image.Decode(file); err != nil {
 		return // can not decode file by any codec
 	}
@@ -231,7 +259,11 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	var tmb, ok = val.(*ThumbElem)
 	if !ok {
-		WriteError(w, http.StatusNotFound, ErrBadThumb, EC_thumbbadcnt)
+		WriteError500(w, ErrBadThumb, EC_thumbbadcnt)
+		return
+	}
+	if tmb == nil {
+		WriteError(w, http.StatusNotFound, ErrNotThumb, EC_thumbnotcnt)
 		return
 	}
 	w.Header().Set("Content-Type", tmb.Mime)
@@ -261,7 +293,11 @@ func tmbchkApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, tp := range arg.Tmbs {
-		tp.UpdateTmb()
+		if syspath, ok := ktmbcache.Path(tp.KTmb()); ok {
+			if prop, err := propcache.Get(syspath); err == nil {
+				tp.NTmbVal = prop.(Proper).NTmb()
+			}
+		}
 	}
 
 	WriteOK(w, arg)
@@ -273,7 +309,6 @@ func tmbscnApi(w http.ResponseWriter, r *http.Request) {
 	var arg struct {
 		AID   int      `json:"aid"`
 		Paths []string `json:"paths"`
-		Force bool     `json:"force"`
 	}
 
 	// get arguments
@@ -300,8 +335,8 @@ func tmbscnApi(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		for _, shrpath := range arg.Paths {
 			var syspath = acc.GetSharePath(shrpath)
-			if prop, err := propcache.Get(syspath); err == nil {
-				CacheImg(prop.(Proper), syspath, arg.Force)
+			if ktmb, ok := ktmbcache.Key(syspath); ok {
+				thumbcache.Get(ktmb)
 			}
 		}
 	}()

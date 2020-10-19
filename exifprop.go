@@ -152,23 +152,46 @@ func (ek *ExifKit) Setup(syspath string, fi os.FileInfo) {
 
 	if file, err := os.Open(syspath); err == nil {
 		defer file.Close()
-		if x, err := exif.Decode(file); err == nil {
+		var x *exif.Exif
+		if x, err = exif.Decode(file); err == nil {
 			ek.ExifProp.Setup(x)
 			if len(ek.Model) > 0 {
 				ek.TypeVal = FT_photo
 			}
-			if pic, err := x.JpegThumbnail(); err == nil {
+			var pic []byte
+			if pic, err = x.JpegThumbnail(); err == nil {
 				ek.KTmbVal = ktmbcache.Cache(syspath)
+				ek.NTmbVal = TMB_cached
 				thumbcache.Set(ek.KTmbVal, &ThumbElem{
 					Data: pic,
 					Mime: "image/jpeg",
 				})
-				ek.NTmbVal = TMB_cached
 				return
 			}
 		}
 	}
 	ek.TmbProp.Setup(syspath)
+}
+
+func GetExifTmb(syspath string) (tmb *ThumbElem, err error) {
+	var file *os.File
+	if file, err = os.Open(syspath); err != nil {
+		return // can not open file
+	}
+	defer file.Close()
+
+	var x *exif.Exif
+	if x, err = exif.Decode(file); err == nil {
+		var pic []byte
+		if pic, err = x.JpegThumbnail(); err == nil {
+			tmb = &ThumbElem{
+				Data: pic,
+				Mime: "image/jpeg",
+			}
+			return
+		}
+	}
+	return
 }
 
 func exifparsers() {

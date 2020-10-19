@@ -103,17 +103,18 @@ const (
 	// thumb
 	EC_thumbabsent = 60
 	EC_thumbbadcnt = 61
+	EC_thumbnotcnt = 62
 
 	// tmb/chk
-	EC_tmbchknoreq  = 62
-	EC_tmbchkbadreq = 63
-	EC_tmbchknodata = 64
+	EC_tmbchknoreq  = 63
+	EC_tmbchkbadreq = 64
+	EC_tmbchknodata = 65
 
 	// tmb/scn
-	EC_tmbscnnoreq  = 65
-	EC_tmbscnbadreq = 66
-	EC_tmbscnnodata = 67
-	EC_tmbscnnoacc  = 68
+	EC_tmbscnnoreq  = 66
+	EC_tmbscnbadreq = 67
+	EC_tmbscnnodata = 68
+	EC_tmbscnnoacc  = 69
 
 	// share/lst
 	EC_shrlstnoreq  = 70

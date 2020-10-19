@@ -103,6 +103,7 @@ var datapack *wpk.Package
 var packager wpk.Packager
 
 // Files properties cache.
+// Key - system path, value - file property struct.
 var propcache gcache.Cache
 
 ///////////////////////////////

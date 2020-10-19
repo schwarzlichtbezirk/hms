@@ -550,8 +550,7 @@ let app = new Vue({
 					}
 					fetchajaxauth("POST", "/api/tmb/scn", {
 						aid: this.aid,
-						paths: paths,
-						force: false
+						paths: paths
 					}).then(response => {
 						traceajax(response);
 					});

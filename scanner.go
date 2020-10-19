@@ -405,16 +405,38 @@ func (tk *TagKit) Setup(syspath string, fi os.FileInfo) {
 			tk.TagProp.Setup(m)
 			if pic := m.Picture(); pic != nil {
 				tk.KTmbVal = ktmbcache.Cache(syspath)
+				tk.NTmbVal = TMB_cached
 				thumbcache.Set(tk.KTmbVal, &ThumbElem{
 					Data: pic.Data,
 					Mime: pic.MIMEType,
 				})
-				tk.NTmbVal = TMB_cached
 				return
 			}
 		}
 	}
 	tk.TmbProp.Setup(syspath)
+}
+
+func GetTagTmb(syspath string) (tmb *ThumbElem, err error) {
+	var file *os.File
+	if file, err = os.Open(syspath); err != nil {
+		return // can not open file
+	}
+	defer file.Close()
+
+	var m tag.Metadata
+	if m, err = tag.ReadFrom(file); err == nil {
+		if pic := m.Picture(); pic != nil {
+			tmb = &ThumbElem{
+				Data: pic.Data,
+				Mime: pic.MIMEType,
+			}
+			return
+		} else {
+			err = ErrNotThumb
+		}
+	}
+	return
 }
 
 // File properties factory.
