@@ -2,8 +2,6 @@ package hms
 
 import (
 	"bytes"
-	"crypto/md5"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"image"
@@ -13,9 +11,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"sync"
 
-	"github.com/bluele/gcache"
 	"github.com/disintegration/gift"
 	_ "github.com/oov/psd"
 	_ "github.com/spate/glimage/dds"
@@ -36,83 +32,12 @@ const thumbside = 256
 
 var thumbrect = image.Rect(0, 0, thumbside, thumbside)
 
-// Thumbnails cache.
-// Key - thumbnail key (syspath MD5-hash), value - thumbnail image.
-var thumbcache = gcache.New(0).
-	Simple().
-	LoaderFunc(func(key interface{}) (ret interface{}, err error) {
-		var syspath, ok = ktmbcache.Path(key.(string))
-		if !ok {
-			err = ErrNoHash
-			return // file path not found
-		}
-
-		var cp interface{}
-		if cp, err = propcache.Get(syspath); err != nil {
-			return // can not get properties
-		}
-		var prop = cp.(Proper)
-		if prop.NTmb() == TMB_reject {
-			err = ErrNotThumb
-			return // thumbnail rejected
-		}
-
-		var tmb *ThumbElem
-		if tmb, err = FindTmb(prop, syspath); tmb != nil {
-			prop.SetNTmb(TMB_cached)
-			ret = tmb
-		} else {
-			prop.SetNTmb(TMB_reject)
-		}
-		return // ok
-	}).
-	Build()
-
 var thumbfilter = gift.New(
 	gift.ResizeToFit(thumbside, thumbside, gift.LinearResampling),
 )
 
 var thumbpngenc = png.Encoder{
 	CompressionLevel: png.BestCompression,
-}
-
-// Cache with hash/syspath and syspath/hash values.
-type KeyThumbCache struct {
-	keypath map[string]string
-	pathkey map[string]string
-	mux     sync.RWMutex
-}
-
-func (c *KeyThumbCache) Key(syspath string) (ktmb string, ok bool) {
-	c.mux.RLock()
-	defer c.mux.RUnlock()
-	ktmb, ok = c.pathkey[syspath]
-	return
-}
-
-func (c *KeyThumbCache) Path(ktmb string) (syspath string, ok bool) {
-	c.mux.RLock()
-	defer c.mux.RUnlock()
-	syspath, ok = c.keypath[ktmb]
-	return
-}
-
-func (c *KeyThumbCache) Cache(syspath string) string {
-	if ktmb, ok := c.Key(syspath); ok {
-		return ktmb
-	}
-	var h = md5.Sum([]byte(syspath))
-	var ktmb = hex.EncodeToString(h[:])
-	c.mux.Lock()
-	defer c.mux.Unlock()
-	c.pathkey[syspath] = ktmb
-	c.keypath[ktmb] = syspath
-	return ktmb
-}
-
-var ktmbcache = KeyThumbCache{
-	keypath: map[string]string{},
-	pathkey: map[string]string{},
 }
 
 // HTTP error messages
@@ -134,19 +59,19 @@ type ThumbElem struct {
 
 // Thumbnails properties.
 type TmbProp struct {
-	KTmbVal string `json:"ktmb,omitempty"`
+	HashVal string `json:"hash,omitempty"`
 	NTmbVal int    `json:"ntmb,omitempty"`
 }
 
 // Generates cache key as hash of path and updates cached state.
 func (tp *TmbProp) Setup(syspath string) {
-	tp.KTmbVal = ktmbcache.Cache(syspath)
+	tp.HashVal = hashcache.Cache(syspath)
 	tp.NTmbCached()
 }
 
 // Updates cached state for this cache key.
 func (tp *TmbProp) NTmbCached() {
-	if thumbcache.Has(tp.KTmbVal) {
+	if thumbcache.Has(tp.HashVal) {
 		tp.NTmbVal = TMB_cached
 	} else {
 		tp.NTmbVal = TMB_none
@@ -154,8 +79,8 @@ func (tp *TmbProp) NTmbCached() {
 }
 
 // Thumbnail key, it's MD5-hash of full path.
-func (tp *TmbProp) KTmb() string {
-	return tp.KTmbVal
+func (tp *TmbProp) Hash() string {
+	return tp.HashVal
 }
 
 // Thumbnail state, -1 impossible, 0 undefined, 1 ready.
@@ -183,7 +108,7 @@ func FindTmb(prop Proper, syspath string) (tmb *ThumbElem, err error) {
 		}
 	}
 
-	if prop.Size() > cfg.ThumbMaxFile {
+	if prop.Size() > cfg.ThumbFileMaxSize {
 		err = ErrTooBig
 		return // file is too big
 	}
@@ -251,9 +176,10 @@ func MakeTmb(syspath string) (tmb *ThumbElem, err error) {
 func thumbHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
 
-	var ktmb = r.URL.Path[len(r.URL.Path)-32:]
+	var hash = r.URL.Path[7 : 7+26] // skip prefix "/thumb/" and cut 26-bytes hash
+	Log.Println(r.URL.Path, hash)
 	var val interface{}
-	if val, err = thumbcache.Get(ktmb); err != nil {
+	if val, err = thumbcache.Get(hash); err != nil {
 		WriteError(w, http.StatusNotFound, err, EC_thumbabsent)
 		return
 	}
@@ -267,7 +193,7 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", tmb.Mime)
-	http.ServeContent(w, r, ktmb, starttime, bytes.NewReader(tmb.Data))
+	http.ServeContent(w, r, hash, starttime, bytes.NewReader(tmb.Data))
 }
 
 // APIHANDLER
@@ -293,7 +219,7 @@ func tmbchkApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, tp := range arg.Tmbs {
-		if syspath, ok := ktmbcache.Path(tp.KTmb()); ok {
+		if syspath, ok := hashcache.Path(tp.Hash()); ok {
 			if prop, err := propcache.Get(syspath); err == nil {
 				tp.NTmbVal = prop.(Proper).NTmb()
 			}
@@ -335,8 +261,8 @@ func tmbscnApi(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		for _, shrpath := range arg.Paths {
 			var syspath = acc.GetSharePath(shrpath)
-			if ktmb, ok := ktmbcache.Key(syspath); ok {
-				thumbcache.Get(ktmb)
+			if hash, ok := hashcache.Key(syspath); ok {
+				thumbcache.Get(hash)
 			}
 		}
 	}()

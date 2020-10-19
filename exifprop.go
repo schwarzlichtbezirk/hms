@@ -160,9 +160,9 @@ func (ek *ExifKit) Setup(syspath string, fi os.FileInfo) {
 			}
 			var pic []byte
 			if pic, err = x.JpegThumbnail(); err == nil {
-				ek.KTmbVal = ktmbcache.Cache(syspath)
+				ek.HashVal = hashcache.Cache(syspath)
 				ek.NTmbVal = TMB_cached
-				thumbcache.Set(ek.KTmbVal, &ThumbElem{
+				thumbcache.Set(ek.HashVal, &ThumbElem{
 					Data: pic,
 					Mime: "image/jpeg",
 				})

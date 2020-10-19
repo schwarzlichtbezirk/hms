@@ -574,7 +574,7 @@ Vue.component('map-card-tag', {
 					title: file.name,
 					riseOnHover: true
 				};
-				if (this.markermode === 'thumb' && file.ktmb) {
+				if (this.markermode === 'thumb' && file.hash) {
 					opt.icon = L.divIcon({
 						html: `<img src="${filetmb(file)}">`,
 						className: "photomarker",

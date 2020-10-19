@@ -512,7 +512,7 @@ let app = new Vue({
 					chktmb = () => {
 						const tmbs = [];
 						for (const fp of this.uncached) {
-							tmbs.push({ ktmb: fp.ktmb });
+							tmbs.push({ hash: fp.hash });
 						}
 						fetchajaxauth("POST", "/api/tmb/chk", {
 							tmbs: tmbs
@@ -523,7 +523,7 @@ let app = new Vue({
 								for (const tp of response.data.tmbs) {
 									if (tp.ntmb) {
 										for (const fp of this.filelist) {
-											if (fp.ktmb === tp.ktmb) {
+											if (fp.hash === tp.hash) {
 												Vue.set(fp, 'ntmb', tp.ntmb);
 												// add gps-item
 												if (fp.latitude && fp.longitude && fp.ntmb === 1) {

@@ -15,7 +15,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bluele/gcache"
 	"github.com/schwarzlichtbezirk/wpk"
 	"github.com/schwarzlichtbezirk/wpk/bulk"
 	"github.com/schwarzlichtbezirk/wpk/mmap"
@@ -56,10 +55,12 @@ type CfgSpec struct {
 	WPKmmap bool `json:"wpk-mmap" yaml:"wpk-mmap"`
 	// Default account for user on localhost.
 	DefAccID int `json:"default-account-id" yaml:"default-account-id"`
-	// Maximum image size to make thumbnail.
-	ThumbMaxFile int64 `json:"thumb-max-file" yaml:"thumb-max-file"`
-	// Size of files properties cache.
-	PropCacheSize int `json:"prop-cache-size" yaml:"prop-cache-size"`
+	// Maximum size of image to make thumbnail.
+	ThumbFileMaxSize int64 `json:"thumb-file-maxsize" yaml:"thumb-file-maxsize"`
+	// Maximum items number in files properties cache.
+	PropCacheMaxNum int `json:"prop-cache-maxnum" yaml:"prop-cache-maxnum"`
+	// Maximum items number in thumbnails cache.
+	ThumbCacheMaxNum int `json:"thumb-cache-maxnum" yaml:"thumb-cache-maxnum"`
 }
 
 // Common server settings.
@@ -76,10 +77,11 @@ var cfg = struct {
 		ShowSharesUser: true,
 	},
 	CfgSpec: CfgSpec{
-		WPKmmap:       false,
-		DefAccID:      0,
-		ThumbMaxFile:  4096*3072*4 + 65536,
-		PropCacheSize: 32 * 1024,
+		WPKmmap:          false,
+		DefAccID:         0,
+		ThumbFileMaxSize: 4096*3072*4 + 65536,
+		PropCacheMaxNum:  32 * 1024,
+		ThumbCacheMaxNum: 2 * 1024,
 	},
 	CfgServ: CfgServ{
 		AutoCert:          false,
@@ -101,10 +103,6 @@ var httpsrv, tlssrv []*http.Server
 // Package root dir.
 var datapack *wpk.Package
 var packager wpk.Packager
-
-// Files properties cache.
-// Key - system path, value - file property struct.
-var propcache gcache.Cache
 
 ///////////////////////////////
 // Startup opening functions //
@@ -324,19 +322,8 @@ func Init() {
 		Log.Fatal(err)
 	}
 
-	// init properties cache
-	propcache = gcache.New(cfg.PropCacheSize).
-		LRU().
-		LoaderFunc(func(key interface{}) (ret interface{}, err error) {
-			var syspath = key.(string)
-			var fi os.FileInfo
-			if fi, err = os.Stat(syspath); err != nil {
-				return
-			}
-			ret = MakeProp(syspath, fi)
-			return
-		}).
-		Build()
+	// build caches with given sizes from settings
+	initcaches()
 
 	// load accounts with roots, hidden and shares lists
 	loadaccounts()

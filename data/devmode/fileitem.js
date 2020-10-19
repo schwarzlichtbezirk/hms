@@ -1,7 +1,7 @@
 "use strict";
 
 const filetmb = file => file.ntmb === 1
-	? '/thumb/' + file.ktmb
+	? '/thumb/' + file.hash
 	: '/asst/file-png/' + geticonname(file) + '.png';
 
 const makemarkercontent = file => `
@@ -12,7 +12,7 @@ const makemarkercontent = file => `
 	</ul>
 	<div class="tab-content">
 		<div class="tab-pane active" id="pict">
-			<img class="rounded thumb" src="${'/thumb/' + file.ktmb}" alt="${file.name} ">
+			<img class="rounded thumb" src="${'/thumb/' + file.hash}" alt="${file.name} ">
 			<div class="d-flex flex-wrap latlng">
 				<div><div class="name">lat:</div> <div class="value">${file.latitude.toFixed(6)}</div></div>
 				<div><div class="name">lng:</div> <div class="value">${file.longitude.toFixed(6)}</div></div>
@@ -280,7 +280,7 @@ Vue.component('file-icon-tag', {
 
 		pngicon() {
 			return this.file.ntmb === 1
-				? '/thumb/' + this.file.ktmb
+				? '/thumb/' + this.file.hash
 				: '/asst/file-png/' + geticonname(this.file) + '.png';
 		},
 
@@ -338,7 +338,7 @@ Vue.component('img-icon-tag', {
 
 		pngicon() {
 			return this.file.ntmb === 1
-				? '/thumb/' + this.file.ktmb
+				? '/thumb/' + this.file.hash
 				: '/asst/file-png/' + geticonname(this.file) + '.png';
 		},
 
