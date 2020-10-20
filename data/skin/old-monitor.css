@@ -327,11 +327,11 @@ a, .btn-link {
 
 /* leaflet popup */
 
-.photoinfo img.thumb {
+.photoinfo .thumb {
 	max-width: 256px;
 }
 
-	.photoinfo img.thumb:hover {
+	.photoinfo .thumb:hover {
 		cursor: pointer;
 	}
 

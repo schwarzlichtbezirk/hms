@@ -77,82 +77,83 @@ const (
 	EC_fileabsent = 31
 
 	// file
-	EC_filebadaccid = 32
-	EC_filenoacc    = 33
-	EC_filedeny     = 34
-
-	// reload
-	EC_reloadload = 35
-	EC_reloadtmpl = 36
-
-	// getlog
-	EC_getlogbadnum = 37
-
-	// folder
-	EC_foldernoreq  = 40
-	EC_folderbadreq = 41
-	EC_foldernoacc  = 42
-	EC_folderfail   = 43
-
-	// ispath
-	EC_ispathnoreq  = 50
-	EC_ispathbadreq = 51
-	EC_ispathnoacc  = 52
-	EC_ispathdeny   = 53
+	EC_filebadaccid = 40
+	EC_filenoacc    = 41
+	EC_filedeny     = 42
 
 	// thumb
-	EC_thumbabsent = 60
-	EC_thumbbadcnt = 61
-	EC_thumbnotcnt = 62
+	EC_thumbbadhash = 43
+	EC_thumbabsent  = 44
+	EC_thumbbadcnt  = 45
+	EC_thumbnotcnt  = 46
+
+	// reload
+	EC_reloadload = 50
+	EC_reloadtmpl = 51
+
+	// getlog
+	EC_getlogbadnum = 52
+
+	// folder
+	EC_foldernoreq  = 60
+	EC_folderbadreq = 61
+	EC_foldernoacc  = 62
+	EC_folderfail   = 63
+
+	// ispath
+	EC_ispathnoreq  = 70
+	EC_ispathbadreq = 71
+	EC_ispathnoacc  = 72
+	EC_ispathdeny   = 73
 
 	// tmb/chk
-	EC_tmbchknoreq  = 63
-	EC_tmbchkbadreq = 64
-	EC_tmbchknodata = 65
+	EC_tmbchknoreq  = 80
+	EC_tmbchkbadreq = 81
+	EC_tmbchknodata = 82
 
 	// tmb/scn
-	EC_tmbscnnoreq  = 66
-	EC_tmbscnbadreq = 67
-	EC_tmbscnnodata = 68
-	EC_tmbscnnoacc  = 69
+	EC_tmbscnnoreq  = 83
+	EC_tmbscnbadreq = 84
+	EC_tmbscnnodata = 85
+	EC_tmbscnnoacc  = 86
 
 	// share/lst
-	EC_shrlstnoreq  = 70
-	EC_shrlstbadreq = 71
-	EC_shrlstnoacc  = 72
-	EC_shrlstdeny   = 73
+	EC_shrlstnoreq  = 90
+	EC_shrlstbadreq = 91
+	EC_shrlstnoacc  = 92
+	EC_shrlstdeny   = 93
 
 	// share/add
-	EC_shraddnoreq   = 80
-	EC_shraddbadreq  = 81
-	EC_shraddnodata  = 82
-	EC_shraddnoacc   = 83
-	EC_shradddeny    = 84
-	EC_shraddnopath  = 85
-	EC_shraddbadpath = 86
+	EC_shraddnoreq   = 100
+	EC_shraddbadreq  = 101
+	EC_shraddnodata  = 102
+	EC_shraddnoacc   = 103
+	EC_shradddeny    = 104
+	EC_shraddnopath  = 105
+	EC_shraddbadpath = 106
 
 	// share/del
-	EC_shrdelnoreq  = 90
-	EC_shrdelbadreq = 91
-	EC_shrdelnodata = 92
-	EC_shrdelnoacc  = 93
-	EC_shrdeldeny   = 94
-	EC_shrdelnopath = 95
+	EC_shrdelnoreq  = 110
+	EC_shrdelbadreq = 111
+	EC_shrdelnodata = 112
+	EC_shrdelnoacc  = 113
+	EC_shrdeldeny   = 114
+	EC_shrdelnopath = 115
 
 	// drive/add
-	EC_drvaddnoreq  = 100
-	EC_drvaddbadreq = 101
-	EC_drvaddnodata = 102
-	EC_drvaddnoacc  = 103
-	EC_drvadddeny   = 104
-	EC_drvaddfile   = 105
+	EC_drvaddnoreq  = 120
+	EC_drvaddbadreq = 121
+	EC_drvaddnodata = 122
+	EC_drvaddnoacc  = 123
+	EC_drvadddeny   = 124
+	EC_drvaddfile   = 125
 
 	// drive/del
-	EC_drvdelnoreq  = 110
-	EC_drvdelbadreq = 111
-	EC_drvdelnodata = 112
-	EC_drvdelnoacc  = 113
-	EC_drvdeldeny   = 114
+	EC_drvdelnoreq  = 130
+	EC_drvdelbadreq = 131
+	EC_drvdelnodata = 132
+	EC_drvdelnoacc  = 133
+	EC_drvdeldeny   = 134
 )
 
 //////////////////
@@ -194,10 +195,6 @@ func RegisterRoutes(gmux *Router) {
 	dacc.PathPrefix("/path/").HandlerFunc(pageHandler(devmsuff, "main"))
 	gacc.PathPrefix("/path/").HandlerFunc(pageHandler(relmsuff, "main"))
 
-	// cached thumbs
-
-	gmux.PathPrefix("/thumb/").HandlerFunc(thumbHandler)
-
 	// files sharing
 
 	gmux.PathPrefix("/data/").Handler(http.StripPrefix("/data/", http.FileServer(packager)))
@@ -205,6 +202,10 @@ func RegisterRoutes(gmux *Router) {
 		gmux.PathPrefix(alias).Handler(http.StripPrefix(alias, http.FileServer(packager.SubDir(prefix))))
 	}
 	gacc.PathPrefix("/file/").HandlerFunc(AjaxWrap(fileHandler))
+
+	// cached thumbs
+
+	gmux.PathPrefix("/thumb/").HandlerFunc(thumbHandler)
 
 	// API routes
 

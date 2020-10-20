@@ -18,9 +18,7 @@ Vue.component('thumbslider-tag', {
 	},
 	methods: {
 		getthumb(file) {
-			return file.ntmb === 1
-				? '/thumb/' + file.hash
-				: '/asst/file-png/' + geticonname(file) + '.png';
+			return filetmbpng(file);
 		},
 
 		onprev() {

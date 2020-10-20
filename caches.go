@@ -1,12 +1,15 @@
 package hms
 
 import (
+	"crypto/hmac"
 	"crypto/md5"
 	"encoding/base32"
+	"io/ioutil"
 	"os"
 	"sync"
 
 	"github.com/bluele/gcache"
+	"gopkg.in/yaml.v3"
 )
 
 // gcaches
@@ -48,8 +51,12 @@ func (c *KeyThumbCache) Cache(syspath string) string {
 	if hash, ok := c.Key(syspath); ok {
 		return hash
 	}
-	var h = md5.Sum([]byte(syspath))
+
+	var mac = hmac.New(md5.New, []byte(cfg.PathHashSalt))
+	mac.Write([]byte(syspath))
+	var h = mac.Sum(nil)
 	var hash = keygen.EncodeToString(h[:])
+
 	c.mux.Lock()
 	defer c.mux.Unlock()
 	c.pathkey[syspath] = hash
@@ -112,6 +119,60 @@ func initcaches() {
 			return // ok
 		}).
 		Build()
+}
+
+func loadhashcache(fpath string) {
+	var err error
+
+	var body []byte
+	if body, err = ioutil.ReadFile(fpath); err == nil {
+		if err = yaml.Unmarshal(body, &hashcache.keypath); err != nil {
+			Log.Fatal("can not decode hashes cache: " + err.Error())
+		}
+	} else {
+		Log.Println("can not read hashes cache: " + err.Error())
+	}
+
+	for key, path := range hashcache.keypath {
+		hashcache.pathkey[path] = key
+	}
+}
+
+const utf8bom = "\xef\xbb\xbf"
+
+func savehashcache(fpath string) (err error) {
+	const intro = `
+# Here is rewritable cache with key/path pairs list.
+# It's loads on server start, and saves before exit.
+# Each key is MD5-hash of file system path encoded
+# to base32, values are associated paths. Those keys
+# used for files paths representations in URLs. You
+# can modify keys to any alphanumerical text that
+# should be unique.
+
+`
+
+	var file *os.File
+	if file, err = os.OpenFile(fpath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644); err != nil {
+		return
+	}
+	defer file.Close()
+
+	if _, err = file.WriteString(utf8bom); err != nil {
+		return
+	}
+	if _, err = file.WriteString(intro); err != nil {
+		return
+	}
+
+	var body []byte
+	if body, err = yaml.Marshal(hashcache.keypath); err != nil {
+		return
+	}
+	if _, err = file.Write(body); err != nil {
+		return
+	}
+	return
 }
 
 // The End.

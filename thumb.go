@@ -42,6 +42,7 @@ var thumbpngenc = png.Encoder{
 
 // HTTP error messages
 var (
+	ErrBadHash  = errors.New("hash is corrupted")
 	ErrNoHash   = errors.New("file with given hash not found")
 	ErrBadThumb = errors.New("thumbnail cache is corrupted")
 	ErrNotThumb = errors.New("thumbnail content can not be created")
@@ -176,8 +177,11 @@ func MakeTmb(syspath string) (tmb *ThumbElem, err error) {
 func thumbHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
 
+	if len(r.URL.Path) < 7+26 {
+		WriteError400(w, ErrBadHash, EC_thumbbadhash)
+		return
+	}
 	var hash = r.URL.Path[7 : 7+26] // skip prefix "/thumb/" and cut 26-bytes hash
-	Log.Println(r.URL.Path, hash)
 	var val interface{}
 	if val, err = thumbcache.Get(hash); err != nil {
 		WriteError(w, http.StatusNotFound, err, EC_thumbabsent)

@@ -576,7 +576,7 @@ Vue.component('map-card-tag', {
 				};
 				if (this.markermode === 'thumb' && file.hash) {
 					opt.icon = L.divIcon({
-						html: `<img src="${filetmb(file)}">`,
+						html: `<img src="${filetmbpng(file)}">`,
 						className: "photomarker",
 						iconSize: [size, size],
 						iconAnchor: [size / 2, size / 2],
@@ -587,7 +587,7 @@ Vue.component('map-card-tag', {
 				const template = document.createElement('template');
 				template.innerHTML = makemarkercontent(file).trim();
 				const popup = template.content.firstChild;
-				popup.querySelector(".photoinfo img.thumb").addEventListener('click', () => {
+				popup.querySelector(".photoinfo picture").addEventListener('click', () => {
 					this.$refs.slider.popup(file);
 				});
 

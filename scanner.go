@@ -203,7 +203,7 @@ type Proper interface {
 	Size() int64  // size in bytes
 	Time() int64  // UNIX time in milliseconds
 	Type() int    // type identifier
-	Hash() string // thumbnail identifier (MD5-hash of full file path)
+	Hash() string // MD5-hash of full file path encoded to hex-base32
 	NTmb() int    // -1 - can not make thumbnail; 0 - not cached; 1 - cached
 	SetNTmb(int)
 	Clone() Proper

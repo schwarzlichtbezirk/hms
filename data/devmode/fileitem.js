@@ -1,6 +1,9 @@
 "use strict";
 
-const filetmb = file => file.ntmb === 1
+const filetmbwebp = file => file.ntmb === 1
+	? ''
+	: '/asst/file-webp/' + geticonname(file) + '.webp';
+const filetmbpng = file => file.ntmb === 1
 	? '/thumb/' + file.hash
 	: '/asst/file-png/' + geticonname(file) + '.png';
 
@@ -12,7 +15,11 @@ const makemarkercontent = file => `
 	</ul>
 	<div class="tab-content">
 		<div class="tab-pane active" id="pict">
-			<img class="rounded thumb" src="${'/thumb/' + file.hash}" alt="${file.name} ">
+			<picture>
+				<source srcset="${filetmbwebp(file)}" class="rounded thumb" type="image/webp">
+				<source srcset="${filetmbpng(file)}" class="rounded thumb" type="image/png">
+				<img src="/asst/file-png/doc-file.png" class="rounded thumb" alt="${file.name}">
+			</picture>
 			<div class="d-flex flex-wrap latlng">
 				<div><div class="name">lat:</div> <div class="value">${file.latitude.toFixed(6)}</div></div>
 				<div><div class="name">lng:</div> <div class="value">${file.longitude.toFixed(6)}</div></div>
@@ -273,15 +280,10 @@ Vue.component('file-icon-tag', {
 		},
 
 		webpicon() {
-			return this.file.ntmb === 1
-				? ''
-				: '/asst/file-webp/' + geticonname(this.file) + '.webp';
+			return filetmbwebp(this.file);
 		},
-
 		pngicon() {
-			return this.file.ntmb === 1
-				? '/thumb/' + this.file.hash
-				: '/asst/file-png/' + geticonname(this.file) + '.png';
+			return filetmbpng(this.file);
 		},
 
 		clsoverlay() {
@@ -331,15 +333,10 @@ Vue.component('img-icon-tag', {
 		},
 
 		webpicon() {
-			return this.file.ntmb === 1
-				? ''
-				: '/asst/file-webp/' + geticonname(this.file) + '.webp';
+			return filetmbwebp(this.file);
 		},
-
 		pngicon() {
-			return this.file.ntmb === 1
-				? '/thumb/' + this.file.hash
-				: '/asst/file-png/' + geticonname(this.file) + '.png';
+			return filetmbpng(this.file);
 		},
 
 		// manage items classes

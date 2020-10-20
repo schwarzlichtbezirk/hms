@@ -1,4 +1,4 @@
-authentication:
+﻿authentication:
     # Access token time to live, in seconds.
     access-ttl: 86400 # 1*24*60*60 = 1 day
     # Refresh token time to live, in seconds.
@@ -9,18 +9,6 @@ authentication:
     refresh-key: zxK4dUnuq3Lhd1Gzhpr3usI5lAzgvy2t3fmxld2spzz7a5nfv0hsksm9cheyutie
     # Can list of all shares be visible for unauthorized user for root path.
     show-shares-user: false
-specification:
-    # On 'true' use memory mapping technology for access to wpk-package nested files.
-    # On 'false' use wpk-package loaded into one solid byte slice.
-    wpk-mmap: false
-    # Default account ID for user on localhost.
-    default-account-id: 0
-    # Maximum size of image to make thumbnail.
-    thumb-file-maxsize: 50397184 # 4096*3072*4 + 65536, 48M, max 4K image + 64K exif metadata
-    # Maximum items number in files properties cache.
-    prop-cache-maxnum: 32768
-    # Maximum items number in thumbnails cache.
-    thumb-cache-maxnum: 2048
 webserver: # See https://golang.org/pkg/net/http/#Server for details.
     # Indicates to get TLS-certificate from letsencrypt.org service
     # if this value is true. Uses local TLS-certificate otherwise.
@@ -46,3 +34,17 @@ webserver: # See https://golang.org/pkg/net/http/#Server for details.
     # Controls the maximum number of bytes the server will read parsing
     # the request header's keys and values, including the request line, in bytes.
     max-header-bytes: 1048576 # 1M
+specification:
+    # On 'true' use memory mapping technology for access to wpk-package nested files.
+    # On 'false' use wpk-package loaded into one solid byte slice.
+    wpk-mmap: false
+    # Default account ID for user on localhost.
+    default-account-id: 0
+    # Maximum size of image to make thumbnail.
+    thumb-file-maxsize: 50397184 # 4096*3072*4 + 65536, 48M, max 4K image + 64K exif metadata
+    # Private key for MAC based on MD5 to generate system files paths hashes.
+    path-hash-salt: 'server-dependent-salt'
+    # Maximum items number in files properties cache.
+    prop-cache-maxnum: 32768
+    # Maximum items number in thumbnails cache.
+    thumb-cache-maxnum: 2048

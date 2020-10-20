@@ -57,6 +57,8 @@ type CfgSpec struct {
 	DefAccID int `json:"default-account-id" yaml:"default-account-id"`
 	// Maximum size of image to make thumbnail.
 	ThumbFileMaxSize int64 `json:"thumb-file-maxsize" yaml:"thumb-file-maxsize"`
+	// Private key for MAC based on MD5 to generate system files paths hashes.
+	PathHashSalt string `json:"path-hash-salt" yaml:"path-hash-salt"`
 	// Maximum items number in files properties cache.
 	PropCacheMaxNum int `json:"prop-cache-maxnum" yaml:"prop-cache-maxnum"`
 	// Maximum items number in thumbnails cache.
@@ -66,8 +68,8 @@ type CfgSpec struct {
 // Common server settings.
 var cfg = struct {
 	CfgAuth `json:"authentication" yaml:"authentication"`
-	CfgSpec `json:"specification" yaml:"specification"`
 	CfgServ `json:"webserver" yaml:"webserver"`
+	CfgSpec `json:"specification" yaml:"specification"`
 }{ // inits default values:
 	CfgAuth: CfgAuth{
 		AccessTTL:      1 * 24 * 60 * 60,
@@ -75,13 +77,6 @@ var cfg = struct {
 		AccessKey:      "skJgM4NsbP3fs4k7vh0gfdkgGl8dJTszdLxZ1sQ9ksFnxbgvw2RsGH8xxddUV479",
 		RefreshKey:     "zxK4dUnuq3Lhd1Gzhpr3usI5lAzgvy2t3fmxld2spzz7a5nfv0hsksm9cheyutie",
 		ShowSharesUser: true,
-	},
-	CfgSpec: CfgSpec{
-		WPKmmap:          false,
-		DefAccID:         0,
-		ThumbFileMaxSize: 4096*3072*4 + 65536,
-		PropCacheMaxNum:  32 * 1024,
-		ThumbCacheMaxNum: 2 * 1024,
 	},
 	CfgServ: CfgServ{
 		AutoCert:          false,
@@ -92,6 +87,13 @@ var cfg = struct {
 		WriteTimeout:      15,
 		IdleTimeout:       60,
 		MaxHeaderBytes:    1 << 20,
+	},
+	CfgSpec: CfgSpec{
+		WPKmmap:          false,
+		DefAccID:         0,
+		ThumbFileMaxSize: 4096*3072*4 + 65536,
+		PropCacheMaxNum:  32 * 1024,
+		ThumbCacheMaxNum: 2 * 1024,
 	},
 }
 
@@ -108,10 +110,10 @@ var packager wpk.Packager
 // Startup opening functions //
 ///////////////////////////////
 
-func opensettings() {
+func loadsettings(fpath string) {
 	var err error
 	var body []byte
-	if body, err = ioutil.ReadFile(confpath + "settings.yaml"); err == nil {
+	if body, err = ioutil.ReadFile(fpath); err == nil {
 		if err = yaml.Unmarshal(body, &cfg); err != nil {
 			Log.Fatal("can not decode settings: " + err.Error())
 		}
@@ -120,25 +122,31 @@ func opensettings() {
 	}
 }
 
-func savesettings() {
-	var err error
+func savesettings(fpath string) (err error) {
+	var file *os.File
+	if file, err = os.OpenFile(fpath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644); err != nil {
+		return
+	}
+	defer file.Close()
+
+	if _, err = file.WriteString(utf8bom); err != nil {
+		return
+	}
 
 	var body []byte
 	if body, err = yaml.Marshal(&cfg); err != nil {
-		Log.Println("can not encode settings: " + err.Error())
 		return
 	}
-
-	if err = ioutil.WriteFile(confpath+"settings.yaml", body, 0644); err != nil {
-		Log.Println("can not write settings file: " + err.Error())
+	if _, err = file.Write(body); err != nil {
 		return
 	}
+	return
 }
 
-func loadaccounts() {
+func loadaccounts(fpath string) {
 	var err error
 	var body []byte
-	if body, err = ioutil.ReadFile(confpath + "accounts.yaml"); err == nil {
+	if body, err = ioutil.ReadFile(fpath); err == nil {
 		if err = yaml.Unmarshal(body, &AccList.list); err != nil {
 			Log.Fatal("can not decode accounts array: " + err.Error())
 		}
@@ -180,19 +188,25 @@ func loadaccounts() {
 	}
 }
 
-func saveaccounts() {
-	var err error
+func saveaccounts(fpath string) (err error) {
+	var file *os.File
+	if file, err = os.OpenFile(fpath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644); err != nil {
+		return
+	}
+	defer file.Close()
+
+	if _, err = file.WriteString(utf8bom); err != nil {
+		return
+	}
 
 	var body []byte
 	if body, err = yaml.Marshal(AccList.list); err != nil {
-		Log.Println("can not encode accounts list: " + err.Error())
 		return
 	}
-
-	if err = ioutil.WriteFile(confpath+"accounts.yaml", body, 0644); err != nil {
-		Log.Println("can not write accounts list file: " + err.Error())
+	if _, err = file.Write(body); err != nil {
 		return
 	}
+	return
 }
 
 var dict = func(values ...interface{}) (map[string]interface{}, error) {
@@ -219,7 +233,7 @@ func loadtemplates() (err error) {
 			if bcnt, err = packager.Extract(key); err != nil {
 				return
 			}
-			var content = strings.TrimPrefix(string(bcnt), "\xef\xbb\xbf") // remove UTF-8 format BOM header
+			var content = strings.TrimPrefix(string(bcnt), utf8bom) // remove UTF-8 format BOM header
 			if _, err = tb.New(key).Parse(content); err != nil {
 				return
 			}
@@ -300,7 +314,7 @@ func Init() {
 	confpath = path
 
 	// load settings files
-	opensettings()
+	loadsettings(confpath + "settings.yaml")
 
 	// load package with data files
 	if cfg.AutoCert {
@@ -324,9 +338,10 @@ func Init() {
 
 	// build caches with given sizes from settings
 	initcaches()
+	loadhashcache(confpath + "cache.yaml")
 
 	// load accounts with roots, hidden and shares lists
-	loadaccounts()
+	loadaccounts(confpath + "accounts.yaml")
 
 	// run meters updater
 	meterscanner = time.AfterFunc(time.Second, meterupdater)
@@ -457,7 +472,17 @@ func Done() {
 	srvwg.Add(1)
 	go func() {
 		defer srvwg.Done()
-		saveaccounts()
+		if err := saveaccounts(confpath + "accounts.yaml"); err != nil {
+			Log.Println("error on accounts list file: " + err.Error())
+		}
+	}()
+
+	srvwg.Add(1)
+	go func() {
+		defer srvwg.Done()
+		if err := savehashcache(confpath + "cache.yaml"); err != nil {
+			Log.Println("error on hashes cache file: " + err.Error())
+		}
 	}()
 
 	packager.Close()

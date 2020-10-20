@@ -69,7 +69,17 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var syspath, shared = acc.CheckSharePath(strings.Join(chunks[3:], "/"))
+	var spath string
+	if hpath, ok := hashcache.Path(chunks[3]); ok {
+		if len(chunks) > 3 {
+			spath = filepath.Join(hpath, strings.Join(chunks[4:], "/"))
+		} else {
+			spath = hpath
+		}
+	} else {
+		spath = strings.Join(chunks[3:], "/")
+	}
+	var syspath, shared = acc.CheckSharePath(spath)
 	if !shared {
 		var auth *Account
 		if auth, err = CheckAuth(r); err != nil {
