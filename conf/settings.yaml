@@ -1,4 +1,9 @@
-﻿authentication:
+﻿
+# Server configuration file. First of all you can change
+# "access-key" and "refresh-key" for tokens defence, and
+# "path-hash-salt" to prevent decode file paths hashes.
+
+authentication:
     # Access token time to live, in seconds.
     access-ttl: 86400 # 1*24*60*60 = 1 day
     # Refresh token time to live, in seconds.
@@ -43,7 +48,7 @@ specification:
     # Maximum size of image to make thumbnail.
     thumb-file-maxsize: 50397184 # 4096*3072*4 + 65536, 48M, max 4K image + 64K exif metadata
     # Private key for MAC based on MD5 to generate system files paths hashes.
-    path-hash-salt: 'server-dependent-salt'
+    path-hash-salt: 4AS4MD2SD9GMRRBN1QKAA5R1TC
     # Maximum items number in files properties cache.
     prop-cache-maxnum: 32768
     # Maximum items number in thumbnails cache.

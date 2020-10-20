@@ -1,4 +1,10 @@
-﻿- id: 0
+﻿
+# List of administrators accounts. Each account should be
+# with unique password, and allows to configure access to
+# specified root drives, shares, and to hide files on
+# specified masks.
+
+- id: 0
   login: admin
   password: dag qus fly in the sky
   roots:

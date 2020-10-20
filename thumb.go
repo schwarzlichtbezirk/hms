@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/disintegration/gift"
 	_ "github.com/oov/psd"
@@ -28,12 +29,12 @@ const (
 	TMB_cached = 1
 )
 
-const thumbside = 256
+// Allow images a bit larger than standard icon stay as is.
+var thumbmaxrect = image.Rect(0, 0, 320, 320)
 
-var thumbrect = image.Rect(0, 0, thumbside, thumbside)
-
+// Resize big images to fit into standard icon size.
 var thumbfilter = gift.New(
-	gift.ResizeToFit(thumbside, thumbside, gift.LinearResampling),
+	gift.ResizeToFit(256, 256, gift.LinearResampling),
 )
 
 var thumbpngenc = png.Encoder{
@@ -42,7 +43,6 @@ var thumbpngenc = png.Encoder{
 
 // HTTP error messages
 var (
-	ErrBadHash  = errors.New("hash is corrupted")
 	ErrNoHash   = errors.New("file with given hash not found")
 	ErrBadThumb = errors.New("thumbnail cache is corrupted")
 	ErrNotThumb = errors.New("thumbnail content can not be created")
@@ -135,7 +135,7 @@ func MakeTmb(syspath string) (tmb *ThumbElem, err error) {
 	if src, ftype, err = image.Decode(file); err != nil {
 		return // can not decode file by any codec
 	}
-	if src.Bounds().In(thumbrect) {
+	if src.Bounds().In(thumbmaxrect) {
 		dst = src
 	} else {
 		var img = image.NewRGBA(thumbfilter.Bounds(src.Bounds()))
@@ -177,11 +177,12 @@ func MakeTmb(syspath string) (tmb *ThumbElem, err error) {
 func thumbHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
 
-	if len(r.URL.Path) < 7+26 {
-		WriteError400(w, ErrBadHash, EC_thumbbadhash)
-		return
+	var chunks = strings.Split(r.URL.Path, "/")
+	if len(chunks) < 3 {
+		panic("bad route for URL " + r.URL.Path)
 	}
-	var hash = r.URL.Path[7 : 7+26] // skip prefix "/thumb/" and cut 26-bytes hash
+
+	var hash = chunks[2]
 	var val interface{}
 	if val, err = thumbcache.Get(hash); err != nil {
 		WriteError(w, http.StatusNotFound, err, EC_thumbabsent)
@@ -257,7 +258,7 @@ func tmbscnApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var acc *Account
-	if acc = AccList.ByID(int(arg.AID)); acc == nil {
+	if acc = acclist.ByID(int(arg.AID)); acc == nil {
 		WriteError400(w, ErrNoAcc, EC_tmbscnnoacc)
 		return
 	}

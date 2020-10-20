@@ -82,10 +82,9 @@ const (
 	EC_filedeny     = 42
 
 	// thumb
-	EC_thumbbadhash = 43
-	EC_thumbabsent  = 44
-	EC_thumbbadcnt  = 45
-	EC_thumbnotcnt  = 46
+	EC_thumbabsent = 43
+	EC_thumbbadcnt = 44
+	EC_thumbnotcnt = 45
 
 	// reload
 	EC_reloadload = 50

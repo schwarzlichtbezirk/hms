@@ -131,7 +131,7 @@ func CheckAuth(r *http.Request) (auth *Account, aerr error) {
 		} else if err != nil {
 			aerr = &ErrAjax{err, EC_tokenbad}
 			return
-		} else if auth = AccList.ByID(claims.AID); auth == nil {
+		} else if auth = acclist.ByID(claims.AID); auth == nil {
 			aerr = &ErrAjax{ErrNoAcc, EC_tokennoacc}
 			return
 		}
@@ -139,7 +139,7 @@ func CheckAuth(r *http.Request) (auth *Account, aerr error) {
 		aerr = &ErrAjax{ErrNoAuth, EC_noauth}
 		return
 	} else {
-		auth = AccList.ByID(cfg.DefAccID)
+		auth = acclist.ByID(cfg.DefAccID)
 	}
 	return
 }
@@ -198,7 +198,7 @@ func signinApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var acc *Account
-	if acc = AccList.ByLogin(arg.Name); acc == nil {
+	if acc = acclist.ByLogin(arg.Name); acc == nil {
 		WriteError(w, http.StatusForbidden, ErrNoAcc, EC_signinnoacc)
 		return
 	}

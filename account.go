@@ -110,7 +110,7 @@ func (al *Accounts) Delete(aid int) bool {
 }
 
 // Accounts list.
-var AccList Accounts
+var acclist Accounts
 
 // Set hidden files array to default predefined list.
 func (acc *Account) SetDefaultHidden() {

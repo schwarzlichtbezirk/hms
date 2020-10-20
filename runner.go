@@ -6,7 +6,6 @@ import (
 	"crypto/tls"
 	"errors"
 	"html/template"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"os/signal"
@@ -19,7 +18,6 @@ import (
 	"github.com/schwarzlichtbezirk/wpk/bulk"
 	"github.com/schwarzlichtbezirk/wpk/mmap"
 	"golang.org/x/crypto/acme/autocert"
-	"gopkg.in/yaml.v3"
 )
 
 const (
@@ -66,11 +64,14 @@ type CfgSpec struct {
 }
 
 // Common server settings.
-var cfg = struct {
+type Config struct {
 	CfgAuth `json:"authentication" yaml:"authentication"`
 	CfgServ `json:"webserver" yaml:"webserver"`
 	CfgSpec `json:"specification" yaml:"specification"`
-}{ // inits default values:
+}
+
+// Instance of common server settings.
+var cfg = Config{ // inits default values:
 	CfgAuth: CfgAuth{
 		AccessTTL:      1 * 24 * 60 * 60,
 		RefreshTTL:     3 * 24 * 60 * 60,
@@ -109,105 +110,6 @@ var packager wpk.Packager
 ///////////////////////////////
 // Startup opening functions //
 ///////////////////////////////
-
-func loadsettings(fpath string) {
-	var err error
-	var body []byte
-	if body, err = ioutil.ReadFile(fpath); err == nil {
-		if err = yaml.Unmarshal(body, &cfg); err != nil {
-			Log.Fatal("can not decode settings: " + err.Error())
-		}
-	} else {
-		Log.Println("can not read settings: " + err.Error())
-	}
-}
-
-func savesettings(fpath string) (err error) {
-	var file *os.File
-	if file, err = os.OpenFile(fpath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644); err != nil {
-		return
-	}
-	defer file.Close()
-
-	if _, err = file.WriteString(utf8bom); err != nil {
-		return
-	}
-
-	var body []byte
-	if body, err = yaml.Marshal(&cfg); err != nil {
-		return
-	}
-	if _, err = file.Write(body); err != nil {
-		return
-	}
-	return
-}
-
-func loadaccounts(fpath string) {
-	var err error
-	var body []byte
-	if body, err = ioutil.ReadFile(fpath); err == nil {
-		if err = yaml.Unmarshal(body, &AccList.list); err != nil {
-			Log.Fatal("can not decode accounts array: " + err.Error())
-		}
-	} else {
-		Log.Println("can not read accounts: " + err.Error())
-	}
-
-	if len(AccList.list) > 0 {
-		for _, acc := range AccList.list {
-			Log.Printf("loaded account id%d, login='%s'", acc.ID, acc.Login)
-			// bring all roots to valid slashes
-			for i, path := range acc.Roots {
-				acc.Roots[i] = filepath.ToSlash(path)
-			}
-
-			// bring all hissen to lowercase
-			for i, path := range acc.Hidden {
-				acc.Hidden[i] = strings.ToLower(filepath.ToSlash(path))
-			}
-
-			// build shares tables
-			acc.UpdateShares()
-		}
-
-		// check up default account
-		if acc := AccList.ByID(cfg.DefAccID); acc != nil {
-			if len(acc.Roots) == 0 {
-				acc.FindRoots()
-			}
-		} else {
-			Log.Fatal("default account is not found")
-		}
-	} else {
-		var acc = AccList.NewAccount("admin", "dag qus fly in the sky")
-		acc.ID = cfg.DefAccID
-		Log.Printf("created account id%d, login='%s'", acc.ID, acc.Login)
-		acc.SetDefaultHidden()
-		acc.FindRoots()
-	}
-}
-
-func saveaccounts(fpath string) (err error) {
-	var file *os.File
-	if file, err = os.OpenFile(fpath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644); err != nil {
-		return
-	}
-	defer file.Close()
-
-	if _, err = file.WriteString(utf8bom); err != nil {
-		return
-	}
-
-	var body []byte
-	if body, err = yaml.Marshal(AccList.list); err != nil {
-		return
-	}
-	if _, err = file.Write(body); err != nil {
-		return
-	}
-	return
-}
 
 var dict = func(values ...interface{}) (map[string]interface{}, error) {
 	if len(values)%2 != 0 {
@@ -314,7 +216,9 @@ func Init() {
 	confpath = path
 
 	// load settings files
-	loadsettings(confpath + "settings.yaml")
+	if err = cfg.Load(confpath + "settings.yaml"); err != nil {
+		Log.Println("error on settings file: " + err.Error())
+	}
 
 	// load package with data files
 	if cfg.AutoCert {
@@ -338,10 +242,14 @@ func Init() {
 
 	// build caches with given sizes from settings
 	initcaches()
-	loadhashcache(confpath + "cache.yaml")
+	if err = hashcache.Load(confpath + "cache.yaml"); err != nil {
+		Log.Println("error on hashes cache file: " + err.Error())
+	}
 
 	// load accounts with roots, hidden and shares lists
-	loadaccounts(confpath + "accounts.yaml")
+	if err = acclist.Load(confpath + "accounts.yaml"); err != nil {
+		Log.Fatal("error on accounts file: " + err.Error())
+	}
 
 	// run meters updater
 	meterscanner = time.AfterFunc(time.Second, meterupdater)
@@ -472,7 +380,7 @@ func Done() {
 	srvwg.Add(1)
 	go func() {
 		defer srvwg.Done()
-		if err := saveaccounts(confpath + "accounts.yaml"); err != nil {
+		if err := acclist.Save(confpath + "accounts.yaml"); err != nil {
 			Log.Println("error on accounts list file: " + err.Error())
 		}
 	}()
@@ -480,7 +388,7 @@ func Done() {
 	srvwg.Add(1)
 	go func() {
 		defer srvwg.Done()
-		if err := savehashcache(confpath + "cache.yaml"); err != nil {
+		if err := hashcache.Save(confpath + "cache.yaml"); err != nil {
 			Log.Println("error on hashes cache file: " + err.Error())
 		}
 	}()

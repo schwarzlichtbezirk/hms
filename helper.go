@@ -1,7 +1,6 @@
 package hms
 
 import (
-	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
 	"math/rand"
@@ -39,13 +38,6 @@ var (
 	ldint      = atomic.LoadInt64
 	lduint     = atomic.LoadUint64
 )
-
-func makehash(data []byte, password []byte) []byte {
-	var h = sha256.New()
-	h.Write(password)
-	h.Write(data)
-	return h.Sum(nil)
-}
 
 func UnixJS(u time.Time) int64 {
 	return u.UnixNano() / 1000000

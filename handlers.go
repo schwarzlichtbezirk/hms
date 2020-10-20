@@ -64,7 +64,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var acc *Account
-	if acc = AccList.ByID(int(aid)); acc == nil {
+	if acc = acclist.ByID(int(aid)); acc == nil {
 		WriteError400(w, ErrNoAcc, EC_filenoacc)
 		return
 	}
@@ -111,11 +111,11 @@ func purgeApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 	propcache.Purge()
 	thumbcache.Purge()
 
-	AccList.mux.RLock()
-	for _, acc := range AccList.list {
+	acclist.mux.RLock()
+	for _, acc := range acclist.list {
 		acc.UpdateShares()
 	}
-	AccList.mux.RUnlock()
+	acclist.mux.RUnlock()
 
 	WriteOK(w, nil)
 }
@@ -223,7 +223,7 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var acc *Account
-	if acc = AccList.ByID(int(arg.AID)); acc == nil {
+	if acc = acclist.ByID(int(arg.AID)); acc == nil {
 		WriteError400(w, ErrNoAcc, EC_foldernoacc)
 		return
 	}
@@ -287,7 +287,7 @@ func ispathApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 	}
 
 	var acc *Account
-	if acc = AccList.ByID(int(arg.AID)); acc == nil {
+	if acc = acclist.ByID(int(arg.AID)); acc == nil {
 		WriteError400(w, ErrNoAcc, EC_ispathnoacc)
 		return
 	}
@@ -324,7 +324,7 @@ func shrlstApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var acc *Account
-	if acc = AccList.ByID(int(arg.AID)); acc == nil {
+	if acc = acclist.ByID(int(arg.AID)); acc == nil {
 		WriteError400(w, ErrNoAcc, EC_shrlstnoacc)
 		return
 	}
@@ -378,7 +378,7 @@ func shraddApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 	}
 
 	var acc *Account
-	if acc = AccList.ByID(int(arg.AID)); acc == nil {
+	if acc = acclist.ByID(int(arg.AID)); acc == nil {
 		WriteError400(w, ErrNoAcc, EC_shraddnoacc)
 		return
 	}
@@ -442,7 +442,7 @@ func shrdelApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 	}
 
 	var acc *Account
-	if acc = AccList.ByID(int(arg.AID)); acc == nil {
+	if acc = acclist.ByID(int(arg.AID)); acc == nil {
 		WriteError400(w, ErrNoAcc, EC_shrdelnoacc)
 		return
 	}
@@ -502,7 +502,7 @@ func drvaddApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 	}
 
 	var acc *Account
-	if acc = AccList.ByID(int(arg.AID)); acc == nil {
+	if acc = acclist.ByID(int(arg.AID)); acc == nil {
 		WriteError400(w, ErrNoAcc, EC_drvaddnoacc)
 		return
 	}
@@ -556,7 +556,7 @@ func drvdelApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 	}
 
 	var acc *Account
-	if acc = AccList.ByID(int(arg.AID)); acc == nil {
+	if acc = acclist.ByID(int(arg.AID)); acc == nil {
 		WriteError400(w, ErrNoAcc, EC_drvdelnoacc)
 		return
 	}
