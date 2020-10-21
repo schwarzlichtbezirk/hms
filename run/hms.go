@@ -5,7 +5,7 @@ import (
 )
 
 const buildvers = "0.5.4"
-const builddate = "2020.10.16"
+const builddate = "2020.10.21"
 
 func main() {
 	Log.Printf("version: %s, builton: %s", buildvers, builddate)

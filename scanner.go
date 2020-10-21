@@ -1,6 +1,7 @@
 package hms
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"strings"
@@ -399,22 +400,35 @@ func (tk *TagKit) Clone() Proper {
 func (tk *TagKit) Setup(syspath string, fi os.FileInfo) {
 	tk.StdProp.Setup(fi)
 
+	var tmb *ThumbElem
 	if file, err := os.Open(syspath); err == nil {
 		defer file.Close()
 		if m, err := tag.ReadFrom(file); err == nil {
 			tk.TagProp.Setup(m)
 			if pic := m.Picture(); pic != nil {
-				tk.HashVal = hashcache.Cache(syspath)
-				tk.NTmbVal = TMB_cached
-				thumbcache.Set(tk.HashVal, &ThumbElem{
-					Data: pic.Data,
-					Mime: pic.MIMEType,
-				})
-				return
+				if cfg.FitEmbeddedTmb {
+					if tmb, err = MakeTmb(bytes.NewReader(pic.Data)); err != nil {
+						tmb = &ThumbElem{
+							Data: pic.Data,
+							Mime: pic.MIMEType,
+						}
+					}
+				} else {
+					tmb = &ThumbElem{
+						Data: pic.Data,
+						Mime: pic.MIMEType,
+					}
+				}
 			}
 		}
 	}
-	tk.TmbProp.Setup(syspath)
+	tk.HashVal = hashcache.Cache(syspath)
+	if tmb != nil {
+		tk.NTmbVal = TMB_cached
+		thumbcache.Set(tk.HashVal, tmb)
+	} else {
+		tk.NTmbVal = TMB_reject
+	}
 }
 
 func GetTagTmb(syspath string) (tmb *ThumbElem, err error) {
@@ -427,11 +441,19 @@ func GetTagTmb(syspath string) (tmb *ThumbElem, err error) {
 	var m tag.Metadata
 	if m, err = tag.ReadFrom(file); err == nil {
 		if pic := m.Picture(); pic != nil {
-			tmb = &ThumbElem{
-				Data: pic.Data,
-				Mime: pic.MIMEType,
+			if cfg.FitEmbeddedTmb {
+				if tmb, err = MakeTmb(bytes.NewReader(pic.Data)); err != nil {
+					tmb = &ThumbElem{
+						Data: pic.Data,
+						Mime: pic.MIMEType,
+					}
+				}
+			} else {
+				tmb = &ThumbElem{
+					Data: pic.Data,
+					Mime: pic.MIMEType,
+				}
 			}
-			return
 		} else {
 			err = ErrNotThumb
 		}

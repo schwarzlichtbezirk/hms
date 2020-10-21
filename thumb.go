@@ -8,6 +8,7 @@ import (
 	"image/gif"
 	"image/jpeg"
 	"image/png"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -119,20 +120,22 @@ func FindTmb(prop Proper, syspath string) (tmb *ThumbElem, err error) {
 		return // file is not image
 	}
 
-	return MakeTmb(syspath)
-}
-
-func MakeTmb(syspath string) (tmb *ThumbElem, err error) {
 	var file *os.File
 	if file, err = os.Open(syspath); err != nil {
 		return // can not open file
 	}
 	defer file.Close()
 
+	return MakeTmb(file)
+}
+
+func MakeTmb(r io.Reader) (tmb *ThumbElem, err error) {
 	var ftype string
 	var src, dst image.Image
-	if src, ftype, err = image.Decode(file); err != nil {
-		return // can not decode file by any codec
+	if src, ftype, err = image.Decode(r); err != nil {
+		if src == nil { // skip "short Huffman data" or others errors with partial results
+			return // can not decode file by any codec
+		}
 	}
 	if src.Bounds().In(thumbmaxrect) {
 		dst = src

@@ -55,6 +55,8 @@ type CfgSpec struct {
 	DefAccID int `json:"default-account-id" yaml:"default-account-id"`
 	// Maximum size of image to make thumbnail.
 	ThumbFileMaxSize int64 `json:"thumb-file-maxsize" yaml:"thumb-file-maxsize"`
+	// Stretch big image embedded into mp3-file to fit into standard icon size.
+	FitEmbeddedTmb bool `json:"fit-embedded-tmb" yaml:"fit-embedded-tmb"`
 	// Private key for MAC based on MD5 to generate system files paths hashes.
 	PathHashSalt string `json:"path-hash-salt" yaml:"path-hash-salt"`
 	// Maximum items number in files properties cache.

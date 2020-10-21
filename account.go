@@ -24,11 +24,11 @@ var DefHidden = []string{
 	"*/thumbs.db",
 }
 
-// File path access
+// File path access.
 const (
-	FPA_none  = 0
-	FPA_admin = 1
-	FPA_share = 2
+	FPA_none  = 0 // account have no any access to specified file path
+	FPA_admin = 1 // only authorized access to specified file path
+	FPA_share = 2 // access to specified file path is shared
 )
 
 // Share description for json-file.
