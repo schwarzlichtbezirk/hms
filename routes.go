@@ -82,28 +82,32 @@ const (
 	EC_filedeny     = 42
 
 	// thumb
-	EC_thumbabsent = 43
-	EC_thumbbadcnt = 44
-	EC_thumbnotcnt = 45
+	EC_thumbbadaccid = 50
+	EC_thumbnoacc    = 51
+	EC_thumbnopath   = 52
+	EC_thumbndeny    = 53
+	EC_thumbabsent   = 54
+	EC_thumbbadcnt   = 55
+	EC_thumbnotcnt   = 56
 
 	// reload
-	EC_reloadload = 50
-	EC_reloadtmpl = 51
+	EC_reloadload = 60
+	EC_reloadtmpl = 61
 
 	// getlog
-	EC_getlogbadnum = 52
+	EC_getlogbadnum = 62
 
 	// folder
-	EC_foldernoreq  = 60
-	EC_folderbadreq = 61
-	EC_foldernoacc  = 62
-	EC_folderfail   = 63
+	EC_foldernoreq  = 70
+	EC_folderbadreq = 71
+	EC_foldernoacc  = 72
+	EC_folderfail   = 73
 
 	// ispath
-	EC_ispathnoreq  = 70
-	EC_ispathbadreq = 71
-	EC_ispathnoacc  = 72
-	EC_ispathdeny   = 73
+	EC_ispathnoreq  = 74
+	EC_ispathbadreq = 75
+	EC_ispathnoacc  = 76
+	EC_ispathdeny   = 77
 
 	// tmb/chk
 	EC_tmbchknoreq  = 80
@@ -178,9 +182,7 @@ var routealias = map[string]string{
 
 // Puts application routes to given router.
 func RegisterRoutes(gmux *Router) {
-
-	// UI routes
-
+	// main page
 	var devm = gmux.PathPrefix("/dev").Subrouter()
 	devm.Path("/").HandlerFunc(pageHandler(devmsuff, "main"))
 	gmux.Path("/").HandlerFunc(pageHandler(relmsuff, "main"))
@@ -189,25 +191,25 @@ func RegisterRoutes(gmux *Router) {
 		gmux.Path("/" + name).HandlerFunc(pageHandler(relmsuff, name)) // release mode
 	}
 
+	// UI routes
 	var dacc = devm.PathPrefix("/id{id}/").Subrouter()
 	var gacc = gmux.PathPrefix("/id{id}/").Subrouter()
 	dacc.PathPrefix("/path/").HandlerFunc(pageHandler(devmsuff, "main"))
 	gacc.PathPrefix("/path/").HandlerFunc(pageHandler(relmsuff, "main"))
 
-	// files sharing
-
+	// wpk-files sharing
 	gmux.PathPrefix("/data/").Handler(http.StripPrefix("/data/", http.FileServer(packager)))
 	for alias, prefix := range routealias {
 		gmux.PathPrefix(alias).Handler(http.StripPrefix(alias, http.FileServer(packager.SubDir(prefix))))
 	}
+
+	// file system sharing
 	gacc.PathPrefix("/file/").HandlerFunc(AjaxWrap(fileHandler))
 
 	// cached thumbs
-
-	gmux.PathPrefix("/thumb/").HandlerFunc(thumbHandler)
+	gacc.PathPrefix("/thumb/").HandlerFunc(thumbHandler)
 
 	// API routes
-
 	var api = gmux.PathPrefix("/api").Subrouter()
 	api.Path("/ping").HandlerFunc(AjaxWrap(pingApi))
 	api.Path("/purge").HandlerFunc(AuthWrap(purgeApi))

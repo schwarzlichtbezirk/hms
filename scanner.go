@@ -337,7 +337,7 @@ func (dk *DriveKit) Scan(syspath string) error {
 	var t1 = time.Now()
 	var fi, err = os.Stat(syspath)
 	if err == nil && !fi.IsDir() {
-		err = ErrNotPath
+		err = ErrNotDir
 	}
 	if err == nil {
 		dk.Latency = int(t1.Sub(time.Now()) / 1000000)

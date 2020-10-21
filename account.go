@@ -24,6 +24,13 @@ var DefHidden = []string{
 	"*/thumbs.db",
 }
 
+// File path access
+const (
+	FPA_none  = 0
+	FPA_admin = 1
+	FPA_share = 2
+)
+
 // Share description for json-file.
 type Share struct {
 	Name string `json:"name"`
@@ -329,6 +336,22 @@ func (acc *Account) GetSharePath(shrpath string) string {
 		return path + suff
 	}
 	return shrpath
+}
+
+func (acc *Account) PathState(syspath string) int {
+	acc.mux.RLock()
+	defer acc.mux.RUnlock()
+	for _, path := range acc.sharespref {
+		if strings.HasPrefix(syspath, path) {
+			return FPA_share
+		}
+	}
+	for _, path := range acc.Roots {
+		if strings.HasPrefix(syspath, path) {
+			return FPA_admin
+		}
+	}
+	return FPA_none
 }
 
 // Brings share path to local file path and signal that it shared.

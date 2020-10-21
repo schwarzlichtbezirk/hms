@@ -2,10 +2,10 @@
 
 const filetmbwebp = file => file.ntmb === 1
 	? ''
-	: '/asst/file-webp/' + geticonname(file) + '.webp';
+	: `/asst/file-webp/${geticonname(file)}.webp`;
 const filetmbpng = file => file.ntmb === 1
-	? '/thumb/' + file.hash
-	: '/asst/file-png/' + geticonname(file) + '.png';
+	? `/id${app.aid}/thumb/${file.hash}`
+	: `/asst/file-png/${geticonname(file)}.png`;
 
 const makemarkercontent = file => `
 <div class="photoinfo">

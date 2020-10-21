@@ -23,7 +23,10 @@ var (
 	ErrArgNoNum  = errors.New("'num' parameter not recognized")
 	ErrArgNoPath = errors.New("'path' argument required")
 	ErrArgNoPref = errors.New("'pref' or 'path' argument required")
-	ErrNotPath   = errors.New("path is not directory")
+	ErrNotDir    = errors.New("path is not directory")
+	ErrNoPath    = errors.New("path is not found")
+	ErrFpaNone   = errors.New("account has no access to specified file path")
+	ErrFpaAdmin  = errors.New("not authorized for access to specified file path")
 )
 
 //////////////////////////
@@ -51,13 +54,14 @@ func pageHandler(pref, name string) http.HandlerFunc {
 func fileHandler(w http.ResponseWriter, r *http.Request) {
 	incuint(&sharecallcount, 1)
 
+	var err error
+
 	var chunks = strings.Split(r.URL.Path, "/")
 	if len(chunks) < 4 {
 		panic("bad route for URL " + r.URL.Path)
 	}
 
 	var aid uint64
-	var err error
 	if aid, err = strconv.ParseUint(chunks[1][2:], 10, 32); err != nil {
 		WriteError400(w, err, EC_filebadaccid)
 		return
@@ -79,15 +83,21 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		spath = strings.Join(chunks[3:], "/")
 	}
-	var syspath, shared = acc.CheckSharePath(spath)
-	if !shared {
+
+	var syspath = acc.GetSharePath(spath)
+	var state = acc.PathState(syspath)
+	if state == FPA_none {
+		WriteError(w, http.StatusForbidden, ErrFpaNone, EC_filedeny)
+		return
+	}
+	if state == FPA_admin {
 		var auth *Account
 		if auth, err = CheckAuth(r); err != nil {
 			WriteJson(w, http.StatusUnauthorized, err)
 			return
 		}
 		if acc.ID != auth.ID {
-			WriteError(w, http.StatusForbidden, ErrDeny, EC_filedeny)
+			WriteError(w, http.StatusForbidden, ErrFpaAdmin, EC_filedeny)
 			return
 		}
 	}
@@ -98,6 +108,57 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 
 	WriteStdHeader(w)
 	http.ServeFile(w, r, syspath)
+}
+
+// Hands out thumbnails for given files if them cached.
+func thumbHandler(w http.ResponseWriter, r *http.Request) {
+	var err error
+
+	var chunks = strings.Split(r.URL.Path, "/")
+	if len(chunks) < 4 {
+		panic("bad route for URL " + r.URL.Path)
+	}
+
+	var aid uint64
+	if aid, err = strconv.ParseUint(chunks[1][2:], 10, 32); err != nil {
+		WriteError400(w, err, EC_thumbbadaccid)
+		return
+	}
+
+	var acc *Account
+	if acc = acclist.ByID(int(aid)); acc == nil {
+		WriteError400(w, ErrNoAcc, EC_thumbnoacc)
+		return
+	}
+
+	var hash = chunks[3]
+	if syspath, ok := hashcache.Path(chunks[3]); ok {
+		var state = acc.PathState(syspath)
+		if state == FPA_none {
+			WriteError(w, http.StatusForbidden, ErrFpaNone, EC_thumbndeny)
+			return
+		}
+	} else {
+		WriteError(w, http.StatusNotFound, ErrNoPath, EC_thumbnopath)
+		return
+	}
+
+	var val interface{}
+	if val, err = thumbcache.Get(hash); err != nil {
+		WriteError(w, http.StatusNotFound, err, EC_thumbabsent)
+		return
+	}
+	var tmb, ok = val.(*ThumbElem)
+	if !ok {
+		WriteError500(w, ErrBadThumb, EC_thumbbadcnt)
+		return
+	}
+	if tmb == nil {
+		WriteError(w, http.StatusNotFound, ErrNotThumb, EC_thumbnotcnt)
+		return
+	}
+	w.Header().Set("Content-Type", tmb.Mime)
+	http.ServeContent(w, r, hash, starttime, bytes.NewReader(tmb.Data))
 }
 
 // APIHANDLER

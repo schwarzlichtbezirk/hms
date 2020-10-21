@@ -11,7 +11,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"strings"
 
 	"github.com/disintegration/gift"
 	_ "github.com/oov/psd"
@@ -171,34 +170,6 @@ func MakeTmb(syspath string) (tmb *ThumbElem, err error) {
 		TmbH: dst.Bounds().Dy(),
 	}
 	return // set valid thumbnail
-}
-
-// Hands out thumbnails for given files if them cached.
-func thumbHandler(w http.ResponseWriter, r *http.Request) {
-	var err error
-
-	var chunks = strings.Split(r.URL.Path, "/")
-	if len(chunks) < 3 {
-		panic("bad route for URL " + r.URL.Path)
-	}
-
-	var hash = chunks[2]
-	var val interface{}
-	if val, err = thumbcache.Get(hash); err != nil {
-		WriteError(w, http.StatusNotFound, err, EC_thumbabsent)
-		return
-	}
-	var tmb, ok = val.(*ThumbElem)
-	if !ok {
-		WriteError500(w, ErrBadThumb, EC_thumbbadcnt)
-		return
-	}
-	if tmb == nil {
-		WriteError(w, http.StatusNotFound, ErrNotThumb, EC_thumbnotcnt)
-		return
-	}
-	w.Header().Set("Content-Type", tmb.Mime)
-	http.ServeContent(w, r, hash, starttime, bytes.NewReader(tmb.Data))
 }
 
 // APIHANDLER
