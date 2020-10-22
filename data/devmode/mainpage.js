@@ -247,24 +247,8 @@ const geticonname = file => {
 
 const encode = (uri) => encodeURI(uri).replace('#', '%23').replace('&', '%26').replace('+', '%2B');
 
-const getfileurl = (file, pref) => {
-	pref = "/id" + app.aid + (pref || shareprefix);
-	let url;
-	if (file.pref) {
-		url = pref + file.pref;
-	} else {
-		if (app.curpathshares.length) {
-			const shr = app.curpathshares[0]; // use any first available share
-			url = pref + encode(shr.pref + '/' + shr.suff + file.name);
-			if (FTtoFG[file.type] === FG.dir) {
-				url += '/';
-			}
-		} else {
-			url = pref + encode(file.path);
-		}
-	}
-	return url;
-};
+const hashfileurl = file => `/id${app.aid}/file/${file.hash}`;
+const hashpathurl = file => `/id${app.aid}/path/${file.hash}`;
 
 const tofp = sk => {
 	const fp = sk.prop;
@@ -274,7 +258,7 @@ const tofp = sk => {
 	if ('pref' in sk) {
 		fp.pref = sk.pref;
 	}
-	return fp
+	return fp;
 };
 
 const showmsgbox = (title, body) => {

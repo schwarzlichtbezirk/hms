@@ -76,7 +76,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 	var spath string
 	if hpath, ok := hashcache.Path(chunks[3]); ok {
 		if len(chunks) > 3 {
-			spath = filepath.Join(hpath, strings.Join(chunks[4:], "/"))
+			spath = filepath.ToSlash(filepath.Join(hpath, strings.Join(chunks[4:], "/")))
 		} else {
 			spath = hpath
 		}
@@ -87,7 +87,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 	var syspath = acc.GetSharePath(spath)
 	var state = acc.PathState(syspath)
 	if state == FPA_none {
-		WriteError(w, http.StatusForbidden, ErrFpaNone, EC_filedeny)
+		WriteError(w, http.StatusForbidden, ErrFpaNone, EC_filefpanone)
 		return
 	}
 	if state == FPA_admin {
@@ -97,7 +97,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if acc.ID != auth.ID {
-			WriteError(w, http.StatusForbidden, ErrFpaAdmin, EC_filedeny)
+			WriteError(w, http.StatusForbidden, ErrFpaAdmin, EC_filefpaadmin)
 			return
 		}
 	}
@@ -344,12 +344,24 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var isroot = len(arg.Path) == 0
-	var _, shared = acc.CheckSharePath(arg.Path)
-
+	var syspath = acc.GetSharePath(arg.Path)
+	var state = acc.PathState(syspath)
 	var auth *Account
-	if auth, err = CheckAuth(r); err != nil && !isroot && !shared {
+	if auth, err = CheckAuth(r); err != nil && !isroot && state < FPA_share {
 		WriteJson(w, http.StatusUnauthorized, err)
 		return
+	}
+	if !isroot {
+		if state == FPA_none {
+			WriteError(w, http.StatusForbidden, ErrFpaNone, EC_folderfpanone)
+			return
+		}
+		if state == FPA_admin {
+			if acc.ID != auth.ID {
+				WriteError(w, http.StatusForbidden, ErrFpaAdmin, EC_folderfpaadmin)
+				return
+			}
+		}
 	}
 
 	if isroot {
@@ -361,8 +373,8 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 
 		if acc == auth || cfg.ShowSharesUser {
 			acc.mux.RLock()
-			for pref, syspath := range acc.sharespref {
-				if prop, err := propcache.Get(syspath); err == nil {
+			for pref, path := range acc.sharespref {
+				if prop, err := propcache.Get(path); err == nil {
 					var sk = ShareKit{prop.(Proper), "", ""}
 					sk.SetPref(pref)
 					ret = append(ret, sk)
@@ -376,7 +388,7 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 			WriteError(w, http.StatusNotFound, err, EC_folderfail)
 			return
 		}
-		Log.Printf("navigate to: %s", arg.Path)
+		Log.Printf("navigate to: %s", syspath)
 	}
 
 	WriteOK(w, ret)

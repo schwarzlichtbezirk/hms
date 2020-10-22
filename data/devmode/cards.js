@@ -132,7 +132,7 @@ Vue.component('dir-card-tag', {
 	},
 	methods: {
 		onlink() {
-			copyTextToClipboard(window.location.origin + getfileurl(this.selfile, "/path/"));
+			copyTextToClipboard(window.location.origin + hashpathurl(this.selfile));
 		},
 		onshare() {
 			this.$emit('share', this.selfile);
@@ -408,7 +408,7 @@ Vue.component('file-card-tag', {
 		},
 
 		onlink() {
-			copyTextToClipboard(window.location.origin + getfileurl(this.selfile));
+			copyTextToClipboard(window.location.origin + hashfileurl(this.selfile));
 		},
 		onshare() {
 			this.$emit('share', this.selfile);
@@ -497,7 +497,7 @@ Vue.component('file-card-tag', {
 					this.$refs.slider.popup(file);
 					break;
 				default:
-					const url = getfileurl(file);
+					const url = hashfileurl(file);
 					window.open(url, file.name);
 			}
 		},

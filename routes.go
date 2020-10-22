@@ -79,7 +79,8 @@ const (
 	// file
 	EC_filebadaccid = 40
 	EC_filenoacc    = 41
-	EC_filedeny     = 42
+	EC_filefpanone  = 42
+	EC_filefpaadmin = 43
 
 	// thumb
 	EC_thumbbadaccid = 50
@@ -98,10 +99,12 @@ const (
 	EC_getlogbadnum = 62
 
 	// folder
-	EC_foldernoreq  = 70
-	EC_folderbadreq = 71
-	EC_foldernoacc  = 72
-	EC_folderfail   = 73
+	EC_foldernoreq    = 70
+	EC_folderbadreq   = 71
+	EC_foldernoacc    = 72
+	EC_folderfpanone  = 73
+	EC_folderfpaadmin = 74
+	EC_folderfail     = 75
 
 	// ispath
 	EC_ispathnoreq  = 74

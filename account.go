@@ -338,6 +338,8 @@ func (acc *Account) GetSharePath(shrpath string) string {
 	return shrpath
 }
 
+// Returns access state of file path, is it shared by account,
+// has access only by authorization, or has no any access.
 func (acc *Account) PathState(syspath string) int {
 	acc.mux.RLock()
 	defer acc.mux.RUnlock()
@@ -352,30 +354,6 @@ func (acc *Account) PathState(syspath string) int {
 		}
 	}
 	return FPA_none
-}
-
-// Brings share path to local file path and signal that it shared.
-func (acc *Account) CheckSharePath(shrpath string) (string, bool) {
-	var pref, suff = splitprefsuff(shrpath)
-
-	acc.mux.RLock()
-	defer acc.mux.RUnlock()
-
-	if pref == "" {
-		var shared bool
-		for _, syspath := range acc.sharespref {
-			if strings.HasPrefix(shrpath, syspath) {
-				shared = true
-				break
-			}
-		}
-		return shrpath, shared
-	}
-
-	if syspath, ok := acc.sharespref[pref]; ok {
-		return syspath + suff, true
-	}
-	return shrpath, false
 }
 
 // Reads directory with given share path and returns ShareKit for each entry.
