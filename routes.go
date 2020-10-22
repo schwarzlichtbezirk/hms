@@ -216,6 +216,7 @@ func RegisterRoutes(gmux *Router) {
 	api.Path("/reload").HandlerFunc(AjaxWrap(reloadApi))
 	api.Path("/srvinf").HandlerFunc(AjaxWrap(srvinfApi))
 	api.Path("/memusg").HandlerFunc(AjaxWrap(memusgApi))
+	api.Path("/cchinf").HandlerFunc(AjaxWrap(cchinfApi))
 	api.Path("/getlog").HandlerFunc(AjaxWrap(getlogApi))
 	api.Path("/pubkey").HandlerFunc(AjaxWrap(pubkeyApi))
 	api.Path("/signin").HandlerFunc(AjaxWrap(signinApi))

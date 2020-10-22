@@ -12,39 +12,39 @@
 				<div class="card-body stattable">
 					<div class="row">
 						<div class="col-sm-6 field-name">client version:</div>
-						<div class="col-md-6 field-value">{{servinfo.buildvers}}</div>
+						<div class="col-md-6 field-value">{{srvinf.buildvers}}</div>
 					</div>
 					<div class="row">
 						<div class="col-sm-6 field-name">client builton:</div>
-						<div class="col-md-6 field-value">{{servinfo.builddate}}</div>
+						<div class="col-md-6 field-value">{{srvinf.builddate}}</div>
 					</div>
 					<div class="row">
 						<div class="col-sm-6 field-name">server start time:</div>
-						<div class="col-md-6 field-value">{{(new Date(servinfo.started)).toLocaleString()}}</div>
+						<div class="col-md-6 field-value">{{(new Date(srvinf.started)).toLocaleString()}}</div>
 					</div>
 					<div class="row">
 						<div class="col-sm-6 field-name">golang version:</div>
-						<div class="col-md-6 field-value">{{servinfo.govers}}</div>
+						<div class="col-md-6 field-value">{{srvinf.govers}}</div>
 					</div>
 					<div class="row">
 						<div class="col-sm-6 field-name">host operation system:</div>
-						<div class="col-md-6 field-value">{{servinfo.os}}</div>
+						<div class="col-md-6 field-value">{{srvinf.os}}</div>
 					</div>
 					<div class="row">
 						<div class="col-sm-6 field-name">number of logical CPUs:</div>
-						<div class="col-md-6 field-value">{{servinfo.numcpu}}</div>
+						<div class="col-md-6 field-value">{{srvinf.numcpu}}</div>
 					</div>
 					<div class="row">
 						<div class="col-sm-6 field-name">max number of used CPUs:</div>
-						<div class="col-md-6 field-value">{{servinfo.maxprocs}}</div>
+						<div class="col-md-6 field-value">{{srvinf.maxprocs}}</div>
 					</div>
 					<div class="row">
 						<div class="col-sm-6 field-name">program directory:</div>
-						<div class="col-md-6 field-value">{{servinfo.destpath}}</div>
+						<div class="col-md-6 field-value">{{srvinf.destpath}}</div>
 					</div>
 					<div class="row">
 						<div class="col-sm-6 field-name">configuration directory:</div>
-						<div class="col-md-6 field-value">{{servinfo.confpath}}</div>
+						<div class="col-md-6 field-value">{{srvinf.confpath}}</div>
 					</div>
 				</div>
 			</div>
@@ -94,7 +94,61 @@
 
 		<div class="card">
 			<div class="card-header">
-				<a class="card-link collapsed" data-toggle="collapse" href="#collapse-console">Console output</a>
+				<a class="card-link collapsed" data-toggle="collapse" href="#collapse-cache">caches state</a>
+			</div>
+			<div id="collapse-cache" class="collapse">
+				<div class="card-body stattable">
+					<div class="row">
+						<div class="col-sm-6 field-name">path cache number items:</div>
+						<div class="col-md-6 field-value">{{cchinf.pathcchnum}}</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-6 field-name">file properties cache number items:</div>
+						<div class="col-md-6 field-value">{{cchinf.propcchnum}}</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-6 field-name">thumbnails cache number items:</div>
+						<div class="col-md-6 field-value">{{cchinf.tmbcchnum}}</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-6 field-name">thumbnails cache total size, bytes:</div>
+						<div class="col-md-6 field-value">{{cchinf.tmbcchsize1}}</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-6 field-name">average thumbnail size, bytes:</div>
+						<div class="col-md-6 field-value">{{avrtmbcchsize}}</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-6 field-name">jpeg thumbnails number items:</div>
+						<div class="col-md-6 field-value">{{cchinf.tmbjpgnum}}</div>
+					</div>
+					<div class="row" v-show="avrshow">
+						<div class="col-sm-6 field-name">jpeg average thumbnail size, bytes:</div>
+						<div class="col-md-6 field-value">{{avrtmbjpgsize}}</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-6 field-name">png thumbnails number items:</div>
+						<div class="col-md-6 field-value">{{cchinf.tmbpngnum}}</div>
+					</div>
+					<div class="row" v-show="avrshow">
+						<div class="col-sm-6 field-name">png average thumbnail size, bytes:</div>
+						<div class="col-md-6 field-value">{{avrtmbpngsize}}</div>
+					</div>
+					<div class="row">
+						<div class="col-sm-6 field-name">gif thumbnails number items:</div>
+						<div class="col-md-6 field-value">{{cchinf.tmbgifnum}}</div>
+					</div>
+					<div class="row" v-show="avrshow">
+						<div class="col-sm-6 field-name">gif average thumbnail size, bytes:</div>
+						<div class="col-md-6 field-value">{{avrtmbgifsize}}</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="card">
+			<div class="card-header">
+				<a class="card-link collapsed" data-toggle="collapse" href="#collapse-console">console output</a>
 			</div>
 			<div id="collapse-console" class="collapse">
 				<div class="card-body">

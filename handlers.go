@@ -232,6 +232,60 @@ func memusgApi(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
+func cchinfApi(w http.ResponseWriter, r *http.Request) {
+	hashcache.mux.RLock()
+	var pathnum = len(hashcache.keypath)
+	hashcache.mux.RUnlock()
+
+	var propnum = propcache.Len(false)
+
+	var tc = thumbcache.GetALL(false)
+	type stat struct {
+		size1 float64
+		size2 float64
+		num   int
+	}
+	var jpg, png, gif stat
+	for _, v := range tc {
+		var tmb = v.(*ThumbElem)
+		var s *stat
+		switch tmb.Mime {
+		case "image/gif":
+			s = &gif
+		case "image/png":
+			s = &png
+		case "image/jpeg":
+			s = &jpg
+		default:
+			panic("unexpected MIME type in cache " + tmb.Mime)
+		}
+		var l = float64(len(tmb.Data))
+		s.size1 += l
+		s.size2 += l * l
+		s.num++
+	}
+
+	var ret = map[string]interface{}{
+		"pathcchnum":  pathnum,
+		"propcchnum":  propnum,
+		"tmbcchnum":   gif.num + png.num + jpg.num,
+		"tmbcchsize1": gif.size1 + png.size1 + jpg.size1,
+		"tmbcchsize2": gif.size2 + png.size2 + jpg.size2,
+		"tmbjpgnum":   jpg.num,
+		"tmbjpgsize1": jpg.size1,
+		"tmbjpgsize2": jpg.size2,
+		"tmbpngnum":   png.num,
+		"tmbpngsize1": png.size1,
+		"tmbpngsize2": png.size2,
+		"tmbgifnum":   gif.num,
+		"tmbgifsize1": gif.size1,
+		"tmbgifsize2": gif.size2,
+	}
+
+	WriteOK(w, ret)
+}
+
+// APIHANDLER
 func getlogApi(w http.ResponseWriter, r *http.Request) {
 	var err error
 

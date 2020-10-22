@@ -7,8 +7,9 @@ const app = new Vue({
 	el: '#app',
 	template: '#app-tpl',
 	data: {
-		servinfo: {},
+		srvinf: {},
 		memgc: {},
+		cchinf: {},
 		log: [],
 		timemode: 1
 	},
@@ -44,6 +45,39 @@ const app = new Vue({
 
 		isdatetime() {
 			return this.timemode === 2 && 'btn-info' || 'btn-outline-info';
+		},
+
+		avrshow() {
+			const zn = (this.cchinf.tmbjpgnum ? 1 : 0) + (this.cchinf.tmbpngnum ? 1 : 0) + (this.cchinf.tmbgifnum ? 1 : 0);
+			return zn > 1;
+		},
+		avrtmbcchsize() {
+			if (this.cchinf.tmbcchnum) {
+				return (this.cchinf.tmbcchsize1 / this.cchinf.tmbcchnum).toFixed();
+			} else {
+				return "N/A";
+			}
+		},
+		avrtmbjpgsize() {
+			if (this.cchinf.tmbjpgnum) {
+				return (this.cchinf.tmbjpgsize1 / this.cchinf.tmbjpgnum).toFixed();
+			} else {
+				return "N/A";
+			}
+		},
+		avrtmbpngsize() {
+			if (this.cchinf.tmbpngnum) {
+				return (this.cchinf.tmbpngsize1 / this.cchinf.tmbpngnum).toFixed();
+			} else {
+				return "N/A";
+			}
+		},
+		avrtmbgifsize() {
+			if (this.cchinf.tmbgifnum) {
+				return (this.cchinf.tmbgifsize1 / this.cchinf.tmbgifnum).toFixed();
+			} else {
+				return "N/A";
+			}
 		}
 	},
 	methods: {
@@ -87,9 +121,9 @@ const app = new Vue({
 	mounted() {
 		fetchajax("GET", "/api/srvinf").then(response => {
 			if (response.ok) {
-				this.servinfo = response.data;
-				this.servinfo.buildvers = buildvers;
-				this.servinfo.builddate = builddate;
+				this.srvinf = response.data;
+				this.srvinf.buildvers = buildvers;
+				this.srvinf.builddate = builddate;
 			}
 		}).catch(() => { });
 
@@ -109,6 +143,22 @@ const app = new Vue({
 			});
 		});
 
+		$("#collapse-cache").on('show.bs.collapse', () => {
+			const scanner = () => {
+				fetchajax("GET", "/api/cchinf").then(response => {
+					if (response.ok) {
+						this.cchinf = response.data;
+					}
+				}).catch(() => { });
+			};
+
+			scanner();
+			const id = setInterval(scanner, scanfreq);
+			$("#collapse-memory").one('hide.bs.collapse', () => {
+				clearInterval(id);
+			});
+		});
+
 		$("#collapse-console").on('show.bs.collapse', () => {
 			this.ongetlog();
 		});
@@ -116,6 +166,8 @@ const app = new Vue({
 	beforeDestroy() {
 		$("#collapse-memory").off('show.bs.collapse');
 		$("#collapse-memory").off('hide.bs.collapse');
+		$("#collapse-cache").off('show.bs.collapse');
+		$("#collapse-cache").off('hide.bs.collapse');
 		$("#collapse-console").off('show.bs.collapse');
 	}
 }); // end of vue application
