@@ -582,16 +582,9 @@ let app = new Vue({
 			}).then(response => {
 				traceajax(response);
 				if (response.ok) {
-					const sk = response.data;
-					if (sk) {
-						const fp = tofp(sk);
-						// update folder settings
-						if (FTtoFG[fp.type] === FG.dir) {
-							if ('pref' in fp) {
-								Vue.set(file, 'pref', fp.pref);
-							}
-							this.shared.push(fp);
-						}
+					if (response.data) {
+						Vue.set(file, 'pref', file.hash);
+						this.shared.push(file);
 					}
 				} else if (response.status === 404) { // Not Found
 					onerr404();
@@ -608,7 +601,7 @@ let app = new Vue({
 		fetchsharedel(file) {
 			return fetchajaxauth("DELETE", "/api/share/del", {
 				aid: this.aid,
-				pref: file.pref
+				hash: file.hash
 			}).then(response => {
 				traceajax(response);
 				if (response.ok) {

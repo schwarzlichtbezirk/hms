@@ -24,6 +24,4 @@
     - ?:/config.msi
     - '*/thumbs.db'
   shares:
-    - name: Music
-      pref: Music
-      path: E:/Music/
+    - E:/Music/

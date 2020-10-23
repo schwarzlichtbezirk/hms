@@ -135,8 +135,7 @@ const (
 	EC_shraddnodata  = 102
 	EC_shraddnoacc   = 103
 	EC_shradddeny    = 104
-	EC_shraddnopath  = 105
-	EC_shraddbadpath = 106
+	EC_shraddfpanone = 105
 
 	// share/del
 	EC_shrdelnoreq  = 110
@@ -144,7 +143,7 @@ const (
 	EC_shrdelnodata = 112
 	EC_shrdelnoacc  = 113
 	EC_shrdeldeny   = 114
-	EC_shrdelnopath = 115
+	EC_shrdelnohash = 115
 
 	// drive/add
 	EC_drvaddnoreq  = 120

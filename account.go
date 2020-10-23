@@ -31,13 +31,6 @@ const (
 	FPA_share = 2 // access to specified file path is shared
 )
 
-// Share description for json-file.
-type Share struct {
-	Name string `json:"name"`
-	Pref string `json:"pref"`
-	Path string `json:"path"`
-}
-
 type Account struct {
 	ID       int    `json:"id"`
 	Login    string `json:"login"`
@@ -46,9 +39,9 @@ type Account struct {
 	Roots  []string `json:"roots"`  // root directories list
 	Hidden []string `json:"hidden"` // patterns for hidden files
 
-	Shares     []Share           `json:"shares"`
-	sharespath map[string]string // shares prefix by system path
-	sharespref map[string]string // shares system path by prefix
+	Shares     []string          `json:"shares"`
+	sharespath map[string]string // shares hash by system path
+	shareshash map[string]string // shares system path by hash
 
 	mux sync.RWMutex
 }
@@ -64,9 +57,9 @@ func (al *Accounts) NewAccount(login, password string) *Account {
 		Password:   password,
 		Roots:      []string{},
 		Hidden:     []string{},
-		Shares:     []Share{},
+		Shares:     []string{},
 		sharespath: map[string]string{},
-		sharespref: map[string]string{},
+		shareshash: map[string]string{},
 	}
 	if len(al.list) > 0 {
 		acc.ID = al.list[len(al.list)-1].ID + 1
@@ -194,17 +187,17 @@ func (acc *Account) UpdateShares() {
 	acc.mux.Lock()
 
 	acc.sharespath = map[string]string{}
-	acc.sharespref = map[string]string{}
+	acc.shareshash = map[string]string{}
 	for _, shr := range acc.Shares {
-		var shr = shr
-		if _, err := propcache.Get(shr.Path); err != nil {
-			defer Log.Printf("id%d: can not create share '%s' on path '%s'", acc.ID, shr.Pref, shr.Path)
-			continue
+		var syspath = shr
+		if prop, err := propcache.Get(syspath); err == nil {
+			var hash = prop.(Proper).Hash()
+			acc.sharespath[syspath] = hash
+			acc.shareshash[hash] = syspath
+			defer Log.Printf("id%d: created share on path '%s'", acc.ID, syspath)
+		} else {
+			defer Log.Printf("id%d: can not create on path '%s'", acc.ID, syspath)
 		}
-
-		acc.sharespath[shr.Path] = shr.Pref
-		acc.sharespref[shr.Pref] = shr.Path
-		defer Log.Printf("id%d: created share '%s' on path '%s'", acc.ID, shr.Pref, shr.Path)
 	}
 
 	acc.mux.Unlock()
@@ -222,80 +215,52 @@ func makerandstr(n int) string {
 	return string(str)
 }
 
-// Looks for correct prefix and add share with it.
-func (acc *Account) MakeShare(name, path string) (pref string) {
-	if len(name) > 8 {
-		pref = name[:8]
-	} else {
-		pref = name
-	}
-	var fit = true
-	for _, b := range pref {
-		if (b < '0' || b > '9') && (b < 'a' || b > 'z') && (b < 'A' || b > 'Z') && b != '-' && b != '_' {
-			fit = false
-		}
-	}
-
-	if fit && acc.AddShare(name, pref, path) {
-		return
-	}
-	for i := 0; !acc.AddShare(name, makerandstr(4), path); i++ {
-		if i > 1000 {
-			panic("can not generate share prefix")
-		}
-	}
-	return
-}
-
 // Add share with given prefix.
-func (acc *Account) AddShare(name, pref, path string) bool {
+func (acc *Account) AddShare(syspath string) bool {
 	acc.mux.Lock()
 	defer acc.mux.Unlock()
 
-	if _, ok := acc.sharespref[pref]; !ok {
-		acc.Shares = append(acc.Shares, Share{
-			Name: name,
-			Pref: pref,
-			Path: path,
-		})
-		acc.sharespath[path] = pref
-		acc.sharespref[pref] = path
+	var hash = hashcache.Cache(syspath)
+	if _, ok := acc.sharespath[hash]; !ok {
+		acc.Shares = append(acc.Shares, syspath)
+		acc.sharespath[syspath] = hash
+		acc.shareshash[hash] = syspath
 		return true
 	}
 	return false
 }
 
 // Delete share by given prefix.
-func (acc *Account) DelSharePref(pref string) bool {
+func (acc *Account) DelShareHash(hash string) bool {
 	acc.mux.Lock()
 	defer acc.mux.Unlock()
 
-	if path, ok := acc.sharespref[pref]; ok {
+	if syspath, ok := acc.shareshash[hash]; ok {
 		for i, shr := range acc.Shares {
-			if shr.Pref == pref {
+			if shr == syspath {
 				acc.Shares = append(acc.Shares[:i], acc.Shares[i+1:]...)
 			}
 		}
-		delete(acc.sharespath, path)
-		delete(acc.sharespref, pref)
+		delete(acc.sharespath, syspath)
+		delete(acc.shareshash, hash)
 		return true
 	}
 	return false
 }
 
 // Delete share by given shared path.
-func (acc *Account) DelSharePath(path string) bool {
+func (acc *Account) DelSharePath(syspath string) bool {
 	acc.mux.Lock()
 	defer acc.mux.Unlock()
 
-	if pref, ok := acc.sharespath[path]; ok {
+	if hash, ok := acc.sharespath[syspath]; ok {
 		for i, shr := range acc.Shares {
-			if shr.Path == path {
+			if shr == syspath {
 				acc.Shares = append(acc.Shares[:i], acc.Shares[i+1:]...)
 			}
 		}
-		delete(acc.sharespath, path)
-		delete(acc.sharespref, pref)
+		delete(acc.sharespath, syspath)
+		delete(acc.shareshash, hash)
 		return true
 	}
 	return false
@@ -305,8 +270,8 @@ func (acc *Account) SetupPref(sk *ShareKit, path string) {
 	acc.mux.RLock()
 	defer acc.mux.RUnlock()
 
-	if pref, ok := acc.sharespath[path]; ok {
-		sk.SetPref(pref)
+	if hash, ok := acc.sharespath[path]; ok {
+		sk.SetPref(hash)
 	}
 }
 
@@ -332,7 +297,7 @@ func (acc *Account) GetSharePath(shrpath string) string {
 	acc.mux.RLock()
 	defer acc.mux.RUnlock()
 
-	if path, ok := acc.sharespref[pref]; ok {
+	if path, ok := acc.shareshash[pref]; ok {
 		return path + suff
 	}
 	return shrpath
@@ -343,7 +308,7 @@ func (acc *Account) GetSharePath(shrpath string) string {
 func (acc *Account) PathState(syspath string) int {
 	acc.mux.RLock()
 	defer acc.mux.RUnlock()
-	for _, path := range acc.sharespref {
+	for _, path := range acc.Shares {
 		if strings.HasPrefix(syspath, path) {
 			return FPA_share
 		}

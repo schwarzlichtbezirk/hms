@@ -6,7 +6,6 @@ import (
 	"errors"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -22,7 +21,7 @@ var (
 	ErrNotFound  = errors.New("404 page not found")
 	ErrArgNoNum  = errors.New("'num' parameter not recognized")
 	ErrArgNoPath = errors.New("'path' argument required")
-	ErrArgNoPref = errors.New("'pref' or 'path' argument required")
+	ErrArgNoHash = errors.New("'hash' or 'path' argument required")
 	ErrNotDir    = errors.New("path is not directory")
 	ErrNoPath    = errors.New("path is not found")
 	ErrFpaNone   = errors.New("account has no access to specified file path")
@@ -373,10 +372,10 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 
 		if acc == auth || cfg.ShowSharesUser {
 			acc.mux.RLock()
-			for pref, path := range acc.sharespref {
+			for hash, path := range acc.shareshash {
 				if prop, err := propcache.Get(path); err == nil {
 					var sk = ShareKit{prop.(Proper), "", ""}
-					sk.SetPref(pref)
+					sk.SetPref(hash)
 					ret = append(ret, sk)
 				}
 			}
@@ -469,10 +468,10 @@ func shrlstApi(w http.ResponseWriter, r *http.Request) {
 
 	var ret []ShareKit
 	acc.mux.RLock()
-	for pref, fpath := range acc.sharespref {
+	for hash, fpath := range acc.shareshash {
 		if prop, err := propcache.Get(fpath); err == nil {
 			var sk = ShareKit{prop.(Proper), fpath, ""}
-			sk.SetPref(pref)
+			sk.SetPref(hash)
 			ret = append(ret, sk)
 		}
 	}
@@ -514,33 +513,17 @@ func shraddApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 		return
 	}
 
-	acc.mux.RLock()
-	var _, has = acc.sharespath[arg.Path]
-	acc.mux.RUnlock()
-	if has { // share already added
-		WriteOK(w, []byte("null"))
+	var syspath = acc.GetSharePath(arg.Path)
+	var state = acc.PathState(syspath)
+	if state == FPA_none {
+		WriteError(w, http.StatusForbidden, ErrFpaNone, EC_filefpanone)
 		return
 	}
 
-	var fpath = acc.GetSharePath(arg.Path)
+	var ret = acc.AddShare(syspath)
+	Log.Printf("id%d: add share %s", acc.ID, syspath)
 
-	var prop interface{}
-	if prop, err = propcache.Get(fpath); err != nil {
-		if os.IsNotExist(err) {
-			WriteError(w, http.StatusNotFound, err, EC_shraddnopath)
-			return
-		} else {
-			WriteError500(w, err, EC_shraddbadpath)
-			return
-		}
-	}
-	var pref = acc.MakeShare(filepath.Base(fpath), fpath)
-	var sk = ShareKit{prop.(Proper), arg.Path, ""}
-	sk.SetPref(pref)
-
-	Log.Printf("id%d: add share %s as %s", acc.ID, fpath, pref)
-
-	WriteOK(w, sk)
+	WriteOK(w, ret)
 }
 
 // APIHANDLER
@@ -549,7 +532,7 @@ func shrdelApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 	var arg struct {
 		AID  int    `json:"aid"`
 		Path string `json:"path,omitempty"`
-		Pref string `json:"pref,omitempty"`
+		Hash string `json:"hash,omitempty"`
 	}
 	var ok bool
 
@@ -559,7 +542,7 @@ func shrdelApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 			WriteError400(w, err, EC_shrdelbadreq)
 			return
 		}
-		if len(arg.Path) == 0 && len(arg.Pref) == 0 {
+		if len(arg.Path) == 0 && len(arg.Hash) == 0 {
 			WriteError400(w, ErrArgNoPath, EC_shrdelnodata)
 			return
 		}
@@ -578,16 +561,16 @@ func shrdelApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 		return
 	}
 
-	if len(arg.Pref) > 0 {
-		if ok = acc.DelSharePref(arg.Pref); ok {
-			Log.Printf("id%d: delete share %s", acc.ID, arg.Pref)
+	if len(arg.Hash) > 0 {
+		if ok = acc.DelShareHash(arg.Hash); ok {
+			Log.Printf("id%d: delete share %s", acc.ID, arg.Hash)
 		}
 	} else if len(arg.Path) > 0 {
 		if ok = acc.DelSharePath(arg.Path); ok {
 			Log.Printf("id%d: delete share %s", acc.ID, arg.Path)
 		}
 	} else {
-		WriteError400(w, ErrArgNoPref, EC_shrdelnopath)
+		WriteError400(w, ErrArgNoHash, EC_shrdelnohash)
 		return
 	}
 
