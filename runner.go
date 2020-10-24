@@ -57,8 +57,6 @@ type CfgSpec struct {
 	ThumbFileMaxSize int64 `json:"thumb-file-maxsize" yaml:"thumb-file-maxsize"`
 	// Stretch big image embedded into mp3-file to fit into standard icon size.
 	FitEmbeddedTmb bool `json:"fit-embedded-tmb" yaml:"fit-embedded-tmb"`
-	// Private key for MAC based on MD5 to generate system files paths hashes.
-	PathHashSalt string `json:"path-hash-salt" yaml:"path-hash-salt"`
 	// Maximum items number in files properties cache.
 	PropCacheMaxNum int `json:"prop-cache-maxnum" yaml:"prop-cache-maxnum"`
 	// Maximum items number in thumbnails cache.
@@ -244,7 +242,7 @@ func Init() {
 
 	// build caches with given sizes from settings
 	initcaches()
-	if err = hashcache.Load(confpath + "cache.yaml"); err != nil {
+	if err = pathcache.Load(confpath + "cache.yaml"); err != nil {
 		Log.Println("error on hashes cache file: " + err.Error())
 	}
 
@@ -390,7 +388,7 @@ func Done() {
 	srvwg.Add(1)
 	go func() {
 		defer srvwg.Done()
-		if err := hashcache.Save(confpath + "cache.yaml"); err != nil {
+		if err := pathcache.Save(confpath + "cache.yaml"); err != nil {
 			Log.Println("error on hashes cache file: " + err.Error())
 		}
 	}()

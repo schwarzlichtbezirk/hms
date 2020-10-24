@@ -204,7 +204,7 @@ type Proper interface {
 	Size() int64  // size in bytes
 	Time() int64  // UNIX time in milliseconds
 	Type() int    // type identifier
-	Hash() string // MD5-hash of full file path encoded to hex-base32
+	PUID() string // path unique ID encoded to hex-base32
 	NTmb() int    // -1 - can not make thumbnail; 0 - not cached; 1 - cached
 	SetNTmb(int)
 	Clone() Proper
@@ -311,7 +311,7 @@ func (dk *DirKit) Clone() Proper {
 func (dk *DirKit) Setup(syspath string) {
 	dk.NameVal = filepath.Base(syspath)
 	dk.TypeVal = FT_dir
-	dk.HashVal = hashcache.Cache(syspath)
+	dk.PUIDVal = pathcache.Cache(syspath)
 	dk.NTmbVal = TMB_reject
 }
 
@@ -330,7 +330,7 @@ func (dk *DriveKit) Clone() Proper {
 func (dk *DriveKit) Setup(syspath string) {
 	dk.NameVal = syspath[:len(syspath)-1]
 	dk.TypeVal = FT_drive
-	dk.HashVal = hashcache.Cache(syspath)
+	dk.PUIDVal = pathcache.Cache(syspath)
 	dk.NTmbVal = TMB_reject
 }
 
@@ -422,10 +422,10 @@ func (tk *TagKit) Setup(syspath string, fi os.FileInfo) {
 			}
 		}
 	}
-	tk.HashVal = hashcache.Cache(syspath)
+	tk.PUIDVal = pathcache.Cache(syspath)
 	if tmb != nil {
 		tk.NTmbVal = TMB_cached
-		thumbcache.Set(tk.HashVal, tmb)
+		thumbcache.Set(tk.PUIDVal, tmb)
 	} else {
 		tk.NTmbVal = TMB_reject
 	}

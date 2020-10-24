@@ -247,8 +247,8 @@ const geticonname = file => {
 
 const encode = (uri) => encodeURI(uri).replace('#', '%23').replace('&', '%26').replace('+', '%2B');
 
-const hashfileurl = file => `/id${app.aid}/file/${file.hash}`;
-const hashpathurl = file => `/id${app.aid}/path/${file.hash}`;
+const hashfileurl = file => `/id${app.aid}/file/${file.puid}`;
+const hashpathurl = file => `/id${app.aid}/path/${file.puid}`;
 
 const tofp = sk => {
 	const fp = sk.prop;
@@ -496,7 +496,7 @@ let app = new Vue({
 					chktmb = () => {
 						const tmbs = [];
 						for (const fp of this.uncached) {
-							tmbs.push({ hash: fp.hash });
+							tmbs.push({ puid: fp.puid });
 						}
 						fetchajaxauth("POST", "/api/tmb/chk", {
 							tmbs: tmbs
@@ -507,7 +507,7 @@ let app = new Vue({
 								for (const tp of response.data.tmbs) {
 									if (tp.ntmb) {
 										for (const fp of this.filelist) {
-											if (fp.hash === tp.hash) {
+											if (fp.puid === tp.puid) {
 												Vue.set(fp, 'ntmb', tp.ntmb);
 												// add gps-item
 												if (fp.latitude && fp.longitude && fp.ntmb === 1) {
@@ -583,7 +583,7 @@ let app = new Vue({
 				traceajax(response);
 				if (response.ok) {
 					if (response.data) {
-						Vue.set(file, 'pref', file.hash);
+						Vue.set(file, 'pref', file.puid);
 						this.shared.push(file);
 					}
 				} else if (response.status === 404) { // Not Found
@@ -601,7 +601,7 @@ let app = new Vue({
 		fetchsharedel(file) {
 			return fetchajaxauth("DELETE", "/api/share/del", {
 				aid: this.aid,
-				hash: file.hash
+				puid: file.puid
 			}).then(response => {
 				traceajax(response);
 				if (response.ok) {
@@ -611,7 +611,7 @@ let app = new Vue({
 						const isdir = FTtoFG[file.type] === FG.dir;
 						if (isdir) {
 							for (let i in this.shared) {
-								if (this.shared[i].pref === file.pref) {
+								if (this.shared[i].puid === file.puid) {
 									this.shared.splice(i, 1);
 									break;
 								}

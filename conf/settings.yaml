@@ -1,7 +1,6 @@
 ﻿
 # Server configuration file. First of all you can change
-# "access-key" and "refresh-key" for tokens defence, and
-# "path-hash-salt" to prevent decode file paths hashes.
+# "access-key" and "refresh-key" for tokens protection.
 
 authentication:
     # Access token time to live, in seconds.
@@ -49,8 +48,6 @@ specification:
     thumb-file-maxsize: 50397184 # 4096*3072*4 + 65536, 48M, max 4K image + 64K exif metadata
     # Stretch big image embedded into mp3-file to fit into standard icon size.
     fit-embedded-tmb: true
-    # Private key for MAC based on MD5 to generate system files paths hashes.
-    path-hash-salt: 4AS4MD2SD9GMRRBN1QKAA5R1TC
     # Maximum items number in files properties cache.
     prop-cache-maxnum: 32768
     # Maximum items number in thumbnails cache.

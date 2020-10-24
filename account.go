@@ -40,8 +40,8 @@ type Account struct {
 	Hidden []string `json:"hidden"` // patterns for hidden files
 
 	Shares     []string          `json:"shares"`
-	sharespath map[string]string // shares hash by system path
-	shareshash map[string]string // shares system path by hash
+	sharespath map[string]string // shares puid by system path
+	shareshash map[string]string // shares system path by puid
 
 	mux sync.RWMutex
 }
@@ -191,9 +191,9 @@ func (acc *Account) UpdateShares() {
 	for _, shr := range acc.Shares {
 		var syspath = shr
 		if prop, err := propcache.Get(syspath); err == nil {
-			var hash = prop.(Proper).Hash()
-			acc.sharespath[syspath] = hash
-			acc.shareshash[hash] = syspath
+			var puid = prop.(Proper).PUID()
+			acc.sharespath[syspath] = puid
+			acc.shareshash[puid] = syspath
 			defer Log.Printf("id%d: created share on path '%s'", acc.ID, syspath)
 		} else {
 			defer Log.Printf("id%d: can not create on path '%s'", acc.ID, syspath)
@@ -220,29 +220,29 @@ func (acc *Account) AddShare(syspath string) bool {
 	acc.mux.Lock()
 	defer acc.mux.Unlock()
 
-	var hash = hashcache.Cache(syspath)
-	if _, ok := acc.sharespath[hash]; !ok {
+	var puid = pathcache.Cache(syspath)
+	if _, ok := acc.sharespath[puid]; !ok {
 		acc.Shares = append(acc.Shares, syspath)
-		acc.sharespath[syspath] = hash
-		acc.shareshash[hash] = syspath
+		acc.sharespath[syspath] = puid
+		acc.shareshash[puid] = syspath
 		return true
 	}
 	return false
 }
 
 // Delete share by given prefix.
-func (acc *Account) DelShareHash(hash string) bool {
+func (acc *Account) DelShareHash(puid string) bool {
 	acc.mux.Lock()
 	defer acc.mux.Unlock()
 
-	if syspath, ok := acc.shareshash[hash]; ok {
+	if syspath, ok := acc.shareshash[puid]; ok {
 		for i, shr := range acc.Shares {
 			if shr == syspath {
 				acc.Shares = append(acc.Shares[:i], acc.Shares[i+1:]...)
 			}
 		}
 		delete(acc.sharespath, syspath)
-		delete(acc.shareshash, hash)
+		delete(acc.shareshash, puid)
 		return true
 	}
 	return false
@@ -253,14 +253,14 @@ func (acc *Account) DelSharePath(syspath string) bool {
 	acc.mux.Lock()
 	defer acc.mux.Unlock()
 
-	if hash, ok := acc.sharespath[syspath]; ok {
+	if puid, ok := acc.sharespath[syspath]; ok {
 		for i, shr := range acc.Shares {
 			if shr == syspath {
 				acc.Shares = append(acc.Shares[:i], acc.Shares[i+1:]...)
 			}
 		}
 		delete(acc.sharespath, syspath)
-		delete(acc.shareshash, hash)
+		delete(acc.shareshash, puid)
 		return true
 	}
 	return false
@@ -270,8 +270,8 @@ func (acc *Account) SetupPref(sk *ShareKit, path string) {
 	acc.mux.RLock()
 	defer acc.mux.RUnlock()
 
-	if hash, ok := acc.sharespath[path]; ok {
-		sk.SetPref(hash)
+	if puid, ok := acc.sharespath[path]; ok {
+		sk.SetPref(puid)
 	}
 }
 
@@ -287,8 +287,8 @@ func splitprefsuff(shrpath string) (string, string) {
 	return shrpath, "" // root of share
 }
 
-// Brings share path to local file path.
-func (acc *Account) GetSharePath(shrpath string) string {
+// Brings share path to system file path.
+func (acc *Account) GetSystemPath(shrpath string) string {
 	var pref, suff = splitprefsuff(shrpath)
 	if pref == "" {
 		return shrpath
@@ -301,6 +301,23 @@ func (acc *Account) GetSharePath(shrpath string) string {
 		return path + suff
 	}
 	return shrpath
+}
+
+// Brings system path to largest share path.
+func (acc *Account) GetSharePath(syspath string) (string, bool) {
+	var pl int
+	var puid string
+	for shr, id := range acc.shareshash {
+		var sl = len(shr)
+		if strings.HasPrefix(syspath, shr) && sl > pl {
+			pl, puid = sl, id
+		}
+	}
+	if pl > 0 {
+		return puid + "/" + syspath[pl:], true
+	} else {
+		return syspath, false
+	}
 }
 
 // Returns access state of file path, is it shared by account,
@@ -323,7 +340,7 @@ func (acc *Account) PathState(syspath string) int {
 
 // Reads directory with given share path and returns ShareKit for each entry.
 func (acc *Account) Readdir(shrpath string) (ret []ShareKit, err error) {
-	var syspath = acc.GetSharePath(shrpath)
+	var syspath = acc.GetSystemPath(shrpath)
 	if !strings.HasSuffix(syspath, "/") {
 		syspath += "/"
 	}

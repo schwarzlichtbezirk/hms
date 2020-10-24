@@ -4,7 +4,7 @@ const filetmbwebp = file => file.ntmb === 1
 	? ''
 	: `/asst/file-webp/${geticonname(file)}.webp`;
 const filetmbpng = file => file.ntmb === 1
-	? `/id${app.aid}/thumb/${file.hash}`
+	? `/id${app.aid}/thumb/${file.puid}`
 	: `/asst/file-png/${geticonname(file)}.png`;
 
 const makemarkercontent = file => `

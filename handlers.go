@@ -21,7 +21,7 @@ var (
 	ErrNotFound  = errors.New("404 page not found")
 	ErrArgNoNum  = errors.New("'num' parameter not recognized")
 	ErrArgNoPath = errors.New("'path' argument required")
-	ErrArgNoHash = errors.New("'hash' or 'path' argument required")
+	ErrArgNoHash = errors.New("'puid' or 'path' argument required")
 	ErrNotDir    = errors.New("path is not directory")
 	ErrNoPath    = errors.New("path is not found")
 	ErrFpaNone   = errors.New("account has no access to specified file path")
@@ -73,7 +73,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var spath string
-	if hpath, ok := hashcache.Path(chunks[3]); ok {
+	if hpath, ok := pathcache.Path(chunks[3]); ok {
 		if len(chunks) > 3 {
 			spath = filepath.ToSlash(filepath.Join(hpath, strings.Join(chunks[4:], "/")))
 		} else {
@@ -83,7 +83,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 		spath = strings.Join(chunks[3:], "/")
 	}
 
-	var syspath = acc.GetSharePath(spath)
+	var syspath = acc.GetSystemPath(spath)
 	var state = acc.PathState(syspath)
 	if state == FPA_none {
 		WriteError(w, http.StatusForbidden, ErrFpaNone, EC_filefpanone)
@@ -130,8 +130,8 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var hash = chunks[3]
-	if syspath, ok := hashcache.Path(chunks[3]); ok {
+	var puid = chunks[3]
+	if syspath, ok := pathcache.Path(chunks[3]); ok {
 		var state = acc.PathState(syspath)
 		if state == FPA_none {
 			WriteError(w, http.StatusForbidden, ErrFpaNone, EC_thumbndeny)
@@ -143,7 +143,7 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var val interface{}
-	if val, err = thumbcache.Get(hash); err != nil {
+	if val, err = thumbcache.Get(puid); err != nil {
 		WriteError(w, http.StatusNotFound, err, EC_thumbabsent)
 		return
 	}
@@ -157,7 +157,7 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", tmb.Mime)
-	http.ServeContent(w, r, hash, starttime, bytes.NewReader(tmb.Data))
+	http.ServeContent(w, r, puid, starttime, bytes.NewReader(tmb.Data))
 }
 
 // APIHANDLER
@@ -232,9 +232,9 @@ func memusgApi(w http.ResponseWriter, r *http.Request) {
 
 // APIHANDLER
 func cchinfApi(w http.ResponseWriter, r *http.Request) {
-	hashcache.mux.RLock()
-	var pathnum = len(hashcache.keypath)
-	hashcache.mux.RUnlock()
+	pathcache.mux.RLock()
+	var pathnum = len(pathcache.keypath)
+	pathcache.mux.RUnlock()
 
 	var propnum = propcache.Len(false)
 
@@ -315,6 +315,66 @@ func getlogApi(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
+func getpthApi(w http.ResponseWriter, r *http.Request) {
+	var err error
+	var arg struct {
+		AID  int    `json:"aid"`
+		PUID string `json:"puid"`
+	}
+	var ret struct {
+		Path  string `json:"path"`
+		State int    `json:"state"`
+	}
+
+	// get arguments
+	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
+		if err = json.Unmarshal(jb, &arg); err != nil {
+			WriteError400(w, err, EC_getpthbadreq)
+			return
+		}
+		if len(arg.PUID) == 0 {
+			WriteError400(w, ErrNoData, EC_getpthnodata)
+			return
+		}
+	} else {
+		WriteError400(w, ErrNoJson, EC_getpthnoreq)
+		return
+	}
+
+	var acc *Account
+	if acc = acclist.ByID(int(arg.AID)); acc == nil {
+		WriteError400(w, ErrNoAcc, EC_getpthnoacc)
+		return
+	}
+
+	var syspath, ok = pathcache.Path(arg.PUID)
+	if !ok {
+		WriteError400(w, ErrNoPath, EC_getpthnopath)
+	}
+	var state = acc.PathState(syspath)
+	if state == FPA_none {
+		WriteError(w, http.StatusForbidden, ErrFpaNone, EC_getpthfpanone)
+		return
+	}
+	if state == FPA_admin {
+		var auth *Account
+		if auth, err = CheckAuth(r); err != nil {
+			WriteJson(w, http.StatusUnauthorized, err)
+			return
+		}
+		if acc.ID != auth.ID {
+			WriteError(w, http.StatusForbidden, ErrFpaAdmin, EC_getpthfpaadmin)
+			return
+		}
+	}
+
+	ret.Path = syspath
+	ret.State = state
+
+	WriteOK(w, ret)
+}
+
+// APIHANDLER
 func folderApi(w http.ResponseWriter, r *http.Request) {
 	incuint(&foldercallcout, 1)
 
@@ -343,7 +403,7 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var isroot = len(arg.Path) == 0
-	var syspath = acc.GetSharePath(arg.Path)
+	var syspath = acc.GetSystemPath(arg.Path)
 	var state = acc.PathState(syspath)
 	var auth *Account
 	if auth, err = CheckAuth(r); err != nil && !isroot && state < FPA_share {
@@ -372,10 +432,10 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 
 		if acc == auth || cfg.ShowSharesUser {
 			acc.mux.RLock()
-			for hash, path := range acc.shareshash {
+			for puid, path := range acc.shareshash {
 				if prop, err := propcache.Get(path); err == nil {
 					var sk = ShareKit{prop.(Proper), "", ""}
-					sk.SetPref(hash)
+					sk.SetPref(puid)
 					ret = append(ret, sk)
 				}
 			}
@@ -468,10 +528,10 @@ func shrlstApi(w http.ResponseWriter, r *http.Request) {
 
 	var ret []ShareKit
 	acc.mux.RLock()
-	for hash, fpath := range acc.shareshash {
+	for puid, fpath := range acc.shareshash {
 		if prop, err := propcache.Get(fpath); err == nil {
 			var sk = ShareKit{prop.(Proper), fpath, ""}
-			sk.SetPref(hash)
+			sk.SetPref(puid)
 			ret = append(ret, sk)
 		}
 	}
@@ -513,7 +573,7 @@ func shraddApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 		return
 	}
 
-	var syspath = acc.GetSharePath(arg.Path)
+	var syspath = acc.GetSystemPath(arg.Path)
 	var state = acc.PathState(syspath)
 	if state == FPA_none {
 		WriteError(w, http.StatusForbidden, ErrFpaNone, EC_filefpanone)
@@ -532,7 +592,7 @@ func shrdelApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 	var arg struct {
 		AID  int    `json:"aid"`
 		Path string `json:"path,omitempty"`
-		Hash string `json:"hash,omitempty"`
+		PUID string `json:"puid,omitempty"`
 	}
 	var ok bool
 
@@ -542,7 +602,7 @@ func shrdelApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 			WriteError400(w, err, EC_shrdelbadreq)
 			return
 		}
-		if len(arg.Path) == 0 && len(arg.Hash) == 0 {
+		if len(arg.Path) == 0 && len(arg.PUID) == 0 {
 			WriteError400(w, ErrArgNoPath, EC_shrdelnodata)
 			return
 		}
@@ -561,9 +621,9 @@ func shrdelApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 		return
 	}
 
-	if len(arg.Hash) > 0 {
-		if ok = acc.DelShareHash(arg.Hash); ok {
-			Log.Printf("id%d: delete share %s", acc.ID, arg.Hash)
+	if len(arg.PUID) > 0 {
+		if ok = acc.DelShareHash(arg.PUID); ok {
+			Log.Printf("id%d: delete share %s", acc.ID, arg.PUID)
 		}
 	} else if len(arg.Path) > 0 {
 		if ok = acc.DelSharePath(arg.Path); ok {

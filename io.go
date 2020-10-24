@@ -32,8 +32,8 @@ func (c *KeyThumbCache) Save(fpath string) (err error) {
 	const intro = `
 # Here is rewritable cache with key/path pairs list.
 # It's loads on server start, and saves before exit.
-# Each key is MD5-hash of file system path encoded
-# to base32, values are associated paths. Those keys
+# Each key is path unique ID encoded to base32 (RFC
+# 4648), values are associated paths. Those keys
 # used for files paths representations in URLs. You
 # can modify keys to any alphanumerical text that
 # should be unique.
@@ -78,8 +78,7 @@ func (cfg *Config) Load(fpath string) (err error) {
 func (cfg *Config) Save(fpath string) (err error) {
 	const intro = `
 # Server configuration file. First of all you can change
-# "access-key" and "refresh-key" for tokens defence, and
-# "path-hash-salt" to prevent decode file paths hashes.
+# "access-key" and "refresh-key" for tokens defence.
 
 `
 

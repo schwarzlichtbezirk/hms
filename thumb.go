@@ -43,7 +43,7 @@ var thumbpngenc = png.Encoder{
 
 // HTTP error messages
 var (
-	ErrNoHash   = errors.New("file with given hash not found")
+	ErrNoPUID   = errors.New("file with given puid not found")
 	ErrBadThumb = errors.New("thumbnail cache is corrupted")
 	ErrNotThumb = errors.New("thumbnail content can not be created")
 	ErrNotImg   = errors.New("file is not image")
@@ -60,28 +60,28 @@ type ThumbElem struct {
 
 // Thumbnails properties.
 type TmbProp struct {
-	HashVal string `json:"hash,omitempty"`
+	PUIDVal string `json:"puid,omitempty"`
 	NTmbVal int    `json:"ntmb,omitempty"`
 }
 
-// Generates cache key as hash of path and updates cached state.
+// Generates PUID (path unique identifier) and updates cached state.
 func (tp *TmbProp) Setup(syspath string) {
-	tp.HashVal = hashcache.Cache(syspath)
+	tp.PUIDVal = pathcache.Cache(syspath)
 	tp.NTmbCached()
 }
 
 // Updates cached state for this cache key.
 func (tp *TmbProp) NTmbCached() {
-	if thumbcache.Has(tp.HashVal) {
+	if thumbcache.Has(tp.PUIDVal) {
 		tp.NTmbVal = TMB_cached
 	} else {
 		tp.NTmbVal = TMB_none
 	}
 }
 
-// Thumbnail key, it's MD5-hash of full path.
-func (tp *TmbProp) Hash() string {
-	return tp.HashVal
+// Thumbnail key, it's full system path unique ID.
+func (tp *TmbProp) PUID() string {
+	return tp.PUIDVal
 }
 
 // Thumbnail state, -1 impossible, 0 undefined, 1 ready.
@@ -198,7 +198,7 @@ func tmbchkApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, tp := range arg.Tmbs {
-		if syspath, ok := hashcache.Path(tp.Hash()); ok {
+		if syspath, ok := pathcache.Path(tp.PUID()); ok {
 			if prop, err := propcache.Get(syspath); err == nil {
 				tp.NTmbVal = prop.(Proper).NTmb()
 			}
@@ -239,9 +239,9 @@ func tmbscnApi(w http.ResponseWriter, r *http.Request) {
 
 	go func() {
 		for _, shrpath := range arg.Paths {
-			var syspath = acc.GetSharePath(shrpath)
-			if hash, ok := hashcache.Key(syspath); ok {
-				thumbcache.Get(hash)
+			var syspath = acc.GetSystemPath(shrpath)
+			if puid, ok := pathcache.PUID(syspath); ok {
+				thumbcache.Get(puid)
 			}
 		}
 	}()
