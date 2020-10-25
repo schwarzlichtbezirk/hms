@@ -37,9 +37,6 @@ const filehint = file => {
 	const lst = [];
 	lst.push(file.name);
 	// Std properties
-	if (file.pref) {
-		lst.push('share: ' + "/id" + app.aid + shareprefix + file.pref);
-	}
 	if (FTtoFG[file.type] !== FG.dir) {
 		lst.push('size: ' + fmtitemsize(file.size || 0));
 	}

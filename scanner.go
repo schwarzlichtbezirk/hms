@@ -219,16 +219,6 @@ type ShareKit struct {
 // Sets full path value.
 func (sk *ShareKit) SetPath(path string) {
 	sk.Path = path
-	sk.Pref = ""
-}
-
-// Sets new share prefix value and updates full path.
-func (sk *ShareKit) SetPref(pref string) {
-	sk.Pref = pref
-	sk.Path = pref
-	if sk.Prop.Type() < 0 {
-		sk.Path += "/"
-	}
 }
 
 // Common file properties chunk.
@@ -238,7 +228,6 @@ type StdProp struct {
 	SizeVal int64  `json:"size,omitempty"`
 	TimeVal int64  `json:"time,omitempty"`
 	TypeVal int    `json:"type,omitempty"`
-	PrefVal string `json:"pref,omitempty"`
 }
 
 // Fills fields from os.FileInfo structure. Do not looks for share.

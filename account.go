@@ -176,7 +176,6 @@ func (acc *Account) ScanRoots() []ShareKit {
 		dk.Setup(root)
 		dk.Scan(root)
 		var sk = ShareKit{&dk, root, ""}
-		acc.SetupPref(&sk, root)
 		drvs[i] = sk
 	}
 	return drvs
@@ -266,15 +265,6 @@ func (acc *Account) DelSharePath(syspath string) bool {
 	return false
 }
 
-func (acc *Account) SetupPref(sk *ShareKit, path string) {
-	acc.mux.RLock()
-	defer acc.mux.RUnlock()
-
-	if puid, ok := acc.sharespath[path]; ok {
-		sk.SetPref(puid)
-	}
-}
-
 // Splits given share path to share prefix and remained suffix.
 func splitprefsuff(shrpath string) (string, string) {
 	for i, c := range shrpath {
@@ -338,9 +328,8 @@ func (acc *Account) PathState(syspath string) int {
 	return FPA_none
 }
 
-// Reads directory with given share path and returns ShareKit for each entry.
-func (acc *Account) Readdir(shrpath string) (ret []ShareKit, err error) {
-	var syspath = acc.GetSystemPath(shrpath)
+// Reads directory with given system path and returns ShareKit for each entry.
+func (acc *Account) Readdir(syspath string) (ret []ShareKit, err error) {
 	if !strings.HasSuffix(syspath, "/") {
 		syspath += "/"
 	}
@@ -369,14 +358,11 @@ func (acc *Account) Readdir(shrpath string) (ret []ShareKit, err error) {
 	for _, fi := range fis {
 		if fi != nil {
 			var fpath = syspath + fi.Name()
-			var spath = shrpath + fi.Name()
 			if fi.IsDir() {
 				fpath += "/"
-				spath += "/"
 			}
 			if !acc.IsHidden(fpath) {
-				var sk = ShareKit{CacheProp(fpath, fi), spath, ""}
-				acc.SetupPref(&sk, fpath)
+				var sk = ShareKit{CacheProp(fpath, fi), fpath, ""}
 				ret = append(ret, sk)
 				fgrp[typetogroup[sk.Prop.Type()]]++
 			}

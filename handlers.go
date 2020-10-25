@@ -315,75 +315,20 @@ func getlogApi(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
-func getpthApi(w http.ResponseWriter, r *http.Request) {
-	var err error
-	var arg struct {
-		AID  int    `json:"aid"`
-		PUID string `json:"puid"`
-	}
-	var ret struct {
-		Path  string `json:"path"`
-		State int    `json:"state"`
-	}
-
-	// get arguments
-	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
-		if err = json.Unmarshal(jb, &arg); err != nil {
-			WriteError400(w, err, EC_getpthbadreq)
-			return
-		}
-		if len(arg.PUID) == 0 {
-			WriteError400(w, ErrNoData, EC_getpthnodata)
-			return
-		}
-	} else {
-		WriteError400(w, ErrNoJson, EC_getpthnoreq)
-		return
-	}
-
-	var acc *Account
-	if acc = acclist.ByID(int(arg.AID)); acc == nil {
-		WriteError400(w, ErrNoAcc, EC_getpthnoacc)
-		return
-	}
-
-	var syspath, ok = pathcache.Path(arg.PUID)
-	if !ok {
-		WriteError400(w, ErrNoPath, EC_getpthnopath)
-	}
-	var state = acc.PathState(syspath)
-	if state == FPA_none {
-		WriteError(w, http.StatusForbidden, ErrFpaNone, EC_getpthfpanone)
-		return
-	}
-	if state == FPA_admin {
-		var auth *Account
-		if auth, err = CheckAuth(r); err != nil {
-			WriteJson(w, http.StatusUnauthorized, err)
-			return
-		}
-		if acc.ID != auth.ID {
-			WriteError(w, http.StatusForbidden, ErrFpaAdmin, EC_getpthfpaadmin)
-			return
-		}
-	}
-
-	ret.Path = syspath
-	ret.State = state
-
-	WriteOK(w, ret)
-}
-
-// APIHANDLER
 func folderApi(w http.ResponseWriter, r *http.Request) {
 	incuint(&foldercallcout, 1)
 
 	var err error
 	var arg struct {
 		AID  int    `json:"aid"`
-		Path string `json:"path"`
+		PUID string `json:"puid"`
 	}
-	var ret []ShareKit
+	var ret struct {
+		List  []ShareKit `json:"list"`
+		Path  string     `json:"path"`
+		State int        `json:"state"`
+		Name  string     `json:"shrname"`
+	}
 
 	// get arguments
 	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
@@ -402,53 +347,66 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var isroot = len(arg.Path) == 0
-	var syspath = acc.GetSystemPath(arg.Path)
-	var state = acc.PathState(syspath)
-	var auth *Account
-	if auth, err = CheckAuth(r); err != nil && !isroot && state < FPA_share {
-		WriteJson(w, http.StatusUnauthorized, err)
-		return
-	}
-	if !isroot {
-		if state == FPA_none {
-			WriteError(w, http.StatusForbidden, ErrFpaNone, EC_folderfpanone)
-			return
-		}
-		if state == FPA_admin {
-			if acc.ID != auth.ID {
-				WriteError(w, http.StatusForbidden, ErrFpaAdmin, EC_folderfpaadmin)
-				return
-			}
-		}
-	}
-
-	if isroot {
-		if auth != nil {
-			ret = auth.ScanRoots()
+	if len(arg.PUID) == 0 { // for root only
+		var auth, _ = CheckAuth(r)
+		if acc == auth {
+			ret.List = auth.ScanRoots()
+			ret.State = FPA_admin
 		} else {
-			ret = []ShareKit{}
+			ret.List = []ShareKit{}
+			ret.State = FPA_share
 		}
 
 		if acc == auth || cfg.ShowSharesUser {
 			acc.mux.RLock()
-			for puid, path := range acc.shareshash {
+			for _, path := range acc.Shares {
 				if prop, err := propcache.Get(path); err == nil {
 					var sk = ShareKit{prop.(Proper), "", ""}
-					sk.SetPref(puid)
-					ret = append(ret, sk)
+					ret.List = append(ret.List, sk)
 				}
 			}
 			acc.mux.RUnlock()
 		}
 		Log.Printf("navigate to root")
-	} else {
-		if ret, err = acc.Readdir(arg.Path); err != nil {
-			WriteError(w, http.StatusNotFound, err, EC_folderfail)
+
+		WriteOK(w, ret)
+		return
+	}
+
+	var syspath, ok = pathcache.Path(arg.PUID)
+	if !ok {
+		WriteError400(w, ErrNoPath, EC_foldernopath)
+	}
+	var state = acc.PathState(syspath)
+	if state == FPA_none {
+		WriteError(w, http.StatusForbidden, ErrFpaNone, EC_folderfpanone)
+		return
+	}
+	if state == FPA_admin {
+		var auth *Account
+		if auth, err = CheckAuth(r); err != nil {
+			WriteJson(w, http.StatusUnauthorized, err)
 			return
 		}
-		Log.Printf("navigate to: %s", syspath)
+		if acc.ID != auth.ID {
+			WriteError(w, http.StatusForbidden, ErrFpaAdmin, EC_folderfpaadmin)
+			return
+		}
 	}
+	if state == FPA_share {
+		var share, _ = acc.GetSharePath(syspath)
+		ret.Path = share
+		ret.Name = filepath.Base(share)
+	} else {
+		ret.Path = syspath
+	}
+	ret.State = state
+
+	if ret.List, err = acc.Readdir(syspath); err != nil {
+		WriteError(w, http.StatusNotFound, err, EC_folderfail)
+		return
+	}
+	Log.Printf("navigate to: %s", syspath)
 
 	WriteOK(w, ret)
 }
@@ -482,13 +440,8 @@ func ispathApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 		return
 	}
 
-	if prop, err := propcache.Get(arg.Path); err == nil {
-		var sk = ShareKit{prop.(Proper), arg.Path, ""}
-		acc.SetupPref(&sk, arg.Path)
-		WriteOK(w, sk)
-	} else {
-		WriteOK(w, nil)
-	}
+	prop, err := propcache.Get(arg.Path)
+	WriteOK(w, prop)
 }
 
 // APIHANDLER
@@ -497,6 +450,7 @@ func shrlstApi(w http.ResponseWriter, r *http.Request) {
 	var arg struct {
 		AID int `json:"aid"`
 	}
+	var ret []Proper
 
 	// get arguments
 	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
@@ -526,13 +480,10 @@ func shrlstApi(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	var ret []ShareKit
 	acc.mux.RLock()
-	for puid, fpath := range acc.shareshash {
-		if prop, err := propcache.Get(fpath); err == nil {
-			var sk = ShareKit{prop.(Proper), fpath, ""}
-			sk.SetPref(puid)
-			ret = append(ret, sk)
+	for _, path := range acc.Shares {
+		if prop, err := propcache.Get(path); err == nil {
+			ret = append(ret, prop.(Proper))
 		}
 	}
 	acc.mux.RUnlock()
@@ -697,9 +648,7 @@ func drvaddApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 	acc.Roots = append(acc.Roots, arg.Path)
 	acc.mux.Unlock()
 
-	var sk = ShareKit{&dk, arg.Path, ""}
-
-	WriteOK(w, sk)
+	WriteOK(w, dk)
 }
 
 // APIHANDLER

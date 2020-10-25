@@ -4,12 +4,12 @@
 		<nav aria-label="breadcrumb">
 			<ol class="breadcrumb">
 				<li v-for="file in curpathway" class="breadcrumb-item align-self-center"><button v-on:click="onpathopen(file)" v-bind:title="file.path" class="btn btn-link p-0">{{file.name}}</button></li>
-				<li class="breadcrumb-item align-self-center active" aria-current="page">{{curpath.name||'root folder'}}</li>
+				<li class="breadcrumb-item align-self-center active" aria-current="page">{{curprop.name||'root folder'}}</li>
 			</ol>
 		</nav>
 		<p v-for="shr in curpathshares">
 			Shared at <span class="bg-stat">{{shr.name}}</span> as
-			<span class="bg-stat"><a v-bind:href="`/id${aid}/path/${shr.pref}/${shr.suff}`" target="_blank">{{`/id${aid}/path/${shr.pref}/${shr.suff}`}}</a></span>
+			<span class="bg-stat"><a v-bind:href="`/id${aid}/path/${shr.puid}/${shr.suff}`" target="_blank">{{`/id${aid}/path/${shr.puid}/${shr.suff}`}}</a></span>
 		</p>
 		<p v-if="!curpathshares.length">Folder does not shared</p>
 		<p class="small">
@@ -63,11 +63,11 @@
 
 	<div id="accordion">
 		<template>
-			<dir-card-tag v-bind:list="pathlist" v-on:open="onpathopen" v-on:share="onshare" />
+			<dir-card-tag v-bind:list="pathlist" v-bind:shared="shared" v-on:open="onpathopen" v-on:share="onshare" />
 		</template>
 
 		<template>
-			<file-card-tag v-bind:list="filelist" v-on:share="onshare" />
+			<file-card-tag v-bind:list="filelist" v-bind:shared="shared" v-on:share="onshare" />
 		</template>
 
 		<template>

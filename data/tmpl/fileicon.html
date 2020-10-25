@@ -6,7 +6,7 @@
 			<source v-bind:srcset="pngicon" v-bind:class="clsimage" type="image/png">
 			<img src="/asst/file-png/doc-file.png" v-bind:class="clsimage" v-bind:alt="file.name">
 		</picture>
-		<picture v-if="file.pref">
+		<picture v-if="state.shared">
 			<source srcset="/asst/file-webp/shared.webp" v-bind:class="clsimage" type="image/webp">
 			<source srcset="/asst/file-png/shared.png" v-bind:class="clsimage" type="image/png">
 			<img src="/asst/file-png/shared.png" v-bind:class="clsimage" alt="shared">

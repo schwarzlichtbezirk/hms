@@ -147,7 +147,7 @@ const DS = {
 	red: 10000
 };
 
-const root = { name: "", path: "", size: 0, time: 0, type: FT.dir };
+const root = { name: "", path: "", size: 0, time: 0, type: FT.dir, puid: "" };
 
 const shareprefix = "/file/";
 
@@ -255,9 +255,6 @@ const tofp = sk => {
 	if ('path' in sk) {
 		fp.path = sk.path;
 	}
-	if ('pref' in sk) {
-		fp.pref = sk.pref;
-	}
 	return fp;
 };
 
@@ -304,8 +301,11 @@ let app = new Vue({
 		// current opened folder data
 		pathlist: [], // list of subfolders properties in current folder
 		filelist: [], // list of files properties in current folder
-		curpath: root, // current folder properties
+		curprop: root, // current folder properties
 		curscan: new Date(), // time of last scanning of current folder
+		curpath: "", // current path and path state
+		curstate: 2, // current path state
+		shrname: "", // current path share name
 		histpos: 0, // position in history stack
 		histlist: [] // history stack
 	},
@@ -316,11 +316,11 @@ let app = new Vue({
 		},
 		// array of paths to current folder
 		curpathway() {
-			if (!this.curpath.name) {
+			if (!this.curprop.name) {
 				return [];
 			}
 
-			const arr = this.curpath.path.split('/');
+			const arr = this.curprop.path.split('/');
 			// remove empty element from separator at the end
 			// and remove current name
 			if (!arr.pop()) {
@@ -345,7 +345,7 @@ let app = new Vue({
 		// get all folder shares
 		curpathshares() {
 			const lst = [];
-			const fldpath = this.curpath.path;
+			const fldpath = this.curprop.path;
 			for (const fp of this.shared) {
 				if (fp.path.length <= fldpath.length && fldpath.substr(0, fp.path.length) === fp.path) {
 					const shr = Object.assign({}, fp);
@@ -379,7 +379,7 @@ let app = new Vue({
 		// common buttons enablers
 
 		dishome() {
-			return !this.curpath.name;
+			return !this.curprop.name;
 		},
 		disback() {
 			return this.histpos < 2;
@@ -442,13 +442,13 @@ let app = new Vue({
 		fetchfolder(file) {
 			return fetchajaxauth("POST", "/api/folder", {
 				aid: this.aid,
-				path: file.path
+				path: file.puid
 			}).then(response => {
 				traceajax(response);
 
 				this.pathlist = [];
 				this.filelist = [];
-				this.curpath = file;
+				this.curprop = file;
 				this.seturl();
 				// init map card
 				this.$refs.mapcard.new();
@@ -456,7 +456,7 @@ let app = new Vue({
 				if (response.ok) {
 					this.curscan = new Date(Date.now());
 					// update folder settings
-					for (const sk of response.data || []) {
+					for (const sk of response.data.list || []) {
 						if (sk) {
 							const fp = tofp(sk);
 							if (fp.type < 0) {
@@ -466,15 +466,10 @@ let app = new Vue({
 							}
 						}
 					}
-					// update shares
-					if (!file.path) { // shares only at root
-						this.shared = [];
-						for (const fp of this.pathlist) {
-							if (fp.pref) {
-								this.shared.push(fp);
-							}
-						}
-					}
+					// current path & state
+					this.curpath = response.data.path;
+					this.curstate = response.data.state;
+					this.shrname = response.data.shrname;
 					// update map card
 					const gpslist = [];
 					for (const fp of this.filelist) {
@@ -519,7 +514,7 @@ let app = new Vue({
 									}
 								}
 								this.$refs.mapcard.addmarkers(gpslist); // update map card
-								if (this.uncached.length && this.curpath === file) {
+								if (this.uncached.length && this.curprop === file) {
 									setTimeout(chktmb, 1500); // wait and run again
 								}
 							}
@@ -561,16 +556,7 @@ let app = new Vue({
 			}).then(response => {
 				traceajax(response);
 				if (response.ok) {
-					this.shared = [];
-					for (const sk of response.data) {
-						// check on cached value exist & it is directory
-						if (sk) {
-							const fp = tofp(sk);
-							if (fp && FTtoFG[fp.type] === FG.dir) {
-								this.shared.push(fp);
-							}
-						}
-					}
+					this.shared = response.data || [];
 				}
 			});
 		},
@@ -583,7 +569,6 @@ let app = new Vue({
 				traceajax(response);
 				if (response.ok) {
 					if (response.data) {
-						Vue.set(file, 'pref', file.puid);
 						this.shared.push(file);
 					}
 				} else if (response.status === 404) { // Not Found
@@ -617,11 +602,10 @@ let app = new Vue({
 								}
 							}
 						}
-						Vue.delete(file, 'pref');
 
-						if (this.curpath.path) {
+						if (this.curprop.path) {
 							// adjust file path to current path
-							file.path = this.curpath.path + file.name;
+							file.path = this.curprop.path + file.name;
 							if (isdir) {
 								file.path += '/';
 							}
@@ -646,9 +630,18 @@ let app = new Vue({
 			});
 		},
 
+		isshared(file) {
+			for (const shr of this.shared) {
+				if (shr.puid === file.puid) {
+					return true;
+				}
+			}
+			return false;
+		},
+
 		seturl() {
-			window.history.replaceState(this.curpath, this.curpath.path,
-				`${(devmode ? "/dev" : "")}/id${this.aid}/path/${this.curpath.path}`);
+			window.history.replaceState(this.curprop, this.curprop.path,
+				`${(devmode ? "/dev" : "")}/id${this.aid}/path/${this.curprop.path}`);
 		},
 
 		setskin(skinlink) {
@@ -692,7 +685,7 @@ let app = new Vue({
 		},
 
 		onrefresh() {
-			const file = this.curpath;
+			const file = this.curprop;
 
 			ajaxcc.emit('ajax', +1);
 			this.fetchfolder(file)
@@ -701,13 +694,13 @@ let app = new Vue({
 		},
 
 		onshare(file) {
-			if (!file.pref) { // should add share
-				ajaxcc.emit('ajax', +1);
-				this.fetchshareadd(file)
-					.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
-			} else { // should remove share
+			if (this.isshared(file)) { // should remove share
 				ajaxcc.emit('ajax', +1);
 				this.fetchsharedel(file)
+					.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
+			} else { // should add share
+				ajaxcc.emit('ajax', +1);
+				this.fetchshareadd(file)
 					.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
 			}
 		},

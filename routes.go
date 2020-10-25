@@ -98,76 +98,68 @@ const (
 	// getlog
 	EC_getlogbadnum = 62
 
-	// getpth
-	EC_getpthnoreq    = 70
-	EC_getpthbadreq   = 71
-	EC_getpthnodata   = 72
-	EC_getpthnoacc    = 73
-	EC_getpthnopath   = 74
-	EC_getpthfpanone  = 75
-	EC_getpthfpaadmin = 76
-
 	// folder
-	EC_foldernoreq    = 80
-	EC_folderbadreq   = 81
-	EC_foldernoacc    = 82
-	EC_folderfpanone  = 83
-	EC_folderfpaadmin = 84
-	EC_folderfail     = 85
+	EC_foldernoreq    = 70
+	EC_folderbadreq   = 71
+	EC_foldernoacc    = 72
+	EC_foldernopath   = 73
+	EC_folderfpanone  = 74
+	EC_folderfpaadmin = 75
+	EC_folderfail     = 76
 
 	// ispath
-	EC_ispathnoreq  = 90
-	EC_ispathbadreq = 91
-	EC_ispathnoacc  = 92
-	EC_ispathdeny   = 93
+	EC_ispathnoreq  = 80
+	EC_ispathbadreq = 81
+	EC_ispathnoacc  = 82
+	EC_ispathdeny   = 83
 
 	// tmb/chk
-	EC_tmbchknoreq  = 100
-	EC_tmbchkbadreq = 101
-	EC_tmbchknodata = 102
+	EC_tmbchknoreq  = 90
+	EC_tmbchkbadreq = 91
+	EC_tmbchknodata = 92
 
 	// tmb/scn
-	EC_tmbscnnoreq  = 103
-	EC_tmbscnbadreq = 104
-	EC_tmbscnnodata = 105
-	EC_tmbscnnoacc  = 106
+	EC_tmbscnnoreq  = 93
+	EC_tmbscnbadreq = 94
+	EC_tmbscnnodata = 95
+	EC_tmbscnnoacc  = 96
 
 	// share/lst
-	EC_shrlstnoreq  = 110
-	EC_shrlstbadreq = 111
-	EC_shrlstnoacc  = 112
-	EC_shrlstdeny   = 113
+	EC_shrlstnoreq  = 100
+	EC_shrlstbadreq = 101
+	EC_shrlstnoacc  = 102
+	EC_shrlstdeny   = 103
 
 	// share/add
-	EC_shraddnoreq   = 120
-	EC_shraddbadreq  = 121
-	EC_shraddnodata  = 122
-	EC_shraddnoacc   = 123
-	EC_shradddeny    = 124
-	EC_shraddfpanone = 125
+	EC_shraddnoreq   = 110
+	EC_shraddbadreq  = 111
+	EC_shraddnodata  = 112
+	EC_shraddnoacc   = 113
+	EC_shradddeny    = 114
+	EC_shraddfpanone = 115
 
 	// share/del
-	EC_shrdelnoreq  = 130
-	EC_shrdelbadreq = 131
-	EC_shrdelnodata = 132
-	EC_shrdelnoacc  = 133
-	EC_shrdeldeny   = 134
-	EC_shrdelnohash = 135
+	EC_shrdelnoreq  = 120
+	EC_shrdelbadreq = 121
+	EC_shrdelnodata = 122
+	EC_shrdelnoacc  = 123
+	EC_shrdeldeny   = 124
+	EC_shrdelnohash = 125
 
 	// drive/add
-	EC_drvaddnoreq  = 140
-	EC_drvaddbadreq = 141
-	EC_drvaddnodata = 142
-	EC_drvaddnoacc  = 143
-	EC_drvadddeny   = 144
-	EC_drvaddfile   = 145
+	EC_drvaddnoreq  = 130
+	EC_drvaddbadreq = 131
+	EC_drvaddnodata = 132
+	EC_drvaddnoacc  = 133
+	EC_drvadddeny   = 134
+	EC_drvaddfile   = 135
 
 	// drive/del
-	EC_drvdelnoreq  = 150
-	EC_drvdelbadreq = 151
-	EC_drvdelnodata = 152
-	EC_drvdelnoacc  = 153
-	EC_drvdeldeny   = 154
+	EC_drvdelnoreq  = 140
+	EC_drvdelbadreq = 141
+	EC_drvdelnodata = 142
+	EC_drvdelnoacc  = 143
+	EC_drvdeldeny   = 144
 )
 
 //////////////////
@@ -232,7 +224,6 @@ func RegisterRoutes(gmux *Router) {
 	api.Path("/pubkey").HandlerFunc(AjaxWrap(pubkeyApi))
 	api.Path("/signin").HandlerFunc(AjaxWrap(signinApi))
 	api.Path("/refrsh").HandlerFunc(AjaxWrap(refrshApi))
-	api.Path("/getpth").HandlerFunc(AjaxWrap(getpthApi))
 	api.Path("/folder").HandlerFunc(AjaxWrap(folderApi))
 	api.Path("/ispath").HandlerFunc(AuthWrap(ispathApi))
 	var tmb = api.PathPrefix("/tmb").Subrouter()

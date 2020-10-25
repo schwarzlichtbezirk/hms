@@ -51,7 +51,7 @@ const copyTextToClipboard = text => {
 
 Vue.component('dir-card-tag', {
 	template: '#dir-card-tpl',
-	props: ["list"],
+	props: ["list", "shared"],
 	data: function () {
 		return {
 			isauth: false, // is authorized
@@ -95,7 +95,7 @@ Vue.component('dir-card-tag', {
 			return !this.selfile;
 		},
 		clsshared() {
-			return { active: this.selfile && this.selfile.pref };
+			return { active: this.selfile && this.isshared(this.selfile) };
 		},
 		disdiskadd() {
 			return !this.diskpath.length;
@@ -131,6 +131,22 @@ Vue.component('dir-card-tag', {
 		}
 	},
 	methods: {
+		isshared(file) {
+			for (const shr of this.shared) {
+				if (shr.puid === file.puid) {
+					return true;
+				}
+			}
+			return false;
+		},
+		// playlist files attributes
+		getstate(file) {
+			return {
+				selected: this.selfile === file,
+				playback: false,
+				shared: this.isshared(file)
+			};
+		},
 		onlink() {
 			copyTextToClipboard(window.location.origin + hashpathurl(this.selfile));
 		},
@@ -172,7 +188,7 @@ Vue.component('dir-card-tag', {
 				if (response.ok) {
 					if (response.data) {
 						this.list.splice(this.list.findIndex(elem => elem === this.selfile), 1);
-						if (this.selfile.pref) {
+						if (this.isshared(this.selfile)) {
 							this.fetchsharedel(this.selfile);
 						}
 					}
@@ -217,7 +233,7 @@ Vue.component('dir-card-tag', {
 
 Vue.component('file-card-tag', {
 	template: '#file-card-tpl',
-	props: ["list"],
+	props: ["list", "shared"],
 	data: function () {
 		return {
 			isauth: false, // is authorized
@@ -283,7 +299,7 @@ Vue.component('file-card-tag', {
 			return !this.selfile;
 		},
 		clsshared() {
-			return { active: this.selfile && this.selfile.pref };
+			return { active: this.selfile && this.isshared(this.selfile) };
 		},
 
 		clsorder() {
@@ -391,11 +407,20 @@ Vue.component('file-card-tag', {
 					return this.other;
 			}
 		},
+		isshared(file) {
+			for (const shr of this.shared) {
+				if (shr.puid === file.puid) {
+					return true;
+				}
+			}
+			return false;
+		},
 		// playlist files attributes
 		getstate(file) {
 			return {
 				selected: this.selfile === file,
-				playback: this.playbackfile && this.playbackfile.name === file.name
+				playback: this.playbackfile && this.playbackfile.name === file.name,
+				shared: this.isshared(file)
 			};
 		},
 		// close current single file viewer
