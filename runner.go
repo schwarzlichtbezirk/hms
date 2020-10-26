@@ -57,6 +57,10 @@ type CfgSpec struct {
 	ThumbFileMaxSize int64 `json:"thumb-file-maxsize" yaml:"thumb-file-maxsize"`
 	// Stretch big image embedded into mp3-file to fit into standard icon size.
 	FitEmbeddedTmb bool `json:"fit-embedded-tmb" yaml:"fit-embedded-tmb"`
+	// Initial size of path unique identifiers in bytes, maximum is 10
+	// (x1.6 for length of string representation).
+	// When the bottom pool arrives to 90%, size increases to next available value.
+	PUIDsize int `json:"puid-size" yaml:"puid-size"`
 	// Maximum items number in files properties cache.
 	PropCacheMaxNum int `json:"prop-cache-maxnum" yaml:"prop-cache-maxnum"`
 	// Maximum items number in thumbnails cache.
@@ -93,6 +97,7 @@ var cfg = Config{ // inits default values:
 		WPKmmap:          false,
 		DefAccID:         0,
 		ThumbFileMaxSize: 4096*3072*4 + 65536,
+		PUIDsize:         3,
 		PropCacheMaxNum:  32 * 1024,
 		ThumbCacheMaxNum: 2 * 1024,
 	},

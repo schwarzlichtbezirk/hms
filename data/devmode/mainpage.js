@@ -147,8 +147,6 @@ const DS = {
 	red: 10000
 };
 
-const root = { name: "", path: "", size: 0, time: 0, type: FT.dir, puid: "" };
-
 const shareprefix = "/file/";
 
 const geticonname = file => {
@@ -248,7 +246,7 @@ const geticonname = file => {
 const encode = (uri) => encodeURI(uri).replace('#', '%23').replace('&', '%26').replace('+', '%2B');
 
 const hashfileurl = file => `/id${app.aid}/file/${file.puid}`;
-const hashpathurl = file => `/id${app.aid}/path/${file.puid}`;
+const hashpathurl = file => `${(devmode ? "/dev" : "")}/id${app.aid}/path/${file.puid}`;
 
 const showmsgbox = (title, body) => {
 	const dlg = $("#msgbox");
@@ -293,11 +291,11 @@ let app = new Vue({
 		// current opened folder data
 		pathlist: [], // list of subfolders properties in current folder
 		filelist: [], // list of files properties in current folder
-		curprop: root, // current folder properties
 		curscan: new Date(), // time of last scanning of current folder
-		curpath: "", // current path and path state
-		curstate: 2, // current path state
-		shrname: "", // current path share name
+		curpuid: "", // current folder PUID
+		curpath: "", // current folder path and path state
+		curstate: 2, // current folder path state
+		shrname: "", // current folder path share name
 		histpos: 0, // position in history stack
 		histlist: [] // history stack
 	},
@@ -307,8 +305,21 @@ let app = new Vue({
 			return this.isauth || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 		},
 		// current page URL
-		cururl() {
+		curshorturl() {
+			return `${(devmode ? "/dev" : "")}/id${this.aid}/path/${this.curpuid}`;
+		},
+		// current page URL
+		curlongurl() {
 			return `${(devmode ? "/dev" : "")}/id${this.aid}/path/${this.curpath}`;
+		},
+		// current path base name
+		curbasename() {
+			if (!this.curpath) {
+				return 'root folder';
+			}
+			const arr = this.curpath.split('/');
+			const base = arr.pop() || arr.pop();
+			return arr.length ? base : this.shrname;
 		},
 		// array of paths to current folder
 		curpathway() {
@@ -367,7 +378,7 @@ let app = new Vue({
 			return this.histpos < 2;
 		},
 		disforward() {
-			return this.histpos > this.histlist.length - 1;
+			return this.histpos >= this.histlist.length;
 		},
 		disparent() {
 			return !this.curpathway.length;
@@ -387,25 +398,25 @@ let app = new Vue({
 
 		// buttons hints
 		hintback() {
-			if (this.histpos < 2) {
-				return "go back";
-			} else {
-				let name = this.histlist[this.histpos - 2].name;
-				if (!name) {
-					name = "root folder";
+			if (this.histpos > 1) {
+				const arg = this.histlist[this.histpos - 2];
+				if (!arg.path) {
+					return "back to root folder";
 				}
-				return "go back to " + name;
+				return `back to /id${arg.aid}/path/${arg.path}`;
+			} else {
+				return "go back";
 			}
 		},
 		hintforward() {
-			if (this.histpos > this.histlist.length - 1) {
-				return "go forward";
-			} else {
-				let name = this.histlist[this.histpos].name;
-				if (!name) {
-					name = "root folder";
+			if (this.histpos < this.histlist.length) {
+				const arg = this.histlist[this.histpos];
+				if (!arg.path) {
+					return "forward to root folder";
 				}
-				return "go forward to " + name;
+				return `forward to /id${arg.aid}/path/${arg.path}`;
+			} else {
+				return "go forward";
 			}
 		},
 		hintparent() {
@@ -421,16 +432,12 @@ let app = new Vue({
 	},
 	methods: {
 		// opens given folder cleary
-		fetchfolder(file) {
-			return fetchajaxauth("POST", "/api/folder", {
-				aid: this.aid,
-				puid: file.puid
-			}).then(response => {
+		fetchfolder(arg) {
+			return fetchajaxauth("POST", "/api/folder", arg).then(response => {
 				traceajax(response);
 
 				this.pathlist = [];
 				this.filelist = [];
-				this.curprop = file;
 				// init map card
 				this.$refs.mapcard.new();
 
@@ -447,7 +454,8 @@ let app = new Vue({
 						}
 					}
 					// current path & state
-					this.curpath = response.data.path;
+					this.curpuid = arg.puid = response.data.puid;
+					this.curpath = arg.path = response.data.path;
 					this.curstate = response.data.state;
 					this.shrname = response.data.shrname;
 					this.seturl();
@@ -519,14 +527,12 @@ let app = new Vue({
 		},
 
 		// opens given folder and push history step
-		fetchopenfolder(file) {
-			return this.fetchfolder(file)
+		fetchopenfolder(arg) {
+			return this.fetchfolder(arg)
 				.then(() => {
 					// update folder history
-					if (this.histpos < this.histlist.length) {
-						this.histlist.splice(this.histpos, this.histlist.length - this.histpos);
-					}
-					this.histlist.push(file);
+					this.histlist.splice(this.histpos);
+					this.histlist.push(arg);
 					this.histpos = this.histlist.length;
 				});
 		},
@@ -574,25 +580,16 @@ let app = new Vue({
 					const ok = response.data;
 					// update folder settings
 					if (ok) {
-						const isdir = FTtoFG[file.type] === FG.dir;
-						if (isdir) {
-							for (let i in this.shared) {
-								if (this.shared[i].puid === file.puid) {
-									this.shared.splice(i, 1);
-									break;
-								}
+						for (let i in this.shared) {
+							if (this.shared[i].puid === file.puid) {
+								this.shared.splice(i, 1);
+								break;
 							}
 						}
 
-						if (this.curprop.path) {
-							// adjust file path to current path
-							file.path = this.curprop.path + file.name;
-							if (isdir) {
-								file.path += '/';
-							}
-						} else {
-							// remove item from root folder
-							if (isdir) {
+						// remove item from root folder
+						if (!this.curpath) {
+							if (FTtoFG[file.type] === FG.dir) {
 								this.pathlist.splice(this.pathlist.findIndex(elem => elem === file), 1);
 							} else {
 								this.filelist.splice(this.filelist.findIndex(elem => elem === file), 1);
@@ -621,7 +618,7 @@ let app = new Vue({
 		},
 
 		seturl() {
-			window.history.replaceState(null, this.curpath, this.cururl);
+			window.history.replaceState(null, this.curpath, this.curlongurl);
 		},
 
 		setskin(skinlink) {
@@ -632,43 +629,40 @@ let app = new Vue({
 
 		onhome() {
 			ajaxcc.emit('ajax', +1);
-			this.fetchopenfolder(root)
+			this.fetchopenfolder({ aid: this.aid, puid: "" })
 				.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
 		},
 
 		onback() {
 			this.histpos--;
-			const file = this.histlist[this.histpos - 1];
+			const arg = this.histlist[this.histpos - 1];
 
 			ajaxcc.emit('ajax', +1);
-			this.fetchfolder(file)
+			this.fetchfolder(arg)
 				.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
 		},
 
 		onforward() {
 			this.histpos++;
-			const file = this.histlist[this.histpos - 1];
+			const arg = this.histlist[this.histpos - 1];
 
 			ajaxcc.emit('ajax', +1);
-			this.fetchfolder(file)
+			this.fetchfolder(arg)
 				.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
 		},
 
 		onparent() {
-			const file = this.curpathway.length
-				? this.curpathway[this.curpathway.length - 1]
-				: root;
-
 			ajaxcc.emit('ajax', +1);
-			this.fetchopenfolder(file)
+			const path = this.curpathway.length
+				? this.curpathway[this.curpathway.length - 1].path
+				: "";
+			this.fetchopenfolder({ aid: this.aid, path: path })
 				.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
 		},
 
 		onrefresh() {
-			const file = this.curprop;
-
 			ajaxcc.emit('ajax', +1);
-			this.fetchfolder(file)
+			this.fetchfolder({ aid: this.aid, path: this.curpath })
 				.then(() => this.fetchsharelist()) // get shares
 				.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
 		},
@@ -688,7 +682,7 @@ let app = new Vue({
 		onpathopen(file) {
 			if (!file.offline) {
 				ajaxcc.emit('ajax', +1);
-				this.fetchopenfolder(file)
+				this.fetchopenfolder({ aid: this.aid, puid: file.puid || "", path: file.path || "" })
 					.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
 			}
 		},
@@ -791,19 +785,14 @@ let app = new Vue({
 			if (chunks[chunks.length - 1].length > 0) {
 				chunks.push(""); // bring it to true path
 			}
-			const file = {
-				name: chunks[chunks.length - 2],
-				path: chunks.join("/"),
-				size: 0, time: 0, type: FT.dir
-			};
 
 			ajaxcc.emit('ajax', +1);
-			this.fetchopenfolder(file)
+			this.fetchopenfolder({ aid: this.aid, path: chunks.join('/') })
 				.then(() => this.fetchsharelist()) // get shares
 				.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
 		} else {
 			ajaxcc.emit('ajax', +1);
-			this.fetchopenfolder(root)
+			this.fetchopenfolder({ aid: this.aid, puid: "" })
 				.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
 		}
 	}

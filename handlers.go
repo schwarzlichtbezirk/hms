@@ -83,7 +83,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 		spath = strings.Join(chunks[3:], "/")
 	}
 
-	var syspath = acc.GetSystemPath(spath)
+	var syspath = UnfoldPath(spath)
 	var state = acc.PathState(syspath)
 	if state == FPA_none {
 		WriteError(w, http.StatusForbidden, ErrFpaNone, EC_filefpanone)
@@ -321,10 +321,12 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
 		AID  int    `json:"aid"`
-		PUID string `json:"puid"`
+		PUID string `json:"puid,omitempty"`
+		Path string `json:"path,omitempty"`
 	}
 	var ret struct {
 		List  []Proper `json:"list"`
+		PUID  string   `json:"puid"`
 		Path  string   `json:"path"`
 		State int      `json:"state"`
 		Name  string   `json:"shrname"`
@@ -347,7 +349,7 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if len(arg.PUID) == 0 { // for root only
+	if len(arg.PUID) == 0 && len(arg.Path) == 0 { // for root only
 		var auth, _ = CheckAuth(r)
 		if acc == auth {
 			ret.List = auth.ScanRoots()
@@ -372,9 +374,17 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var syspath, ok = pathcache.Path(arg.PUID)
-	if !ok {
-		WriteError400(w, ErrNoPath, EC_foldernopath)
+	var syspath string
+	if len(arg.PUID) > 0 {
+		var ok bool
+		if syspath, ok = pathcache.Path(arg.PUID); !ok {
+			WriteError400(w, ErrNoPath, EC_foldernopath)
+			return
+		}
+		ret.PUID = arg.PUID
+	} else {
+		syspath = UnfoldPath(arg.Path)
+		ret.PUID = pathcache.Cache(syspath)
 	}
 	var state = acc.PathState(syspath)
 	if state == FPA_none {
@@ -544,7 +554,7 @@ func shrdelApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 	var err error
 	var arg struct {
 		AID  int    `json:"aid"`
-		PUID string `json:"puid,omitempty"`
+		PUID string `json:"puid"`
 	}
 	var ok bool
 

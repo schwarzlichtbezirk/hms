@@ -56,17 +56,57 @@ func (c *KeyThumbCache) Cache(syspath string) string {
 	}
 
 	// generate path unique ID
+	var n = 0
+	var buf [10]byte
 	for ok = true; ok; _, ok = c.keypath[puid] {
-		var buf [10]byte
-		if _, err := rand.Read(buf[:]); err != nil {
+		if n == 10 {
+			switch {
+			case cfg.PUIDsize < 3:
+				cfg.PUIDsize = 3 // 16M pool
+				n = 0
+			case cfg.PUIDsize < 5:
+				cfg.PUIDsize = 5 // 1T pool
+				n = 0
+			case cfg.PUIDsize < 10:
+				cfg.PUIDsize = 10 // 10^24 pool
+				n = 0
+			}
+		}
+		if _, err := rand.Read(buf[:cfg.PUIDsize]); err != nil {
 			panic(err)
 		}
-		puid = idenc.EncodeToString(buf[:])
+		puid = idenc.EncodeToString(buf[:cfg.PUIDsize])
+		n++
 	}
 
 	c.pathkey[syspath] = puid
 	c.keypath[puid] = syspath
 	return puid
+}
+
+// Splits given share path to share prefix and remained suffix.
+func SplitPrefSuff(shrpath string) (string, string) {
+	for i, c := range shrpath {
+		if c == '/' || c == '\\' {
+			return shrpath[:i], shrpath[i+1:]
+		} else if (c < '0' || c > '9') && (c < 'A' || c > 'Z') {
+			return "", shrpath
+		}
+	}
+	return shrpath, "" // root of share
+}
+
+// Brings any share path to system file path.
+func UnfoldPath(shrpath string) string {
+	var pref, suff = SplitPrefSuff(shrpath)
+	if pref == "" {
+		return shrpath
+	}
+
+	if path, ok := pathcache.Path(pref); ok {
+		return path + suff
+	}
+	return shrpath
 }
 
 // Instance of unlimited cache with PUID<=>syspath pairs.

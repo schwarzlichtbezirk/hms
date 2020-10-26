@@ -246,34 +246,6 @@ func (acc *Account) DelShare(puid string) bool {
 	return false
 }
 
-// Splits given share path to share prefix and remained suffix.
-func splitprefsuff(shrpath string) (string, string) {
-	for i, c := range shrpath {
-		if c == '/' || c == '\\' {
-			return shrpath[:i], shrpath[i+1:]
-		} else if c == ':' { // prefix can not be with colons
-			return "", shrpath
-		}
-	}
-	return shrpath, "" // root of share
-}
-
-// Brings share path to system file path.
-func (acc *Account) GetSystemPath(shrpath string) string {
-	var pref, suff = splitprefsuff(shrpath)
-	if pref == "" {
-		return shrpath
-	}
-
-	acc.mux.RLock()
-	defer acc.mux.RUnlock()
-
-	if path, ok := acc.puidshare[pref]; ok {
-		return path + suff
-	}
-	return shrpath
-}
-
 // Brings system path to largest share path.
 func (acc *Account) GetSharePath(syspath string) (string, string) {
 	var puid, share string
