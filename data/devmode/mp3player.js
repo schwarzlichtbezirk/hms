@@ -31,7 +31,7 @@ Vue.component('mp3-player-tag', {
 		// index of selected file
 		selfilepos() {
 			for (const i in this.list) {
-				if (this.selfile.path === this.list[i].path) {
+				if (this.selfile.puid === this.list[i].puid) {
 					return Number(i);
 				}
 			}
@@ -114,7 +114,7 @@ Vue.component('mp3-player-tag', {
 	},
 	methods: {
 		setup(file) {
-			if (this.selfile.path === file.path) { // do not set again same file
+			if (this.selfile.puid === file.puid) { // do not set again same file
 				return;
 			}
 			this.close();

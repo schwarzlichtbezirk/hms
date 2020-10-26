@@ -3,15 +3,15 @@
 	<div class="container-fluid folder-head">
 		<nav aria-label="breadcrumb">
 			<ol class="breadcrumb">
-				<li v-for="file in curpathway" class="breadcrumb-item align-self-center"><button v-on:click="onpathopen(file)" v-bind:title="file.path" class="btn btn-link p-0">{{file.name}}</button></li>
+				<li v-for="file in curpathway" class="breadcrumb-item align-self-center"><button v-on:click="onpathopen(file)" v-bind:title="`/id${aid}/path/${file.path}`" class="btn btn-link p-0">{{file.name}}</button></li>
 				<li class="breadcrumb-item align-self-center active" aria-current="page">{{curprop.name||'root folder'}}</li>
 			</ol>
 		</nav>
-		<p v-for="shr in curpathshares">
-			Shared at <span class="bg-stat">{{shr.name}}</span> as
-			<span class="bg-stat"><a v-bind:href="`/id${aid}/path/${shr.puid}/${shr.suff}`" target="_blank">{{`/id${aid}/path/${shr.puid}/${shr.suff}`}}</a></span>
+		<p v-if="curstate>1">
+			Shared at <span class="bg-stat">{{shrname}}</span> as
+			<span class="bg-stat"><a v-bind:href="cururl" target="_blank">{{cururl}}</a></span>
 		</p>
-		<p v-if="!curpathshares.length">Folder does not shared</p>
+		<p v-else>Folder does not shared</p>
 		<p class="small">
 			Total <span class="bg-stat">{{pathlist.length}}</span> subfolders,
 			<span class="bg-stat">{{filelist.length}}</span> files on <span class="bg-stat">{{sumsize}}</span>, scanning time <span class="bg-stat">{{curscan.toLocaleTimeString()}}</span>.

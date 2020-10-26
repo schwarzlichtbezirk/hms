@@ -164,7 +164,7 @@ const geticonname = file => {
 				return "drive-red";
 			}
 		case FT.dir:
-			const suff = app.curpathshares.length ? "-pub" : "";
+			const suff = app.shrname.length ? "-pub" : "";
 			if (file.scan) {
 				let fnum = 0;
 				const fg = file.fgrp;
@@ -250,14 +250,6 @@ const encode = (uri) => encodeURI(uri).replace('#', '%23').replace('&', '%26').r
 const hashfileurl = file => `/id${app.aid}/file/${file.puid}`;
 const hashpathurl = file => `/id${app.aid}/path/${file.puid}`;
 
-const tofp = sk => {
-	const fp = sk.prop;
-	if ('path' in sk) {
-		fp.path = sk.path;
-	}
-	return fp;
-};
-
 const showmsgbox = (title, body) => {
 	const dlg = $("#msgbox");
 	dlg.find(".modal-title").html(title);
@@ -314,13 +306,17 @@ let app = new Vue({
 		isadmin() {
 			return this.isauth || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 		},
+		// current page URL
+		cururl() {
+			return `${(devmode ? "/dev" : "")}/id${this.aid}/path/${this.curpath}`;
+		},
 		// array of paths to current folder
 		curpathway() {
-			if (!this.curprop.name) {
+			if (!this.curpath) {
 				return [];
 			}
 
-			const arr = this.curprop.path.split('/');
+			const arr = this.curpath.split('/');
 			// remove empty element from separator at the end
 			// and remove current name
 			if (!arr.pop()) {
@@ -333,25 +329,11 @@ let app = new Vue({
 				path += fn + '/';
 				lst.push({
 					name: fn,
-					path: path,
-					size: 0,
-					time: 0,
-					type: FT.dir
+					path: path
 				});
 			}
-			return lst;
-		},
-
-		// get all folder shares
-		curpathshares() {
-			const lst = [];
-			const fldpath = this.curprop.path;
-			for (const fp of this.shared) {
-				if (fp.path.length <= fldpath.length && fldpath.substr(0, fp.path.length) === fp.path) {
-					const shr = Object.assign({}, fp);
-					shr.suff = fldpath.substr(shr.path.length, fldpath.length);
-					lst.push(shr);
-				}
+			if (lst.length) {
+				lst[0].name = this.shrname;
 			}
 			return lst;
 		},
@@ -379,7 +361,7 @@ let app = new Vue({
 		// common buttons enablers
 
 		dishome() {
-			return !this.curprop.name;
+			return !this.curpath;
 		},
 		disback() {
 			return this.histpos < 2;
@@ -442,23 +424,21 @@ let app = new Vue({
 		fetchfolder(file) {
 			return fetchajaxauth("POST", "/api/folder", {
 				aid: this.aid,
-				path: file.puid
+				puid: file.puid
 			}).then(response => {
 				traceajax(response);
 
 				this.pathlist = [];
 				this.filelist = [];
 				this.curprop = file;
-				this.seturl();
 				// init map card
 				this.$refs.mapcard.new();
 
 				if (response.ok) {
 					this.curscan = new Date(Date.now());
 					// update folder settings
-					for (const sk of response.data.list || []) {
-						if (sk) {
-							const fp = tofp(sk);
+					for (const fp of response.data.list || []) {
+						if (fp) {
 							if (fp.type < 0) {
 								this.pathlist.push(fp);
 							} else {
@@ -470,6 +450,7 @@ let app = new Vue({
 					this.curpath = response.data.path;
 					this.curstate = response.data.state;
 					this.shrname = response.data.shrname;
+					this.seturl();
 					// update map card
 					const gpslist = [];
 					for (const fp of this.filelist) {
@@ -514,7 +495,7 @@ let app = new Vue({
 									}
 								}
 								this.$refs.mapcard.addmarkers(gpslist); // update map card
-								if (this.uncached.length && this.curprop === file) {
+								if (this.uncached.length) {
 									setTimeout(chktmb, 1500); // wait and run again
 								}
 							}
@@ -523,13 +504,13 @@ let app = new Vue({
 					// gets thumbs
 					setTimeout(chktmb, 600);
 
-					const paths = [];
+					const puids = [];
 					for (const fp of this.uncached) {
-						paths.push(fp.path);
+						puids.push(fp.puid);
 					}
 					fetchajaxauth("POST", "/api/tmb/scn", {
 						aid: this.aid,
-						paths: paths
+						puids: puids
 					}).then(response => {
 						traceajax(response);
 					});
@@ -564,7 +545,7 @@ let app = new Vue({
 		fetchshareadd(file) {
 			return fetchajaxauth("POST", "/api/share/add", {
 				aid: this.aid,
-				path: file.path
+				puid: file.puid
 			}).then(response => {
 				traceajax(response);
 				if (response.ok) {
@@ -640,8 +621,7 @@ let app = new Vue({
 		},
 
 		seturl() {
-			window.history.replaceState(this.curprop, this.curprop.path,
-				`${(devmode ? "/dev" : "")}/id${this.aid}/path/${this.curprop.path}`);
+			window.history.replaceState(null, this.curpath, this.cururl);
 		},
 
 		setskin(skinlink) {
@@ -739,10 +719,10 @@ let app = new Vue({
 				traceajax(response);
 				if (response.status === 200) {
 					auth.signin(response.data, this.login);
-					this.seturl();
 					this.namestate = 1;
 					this.passstate = 1;
 					this.onrefresh();
+					this.seturl();
 				} else if (response.status === 403) { // Forbidden
 					auth.signout();
 					switch (response.data.code) {

@@ -182,7 +182,7 @@ Vue.component('dir-card-tag', {
 			ajaxcc.emit('ajax', +1);
 			fetchajaxauth("POST", "/api/drive/del", {
 				aid: app.aid,
-				path: this.selfile.path
+				puid: this.selfile.puid
 			}).then(response => {
 				traceajax(response);
 				if (response.ok) {

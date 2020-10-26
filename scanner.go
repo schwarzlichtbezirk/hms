@@ -210,17 +210,6 @@ type Proper interface {
 	Clone() Proper
 }
 
-type ShareKit struct {
-	Prop Proper `json:"prop"`
-	Path string `json:"path,omitempty"` // full share path to file or directory
-	Pref string `json:"pref,omitempty"` // share prefix
-}
-
-// Sets full path value.
-func (sk *ShareKit) SetPath(path string) {
-	sk.Path = path
-}
-
 // Common file properties chunk.
 type StdProp struct {
 	NameVal string `json:"name,omitempty"`

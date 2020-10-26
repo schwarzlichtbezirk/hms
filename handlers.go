@@ -324,10 +324,10 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 		PUID string `json:"puid"`
 	}
 	var ret struct {
-		List  []ShareKit `json:"list"`
-		Path  string     `json:"path"`
-		State int        `json:"state"`
-		Name  string     `json:"shrname"`
+		List  []Proper `json:"list"`
+		Path  string   `json:"path"`
+		State int      `json:"state"`
+		Name  string   `json:"shrname"`
 	}
 
 	// get arguments
@@ -353,7 +353,7 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 			ret.List = auth.ScanRoots()
 			ret.State = FPA_admin
 		} else {
-			ret.List = []ShareKit{}
+			ret.List = []Proper{}
 			ret.State = FPA_share
 		}
 
@@ -361,8 +361,7 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 			acc.mux.RLock()
 			for _, path := range acc.Shares {
 				if prop, err := propcache.Get(path); err == nil {
-					var sk = ShareKit{prop.(Proper), "", ""}
-					ret.List = append(ret.List, sk)
+					ret.List = append(ret.List, prop.(Proper))
 				}
 			}
 			acc.mux.RUnlock()
@@ -394,8 +393,8 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if state == FPA_share {
-		var share, _ = acc.GetSharePath(syspath)
-		ret.Path = share
+		var path, share = acc.GetSharePath(syspath)
+		ret.Path = path
 		ret.Name = filepath.Base(share)
 	} else {
 		ret.Path = syspath
@@ -496,7 +495,7 @@ func shraddApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 	var err error
 	var arg struct {
 		AID  int    `json:"aid"`
-		Path string `json:"path"`
+		PUID string `json:"puid"`
 	}
 
 	// get arguments
@@ -505,7 +504,7 @@ func shraddApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 			WriteError400(w, err, EC_shraddbadreq)
 			return
 		}
-		if len(arg.Path) == 0 {
+		if len(arg.PUID) == 0 {
 			WriteError400(w, ErrArgNoPath, EC_shraddnodata)
 			return
 		}
@@ -524,10 +523,13 @@ func shraddApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 		return
 	}
 
-	var syspath = acc.GetSystemPath(arg.Path)
+	var syspath, ok = pathcache.Path(arg.PUID)
+	if !ok {
+		WriteError400(w, ErrNoPath, EC_shraddnopath)
+	}
 	var state = acc.PathState(syspath)
 	if state == FPA_none {
-		WriteError(w, http.StatusForbidden, ErrFpaNone, EC_filefpanone)
+		WriteError(w, http.StatusForbidden, ErrFpaNone, EC_shraddfpanone)
 		return
 	}
 
@@ -542,7 +544,6 @@ func shrdelApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 	var err error
 	var arg struct {
 		AID  int    `json:"aid"`
-		Path string `json:"path,omitempty"`
 		PUID string `json:"puid,omitempty"`
 	}
 	var ok bool
@@ -553,7 +554,7 @@ func shrdelApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 			WriteError400(w, err, EC_shrdelbadreq)
 			return
 		}
-		if len(arg.Path) == 0 && len(arg.PUID) == 0 {
+		if len(arg.PUID) == 0 {
 			WriteError400(w, ErrArgNoPath, EC_shrdelnodata)
 			return
 		}
@@ -572,17 +573,8 @@ func shrdelApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 		return
 	}
 
-	if len(arg.PUID) > 0 {
-		if ok = acc.DelShareHash(arg.PUID); ok {
-			Log.Printf("id%d: delete share %s", acc.ID, arg.PUID)
-		}
-	} else if len(arg.Path) > 0 {
-		if ok = acc.DelSharePath(arg.Path); ok {
-			Log.Printf("id%d: delete share %s", acc.ID, arg.Path)
-		}
-	} else {
-		WriteError400(w, ErrArgNoHash, EC_shrdelnohash)
-		return
+	if ok = acc.DelShare(arg.PUID); ok {
+		Log.Printf("id%d: delete share %s", acc.ID, arg.PUID)
 	}
 
 	WriteOK(w, ok)
@@ -656,7 +648,7 @@ func drvdelApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 	var err error
 	var arg struct {
 		AID  int    `json:"aid"`
-		Path string `json:"path"`
+		PUID string `json:"puid"`
 	}
 
 	// get arguments
@@ -665,7 +657,7 @@ func drvdelApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 			WriteError400(w, err, EC_drvdelbadreq)
 			return
 		}
-		if len(arg.Path) == 0 {
+		if len(arg.PUID) == 0 {
 			WriteError400(w, ErrArgNoPath, EC_drvdelnodata)
 			return
 		}
@@ -684,8 +676,13 @@ func drvdelApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 		return
 	}
 
+	var syspath, ok = pathcache.Path(arg.PUID)
+	if !ok {
+		WriteError400(w, ErrNoPath, EC_drvdelnopath)
+	}
+
 	var i int
-	if i = acc.RootIndex(arg.Path); i >= 0 {
+	if i = acc.RootIndex(syspath); i >= 0 {
 		acc.mux.Lock()
 		acc.Roots = append(acc.Roots[:i], acc.Roots[i+1:]...)
 		acc.mux.Unlock()

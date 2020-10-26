@@ -22,8 +22,8 @@ var (
 
 // Unlimited cache with puid/syspath and syspath/puid values.
 type KeyThumbCache struct {
-	keypath map[string]string
-	pathkey map[string]string
+	keypath map[string]string // puid/path key/values
+	pathkey map[string]string // path/puid key/values
 	mux     sync.RWMutex
 }
 

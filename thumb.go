@@ -213,7 +213,7 @@ func tmbscnApi(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
 		AID   int      `json:"aid"`
-		Paths []string `json:"paths"`
+		PUIDs []string `json:"puids"`
 	}
 
 	// get arguments
@@ -222,7 +222,7 @@ func tmbscnApi(w http.ResponseWriter, r *http.Request) {
 			WriteError400(w, err, EC_tmbscnbadreq)
 			return
 		}
-		if len(arg.Paths) == 0 {
+		if len(arg.PUIDs) == 0 {
 			WriteError400(w, ErrNoData, EC_tmbscnnodata)
 			return
 		}
@@ -238,9 +238,12 @@ func tmbscnApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	go func() {
-		for _, shrpath := range arg.Paths {
-			var syspath = acc.GetSystemPath(shrpath)
-			if puid, ok := pathcache.PUID(syspath); ok {
+		for _, puid := range arg.PUIDs {
+			if syspath, ok := pathcache.Path(puid); ok {
+				var state = acc.PathState(syspath)
+				if state == FPA_none {
+					continue
+				}
 				thumbcache.Get(puid)
 			}
 		}

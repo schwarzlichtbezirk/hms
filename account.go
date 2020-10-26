@@ -39,9 +39,9 @@ type Account struct {
 	Roots  []string `json:"roots"`  // root directories list
 	Hidden []string `json:"hidden"` // patterns for hidden files
 
-	Shares     []string          `json:"shares"`
-	sharespath map[string]string // shares puid by system path
-	shareshash map[string]string // shares system path by puid
+	Shares    []string          `json:"shares"`
+	sharepuid map[string]string // share/puid key/values
+	puidshare map[string]string // puid/share key/values
 
 	mux sync.RWMutex
 }
@@ -53,13 +53,13 @@ type Accounts struct {
 
 func (al *Accounts) NewAccount(login, password string) *Account {
 	var acc = &Account{
-		Login:      login,
-		Password:   password,
-		Roots:      []string{},
-		Hidden:     []string{},
-		Shares:     []string{},
-		sharespath: map[string]string{},
-		shareshash: map[string]string{},
+		Login:     login,
+		Password:  password,
+		Roots:     []string{},
+		Hidden:    []string{},
+		Shares:    []string{},
+		sharepuid: map[string]string{},
+		puidshare: map[string]string{},
 	}
 	if len(al.list) > 0 {
 		acc.ID = al.list[len(al.list)-1].ID + 1
@@ -166,17 +166,16 @@ func (acc *Account) FindRoots() {
 }
 
 // Scan drives from roots list.
-func (acc *Account) ScanRoots() []ShareKit {
+func (acc *Account) ScanRoots() []Proper {
 	acc.mux.RLock()
 	defer acc.mux.RUnlock()
 
-	var drvs = make([]ShareKit, len(acc.Roots), len(acc.Roots))
+	var drvs = make([]Proper, len(acc.Roots), len(acc.Roots))
 	for i, root := range acc.Roots {
 		var dk DriveKit
 		dk.Setup(root)
 		dk.Scan(root)
-		var sk = ShareKit{&dk, root, ""}
-		drvs[i] = sk
+		drvs[i] = &dk
 	}
 	return drvs
 }
@@ -185,14 +184,14 @@ func (acc *Account) ScanRoots() []ShareKit {
 func (acc *Account) UpdateShares() {
 	acc.mux.Lock()
 
-	acc.sharespath = map[string]string{}
-	acc.shareshash = map[string]string{}
+	acc.sharepuid = map[string]string{}
+	acc.puidshare = map[string]string{}
 	for _, shr := range acc.Shares {
 		var syspath = shr
 		if prop, err := propcache.Get(syspath); err == nil {
 			var puid = prop.(Proper).PUID()
-			acc.sharespath[syspath] = puid
-			acc.shareshash[puid] = syspath
+			acc.sharepuid[syspath] = puid
+			acc.puidshare[puid] = syspath
 			defer Log.Printf("id%d: created share on path '%s'", acc.ID, syspath)
 		} else {
 			defer Log.Printf("id%d: can not create on path '%s'", acc.ID, syspath)
@@ -214,52 +213,34 @@ func makerandstr(n int) string {
 	return string(str)
 }
 
-// Add share with given prefix.
+// Add share with given path unigue identifier.
 func (acc *Account) AddShare(syspath string) bool {
 	acc.mux.Lock()
 	defer acc.mux.Unlock()
 
 	var puid = pathcache.Cache(syspath)
-	if _, ok := acc.sharespath[puid]; !ok {
+	if _, ok := acc.sharepuid[puid]; !ok {
 		acc.Shares = append(acc.Shares, syspath)
-		acc.sharespath[syspath] = puid
-		acc.shareshash[puid] = syspath
+		acc.sharepuid[syspath] = puid
+		acc.puidshare[puid] = syspath
 		return true
 	}
 	return false
 }
 
-// Delete share by given prefix.
-func (acc *Account) DelShareHash(puid string) bool {
+// Delete share by given path unigue identifier.
+func (acc *Account) DelShare(puid string) bool {
 	acc.mux.Lock()
 	defer acc.mux.Unlock()
 
-	if syspath, ok := acc.shareshash[puid]; ok {
+	if syspath, ok := acc.puidshare[puid]; ok {
 		for i, shr := range acc.Shares {
 			if shr == syspath {
 				acc.Shares = append(acc.Shares[:i], acc.Shares[i+1:]...)
 			}
 		}
-		delete(acc.sharespath, syspath)
-		delete(acc.shareshash, puid)
-		return true
-	}
-	return false
-}
-
-// Delete share by given shared path.
-func (acc *Account) DelSharePath(syspath string) bool {
-	acc.mux.Lock()
-	defer acc.mux.Unlock()
-
-	if puid, ok := acc.sharespath[syspath]; ok {
-		for i, shr := range acc.Shares {
-			if shr == syspath {
-				acc.Shares = append(acc.Shares[:i], acc.Shares[i+1:]...)
-			}
-		}
-		delete(acc.sharespath, syspath)
-		delete(acc.shareshash, puid)
+		delete(acc.sharepuid, syspath)
+		delete(acc.puidshare, puid)
 		return true
 	}
 	return false
@@ -287,26 +268,24 @@ func (acc *Account) GetSystemPath(shrpath string) string {
 	acc.mux.RLock()
 	defer acc.mux.RUnlock()
 
-	if path, ok := acc.shareshash[pref]; ok {
+	if path, ok := acc.puidshare[pref]; ok {
 		return path + suff
 	}
 	return shrpath
 }
 
 // Brings system path to largest share path.
-func (acc *Account) GetSharePath(syspath string) (string, bool) {
-	var pl int
-	var puid string
-	for shr, id := range acc.shareshash {
-		var sl = len(shr)
-		if strings.HasPrefix(syspath, shr) && sl > pl {
-			pl, puid = sl, id
+func (acc *Account) GetSharePath(syspath string) (string, string) {
+	var puid, share string
+	for id, shr := range acc.puidshare {
+		if strings.HasPrefix(syspath, shr) && len(shr) > len(share) {
+			puid, share = id, shr
 		}
 	}
-	if pl > 0 {
-		return puid + "/" + syspath[pl:], true
+	if len(share) > 0 {
+		return puid + "/" + syspath[len(share):], share
 	} else {
-		return syspath, false
+		return syspath, ""
 	}
 }
 
@@ -328,8 +307,8 @@ func (acc *Account) PathState(syspath string) int {
 	return FPA_none
 }
 
-// Reads directory with given system path and returns ShareKit for each entry.
-func (acc *Account) Readdir(syspath string) (ret []ShareKit, err error) {
+// Reads directory with given system path and returns Proper for each entry.
+func (acc *Account) Readdir(syspath string) (ret []Proper, err error) {
 	if !strings.HasSuffix(syspath, "/") {
 		syspath += "/"
 	}
@@ -362,9 +341,9 @@ func (acc *Account) Readdir(syspath string) (ret []ShareKit, err error) {
 				fpath += "/"
 			}
 			if !acc.IsHidden(fpath) {
-				var sk = ShareKit{CacheProp(fpath, fi), fpath, ""}
-				ret = append(ret, sk)
-				fgrp[typetogroup[sk.Prop.Type()]]++
+				var prop = CacheProp(fpath, fi)
+				ret = append(ret, prop)
+				fgrp[typetogroup[prop.Type()]]++
 			}
 		}
 	}
