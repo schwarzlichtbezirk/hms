@@ -1,0 +1,14 @@
+
+<div class="form-inline">
+	<template v-if="isauth">
+		<span class="navbar-text py-0 ml-md-3">{{login}}</span>
+		<button class="btn toolbtn" v-on:click="onlogout" title="sign-out"><i class="material-icons">exit_to_app</i></button>
+	</template>
+	<template v-else>
+		<div class="input-group">
+			<input v-model="login" v-bind:class="clsname" v-on:keyup.enter.prevent="onlogin" v-on:keyup="onauthchange" class="form-control toolinp bg-tool" type="text" size="10" maxlength="16" placeholder="login">
+			<input v-model="password" v-bind:class="clspass" v-on:keyup.enter.prevent="onlogin" v-on:keyup="onauthchange" class="form-control toolinp bg-tool" type="password" size="10" maxlength="80" placeholder="password">
+		</div>
+		<button class="btn toolbtn" v-on:click="onlogin" title="sign-in with given password"><i class="material-icons">account_box</i></button>
+	</template>
+</div>

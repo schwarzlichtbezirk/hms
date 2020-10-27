@@ -43,17 +43,7 @@
 						</li>
 					</ul>
 					<ul class="navbar-nav flex-row">
-						<li v-show="showauth && !isauth" class="form-inline">
-							<div class="input-group">
-								<input v-model="login" v-bind:class="clsname" v-on:keyup.enter.prevent="onlogin" v-on:keyup="onauthchange" class="form-control toolinp bg-tool" type="text" size="10" maxlength="16" placeholder="login">
-								<input v-model="password" v-bind:class="clspass" v-on:keyup.enter.prevent="onlogin" v-on:keyup="onauthchange" class="form-control toolinp bg-tool" type="password" size="10" maxlength="80" placeholder="password">
-							</div>
-							<button class="btn toolbtn" v-on:click="onlogin" title="sign-in with given password"><i class="material-icons">account_box</i></button>
-						</li>
-						<li v-show="showauth && isauth" class="form-inline">
-							<span class="navbar-text ml-md-3">{{login}}</span>
-							<button class="btn toolbtn" v-on:click="onlogout" title="sign-out"><i class="material-icons">exit_to_app</i></button>
-						</li>
+						<li v-show="showauth"><auth-tag v-on:refresh="onrefresh" /></li>
 						<li><button class="btn toolbtn" v-on:click="onauthcaret" v-bind:title="hintauthcaret"><i class="material-icons">{{textauthcaret}}</i></button></li>
 					</ul>
 				</div>

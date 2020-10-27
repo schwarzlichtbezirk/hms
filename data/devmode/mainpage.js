@@ -270,7 +270,89 @@ const onerr404 = () => {
 	);
 };
 
-let app = new Vue({
+Vue.component('auth-tag', {
+	template: '#auth-tpl',
+	data: function () {
+		return {
+			isauth: false, // is authorized
+			login: "", // authorization login
+			password: "", // authorization password
+			namestate: 0, // -1 invalid login, 0 ambiguous, 1 valid login
+			passstate: 0 // -1 invalid password, 0 ambiguous, 1 valid password
+		};
+	},
+	computed: {
+		clsname() {
+			return !this.namestate ? ''
+				: this.namestate === -1 ? 'is-invalid' : 'is-valid';
+		},
+		clspass() {
+			return !this.passstate ? ''
+				: this.passstate === -1 ? 'is-invalid' : 'is-valid';
+		}
+	},
+	methods: {
+		onauthchange() {
+			this.namestate = 0;
+			this.passstate = 0;
+		},
+		onlogin() {
+			ajaxcc.emit('ajax', +1);
+			fetchajax("POST", "/api/pubkey").then(response => {
+				traceajax(response);
+				if (response.ok) {
+					// github.com/emn178/js-sha256
+					const hash = sha256.hmac.create(response.data);
+					hash.update(this.password);
+					return fetchajax("POST", "/api/signin", {
+						name: this.login,
+						pubk: response.data,
+						hash: hash.digest()
+					});
+				}
+				return Promise.reject();
+			}).then(response => {
+				traceajax(response);
+				if (response.status === 200) {
+					auth.signin(response.data, this.login);
+					this.namestate = 1;
+					this.passstate = 1;
+					this.$emit('refresh');
+				} else if (response.status === 403) { // Forbidden
+					auth.signout();
+					switch (response.data.code) {
+						case 13:
+							this.namestate = -1;
+							this.passstate = 0;
+							break;
+						case 15:
+							this.namestate = 1;
+							this.passstate = -1;
+							break;
+						default:
+							this.namestate = -1;
+							this.passstate = -1;
+					}
+				}
+			}).catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
+		},
+		onlogout() {
+			auth.signout();
+			this.namestate = 0;
+			this.passstate = 0;
+			this.$emit('refresh');
+		}
+	},
+	mounted() {
+		this._authclosure = is => this.isauth = is;
+		auth.on('auth', this._authclosure);
+	},
+	beforeDestroy() {
+		auth.off('auth', this._authclosure);
+	}
+});
+
+const app = new Vue({
 	el: '#app',
 	template: '#app-tpl',
 	data: {
@@ -280,10 +362,6 @@ let app = new Vue({
 		isauth: false, // is authorized
 		authid: 0, // authorized ID
 		aid: 0, // account ID
-		login: "", // authorization login
-		password: "", // authorization password
-		namestate: 0, // -1 invalid login, 0 ambiguous, 1 valid login
-		passstate: 0, // -1 invalid password, 0 ambiguous, 1 valid password
 
 		loadcount: 0, // ajax working request count
 		shared: [], // list of shared folders
@@ -386,14 +464,6 @@ let app = new Vue({
 
 		textauthcaret() {
 			return this.showauth ? 'arrow_right' : 'arrow_left';
-		},
-		clsname() {
-			return !this.namestate ? ''
-				: this.namestate === -1 ? 'is-invalid' : 'is-valid';
-		},
-		clspass() {
-			return !this.passstate ? ''
-				: this.passstate === -1 ? 'is-invalid' : 'is-valid';
 		},
 
 		// buttons hints
@@ -686,60 +756,8 @@ let app = new Vue({
 					.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
 			}
 		},
-
 		onauthcaret() {
 			this.showauth = !this.showauth;
-		},
-		onauthchange() {
-			this.namestate = 0;
-			this.passstate = 0;
-		},
-		onlogin() {
-			ajaxcc.emit('ajax', +1);
-			fetchajax("POST", "/api/pubkey").then(response => {
-				traceajax(response);
-				if (response.ok) {
-					// github.com/emn178/js-sha256
-					const hash = sha256.hmac.create(response.data);
-					hash.update(this.password);
-					return fetchajax("POST", "/api/signin", {
-						name: this.login,
-						pubk: response.data,
-						hash: hash.digest()
-					});
-				}
-				return Promise.reject();
-			}).then(response => {
-				traceajax(response);
-				if (response.status === 200) {
-					auth.signin(response.data, this.login);
-					this.namestate = 1;
-					this.passstate = 1;
-					this.onrefresh();
-					this.seturl();
-				} else if (response.status === 403) { // Forbidden
-					auth.signout();
-					switch (response.data.code) {
-						case 13:
-							this.namestate = -1;
-							this.passstate = 0;
-							break;
-						case 15:
-							this.namestate = 1;
-							this.passstate = -1;
-							break;
-						default:
-							this.namestate = -1;
-							this.passstate = -1;
-					}
-				}
-			}).catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
-		},
-		onlogout() {
-			auth.signout();
-			this.namestate = 0;
-			this.passstate = 0;
-			this.onrefresh();
 		}
 	},
 	mounted() {
