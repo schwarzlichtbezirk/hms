@@ -1,8 +1,12 @@
 package hms
 
 import (
+	"bytes"
 	"crypto/rand"
 	"encoding/base32"
+	"errors"
+	"image"
+	"image/jpeg"
 	"os"
 	"sync"
 
@@ -16,8 +20,18 @@ var (
 	propcache gcache.Cache
 
 	// Thumbnails cache.
-	// Key - path unique ID, value - thumbnail image.
+	// Key - path unique ID, value - thumbnail image in MediaData.
 	thumbcache gcache.Cache
+
+	// Converted media files cache.
+	// Key - path unique ID, value - media file in MediaData.
+	mediacache gcache.Cache
+)
+
+// Error messages
+var (
+	ErrNoPUID      = errors.New("file with given puid not found")
+	ErrUncacheable = errors.New("file format is uncacheable")
 )
 
 // Unlimited cache with puid/syspath and syspath/puid values.
@@ -154,14 +168,84 @@ func initcaches() {
 				return // thumbnail rejected
 			}
 
-			var tmb *ThumbElem
-			if tmb, err = FindTmb(prop, syspath); tmb != nil {
+			var md *MediaData
+			if md, err = FindTmb(prop, syspath); md != nil {
 				prop.SetNTmb(TMB_cached)
-				ret = tmb
+				ret = md
 			} else {
 				prop.SetNTmb(TMB_reject)
 			}
 			return // ok
+		}).
+		Build()
+
+	// init converted media files cache
+	mediacache = gcache.New(cfg.ThumbCacheMaxNum).
+		LRU().
+		LoaderFunc(func(key interface{}) (ret interface{}, err error) {
+			var syspath, ok = pathcache.Path(key.(string))
+			if !ok {
+				err = ErrNoPUID
+				return // file path not found
+			}
+
+			var cp interface{}
+			if cp, err = propcache.Get(syspath); err != nil {
+				return // can not get properties
+			}
+
+			switch cp.(Proper).Type() {
+			case FT_tga, FT_bmp, FT_tiff:
+				var file *os.File
+				if file, err = os.Open(syspath); err != nil {
+					return // can not open file
+				}
+				defer file.Close()
+
+				var img image.Image
+				if img, _, err = image.Decode(file); err != nil {
+					if img == nil { // skip "short Huffman data" or others errors with partial results
+						return // can not decode file by any codec
+					}
+				}
+
+				var buf bytes.Buffer
+				if err = jpeg.Encode(&buf, img, &jpeg.Options{Quality: 80}); err != nil {
+					return // can not write jpeg
+				}
+				ret = &MediaData{
+					Data: buf.Bytes(),
+					Mime: "image/jpeg",
+				}
+				return
+
+			case FT_dds, FT_psd:
+				var file *os.File
+				if file, err = os.Open(syspath); err != nil {
+					return // can not open file
+				}
+				defer file.Close()
+
+				var img image.Image
+				if img, _, err = image.Decode(file); err != nil {
+					if img == nil { // skip "short Huffman data" or others errors with partial results
+						return // can not decode file by any codec
+					}
+				}
+
+				var buf bytes.Buffer
+				if err = thumbpngenc.Encode(&buf, img); err != nil {
+					return // can not write png
+				}
+				ret = &MediaData{
+					Data: buf.Bytes(),
+					Mime: "image/png",
+				}
+				return
+			}
+
+			err = ErrUncacheable
+			return // uncacheable type
 		}).
 		Build()
 }

@@ -38,25 +38,24 @@ const FT = {
 	ogg: 4,
 	mp4: 5,
 	webm: 6,
-	photo: 7,
-	tga: 8,
-	bmp: 9,
-	dds: 10,
-	tiff: 11,
-	jpeg: 12,
-	gif: 13,
-	png: 14,
-	webp: 15,
-	psd: 16,
-	pdf: 17,
-	html: 18,
-	text: 19,
-	scr: 20,
-	cfg: 21,
-	log: 22,
-	cab: 23,
-	zip: 24,
-	rar: 25
+	tga: 7,
+	bmp: 8,
+	dds: 9,
+	tiff: 10,
+	jpeg: 11,
+	gif: 12,
+	png: 13,
+	webp: 14,
+	psd: 15,
+	pdf: 16,
+	html: 17,
+	text: 18,
+	scr: 19,
+	cfg: 20,
+	log: 21,
+	cab: 22,
+	zip: 23,
+	rar: 24
 };
 
 // File groups
@@ -81,7 +80,6 @@ const FTtoFG = {
 	[FT.ogg]: FG.video,
 	[FT.mp4]: FG.video,
 	[FT.webm]: FG.video,
-	[FT.photo]: FG.image,
 	[FT.tga]: FG.image,
 	[FT.bmp]: FG.image,
 	[FT.dds]: FG.image,
@@ -120,7 +118,6 @@ const FTtoFV = {
 	[FT.ogg]: FV.video,
 	[FT.mp4]: FV.video,
 	[FT.webm]: FV.video,
-	[FT.photo]: FV.image,
 	[FT.tga]: FV.image,
 	[FT.bmp]: FV.image,
 	[FT.dds]: FV.image,
@@ -203,8 +200,6 @@ const geticonname = file => {
 			return "doc-mp4";
 		case FT.webm:
 			return "doc-movie";
-		case FT.photo:
-			return "doc-photo";
 		case FT.tga:
 		case FT.bmp:
 		case FT.dds:
@@ -245,8 +240,9 @@ const geticonname = file => {
 
 const encode = (uri) => encodeURI(uri).replace('#', '%23').replace('&', '%26').replace('+', '%2B');
 
-const hashfileurl = file => `/id${app.aid}/file/${file.puid}`;
-const hashpathurl = file => `${(devmode ? "/dev" : "")}/id${app.aid}/path/${file.puid}`;
+const fileurl = file => `/id${app.aid}/file/${file.puid}`;
+const pathurl = file => `${(devmode ? "/dev" : "")}/id${app.aid}/path/${file.puid}`;
+const mediaurl = file => `/id${app.aid}/media/${file.puid}`;
 
 const showmsgbox = (title, body) => {
 	const dlg = $("#msgbox");
@@ -298,13 +294,13 @@ Vue.component('auth-tag', {
 		},
 		onlogin() {
 			ajaxcc.emit('ajax', +1);
-			fetchajax("POST", "/api/pubkey").then(response => {
+			fetchajax("POST", "/api/auth/pubkey").then(response => {
 				traceajax(response);
 				if (response.ok) {
 					// github.com/emn178/js-sha256
 					const hash = sha256.hmac.create(response.data);
 					hash.update(this.password);
-					return fetchajax("POST", "/api/signin", {
+					return fetchajax("POST", "/api/auth/signin", {
 						name: this.login,
 						pubk: response.data,
 						hash: hash.digest()
@@ -503,7 +499,7 @@ const app = new Vue({
 	methods: {
 		// opens given folder cleary
 		fetchfolder(arg) {
-			return fetchajaxauth("POST", "/api/folder", arg).then(response => {
+			return fetchajaxauth("POST", "/api/path/folder", arg).then(response => {
 				traceajax(response);
 
 				this.pathlist = [];

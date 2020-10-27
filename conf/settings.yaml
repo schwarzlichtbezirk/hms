@@ -54,3 +54,5 @@ specification:
     prop-cache-maxnum: 32768
     # Maximum items number in thumbnails cache.
     thumb-cache-maxnum: 2048
+    # Maximum items number in converted media files cache.
+    media-cache-maxnum: 64

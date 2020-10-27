@@ -91,7 +91,7 @@ const fetchajaxauth = (method, url, body) => {
 		body: body && JSON.stringify(body)
 	}).then(response => {
 		if (response.status === 401 && auth.token.refrsh) { // Unauthorized
-			return fetchajax("POST", "/api/refrsh", {
+			return fetchajax("POST", "/api/auth/refrsh", {
 				refrsh: auth.token.refrsh
 			}).then(response => {
 				if (response.ok) {

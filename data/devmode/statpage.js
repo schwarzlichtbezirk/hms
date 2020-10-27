@@ -99,7 +99,7 @@ const app = new Vue({
 		},
 
 		ongetlog() {
-			fetchajax("GET", "/api/getlog").then(response => {
+			fetchajax("GET", "/api/stat/getlog").then(response => {
 				if (response.ok) {
 					this.log = response.data;
 				}
@@ -119,7 +119,7 @@ const app = new Vue({
 		}
 	},
 	mounted() {
-		fetchajax("GET", "/api/srvinf").then(response => {
+		fetchajax("GET", "/api/stat/srvinf").then(response => {
 			if (response.ok) {
 				this.srvinf = response.data;
 				this.srvinf.buildvers = buildvers;
@@ -129,7 +129,7 @@ const app = new Vue({
 
 		$("#collapse-memory").on('show.bs.collapse', () => {
 			const scanner = () => {
-				fetchajax("GET", "/api/memusg").then(response => {
+				fetchajax("GET", "/api/stat/memusg").then(response => {
 					if (response.ok) {
 						this.memgc = response.data;
 					}
@@ -145,7 +145,7 @@ const app = new Vue({
 
 		$("#collapse-cache").on('show.bs.collapse', () => {
 			const scanner = () => {
-				fetchajax("GET", "/api/cchinf").then(response => {
+				fetchajax("GET", "/api/stat/cchinf").then(response => {
 					if (response.ok) {
 						this.cchinf = response.data;
 					}

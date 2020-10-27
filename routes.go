@@ -55,41 +55,49 @@ const (
 	EC_tokenbad   = 5
 	EC_tokennoacc = 6
 
-	// pubkey
-	EC_pubkeyrand = 7
-
-	// signin
-	EC_signinnoreq  = 10
-	EC_signinbadreq = 11
-	EC_signinnodata = 12
-	EC_signinnoacc  = 13
-	EC_signinpkey   = 14
-	EC_signindeny   = 15
-
-	// refrsh
-	EC_refrshnoreq  = 20
-	EC_refrshbadreq = 21
-	EC_refrshnodata = 22
-	EC_refrshparse  = 23
-
 	// page
-	EC_pageabsent = 30
-	EC_fileabsent = 31
+	EC_pageabsent = 7
+	EC_fileabsent = 8
 
 	// file
-	EC_filebadaccid = 40
-	EC_filenoacc    = 41
-	EC_filefpanone  = 42
-	EC_filefpaadmin = 43
+	EC_filebadaccid = 10
+	EC_filenoacc    = 11
+	EC_filefpanone  = 12
+	EC_filefpaadmin = 13
+
+	// media
+	EC_mediabadaccid = 20
+	EC_medianoacc    = 21
+	EC_medianopath   = 22
+	EC_mediafpanone  = 23
+	EC_mediafpaadmin = 24
+	EC_mediaabsent   = 25
+	EC_mediabadcnt   = 26
 
 	// thumb
-	EC_thumbbadaccid = 50
-	EC_thumbnoacc    = 51
-	EC_thumbnopath   = 52
-	EC_thumbndeny    = 53
-	EC_thumbabsent   = 54
-	EC_thumbbadcnt   = 55
-	EC_thumbnotcnt   = 56
+	EC_thumbbadaccid = 30
+	EC_thumbnoacc    = 31
+	EC_thumbnopath   = 32
+	EC_thumbfpanone  = 33
+	EC_thumbabsent   = 34
+	EC_thumbbadcnt   = 35
+
+	// pubkey
+	EC_pubkeyrand = 40
+
+	// signin
+	EC_signinnoreq  = 41
+	EC_signinbadreq = 42
+	EC_signinnodata = 43
+	EC_signinnoacc  = 44
+	EC_signinpkey   = 45
+	EC_signindeny   = 46
+
+	// refrsh
+	EC_refrshnoreq  = 50
+	EC_refrshbadreq = 51
+	EC_refrshnodata = 52
+	EC_refrshparse  = 53
 
 	// reload
 	EC_reloadload = 60
@@ -209,7 +217,8 @@ func RegisterRoutes(gmux *Router) {
 
 	// file system sharing
 	gacc.PathPrefix("/file/").HandlerFunc(AjaxWrap(fileHandler))
-
+	// converted media files
+	gacc.PathPrefix("/media/").HandlerFunc(mediaHandler)
 	// cached thumbs
 	gacc.PathPrefix("/thumb/").HandlerFunc(thumbHandler)
 
@@ -217,16 +226,19 @@ func RegisterRoutes(gmux *Router) {
 	var api = gmux.PathPrefix("/api").Subrouter()
 	api.Path("/ping").HandlerFunc(AjaxWrap(pingApi))
 	api.Path("/purge").HandlerFunc(AuthWrap(purgeApi))
-	api.Path("/reload").HandlerFunc(AjaxWrap(reloadApi))
-	api.Path("/srvinf").HandlerFunc(AjaxWrap(srvinfApi))
-	api.Path("/memusg").HandlerFunc(AjaxWrap(memusgApi))
-	api.Path("/cchinf").HandlerFunc(AjaxWrap(cchinfApi))
-	api.Path("/getlog").HandlerFunc(AjaxWrap(getlogApi))
-	api.Path("/pubkey").HandlerFunc(AjaxWrap(pubkeyApi))
-	api.Path("/signin").HandlerFunc(AjaxWrap(signinApi))
-	api.Path("/refrsh").HandlerFunc(AjaxWrap(refrshApi))
-	api.Path("/folder").HandlerFunc(AjaxWrap(folderApi))
-	api.Path("/ispath").HandlerFunc(AuthWrap(ispathApi))
+	api.Path("/reload").HandlerFunc(AuthWrap(reloadApi))
+	var stc = api.PathPrefix("/stat").Subrouter()
+	stc.Path("/srvinf").HandlerFunc(AjaxWrap(srvinfApi))
+	stc.Path("/memusg").HandlerFunc(AjaxWrap(memusgApi))
+	stc.Path("/cchinf").HandlerFunc(AjaxWrap(cchinfApi))
+	stc.Path("/getlog").HandlerFunc(AjaxWrap(getlogApi))
+	var reg = api.PathPrefix("/auth").Subrouter()
+	reg.Path("/pubkey").HandlerFunc(AjaxWrap(pubkeyApi))
+	reg.Path("/signin").HandlerFunc(AjaxWrap(signinApi))
+	reg.Path("/refrsh").HandlerFunc(AjaxWrap(refrshApi))
+	var dir = api.PathPrefix("/path").Subrouter()
+	dir.Path("/folder").HandlerFunc(AjaxWrap(folderApi))
+	dir.Path("/is").HandlerFunc(AuthWrap(ispathApi))
 	var tmb = api.PathPrefix("/tmb").Subrouter()
 	tmb.Path("/chk").HandlerFunc(AjaxWrap(tmbchkApi))
 	tmb.Path("/scn").HandlerFunc(AjaxWrap(tmbscnApi))

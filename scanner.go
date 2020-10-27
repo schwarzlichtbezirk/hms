@@ -21,25 +21,24 @@ const (
 	FT_ogg   = 4
 	FT_mp4   = 5
 	FT_webm  = 6
-	FT_photo = 7
-	FT_tga   = 8
-	FT_bmp   = 9
-	FT_dds   = 10
-	FT_tiff  = 11
-	FT_jpeg  = 12
-	FT_gif   = 13
-	FT_png   = 14
-	FT_webp  = 15
-	FT_psd   = 16
-	FT_pdf   = 17
-	FT_html  = 18
-	FT_text  = 19
-	FT_scr   = 20
-	FT_cfg   = 21
-	FT_log   = 22
-	FT_cab   = 23
-	FT_zip   = 24
-	FT_rar   = 25
+	FT_tga   = 7
+	FT_bmp   = 8
+	FT_dds   = 9
+	FT_tiff  = 10
+	FT_jpeg  = 11
+	FT_gif   = 12
+	FT_png   = 13
+	FT_webp  = 14
+	FT_psd   = 15
+	FT_pdf   = 16
+	FT_html  = 17
+	FT_text  = 18
+	FT_scr   = 19
+	FT_cfg   = 20
+	FT_log   = 21
+	FT_cab   = 22
+	FT_zip   = 23
+	FT_rar   = 24
 )
 
 // File groups
@@ -66,7 +65,6 @@ var typetogroup = map[int]int{
 	FT_ogg:   FG_music,
 	FT_mp4:   FG_video,
 	FT_webm:  FG_video,
-	FT_photo: FG_image,
 	FT_tga:   FG_image,
 	FT_bmp:   FG_image,
 	FT_dds:   FG_image,
@@ -378,21 +376,21 @@ func (tk *TagKit) Clone() Proper {
 func (tk *TagKit) Setup(syspath string, fi os.FileInfo) {
 	tk.StdProp.Setup(fi)
 
-	var tmb *ThumbElem
+	var md *MediaData
 	if file, err := os.Open(syspath); err == nil {
 		defer file.Close()
 		if m, err := tag.ReadFrom(file); err == nil {
 			tk.TagProp.Setup(m)
 			if pic := m.Picture(); pic != nil {
 				if cfg.FitEmbeddedTmb {
-					if tmb, err = MakeTmb(bytes.NewReader(pic.Data)); err != nil {
-						tmb = &ThumbElem{
+					if md, err = MakeTmb(bytes.NewReader(pic.Data)); err != nil {
+						md = &MediaData{
 							Data: pic.Data,
 							Mime: pic.MIMEType,
 						}
 					}
 				} else {
-					tmb = &ThumbElem{
+					md = &MediaData{
 						Data: pic.Data,
 						Mime: pic.MIMEType,
 					}
@@ -401,15 +399,15 @@ func (tk *TagKit) Setup(syspath string, fi os.FileInfo) {
 		}
 	}
 	tk.PUIDVal = pathcache.Cache(syspath)
-	if tmb != nil {
+	if md != nil {
 		tk.NTmbVal = TMB_cached
-		thumbcache.Set(tk.PUIDVal, tmb)
+		thumbcache.Set(tk.PUIDVal, md)
 	} else {
 		tk.NTmbVal = TMB_reject
 	}
 }
 
-func GetTagTmb(syspath string) (tmb *ThumbElem, err error) {
+func GetTagTmb(syspath string) (md *MediaData, err error) {
 	var file *os.File
 	if file, err = os.Open(syspath); err != nil {
 		return // can not open file
@@ -420,14 +418,14 @@ func GetTagTmb(syspath string) (tmb *ThumbElem, err error) {
 	if m, err = tag.ReadFrom(file); err == nil {
 		if pic := m.Picture(); pic != nil {
 			if cfg.FitEmbeddedTmb {
-				if tmb, err = MakeTmb(bytes.NewReader(pic.Data)); err != nil {
-					tmb = &ThumbElem{
+				if md, err = MakeTmb(bytes.NewReader(pic.Data)); err != nil {
+					md = &MediaData{
 						Data: pic.Data,
 						Mime: pic.MIMEType,
 					}
 				}
 			} else {
-				tmb = &ThumbElem{
+				md = &MediaData{
 					Data: pic.Data,
 					Mime: pic.MIMEType,
 				}

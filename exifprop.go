@@ -155,14 +155,11 @@ func (ek *ExifKit) Setup(syspath string, fi os.FileInfo) {
 		var x *exif.Exif
 		if x, err = exif.Decode(file); err == nil {
 			ek.ExifProp.Setup(x)
-			if len(ek.Model) > 0 {
-				ek.TypeVal = FT_photo
-			}
 			var pic []byte
 			if pic, err = x.JpegThumbnail(); err == nil {
 				ek.PUIDVal = pathcache.Cache(syspath)
 				ek.NTmbVal = TMB_cached
-				thumbcache.Set(ek.PUIDVal, &ThumbElem{
+				thumbcache.Set(ek.PUIDVal, &MediaData{
 					Data: pic,
 					Mime: "image/jpeg",
 				})
@@ -173,7 +170,7 @@ func (ek *ExifKit) Setup(syspath string, fi os.FileInfo) {
 	ek.TmbProp.Setup(syspath)
 }
 
-func GetExifTmb(syspath string) (tmb *ThumbElem, err error) {
+func GetExifTmb(syspath string) (md *MediaData, err error) {
 	var file *os.File
 	if file, err = os.Open(syspath); err != nil {
 		return // can not open file
@@ -184,7 +181,7 @@ func GetExifTmb(syspath string) (tmb *ThumbElem, err error) {
 	if x, err = exif.Decode(file); err == nil {
 		var pic []byte
 		if pic, err = x.JpegThumbnail(); err == nil {
-			tmb = &ThumbElem{
+			md = &MediaData{
 				Data: pic,
 				Mime: "image/jpeg",
 			}

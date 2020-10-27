@@ -83,12 +83,12 @@ Vue.component('photoslider-tag', {
 	methods: {
 		select(file) {
 			this.selfile = file;
-			this.selfileurl = hashfileurl(file);
+			this.selfileurl = mediaurl(file);
 			this.$emit('select', file);
 		},
 		popup(file) {
 			this.selfile = file;
-			this.selfileurl = hashfileurl(file);
+			this.selfileurl = mediaurl(file);
 			$(this.$refs.modal).modal('show');
 		},
 		close() {

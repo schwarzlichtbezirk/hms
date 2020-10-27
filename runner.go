@@ -65,6 +65,8 @@ type CfgSpec struct {
 	PropCacheMaxNum int `json:"prop-cache-maxnum" yaml:"prop-cache-maxnum"`
 	// Maximum items number in thumbnails cache.
 	ThumbCacheMaxNum int `json:"thumb-cache-maxnum" yaml:"thumb-cache-maxnum"`
+	// Maximum items number in converted media files cache.
+	MediaCacheMaxNum int `json:"media-cache-maxnum" yaml:"media-cache-maxnum"`
 }
 
 // Common server settings.
@@ -100,6 +102,7 @@ var cfg = Config{ // inits default values:
 		PUIDsize:         3,
 		PropCacheMaxNum:  32 * 1024,
 		ThumbCacheMaxNum: 2 * 1024,
+		MediaCacheMaxNum: 64,
 	},
 }
 

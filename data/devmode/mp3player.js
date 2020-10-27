@@ -120,7 +120,7 @@ Vue.component('mp3-player-tag', {
 			this.close();
 			this.selfile = file;
 
-			this.media = new Audio(hashfileurl(file)); // API HTMLMediaElement, HTMLAudioElement
+			this.media = new Audio(mediaurl(file)); // API HTMLMediaElement, HTMLAudioElement
 			this.media.volume = this.volval / 100;
 			this.media.playbackRate = this.ratevals[this.ratval];
 			this.media.loop = this.repeatmode === 1;

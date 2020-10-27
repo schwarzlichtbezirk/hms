@@ -148,7 +148,7 @@ Vue.component('dir-card-tag', {
 			};
 		},
 		onlink() {
-			copyTextToClipboard(window.location.origin + hashpathurl(this.selfile));
+			copyTextToClipboard(window.location.origin + pathurl(this.selfile));
 		},
 		onshare() {
 			this.$emit('share', this.selfile);
@@ -196,7 +196,7 @@ Vue.component('dir-card-tag', {
 			}).catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
 		},
 		ondiskpathchange(e) {
-			fetchajaxauth("POST", "/api/ispath", {
+			fetchajaxauth("POST", "/api/path/is", {
 				aid: app.aid,
 				path: this.diskpath
 			}).then(response => {
@@ -433,7 +433,7 @@ Vue.component('file-card-tag', {
 		},
 
 		onlink() {
-			copyTextToClipboard(window.location.origin + hashfileurl(this.selfile));
+			copyTextToClipboard(window.location.origin + fileurl(this.selfile));
 		},
 		onshare() {
 			this.$emit('share', this.selfile);
@@ -522,7 +522,7 @@ Vue.component('file-card-tag', {
 					this.$refs.slider.popup(file);
 					break;
 				default:
-					const url = hashfileurl(file);
+					const url = mediaurl(file);
 					window.open(url, file.name);
 			}
 		},

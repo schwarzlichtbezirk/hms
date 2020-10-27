@@ -72,18 +72,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var spath string
-	if hpath, ok := pathcache.Path(chunks[3]); ok {
-		if len(chunks) > 3 {
-			spath = filepath.ToSlash(filepath.Join(hpath, strings.Join(chunks[4:], "/")))
-		} else {
-			spath = hpath
-		}
-	} else {
-		spath = strings.Join(chunks[3:], "/")
-	}
-
-	var syspath = UnfoldPath(spath)
+	var syspath = UnfoldPath(strings.Join(chunks[3:], "/"))
 	var state = acc.PathState(syspath)
 	if state == FPA_none {
 		WriteError(w, http.StatusForbidden, ErrFpaNone, EC_filefpanone)
@@ -104,9 +93,79 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 	if _, ok := r.Header["If-Range"]; !ok { // not partial content
 		Log.Printf("id%d: serve %s", acc.ID, filepath.Base(syspath))
 	}
-
 	WriteStdHeader(w)
 	http.ServeFile(w, r, syspath)
+}
+
+// Hands out converted media files if them can be cached.
+func mediaHandler(w http.ResponseWriter, r *http.Request) {
+	var err error
+
+	var chunks = strings.Split(r.URL.Path, "/")
+	if len(chunks) < 4 {
+		panic("bad route for URL " + r.URL.Path)
+	}
+
+	var aid uint64
+	if aid, err = strconv.ParseUint(chunks[1][2:], 10, 32); err != nil {
+		WriteError400(w, err, EC_mediabadaccid)
+		return
+	}
+
+	var acc *Account
+	if acc = acclist.ByID(int(aid)); acc == nil {
+		WriteError400(w, ErrNoAcc, EC_medianoacc)
+		return
+	}
+
+	var puid = chunks[3]
+	var syspath, ok = pathcache.Path(puid)
+	if !ok {
+		WriteError(w, http.StatusNotFound, ErrNoPath, EC_medianopath)
+		return
+	}
+	var state = acc.PathState(syspath)
+	if state == FPA_none {
+		WriteError(w, http.StatusForbidden, ErrFpaNone, EC_mediafpanone)
+		return
+	}
+	if state == FPA_admin {
+		var auth *Account
+		if auth, err = CheckAuth(r); err != nil {
+			WriteJson(w, http.StatusUnauthorized, err)
+			return
+		}
+		if acc.ID != auth.ID {
+			WriteError(w, http.StatusForbidden, ErrFpaAdmin, EC_mediafpaadmin)
+			return
+		}
+	}
+
+	var val interface{}
+	if val, err = mediacache.Get(puid); err != nil {
+		if !errors.Is(err, ErrUncacheable) {
+			WriteError(w, http.StatusNotFound, err, EC_mediaabsent)
+			return
+		}
+
+		if _, ok := r.Header["If-Range"]; !ok { // not partial content
+			Log.Printf("id%d: serve %s", acc.ID, filepath.Base(syspath))
+		}
+		WriteStdHeader(w)
+		http.ServeFile(w, r, syspath)
+		return
+	}
+	var md *MediaData
+	if md, ok = val.(*MediaData); !ok || md == nil {
+		WriteError500(w, ErrBadMedia, EC_mediabadcnt)
+		return
+	}
+
+	if _, ok := r.Header["If-Range"]; !ok { // not partial content
+		Log.Printf("id%d: media %s", acc.ID, filepath.Base(syspath))
+	}
+	w.Header().Set("Content-Type", md.Mime)
+	http.ServeContent(w, r, puid, starttime, bytes.NewReader(md.Data))
 }
 
 // Hands out thumbnails for given files if them cached.
@@ -131,14 +190,14 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var puid = chunks[3]
-	if syspath, ok := pathcache.Path(chunks[3]); ok {
-		var state = acc.PathState(syspath)
-		if state == FPA_none {
-			WriteError(w, http.StatusForbidden, ErrFpaNone, EC_thumbndeny)
-			return
-		}
-	} else {
+	var syspath, ok = pathcache.Path(puid)
+	if !ok {
 		WriteError(w, http.StatusNotFound, ErrNoPath, EC_thumbnopath)
+		return
+	}
+	var state = acc.PathState(syspath)
+	if state == FPA_none {
+		WriteError(w, http.StatusForbidden, ErrFpaNone, EC_thumbfpanone)
 		return
 	}
 
@@ -147,17 +206,13 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, http.StatusNotFound, err, EC_thumbabsent)
 		return
 	}
-	var tmb, ok = val.(*ThumbElem)
-	if !ok {
-		WriteError500(w, ErrBadThumb, EC_thumbbadcnt)
+	var md *MediaData
+	if md, ok = val.(*MediaData); !ok || md == nil {
+		WriteError500(w, ErrBadMedia, EC_thumbbadcnt)
 		return
 	}
-	if tmb == nil {
-		WriteError(w, http.StatusNotFound, ErrNotThumb, EC_thumbnotcnt)
-		return
-	}
-	w.Header().Set("Content-Type", tmb.Mime)
-	http.ServeContent(w, r, puid, starttime, bytes.NewReader(tmb.Data))
+	w.Header().Set("Content-Type", md.Mime)
+	http.ServeContent(w, r, puid, starttime, bytes.NewReader(md.Data))
 }
 
 // APIHANDLER
@@ -181,7 +236,7 @@ func purgeApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 }
 
 // APIHANDLER
-func reloadApi(w http.ResponseWriter, r *http.Request) {
+func reloadApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 	var err error
 
 	if err = packager.OpenWPK(destpath + "hms.wpk"); err != nil {
@@ -246,9 +301,9 @@ func cchinfApi(w http.ResponseWriter, r *http.Request) {
 	}
 	var jpg, png, gif stat
 	for _, v := range tc {
-		var tmb = v.(*ThumbElem)
+		var md = v.(*MediaData)
 		var s *stat
-		switch tmb.Mime {
+		switch md.Mime {
 		case "image/gif":
 			s = &gif
 		case "image/png":
@@ -256,9 +311,9 @@ func cchinfApi(w http.ResponseWriter, r *http.Request) {
 		case "image/jpeg":
 			s = &jpg
 		default:
-			panic("unexpected MIME type in cache " + tmb.Mime)
+			panic("unexpected MIME type in cache " + md.Mime)
 		}
-		var l = float64(len(tmb.Data))
+		var l = float64(len(md.Data))
 		s.size1 += l
 		s.size2 += l * l
 		s.num++

@@ -41,21 +41,18 @@ var thumbpngenc = png.Encoder{
 	CompressionLevel: png.BestCompression,
 }
 
-// HTTP error messages
+// Error messages
 var (
-	ErrNoPUID   = errors.New("file with given puid not found")
-	ErrBadThumb = errors.New("thumbnail cache is corrupted")
+	ErrBadMedia = errors.New("media content is corrupted")
 	ErrNotThumb = errors.New("thumbnail content can not be created")
 	ErrNotImg   = errors.New("file is not image")
 	ErrTooBig   = errors.New("file is too big")
 )
 
 // Thumbnails cache element.
-type ThumbElem struct {
-	Data       []byte
-	Mime       string
-	OrgW, OrgH int
-	TmbW, TmbH int
+type MediaData struct {
+	Data []byte
+	Mime string
 }
 
 // Thumbnails properties.
@@ -94,17 +91,17 @@ func (tp *TmbProp) SetNTmb(v int) {
 	tp.NTmbVal = v
 }
 
-func FindTmb(prop Proper, syspath string) (tmb *ThumbElem, err error) {
+func FindTmb(prop Proper, syspath string) (md *MediaData, err error) {
 	// try to extract from EXIF
 	if _, ok := prop.(*ExifKit); ok { // skip non-EXIF properties
-		if tmb, err = GetExifTmb(syspath); err == nil {
+		if md, err = GetExifTmb(syspath); err == nil {
 			return // thumbnail from EXIF
 		}
 	}
 
 	// try to extract from ID3
 	if _, ok := prop.(*TagKit); ok { // skip non-ID3 properties
-		if tmb, err = GetTagTmb(syspath); err == nil {
+		if md, err = GetTagTmb(syspath); err == nil {
 			return // thumbnail from ID3
 		}
 	}
@@ -129,7 +126,7 @@ func FindTmb(prop Proper, syspath string) (tmb *ThumbElem, err error) {
 	return MakeTmb(file)
 }
 
-func MakeTmb(r io.Reader) (tmb *ThumbElem, err error) {
+func MakeTmb(r io.Reader) (md *MediaData, err error) {
 	var ftype string
 	var src, dst image.Image
 	if src, ftype, err = image.Decode(r); err != nil {
@@ -164,13 +161,9 @@ func MakeTmb(r io.Reader) (tmb *ThumbElem, err error) {
 		}
 		mime = "image/jpeg"
 	}
-	tmb = &ThumbElem{
+	md = &MediaData{
 		Data: buf.Bytes(),
 		Mime: mime,
-		OrgW: src.Bounds().Dx(),
-		OrgH: src.Bounds().Dy(),
-		TmbW: dst.Bounds().Dx(),
-		TmbH: dst.Bounds().Dy(),
 	}
 	return // set valid thumbnail
 }
