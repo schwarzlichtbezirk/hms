@@ -162,7 +162,7 @@ Vue.component('dir-card-tag', {
 
 		ondiskadd() {
 			ajaxcc.emit('ajax', +1);
-			fetchajaxauth("POST", "/api/drive/add", {
+			fetchjsonauth("POST", "/api/drive/add", {
 				aid: app.aid,
 				path: this.diskpath
 			}).then(response => {
@@ -180,7 +180,7 @@ Vue.component('dir-card-tag', {
 		},
 		ondiskremove() {
 			ajaxcc.emit('ajax', +1);
-			fetchajaxauth("POST", "/api/drive/del", {
+			fetchjsonauth("POST", "/api/drive/del", {
 				aid: app.aid,
 				puid: this.selfile.puid
 			}).then(response => {
@@ -196,7 +196,7 @@ Vue.component('dir-card-tag', {
 			}).catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
 		},
 		ondiskpathchange(e) {
-			fetchajaxauth("POST", "/api/path/is", {
+			fetchjsonauth("POST", "/api/path/is", {
 				aid: app.aid,
 				path: this.diskpath
 			}).then(response => {

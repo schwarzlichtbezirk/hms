@@ -184,6 +184,11 @@ var pagealias = map[string]string{
 	"stat": "stat.html",
 }
 
+// Main page routes.
+var routemain = []string{
+	"/path/", "/home/", "/drive/", "/share/",
+}
+
 // Routes aliases.
 var routealias = map[string]string{
 	"/devm/": devmsuff,
@@ -206,8 +211,10 @@ func RegisterRoutes(gmux *Router) {
 	// UI routes
 	var dacc = devm.PathPrefix("/id{id}/").Subrouter()
 	var gacc = gmux.PathPrefix("/id{id}/").Subrouter()
-	dacc.PathPrefix("/path/").HandlerFunc(pageHandler(devmsuff, "main"))
-	gacc.PathPrefix("/path/").HandlerFunc(pageHandler(relmsuff, "main"))
+	for _, pref := range routemain {
+		dacc.PathPrefix(pref).HandlerFunc(pageHandler(devmsuff, "main"))
+		gacc.PathPrefix(pref).HandlerFunc(pageHandler(relmsuff, "main"))
+	}
 
 	// wpk-files sharing
 	gmux.PathPrefix("/data/").Handler(http.StripPrefix("/data/", http.FileServer(packager)))

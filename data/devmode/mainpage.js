@@ -294,13 +294,13 @@ Vue.component('auth-tag', {
 		},
 		onlogin() {
 			ajaxcc.emit('ajax', +1);
-			fetchajax("POST", "/api/auth/pubkey").then(response => {
+			fetchjson("POST", "/api/auth/pubkey").then(response => {
 				traceajax(response);
 				if (response.ok) {
 					// github.com/emn178/js-sha256
 					const hash = sha256.hmac.create(response.data);
 					hash.update(this.password);
-					return fetchajax("POST", "/api/auth/signin", {
+					return fetchjson("POST", "/api/auth/signin", {
 						name: this.login,
 						pubk: response.data,
 						hash: hash.digest()
@@ -340,7 +340,12 @@ Vue.component('auth-tag', {
 		}
 	},
 	mounted() {
-		this._authclosure = is => this.isauth = is;
+		this._authclosure = is => {
+			this.isauth = is;
+			if (is) {
+				this.login = auth.login;
+			}
+		};
 		auth.on('auth', this._authclosure);
 	},
 	beforeDestroy() {
@@ -358,6 +363,7 @@ const app = new Vue({
 		isauth: false, // is authorized
 		authid: 0, // authorized ID
 		aid: 0, // account ID
+		route: "path", // current route
 
 		loadcount: 0, // ajax working request count
 		shared: [], // list of shared folders
@@ -384,7 +390,12 @@ const app = new Vue({
 		},
 		// current page URL
 		curlongurl() {
-			return `${(devmode ? "/dev" : "")}/id${this.aid}/path/${this.curpath}`;
+			switch (this.route) {
+				case "share":
+					return `${(devmode ? "/dev" : "")}/id${this.aid}/share/`;
+				case "path":
+					return `${(devmode ? "/dev" : "")}/id${this.aid}/path/${this.curpath}`;
+			}
 		},
 		// current path base name
 		curbasename() {
@@ -393,7 +404,7 @@ const app = new Vue({
 			}
 			const arr = this.curpath.split('/');
 			const base = arr.pop() || arr.pop();
-			return arr.length ? base : this.shrname;
+			return !arr.length && this.shrname || base;
 		},
 		// array of paths to current folder
 		curpathway() {
@@ -418,7 +429,7 @@ const app = new Vue({
 				});
 			}
 			if (lst.length) {
-				lst[0].name = this.shrname;
+				lst[0].name = this.shrname || lst[0].name;
 			}
 			return lst;
 		},
@@ -499,7 +510,7 @@ const app = new Vue({
 	methods: {
 		// opens given folder cleary
 		fetchfolder(arg) {
-			return fetchajaxauth("POST", "/api/path/folder", arg).then(response => {
+			return fetchjsonauth("POST", "/api/path/folder", arg).then(response => {
 				traceajax(response);
 
 				this.pathlist = [];
@@ -508,6 +519,7 @@ const app = new Vue({
 				this.$refs.mapcard.new();
 
 				if (response.ok) {
+					this.route = "path";
 					this.curscan = new Date(Date.now());
 					// update folder settings
 					for (const fp of response.data.list || []) {
@@ -548,7 +560,7 @@ const app = new Vue({
 						for (const fp of this.uncached) {
 							tmbs.push({ puid: fp.puid });
 						}
-						fetchajaxauth("POST", "/api/tmb/chk", {
+						fetchjsonauth("POST", "/api/tmb/chk", {
 							tmbs: tmbs
 						}).then(response => {
 							traceajax(response);
@@ -577,17 +589,6 @@ const app = new Vue({
 					};
 					// gets thumbs
 					setTimeout(chktmb, 600);
-
-					const puids = [];
-					for (const fp of this.uncached) {
-						puids.push(fp.puid);
-					}
-					fetchajaxauth("POST", "/api/tmb/scn", {
-						aid: this.aid,
-						puids: puids
-					}).then(response => {
-						traceajax(response);
-					});
 				}
 			});
 		},
@@ -600,22 +601,75 @@ const app = new Vue({
 					this.histlist.splice(this.histpos);
 					this.histlist.push(arg);
 					this.histpos = this.histlist.length;
-				});
+				})
+				.then(() => this.fetchscanthumbs());
 		},
 
-		fetchsharelist() {
-			return fetchajaxauth("POST", "/api/share/lst", {
+		fetchscanthumbs() {
+			if (this.uncached.length) {
+				const puids = [];
+				for (const fp of this.uncached) {
+					puids.push(fp.puid);
+				}
+				return fetchjsonauth("POST", "/api/tmb/scn", {
+					aid: this.aid,
+					puids: puids
+				}).then(response => {
+					traceajax(response);
+				});
+			}
+			return Promise.resolve();
+		},
+
+		fetchshared() {
+			return fetchjsonauth("POST", "/api/share/lst", {
 				aid: this.aid
 			}).then(response => {
 				traceajax(response);
 				if (response.ok) {
-					this.shared = response.data || [];
+					this.shared = response.data;
+				}
+			});
+		},
+
+		fetchsharepage() {
+			return fetchjsonauth("POST", "/api/share/lst", {
+				aid: this.aid
+			}).then(response => {
+				traceajax(response);
+
+				this.pathlist = [];
+				this.filelist = [];
+				// init map card
+				this.$refs.mapcard.new();
+
+				if (response.ok) {
+					this.route = "share";
+					this.curscan = new Date(Date.now());
+					// update folder settings
+					for (const fp of response.data) {
+						if (fp) {
+							if (fp.type < 0) {
+								this.pathlist.push(fp);
+							} else {
+								this.filelist.push(fp);
+							}
+						}
+					}
+					// current path & state
+					this.curpuid = "";
+					this.curpath = "";
+					this.curstate = "";
+					this.shrname = "";
+					this.seturl();
+					// update shared
+					this.shared = response.data;
 				}
 			});
 		},
 
 		fetchshareadd(file) {
-			return fetchajaxauth("POST", "/api/share/add", {
+			return fetchjsonauth("POST", "/api/share/add", {
 				aid: this.aid,
 				puid: file.puid
 			}).then(response => {
@@ -637,7 +691,7 @@ const app = new Vue({
 		},
 
 		fetchsharedel(file) {
-			return fetchajaxauth("DELETE", "/api/share/del", {
+			return fetchjsonauth("DELETE", "/api/share/del", {
 				aid: this.aid,
 				puid: file.puid
 			}).then(response => {
@@ -705,6 +759,7 @@ const app = new Vue({
 
 			ajaxcc.emit('ajax', +1);
 			this.fetchfolder(arg)
+				.then(() => this.fetchscanthumbs())
 				.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
 		},
 
@@ -714,6 +769,7 @@ const app = new Vue({
 
 			ajaxcc.emit('ajax', +1);
 			this.fetchfolder(arg)
+				.then(() => this.fetchscanthumbs())
 				.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
 		},
 
@@ -729,7 +785,8 @@ const app = new Vue({
 		onrefresh() {
 			ajaxcc.emit('ajax', +1);
 			this.fetchfolder({ aid: this.aid, path: this.curpath })
-				.then(() => this.fetchsharelist()) // get shares
+				.then(() => this.fetchshared()) // get shares
+				.then(() => this.fetchscanthumbs())
 				.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
 		},
 
@@ -794,20 +851,34 @@ const app = new Vue({
 		}
 
 		// open path
-		if (chunks[0] === "path") {
-			chunks.shift();
-			if (chunks[chunks.length - 1].length > 0) {
-				chunks.push(""); // bring it to true path
-			}
+		const route = chunks[0];
+		chunks.shift();
+		switch (route) {
+			case "path":
+				if (chunks[chunks.length - 1].length > 0) {
+					chunks.push(""); // bring it to true path
+				}
 
-			ajaxcc.emit('ajax', +1);
-			this.fetchopenfolder({ aid: this.aid, path: chunks.join('/') })
-				.then(() => this.fetchsharelist()) // get shares
-				.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
-		} else {
-			ajaxcc.emit('ajax', +1);
-			this.fetchopenfolder({ aid: this.aid, puid: "" })
-				.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
+				ajaxcc.emit('ajax', +1);
+				this.fetchopenfolder({ aid: this.aid, path: chunks.join('/') })
+					.then(() => this.fetchshared()) // get shares
+					.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
+				break;
+
+			case "drive":
+				break;
+
+			case "share":
+				ajaxcc.emit('ajax', +1);
+				this.fetchsharepage()
+					.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
+				break;
+
+			default:
+				ajaxcc.emit('ajax', +1);
+				this.fetchopenfolder({ aid: this.aid, puid: "" })
+					.then(() => this.fetchshared()) // get shares
+					.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
 		}
 	}
 });

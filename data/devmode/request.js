@@ -55,80 +55,65 @@ const auth = extend({
 // ajax calls counter
 const ajaxcc = extend({}, makeeventmodel());
 
-const fetchajax = (method, url, body) => {
-	let resp;
-	return fetch(url, {
-		method: method,
-		headers: {
-			'Accept': 'application/json;charset=utf-8',
-			'Content-Type': 'application/json;charset=utf-8'
-		},
-		body: body && JSON.stringify(body)
-	}).then(response => {
-		resp = response;
-		// returns undefined on empty body or error in json
-		return new Promise((resolve) => response.json()
-			.then(json => resolve(json))
-			.catch(() => resolve(undefined)));
-	}).then(data => {
-		resp.data = data;
-		return resp;
-	});
-};
-
-const fetchajaxauth = (method, url, body) => {
-	let resp;
+// returns header properties set for ajax calls with json data.
+const ajaxheader = (bearer) => {
 	const hdr = {
 		'Accept': 'application/json;charset=utf-8',
 		'Content-Type': 'application/json;charset=utf-8'
 	};
-	if (auth.token.access) {
+	if (bearer && auth.token.access) {
 		hdr['Authorization'] = 'Bearer ' + auth.token.access;
 	}
-	return fetch(url, { // 1-st try
+	return hdr;
+};
+
+const fetchjson = async (method, url, body) => {
+	const response = await fetch(url, {
 		method: method,
-		headers: hdr,
+		headers: ajaxheader(false),
 		body: body && JSON.stringify(body)
-	}).then(response => {
-		if (response.status === 401 && auth.token.refrsh) { // Unauthorized
-			return fetchajax("POST", "/api/auth/refrsh", {
-				refrsh: auth.token.refrsh
-			}).then(response => {
-				if (response.ok) {
-					auth.signin(response.data);
-					const hdr = {
-						'Accept': 'application/json;charset=utf-8',
-						'Content-Type': 'application/json;charset=utf-8'
-					};
-					if (auth.token.access) {
-						hdr['Authorization'] = 'Bearer ' + auth.token.access;
-					}
-					return fetch(url, { // 2-nd try
-						method: method,
-						headers: hdr,
-						body: body && JSON.stringify(body)
-					}).then(response => {
-						resp = response;
-						// returns undefined on empty body or error in json
-						return new Promise((resolve) => response.json()
-							.then(json => resolve(json))
-							.catch(() => resolve(undefined)));
-					});
-				} else {
-					return Promise.reject();
-				}
-			});
-		} else {
-			resp = response;
-			// returns undefined on empty body or error in json
-			return new Promise((resolve) => response.json()
-				.then(json => resolve(json))
-				.catch(() => resolve(undefined)));
-		}
-	}).then(data => {
-		resp.data = data;
-		return resp;
 	});
+	// returns undefined on empty body or error in json
+	try {
+		response.data = await response.json();
+	} catch {
+		response.data = undefined;
+	}
+	return response;
+};
+
+const fetchjsonauth = async (method, url, body) => {
+	const response = await fetch(url, { // 1-st try
+		method: method,
+		headers: ajaxheader(true),
+		body: body && JSON.stringify(body)
+	});
+	if (response.status === 401 && auth.token.refrsh) { // Unauthorized
+		const response = await fetchjson("POST", "/api/auth/refrsh", {
+			refrsh: auth.token.refrsh
+		});
+		if (response.ok) {
+			auth.signin(response.data);
+			const response = fetch(url, { // 2-nd try
+				method: method,
+				headers: ajaxheader(true),
+				body: body && JSON.stringify(body)
+			});
+			try { // returns undefined on empty body or error in json
+				response.data = await response.json();
+			} catch {
+				response.data = undefined;
+			}
+			return response;
+		}
+		return Promise.reject();
+	}
+	try { // returns undefined on empty body or error in json
+		response.data = await response.json();
+	} catch {
+		response.data = undefined;
+	}
+	return response;
 };
 
 // The End.

@@ -514,7 +514,7 @@ func shrlstApi(w http.ResponseWriter, r *http.Request) {
 	var arg struct {
 		AID int `json:"aid"`
 	}
-	var ret []Proper
+	var ret = []Proper{}
 
 	// get arguments
 	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
