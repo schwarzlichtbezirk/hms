@@ -55,6 +55,16 @@ const auth = extend({
 // ajax calls counter
 const ajaxcc = extend({}, makeeventmodel());
 
+// error on HTTP response with given status.
+class HttpError extends Error {
+	constructor(status, errajax) {
+		super(errajax.what);
+		this.name = 'HttpError';
+		this.status = status;
+		extend(this, errajax);
+	}
+}
+
 // returns header properties set for ajax calls with json data.
 const ajaxheader = (bearer) => {
 	const hdr = {
@@ -67,52 +77,56 @@ const ajaxheader = (bearer) => {
 	return hdr;
 };
 
+// make ajax-call with json data.
 const fetchjson = async (method, url, body) => {
+	return await fetch(url, {
+		method: method,
+		headers: ajaxheader(false),
+		body: JSON.stringify(body)
+	});
+};
+
+// make ajax-call with json data and get json-response.
+const fetchajax = async (method, url, body) => {
 	const response = await fetch(url, {
 		method: method,
 		headers: ajaxheader(false),
 		body: body && JSON.stringify(body)
 	});
-	// returns undefined on empty body or error in json
-	try {
-		response.data = await response.json();
-	} catch {
-		response.data = undefined;
-	}
+	response.data = await response.json();
 	return response;
 };
 
+// make authorized ajax-call with json data.
 const fetchjsonauth = async (method, url, body) => {
-	const response = await fetch(url, { // 1-st try
+	const resp0 = await fetch(url, { // 1-st try
 		method: method,
 		headers: ajaxheader(true),
 		body: body && JSON.stringify(body)
 	});
-	if (response.status === 401 && auth.token.refrsh) { // Unauthorized
-		const response = await fetchjson("POST", "/api/auth/refrsh", {
+	if (resp0.status === 401 && auth.token.refrsh) { // Unauthorized
+		const resp1 = await fetchjson("POST", "/api/auth/refrsh", {
 			refrsh: auth.token.refrsh
 		});
-		if (response.ok) {
-			auth.signin(response.data);
-			const response = fetch(url, { // 2-nd try
-				method: method,
-				headers: ajaxheader(true),
-				body: body && JSON.stringify(body)
-			});
-			try { // returns undefined on empty body or error in json
-				response.data = await response.json();
-			} catch {
-				response.data = undefined;
-			}
-			return response;
+		const data = await resp1.json();
+		if (!resp1.ok) {
+			throw new HttpError(resp1.status, data);
 		}
-		return Promise.reject();
+		auth.signin(data);
+		const resp2 = fetch(url, { // 2-nd try
+			method: method,
+			headers: ajaxheader(true),
+			body: body && JSON.stringify(body)
+		});
+		return resp2;
 	}
-	try { // returns undefined on empty body or error in json
-		response.data = await response.json();
-	} catch {
-		response.data = undefined;
-	}
+	return resp0;
+};
+
+// make authorized ajax-call with json data and get json-response.
+const fetchajaxauth = async (method, url, body) => {
+	const response = await fetchjsonauth(method, url, body);
+	response.data = await response.json();
 	return response;
 };
 

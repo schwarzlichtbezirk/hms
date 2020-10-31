@@ -99,11 +99,14 @@ const app = new Vue({
 		},
 
 		ongetlog() {
-			fetchjson("GET", "/api/stat/getlog").then(response => {
-				if (response.ok) {
-					this.log = response.data;
-				}
-			}).catch(() => {});
+			(async () => {
+				try {
+					const response = await fetch("/api/stat/getlog");
+					if (response.ok) {
+						this.log = await response.json();
+					}
+				} catch (e) { console.error(e); }
+			})();
 		},
 
 		onnoprefix() {
@@ -119,43 +122,52 @@ const app = new Vue({
 		}
 	},
 	mounted() {
-		fetchjson("GET", "/api/stat/srvinf").then(response => {
-			if (response.ok) {
-				this.srvinf = response.data;
-				this.srvinf.buildvers = buildvers;
-				this.srvinf.builddate = builddate;
-			}
-		}).catch(() => { });
+		(async () => {
+			try {
+				const response = await fetch("/api/stat/srvinf");
+				if (response.ok) {
+					this.srvinf = await response.json();
+					this.srvinf.buildvers = buildvers;
+					this.srvinf.builddate = builddate;
+				}
+			} catch (e) { console.error(e); }
+		})();
 
 		$("#collapse-memory").on('show.bs.collapse', () => {
-			const scanner = () => {
-				fetchjson("GET", "/api/stat/memusg").then(response => {
-					if (response.ok) {
-						this.memgc = response.data;
+			let expanded = true;
+			(async () => {
+				try {
+					while (expanded) {
+						const response = await fetch("/api/stat/memusg");
+						if (response.ok) {
+							this.memgc = await response.json();
+						}
+						await new Promise(resolve => setTimeout(resolve, scanfreq));
 					}
-				}).catch(() => { });
-			};
+				} catch (e) { console.error(e); }
+			})();
 
-			scanner();
-			const id = setInterval(scanner, scanfreq);
 			$("#collapse-memory").one('hide.bs.collapse', () => {
-				clearInterval(id);
+				expanded = false;
 			});
 		});
 
 		$("#collapse-cache").on('show.bs.collapse', () => {
-			const scanner = () => {
-				fetchjson("GET", "/api/stat/cchinf").then(response => {
-					if (response.ok) {
-						this.cchinf = response.data;
+			let expanded = true;
+			(async () => {
+				try {
+					while (expanded) {
+						const response = await fetch("/api/stat/cchinf");
+						if (response.ok) {
+							this.cchinf = await response.json();
+						}
+						await new Promise(resolve => setTimeout(resolve, scanfreq));
 					}
-				}).catch(() => { });
-			};
+				} catch (e) { console.error(e); }
+			})();
 
-			scanner();
-			const id = setInterval(scanner, scanfreq);
 			$("#collapse-memory").one('hide.bs.collapse', () => {
-				clearInterval(id);
+				expanded = false;
 			});
 		});
 

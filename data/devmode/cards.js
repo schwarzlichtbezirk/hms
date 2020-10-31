@@ -161,51 +161,70 @@ Vue.component('dir-card-tag', {
 		},
 
 		ondiskadd() {
-			ajaxcc.emit('ajax', +1);
-			fetchjsonauth("POST", "/api/drive/add", {
-				aid: app.aid,
-				path: this.diskpath
-			}).then(response => {
-				traceajax(response);
-				if (response.ok) {
-					const file = response.data;
-					if (file) {
-						this.list.push(file);
+			(async () => {
+				ajaxcc.emit('ajax', +1);
+				try {
+					const response = await fetchajaxauth("POST", "/api/drive/add", {
+						aid: app.aid,
+						path: this.diskpath
+					});
+					traceajax(response);
+					if (response.ok) {
+						const file = response.data;
+						if (file) {
+							this.list.push(file);
+						}
+						$("#diskadd" + this.iid).modal('hide');
+					} else {
+						this.diskpathstate = -1;
 					}
-					$("#diskadd" + this.iid).modal('hide');
-				} else {
-					this.diskpathstate = -1;
+				} catch (e) {
+					ajaxfail(e);
+				} finally {
+					ajaxcc.emit('ajax', -1);
 				}
-			}).catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
+			})();
 		},
 		ondiskremove() {
-			ajaxcc.emit('ajax', +1);
-			fetchjsonauth("POST", "/api/drive/del", {
-				aid: app.aid,
-				puid: this.selfile.puid
-			}).then(response => {
-				traceajax(response);
-				if (response.ok) {
-					if (response.data) {
-						this.list.splice(this.list.findIndex(elem => elem === this.selfile), 1);
-						if (this.isshared(this.selfile)) {
-							this.fetchsharedel(this.selfile);
+			(async () => {
+				ajaxcc.emit('ajax', +1);
+				try {
+					const response = await fetchajaxauth("POST", "/api/drive/del", {
+						aid: app.aid,
+						puid: this.selfile.puid
+					});
+					traceajax(response);
+					if (response.ok) {
+						if (response.data) {
+							this.list.splice(this.list.findIndex(elem => elem === this.selfile), 1);
+							if (this.isshared(this.selfile)) {
+								await this.fetchsharedel(this.selfile);
+							}
 						}
 					}
+				} catch (e) {
+					ajaxfail(e);
+				} finally {
+					ajaxcc.emit('ajax', -1);
 				}
-			}).catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
+			})();
 		},
 		ondiskpathchange(e) {
-			fetchjsonauth("POST", "/api/path/is", {
-				aid: app.aid,
-				path: this.diskpath
-			}).then(response => {
-				if (response.ok) {
-					this.diskpathstate = response.data ? 1 : 0;
-				} else {
-					this.diskpathstate = -1;
+			(async () => {
+				try {
+					const response = await fetchajaxauth("POST", "/api/path/is", {
+						aid: app.aid,
+						path: this.diskpath
+					});
+					if (response.ok) {
+						this.diskpathstate = response.data ? 1 : 0;
+					} else {
+						this.diskpathstate = -1;
+					}
+				} catch (e) {
+					ajaxfail(e);
 				}
-			}).catch(ajaxfail);
+			})();
 		},
 
 		onselect(file) {

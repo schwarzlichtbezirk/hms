@@ -244,25 +244,72 @@ const fileurl = file => `/id${app.aid}/file/${file.puid}`;
 const pathurl = file => `${(devmode ? "/dev" : "")}/id${app.aid}/path/${file.puid}`;
 const mediaurl = file => `/id${app.aid}/media/${file.puid}`;
 
-const showmsgbox = (title, body) => {
+const showmsgbox = (title, message, details) => {
 	const dlg = $("#msgbox");
-	dlg.find(".modal-title").html(title);
-	dlg.find(".modal-body").html(body);
+	dlg.find(".modal-title").text(title);
+	dlg.find(".message").text(message);
+	dlg.find(".details").text(details || "");
 	dlg.modal("show");
 };
 
-const ajaxfail = what => {
+const ajaxfail = e => {
+	console.error(e.name, e);
+	if (e instanceof SyntaxError) {
+		showmsgbox(
+			"Syntax error",
+			"Application function failed with syntax error in javascript."
+		);
+		return;
+	} else if (e instanceof HttpError) {
+		const msgbox = (title, message) => {
+			const dlg = $("#msgbox");
+			dlg.find(".modal-title").text(title);
+			dlg.find(".message").text(message);
+			dlg.find(".errcode").text(e.code);
+			dlg.find(".errmsg").text(e.what);
+			dlg.modal("show");
+		};
+		switch (e.status) {
+			case 400: // Bad Request
+				msgbox(
+					"Application error",
+					"Action is rejected by server. This error is caused by wrong parameters in application ajax-call to server."
+				);
+				return;
+			case 401: // Unauthorized
+				msgbox(
+					"Unauthorized",
+					"Action can be done only after authorization."
+				);
+				return;
+			case 403: // Forbidden
+				msgbox(
+					"404 resource forbidden",
+					"Resource referenced by application ajax-call is forbidden. It can be accessible after authorization, or for other authorization."
+				);
+				return;
+			case 404: // Not Found
+				msgbox(
+					"404 resource not found",
+					"Resource referenced by application ajax-call is not found on server."
+				);
+				return;
+			case 500: // Internal Server Error
+				msgbox(
+					"Internal server error",
+					"Action could not be completed due to an internal error on the server side."
+				);
+				return;
+			default:
+				msgbox(
+					"Error " + e.status,
+					`Action is rejected with HTTP status ${e.status}.`
+				);
+		}
+	}
 	showmsgbox(
 		"Server unavailable",
 		"Server is currently not available, action can not be done now."
-	);
-	console.error(what);
-};
-
-const onerr404 = () => {
-	showmsgbox(
-		"Invalid path",
-		"Specified path cannot be accessed now."
 	);
 };
 
@@ -293,44 +340,57 @@ Vue.component('auth-tag', {
 			this.passstate = 0;
 		},
 		onlogin() {
-			ajaxcc.emit('ajax', +1);
-			fetchjson("POST", "/api/auth/pubkey").then(response => {
-				traceajax(response);
-				if (response.ok) {
+			(async () => {
+				ajaxcc.emit('ajax', +1);
+				try {
+					const resp1 = await fetchjson("POST", "/api/auth/pubkey");
+					const data1 = await resp1.json();
+					traceajax(resp1, data1);
+
+					if (!resp1.ok) {
+						throw new HttpError(resp1.status, data1);
+					}
 					// github.com/emn178/js-sha256
-					const hash = sha256.hmac.create(response.data);
+					const hash = sha256.hmac.create(data1);
 					hash.update(this.password);
-					return fetchjson("POST", "/api/auth/signin", {
+
+					const resp2 = await fetchjson("POST", "/api/auth/signin", {
 						name: this.login,
-						pubk: response.data,
+						pubk: data1,
 						hash: hash.digest()
 					});
-				}
-				return Promise.reject();
-			}).then(response => {
-				traceajax(response);
-				if (response.status === 200) {
-					auth.signin(response.data, this.login);
-					this.namestate = 1;
-					this.passstate = 1;
-					this.$emit('refresh');
-				} else if (response.status === 403) { // Forbidden
-					auth.signout();
-					switch (response.data.code) {
-						case 13:
-							this.namestate = -1;
-							this.passstate = 0;
-							break;
-						case 15:
-							this.namestate = 1;
-							this.passstate = -1;
-							break;
-						default:
-							this.namestate = -1;
-							this.passstate = -1;
+					const data2 = await resp2.json();
+					traceajax(resp2, data2);
+
+					if (resp2.status === 200) {
+						auth.signin(data2, this.login);
+						this.namestate = 1;
+						this.passstate = 1;
+						this.$emit('refresh');
+					} else if (resp2.status === 403) { // Forbidden
+						auth.signout();
+						switch (data2.code) {
+							case 13:
+								this.namestate = -1;
+								this.passstate = 0;
+								break;
+							case 15:
+								this.namestate = 1;
+								this.passstate = -1;
+								break;
+							default:
+								this.namestate = -1;
+								this.passstate = -1;
+						}
+					} else {
+						throw new HttpError(resp2.status, data2);
 					}
+				} catch (e) {
+					ajaxfail(e);
+				} finally {
+					ajaxcc.emit('ajax', -1);
 				}
-			}).catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
+			})();
 		},
 		onlogout() {
 			auth.signout();
@@ -509,223 +569,214 @@ const app = new Vue({
 	},
 	methods: {
 		// opens given folder cleary
-		fetchfolder(arg) {
-			return fetchjsonauth("POST", "/api/path/folder", arg).then(response => {
-				traceajax(response);
+		async fetchfolder(arg) {
+			const response = await fetchajaxauth("POST", "/api/path/folder", arg);
+			traceajax(response);
 
-				this.pathlist = [];
-				this.filelist = [];
-				// init map card
-				this.$refs.mapcard.new();
+			this.pathlist = [];
+			this.filelist = [];
+			// init map card
+			this.$refs.mapcard.new();
 
-				if (response.ok) {
-					this.route = "path";
-					this.curscan = new Date(Date.now());
-					// update folder settings
-					for (const fp of response.data.list || []) {
-						if (fp) {
-							if (fp.type < 0) {
-								this.pathlist.push(fp);
-							} else {
-								this.filelist.push(fp);
-							}
-						}
+			if (!response.ok) {
+				throw new HttpError(response.status, response.data);
+			}
+			this.route = "path";
+			this.curscan = new Date(Date.now());
+			// update folder settings
+			for (const fp of response.data.list || []) {
+				if (fp) {
+					if (fp.type < 0) {
+						this.pathlist.push(fp);
+					} else {
+						this.filelist.push(fp);
 					}
-					// current path & state
-					this.curpuid = arg.puid = response.data.puid;
-					this.curpath = arg.path = response.data.path;
-					this.curstate = response.data.state;
-					this.shrname = response.data.shrname;
-					this.seturl();
-					// update map card
-					const gpslist = [];
-					for (const fp of this.filelist) {
-						if (fp.latitude && fp.longitude && fp.ntmb === 1) {
-							gpslist.push(fp);
-						}
-					}
-					this.$refs.mapcard.addmarkers(gpslist);
-				} else if (response.status === 401) { // Unauthorized
-					onerr404();
-				} else if (response.status === 404) { // Not Found
-					onerr404();
 				}
-
-				// cache folder thumnails
-				if (this.uncached.length) {
-					// check cached state loop
-					let chktmb;
-					chktmb = () => {
-						const tmbs = [];
-						for (const fp of this.uncached) {
-							tmbs.push({ puid: fp.puid });
-						}
-						fetchjsonauth("POST", "/api/tmb/chk", {
-							tmbs: tmbs
-						}).then(response => {
-							traceajax(response);
-							if (response.ok) {
-								const gpslist = [];
-								for (const tp of response.data.tmbs) {
-									if (tp.ntmb) {
-										for (const fp of this.filelist) {
-											if (fp.puid === tp.puid) {
-												Vue.set(fp, 'ntmb', tp.ntmb);
-												// add gps-item
-												if (fp.latitude && fp.longitude && fp.ntmb === 1) {
-													gpslist.push(fp);
-												}
-												break;
-											}
-										}
-									}
-								}
-								this.$refs.mapcard.addmarkers(gpslist); // update map card
-								if (this.uncached.length) {
-									setTimeout(chktmb, 1500); // wait and run again
-								}
-							}
-						});
-					};
-					// gets thumbs
-					setTimeout(chktmb, 600);
+			}
+			// current path & state
+			this.curpuid = arg.puid = response.data.puid;
+			this.curpath = arg.path = response.data.path;
+			this.curstate = response.data.state;
+			this.shrname = response.data.shrname;
+			this.seturl();
+			// update map card
+			const gpslist = [];
+			for (const fp of this.filelist) {
+				if (fp.latitude && fp.longitude && fp.ntmb === 1) {
+					gpslist.push(fp);
 				}
-			});
+			}
+			this.$refs.mapcard.addmarkers(gpslist);
 		},
 
 		// opens given folder and push history step
-		fetchopenfolder(arg) {
-			return this.fetchfolder(arg)
-				.then(() => {
-					// update folder history
-					this.histlist.splice(this.histpos);
-					this.histlist.push(arg);
-					this.histpos = this.histlist.length;
-				})
-				.then(() => this.fetchscanthumbs());
+		async fetchopenfolder(arg) {
+			await this.fetchfolder(arg);
+			// update folder history
+			this.histlist.splice(this.histpos);
+			this.histlist.push(arg);
+			this.histpos = this.histlist.length;
+			// scan thumbnails
+			await this.fetchscanthumbs();
 		},
 
-		fetchscanthumbs() {
-			if (this.uncached.length) {
-				const puids = [];
-				for (const fp of this.uncached) {
-					puids.push(fp.puid);
-				}
-				return fetchjsonauth("POST", "/api/tmb/scn", {
-					aid: this.aid,
-					puids: puids
-				}).then(response => {
-					traceajax(response);
-				});
+		async fetchscanthumbs() {
+			if (!this.uncached.length) {
+				return;
 			}
-			return Promise.resolve();
-		},
 
-		fetchshared() {
-			return fetchjsonauth("POST", "/api/share/lst", {
-				aid: this.aid
-			}).then(response => {
-				traceajax(response);
-				if (response.ok) {
-					this.shared = response.data;
-				}
+			const response = await fetchjsonauth("POST", "/api/tmb/scn", {
+				aid: this.aid,
+				puids: this.uncached.map(fp => fp.puid)
 			});
-		},
+			traceajax(response);
 
-		fetchsharepage() {
-			return fetchjsonauth("POST", "/api/share/lst", {
-				aid: this.aid
-			}).then(response => {
-				traceajax(response);
-
-				this.pathlist = [];
-				this.filelist = [];
-				// init map card
-				this.$refs.mapcard.new();
-
-				if (response.ok) {
-					this.route = "share";
-					this.curscan = new Date(Date.now());
-					// update folder settings
-					for (const fp of response.data) {
-						if (fp) {
-							if (fp.type < 0) {
-								this.pathlist.push(fp);
-							} else {
-								this.filelist.push(fp);
+			// cache folder thumnails
+			const curpuid = this.puid;
+			(async () => {
+				try {
+					while (curpuid === this.puid && this.uncached.length) {
+						// check cached state loop
+						const response = await fetchajaxauth("POST", "/api/tmb/chk", {
+							tmbs: this.uncached.map(fp => ({ puid: fp.puid }))
+						});
+						traceajax(response);
+						if (!response.ok) {
+							throw new HttpError(response.status, response.data);
+						}
+						const gpslist = [];
+						for (const tp of response.data.tmbs) {
+							if (tp.ntmb) {
+								for (const fp of this.filelist) {
+									if (fp.puid === tp.puid) {
+										Vue.set(fp, 'ntmb', tp.ntmb);
+										// add gps-item
+										if (fp.latitude && fp.longitude && fp.ntmb === 1) {
+											gpslist.push(fp);
+										}
+										break;
+									}
+								}
 							}
 						}
+						// update map card
+						this.$refs.mapcard.addmarkers(gpslist);
+						// wait and run again
+						await new Promise(resolve => setTimeout(resolve, 1500));
 					}
-					// current path & state
-					this.curpuid = "";
-					this.curpath = "";
-					this.curstate = "";
-					this.shrname = "";
-					this.seturl();
-					// update shared
-					this.shared = response.data;
+				} catch (e) {
+					ajaxfail(e);
 				}
-			});
+			})();
 		},
 
-		fetchshareadd(file) {
-			return fetchjsonauth("POST", "/api/share/add", {
+		async fetchshared() {
+			const response = await fetchajaxauth("POST", "/api/share/lst", {
+				aid: this.aid
+			});
+			traceajax(response);
+			if (!response.ok) {
+				throw new HttpError(response.status, response.data);
+			}
+			this.shared = response.data;
+		},
+
+		async fetchsharepage() {
+			const response = await fetchajaxauth("POST", "/api/share/lst", {
+				aid: this.aid
+			});
+			traceajax(response);
+
+			this.pathlist = [];
+			this.filelist = [];
+			// init map card
+			this.$refs.mapcard.new();
+
+			if (!response.ok) {
+				throw new HttpError(response.status, response.data);
+			}
+			this.route = "share";
+			this.curscan = new Date(Date.now());
+			// update folder settings
+			for (const fp of response.data) {
+				if (fp) {
+					if (fp.type < 0) {
+						this.pathlist.push(fp);
+					} else {
+						this.filelist.push(fp);
+					}
+				}
+			}
+			// current path & state
+			this.curpuid = "";
+			this.curpath = "";
+			this.curstate = "";
+			this.shrname = "";
+			this.seturl();
+			// update shared
+			this.shared = response.data;
+		},
+
+		async fetchshareadd(file) {
+			const response = await fetchajaxauth("POST", "/api/share/add", {
 				aid: this.aid,
 				puid: file.puid
-			}).then(response => {
-				traceajax(response);
-				if (response.ok) {
-					if (response.data) {
-						this.shared.push(file);
-					}
-				} else if (response.status === 404) { // Not Found
-					onerr404();
-					// remove file from folder
-					if (FTtoFG[file.type] === FG.dir) {
-						this.pathlist.splice(this.pathlist.findIndex(elem => elem === file), 1);
-					} else {
-						this.filelist.splice(this.filelist.findIndex(elem => elem === file), 1);
-					}
-				}
 			});
+			traceajax(response);
+			if (response.ok) {
+				if (response.data) {
+					this.shared.push(file);
+				}
+			} else if (response.status === 404) { // Not Found
+				// remove file from folder
+				if (FTtoFG[file.type] === FG.dir) {
+					this.pathlist.splice(this.pathlist.findIndex(elem => elem === file), 1);
+				} else {
+					this.filelist.splice(this.filelist.findIndex(elem => elem === file), 1);
+				}
+				throw new HttpError(404, response.data);
+			} else {
+				throw new HttpError(response.status, response.data);
+			}
 		},
 
-		fetchsharedel(file) {
-			return fetchjsonauth("DELETE", "/api/share/del", {
+		async fetchsharedel(file) {
+			const response = await fetchajaxauth("DELETE", "/api/share/del", {
 				aid: this.aid,
 				puid: file.puid
-			}).then(response => {
-				traceajax(response);
-				if (response.ok) {
-					const ok = response.data;
-					// update folder settings
-					if (ok) {
-						for (let i in this.shared) {
-							if (this.shared[i].puid === file.puid) {
-								this.shared.splice(i, 1);
-								break;
-							}
-						}
-
-						// remove item from root folder
-						if (!this.curpath) {
-							if (FTtoFG[file.type] === FG.dir) {
-								this.pathlist.splice(this.pathlist.findIndex(elem => elem === file), 1);
-							} else {
-								this.filelist.splice(this.filelist.findIndex(elem => elem === file), 1);
-							}
+			});
+			traceajax(response);
+			if (response.ok) {
+				const ok = response.data;
+				// update folder settings
+				if (ok) {
+					for (let i in this.shared) {
+						if (this.shared[i].puid === file.puid) {
+							this.shared.splice(i, 1);
+							break;
 						}
 					}
-				} else if (xhr.status === 404) { // Not Found
-					onerr404();
-					// remove file from folder
-					if (FTtoFG[file.type] === FG.dir) {
-						this.pathlist.splice(this.pathlist.findIndex(elem => elem === file), 1);
-					} else {
-						this.filelist.splice(this.filelist.findIndex(elem => elem === file), 1);
+
+					// remove item from root folder
+					if (!this.curpath) {
+						if (FTtoFG[file.type] === FG.dir) {
+							this.pathlist.splice(this.pathlist.findIndex(elem => elem === file), 1);
+						} else {
+							this.filelist.splice(this.filelist.findIndex(elem => elem === file), 1);
+						}
 					}
 				}
-			});
+			} else if (xhr.status === 404) { // Not Found
+				// remove file from folder
+				if (FTtoFG[file.type] === FG.dir) {
+					this.pathlist.splice(this.pathlist.findIndex(elem => elem === file), 1);
+				} else {
+					this.filelist.splice(this.filelist.findIndex(elem => elem === file), 1);
+				}
+				throw new HttpError(404, response.data);
+			} else {
+				throw new HttpError(response.status, response.data);
+			}
 		},
 
 		isshared(file) {
@@ -748,65 +799,112 @@ const app = new Vue({
 		},
 
 		onhome() {
-			ajaxcc.emit('ajax', +1);
-			this.fetchopenfolder({ aid: this.aid, puid: "" })
-				.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
+			(async () => {
+				ajaxcc.emit('ajax', +1);
+				try {
+					await this.fetchopenfolder({ aid: this.aid, puid: "" });
+				} catch (e) {
+					ajaxfail(e);
+				} finally {
+					ajaxcc.emit('ajax', -1);
+				}
+			})();
 		},
 
 		onback() {
 			this.histpos--;
 			const arg = this.histlist[this.histpos - 1];
 
-			ajaxcc.emit('ajax', +1);
-			this.fetchfolder(arg)
-				.then(() => this.fetchscanthumbs())
-				.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
+			(async () => {
+				ajaxcc.emit('ajax', +1);
+				try {
+					await this.fetchfolder(arg);
+					await this.fetchscanthumbs();
+				} catch (e) {
+					ajaxfail(e);
+				} finally {
+					ajaxcc.emit('ajax', -1);
+				}
+			})();
 		},
 
 		onforward() {
 			this.histpos++;
 			const arg = this.histlist[this.histpos - 1];
 
-			ajaxcc.emit('ajax', +1);
-			this.fetchfolder(arg)
-				.then(() => this.fetchscanthumbs())
-				.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
+			(async () => {
+				ajaxcc.emit('ajax', +1);
+				try {
+					await this.fetchfolder(arg);
+					await this.fetchscanthumbs();
+				} catch (e) {
+					ajaxfail(e);
+				} finally {
+					ajaxcc.emit('ajax', -1);
+				}
+			})();
 		},
 
 		onparent() {
-			ajaxcc.emit('ajax', +1);
-			const path = this.curpathway.length
-				? this.curpathway[this.curpathway.length - 1].path
-				: "";
-			this.fetchopenfolder({ aid: this.aid, path: path })
-				.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
+			(async () => {
+				ajaxcc.emit('ajax', +1);
+				try {
+					const path = this.curpathway.length
+						? this.curpathway[this.curpathway.length - 1].path
+						: "";
+					await this.fetchopenfolder({ aid: this.aid, path: path });
+				} catch (e) {
+					ajaxfail(e);
+				} finally {
+					ajaxcc.emit('ajax', -1);
+				}
+			})();
 		},
 
 		onrefresh() {
-			ajaxcc.emit('ajax', +1);
-			this.fetchfolder({ aid: this.aid, path: this.curpath })
-				.then(() => this.fetchshared()) // get shares
-				.then(() => this.fetchscanthumbs())
-				.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
+			(async () => {
+				ajaxcc.emit('ajax', +1);
+				try {
+					await this.fetchfolder({ aid: this.aid, path: this.curpath });
+					await this.fetchshared(); // get shares
+					await this.fetchscanthumbs();
+				} catch (e) {
+					ajaxfail(e);
+				} finally {
+					ajaxcc.emit('ajax', -1);
+				}
+			})();
 		},
 
 		onshare(file) {
-			if (this.isshared(file)) { // should remove share
+			(async () => {
 				ajaxcc.emit('ajax', +1);
-				this.fetchsharedel(file)
-					.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
-			} else { // should add share
-				ajaxcc.emit('ajax', +1);
-				this.fetchshareadd(file)
-					.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
-			}
+				try {
+					if (this.isshared(file)) { // should remove share
+						await this.fetchsharedel(file);
+					} else { // should add share
+						await this.fetchshareadd(file);
+					}
+				} catch (e) {
+					ajaxfail(e);
+				} finally {
+					ajaxcc.emit('ajax', -1);
+				}
+			})();
 		},
 
 		onpathopen(file) {
 			if (!file.offline) {
-				ajaxcc.emit('ajax', +1);
-				this.fetchopenfolder({ aid: this.aid, puid: file.puid || "", path: file.path || "" })
-					.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
+				(async () => {
+					ajaxcc.emit('ajax', +1);
+					try {
+						await this.fetchopenfolder({ aid: this.aid, puid: file.puid || "", path: file.path || "" });
+					} catch (e) {
+						ajaxfail(e);
+					} finally {
+						ajaxcc.emit('ajax', -1);
+					}
+				})();
 			}
 		},
 		onauthcaret() {
@@ -855,30 +953,50 @@ const app = new Vue({
 		chunks.shift();
 		switch (route) {
 			case "path":
-				if (chunks[chunks.length - 1].length > 0) {
-					chunks.push(""); // bring it to true path
-				}
-
-				ajaxcc.emit('ajax', +1);
-				this.fetchopenfolder({ aid: this.aid, path: chunks.join('/') })
-					.then(() => this.fetchshared()) // get shares
-					.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
+				(async () => {
+					ajaxcc.emit('ajax', +1);
+					try {
+						if (chunks[chunks.length - 1].length > 0) {
+							chunks.push(""); // bring it to true path
+						}
+						await this.fetchopenfolder({ aid: this.aid, path: chunks.join('/') });
+						await this.fetchshared(); // get shares
+					} catch (e) {
+						ajaxfail(e);
+					} finally {
+						ajaxcc.emit('ajax', -1);
+					}
+				})();
 				break;
 
 			case "drive":
 				break;
 
 			case "share":
-				ajaxcc.emit('ajax', +1);
-				this.fetchsharepage()
-					.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
+				(async () => {
+					ajaxcc.emit('ajax', +1);
+					try {
+						await this.fetchsharepage();
+					} catch (e) {
+						ajaxfail(e);
+					} finally {
+						ajaxcc.emit('ajax', -1);
+					}
+				})();
 				break;
 
 			default:
-				ajaxcc.emit('ajax', +1);
-				this.fetchopenfolder({ aid: this.aid, puid: "" })
-					.then(() => this.fetchshared()) // get shares
-					.catch(ajaxfail).finally(() => ajaxcc.emit('ajax', -1));
+				(async () => {
+					ajaxcc.emit('ajax', +1);
+					try {
+						await this.fetchopenfolder({ aid: this.aid, puid: "" });
+						await this.fetchshared(); // get shares
+					} catch (e) {
+						ajaxfail(e);
+					} finally {
+						ajaxcc.emit('ajax', -1);
+					}
+				})();
 		}
 	}
 });
