@@ -423,7 +423,7 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 			}
 			acc.mux.RUnlock()
 		}
-		Log.Printf("navigate to root")
+		Log.Printf("id%d: navigate to root", acc.ID)
 
 		WriteOK(w, ret)
 		return
@@ -470,7 +470,7 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, http.StatusNotFound, err, EC_folderfail)
 		return
 	}
-	Log.Printf("navigate to: %s", syspath)
+	Log.Printf("id%d: navigate to %s", acc.ID, syspath)
 
 	WriteOK(w, ret)
 }
@@ -647,8 +647,34 @@ func shrdelApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 
 // APIHANDLER
 func drvlstApi(w http.ResponseWriter, r *http.Request, auth *Account) {
-	var ret = auth.ScanRoots()
-	Log.Printf("navigate to root")
+	var err error
+	var arg struct {
+		AID int `json:"aid"`
+	}
+	var ret []Proper
+
+	// get arguments
+	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
+		if err = json.Unmarshal(jb, &arg); err != nil {
+			WriteError400(w, err, EC_drvlstbadreq)
+			return
+		}
+	} else {
+		WriteError400(w, ErrNoJson, EC_drvlstnoreq)
+		return
+	}
+
+	var acc *Account
+	if acc = acclist.ByID(int(arg.AID)); acc == nil {
+		WriteError400(w, ErrNoAcc, EC_drvlstnoacc)
+		return
+	}
+	if auth != acc {
+		WriteError(w, http.StatusForbidden, ErrDeny, EC_drvlstdeny)
+		return
+	}
+	ret = acc.ScanRoots()
+	Log.Printf("id%d: navigate to root", acc.ID)
 	WriteOK(w, ret)
 }
 

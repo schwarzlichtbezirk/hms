@@ -154,21 +154,27 @@ const (
 	EC_shrdelnoacc  = 123
 	EC_shrdeldeny   = 124
 
+	// drive/lst
+	EC_drvlstnoreq  = 130
+	EC_drvlstbadreq = 131
+	EC_drvlstnoacc  = 132
+	EC_drvlstdeny   = 133
+
 	// drive/add
-	EC_drvaddnoreq  = 130
-	EC_drvaddbadreq = 131
-	EC_drvaddnodata = 132
-	EC_drvaddnoacc  = 133
-	EC_drvadddeny   = 134
-	EC_drvaddfile   = 135
+	EC_drvaddnoreq  = 140
+	EC_drvaddbadreq = 141
+	EC_drvaddnodata = 142
+	EC_drvaddnoacc  = 143
+	EC_drvadddeny   = 144
+	EC_drvaddfile   = 145
 
 	// drive/del
-	EC_drvdelnoreq  = 140
-	EC_drvdelbadreq = 141
-	EC_drvdelnodata = 142
-	EC_drvdelnoacc  = 143
-	EC_drvdeldeny   = 144
-	EC_drvdelnopath = 145
+	EC_drvdelnoreq  = 150
+	EC_drvdelbadreq = 151
+	EC_drvdelnodata = 152
+	EC_drvdelnoacc  = 153
+	EC_drvdeldeny   = 154
+	EC_drvdelnopath = 155
 )
 
 //////////////////
