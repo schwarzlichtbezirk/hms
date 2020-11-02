@@ -40,6 +40,7 @@ Vue.component('photoslider-tag', {
 		return {
 			selfile: null,
 			selfileurl: null,
+			imgloading: false,
 			repeatmode: 0 // 0 - no any repeat, 1 - repeat single, 2 - repeat playlist
 		};
 	},
@@ -81,22 +82,34 @@ Vue.component('photoslider-tag', {
 		}
 	},
 	methods: {
+		load(url) {
+			if (url) {
+				this.imgloading = true;
+			}
+			this.selfileurl = url;
+		},
 		select(file) {
 			this.selfile = file;
-			this.selfileurl = mediaurl(file);
+			this.load(mediaurl(file));
 			this.$emit('select', file);
 		},
 		popup(file) {
 			this.selfile = file;
-			this.selfileurl = mediaurl(file);
+			this.load(mediaurl(file));
 			$(this.$refs.modal).modal('show');
 		},
 		close() {
 			this.selfile = null;
-			this.selfileurl = null;
+			this.load(mediaurl(file));
 			$(this.$refs.modal).modal('hide');
 		},
 
+		onimgload(e) {
+			this.imgloading = false;
+		},
+		onimgerror(e) {
+			this.imgloading = false;
+		},
 		onkeyup(e) {
 			switch (e.code) {
 				case 'ArrowLeft':

@@ -110,7 +110,6 @@ const (
 	EC_homenoreq  = 70
 	EC_homebadreq = 71
 	EC_homenoacc  = 72
-	EC_homedeny   = 73
 
 	// folder
 	EC_foldernoreq    = 80
@@ -257,7 +256,7 @@ func RegisterRoutes(gmux *Router) {
 	reg.Path("/signin").HandlerFunc(AjaxWrap(signinApi))
 	reg.Path("/refrsh").HandlerFunc(AjaxWrap(refrshApi))
 	var crd = api.PathPrefix("/card").Subrouter()
-	crd.Path("/home").HandlerFunc(AuthWrap(homeApi))
+	crd.Path("/home").HandlerFunc(AjaxWrap(homeApi))
 	crd.Path("/folder").HandlerFunc(AjaxWrap(folderApi))
 	crd.Path("/ispath").HandlerFunc(AuthWrap(ispathApi))
 	var tmb = api.PathPrefix("/tmb").Subrouter()

@@ -696,7 +696,7 @@ const app = new Vue({
 			if (!response.ok) {
 				throw new HttpError(response.status, response.data);
 			}
-			this.shared = response.data;
+			this.shared = response.data || [];
 		},
 
 		async fetchhome() {
@@ -707,7 +707,7 @@ const app = new Vue({
 			if (!response.ok) {
 				throw new HttpError(response.status, response.data);
 			}
-			this.pathlist = response.data; // all items are categories
+			this.pathlist = response.data || []; // all items are categories
 			this.filelist = [];
 			// init map card
 			this.$refs.mapcard.new();
@@ -730,7 +730,7 @@ const app = new Vue({
 				throw new HttpError(response.status, response.data);
 			}
 
-			this.pathlist = response.data; // all items are drives
+			this.pathlist = response.data || []; // all items are drives
 			this.filelist = [];
 			// init map card
 			this.$refs.mapcard.new();
@@ -761,7 +761,7 @@ const app = new Vue({
 			this.route = "share";
 			this.curscan = new Date(Date.now());
 			// update folder settings
-			for (const fp of response.data) {
+			for (const fp of response.data || []) {
 				if (fp) {
 					if (fp.type < 0) {
 						this.pathlist.push(fp);
@@ -776,7 +776,7 @@ const app = new Vue({
 			this.curstate = "";
 			this.shrname = "";
 			// update shared
-			this.shared = response.data;
+			this.shared = response.data || [];
 			// update map card
 			const gpslist = [];
 			for (const fp of this.filelist) {
@@ -1089,11 +1089,8 @@ const app = new Vue({
 		}
 
 		// get route
-		const route = chunks[0];
+		const route = chunks[0] || "home";
 		chunks.shift();
-		if (!route) {
-			route = "home";
-		}
 
 		// open route
 		(async () => {
@@ -1116,7 +1113,7 @@ const app = new Vue({
 });
 
 $(document).ready(() => {
-	$('.preloader').hide("fast");
+	$('.preloader-lock').hide("fast");
 	$('#app').show("fast");
 });
 

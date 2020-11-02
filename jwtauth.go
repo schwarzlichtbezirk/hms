@@ -38,8 +38,6 @@ type CfgAuth struct {
 	AccessKey string `json:"access-key" yaml:"access-key"`
 	// Key for refresh HS-256 JWT-tokens.
 	RefreshKey string `json:"refresh-key" yaml:"refresh-key"`
-	// Can list of all shares be visible for unauthorized user.
-	ShowSharesUser bool `json:"show-shares-user" yaml:"show-shares-user"`
 }
 
 var (

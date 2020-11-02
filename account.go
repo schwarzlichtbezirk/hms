@@ -43,6 +43,8 @@ type Account struct {
 	sharepuid map[string]string // share/puid key/values
 	puidshare map[string]string // puid/share key/values
 
+	ShowShares bool `json:"show-shares" yaml:"show-shares"`
+
 	mux sync.RWMutex
 }
 
@@ -53,13 +55,14 @@ type Accounts struct {
 
 func (al *Accounts) NewAccount(login, password string) *Account {
 	var acc = &Account{
-		Login:     login,
-		Password:  password,
-		Roots:     []string{},
-		Hidden:    []string{},
-		Shares:    []string{},
-		sharepuid: map[string]string{},
-		puidshare: map[string]string{},
+		Login:      login,
+		Password:   password,
+		Roots:      []string{},
+		Hidden:     []string{},
+		Shares:     []string{},
+		sharepuid:  map[string]string{},
+		puidshare:  map[string]string{},
+		ShowShares: true,
 	}
 	if len(al.list) > 0 {
 		acc.ID = al.list[len(al.list)-1].ID + 1

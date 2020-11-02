@@ -6,7 +6,7 @@
 
 /* preloader */
 
-.preloader {
+.preloader-lock {
 	z-index: 1040; /* above sticked and fixed navbar */
 	position: fixed;
 	top: 0;
@@ -16,7 +16,7 @@
 	background-color: rgba(0, 0, 0, 0.1875);
 }
 
-	.preloader > div {
+	.preloader-bar {
 		position: absolute;
 		top: 50%;
 		left: 50%;
@@ -30,7 +30,7 @@
 		flex-wrap: nowrap;
 	}
 
-		.preloader > div > span {
+		.preloader-bar > span {
 			height: 25px;
 			width: 25px;
 			background: RebeccaPurple;
@@ -40,7 +40,7 @@
 		}
 
 @media (max-width: 767.98px) {
-	.preloader > div > span {
+	.preloader-bar > span {
 		height: 30px;
 		width: 30px;
 		margin: 5px;
@@ -57,22 +57,22 @@
 	}
 }
 
-.preloader > div > span:nth-child(1) {
+.preloader-bar > span:nth-child(1) {
 	animation-delay: 0s;
 }
 
-.preloader > div > span:nth-child(2) {
+.preloader-bar > span:nth-child(2) {
 	animation-delay: 0.2s;
 }
 
-.preloader > div > span:nth-child(3) {
+.preloader-bar > span:nth-child(3) {
 	animation-delay: 0.4s;
 }
 
-.preloader > div > span:nth-child(4) {
+.preloader-bar > span:nth-child(4) {
 	animation-delay: 0.6s;
 }
 
-.preloader > div > span:nth-child(5) {
+.preloader-bar > span:nth-child(5) {
 	animation-delay: 0.8s;
 }

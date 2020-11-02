@@ -370,12 +370,12 @@ func getlogApi(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
-func homeApi(w http.ResponseWriter, r *http.Request, auth *Account) {
+func homeApi(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
 		AID int `json:"aid"`
 	}
-	var ret []Proper
+	var ret = []Proper{}
 
 	// get arguments
 	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
@@ -393,13 +393,12 @@ func homeApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 		WriteError400(w, ErrNoAcc, EC_homenoacc)
 		return
 	}
-	if auth != acc {
-		WriteError(w, http.StatusForbidden, ErrDeny, EC_homedeny)
-		return
-	}
+	var auth, _ = CheckAuth(r)
 
-	ret = append(ret, NewCatKit("Drives list", "drives"))
-	if len(acc.Shares) > 0 {
+	if auth == acc {
+		ret = append(ret, NewCatKit("Drives list", "drives"))
+	}
+	if auth == acc || acc.ShowShares {
 		ret = append(ret, NewCatKit("Shared resources", "shares"))
 	}
 
@@ -551,7 +550,7 @@ func shrlstApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var auth *Account
-	if auth, err = CheckAuth(r); !(auth == acc || cfg.ShowSharesUser) {
+	if auth, err = CheckAuth(r); !(auth == acc || acc.ShowShares) {
 		if err != nil {
 			WriteJson(w, http.StatusUnauthorized, err)
 			return

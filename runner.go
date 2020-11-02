@@ -79,11 +79,10 @@ type Config struct {
 // Instance of common server settings.
 var cfg = Config{ // inits default values:
 	CfgAuth: CfgAuth{
-		AccessTTL:      1 * 24 * 60 * 60,
-		RefreshTTL:     3 * 24 * 60 * 60,
-		AccessKey:      "skJgM4NsbP3fs4k7vh0gfdkgGl8dJTszdLxZ1sQ9ksFnxbgvw2RsGH8xxddUV479",
-		RefreshKey:     "zxK4dUnuq3Lhd1Gzhpr3usI5lAzgvy2t3fmxld2spzz7a5nfv0hsksm9cheyutie",
-		ShowSharesUser: true,
+		AccessTTL:  1 * 24 * 60 * 60,
+		RefreshTTL: 3 * 24 * 60 * 60,
+		AccessKey:  "skJgM4NsbP3fs4k7vh0gfdkgGl8dJTszdLxZ1sQ9ksFnxbgvw2RsGH8xxddUV479",
+		RefreshKey: "zxK4dUnuq3Lhd1Gzhpr3usI5lAzgvy2t3fmxld2spzz7a5nfv0hsksm9cheyutie",
 	},
 	CfgServ: CfgServ{
 		AutoCert:          false,

@@ -185,7 +185,7 @@ const app = new Vue({
 }); // end of vue application
 
 $(document).ready(() => {
-	$('.preloader').hide("fast");
+	$('.preloader-lock').hide("fast");
 	$('#app').show("fast");
 });
 

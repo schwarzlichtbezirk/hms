@@ -25,3 +25,4 @@
     - '*/thumbs.db'
   shares:
     - E:/Music/
+  show-shares: true
