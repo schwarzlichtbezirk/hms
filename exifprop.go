@@ -140,12 +140,6 @@ type ExifKit struct {
 	ExifProp
 }
 
-// Creates copy of it self.
-func (ek *ExifKit) Clone() Proper {
-	var c = *ek
-	return &c
-}
-
 // Fills fields with given path.
 func (ek *ExifKit) Setup(syspath string, fi os.FileInfo) {
 	ek.StdProp.Setup(fi)

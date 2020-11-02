@@ -7,15 +7,17 @@
 				<li class="breadcrumb-item align-self-center active" aria-current="page">{{curbasename}}</li>
 			</ol>
 		</nav>
-		<p v-if="curstate>1">
-			Shared at <span class="bg-stat">{{shrname}}</span> as
-			<span class="bg-stat"><a v-bind:href="curshorturl" target="_blank">{{curshorturl}}</a></span>
-		</p>
-		<p v-else>Folder does not shared</p>
-		<p class="small">
-			Total <span class="bg-stat">{{pathlist.length}}</span> subfolders,
-			<span class="bg-stat">{{filelist.length}}</span> files on <span class="bg-stat">{{sumsize}}</span>, scanning time <span class="bg-stat">{{curscan.toLocaleTimeString()}}</span>.
-		</p>
+		<template v-if="route==='path'">
+			<p v-if="curstate>1">
+				Shared at <span class="bg-stat">{{shrname}}</span> as
+				<span class="bg-stat"><a v-bind:href="curshorturl" target="_blank">{{curshorturl}}</a></span>
+			</p>
+			<p v-else>Folder does not shared</p>
+			<p class="small">
+				Total <span class="bg-stat">{{pathlist.length}}</span> subfolders,
+				<span class="bg-stat">{{filelist.length}}</span> files on <span class="bg-stat">{{sumsize}}</span>, scanning time <span class="bg-stat">{{curscan.toLocaleTimeString()}}</span>.
+			</p>
+		</template>
 	</div>
 
 	<div class="sticky-top">

@@ -12,6 +12,7 @@ import (
 
 // File types
 const (
+	FT_cat   = -3
 	FT_drive = -2
 	FT_dir   = -1
 	FT_file  = 0
@@ -56,6 +57,7 @@ const (
 const FG_num = 8
 
 var typetogroup = map[int]int{
+	FT_cat:   FG_dir,
 	FT_drive: FG_dir,
 	FT_dir:   FG_dir,
 	FT_file:  FG_other,
@@ -205,7 +207,6 @@ type Proper interface {
 	PUID() string // path unique ID encoded to hex-base32
 	NTmb() int    // -1 - can not make thumbnail; 0 - not cached; 1 - cached
 	SetNTmb(int)
-	Clone() Proper
 }
 
 // Common file properties chunk.
@@ -250,12 +251,6 @@ type FileKit struct {
 	TmbProp
 }
 
-// Creates copy of it self.
-func (fk *FileKit) Clone() Proper {
-	var c = *fk
-	return &c
-}
-
 // Calls nested structures setups.
 func (fk *FileKit) Setup(syspath string, fi os.FileInfo) {
 	fk.StdProp.Setup(fi)
@@ -277,12 +272,6 @@ type DirKit struct {
 	DirProp
 }
 
-// Creates copy of it self.
-func (dk *DirKit) Clone() Proper {
-	var c = *dk
-	return &c
-}
-
 // Fills fields with given path. Do not looks for share.
 func (dk *DirKit) Setup(syspath string) {
 	dk.NameVal = filepath.Base(syspath)
@@ -294,12 +283,6 @@ func (dk *DirKit) Setup(syspath string) {
 type DriveKit struct {
 	DirKit
 	Latency int `json:"latency"` // drive connection latency in ms, or -1 on error
-}
-
-// Creates copy of it self.
-func (dk *DriveKit) Clone() Proper {
-	var c = *dk
-	return &c
 }
 
 // Fills fields with given path. Do not looks for share.
@@ -322,6 +305,25 @@ func (dk *DriveKit) Scan(syspath string) error {
 		dk.Latency = -1
 	}
 	return err
+}
+
+type CatKit struct {
+	DirKit
+	CID string `json:"cid"`
+}
+
+func (ck *CatKit) Setup(name, cid string) {
+	ck.NameVal = name
+	ck.TypeVal = FT_cat
+	ck.PUIDVal = pathcache.Cache("[" + cid + "/" + name + "]")
+	ck.NTmbVal = TMB_reject
+	ck.CID = cid
+}
+
+func NewCatKit(name, cid string) *CatKit {
+	var ck CatKit
+	ck.Setup(name, cid)
+	return &ck
 }
 
 // Descriptor for discs and tracks.
@@ -363,12 +365,6 @@ type TagKit struct {
 	StdProp
 	TmbProp
 	TagProp
-}
-
-// Creates copy of it self.
-func (tk *TagKit) Clone() Proper {
-	var c = *tk
-	return &c
 }
 
 // Fills fields with given path.

@@ -370,6 +370,44 @@ func getlogApi(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
+func homeApi(w http.ResponseWriter, r *http.Request, auth *Account) {
+	var err error
+	var arg struct {
+		AID int `json:"aid"`
+	}
+	var ret []Proper
+
+	// get arguments
+	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
+		if err = json.Unmarshal(jb, &arg); err != nil {
+			WriteError400(w, err, EC_homebadreq)
+			return
+		}
+	} else {
+		WriteError400(w, ErrNoJson, EC_homenoreq)
+		return
+	}
+
+	var acc *Account
+	if acc = acclist.ByID(int(arg.AID)); acc == nil {
+		WriteError400(w, ErrNoAcc, EC_homenoacc)
+		return
+	}
+	if auth != acc {
+		WriteError(w, http.StatusForbidden, ErrDeny, EC_homedeny)
+		return
+	}
+
+	ret = append(ret, NewCatKit("Drives list", "drives"))
+	if len(acc.Shares) > 0 {
+		ret = append(ret, NewCatKit("Shared resources", "shares"))
+	}
+
+	Log.Printf("id%d: navigate to home", acc.ID)
+	WriteOK(w, ret)
+}
+
+// APIHANDLER
 func folderApi(w http.ResponseWriter, r *http.Request) {
 	incuint(&foldercallcout, 1)
 
@@ -393,6 +431,10 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 			WriteError400(w, err, EC_folderbadreq)
 			return
 		}
+		if len(arg.PUID) == 0 && len(arg.Path) == 0 {
+			WriteError400(w, ErrArgNoPath, EC_foldernodata)
+			return
+		}
 	} else {
 		WriteError400(w, ErrNoJson, EC_foldernoreq)
 		return
@@ -401,31 +443,6 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 	var acc *Account
 	if acc = acclist.ByID(int(arg.AID)); acc == nil {
 		WriteError400(w, ErrNoAcc, EC_foldernoacc)
-		return
-	}
-
-	if len(arg.PUID) == 0 && len(arg.Path) == 0 { // for root only
-		var auth, _ = CheckAuth(r)
-		if acc == auth {
-			ret.List = auth.ScanRoots()
-			ret.State = FPA_admin
-		} else {
-			ret.List = []Proper{}
-			ret.State = FPA_share
-		}
-
-		if acc == auth || cfg.ShowSharesUser {
-			acc.mux.RLock()
-			for _, path := range acc.Shares {
-				if prop, err := propcache.Get(path); err == nil {
-					ret.List = append(ret.List, prop.(Proper))
-				}
-			}
-			acc.mux.RUnlock()
-		}
-		Log.Printf("id%d: navigate to root", acc.ID)
-
-		WriteOK(w, ret)
 		return
 	}
 
@@ -674,7 +691,7 @@ func drvlstApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 		return
 	}
 	ret = acc.ScanRoots()
-	Log.Printf("id%d: navigate to root", acc.ID)
+	Log.Printf("id%d: navigate to drives", acc.ID)
 	WriteOK(w, ret)
 }
 

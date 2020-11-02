@@ -29,6 +29,7 @@ const skinlist = [
 
 // File types
 const FT = {
+	cat: -3,
 	drive: -2,
 	dir: -1,
 	file: 0,
@@ -71,6 +72,7 @@ const FG = {
 };
 
 const FTtoFG = {
+	[FT.cat]: FG.dir,
 	[FT.drive]: FG.dir,
 	[FT.dir]: FG.dir,
 	[FT.file]: FG.other,
@@ -109,6 +111,7 @@ const FV = {
 };
 
 const FTtoFV = {
+	[FT.cat]: FV.none,
 	[FT.drive]: FV.none,
 	[FT.dir]: FV.none,
 	[FT.file]: FV.none,
@@ -148,6 +151,15 @@ const shareprefix = "/file/";
 
 const geticonname = file => {
 	switch (file.type) {
+		case FT.cat:
+			switch (file.cid) {
+				case "drives":
+					return "drives";
+				case "shares":
+					return "shares";
+				default:
+					return "folder-close";
+			}
 		case FT.drive:
 			if (file.latency < 0) {
 				return "drive-off";
@@ -423,21 +435,23 @@ const app = new Vue({
 		isauth: false, // is authorized
 		authid: 0, // authorized ID
 		aid: 0, // account ID
-		route: "path", // current route
 
 		loadcount: 0, // ajax working request count
 		shared: [], // list of shared folders
 
+		// history
+		histpos: 0, // position in history stack
+		histlist: [], // history stack
+
 		// current opened folder data
+		route: "path", // current route
 		pathlist: [], // list of subfolders properties in current folder
 		filelist: [], // list of files properties in current folder
 		curscan: new Date(), // time of last scanning of current folder
 		curpuid: "", // current folder PUID
 		curpath: "", // current folder path and path state
 		curstate: 2, // current folder path state
-		shrname: "", // current folder path share name
-		histpos: 0, // position in history stack
-		histlist: [] // history stack
+		shrname: "" // current folder path share name
 	},
 	computed: {
 		// is it authorized or running on localhost
@@ -450,21 +464,22 @@ const app = new Vue({
 		},
 		// current page URL
 		curlongurl() {
-			switch (this.route) {
-				case "share":
-					return `${(devmode ? "/dev" : "")}/id${this.aid}/share/`;
-				case "path":
-					return `${(devmode ? "/dev" : "")}/id${this.aid}/path/${this.curpath}`;
-			}
+			return `${(devmode ? "/dev" : "")}/id${this.aid}/path/${this.curpath}`;
 		},
 		// current path base name
 		curbasename() {
-			if (!this.curpath) {
-				return 'root folder';
+			switch (this.route) {
+				case "path":
+					const arr = this.curpath.split('/');
+					const base = arr.pop() || arr.pop();
+					return !arr.length && this.shrname || base;
+				case "home":
+					return 'home page';
+				case "drive":
+					return 'drives list';
+				case "share":
+					return 'shares list';
 			}
-			const arr = this.curpath.split('/');
-			const base = arr.pop() || arr.pop();
-			return !arr.length && this.shrname || base;
 		},
 		// array of paths to current folder
 		curpathway() {
@@ -517,7 +532,7 @@ const app = new Vue({
 		// common buttons enablers
 
 		dishome() {
-			return !this.curpath;
+			return this.route === "home";
 		},
 		disback() {
 			return this.histpos < 2;
@@ -539,7 +554,9 @@ const app = new Vue({
 				const hist = this.histlist[this.histpos - 2];
 				switch (hist.route) {
 					case "path":
-						return `back to /id${hist.arg.aid}/path/${hist.arg.path}`;
+						return `back to /id${hist.aid}/path/${hist.path}`;
+					case "home":
+						return "back to home";
 					case "drive":
 						return "back to drives";
 					case "share":
@@ -553,7 +570,9 @@ const app = new Vue({
 				const hist = this.histlist[this.histpos];
 				switch (hist.route) {
 					case "path":
-						return `forward to /id${hist.arg.aid}/path/${hist.arg.path}`;
+						return `forward to /id${hist.aid}/path/${hist.path}`;
+					case "home":
+						return "forward to home";
 					case "drive":
 						return "forward to drives";
 					case "share":
@@ -575,8 +594,10 @@ const app = new Vue({
 	},
 	methods: {
 		// opens given folder cleary
-		async fetchfolder(arg) {
-			const response = await fetchajaxauth("POST", "/api/path/folder", arg);
+		async fetchfolder(hist) {
+			const response = await fetchajaxauth("POST", "/api/card/folder", {
+				aid: hist.aid, puid: hist.puid || "", path: hist.path || ""
+			});
 			traceajax(response);
 
 			this.pathlist = [];
@@ -600,11 +621,10 @@ const app = new Vue({
 				}
 			}
 			// current path & state
-			this.curpuid = arg.puid = response.data.puid;
-			this.curpath = arg.path = response.data.path;
+			this.curpuid = hist.puid = response.data.puid;
+			this.curpath = hist.path = response.data.path;
 			this.curstate = response.data.state;
 			this.shrname = response.data.shrname;
-			this.seturl();
 			// update map card
 			const gpslist = [];
 			for (const fp of this.filelist) {
@@ -679,6 +699,28 @@ const app = new Vue({
 			this.shared = response.data;
 		},
 
+		async fetchhome() {
+			const response = await fetchajaxauth("POST", "/api/card/home", {
+				aid: this.aid
+			});
+			traceajax(response);
+			if (!response.ok) {
+				throw new HttpError(response.status, response.data);
+			}
+			this.pathlist = response.data; // all items are categories
+			this.filelist = [];
+			// init map card
+			this.$refs.mapcard.new();
+
+			this.route = "home";
+			this.curscan = new Date(Date.now());
+			// current path & state
+			this.curpuid = "";
+			this.curpath = "";
+			this.curstate = "";
+			this.shrname = "";
+		},
+
 		async fetchdrivepage() {
 			const response = await fetchajaxauth("POST", "/api/drive/lst", {
 				aid: this.aid
@@ -688,7 +730,7 @@ const app = new Vue({
 				throw new HttpError(response.status, response.data);
 			}
 
-			this.pathlist = response.data; // all itens are drives
+			this.pathlist = response.data; // all items are drives
 			this.filelist = [];
 			// init map card
 			this.$refs.mapcard.new();
@@ -700,7 +742,6 @@ const app = new Vue({
 			this.curpath = "";
 			this.curstate = "";
 			this.shrname = "";
-			this.seturl();
 		},
 
 		async fetchsharepage() {
@@ -734,28 +775,38 @@ const app = new Vue({
 			this.curpath = "";
 			this.curstate = "";
 			this.shrname = "";
-			this.seturl();
 			// update shared
 			this.shared = response.data;
+			// update map card
+			const gpslist = [];
+			for (const fp of this.filelist) {
+				if (fp.latitude && fp.longitude && fp.ntmb === 1) {
+					gpslist.push(fp);
+				}
+			}
+			this.$refs.mapcard.addmarkers(gpslist);
 		},
 
-		async fetchopenroute(route, arg) {
-			switch (route) {
+		async fetchopenroute(hist) {
+			switch (hist.route) {
 				case "path":
-					await this.fetchfolder(arg);
+					await this.fetchfolder(hist);
 					await this.fetchscanthumbs();
+					break;
+				case "home":
+					await this.fetchhome();
 					break;
 				case "drive":
 					await this.fetchdrivepage();
-					await this.fetchscanthumbs();
 					break;
 				case "share":
 					await this.fetchsharepage();
+					await this.fetchscanthumbs();
 					break;
 				default:
-					await this.fetchfolder({ aid: this.aid, puid: "" });
-					await this.fetchscanthumbs();
+					throw new Error("try to open undefined route");
 			}
+			this.seturl();
 		},
 
 		async fetchshareadd(file) {
@@ -836,13 +887,25 @@ const app = new Vue({
 		},
 
 		seturl() {
-			window.history.replaceState(null, this.curpath, this.curlongurl);
+			const url = (() => {
+				switch (this.route) {
+					case "path":
+						return this.curlongurl;
+					case "home":
+						return `${(devmode ? "/dev" : "")}/id${this.aid}/home/`;
+					case "drive":
+						return `${(devmode ? "/dev" : "")}/id${this.aid}/drive/`;
+					case "share":
+						return `${(devmode ? "/dev" : "")}/id${this.aid}/share/`;
+				}
+			})();
+			window.history.replaceState(null, this.curpath, url);
 		},
 
 		// push item into folders history
-		pushroute(route, arg) {
+		pushroute(hist) {
 			this.histlist.splice(this.histpos);
-			this.histlist.push({ route: route, arg: arg });
+			this.histlist.push(hist);
 			this.histpos = this.histlist.length;
 		},
 
@@ -851,9 +914,9 @@ const app = new Vue({
 				ajaxcc.emit('ajax', +1);
 				try {
 					// open route and push history step
-					const arg = { aid: this.aid, puid: "" };
-					await this.fetchopenroute("path", arg);
-					this.pushroute("path", arg);
+					const hist = { route: "home", aid: this.aid };
+					await this.fetchopenroute(hist);
+					this.pushroute(hist);
 				} catch (e) {
 					ajaxfail(e);
 				} finally {
@@ -868,7 +931,7 @@ const app = new Vue({
 				try {
 					this.histpos--;
 					const hist = this.histlist[this.histpos - 1];
-					await this.fetchopenroute(hist.route, hist.arg);
+					await this.fetchopenroute(hist);
 				} catch (e) {
 					ajaxfail(e);
 				} finally {
@@ -883,7 +946,7 @@ const app = new Vue({
 				try {
 					this.histpos++;
 					const hist = this.histlist[this.histpos - 1];
-					await this.fetchopenroute(hist.route, hist.arg);
+					await this.fetchopenroute(hist);
 				} catch (e) {
 					ajaxfail(e);
 				} finally {
@@ -900,9 +963,9 @@ const app = new Vue({
 					const path = this.curpathway.length
 						? this.curpathway[this.curpathway.length - 1].path
 						: "";
-					const arg = { aid: this.aid, path: path };
-					await this.fetchopenroute("path", arg);
-					this.pushroute("path", arg);
+					const hist = { route: "home", aid: this.aid, path: path };
+					await this.fetchopenroute(hist);
+					this.pushroute(hist);
 				} catch (e) {
 					ajaxfail(e);
 				} finally {
@@ -915,8 +978,8 @@ const app = new Vue({
 			(async () => {
 				ajaxcc.emit('ajax', +1);
 				try {
-					await this.fetchopenroute(this.route, { aid: this.aid, path: this.curpath });
-					if (this.route !== "share") {
+					await this.fetchopenroute({ route: this.route, aid: this.aid, path: this.curpath });
+					if (this.isauth && this.route !== "share") {
 						await this.fetchshared(); // get shares
 					}
 				} catch (e) {
@@ -950,9 +1013,26 @@ const app = new Vue({
 					ajaxcc.emit('ajax', +1);
 					try {
 						// open route and push history step
-						const arg = { aid: this.aid, puid: file.puid || "", path: file.path || "" };
-						await this.fetchopenroute("path", arg);
-						this.pushroute("path", arg);
+						const hist = {
+							route: "path",
+							aid: this.aid,
+							puid: file.puid || "",
+							path: file.path || ""
+						};
+						if (file.type === FT.cat) {
+							switch (file.cid) {
+								case "drives":
+									hist.route = "drive";
+									break;
+								case "shares":
+									hist.route = "share";
+									break;
+								default:
+									return;
+							}
+						}
+						await this.fetchopenroute(hist);
+						this.pushroute(hist);
 					} catch (e) {
 						ajaxfail(e);
 					} finally {
@@ -1011,18 +1091,21 @@ const app = new Vue({
 		// get route
 		const route = chunks[0];
 		chunks.shift();
+		if (!route) {
+			route = "home";
+		}
 
 		// open route
 		(async () => {
 			ajaxcc.emit('ajax', +1);
 			try {
 				// open route and push history step
-				const arg = { aid: this.aid, path: chunks.join('/') };
-				await this.fetchopenroute(route, arg);
-				if (route !== "share") {
+				const hist = { route: route, aid: this.aid, path: chunks.join('/') };
+				await this.fetchopenroute(hist);
+				if (this.isauth && route !== "share") {
 					await this.fetchshared(); // get shares
 				}
-				this.pushroute(route, arg);
+				this.pushroute(hist);
 			} catch (e) {
 				ajaxfail(e);
 			} finally {

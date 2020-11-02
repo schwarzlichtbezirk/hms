@@ -89,10 +89,10 @@ Vue.component('dir-card-tag', {
 		},
 
 		dislink() {
-			return !this.selfile;
+			return !this.selfile || this.selfile.type === FT.cat;
 		},
 		disshared() {
-			return !this.selfile;
+			return !this.selfile || this.selfile.type === FT.cat;
 		},
 		clsshared() {
 			return { active: this.selfile && this.isshared(this.selfile) };
@@ -212,7 +212,7 @@ Vue.component('dir-card-tag', {
 		ondiskpathchange(e) {
 			(async () => {
 				try {
-					const response = await fetchajaxauth("POST", "/api/path/is", {
+					const response = await fetchajaxauth("POST", "/card/path/ispath", {
 						aid: app.aid,
 						path: this.diskpath
 					});
@@ -312,10 +312,10 @@ Vue.component('file-card-tag', {
 		},
 
 		dislink() {
-			return !this.selfile;
+			return !this.selfile || this.selfile.type === FT.cat;
 		},
 		disshared() {
-			return !this.selfile;
+			return !this.selfile || this.selfile.type === FT.cat;
 		},
 		clsshared() {
 			return { active: this.selfile && this.isshared(this.selfile) };
