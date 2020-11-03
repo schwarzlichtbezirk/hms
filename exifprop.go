@@ -11,32 +11,32 @@ import (
 
 // EXIF tags properties chunk.
 type ExifProp struct {
-	Width  int `json:"width,omitempty"`
-	Height int `json:"height,omitempty"`
+	Width  int `json:"width,omitempty" yaml:"width,omitempty"`
+	Height int `json:"height,omitempty" yaml:"height,omitempty"`
 	// Photo
-	Model        string  `json:"model,omitempty"`
-	Make         string  `json:"make,omitempty"`
-	Software     string  `json:"software,omitempty"`
-	DateTime     int64   `json:"datetime,omitempty"`
-	Orientation  int     `json:"orientation,omitempty"`
-	ExposureTime string  `json:"exposuretime,omitempty"`
-	ExposureProg int     `json:"exposureprog,omitempty"`
-	FNumber      float64 `json:"fnumber,omitempty"`
-	ISOSpeed     int     `json:"isospeed,omitempty"`
-	ShutterSpeed float64 `json:"shutterspeed,omitempty"`
-	Aperture     float64 `json:"aperture,omitempty"`
-	ExposureBias float64 `json:"exposurebias,omitempty"`
-	LightSource  int     `json:"lightsource,omitempty"`
-	Focal        float64 `json:"focal,omitempty"`
-	Focal35mm    int     `json:"focal35mm,omitempty"`
-	DigitalZoom  float64 `json:"digitalzoom,omitempty"`
-	Flash        int     `json:"flash,omitempty"`
-	UniqueID     string  `json:"uniqueid,omitempty"`
+	Model        string  `json:"model,omitempty" yaml:"model,omitempty"`
+	Make         string  `json:"make,omitempty" yaml:"make,omitempty"`
+	Software     string  `json:"software,omitempty" yaml:"software,omitempty"`
+	DateTime     int64   `json:"datetime,omitempty" yaml:"datetime,omitempty"`
+	Orientation  int     `json:"orientation,omitempty" yaml:"orientation,omitempty"`
+	ExposureTime string  `json:"exposuretime,omitempty" yaml:"exposuretime,omitempty"`
+	ExposureProg int     `json:"exposureprog,omitempty" yaml:"exposureprog,omitempty"`
+	FNumber      float64 `json:"fnumber,omitempty" yaml:"fnumber,omitempty"`
+	ISOSpeed     int     `json:"isospeed,omitempty" yaml:"isospeed,omitempty"`
+	ShutterSpeed float64 `json:"shutterspeed,omitempty" yaml:"shutterspeed,omitempty"`
+	Aperture     float64 `json:"aperture,omitempty" yaml:"aperture,omitempty"`
+	ExposureBias float64 `json:"exposurebias,omitempty" yaml:"exposurebias,omitempty"`
+	LightSource  int     `json:"lightsource,omitempty" yaml:"lightsource,omitempty"`
+	Focal        float64 `json:"focal,omitempty" yaml:"focal,omitempty"`
+	Focal35mm    int     `json:"focal35mm,omitempty" yaml:"focal35mm,omitempty"`
+	DigitalZoom  float64 `json:"digitalzoom,omitempty" yaml:"digitalzoom,omitempty"`
+	Flash        int     `json:"flash,omitempty" yaml:"flash,omitempty"`
+	UniqueID     string  `json:"uniqueid,omitempty" yaml:"uniqueid,omitempty"`
 	// GPS
-	Latitude  float64 `json:"latitude,omitempty"`
-	Longitude float64 `json:"longitude,omitempty"`
-	Altitude  float64 `json:"altitude,omitempty"`
-	Satelites string  `json:"satelites,omitempty"`
+	Latitude  float64 `json:"latitude,omitempty" yaml:"latitude,omitempty"`
+	Longitude float64 `json:"longitude,omitempty" yaml:"longitude,omitempty"`
+	Altitude  float64 `json:"altitude,omitempty" yaml:"altitude,omitempty"`
+	Satelites string  `json:"satelites,omitempty" yaml:"satelites,omitempty"`
 }
 
 func ratfloat(t *tiff.Tag) float64 {

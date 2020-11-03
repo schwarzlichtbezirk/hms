@@ -57,8 +57,8 @@ type MediaData struct {
 
 // Thumbnails properties.
 type TmbProp struct {
-	PUIDVal string `json:"puid,omitempty"`
-	NTmbVal int    `json:"ntmb,omitempty"`
+	PUIDVal string `json:"puid,omitempty" yaml:"puid,omitempty"`
+	NTmbVal int    `json:"ntmb,omitempty" yaml:"ntmb,omitempty"`
 }
 
 // Generates PUID (path unique identifier) and updates cached state.

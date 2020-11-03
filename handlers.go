@@ -615,7 +615,7 @@ func shraddApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 	}
 
 	var ret = acc.AddShare(syspath)
-	Log.Printf("id%d: add share %s", acc.ID, syspath)
+	Log.Printf("id%d: add share '%s' as %s", acc.ID, syspath, arg.PUID)
 
 	WriteOK(w, ret)
 }

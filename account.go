@@ -192,9 +192,9 @@ func (acc *Account) UpdateShares() {
 			var puid = prop.(Proper).PUID()
 			acc.sharepuid[syspath] = puid
 			acc.puidshare[puid] = syspath
-			defer Log.Printf("id%d: created share on path '%s'", acc.ID, syspath)
+			defer Log.Printf("id%d: shared '%s' as %s", acc.ID, syspath, puid)
 		} else {
-			defer Log.Printf("id%d: can not create on path '%s'", acc.ID, syspath)
+			defer Log.Printf("id%d: can not share '%s'", acc.ID, syspath)
 		}
 	}
 

@@ -223,11 +223,11 @@ type Proper interface {
 
 // Common file properties chunk.
 type StdProp struct {
-	NameVal string `json:"name,omitempty"`
-	PathVal string `json:"path,omitempty"`
-	SizeVal int64  `json:"size,omitempty"`
-	TimeVal int64  `json:"time,omitempty"`
-	TypeVal int    `json:"type,omitempty"`
+	NameVal string `json:"name,omitempty" yaml:"name,omitempty"`
+	PathVal string `json:"path,omitempty" yaml:"path,omitempty"`
+	SizeVal int64  `json:"size,omitempty" yaml:"size,omitempty"`
+	TimeVal int64  `json:"time,omitempty" yaml:"time,omitempty"`
+	TypeVal int    `json:"type,omitempty" yaml:"type,omitempty"`
 }
 
 // Fills fields from os.FileInfo structure. Do not looks for share.
@@ -272,9 +272,9 @@ func (fk *FileKit) Setup(syspath string, fi os.FileInfo) {
 // Directory properties chunk.
 type DirProp struct {
 	// Directory scanning time in UNIX format, milliseconds.
-	Scan int64 `json:"scan"`
+	Scan int64 `json:"scan" yaml:"scan"`
 	// Directory file groups counters.
-	FGrp [FG_num]int `json:"fgrp"`
+	FGrp [FG_num]int `json:"fgrp" yaml:"fgrp,flow"`
 }
 
 // Directory properties kit.
@@ -320,7 +320,8 @@ func (dk *DriveKit) Scan(syspath string) error {
 }
 
 type CatKit struct {
-	DirKit
+	StdProp
+	TmbProp
 	CID string `json:"cid"`
 }
 
@@ -335,22 +336,28 @@ func (ck *CatKit) Setup(path string) {
 
 // Descriptor for discs and tracks.
 type TagEnum struct {
-	Number int `json:"number,omitempty"`
-	Total  int `json:"total,omitempty"`
+	Number int `json:"number,omitempty" yaml:"number,omitempty"`
+	Total  int `json:"total,omitempty" yaml:"total,omitempty"`
+}
+
+// Used to check whether an object is zero to determine whether
+// it should be omitted when marshaling to yaml.
+func (te *TagEnum) IsZero() bool {
+	return te.Number == 0 && te.Total == 0
 }
 
 // Music file tags properties chunk.
 type TagProp struct {
-	Title    string  `json:"title,omitempty"`
-	Album    string  `json:"album,omitempty"`
-	Artist   string  `json:"artist,omitempty"`
-	Composer string  `json:"composer,omitempty"`
-	Genre    string  `json:"genre,omitempty"`
-	Year     int     `json:"year,omitempty"`
-	Track    TagEnum `json:"track,omitempty"`
-	Disc     TagEnum `json:"disc,omitempty"`
-	Lyrics   string  `json:"lyrics,omitempty"`
-	Comment  string  `json:"comment,omitempty"`
+	Title    string  `json:"title,omitempty" yaml:"title,omitempty"`
+	Album    string  `json:"album,omitempty" yaml:"album,omitempty"`
+	Artist   string  `json:"artist,omitempty" yaml:"artist,omitempty"`
+	Composer string  `json:"composer,omitempty" yaml:"composer,omitempty"`
+	Genre    string  `json:"genre,omitempty" yaml:"genre,omitempty"`
+	Year     int     `json:"year,omitempty" yaml:"year,omitempty"`
+	Track    TagEnum `json:"track,omitempty" yaml:"track,flow,omitempty"`
+	Disc     TagEnum `json:"disc,omitempty" yaml:"disc,flow,omitempty"`
+	Lyrics   string  `json:"lyrics,omitempty" yaml:"lyrics,omitempty"`
+	Comment  string  `json:"comment,omitempty" yaml:"comment,omitempty"`
 }
 
 // Fills fields from tags metadata.

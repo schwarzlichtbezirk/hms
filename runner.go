@@ -240,7 +240,7 @@ func Init() {
 	if err = packager.OpenWPK(destpath + "hms.wpk"); err != nil {
 		Log.Fatal("can not load wpk-package: " + err.Error())
 	}
-	Log.Printf("cached %d files to %d aliases on %d bytes", datapack.RecNumber, datapack.TagNumber, datapack.TagOffset)
+	Log.Printf("cached %d package files to %d aliases on %d bytes", datapack.RecNumber, datapack.TagNumber, datapack.TagOffset)
 
 	// insert components templates into pages
 	if err = loadtemplates(); err != nil {
@@ -249,9 +249,10 @@ func Init() {
 
 	// build caches with given sizes from settings
 	initcaches()
-	if err = pathcache.Load(confpath + "cache.yaml"); err != nil {
-		Log.Println("error on hashes cache file: " + err.Error())
+	if err = pathcache.Load(confpath + "pathcache.yaml"); err != nil {
+		Log.Println("error on path cache file: " + err.Error())
 	}
+	Log.Printf("loaded %d items into path cache", len(pathcache.keypath))
 
 	// load accounts with roots, hidden and shares lists
 	if err = acclist.Load(confpath + "accounts.yaml"); err != nil {
@@ -395,8 +396,8 @@ func Done() {
 	srvwg.Add(1)
 	go func() {
 		defer srvwg.Done()
-		if err := pathcache.Save(confpath + "cache.yaml"); err != nil {
-			Log.Println("error on hashes cache file: " + err.Error())
+		if err := pathcache.Save(confpath + "pathcache.yaml"); err != nil {
+			Log.Println("error on path cache file: " + err.Error())
 		}
 	}()
 
