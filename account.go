@@ -43,8 +43,6 @@ type Account struct {
 	sharepuid map[string]string // share/puid key/values
 	puidshare map[string]string // puid/share key/values
 
-	ShowShares bool `json:"show-shares" yaml:"show-shares"`
-
 	mux sync.RWMutex
 }
 
@@ -55,14 +53,13 @@ type Accounts struct {
 
 func (al *Accounts) NewAccount(login, password string) *Account {
 	var acc = &Account{
-		Login:      login,
-		Password:   password,
-		Roots:      []string{},
-		Hidden:     []string{},
-		Shares:     []string{},
-		sharepuid:  map[string]string{},
-		puidshare:  map[string]string{},
-		ShowShares: true,
+		Login:     login,
+		Password:  password,
+		Roots:     []string{},
+		Hidden:    []string{},
+		Shares:    []string{},
+		sharepuid: map[string]string{},
+		puidshare: map[string]string{},
 	}
 	if len(al.list) > 0 {
 		acc.ID = al.list[len(al.list)-1].ID + 1
@@ -216,13 +213,25 @@ func makerandstr(n int) string {
 	return string(str)
 }
 
+// Checks that share with given PUID is present.
+func (acc *Account) IsShared(syspath string) bool {
+	acc.mux.RLock()
+	defer acc.mux.RUnlock()
+	for _, path := range acc.Shares {
+		if path == syspath {
+			return true
+		}
+	}
+	return false
+}
+
 // Add share with given path unigue identifier.
 func (acc *Account) AddShare(syspath string) bool {
 	acc.mux.Lock()
 	defer acc.mux.Unlock()
 
 	var puid = pathcache.Cache(syspath)
-	if _, ok := acc.sharepuid[puid]; !ok {
+	if _, ok := acc.puidshare[puid]; !ok {
 		acc.Shares = append(acc.Shares, syspath)
 		acc.sharepuid[syspath] = puid
 		acc.puidshare[puid] = syspath
@@ -251,6 +260,9 @@ func (acc *Account) DelShare(puid string) bool {
 
 // Brings system path to largest share path.
 func (acc *Account) GetSharePath(syspath string) (string, string) {
+	acc.mux.RLock()
+	defer acc.mux.RUnlock()
+
 	var puid, share string
 	for id, shr := range acc.puidshare {
 		if strings.HasPrefix(syspath, shr) && len(shr) > len(share) {
@@ -276,6 +288,11 @@ func (acc *Account) PathState(syspath string) int {
 	}
 	for _, path := range acc.Roots {
 		if strings.HasPrefix(syspath, path) {
+			return FPA_admin
+		}
+	}
+	for _, path := range CatPath {
+		if path == syspath {
 			return FPA_admin
 		}
 	}

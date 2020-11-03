@@ -92,7 +92,7 @@ Vue.component('dir-card-tag', {
 			return !this.selfile || this.selfile.type === FT.cat;
 		},
 		disshared() {
-			return !this.selfile || this.selfile.type === FT.cat;
+			return !this.selfile;
 		},
 		clsshared() {
 			return { active: this.selfile && this.isshared(this.selfile) };
@@ -315,7 +315,7 @@ Vue.component('file-card-tag', {
 			return !this.selfile || this.selfile.type === FT.cat;
 		},
 		disshared() {
-			return !this.selfile || this.selfile.type === FT.cat;
+			return !this.selfile;
 		},
 		clsshared() {
 			return { active: this.selfile && this.isshared(this.selfile) };

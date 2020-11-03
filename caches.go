@@ -141,6 +141,14 @@ func initcaches() {
 			var syspath = key.(string)
 			var fi os.FileInfo
 			if fi, err = os.Stat(syspath); err != nil {
+				for _, path := range CatPath {
+					if path == syspath {
+						var ck CatKit
+						ck.Setup(path)
+						ret, err = &ck, nil
+						return
+					}
+				}
 				return
 			}
 			ret = MakeProp(syspath, fi)

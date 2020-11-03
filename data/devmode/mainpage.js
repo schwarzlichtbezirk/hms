@@ -612,7 +612,7 @@ const app = new Vue({
 			this.curscan = new Date(Date.now());
 			// update folder settings
 			for (const fp of response.data.list || []) {
-				if (fp) {
+				if (fp && fp.type !== FT.cat) {
 					if (fp.type < 0) {
 						this.pathlist.push(fp);
 					} else {
@@ -762,7 +762,7 @@ const app = new Vue({
 			this.curscan = new Date(Date.now());
 			// update folder settings
 			for (const fp of response.data || []) {
-				if (fp) {
+				if (fp && fp.type !== FT.cat) {
 					if (fp.type < 0) {
 						this.pathlist.push(fp);
 					} else {
@@ -815,21 +815,10 @@ const app = new Vue({
 				puid: file.puid
 			});
 			traceajax(response);
-			if (response.ok) {
-				if (response.data) {
-					this.shared.push(file);
-				}
-			} else if (response.status === 404) { // Not Found
-				// remove file from folder
-				if (FTtoFG[file.type] === FG.dir) {
-					this.pathlist.splice(this.pathlist.findIndex(elem => elem === file), 1);
-				} else {
-					this.filelist.splice(this.filelist.findIndex(elem => elem === file), 1);
-				}
-				throw new HttpError(404, response.data);
-			} else {
+			if (!response.ok) {
 				throw new HttpError(response.status, response.data);
 			}
+			this.shared.push(file);
 		},
 
 		async fetchsharedel(file) {
@@ -838,36 +827,17 @@ const app = new Vue({
 				puid: file.puid
 			});
 			traceajax(response);
-			if (response.ok) {
-				const ok = response.data;
-				// update folder settings
-				if (ok) {
-					for (let i in this.shared) {
-						if (this.shared[i].puid === file.puid) {
-							this.shared.splice(i, 1);
-							break;
-						}
-					}
-
-					// remove item from root folder
-					if (!this.curpath) {
-						if (FTtoFG[file.type] === FG.dir) {
-							this.pathlist.splice(this.pathlist.findIndex(elem => elem === file), 1);
-						} else {
-							this.filelist.splice(this.filelist.findIndex(elem => elem === file), 1);
-						}
-					}
-				}
-			} else if (xhr.status === 404) { // Not Found
-				// remove file from folder
-				if (FTtoFG[file.type] === FG.dir) {
-					this.pathlist.splice(this.pathlist.findIndex(elem => elem === file), 1);
-				} else {
-					this.filelist.splice(this.filelist.findIndex(elem => elem === file), 1);
-				}
-				throw new HttpError(404, response.data);
-			} else {
+			if (!response.ok) {
 				throw new HttpError(response.status, response.data);
+			}
+			// update folder settings
+			if (response.data) { // on ok
+				for (let i in this.shared) {
+					if (this.shared[i].puid === file.puid) {
+						this.shared.splice(i, 1);
+						break;
+					}
+				}
 			}
 		},
 

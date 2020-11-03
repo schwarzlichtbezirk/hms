@@ -267,7 +267,7 @@ func RegisterRoutes(gmux *Router) {
 	shr.Path("/add").HandlerFunc(AuthWrap(shraddApi))
 	shr.Path("/del").HandlerFunc(AuthWrap(shrdelApi))
 	var drv = api.PathPrefix("/drive").Subrouter()
-	drv.Path("/lst").HandlerFunc(AuthWrap(drvlstApi))
+	drv.Path("/lst").HandlerFunc(AjaxWrap(drvlstApi))
 	drv.Path("/add").HandlerFunc(AuthWrap(drvaddApi))
 	drv.Path("/del").HandlerFunc(AuthWrap(drvdelApi))
 }

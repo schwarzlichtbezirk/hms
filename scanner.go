@@ -198,6 +198,18 @@ var extset = map[string]int{
 	".rar": FT_rar,
 }
 
+// Categories properties constants.
+const (
+	CP_drives = "[drives/Drives list]"
+	CP_shares = "[shares/Shared resources]"
+)
+
+// Paths list of categories properties.
+var CatPath = []string{
+	CP_drives,
+	CP_shares,
+}
+
 // File properties interface.
 type Proper interface {
 	Name() string // string identifier
@@ -312,18 +324,13 @@ type CatKit struct {
 	CID string `json:"cid"`
 }
 
-func (ck *CatKit) Setup(name, cid string) {
-	ck.NameVal = name
+func (ck *CatKit) Setup(path string) {
+	var pos = strings.IndexByte(path, '/')
+	ck.NameVal = path[pos+1 : len(path)-1]
 	ck.TypeVal = FT_cat
-	ck.PUIDVal = pathcache.Cache("[" + cid + "/" + name + "]")
+	ck.PUIDVal = pathcache.Cache(path)
 	ck.NTmbVal = TMB_reject
-	ck.CID = cid
-}
-
-func NewCatKit(name, cid string) *CatKit {
-	var ck CatKit
-	ck.Setup(name, cid)
-	return &ck
+	ck.CID = path[1:pos]
 }
 
 // Descriptor for discs and tracks.

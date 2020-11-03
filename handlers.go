@@ -395,11 +395,11 @@ func homeApi(w http.ResponseWriter, r *http.Request) {
 	}
 	var auth, _ = CheckAuth(r)
 
-	if auth == acc {
-		ret = append(ret, NewCatKit("Drives list", "drives"))
-	}
-	if auth == acc || acc.ShowShares {
-		ret = append(ret, NewCatKit("Shared resources", "shares"))
+	for _, path := range CatPath {
+		if auth == acc || acc.IsShared(path) {
+			var prop, _ = propcache.Get(path)
+			ret = append(ret, prop.(Proper))
+		}
 	}
 
 	Log.Printf("id%d: navigate to home", acc.ID)
@@ -550,7 +550,7 @@ func shrlstApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var auth *Account
-	if auth, err = CheckAuth(r); !(auth == acc || acc.ShowShares) {
+	if auth, err = CheckAuth(r); !(auth == acc || acc.IsShared(CP_shares)) {
 		if err != nil {
 			WriteJson(w, http.StatusUnauthorized, err)
 			return
@@ -662,7 +662,7 @@ func shrdelApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 }
 
 // APIHANDLER
-func drvlstApi(w http.ResponseWriter, r *http.Request, auth *Account) {
+func drvlstApi(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
 		AID int `json:"aid"`
@@ -685,10 +685,18 @@ func drvlstApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 		WriteError400(w, ErrNoAcc, EC_drvlstnoacc)
 		return
 	}
-	if auth != acc {
-		WriteError(w, http.StatusForbidden, ErrDeny, EC_drvlstdeny)
-		return
+
+	var auth *Account
+	if auth, err = CheckAuth(r); !(auth == acc || acc.IsShared(CP_drives)) {
+		if err != nil {
+			WriteJson(w, http.StatusUnauthorized, err)
+			return
+		} else {
+			WriteError(w, http.StatusForbidden, ErrDeny, EC_drvlstdeny)
+			return
+		}
 	}
+
 	ret = acc.ScanRoots()
 	Log.Printf("id%d: navigate to drives", acc.ID)
 	WriteOK(w, ret)
