@@ -192,9 +192,9 @@ func (acc *Account) UpdateShares() {
 			var puid = prop.(Proper).PUID()
 			acc.sharepuid[syspath] = puid
 			acc.puidshare[puid] = syspath
-			defer Log.Printf("id%d: shared '%s' as %s", acc.ID, syspath, puid)
+			Log.Printf("id%d: shared '%s' as %s", acc.ID, syspath, puid)
 		} else {
-			defer Log.Printf("id%d: can not share '%s'", acc.ID, syspath)
+			Log.Printf("id%d: can not share '%s'", acc.ID, syspath)
 		}
 	}
 
@@ -343,6 +343,7 @@ func (acc *Account) Readdir(syspath string) (ret []Proper, err error) {
 	if dk, ok := CacheProp(syspath, di).(*DirKit); ok {
 		dk.Scan = UnixJSNow()
 		dk.FGrp = fgrp
+		dircache.Set(dk.PUIDVal, dk.DirProp)
 	}
 
 	return

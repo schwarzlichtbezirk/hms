@@ -358,10 +358,10 @@ Vue.component('auth-tag', {
 					const resp1 = await fetchjson("POST", "/api/auth/pubkey");
 					const data1 = await resp1.json();
 					traceajax(resp1, data1);
-
 					if (!resp1.ok) {
 						throw new HttpError(resp1.status, data1);
 					}
+
 					// github.com/emn178/js-sha256
 					const hash = sha256.hmac.create(data1);
 					hash.update(this.password);
@@ -599,15 +599,15 @@ const app = new Vue({
 				aid: hist.aid, puid: hist.puid || "", path: hist.path || ""
 			});
 			traceajax(response);
+			if (!response.ok) {
+				throw new HttpError(response.status, response.data);
+			}
 
 			this.pathlist = [];
 			this.filelist = [];
 			// init map card
 			this.$refs.mapcard.new();
 
-			if (!response.ok) {
-				throw new HttpError(response.status, response.data);
-			}
 			this.route = "path";
 			this.curscan = new Date(Date.now());
 			// update folder settings
@@ -662,6 +662,7 @@ const app = new Vue({
 						if (!response.ok) {
 							throw new HttpError(response.status, response.data);
 						}
+
 						const gpslist = [];
 						for (const tp of response.data.tmbs) {
 							if (tp.ntmb) {
@@ -707,6 +708,7 @@ const app = new Vue({
 			if (!response.ok) {
 				throw new HttpError(response.status, response.data);
 			}
+
 			this.pathlist = response.data || []; // all items are categories
 			this.filelist = [];
 			// init map card
@@ -830,6 +832,7 @@ const app = new Vue({
 			if (!response.ok) {
 				throw new HttpError(response.status, response.data);
 			}
+
 			// update folder settings
 			if (response.data) { // on ok
 				for (let i in this.shared) {
@@ -978,7 +981,7 @@ const app = new Vue({
 		},
 
 		onpathopen(file) {
-			if (!file.offline) {
+			if (!file.latency || file.latency > 0) {
 				(async () => {
 					ajaxcc.emit('ajax', +1);
 					try {

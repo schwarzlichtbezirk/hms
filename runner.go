@@ -253,6 +253,10 @@ func Init() {
 		Log.Println("error on path cache file: " + err.Error())
 	}
 	Log.Printf("loaded %d items into path cache", len(pathcache.keypath))
+	if err = dircache.Load(confpath + "dircache.yaml"); err != nil {
+		Log.Println("error on directories cache file: " + err.Error())
+	}
+	Log.Printf("loaded %d items into directories cache", len(dircache.keydir))
 
 	// load accounts with roots, hidden and shares lists
 	if err = acclist.Load(confpath + "accounts.yaml"); err != nil {
@@ -398,6 +402,14 @@ func Done() {
 		defer srvwg.Done()
 		if err := pathcache.Save(confpath + "pathcache.yaml"); err != nil {
 			Log.Println("error on path cache file: " + err.Error())
+		}
+	}()
+
+	srvwg.Add(1)
+	go func() {
+		defer srvwg.Done()
+		if err := dircache.Save(confpath + "dircache.yaml"); err != nil {
+			Log.Println("error on directories cache file: " + err.Error())
 		}
 	}()
 

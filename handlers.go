@@ -393,7 +393,13 @@ func homeApi(w http.ResponseWriter, r *http.Request) {
 		WriteError400(w, ErrNoAcc, EC_homenoacc)
 		return
 	}
-	var auth, _ = CheckAuth(r)
+	var auth *Account
+	if auth, err = CheckAuth(r); err != nil {
+		if err.(*ErrAjax).Code > EC_noauth {
+			WriteJson(w, http.StatusUnauthorized, err)
+			return
+		}
+	}
 
 	for _, path := range CatPath {
 		if auth == acc || acc.IsShared(path) {
@@ -449,7 +455,7 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 	if len(arg.PUID) > 0 {
 		var ok bool
 		if syspath, ok = pathcache.Path(arg.PUID); !ok {
-			WriteError400(w, ErrNoPath, EC_foldernopath)
+			WriteError(w, http.StatusNotFound, ErrNoPath, EC_foldernopath)
 			return
 		}
 		ret.PUID = arg.PUID
@@ -550,14 +556,15 @@ func shrlstApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var auth *Account
-	if auth, err = CheckAuth(r); !(auth == acc || acc.IsShared(CP_shares)) {
-		if err != nil {
+	if auth, err = CheckAuth(r); err != nil {
+		if err.(*ErrAjax).Code > EC_noauth {
 			WriteJson(w, http.StatusUnauthorized, err)
 			return
-		} else {
-			WriteError(w, http.StatusForbidden, ErrDeny, EC_shrlstdeny)
-			return
 		}
+	}
+	if auth != acc && !acc.IsShared(CP_shares) {
+		WriteError(w, http.StatusForbidden, ErrDeny, EC_shrlstdeny)
+		return
 	}
 
 	acc.mux.RLock()
@@ -606,7 +613,7 @@ func shraddApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 
 	var syspath, ok = pathcache.Path(arg.PUID)
 	if !ok {
-		WriteError400(w, ErrNoPath, EC_shraddnopath)
+		WriteError(w, http.StatusNotFound, ErrNoPath, EC_shraddnopath)
 	}
 	var state = acc.PathState(syspath)
 	if state == FPA_none {
@@ -687,14 +694,15 @@ func drvlstApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var auth *Account
-	if auth, err = CheckAuth(r); !(auth == acc || acc.IsShared(CP_drives)) {
-		if err != nil {
+	if auth, err = CheckAuth(r); err != nil {
+		if err.(*ErrAjax).Code > EC_noauth {
 			WriteJson(w, http.StatusUnauthorized, err)
 			return
-		} else {
-			WriteError(w, http.StatusForbidden, ErrDeny, EC_drvlstdeny)
-			return
 		}
+	}
+	if auth != acc && !acc.IsShared(CP_shares) {
+		WriteError(w, http.StatusForbidden, ErrDeny, EC_drvlstdeny)
+		return
 	}
 
 	ret = acc.ScanRoots()
@@ -793,7 +801,7 @@ func drvdelApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 
 	var syspath, ok = pathcache.Path(arg.PUID)
 	if !ok {
-		WriteError400(w, ErrNoPath, EC_drvdelnopath)
+		WriteError(w, http.StatusNotFound, ErrNoPath, EC_drvdelnopath)
 	}
 
 	var i int

@@ -269,12 +269,25 @@ func (fk *FileKit) Setup(syspath string, fi os.FileInfo) {
 	fk.TmbProp.Setup(syspath)
 }
 
+type FileGrp [FG_num]int
+
+// Used to check whether an object is zero to determine whether
+// it should be omitted when marshaling to yaml.
+func (fg *FileGrp) IsZero() bool {
+	for _, v := range fg {
+		if v != 0 {
+			return false
+		}
+	}
+	return true
+}
+
 // Directory properties chunk.
 type DirProp struct {
 	// Directory scanning time in UNIX format, milliseconds.
 	Scan int64 `json:"scan" yaml:"scan"`
 	// Directory file groups counters.
-	FGrp [FG_num]int `json:"fgrp" yaml:"fgrp,flow"`
+	FGrp FileGrp `json:"fgrp" yaml:"fgrp,flow"`
 }
 
 // Directory properties kit.
@@ -290,6 +303,9 @@ func (dk *DirKit) Setup(syspath string) {
 	dk.TypeVal = FT_dir
 	dk.PUIDVal = pathcache.Cache(syspath)
 	dk.NTmbVal = TMB_reject
+	if dp, ok := dircache.Get(dk.PUIDVal); ok {
+		dk.DirProp = dp
+	}
 }
 
 type DriveKit struct {
@@ -472,17 +488,6 @@ func MakeProp(syspath string, fi os.FileInfo) Proper {
 			return &fk
 		}
 	}
-}
-
-// File properties factory.
-func CacheProp(syspath string, fi os.FileInfo) Proper {
-	if propcache.Has(syspath) {
-		var cp, _ = propcache.Get(syspath)
-		return cp.(Proper)
-	}
-	var prop = MakeProp(syspath, fi)
-	propcache.Set(syspath, prop)
-	return prop
 }
 
 // The End.

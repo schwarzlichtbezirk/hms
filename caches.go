@@ -35,14 +35,14 @@ var (
 )
 
 // Unlimited cache with puid/syspath and syspath/puid values.
-type KeyThumbCache struct {
+type PathCache struct {
 	keypath map[string]string // puid/path key/values
 	pathkey map[string]string // path/puid key/values
 	mux     sync.RWMutex
 }
 
 // Returns cached PUID for specified system path.
-func (c *KeyThumbCache) PUID(syspath string) (puid string, ok bool) {
+func (c *PathCache) PUID(syspath string) (puid string, ok bool) {
 	c.mux.RLock()
 	defer c.mux.RUnlock()
 	puid, ok = c.pathkey[syspath]
@@ -50,29 +50,25 @@ func (c *KeyThumbCache) PUID(syspath string) (puid string, ok bool) {
 }
 
 // Returns cached system path of specified PUID (path unique identifier).
-func (c *KeyThumbCache) Path(puid string) (syspath string, ok bool) {
+func (c *PathCache) Path(puid string) (syspath string, ok bool) {
 	c.mux.RLock()
 	defer c.mux.RUnlock()
 	syspath, ok = c.keypath[puid]
 	return
 }
 
-// Returns cached PUID for specified system path, or make it and put into cache.
-func (c *KeyThumbCache) Cache(syspath string) string {
+// Produce base32 string representation of given random bytes slice.
+var idenc = base32.HexEncoding.WithPadding(base32.NoPadding)
+
+// Generate new path unique ID.
+func (c *PathCache) MakePUID() string {
+	c.mux.RLock()
+	defer c.mux.RUnlock()
+
 	var puid string
-	var ok bool
-
-	c.mux.Lock()
-	defer c.mux.Unlock()
-
-	if puid, ok = c.pathkey[syspath]; ok {
-		return puid
-	}
-
-	// generate path unique ID
 	var n = 0
 	var buf [10]byte
-	for ok = true; ok; _, ok = c.keypath[puid] {
+	for ok := true; ok; _, ok = c.keypath[puid] {
 		if n == 10 {
 			switch {
 			case cfg.PUIDsize < 3:
@@ -92,7 +88,19 @@ func (c *KeyThumbCache) Cache(syspath string) string {
 		puid = idenc.EncodeToString(buf[:cfg.PUIDsize])
 		n++
 	}
+	return puid
+}
 
+// Returns cached PUID for specified system path, or make it and put into cache.
+func (c *PathCache) Cache(syspath string) string {
+	if puid, ok := c.PUID(syspath); ok {
+		return puid
+	}
+
+	var puid = c.MakePUID()
+
+	c.mux.Lock()
+	defer c.mux.Unlock()
 	c.pathkey[syspath] = puid
 	c.keypath[puid] = syspath
 	return puid
@@ -124,13 +132,36 @@ func UnfoldPath(shrpath string) string {
 }
 
 // Instance of unlimited cache with PUID<=>syspath pairs.
-var pathcache = KeyThumbCache{
+var pathcache = PathCache{
 	keypath: map[string]string{},
 	pathkey: map[string]string{},
 }
 
-// Produce base32 string representation of given random bytes slice.
-var idenc = base32.HexEncoding.WithPadding(base32.NoPadding)
+// Unlimited cache with puid/DirProp values.
+type DirCache struct {
+	keydir map[string]DirProp
+	mux    sync.RWMutex
+}
+
+// Get value from cache.
+func (c *DirCache) Get(puid string) (dp DirProp, ok bool) {
+	c.mux.RLock()
+	defer c.mux.RUnlock()
+	dp, ok = c.keydir[puid]
+	return
+}
+
+// Set value to cache.
+func (c *DirCache) Set(puid string, dp DirProp) {
+	c.mux.Lock()
+	defer c.mux.Unlock()
+	c.keydir[puid] = dp
+}
+
+// Instance of unlimited cache with puid/DirProp values.
+var dircache = DirCache{
+	keydir: map[string]DirProp{},
+}
 
 // Prepares caches depends of previously loaded configuration.
 func initcaches() {
@@ -256,6 +287,17 @@ func initcaches() {
 			return // uncacheable type
 		}).
 		Build()
+}
+
+// File properties factory, prevents double os.Stat slow call.
+func CacheProp(syspath string, fi os.FileInfo) Proper {
+	if propcache.Has(syspath) {
+		var cp, _ = propcache.Get(syspath)
+		return cp.(Proper)
+	}
+	var prop = MakeProp(syspath, fi)
+	propcache.Set(syspath, prop)
+	return prop
 }
 
 // The End.

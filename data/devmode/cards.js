@@ -194,12 +194,14 @@ Vue.component('dir-card-tag', {
 						puid: this.selfile.puid
 					});
 					traceajax(response);
-					if (response.ok) {
-						if (response.data) {
-							this.list.splice(this.list.findIndex(elem => elem === this.selfile), 1);
-							if (this.isshared(this.selfile)) {
-								await this.fetchsharedel(this.selfile);
-							}
+					if (!response.ok) {
+						throw new HttpError(response.status, response.data);
+					}
+
+					if (response.data) {
+						this.list.splice(this.list.findIndex(elem => elem === this.selfile), 1);
+						if (this.isshared(this.selfile)) {
+							await this.fetchsharedel(this.selfile);
 						}
 					}
 				} catch (e) {

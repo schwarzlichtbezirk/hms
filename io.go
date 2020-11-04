@@ -11,7 +11,7 @@ import (
 
 const utf8bom = "\xef\xbb\xbf"
 
-func (c *KeyThumbCache) Load(fpath string) (err error) {
+func (c *PathCache) Load(fpath string) (err error) {
 	var body []byte
 	if body, err = ioutil.ReadFile(fpath); err == nil {
 		if err = yaml.Unmarshal(body, &c.keypath); err != nil {
@@ -28,7 +28,7 @@ func (c *KeyThumbCache) Load(fpath string) (err error) {
 	return
 }
 
-func (c *KeyThumbCache) Save(fpath string) (err error) {
+func (c *PathCache) Save(fpath string) (err error) {
 	const intro = `
 # Here is rewritable cache with key/path pairs list.
 # It's loads on server start, and saves before exit.
@@ -63,6 +63,51 @@ func (c *KeyThumbCache) Save(fpath string) (err error) {
 	return
 }
 
+func (c *DirCache) Load(fpath string) (err error) {
+	var body []byte
+	if body, err = ioutil.ReadFile(fpath); err == nil {
+		if err = yaml.Unmarshal(body, &c.keydir); err != nil {
+			return
+		}
+	}
+	return
+}
+
+func (c *DirCache) Save(fpath string) (err error) {
+	const intro = `
+# Here is rewritable cache with key/path pairs list.
+# It's loads on server start, and saves before exit.
+# Each key is path unique ID encoded to base32 (RFC
+# 4648), values are associated directory properties.
+# Those cache is used for directories representation
+# and media groups representation. Count set format:
+# [misc, music, video, image, books, txt, arch, dir]
+
+`
+
+	var file *os.File
+	if file, err = os.OpenFile(fpath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644); err != nil {
+		return
+	}
+	defer file.Close()
+
+	if _, err = file.WriteString(utf8bom); err != nil {
+		return
+	}
+	if _, err = file.WriteString(intro); err != nil {
+		return
+	}
+
+	var body []byte
+	if body, err = yaml.Marshal(c.keydir); err != nil {
+		return
+	}
+	if _, err = file.Write(body); err != nil {
+		return
+	}
+	return
+}
+
 func (cfg *Config) Load(fpath string) (err error) {
 	var body []byte
 	if body, err = ioutil.ReadFile(fpath); err == nil {
@@ -78,7 +123,7 @@ func (cfg *Config) Load(fpath string) (err error) {
 func (cfg *Config) Save(fpath string) (err error) {
 	const intro = `
 # Server configuration file. First of all you can change
-# "access-key" and "refresh-key" for tokens defence.
+# "access-key" and "refresh-key" for tokens protection.
 
 `
 
