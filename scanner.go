@@ -16,12 +16,12 @@ const (
 	FT_drive = -2
 	FT_dir   = -1
 	FT_file  = 0
-	FT_wave  = 1
-	FT_flac  = 2
-	FT_mp3   = 3
-	FT_ogg   = 4
-	FT_mp4   = 5
-	FT_webm  = 6
+	FT_mp4   = 1
+	FT_webm  = 2
+	FT_wave  = 3
+	FT_flac  = 4
+	FT_mp3   = 5
+	FT_ogg   = 6
 	FT_tga   = 7
 	FT_bmp   = 8
 	FT_dds   = 9
@@ -45,8 +45,8 @@ const (
 // File groups
 const (
 	FG_other = 0
-	FG_music = 1
-	FG_video = 2
+	FG_video = 1
+	FG_audio = 2
 	FG_image = 3
 	FG_books = 4
 	FG_texts = 5
@@ -61,12 +61,12 @@ var typetogroup = map[int]int{
 	FT_drive: FG_dir,
 	FT_dir:   FG_dir,
 	FT_file:  FG_other,
-	FT_wave:  FG_music,
-	FT_flac:  FG_music,
-	FT_mp3:   FG_music,
-	FT_ogg:   FG_music,
 	FT_mp4:   FG_video,
 	FT_webm:  FG_video,
+	FT_wave:  FG_audio,
+	FT_flac:  FG_audio,
+	FT_mp3:   FG_audio,
+	FT_ogg:   FG_audio,
 	FT_tga:   FG_image,
 	FT_bmp:   FG_image,
 	FT_dds:   FG_image,
@@ -88,15 +88,15 @@ var typetogroup = map[int]int{
 }
 
 var extset = map[string]int{
+	// Video
+	".mp4":  FT_mp4,
+	".webm": FT_webm,
+
 	// Audio
 	".wav":  FT_wave,
 	".flac": FT_flac,
 	".mp3":  FT_mp3,
 	".ogg":  FT_ogg,
-
-	// Video
-	".mp4":  FT_mp4,
-	".webm": FT_webm,
 
 	// Images
 	".tga":  FT_tga,
@@ -115,7 +115,7 @@ var extset = map[string]int{
 	".psd":  FT_psd,
 	".psb":  FT_psd,
 
-	// Text
+	// Books
 	".pdf":   FT_pdf,
 	".html":  FT_html,
 	".htm":   FT_html,
@@ -124,6 +124,8 @@ var extset = map[string]int{
 	".xhtml": FT_html,
 	".phtml": FT_html,
 	".hta":   FT_html,
+
+	// Text
 	".txt":   FT_text,
 	".css":   FT_scr,
 	".js":    FT_scr,
@@ -202,12 +204,24 @@ var extset = map[string]int{
 const (
 	CP_drives = "[drives/Drives list]"
 	CP_shares = "[shares/Shared resources]"
+	CP_media  = "[media/Multimedia files]"
+	CP_video  = "[video/Movie and video files]"
+	CP_audio  = "[audio/Music and audio files]"
+	CP_image  = "[image/Photos and images]"
+	CP_books  = "[books/Books]"
+	CP_texts  = "[texts/Text files]"
 )
 
 // Paths list of categories properties.
 var CatPath = []string{
 	CP_drives,
 	CP_shares,
+	CP_media,
+	CP_video,
+	CP_audio,
+	CP_image,
+	CP_books,
+	CP_texts,
 }
 
 // File properties interface.

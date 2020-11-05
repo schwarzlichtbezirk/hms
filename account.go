@@ -213,11 +213,23 @@ func makerandstr(n int) string {
 	return string(str)
 }
 
-// Checks that share with given PUID is present.
+// Checks that syspath is become in any share.
 func (acc *Account) IsShared(syspath string) bool {
 	acc.mux.RLock()
 	defer acc.mux.RUnlock()
 	for _, path := range acc.Shares {
+		if path == syspath {
+			return true
+		}
+	}
+	return false
+}
+
+// Checks that syspath is become in any root.
+func (acc *Account) IsRooted(syspath string) bool {
+	acc.mux.RLock()
+	defer acc.mux.RUnlock()
+	for _, path := range acc.Roots {
 		if path == syspath {
 			return true
 		}

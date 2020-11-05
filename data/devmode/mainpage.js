@@ -33,12 +33,12 @@ const FT = {
 	drive: -2,
 	dir: -1,
 	file: 0,
-	wave: 1,
-	flac: 2,
-	mp3: 3,
-	ogg: 4,
-	mp4: 5,
-	webm: 6,
+	mp4: 1,
+	webm: 2,
+	wave: 3,
+	flac: 4,
+	mp3: 5,
+	ogg: 6,
 	tga: 7,
 	bmp: 8,
 	dds: 9,
@@ -62,8 +62,8 @@ const FT = {
 // File groups
 const FG = {
 	other: 0,
-	music: 1,
-	video: 2,
+	video: 1,
+	audio: 2,
 	image: 3,
 	books: 4,
 	texts: 5,
@@ -76,12 +76,12 @@ const FTtoFG = {
 	[FT.drive]: FG.dir,
 	[FT.dir]: FG.dir,
 	[FT.file]: FG.other,
-	[FT.wave]: FG.music,
-	[FT.flac]: FG.music,
-	[FT.mp3]: FG.music,
 	[FT.ogg]: FG.video,
 	[FT.mp4]: FG.video,
 	[FT.webm]: FG.video,
+	[FT.wave]: FG.audio,
+	[FT.flac]: FG.audio,
+	[FT.mp3]: FG.audio,
 	[FT.tga]: FG.image,
 	[FT.bmp]: FG.image,
 	[FT.dds]: FG.image,
@@ -105,8 +105,8 @@ const FTtoFG = {
 // File viewers
 const FV = {
 	none: 0,
-	music: 1,
-	video: 2,
+	video: 1,
+	audio: 2,
 	image: 3
 };
 
@@ -115,12 +115,12 @@ const FTtoFV = {
 	[FT.drive]: FV.none,
 	[FT.dir]: FV.none,
 	[FT.file]: FV.none,
-	[FT.wave]: FV.music,
-	[FT.flac]: FV.music,
-	[FT.mp3]: FV.music,
 	[FT.ogg]: FV.video,
 	[FT.mp4]: FV.video,
 	[FT.webm]: FV.video,
+	[FT.wave]: FV.audio,
+	[FT.flac]: FV.audio,
+	[FT.mp3]: FV.audio,
 	[FT.tga]: FV.image,
 	[FT.bmp]: FV.image,
 	[FT.dds]: FV.image,
@@ -153,12 +153,15 @@ const geticonname = file => {
 	switch (file.type) {
 		case FT.cat:
 			switch (file.cid) {
-				case "drives":
-					return "drives";
-				case "shares":
-					return "shares";
-				default:
-					return "folder-close";
+				case "drives": return "drives";
+				case "shares": return "shares";
+				case "media": return "media";
+				case "video": return "video";
+				case "audio": return "music";
+				case "image": return "photo";
+				case "books": return "books";
+				case "texts": return "texts";
+				default: return "folder-close";
 			}
 		case FT.drive:
 			if (file.latency < 0) {
@@ -180,7 +183,7 @@ const geticonname = file => {
 				}
 				if (!fnum) {
 					return "folder-empty" + suff;
-				} else if (fg[FG.music] / fnum > 0.5) {
+				} else if (fg[FG.audio] / fnum > 0.5) {
 					return "folder-mp3" + suff;
 				} else if (fg[FG.video] / fnum > 0.5) {
 					return "folder-movies" + suff;
@@ -192,7 +195,7 @@ const geticonname = file => {
 					return "folder-doc" + suff;
 				} else if (fg[FG.dir] / fnum > 0.5) {
 					return "folder-sub" + suff;
-				} else if ((fg[FG.music] + fg[FG.video] + fg[FG.image]) / fnum > 0.5) {
+				} else if ((fg[FG.audio] + fg[FG.video] + fg[FG.image]) / fnum > 0.5) {
 					return "folder-media" + suff;
 				} else {
 					return "folder-empty" + suff;
@@ -200,6 +203,10 @@ const geticonname = file => {
 			} else {
 				return "folder-close" + suff;
 			}
+		case FT.mp4:
+			return "doc-mp4";
+		case FT.webm:
+			return "doc-movie";
 		case FT.wave:
 			return "doc-wave";
 		case FT.flac:
@@ -208,10 +215,6 @@ const geticonname = file => {
 			return "doc-mp3";
 		case FT.ogg:
 			return "doc-music";
-		case FT.mp4:
-			return "doc-mp4";
-		case FT.webm:
-			return "doc-movie";
 		case FT.tga:
 		case FT.bmp:
 		case FT.dds:
@@ -789,6 +792,29 @@ const app = new Vue({
 			this.$refs.mapcard.addmarkers(gpslist);
 		},
 
+		async fetchcatpage(hist) {
+			const response = await fetchajaxauth("POST", "/api/card/cat", {
+				aid: hist.aid, puid: hist.puid
+			});
+			traceajax(response);
+			if (!response.ok) {
+				throw new HttpError(response.status, response.data);
+			}
+
+			this.pathlist = response.data || []; // all items are directories
+			this.filelist = [];
+			// init map card
+			this.$refs.mapcard.new();
+
+			this.route = "cat";
+			this.curscan = new Date(Date.now());
+			// current path & state
+			this.curpuid = hist.puid;
+			this.curpath = "";
+			this.curstate = "";
+			this.shrname = "";
+		},
+
 		async fetchopenroute(hist) {
 			switch (hist.route) {
 				case "path":
@@ -804,6 +830,9 @@ const app = new Vue({
 				case "share":
 					await this.fetchsharepage();
 					await this.fetchscanthumbs();
+					break;
+				case "cat":
+					await this.fetchcatpage(hist);
 					break;
 				default:
 					throw new Error("try to open undefined route");
@@ -986,13 +1015,9 @@ const app = new Vue({
 					ajaxcc.emit('ajax', +1);
 					try {
 						// open route and push history step
-						const hist = {
-							route: "path",
-							aid: this.aid,
-							puid: file.puid || "",
-							path: file.path || ""
-						};
+						const hist = { aid: this.aid };
 						if (file.type === FT.cat) {
+							hist.puid = file.puid;
 							switch (file.cid) {
 								case "drives":
 									hist.route = "drive";
@@ -1000,8 +1025,40 @@ const app = new Vue({
 								case "shares":
 									hist.route = "share";
 									break;
+								case "media":
+									hist.route = "cat";
+									hist.cid = "media";
+									break;
+								case "video":
+									hist.route = "cat";
+									hist.cid = "video";
+									break;
+								case "audio":
+									hist.route = "cat";
+									hist.cid = "audio";
+									break;
+								case "image":
+									hist.route = "cat";
+									hist.cid = "image";
+									break;
+								case "books":
+									hist.route = "cat";
+									hist.cid = "books";
+									break;
+								case "texts":
+									hist.route = "cat";
+									hist.cid = "texts";
+									break;
 								default:
 									return;
+							}
+						} else {
+							hist.route = "path";
+							if (file.puid) {
+								hist.puid = file.puid;
+							}
+							if (file.path) {
+								hist.path = file.path;
 							}
 						}
 						await this.fetchopenroute(hist);

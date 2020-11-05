@@ -413,6 +413,81 @@ func homeApi(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
+func catApi(w http.ResponseWriter, r *http.Request) {
+	var err error
+	var arg struct {
+		AID  int    `json:"aid"`
+		PUID string `json:"puid"`
+	}
+	var ret = []Proper{}
+
+	// get arguments
+	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
+		if err = json.Unmarshal(jb, &arg); err != nil {
+			WriteError400(w, err, EC_folderbadreq)
+			return
+		}
+		if len(arg.PUID) == 0 {
+			WriteError400(w, ErrArgNoPath, EC_foldernodata)
+			return
+		}
+	} else {
+		WriteError400(w, ErrNoJson, EC_foldernoreq)
+		return
+	}
+
+	var acc *Account
+	if acc = acclist.ByID(int(arg.AID)); acc == nil {
+		WriteError400(w, ErrNoAcc, EC_foldernoacc)
+		return
+	}
+
+	var auth *Account
+	if auth, err = CheckAuth(r); err != nil {
+		if err.(*ErrAjax).Code > EC_noauth {
+			WriteJson(w, http.StatusUnauthorized, err)
+			return
+		}
+	}
+	if auth != acc && !acc.IsShared(CP_shares) {
+		WriteError(w, http.StatusForbidden, ErrDeny, EC_shrlstdeny)
+		return
+	}
+
+	var path string
+	var ok bool
+	if path, ok = pathcache.Path(arg.PUID); !ok {
+		WriteError(w, http.StatusNotFound, ErrNoPath, EC_foldernopath)
+		return
+	}
+	var catprop = func(puids []string) {
+		for _, puid := range puids {
+			if syspath, ok := pathcache.Path(puid); ok {
+				if prop, err := propcache.Get(syspath); err == nil {
+					ret = append(ret, prop.(Proper))
+				}
+			}
+		}
+	}
+	switch path {
+	case CP_media:
+		catprop(dircache.Cats([]int{FG_video, FG_audio, FG_image}, 0.5))
+	case CP_video:
+		catprop(dircache.Cat(FG_video, 0.5))
+	case CP_audio:
+		catprop(dircache.Cat(FG_audio, 0.5))
+	case CP_image:
+		catprop(dircache.Cat(FG_image, 0.5))
+	case CP_books:
+		catprop(dircache.Cat(FG_books, 0.5))
+	case CP_texts:
+		catprop(dircache.Cat(FG_texts, 0.5))
+	}
+
+	WriteOK(w, ret)
+}
+
+// APIHANDLER
 func folderApi(w http.ResponseWriter, r *http.Request) {
 	incuint(&foldercallcout, 1)
 

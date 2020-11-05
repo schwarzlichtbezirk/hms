@@ -158,6 +158,40 @@ func (c *DirCache) Set(puid string, dp DirProp) {
 	c.keydir[puid] = dp
 }
 
+func (c *DirCache) Cat(cat int, percent float64) (ret []string) {
+	c.mux.RLock()
+	defer c.mux.RUnlock()
+	for puid, dp := range c.keydir {
+		var sum int
+		for _, v := range dp.FGrp {
+			sum += v
+		}
+		if sum > 0 && float64(dp.FGrp[cat])/float64(sum) > percent {
+			ret = append(ret, puid)
+		}
+	}
+	return
+}
+
+func (c *DirCache) Cats(cats []int, percent float64) (ret []string) {
+	c.mux.RLock()
+	defer c.mux.RUnlock()
+	for puid, dp := range c.keydir {
+		var sum int
+		for _, v := range dp.FGrp {
+			sum += v
+		}
+		var cs int
+		for _, ci := range cats {
+			cs += dp.FGrp[ci]
+		}
+		if sum > 0 && float64(cs)/float64(sum) > percent {
+			ret = append(ret, puid)
+		}
+	}
+	return
+}
+
 // Instance of unlimited cache with puid/DirProp values.
 var dircache = DirCache{
 	keydir: map[string]DirProp{},

@@ -1,6 +1,6 @@
 "use strict";
 
-const mp3filter = file => FTtoFV[file.type] === FV.music || FTtoFV[file.type] === FV.video;
+const mp3filter = file => FTtoFV[file.type] === FV.audio || FTtoFV[file.type] === FV.video;
 
 Vue.component('mp3-player-tag', {
 	template: '#mp3-player-tpl',
@@ -68,7 +68,7 @@ Vue.component('mp3-player-tag', {
 			return this.ratevals[this.ratval].toFixed(2);
 		},
 
-		// music buttons
+		// audio buttons
 		iconplay() {
 			return this.isplay ? 'pause' : 'play_arrow';
 		},

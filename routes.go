@@ -198,7 +198,7 @@ var pagealias = map[string]string{
 
 // Main page routes.
 var routemain = []string{
-	"/path/", "/home/", "/drive/", "/share/",
+	"/path/", "/home/", "/drive/", "/share/", "/cat/",
 }
 
 // Routes aliases.
@@ -257,6 +257,7 @@ func RegisterRoutes(gmux *Router) {
 	reg.Path("/refrsh").HandlerFunc(AjaxWrap(refrshApi))
 	var crd = api.PathPrefix("/card").Subrouter()
 	crd.Path("/home").HandlerFunc(AjaxWrap(homeApi))
+	crd.Path("/cat").HandlerFunc(AjaxWrap(catApi))
 	crd.Path("/folder").HandlerFunc(AjaxWrap(folderApi))
 	crd.Path("/ispath").HandlerFunc(AuthWrap(ispathApi))
 	var tmb = api.PathPrefix("/tmb").Subrouter()

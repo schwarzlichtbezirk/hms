@@ -263,7 +263,7 @@ Vue.component('file-card-tag', {
 			order: 1,
 			sortmode: sortbyalpha,
 			listmode: "smicon",
-			music: true, video: true, image: true, books: true, texts: true, other: false,
+			audio: true, video: true, image: true, books: true, texts: true, other: false,
 			audioonly: false,
 			viewer: null, // file viewers
 
@@ -343,7 +343,7 @@ Vue.component('file-card-tag', {
 		},
 
 		showmusic() {
-			return !!this.list.find(file => FTtoFG[file.type] === FG.music);
+			return !!this.list.find(file => FTtoFG[file.type] === FG.audio);
 		},
 		showvideo() {
 			return !!this.list.find(file => FTtoFG[file.type] === FG.video);
@@ -363,11 +363,11 @@ Vue.component('file-card-tag', {
 				|| FTtoFG[file.type] === FG.other);
 		},
 
-		clsaudio() {
+		clsaudioonly() {
 			return { active: this.audioonly };
 		},
-		clsmusic() {
-			return { active: this.music };
+		clsaudio() {
+			return { active: this.audio };
 		},
 		clsvideo() {
 			return { active: this.video };
@@ -414,8 +414,8 @@ Vue.component('file-card-tag', {
 			switch (FTtoFG[file.type]) {
 				case FG.dir:
 					return true;
-				case FG.music:
-					return this.music;
+				case FG.audio:
+					return this.audio;
 				case FG.video:
 					return this.video;
 				case FG.image:
@@ -479,11 +479,11 @@ Vue.component('file-card-tag', {
 			this.listmode = listmodenext[this.listmode];
 		},
 
-		onaudio() {
+		onaudioonly() {
 			this.audioonly = !this.audioonly;
 		},
-		onmusic() {
-			this.music = !this.music;
+		onaudio() {
+			this.audio = !this.audio;
 		},
 		onvideo() {
 			this.video = !this.video;
@@ -514,7 +514,7 @@ Vue.component('file-card-tag', {
 				case FV.none:
 					this.closeviewer();
 					break;
-				case FV.music:
+				case FV.audio:
 					this.viewer = this.$refs.mp3player;
 					this.viewer.setup(file);
 					this.viewer.visible = true;

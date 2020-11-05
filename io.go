@@ -81,7 +81,7 @@ func (c *DirCache) Save(fpath string) (err error) {
 # 4648), values are associated directory properties.
 # Those cache is used for directories representation
 # and media groups representation. Count set format:
-# [misc, music, video, image, books, txt, arch, dir]
+# [misc, video, audio, image, books, txt, arch, dir]
 
 `
 
