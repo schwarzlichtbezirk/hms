@@ -1,8 +1,10 @@
 "use strict";
 
-const sortbyalpha = "name";
-const sortbysize = "size";
-const unsorted = "";
+const sortmode = {
+	byalpha: "name",
+	bysize: "size",
+	unsorted: ""
+};
 
 const listmodetag = {
 	smicon: 'file-icon-tag',
@@ -56,7 +58,7 @@ Vue.component('dir-card-tag', {
 		return {
 			isauth: false, // is authorized
 			selfile: null, // current selected item
-			order: 1,
+			sortorder: 1,
 			listmode: "smicon",
 			diskpath: "", // path to disk to add
 			diskpathstate: 0,
@@ -77,11 +79,21 @@ Vue.component('dir-card-tag', {
 			})();
 			return this.list.length > 0;
 		},
+		sortable() {
+			for (const fp of this.list) {
+				if (fp.type === FT.ctgr) {
+					return false;
+				}
+			}
+			return true;
+		},
 		// sorted subfolders list
 		sortedlist() {
-			return this.list.slice().sort((v1, v2) => {
-				return this.order * (v1.name.toLowerCase() > v2.name.toLowerCase() ? 1 : -1);
-			});
+			return this.sortable
+				? this.list.slice().sort((v1, v2) => {
+					return this.sortorder * (v1.name.toLowerCase() > v2.name.toLowerCase() ? 1 : -1);
+				})
+				: this.list;
 		},
 
 		clsfilelist() {
@@ -89,7 +101,7 @@ Vue.component('dir-card-tag', {
 		},
 
 		dislink() {
-			return !this.selfile || this.selfile.type === FT.cat;
+			return !this.selfile || this.selfile.type === FT.ctgr;
 		},
 		disshared() {
 			return !this.selfile;
@@ -105,7 +117,7 @@ Vue.component('dir-card-tag', {
 		},
 
 		clsorder() {
-			return this.order > 0
+			return this.sortorder > 0
 				? 'arrow_downward'
 				: 'arrow_upward';
 		},
@@ -122,7 +134,7 @@ Vue.component('dir-card-tag', {
 		},
 
 		hintorder() {
-			return this.order > 0
+			return this.sortorder > 0
 				? "direct order"
 				: "reverse order";
 		},
@@ -154,7 +166,7 @@ Vue.component('dir-card-tag', {
 			this.$emit('share', this.selfile);
 		},
 		onorder() {
-			this.order = -this.order;
+			this.sortorder = -this.sortorder;
 		},
 		onlistmode() {
 			this.listmode = listmodenext[this.listmode];
@@ -260,8 +272,8 @@ Vue.component('file-card-tag', {
 			isauth: false, // is authorized
 			selfile: null, // current selected item
 			playbackfile: null,
-			order: 1,
-			sortmode: sortbyalpha,
+			sortorder: 1,
+			sortmode: sortmode.byalpha,
 			listmode: "smicon",
 			audio: true, video: true, image: true, books: true, texts: true, other: false,
 			audioonly: false,
@@ -293,16 +305,16 @@ Vue.component('file-card-tag', {
 					res.push(file);
 				}
 			}
-			if (this.sortmode === sortbyalpha) {
+			if (this.sortmode === sortmode.byalpha) {
 				res.sort((v1, v2) => {
-					return this.order * (v1.name.toLowerCase() > v2.name.toLowerCase() ? 1 : -1);
+					return this.sortorder * (v1.name.toLowerCase() > v2.name.toLowerCase() ? 1 : -1);
 				});
-			} else if (this.sortmode === sortbysize) {
+			} else if (this.sortmode === sortmode.bysize) {
 				res.sort((v1, v2) => {
 					if (v1.size === v2.size) {
-						return this.order * (v1.name.toLowerCase() > v2.name.toLowerCase() ? 1 : -1);
+						return this.sortorder * (v1.name.toLowerCase() > v2.name.toLowerCase() ? 1 : -1);
 					} else {
-						return this.order * (v1.size > v2.size ? 1 : -1);
+						return this.sortorder * (v1.size > v2.size ? 1 : -1);
 					}
 				});
 			}
@@ -314,7 +326,7 @@ Vue.component('file-card-tag', {
 		},
 
 		dislink() {
-			return !this.selfile || this.selfile.type === FT.cat;
+			return !this.selfile || this.selfile.type === FT.ctgr;
 		},
 		disshared() {
 			return !this.selfile;
@@ -324,17 +336,17 @@ Vue.component('file-card-tag', {
 		},
 
 		clsorder() {
-			return this.order > 0
+			return this.sortorder > 0
 				? 'arrow_downward'
 				: 'arrow_upward';
 		},
 		clssortmode() {
 			switch (this.sortmode) {
-				case sortbyalpha:
+				case sortmode.byalpha:
 					return "sort_by_alpha";
-				case sortbysize:
+				case sortmode.bysize:
 					return "sort";
-				case unsorted:
+				case sortmode.unsorted:
 					return "reorder";
 			}
 		},
@@ -390,17 +402,17 @@ Vue.component('file-card-tag', {
 		},
 
 		hintorder() {
-			return this.order > 0
+			return this.sortorder > 0
 				? "direct order"
 				: "reverse order";
 		},
 		hintsortmode() {
 			switch (this.sortmode) {
-				case sortbyalpha:
+				case sortmode.byalpha:
 					return "sort by alpha";
-				case sortbysize:
+				case sortmode.bysize:
 					return "sort by size";
-				case unsorted:
+				case sortmode.unsorted:
 					return "as is unsorted";
 			}
 		},
@@ -460,18 +472,18 @@ Vue.component('file-card-tag', {
 			this.$emit('share', this.selfile);
 		},
 		onorder() {
-			this.order = -this.order;
+			this.sortorder = -this.sortorder;
 		},
 		onsortmode() {
 			switch (this.sortmode) {
-				case sortbyalpha:
-					this.sortmode = sortbysize;
+				case sortmode.byalpha:
+					this.sortmode = sortmode.bysize;
 					break;
-				case sortbysize:
-					this.sortmode = unsorted;
+				case sortmode.bysize:
+					this.sortmode = sortmode.unsorted;
 					break;
-				case unsorted:
-					this.sortmode = sortbyalpha;
+				case sortmode.unsorted:
+					this.sortmode = sortmode.byalpha;
 					break;
 			}
 		},

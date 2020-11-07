@@ -170,14 +170,28 @@ func (acc *Account) ScanRoots() []Proper {
 	acc.mux.RLock()
 	defer acc.mux.RUnlock()
 
-	var drvs = make([]Proper, len(acc.Roots), len(acc.Roots))
-	for i, root := range acc.Roots {
+	var lst = make([]Proper, len(acc.Roots), len(acc.Roots))
+	for i, path := range acc.Roots {
 		var dk DriveKit
-		dk.Setup(root)
-		dk.Scan(root)
-		drvs[i] = &dk
+		dk.Setup(path)
+		dk.Scan(path)
+		lst[i] = &dk
 	}
-	return drvs
+	return lst
+}
+
+// Scan actual shares from shares list.
+func (acc *Account) ScanShares() []Proper {
+	acc.mux.RLock()
+	defer acc.mux.RUnlock()
+
+	var lst []Proper
+	for _, path := range acc.Shares {
+		if prop, err := propcache.Get(path); err == nil {
+			lst = append(lst, prop.(Proper))
+		}
+	}
+	return lst
 }
 
 // Recreates shares maps, puts share property to cache.

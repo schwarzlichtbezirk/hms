@@ -26,6 +26,7 @@ var (
 	ErrNoPath    = errors.New("path is not found")
 	ErrFpaNone   = errors.New("account has no access to specified file path")
 	ErrFpaAdmin  = errors.New("not authorized for access to specified file path")
+	ErrNotCat    = errors.New("only categories can be accepted")
 )
 
 //////////////////////////
@@ -413,32 +414,47 @@ func homeApi(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
-func catApi(w http.ResponseWriter, r *http.Request) {
+func ctgrApi(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
 		AID  int    `json:"aid"`
 		PUID string `json:"puid"`
+		CID  string `json:"cid"`
 	}
 	var ret = []Proper{}
 
 	// get arguments
 	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
 		if err = json.Unmarshal(jb, &arg); err != nil {
-			WriteError400(w, err, EC_folderbadreq)
-			return
-		}
-		if len(arg.PUID) == 0 {
-			WriteError400(w, ErrArgNoPath, EC_foldernodata)
+			WriteError400(w, err, EC_ctgrbadreq)
 			return
 		}
 	} else {
-		WriteError400(w, ErrNoJson, EC_foldernoreq)
+		WriteError400(w, ErrNoJson, EC_ctgrnoreq)
+		return
+	}
+
+	var catpath string
+	if len(arg.CID) > 0 {
+		var ok bool
+		if catpath, ok = CidCatPath[arg.CID]; !ok {
+			WriteError400(w, ErrArgNoPath, EC_ctgrnocid)
+			return
+		}
+	} else if len(arg.PUID) > 0 {
+		var ok bool
+		if catpath, ok = pathcache.Path(arg.PUID); !ok {
+			WriteError(w, http.StatusNotFound, ErrNoPath, EC_ctgrnopath)
+			return
+		}
+	} else {
+		WriteError400(w, ErrArgNoPath, EC_ctgrnodata)
 		return
 	}
 
 	var acc *Account
 	if acc = acclist.ByID(int(arg.AID)); acc == nil {
-		WriteError400(w, ErrNoAcc, EC_foldernoacc)
+		WriteError400(w, ErrNoAcc, EC_ctgrnoacc)
 		return
 	}
 
@@ -449,15 +465,9 @@ func catApi(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	if auth != acc && !acc.IsShared(CP_shares) {
-		WriteError(w, http.StatusForbidden, ErrDeny, EC_shrlstdeny)
-		return
-	}
 
-	var path string
-	var ok bool
-	if path, ok = pathcache.Path(arg.PUID); !ok {
-		WriteError(w, http.StatusNotFound, ErrNoPath, EC_foldernopath)
+	if auth != acc && !acc.IsShared(catpath) {
+		WriteError(w, http.StatusForbidden, ErrDeny, EC_ctgrdeny)
 		return
 	}
 	var catprop = func(puids []string) {
@@ -469,19 +479,26 @@ func catApi(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	switch path {
+	switch catpath {
+	case CP_drives:
+		ret = acc.ScanRoots()
+	case CP_shares:
+		ret = acc.ScanShares()
 	case CP_media:
-		catprop(dircache.Cats([]int{FG_video, FG_audio, FG_image}, 0.5))
+		catprop(dircache.Categories([]int{FG_video, FG_audio, FG_image}, 0.5))
 	case CP_video:
-		catprop(dircache.Cat(FG_video, 0.5))
+		catprop(dircache.Category(FG_video, 0.5))
 	case CP_audio:
-		catprop(dircache.Cat(FG_audio, 0.5))
+		catprop(dircache.Category(FG_audio, 0.5))
 	case CP_image:
-		catprop(dircache.Cat(FG_image, 0.5))
+		catprop(dircache.Category(FG_image, 0.5))
 	case CP_books:
-		catprop(dircache.Cat(FG_books, 0.5))
+		catprop(dircache.Category(FG_books, 0.5))
 	case CP_texts:
-		catprop(dircache.Cat(FG_texts, 0.5))
+		catprop(dircache.Category(FG_texts, 0.5))
+	default:
+		WriteError(w, http.StatusMethodNotAllowed, ErrNotCat, EC_ctgrnotcat)
+		return
 	}
 
 	WriteOK(w, ret)
@@ -498,11 +515,10 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 		Path string `json:"path,omitempty"`
 	}
 	var ret struct {
-		List  []Proper `json:"list"`
-		PUID  string   `json:"puid"`
-		Path  string   `json:"path"`
-		State int      `json:"state"`
-		Name  string   `json:"shrname"`
+		List []Proper `json:"list"`
+		PUID string   `json:"puid"`
+		Path string   `json:"path"`
+		Name string   `json:"shrname"`
 	}
 
 	// get arguments
@@ -561,7 +577,6 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 	} else {
 		ret.Path = syspath
 	}
-	ret.State = state
 
 	if ret.List, err = acc.Readdir(syspath); err != nil {
 		WriteError(w, http.StatusNotFound, err, EC_folderfail)
@@ -642,14 +657,7 @@ func shrlstApi(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	acc.mux.RLock()
-	for _, path := range acc.Shares {
-		if prop, err := propcache.Get(path); err == nil {
-			ret = append(ret, prop.(Proper))
-		}
-	}
-	acc.mux.RUnlock()
-
+	ret = acc.ScanShares()
 	WriteOK(w, ret)
 }
 
@@ -775,7 +783,7 @@ func drvlstApi(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	if auth != acc && !acc.IsShared(CP_shares) {
+	if auth != acc && !acc.IsShared(CP_drives) {
 		WriteError(w, http.StatusForbidden, ErrDeny, EC_drvlstdeny)
 		return
 	}

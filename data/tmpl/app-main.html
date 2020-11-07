@@ -7,8 +7,8 @@
 				<li class="breadcrumb-item align-self-center active" aria-current="page">{{curbasename}}</li>
 			</ol>
 		</nav>
-		<template v-if="route==='path'">
-			<p v-if="curstate>1">
+		<template v-if="curpath">
+			<p v-if="shrname">
 				Shared at <span class="bg-stat">{{shrname}}</span> as
 				<span class="bg-stat"><a v-bind:href="curshorturl" target="_blank">{{curshorturl}}</a></span>
 			</p>

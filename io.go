@@ -25,6 +25,11 @@ func (c *PathCache) Load(fpath string) (err error) {
 	for key, path := range c.keypath {
 		c.pathkey[path] = key
 	}
+
+	// cache categories paths
+	for _, path := range CatPath {
+		c.Cache(path)
+	}
 	return
 }
 

@@ -12,7 +12,7 @@ import (
 
 // File types
 const (
-	FT_cat   = -3
+	FT_ctgr  = -3
 	FT_drive = -2
 	FT_dir   = -1
 	FT_file  = 0
@@ -57,7 +57,7 @@ const (
 const FG_num = 8
 
 var typetogroup = map[int]int{
-	FT_cat:   FG_dir,
+	FT_ctgr:  FG_dir,
 	FT_drive: FG_dir,
 	FT_dir:   FG_dir,
 	FT_file:  FG_other,
@@ -224,6 +224,17 @@ var CatPath = []string{
 	CP_texts,
 }
 
+var CidCatPath = map[string]string{
+	"drives": CP_drives,
+	"shares": CP_shares,
+	"media":  CP_media,
+	"video":  CP_video,
+	"audio":  CP_audio,
+	"image":  CP_image,
+	"books":  CP_books,
+	"texts":  CP_texts,
+}
+
 // File properties interface.
 type Proper interface {
 	Name() string // string identifier
@@ -358,7 +369,7 @@ type CatKit struct {
 func (ck *CatKit) Setup(path string) {
 	var pos = strings.IndexByte(path, '/')
 	ck.NameVal = path[pos+1 : len(path)-1]
-	ck.TypeVal = FT_cat
+	ck.TypeVal = FT_ctgr
 	ck.PUIDVal = pathcache.Cache(path)
 	ck.NTmbVal = TMB_reject
 	ck.CID = path[1:pos]

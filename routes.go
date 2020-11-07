@@ -111,76 +111,86 @@ const (
 	EC_homebadreq = 71
 	EC_homenoacc  = 72
 
+	// ctgr
+	EC_ctgrnoreq  = 80
+	EC_ctgrbadreq = 81
+	EC_ctgrnodata = 82
+	EC_ctgrnopath = 83
+	EC_ctgrnocid  = 84
+	EC_ctgrnoacc  = 85
+	EC_ctgrdeny   = 86
+	EC_ctgrnotcat = 87
+
 	// folder
-	EC_foldernoreq    = 80
-	EC_folderbadreq   = 81
-	EC_foldernodata   = 82
-	EC_foldernoacc    = 83
-	EC_foldernopath   = 84
-	EC_folderfpanone  = 85
-	EC_folderfpaadmin = 86
-	EC_folderfail     = 87
+	EC_foldernoreq    = 90
+	EC_folderbadreq   = 91
+	EC_foldernodata   = 92
+	EC_foldernoacc    = 93
+	EC_foldernopath   = 94
+	EC_folderfpanone  = 95
+	EC_folderfpaadmin = 96
+	EC_folderfail     = 97
 
 	// ispath
-	EC_ispathnoreq  = 90
-	EC_ispathbadreq = 91
-	EC_ispathnoacc  = 92
-	EC_ispathdeny   = 93
+	EC_ispathnoreq  = 100
+	EC_ispathbadreq = 101
+	EC_ispathnoacc  = 102
+	EC_ispathdeny   = 103
 
 	// tmb/chk
-	EC_tmbchknoreq  = 100
-	EC_tmbchkbadreq = 101
-	EC_tmbchknodata = 102
+	EC_tmbchknoreq  = 110
+	EC_tmbchkbadreq = 111
+	EC_tmbchknodata = 112
 
 	// tmb/scn
-	EC_tmbscnnoreq  = 103
-	EC_tmbscnbadreq = 104
-	EC_tmbscnnodata = 105
-	EC_tmbscnnoacc  = 106
+	EC_tmbscnnoreq  = 113
+	EC_tmbscnbadreq = 114
+	EC_tmbscnnodata = 115
+	EC_tmbscnnoacc  = 116
 
 	// share/lst
-	EC_shrlstnoreq  = 110
-	EC_shrlstbadreq = 111
-	EC_shrlstnoacc  = 112
-	EC_shrlstdeny   = 113
+	EC_shrlstnoreq  = 120
+	EC_shrlstbadreq = 121
+	EC_shrlstnoacc  = 122
+	EC_shrlstdeny   = 123
 
 	// share/add
-	EC_shraddnoreq   = 120
-	EC_shraddbadreq  = 121
-	EC_shraddnodata  = 122
-	EC_shraddnoacc   = 123
-	EC_shradddeny    = 124
-	EC_shraddnopath  = 125
-	EC_shraddfpanone = 126
+	EC_shraddnoreq   = 130
+	EC_shraddbadreq  = 131
+	EC_shraddnodata  = 132
+	EC_shraddnoacc   = 133
+	EC_shradddeny    = 134
+	EC_shraddnopath  = 135
+	EC_shraddfpanone = 136
 
 	// share/del
-	EC_shrdelnoreq  = 130
-	EC_shrdelbadreq = 131
-	EC_shrdelnodata = 132
-	EC_shrdelnoacc  = 133
-	EC_shrdeldeny   = 134
+	EC_shrdelnoreq  = 140
+	EC_shrdelbadreq = 141
+	EC_shrdelnodata = 142
+	EC_shrdelnoacc  = 143
+	EC_shrdeldeny   = 144
 
 	// drive/lst
-	EC_drvlstnoreq  = 140
-	EC_drvlstbadreq = 141
-	EC_drvlstnoacc  = 142
-	EC_drvlstdeny   = 143
+	EC_drvlstnoreq  = 150
+	EC_drvlstbadreq = 151
+	EC_drvlstnoacc  = 152
+	EC_drvlstdeny   = 153
 
 	// drive/add
-	EC_drvaddnoreq  = 150
-	EC_drvaddbadreq = 151
-	EC_drvaddnodata = 152
-	EC_drvaddnoacc  = 153
-	EC_drvadddeny   = 154
-	EC_drvaddfile   = 155
+	EC_drvaddnoreq  = 160
+	EC_drvaddbadreq = 161
+	EC_drvaddnodata = 162
+	EC_drvaddnoacc  = 163
+	EC_drvadddeny   = 164
+	EC_drvaddfile   = 165
 
 	// drive/del
-	EC_drvdelnoreq  = 160
-	EC_drvdelbadreq = 161
-	EC_drvdelnodata = 162
-	EC_drvdelnoacc  = 163
-	EC_drvdeldeny   = 164
-	EC_drvdelnopath = 165
+	EC_drvdelnoreq  = 170
+	EC_drvdelbadreq = 171
+	EC_drvdelnodata = 172
+	EC_drvdelnoacc  = 173
+	EC_drvdeldeny   = 174
+	EC_drvdelnopath = 175
 )
 
 //////////////////
@@ -198,7 +208,7 @@ var pagealias = map[string]string{
 
 // Main page routes.
 var routemain = []string{
-	"/path/", "/home/", "/drive/", "/share/", "/cat/",
+	"/home/", "/ctgr/", "/path/",
 }
 
 // Routes aliases.
@@ -257,7 +267,7 @@ func RegisterRoutes(gmux *Router) {
 	reg.Path("/refrsh").HandlerFunc(AjaxWrap(refrshApi))
 	var crd = api.PathPrefix("/card").Subrouter()
 	crd.Path("/home").HandlerFunc(AjaxWrap(homeApi))
-	crd.Path("/cat").HandlerFunc(AjaxWrap(catApi))
+	crd.Path("/ctgr").HandlerFunc(AjaxWrap(ctgrApi))
 	crd.Path("/folder").HandlerFunc(AjaxWrap(folderApi))
 	crd.Path("/ispath").HandlerFunc(AuthWrap(ispathApi))
 	var tmb = api.PathPrefix("/tmb").Subrouter()

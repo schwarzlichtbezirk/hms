@@ -158,7 +158,7 @@ func (c *DirCache) Set(puid string, dp DirProp) {
 	c.keydir[puid] = dp
 }
 
-func (c *DirCache) Cat(cat int, percent float64) (ret []string) {
+func (c *DirCache) Category(ctgr int, percent float64) (ret []string) {
 	c.mux.RLock()
 	defer c.mux.RUnlock()
 	for puid, dp := range c.keydir {
@@ -166,14 +166,14 @@ func (c *DirCache) Cat(cat int, percent float64) (ret []string) {
 		for _, v := range dp.FGrp {
 			sum += v
 		}
-		if sum > 0 && float64(dp.FGrp[cat])/float64(sum) > percent {
+		if sum > 0 && float64(dp.FGrp[ctgr])/float64(sum) > percent {
 			ret = append(ret, puid)
 		}
 	}
 	return
 }
 
-func (c *DirCache) Cats(cats []int, percent float64) (ret []string) {
+func (c *DirCache) Categories(cats []int, percent float64) (ret []string) {
 	c.mux.RLock()
 	defer c.mux.RUnlock()
 	for puid, dp := range c.keydir {
