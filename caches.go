@@ -106,12 +106,27 @@ func (c *PathCache) Cache(syspath string) string {
 	return puid
 }
 
+var puidsym = (func() (t [256]bool) {
+	for i := '0'; i <= '9'; i++ {
+		t[i] = true
+	}
+	for i := 'A'; i <= 'Z'; i++ {
+		t[i] = true
+	}
+	for i := 'a'; i <= 'z'; i++ {
+		t[i] = true
+	}
+	t['_'] = true
+	t['-'] = true
+	return
+})()
+
 // Splits given share path to share prefix and remained suffix.
 func SplitPrefSuff(shrpath string) (string, string) {
 	for i, c := range shrpath {
 		if c == '/' || c == '\\' {
 			return shrpath[:i], shrpath[i+1:]
-		} else if (c < '0' || c > '9') && (c < 'A' || c > 'Z') {
+		} else if !puidsym[c] {
 			return "", shrpath
 		}
 	}

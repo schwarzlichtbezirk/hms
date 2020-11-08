@@ -38,10 +38,13 @@ type Account struct {
 
 	Roots  []string `json:"roots"`  // root directories list
 	Hidden []string `json:"hidden"` // patterns for hidden files
+	Shares []string `json:"shares"`
 
-	Shares    []string          `json:"shares"`
+	// private shares data
 	sharepuid map[string]string // share/puid key/values
 	puidshare map[string]string // puid/share key/values
+	ctgrshare [FG_num]bool
+	allshared bool
 
 	mux sync.RWMutex
 }
@@ -197,6 +200,7 @@ func (acc *Account) ScanShares() []Proper {
 // Recreates shares maps, puts share property to cache.
 func (acc *Account) UpdateShares() {
 	acc.mux.Lock()
+	defer acc.mux.Unlock()
 
 	acc.sharepuid = map[string]string{}
 	acc.puidshare = map[string]string{}
@@ -211,20 +215,6 @@ func (acc *Account) UpdateShares() {
 			Log.Printf("id%d: can not share '%s'", acc.ID, syspath)
 		}
 	}
-
-	acc.mux.Unlock()
-}
-
-var sharecharset = []byte("0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz")
-
-func makerandstr(n int) string {
-	var l = byte(len(sharecharset))
-	var str = make([]byte, n)
-	randbytes(str)
-	for i := 0; i < n; i++ {
-		str[i] = sharecharset[str[i]%l]
-	}
-	return string(str)
 }
 
 // Checks that syspath is become in any share.
@@ -285,21 +275,43 @@ func (acc *Account) DelShare(puid string) bool {
 }
 
 // Brings system path to largest share path.
-func (acc *Account) GetSharePath(syspath string) (string, string) {
+func (acc *Account) GetSharePath(syspath string) (string, string, int) {
+	var base string
+	var concat = func() string {
+		var pref, suff = pathcache.Cache(base), syspath[len(base):]
+		if len(suff) > 0 && suff[0] != '/' {
+			return pref + "/" + suff
+		} else {
+			return pref + suff
+		}
+	}
+
 	acc.mux.RLock()
 	defer acc.mux.RUnlock()
 
-	var puid, share string
-	for id, shr := range acc.puidshare {
-		if strings.HasPrefix(syspath, shr) && len(shr) > len(share) {
-			puid, share = id, shr
+	for _, path := range acc.Shares {
+		if strings.HasPrefix(syspath, path) {
+			if len(path) > len(base) {
+				base = path
+			}
 		}
 	}
-	if len(share) > 0 {
-		return puid + "/" + syspath[len(share):], share
-	} else {
-		return syspath, ""
+	if len(base) > 0 {
+		return concat(), base, FPA_share
 	}
+
+	for _, path := range acc.Roots {
+		if strings.HasPrefix(syspath, path) {
+			if len(path) > len(base) {
+				base = path
+			}
+		}
+	}
+	if len(base) > 0 {
+		return concat(), base, FPA_admin
+	}
+
+	return syspath, "", FPA_none
 }
 
 // Returns access state of file path, is it shared by account,
@@ -307,6 +319,7 @@ func (acc *Account) GetSharePath(syspath string) (string, string) {
 func (acc *Account) PathState(syspath string) int {
 	acc.mux.RLock()
 	defer acc.mux.RUnlock()
+
 	for _, path := range acc.Shares {
 		if strings.HasPrefix(syspath, path) {
 			return FPA_share

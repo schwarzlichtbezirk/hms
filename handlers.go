@@ -543,18 +543,19 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var syspath string
-	if len(arg.PUID) > 0 {
+	if len(arg.Path) > 0 {
+		syspath = UnfoldPath(arg.Path)
+		ret.PUID = pathcache.Cache(syspath)
+	} else {
 		var ok bool
 		if syspath, ok = pathcache.Path(arg.PUID); !ok {
 			WriteError(w, http.StatusNotFound, ErrNoPath, EC_foldernopath)
 			return
 		}
 		ret.PUID = arg.PUID
-	} else {
-		syspath = UnfoldPath(arg.Path)
-		ret.PUID = pathcache.Cache(syspath)
 	}
-	var state = acc.PathState(syspath)
+
+	var shrpath, base, state = acc.GetSharePath(syspath)
 	if state == FPA_none {
 		WriteError(w, http.StatusForbidden, ErrFpaNone, EC_folderfpanone)
 		return
@@ -570,13 +571,8 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	if state == FPA_share {
-		var path, share = acc.GetSharePath(syspath)
-		ret.Path = path
-		ret.Name = filepath.Base(share)
-	} else {
-		ret.Path = syspath
-	}
+	ret.Path = shrpath
+	ret.Name = PathBase(base)
 
 	if ret.List, err = acc.Readdir(syspath); err != nil {
 		WriteError(w, http.StatusNotFound, err, EC_folderfail)

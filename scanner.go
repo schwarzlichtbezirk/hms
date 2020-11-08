@@ -315,6 +315,15 @@ type DirProp struct {
 	FGrp FileGrp `json:"fgrp" yaml:"fgrp,flow"`
 }
 
+func PathBase(syspath string) string {
+	var name = filepath.Base(syspath)
+	if len(name) > 1 {
+		return name
+	} else {
+		return syspath[:len(syspath)-1]
+	}
+}
+
 // Directory properties kit.
 type DirKit struct {
 	StdProp
@@ -324,7 +333,7 @@ type DirKit struct {
 
 // Fills fields with given path. Do not looks for share.
 func (dk *DirKit) Setup(syspath string) {
-	dk.NameVal = filepath.Base(syspath)
+	dk.NameVal = PathBase(syspath)
 	dk.TypeVal = FT_dir
 	dk.PUIDVal = pathcache.Cache(syspath)
 	dk.NTmbVal = TMB_reject
@@ -340,7 +349,7 @@ type DriveKit struct {
 
 // Fills fields with given path. Do not looks for share.
 func (dk *DriveKit) Setup(syspath string) {
-	dk.NameVal = syspath[:len(syspath)-1]
+	dk.NameVal = PathBase(syspath)
 	dk.TypeVal = FT_drive
 	dk.PUIDVal = pathcache.Cache(syspath)
 	dk.NTmbVal = TMB_reject

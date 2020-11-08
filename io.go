@@ -168,9 +168,13 @@ func (al *Accounts) Load(fpath string) (err error) {
 	if len(al.list) > 0 {
 		for _, acc := range al.list {
 			Log.Printf("loaded account id%d, login='%s'", acc.ID, acc.Login)
-			// bring all roots to valid slashes
-			for i, path := range acc.Roots {
-				acc.Roots[i] = filepath.ToSlash(path)
+			// cache roots
+			for _, path := range acc.Roots {
+				pathcache.Cache(path)
+			}
+			// cache shares
+			for _, path := range acc.Shares {
+				pathcache.Cache(path)
 			}
 
 			// bring all hidden to lowercase
