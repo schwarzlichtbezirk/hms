@@ -31,6 +31,25 @@ const (
 	FPA_share = 2 // access to specified file path is shared
 )
 
+type CatGrp [FG_num]bool
+
+// Used to check whether an object is zero to determine whether
+// it should be omitted when marshaling to yaml.
+func (cg *CatGrp) IsZero() bool {
+	for _, v := range cg {
+		if v {
+			return false
+		}
+	}
+	return true
+}
+
+func (cg *CatGrp) SetAll(v bool) {
+	for i := range cg {
+		cg[i] = v
+	}
+}
+
 type Account struct {
 	ID       int    `json:"id"`
 	Login    string `json:"login"`
@@ -43,8 +62,7 @@ type Account struct {
 	// private shares data
 	sharepuid map[string]string // share/puid key/values
 	puidshare map[string]string // puid/share key/values
-	ctgrshare [FG_num]bool
-	allshared bool
+	ctgrshare CatGrp
 
 	mux sync.RWMutex
 }
@@ -197,6 +215,27 @@ func (acc *Account) ScanShares() []Proper {
 	return lst
 }
 
+// Private function to update account shares private data.
+func (acc *Account) updateGrp() {
+	var is = func(path string) bool {
+		var _, ok = acc.sharepuid[path]
+		return ok
+	}
+
+	var all = is(CP_drives)
+	var media = is(CP_media)
+	acc.ctgrshare = CatGrp{
+		all,
+		all || is(CP_video) || media,
+		all || is(CP_audio) || media,
+		all || is(CP_image) || media,
+		all || is(CP_books),
+		all || is(CP_texts),
+		all,
+		all,
+	}
+}
+
 // Recreates shares maps, puts share property to cache.
 func (acc *Account) UpdateShares() {
 	acc.mux.Lock()
@@ -215,6 +254,7 @@ func (acc *Account) UpdateShares() {
 			Log.Printf("id%d: can not share '%s'", acc.ID, syspath)
 		}
 	}
+	acc.updateGrp()
 }
 
 // Checks that syspath is become in any share.
@@ -251,6 +291,7 @@ func (acc *Account) AddShare(syspath string) bool {
 		acc.Shares = append(acc.Shares, syspath)
 		acc.sharepuid[syspath] = puid
 		acc.puidshare[puid] = syspath
+		acc.updateGrp()
 		return true
 	}
 	return false
@@ -269,20 +310,20 @@ func (acc *Account) DelShare(puid string) bool {
 		}
 		delete(acc.sharepuid, syspath)
 		delete(acc.puidshare, puid)
+		acc.updateGrp()
 		return true
 	}
 	return false
 }
 
 // Brings system path to largest share path.
-func (acc *Account) GetSharePath(syspath string) (string, string, int) {
-	var base string
-	var concat = func() string {
+func (acc *Account) GetSharePath(syspath string, isadmin bool) (shrpath string, base string, cg CatGrp) {
+	var concat = func() {
 		var pref, suff = pathcache.Cache(base), syspath[len(base):]
 		if len(suff) > 0 && suff[0] != '/' {
-			return pref + "/" + suff
+			shrpath = pref + "/" + suff
 		} else {
-			return pref + suff
+			shrpath = pref + suff
 		}
 	}
 
@@ -297,7 +338,9 @@ func (acc *Account) GetSharePath(syspath string) (string, string, int) {
 		}
 	}
 	if len(base) > 0 {
-		return concat(), base, FPA_share
+		concat()
+		cg.SetAll(true)
+		return
 	}
 
 	for _, path := range acc.Roots {
@@ -308,38 +351,68 @@ func (acc *Account) GetSharePath(syspath string) (string, string, int) {
 		}
 	}
 	if len(base) > 0 {
-		return concat(), base, FPA_admin
+		concat()
+		if isadmin {
+			cg.SetAll(true)
+		} else {
+			cg = acc.ctgrshare
+		}
+		return
 	}
 
-	return syspath, "", FPA_none
+	shrpath = syspath
+	return
 }
 
-// Returns access state of file path, is it shared by account,
-// has access only by authorization, or has no any access.
-func (acc *Account) PathState(syspath string) int {
+// Returns file group access state for given file path.
+func (acc *Account) PathAccess(syspath string, isadmin bool) (cg CatGrp) {
 	acc.mux.RLock()
 	defer acc.mux.RUnlock()
 
 	for _, path := range acc.Shares {
 		if strings.HasPrefix(syspath, path) {
-			return FPA_share
+			cg.SetAll(true)
+			return
 		}
 	}
 	for _, path := range acc.Roots {
 		if strings.HasPrefix(syspath, path) {
-			return FPA_admin
+			if isadmin {
+				cg.SetAll(true)
+			} else {
+				cg = acc.ctgrshare
+			}
+			return
+		}
+	}
+	return
+}
+
+// Returns whether account has admin access to file path or category path.
+func (acc *Account) PathAdmin(syspath string) bool {
+	acc.mux.RLock()
+	defer acc.mux.RUnlock()
+
+	for _, path := range acc.Shares {
+		if strings.HasPrefix(syspath, path) {
+			return true
+		}
+	}
+	for _, path := range acc.Roots {
+		if strings.HasPrefix(syspath, path) {
+			return true
 		}
 	}
 	for _, path := range CatPath {
 		if path == syspath {
-			return FPA_admin
+			return true
 		}
 	}
-	return FPA_none
+	return false
 }
 
 // Reads directory with given system path and returns Proper for each entry.
-func (acc *Account) Readdir(syspath string) (ret []Proper, err error) {
+func (acc *Account) Readdir(syspath string, cg *CatGrp) (ret []Proper, err error) {
 	if !strings.HasSuffix(syspath, "/") {
 		syspath += "/"
 	}
@@ -363,7 +436,7 @@ func (acc *Account) Readdir(syspath string) (ret []Proper, err error) {
 		return
 	}
 
-	var fgrp = [FG_num]int{}
+	var fgrp = FileGrp{}
 
 	for _, fi := range fis {
 		if fi != nil {
@@ -373,8 +446,11 @@ func (acc *Account) Readdir(syspath string) (ret []Proper, err error) {
 			}
 			if !acc.IsHidden(fpath) {
 				var prop = CacheProp(fpath, fi)
-				ret = append(ret, prop)
-				fgrp[typetogroup[prop.Type()]]++
+				var grp = typetogroup[prop.Type()]
+				if cg[grp] {
+					ret = append(ret, prop)
+				}
+				fgrp[grp]++
 			}
 		}
 	}

@@ -24,8 +24,9 @@ var (
 	ErrArgNoHash = errors.New("'puid' or 'path' argument required")
 	ErrNotDir    = errors.New("path is not directory")
 	ErrNoPath    = errors.New("path is not found")
-	ErrFpaNone   = errors.New("account has no access to specified file path")
-	ErrFpaAdmin  = errors.New("not authorized for access to specified file path")
+	ErrDeny      = errors.New("access denied for specified authorization")
+	ErrNotShared = errors.New("access to specified resource does not shared")
+	ErrNoAccess  = errors.New("account has no access to specified file path")
 	ErrNotCat    = errors.New("only categories can be accepted")
 )
 
@@ -72,23 +73,24 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 		WriteError400(w, ErrNoAcc, EC_filenoacc)
 		return
 	}
-
-	var syspath = UnfoldPath(strings.Join(chunks[3:], "/"))
-	var state = acc.PathState(syspath)
-	if state == FPA_none {
-		WriteError(w, http.StatusForbidden, ErrFpaNone, EC_filefpanone)
+	var auth *Account
+	if auth, err = GetAuth(r); err != nil {
+		WriteJson(w, http.StatusUnauthorized, err)
 		return
 	}
-	if state == FPA_admin {
-		var auth *Account
-		if auth, err = CheckAuth(r); err != nil {
-			WriteJson(w, http.StatusUnauthorized, err)
-			return
-		}
-		if acc.ID != auth.ID {
-			WriteError(w, http.StatusForbidden, ErrFpaAdmin, EC_filefpaadmin)
-			return
-		}
+
+	var syspath = UnfoldPath(strings.Join(chunks[3:], "/"))
+
+	var prop interface{}
+	if prop, err = propcache.Get(syspath); err != nil {
+		WriteError(w, http.StatusNotFound, err, EC_filenoprop)
+		return
+	}
+	var cg = acc.PathAccess(syspath, auth == acc)
+	var grp = typetogroup[prop.(Proper).Type()]
+	if !cg[grp] {
+		WriteError(w, http.StatusForbidden, ErrNoAccess, EC_fileaccess)
+		return
 	}
 
 	if _, ok := r.Header["If-Range"]; !ok { // not partial content
@@ -118,6 +120,11 @@ func mediaHandler(w http.ResponseWriter, r *http.Request) {
 		WriteError400(w, ErrNoAcc, EC_medianoacc)
 		return
 	}
+	var auth *Account
+	if auth, err = GetAuth(r); err != nil {
+		WriteJson(w, http.StatusUnauthorized, err)
+		return
+	}
 
 	var puid = chunks[3]
 	var syspath, ok = pathcache.Path(puid)
@@ -125,21 +132,17 @@ func mediaHandler(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, http.StatusNotFound, ErrNoPath, EC_medianopath)
 		return
 	}
-	var state = acc.PathState(syspath)
-	if state == FPA_none {
-		WriteError(w, http.StatusForbidden, ErrFpaNone, EC_mediafpanone)
+
+	var prop interface{}
+	if prop, err = propcache.Get(syspath); err != nil {
+		WriteError(w, http.StatusNotFound, err, EC_medianoprop)
 		return
 	}
-	if state == FPA_admin {
-		var auth *Account
-		if auth, err = CheckAuth(r); err != nil {
-			WriteJson(w, http.StatusUnauthorized, err)
-			return
-		}
-		if acc.ID != auth.ID {
-			WriteError(w, http.StatusForbidden, ErrFpaAdmin, EC_mediafpaadmin)
-			return
-		}
+	var cg = acc.PathAccess(syspath, auth == acc)
+	var grp = typetogroup[prop.(Proper).Type()]
+	if !cg[grp] {
+		WriteError(w, http.StatusForbidden, ErrNoAccess, EC_mediaaccess)
+		return
 	}
 
 	var val interface{}
@@ -189,6 +192,11 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) {
 		WriteError400(w, ErrNoAcc, EC_thumbnoacc)
 		return
 	}
+	var auth *Account
+	if auth, err = GetAuth(r); err != nil {
+		WriteJson(w, http.StatusUnauthorized, err)
+		return
+	}
 
 	var puid = chunks[3]
 	var syspath, ok = pathcache.Path(puid)
@@ -196,9 +204,16 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, http.StatusNotFound, ErrNoPath, EC_thumbnopath)
 		return
 	}
-	var state = acc.PathState(syspath)
-	if state == FPA_none {
-		WriteError(w, http.StatusForbidden, ErrFpaNone, EC_thumbfpanone)
+
+	var prop interface{}
+	if prop, err = propcache.Get(syspath); err != nil {
+		WriteError(w, http.StatusNotFound, err, EC_thumbnoprop)
+		return
+	}
+	var cg = acc.PathAccess(syspath, auth == acc)
+	var grp = typetogroup[prop.(Proper).Type()]
+	if !cg[grp] {
+		WriteError(w, http.StatusForbidden, ErrNoAccess, EC_thumbaccess)
 		return
 	}
 
@@ -390,16 +405,14 @@ func homeApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var acc *Account
-	if acc = acclist.ByID(int(arg.AID)); acc == nil {
+	if acc = acclist.ByID(arg.AID); acc == nil {
 		WriteError400(w, ErrNoAcc, EC_homenoacc)
 		return
 	}
 	var auth *Account
-	if auth, err = CheckAuth(r); err != nil {
-		if err.(*ErrAjax).Code > EC_noauth {
-			WriteJson(w, http.StatusUnauthorized, err)
-			return
-		}
+	if auth, err = GetAuth(r); err != nil {
+		WriteJson(w, http.StatusUnauthorized, err)
+		return
 	}
 
 	for _, path := range CatPath {
@@ -453,21 +466,18 @@ func ctgrApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var acc *Account
-	if acc = acclist.ByID(int(arg.AID)); acc == nil {
+	if acc = acclist.ByID(arg.AID); acc == nil {
 		WriteError400(w, ErrNoAcc, EC_ctgrnoacc)
 		return
 	}
-
 	var auth *Account
-	if auth, err = CheckAuth(r); err != nil {
-		if err.(*ErrAjax).Code > EC_noauth {
-			WriteJson(w, http.StatusUnauthorized, err)
-			return
-		}
+	if auth, err = GetAuth(r); err != nil {
+		WriteJson(w, http.StatusUnauthorized, err)
+		return
 	}
 
 	if auth != acc && !acc.IsShared(catpath) {
-		WriteError(w, http.StatusForbidden, ErrDeny, EC_ctgrdeny)
+		WriteError(w, http.StatusForbidden, ErrNotShared, EC_ctgrnoshr)
 		return
 	}
 	var catprop = func(puids []string) {
@@ -537,8 +547,13 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var acc *Account
-	if acc = acclist.ByID(int(arg.AID)); acc == nil {
+	if acc = acclist.ByID(arg.AID); acc == nil {
 		WriteError400(w, ErrNoAcc, EC_foldernoacc)
+		return
+	}
+	var auth *Account
+	if auth, err = GetAuth(r); err != nil {
+		WriteJson(w, http.StatusUnauthorized, err)
 		return
 	}
 
@@ -555,26 +570,15 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 		ret.PUID = arg.PUID
 	}
 
-	var shrpath, base, state = acc.GetSharePath(syspath)
-	if state == FPA_none {
-		WriteError(w, http.StatusForbidden, ErrFpaNone, EC_folderfpanone)
+	var shrpath, base, cg = acc.GetSharePath(syspath, auth == acc)
+	if cg.IsZero() {
+		WriteError(w, http.StatusForbidden, ErrNoAccess, EC_folderaccess)
 		return
-	}
-	if state == FPA_admin {
-		var auth *Account
-		if auth, err = CheckAuth(r); err != nil {
-			WriteJson(w, http.StatusUnauthorized, err)
-			return
-		}
-		if acc.ID != auth.ID {
-			WriteError(w, http.StatusForbidden, ErrFpaAdmin, EC_folderfpaadmin)
-			return
-		}
 	}
 	ret.Path = shrpath
 	ret.Name = PathBase(base)
 
-	if ret.List, err = acc.Readdir(syspath); err != nil {
+	if ret.List, err = acc.Readdir(syspath, &cg); err != nil {
 		WriteError(w, http.StatusNotFound, err, EC_folderfail)
 		return
 	}
@@ -603,7 +607,7 @@ func ispathApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 	}
 
 	var acc *Account
-	if acc = acclist.ByID(int(arg.AID)); acc == nil {
+	if acc = acclist.ByID(arg.AID); acc == nil {
 		WriteError400(w, ErrNoAcc, EC_ispathnoacc)
 		return
 	}
@@ -636,20 +640,18 @@ func shrlstApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var acc *Account
-	if acc = acclist.ByID(int(arg.AID)); acc == nil {
+	if acc = acclist.ByID(arg.AID); acc == nil {
 		WriteError400(w, ErrNoAcc, EC_shrlstnoacc)
 		return
 	}
-
 	var auth *Account
-	if auth, err = CheckAuth(r); err != nil {
-		if err.(*ErrAjax).Code > EC_noauth {
-			WriteJson(w, http.StatusUnauthorized, err)
-			return
-		}
+	if auth, err = GetAuth(r); err != nil {
+		WriteJson(w, http.StatusUnauthorized, err)
+		return
 	}
+
 	if auth != acc && !acc.IsShared(CP_shares) {
-		WriteError(w, http.StatusForbidden, ErrDeny, EC_shrlstdeny)
+		WriteError(w, http.StatusForbidden, ErrNotShared, EC_shrlstnoshr)
 		return
 	}
 
@@ -681,7 +683,7 @@ func shraddApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 	}
 
 	var acc *Account
-	if acc = acclist.ByID(int(arg.AID)); acc == nil {
+	if acc = acclist.ByID(arg.AID); acc == nil {
 		WriteError400(w, ErrNoAcc, EC_shraddnoacc)
 		return
 	}
@@ -694,9 +696,8 @@ func shraddApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 	if !ok {
 		WriteError(w, http.StatusNotFound, ErrNoPath, EC_shraddnopath)
 	}
-	var state = acc.PathState(syspath)
-	if state == FPA_none {
-		WriteError(w, http.StatusForbidden, ErrFpaNone, EC_shraddfpanone)
+	if !acc.PathAdmin(syspath) {
+		WriteError(w, http.StatusForbidden, ErrNoAccess, EC_shraddaccess)
 		return
 	}
 
@@ -731,7 +732,7 @@ func shrdelApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 	}
 
 	var acc *Account
-	if acc = acclist.ByID(int(arg.AID)); acc == nil {
+	if acc = acclist.ByID(arg.AID); acc == nil {
 		WriteError400(w, ErrNoAcc, EC_shrdelnoacc)
 		return
 	}
@@ -767,20 +768,18 @@ func drvlstApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var acc *Account
-	if acc = acclist.ByID(int(arg.AID)); acc == nil {
+	if acc = acclist.ByID(arg.AID); acc == nil {
 		WriteError400(w, ErrNoAcc, EC_drvlstnoacc)
 		return
 	}
-
 	var auth *Account
-	if auth, err = CheckAuth(r); err != nil {
-		if err.(*ErrAjax).Code > EC_noauth {
-			WriteJson(w, http.StatusUnauthorized, err)
-			return
-		}
+	if auth, err = GetAuth(r); err != nil {
+		WriteJson(w, http.StatusUnauthorized, err)
+		return
 	}
+
 	if auth != acc && !acc.IsShared(CP_drives) {
-		WriteError(w, http.StatusForbidden, ErrDeny, EC_drvlstdeny)
+		WriteError(w, http.StatusForbidden, ErrNotShared, EC_drvlstnoshr)
 		return
 	}
 
@@ -817,7 +816,7 @@ func drvaddApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 	}
 
 	var acc *Account
-	if acc = acclist.ByID(int(arg.AID)); acc == nil {
+	if acc = acclist.ByID(arg.AID); acc == nil {
 		WriteError400(w, ErrNoAcc, EC_drvaddnoacc)
 		return
 	}
@@ -869,7 +868,7 @@ func drvdelApi(w http.ResponseWriter, r *http.Request, auth *Account) {
 	}
 
 	var acc *Account
-	if acc = acclist.ByID(int(arg.AID)); acc == nil {
+	if acc = acclist.ByID(arg.AID); acc == nil {
 		WriteError400(w, ErrNoAcc, EC_drvdelnoacc)
 		return
 	}

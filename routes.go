@@ -62,15 +62,15 @@ const (
 	// file
 	EC_filebadaccid = 10
 	EC_filenoacc    = 11
-	EC_filefpanone  = 12
-	EC_filefpaadmin = 13
+	EC_fileaccess   = 12
+	EC_filenoprop   = 13
 
 	// media
 	EC_mediabadaccid = 20
 	EC_medianoacc    = 21
 	EC_medianopath   = 22
-	EC_mediafpanone  = 23
-	EC_mediafpaadmin = 24
+	EC_mediaaccess   = 23
+	EC_medianoprop   = 24
 	EC_mediaabsent   = 25
 	EC_mediabadcnt   = 26
 
@@ -78,9 +78,10 @@ const (
 	EC_thumbbadaccid = 30
 	EC_thumbnoacc    = 31
 	EC_thumbnopath   = 32
-	EC_thumbfpanone  = 33
-	EC_thumbabsent   = 34
-	EC_thumbbadcnt   = 35
+	EC_thumbaccess   = 33
+	EC_thumbnoprop   = 34
+	EC_thumbabsent   = 35
+	EC_thumbbadcnt   = 36
 
 	// pubkey
 	EC_pubkeyrand = 40
@@ -118,18 +119,17 @@ const (
 	EC_ctgrnopath = 83
 	EC_ctgrnocid  = 84
 	EC_ctgrnoacc  = 85
-	EC_ctgrdeny   = 86
+	EC_ctgrnoshr  = 86
 	EC_ctgrnotcat = 87
 
 	// folder
-	EC_foldernoreq    = 90
-	EC_folderbadreq   = 91
-	EC_foldernodata   = 92
-	EC_foldernoacc    = 93
-	EC_foldernopath   = 94
-	EC_folderfpanone  = 95
-	EC_folderfpaadmin = 96
-	EC_folderfail     = 97
+	EC_foldernoreq  = 90
+	EC_folderbadreq = 91
+	EC_foldernodata = 92
+	EC_foldernoacc  = 93
+	EC_foldernopath = 94
+	EC_folderaccess = 95
+	EC_folderfail   = 96
 
 	// ispath
 	EC_ispathnoreq  = 100
@@ -152,16 +152,16 @@ const (
 	EC_shrlstnoreq  = 120
 	EC_shrlstbadreq = 121
 	EC_shrlstnoacc  = 122
-	EC_shrlstdeny   = 123
+	EC_shrlstnoshr  = 123
 
 	// share/add
-	EC_shraddnoreq   = 130
-	EC_shraddbadreq  = 131
-	EC_shraddnodata  = 132
-	EC_shraddnoacc   = 133
-	EC_shradddeny    = 134
-	EC_shraddnopath  = 135
-	EC_shraddfpanone = 136
+	EC_shraddnoreq  = 130
+	EC_shraddbadreq = 131
+	EC_shraddnodata = 132
+	EC_shraddnoacc  = 133
+	EC_shradddeny   = 134
+	EC_shraddnopath = 135
+	EC_shraddaccess = 136
 
 	// share/del
 	EC_shrdelnoreq  = 140
@@ -174,7 +174,7 @@ const (
 	EC_drvlstnoreq  = 150
 	EC_drvlstbadreq = 151
 	EC_drvlstnoacc  = 152
-	EC_drvlstdeny   = 153
+	EC_drvlstnoshr  = 153
 
 	// drive/add
 	EC_drvaddnoreq  = 160

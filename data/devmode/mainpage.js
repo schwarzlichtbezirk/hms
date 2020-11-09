@@ -650,7 +650,7 @@ const app = new Vue({
 				}
 			}
 			// update shared
-			if (hist.cid === "shares") {
+			if (hist.cid === "shares" && this.isadmin) {
 				this.shared = response.data || [];
 			}
 
@@ -939,7 +939,7 @@ const app = new Vue({
 				ajaxcc.emit('ajax', +1);
 				try {
 					await this.fetchopenroute({ cid: this.curcid, aid: this.aid, puid: this.curpuid, path: this.curpath });
-					if (this.isauth && this.curcid !== "shares") {
+					if (this.isadmin && this.curcid !== "shares") {
 						await this.fetchshared(); // get shares
 					}
 				} catch (e) {
@@ -1056,7 +1056,7 @@ const app = new Vue({
 			try {
 				// open route and push history step
 				await this.fetchopenroute(hist);
-				if (this.isauth && hist.cid !== "share") {
+				if (this.isadmin && hist.cid !== "share") {
 					await this.fetchshared(); // get shares
 				}
 				this.pushhist(hist);

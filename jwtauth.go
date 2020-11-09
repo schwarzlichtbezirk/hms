@@ -46,7 +46,6 @@ var (
 	ErrNoUserID = errors.New("token does not have user id")
 	ErrNoPubKey = errors.New("public key does not exist any more")
 	ErrBadPass  = errors.New("password is incorrect")
-	ErrDeny     = errors.New("access denied")
 	ErrNoAcc    = errors.New("account is absent")
 )
 
@@ -104,8 +103,9 @@ func IsLocalhost(addrport string) bool {
 	return net.ParseIP(StripPort(addrport)).IsLoopback()
 }
 
-// Returns authorized account or error otherwise.
-func CheckAuth(r *http.Request) (auth *Account, aerr error) {
+// Returns account from authorization header if it present,
+// or default account with no error if authorization is absent.
+func GetAuth(r *http.Request) (auth *Account, aerr error) {
 	if pool, is := r.Header["Authorization"]; is {
 		var err error // stores last bearer error
 		var claims HMSClaims
@@ -133,10 +133,9 @@ func CheckAuth(r *http.Request) (auth *Account, aerr error) {
 			aerr = &ErrAjax{ErrNoAcc, EC_tokennoacc}
 			return
 		}
-	} else if !IsLocalhost(r.RemoteAddr) {
-		aerr = &ErrAjax{ErrNoAuth, EC_noauth}
 		return
-	} else {
+	}
+	if IsLocalhost(r.RemoteAddr) {
 		auth = acclist.ByID(cfg.DefAccID)
 	}
 	return
@@ -149,8 +148,12 @@ func AuthWrap(fn AuthHandlerFunc) http.HandlerFunc {
 
 		var err error
 		var auth *Account
-		if auth, err = CheckAuth(r); err != nil {
+		if auth, err = GetAuth(r); err != nil {
 			WriteJson(w, http.StatusUnauthorized, err)
+			return
+		}
+		if auth == nil {
+			WriteError(w, http.StatusUnauthorized, ErrNoAuth, EC_noauth)
 			return
 		}
 

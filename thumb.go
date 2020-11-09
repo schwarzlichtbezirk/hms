@@ -229,12 +229,16 @@ func tmbscnApi(w http.ResponseWriter, r *http.Request) {
 		WriteError400(w, ErrNoAcc, EC_tmbscnnoacc)
 		return
 	}
+	var auth *Account
+	if auth, err = GetAuth(r); err != nil {
+		WriteJson(w, http.StatusUnauthorized, err)
+		return
+	}
 
 	go func() {
 		for _, puid := range arg.PUIDs {
 			if syspath, ok := pathcache.Path(puid); ok {
-				var state = acc.PathState(syspath)
-				if state == FPA_none {
+				if cg := acc.PathAccess(syspath, auth == acc); cg.IsZero() {
 					continue
 				}
 				thumbcache.Get(puid)
