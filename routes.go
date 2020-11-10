@@ -107,6 +107,10 @@ const (
 	// getlog
 	EC_getlogbadnum = 62
 
+	// usrlst
+	EC_usrlstnoreq  = 63
+	EC_usrlstbadreq = 64
+
 	// home
 	EC_homenoreq  = 70
 	EC_homebadreq = 71
@@ -261,6 +265,7 @@ func RegisterRoutes(gmux *Router) {
 	stc.Path("/memusg").HandlerFunc(AjaxWrap(memusgApi))
 	stc.Path("/cchinf").HandlerFunc(AjaxWrap(cchinfApi))
 	stc.Path("/getlog").HandlerFunc(AjaxWrap(getlogApi))
+	stc.Path("/usrlst").HandlerFunc(AjaxWrap(usrlstApi))
 	var reg = api.PathPrefix("/auth").Subrouter()
 	reg.Path("/pubkey").HandlerFunc(AjaxWrap(pubkeyApi))
 	reg.Path("/signin").HandlerFunc(AjaxWrap(signinApi))
@@ -290,7 +295,7 @@ func RegisterRoutes(gmux *Router) {
 // Handler wrapper for AJAX API calls without authorization.
 func AjaxWrap(fn http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		incuint(&ajaxcallcount, 1)
+		userajax <- r
 		fn(w, r)
 	}
 }

@@ -163,5 +163,26 @@
 			</div>
 		</div>
 
+		<div class="card">
+			<div class="card-header">
+				<a class="card-link collapsed" data-toggle="collapse" href="#collapse-users">users activity</a>
+			</div>
+			<div id="collapse-users" class="collapse">
+				<div class="card-body">
+					<div>
+						<span class="field-name">total users:</span><span class="field-value mx-2">{{usrlst.total}}</span>
+						<span class="field-name">online users:</span><span class="field-value mx-2">{{usrlst.online}}</span>
+					</div>
+					<template v-for="user in usrlst.list">
+						<div class="d-flex">
+							<div class="font-weight-bolder px-2">{{user.addr}}</div>
+							<div class="">{{Date.now()-user.lastajax<5*60000?'online':'offline'}}</div>
+							<div>{{user.file}}</div>
+						</div>
+					</template>
+				</div>
+			</div>
+		</div>
+
 	</div>
 </div>

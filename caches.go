@@ -9,6 +9,7 @@ import (
 	"image/jpeg"
 	"os"
 	"sync"
+	"time"
 
 	"github.com/bluele/gcache"
 )
@@ -19,6 +20,9 @@ var (
 	// Key - system path, value - file property struct.
 	propcache gcache.Cache
 
+	// Public keys cache for authorization.
+	pubkeycache gcache.Cache
+
 	// Thumbnails cache.
 	// Key - path unique ID, value - thumbnail image in MediaData.
 	thumbcache gcache.Cache
@@ -27,6 +31,9 @@ var (
 	// Key - path unique ID, value - media file in MediaData.
 	mediacache gcache.Cache
 )
+
+// Produce base32 string representation of given random bytes slice.
+var idenc = base32.HexEncoding.WithPadding(base32.NoPadding)
 
 // Error messages
 var (
@@ -56,9 +63,6 @@ func (c *PathCache) Path(puid string) (syspath string, ok bool) {
 	syspath, ok = c.keypath[puid]
 	return
 }
-
-// Produce base32 string representation of given random bytes slice.
-var idenc = base32.HexEncoding.WithPadding(base32.NoPadding)
 
 // Generate new path unique ID.
 func (c *PathCache) MakePUID() string {
@@ -235,6 +239,9 @@ func initcaches() {
 			return
 		}).
 		Build()
+
+	// init public keys cache
+	pubkeycache = gcache.New(10).LRU().Expiration(15 * time.Second).Build()
 
 	// init thumbnails cache
 	thumbcache = gcache.New(cfg.ThumbCacheMaxNum).

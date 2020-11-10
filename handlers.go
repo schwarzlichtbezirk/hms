@@ -38,23 +38,19 @@ var (
 func pageHandler(pref, name string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var alias = pagealias[name]
-		if content, ok := pagecache[pref+alias]; ok {
-			pccmux.Lock()
-			pagecallcount[name]++
-			pccmux.Unlock()
-
-			WriteHtmlHeader(w)
-			http.ServeContent(w, r, alias, starttime, bytes.NewReader(content))
-		} else {
+		var content, ok = pagecache[pref+alias]
+		if !ok {
 			WriteError(w, http.StatusNotFound, ErrNotFound, EC_pageabsent)
 		}
+		userpage <- r
+
+		WriteHtmlHeader(w)
+		http.ServeContent(w, r, alias, starttime, bytes.NewReader(content))
 	}
 }
 
 // APIHANDLER
 func fileHandler(w http.ResponseWriter, r *http.Request) {
-	incuint(&sharecallcount, 1)
-
 	var err error
 
 	var chunks = strings.Split(r.URL.Path, "/")
@@ -94,6 +90,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, ok := r.Header["If-Range"]; !ok { // not partial content
+		userfile <- userfilepath{r, syspath}
 		Log.Printf("id%d: serve %s", acc.ID, filepath.Base(syspath))
 	}
 	WriteStdHeader(w)
@@ -153,6 +150,7 @@ func mediaHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if _, ok := r.Header["If-Range"]; !ok { // not partial content
+			userfile <- userfilepath{r, syspath}
 			Log.Printf("id%d: serve %s", acc.ID, filepath.Base(syspath))
 		}
 		WriteStdHeader(w)
@@ -166,6 +164,7 @@ func mediaHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, ok := r.Header["If-Range"]; !ok { // not partial content
+		userfile <- userfilepath{r, syspath}
 		Log.Printf("id%d: media %s", acc.ID, filepath.Base(syspath))
 	}
 	w.Header().Set("Content-Type", md.Mime)
@@ -422,6 +421,7 @@ func homeApi(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	userpath <- userfilepath{r, "[home/Home]"}
 	Log.Printf("id%d: navigate to home", acc.ID)
 	WriteOK(w, ret)
 }
@@ -484,6 +484,7 @@ func ctgrApi(w http.ResponseWriter, r *http.Request) {
 		for _, puid := range puids {
 			if syspath, ok := pathcache.Path(puid); ok {
 				if prop, err := propcache.Get(syspath); err == nil {
+					userpath <- userfilepath{r, syspath}
 					ret = append(ret, prop.(Proper))
 				}
 			}
@@ -516,8 +517,6 @@ func ctgrApi(w http.ResponseWriter, r *http.Request) {
 
 // APIHANDLER
 func folderApi(w http.ResponseWriter, r *http.Request) {
-	incuint(&foldercallcout, 1)
-
 	var err error
 	var arg struct {
 		AID  int    `json:"aid"`
@@ -582,6 +581,7 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, http.StatusNotFound, err, EC_folderfail)
 		return
 	}
+	userpath <- userfilepath{r, syspath}
 	Log.Printf("id%d: navigate to %s", acc.ID, syspath)
 
 	WriteOK(w, ret)

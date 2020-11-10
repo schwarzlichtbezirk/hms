@@ -3,6 +3,7 @@ module github.com/schwarzlichtbezirk/hms
 go 1.14
 
 require (
+	github.com/avct/uasurfer v0.0.0-20191028135549-26b5daa857f1 // indirect
 	github.com/bluele/gcache v0.0.0-20190518031135-bc40bd653833
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/dhowden/tag v0.0.0-20200828214007-46e57f75dbfc

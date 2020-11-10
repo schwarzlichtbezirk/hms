@@ -11,7 +11,8 @@ const app = new Vue({
 		memgc: {},
 		cchinf: {},
 		log: [],
-		timemode: 1
+		timemode: 1,
+		usrlst: {}
 	},
 	computed: {
 		consolecontent() {
@@ -166,13 +167,34 @@ const app = new Vue({
 				} catch (e) { console.error(e); }
 			})();
 
-			$("#collapse-memory").one('hide.bs.collapse', () => {
+			$("#collapse-cache").one('hide.bs.collapse', () => {
 				expanded = false;
 			});
 		});
 
 		$("#collapse-console").on('show.bs.collapse', () => {
 			this.ongetlog();
+		});
+
+		$("#collapse-users").on('show.bs.collapse', () => {
+			let expanded = true;
+			(async () => {
+				try {
+					while (expanded) {
+						const response = await fetchjson("POST", "/api/stat/usrlst", {
+							pos: 0, num: 20
+						});
+						if (response.ok) {
+							this.usrlst = await response.json();
+						}
+						await new Promise(resolve => setTimeout(resolve, scanfreq));
+					}
+				} catch (e) { console.error(e); }
+			})();
+
+			$("#collapse-users").one('hide.bs.collapse', () => {
+				expanded = false;
+			});
 		});
 	},
 	beforeDestroy() {
@@ -181,6 +203,8 @@ const app = new Vue({
 		$("#collapse-cache").off('show.bs.collapse');
 		$("#collapse-cache").off('hide.bs.collapse');
 		$("#collapse-console").off('show.bs.collapse');
+		$("#collapse-users").off('show.bs.collapse');
+		$("#collapse-users").off('hide.bs.collapse');
 	}
 }); // end of vue application
 

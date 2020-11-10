@@ -7,12 +7,12 @@ import (
 	"encoding/json"
 	"errors"
 	"io/ioutil"
+	"math/rand"
 	"net"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/bluele/gcache"
 	"github.com/dgrijalva/jwt-go"
 )
 
@@ -49,11 +49,8 @@ var (
 	ErrNoAcc    = errors.New("account is absent")
 )
 
-// Public keys cache for authorization.
-var pubkeycache = gcache.New(10).LRU().Expiration(15 * time.Second).Build()
-
 // Zero hash value.
-var zero [32]byte
+var zero32 [32]byte
 
 // Access and refresh tokens pair.
 type Tokens struct {
@@ -83,6 +80,16 @@ func (t *Tokens) Make(aid int) {
 		},
 		AID: aid,
 	}).SignedString([]byte(cfg.RefreshKey))
+}
+
+// Convert time to UNIX-time in milliseconds, compatible with javascript time format.
+func UnixJS(u time.Time) int64 {
+	return u.UnixNano() / 1000000
+}
+
+// Returns same result as Date.now() in javascript.
+func UnixJSNow() int64 {
+	return time.Now().UnixNano() / 1000000
 }
 
 // Fast IP-address extract from valid host:port string.
@@ -144,7 +151,7 @@ func GetAuth(r *http.Request) (auth *Account, aerr error) {
 // Handler wrapper for API with admin checkup.
 func AuthWrap(fn AuthHandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		incuint(&ajaxcallcount, 1)
+		userajax <- r
 
 		var err error
 		var auth *Account
@@ -164,12 +171,12 @@ func AuthWrap(fn AuthHandlerFunc) http.HandlerFunc {
 func pubkeyApi(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var buf [32]byte
-	if _, err = randbytes(buf[:]); err != nil {
+	if _, err = rand.Read(buf[:]); err != nil {
 		WriteError500(w, err, EC_pubkeyrand)
 		return
 	}
 
-	pubkeycache.Set(tohex(buf[:]), struct{}{})
+	pubkeycache.Set(idenc.EncodeToString(buf[:]), struct{}{})
 
 	WriteOK(w, buf)
 }
@@ -189,7 +196,7 @@ func signinApi(w http.ResponseWriter, r *http.Request) {
 			WriteError400(w, err, EC_signinbadreq)
 			return
 		}
-		if arg.Name == "" || bytes.Equal(arg.PubK[:], zero[:]) || bytes.Equal(arg.Hash[:], zero[:]) {
+		if arg.Name == "" || bytes.Equal(arg.PubK[:], zero32[:]) || bytes.Equal(arg.Hash[:], zero32[:]) {
 			WriteError400(w, ErrNoData, EC_signinnodata)
 			return
 		}
@@ -204,7 +211,7 @@ func signinApi(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err = pubkeycache.Get(tohex(arg.PubK[:])); err != nil {
+	if _, err = pubkeycache.Get(idenc.EncodeToString(arg.PubK[:])); err != nil {
 		WriteError(w, http.StatusForbidden, ErrNoPubKey, EC_signinpkey)
 		return
 	}

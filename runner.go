@@ -263,8 +263,8 @@ func Init() {
 		Log.Fatal("error on accounts file: " + err.Error())
 	}
 
-	// run meters updater
-	meterscanner = time.AfterFunc(time.Second, meterupdater)
+	// run users scanner for statistics
+	go UserScanner()
 
 	// EXIF parsers
 	exifparsers()
@@ -348,9 +348,6 @@ func WaitBreak() {
 
 // Graceful stop network processing, waits until all server threads will be stopped.
 func Done() {
-	// Stop meters updater
-	meterscanner.Stop()
-
 	// Create a deadline to wait for.
 	var ctx, cancel = context.WithTimeout(
 		context.Background(),
@@ -388,6 +385,9 @@ func Done() {
 			}
 		}()
 	}
+
+	// Stop users scanner
+	close(userquit)
 
 	srvwg.Add(1)
 	go func() {
