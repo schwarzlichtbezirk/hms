@@ -41,7 +41,7 @@ specification:
     # On 'false' use wpk-package loaded into one solid byte slice.
     wpk-mmap: false
     # Default account ID for user on localhost.
-    default-account-id: 0
+    default-account-id: 1
     # Maximum size of image to make thumbnail.
     thumb-file-maxsize: 50397184 # 4096*3072*4 + 65536, 48M, max 4K image + 64K exif metadata
     # Stretch big image embedded into mp3-file to fit into standard icon size.

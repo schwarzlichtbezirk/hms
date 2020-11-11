@@ -3,6 +3,78 @@
 // Scanning frequency
 const scanfreq = 2000;
 
+// User Agent structure sample:
+// {"Browser":{"Name":1,"Version":{"Major":86,"Minor":0,"Patch":4240}},"OS":{"Platform":1,"Name":2,"Version":{"Major":10,"Minor":0,"Patch":0}},"DeviceType":1}
+
+// Browser name
+const BN = [
+	"Unknown",
+	"Chrome", "IE", "Safari", "Firefox", "Android", "Opera",
+	"Blackberry", "UCBrowser", "Silk", "Nokia",
+	"NetFront", "QQ", "Maxthon", "SogouExplorer", "Spotify",
+	"Nintendo", "Samsung", "Yandex", "CocCoc",
+	"Bot", // Bot list begins here
+	"AppleBot", "BaiduBot", "BingBot", "DuckDuckGoBot",
+	"FacebookBot", "GoogleBot", "LinkedInBot", "MsnBot",
+	"PingdomBot", "TwitterBot", "YandexBot", "CocCocBot",
+	"YahooBot" // Bot list ends here
+];
+
+// OS Name
+const OSN = [
+	"Unknown",
+	"WindowsPhone", "Windows", "MacOSX",
+	"iOS", "Android", "Blackberry",
+	"ChromeOS", "Kindle", "WebOS", "Linux",
+	"Playstation", "Xbox", "Nintendo",
+	"Bot"
+];
+
+// OS Platform
+const OSP = [
+	"Unknown",
+	"Windows", "Mac", "Linux",
+	"iPad", "iPhone", "iPod", "Blackberry", "WindowsPhone",
+	"Playstation", "Xbox", "Nintendo",
+	"Bot"
+];
+
+// Device Type
+const DT = [
+	"Unknown", "Computer", "Tablet", "Phone", "Console", "Wearable", "TV"
+];
+
+Vue.component('user-tag', {
+	template: '#user-tpl',
+	props: ["user"],
+	data: function () {
+		return {
+		};
+	},
+	computed: {
+		clsonline() {
+			return this.user.online ? 'text-success' : 'text-secondary';
+		},
+		txtonline() {
+			return this.user.online ? 'radio_button_checked' : 'radio_button_unchecked';
+		},
+		browser() {
+			return `${BN[this.user.ua.Browser.Name]} (${this.user.ua.Browser.Version.Major}.${this.user.ua.Browser.Version.Minor}.${this.user.ua.Browser.Version.Patch})`;
+		},
+		os() {
+			return `${OSN[this.user.ua.OS.Name]} (${this.user.ua.OS.Version.Major}.${this.user.ua.OS.Version.Minor}.${this.user.ua.OS.Version.Patch})`;
+		},
+		platform() {
+			return OSP[this.user.ua.OS.Platform];
+		},
+		device() {
+			return DT[this.user.ua.DeviceType];
+		}
+	},
+	methods: {
+	}
+});
+
 const app = new Vue({
 	el: '#app',
 	template: '#app-tpl',

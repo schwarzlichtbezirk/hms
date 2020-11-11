@@ -28,11 +28,16 @@
 	<link rel="stylesheet" type="text/css" href="/plug/normalize.css?8.0.1">
 	<!-- Bootstrap CSS -->
 	<link rel="stylesheet" type="text/css" href="/plug/bootstrap.min.css?4.4.1">
+	<!-- Google fonts -->
+	<link rel="stylesheet" type="text/css" href="/asst/iconfont/material-icons.css">
 
 	<!-- Project CSS -->
 	<link rel="stylesheet" type="text/css" href="/devm/stat.css?0.1.0">
 
 	<!-- x-templates -->
+	<script type="text/x-template" id="user-tpl">
+		[=[template "tmpl/user.html"]=]
+	</script>
 	<script type="text/x-template" id="app-tpl">
 		[=[template "tmpl/app-stat.html"]=]
 	</script>
@@ -47,10 +52,10 @@
 	<script src="/plug/vue.js?2.6.12"></script>
 
 	<!-- common functionality used in all components -->
-	<script src="/devm/devmode.js?0.5.6"></script>
+	<script src="/devm/devmode.js?0.6.0"></script>
 	<script src="/devm/common.js?0.4.4"></script>
 	<script src="/devm/request.js?0.5.6"></script>
 	<!-- load application script -->
-	<script src="/devm/statpage.js?0.5.6"></script>
+	<script src="/devm/statpage.js?0.6.0"></script>
 </body>
 </html>

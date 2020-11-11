@@ -1,0 +1,11 @@
+
+<div class="user">
+	<div class="mx-md-2" v-bind:class="clsonline"><i class="material-icons">{{txtonline}}</i></div>
+	<div><span class="field-name">IP:</span><span class="field-value">{{user.addr}}</span></div>
+	<div v-show="user.ua.Browser.Name"><span class="field-name">browser:</span><span class="field-value">{{browser}}</span></div>
+	<div v-show="user.ua.OS.Name"><span class="field-name">OS:</span><span class="field-value">{{os}}</span></div>
+	<div v-show="user.ua.OS.Platform"><span class="field-name">Platform:</span><span class="field-value">{{platform}}</span></div>
+	<div v-show="user.ua.DeviceType"><span class="field-name">device:</span><span class="field-value">{{device}}</span></div>
+	<div v-show="user.path"><span class="field-name">folder:</span><span class="field-value">{{user.path}}</span></div>
+	<div v-show="user.file"><span class="field-name">serve:</span><span class="field-value">{{user.file}}</span></div>
+</div>

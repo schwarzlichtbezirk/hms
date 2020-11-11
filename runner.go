@@ -96,7 +96,7 @@ var cfg = Config{ // inits default values:
 	},
 	CfgSpec: CfgSpec{
 		WPKmmap:          false,
-		DefAccID:         0,
+		DefAccID:         1,
 		ThumbFileMaxSize: 4096*3072*4 + 65536,
 		PUIDsize:         3,
 		PropCacheMaxNum:  32 * 1024,

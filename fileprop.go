@@ -316,12 +316,18 @@ type DirProp struct {
 }
 
 func PathBase(syspath string) string {
-	var name = filepath.Base(syspath)
-	if len(name) > 1 {
-		return name
-	} else {
-		return syspath[:len(syspath)-1]
+	if len(syspath) > 0 {
+		if syspath[0] == '[' && syspath[len(syspath)-1] == ']' {
+			return syspath
+		}
+		var name = filepath.Base(syspath)
+		if len(name) > 1 {
+			return name
+		} else if syspath[len(syspath)-1] == '/' {
+			return syspath[:len(syspath)-1]
+		}
 	}
+	return syspath
 }
 
 // Directory properties kit.

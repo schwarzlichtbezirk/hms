@@ -1,21 +1,25 @@
 
 .field-name {
 	text-align: right;
-	font-weight: 700;
+	font-weight: 400;
+	padding-left: 0.5rem;
+	padding-right: 0.25rem;
 }
 
 .field-value {
 	text-align: left;
-	font-weight: 400;
+	font-weight: 700;
+	padding-left: 0.25rem;
+	padding-right: 0.5rem;
 }
 
 .stattable > .row {
 	border-bottom: 1px solid rgba(0, 0, 0, 0);
 }
 
-.stattable > .row:hover {
-	border-bottom: 1px solid rgba(0, 0, 0, 0.125);
-}
+	.stattable > .row:hover {
+		border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+	}
 
 .console-window {
 	color: #d9d9d9;
@@ -54,3 +58,15 @@
 		width: auto;
 	}
 }
+
+.user {
+	border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+	.user:hover {
+		background-color: rgba(0, 0, 0, 0.03);
+	}
+
+	.user > div {
+		display: inline;
+	}

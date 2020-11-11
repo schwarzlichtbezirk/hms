@@ -90,8 +90,10 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, ok := r.Header["If-Range"]; !ok { // not partial content
-		userfile <- userfilepath{r, syspath}
-		Log.Printf("id%d: serve %s", acc.ID, filepath.Base(syspath))
+		userfile <- userfilepath{r, prop.(Proper).PUID()}
+		Log.Printf("id%d: serve %s", acc.ID, PathBase(syspath))
+	} else {
+		userajax <- r // update statistics for partial content
 	}
 	WriteStdHeader(w)
 	http.ServeFile(w, r, syspath)
@@ -150,8 +152,10 @@ func mediaHandler(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if _, ok := r.Header["If-Range"]; !ok { // not partial content
-			userfile <- userfilepath{r, syspath}
-			Log.Printf("id%d: serve %s", acc.ID, filepath.Base(syspath))
+			userfile <- userfilepath{r, puid}
+			Log.Printf("id%d: serve %s", acc.ID, PathBase(syspath))
+		} else {
+			userajax <- r // update statistics for partial content
 		}
 		WriteStdHeader(w)
 		http.ServeFile(w, r, syspath)
@@ -164,8 +168,10 @@ func mediaHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if _, ok := r.Header["If-Range"]; !ok { // not partial content
-		userfile <- userfilepath{r, syspath}
-		Log.Printf("id%d: media %s", acc.ID, filepath.Base(syspath))
+		userfile <- userfilepath{r, puid}
+		Log.Printf("id%d: media %s", acc.ID, PathBase(syspath))
+	} else {
+		userajax <- r // update statistics for partial content
 	}
 	w.Header().Set("Content-Type", md.Mime)
 	http.ServeContent(w, r, puid, starttime, bytes.NewReader(md.Data))
@@ -421,7 +427,7 @@ func homeApi(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	userpath <- userfilepath{r, "[home/Home]"}
+	userpath <- userfilepath{r, ""}
 	Log.Printf("id%d: navigate to home", acc.ID)
 	WriteOK(w, ret)
 }
@@ -454,6 +460,7 @@ func ctgrApi(w http.ResponseWriter, r *http.Request) {
 			WriteError400(w, ErrArgNoPath, EC_ctgrnocid)
 			return
 		}
+		arg.PUID = pathcache.Cache(catpath)
 	} else if len(arg.PUID) > 0 {
 		var ok bool
 		if catpath, ok = pathcache.Path(arg.PUID); !ok {
@@ -484,7 +491,6 @@ func ctgrApi(w http.ResponseWriter, r *http.Request) {
 		for _, puid := range puids {
 			if syspath, ok := pathcache.Path(puid); ok {
 				if prop, err := propcache.Get(syspath); err == nil {
-					userpath <- userfilepath{r, syspath}
 					ret = append(ret, prop.(Proper))
 				}
 			}
@@ -512,6 +518,8 @@ func ctgrApi(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	userpath <- userfilepath{r, arg.PUID}
+	Log.Printf("id%d: navigate to %s", acc.ID, catpath)
 	WriteOK(w, ret)
 }
 
@@ -581,7 +589,7 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, http.StatusNotFound, err, EC_folderfail)
 		return
 	}
-	userpath <- userfilepath{r, syspath}
+	userpath <- userfilepath{r, ret.PUID}
 	Log.Printf("id%d: navigate to %s", acc.ID, syspath)
 
 	WriteOK(w, ret)

@@ -7,11 +7,11 @@ import (
 	"net/http"
 	"time"
 
-	ua "github.com/avct/uasurfer"
+	uas "github.com/avct/uasurfer"
 )
 
 type HistItem struct {
-	Item string `json:"item"`
+	PUID string `json:"puid"`
 	Time int64  `json:"time"`
 }
 
@@ -25,20 +25,20 @@ type User struct {
 	Files     []HistItem `json:"files" yaml:"files"`          // list of served files
 
 	// private parsed user agent data
-	ua ua.UserAgent
+	ua uas.UserAgent
 }
 
 type UserInfo struct {
-	Addr   string       `json:"addr"`
-	UA     ua.UserAgent `json:"ua"`
-	Path   string       `json:"path"`
-	File   string       `json:"file"`
-	Online bool         `json:"online"`
+	Addr   string        `json:"addr"`
+	UA     uas.UserAgent `json:"ua"`
+	Path   string        `json:"path"`
+	File   string        `json:"file"`
+	Online bool          `json:"online"`
 }
 
 type userfilepath struct {
-	r *http.Request
-	p string
+	r    *http.Request
+	puid string
 }
 
 var usercache = map[string]*User{}
@@ -63,7 +63,7 @@ func GetUser(r *http.Request) *User {
 			Addr:      addr,
 			UserAgent: agent,
 		}
-		ua.ParseUserAgent(agent, &user.ua)
+		uas.ParseUserAgent(agent, &user.ua)
 		usercache[key] = user
 		userlist = append(userlist, user)
 	}
@@ -84,11 +84,11 @@ func UserScanner() {
 
 		case up := <-userpath:
 			var user = GetUser(up.r)
-			user.Paths = append(user.Paths, HistItem{up.p, UnixJSNow()})
+			user.Paths = append(user.Paths, HistItem{up.puid, UnixJSNow()})
 
 		case up := <-userfile:
 			var user = GetUser(up.r)
-			user.Files = append(user.Files, HistItem{up.p, UnixJSNow()})
+			user.Files = append(user.Files, HistItem{up.puid, UnixJSNow()})
 
 		case <-userquit:
 			return
@@ -132,10 +132,12 @@ func usrlstApi(w http.ResponseWriter, r *http.Request) {
 			ui.Addr = user.Addr
 			ui.UA = user.ua
 			if len(user.Paths) > 0 {
-				ui.Path = user.Paths[len(user.Paths)-1].Item
+				var path, _ = pathcache.Path(user.Paths[len(user.Paths)-1].PUID)
+				ui.Path = PathBase(path)
 			}
 			if len(user.Files) > 0 {
-				ui.File = user.Files[len(user.Files)-1].Item
+				var path, _ = pathcache.Path(user.Files[len(user.Files)-1].PUID)
+				ui.File = PathBase(path)
 			}
 			ui.Online = user.LastAjax > ot
 			ret.List = append(ret.List, ui)

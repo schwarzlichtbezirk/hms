@@ -4,7 +4,7 @@
 # specified root drives, shares, and to hide files on
 # specified masks.
 
-- id: 0
+- id: 1
   login: admin
   password: dag qus fly in the sky
   roots:
