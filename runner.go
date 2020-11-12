@@ -51,6 +51,8 @@ type CfgServ struct {
 type CfgSpec struct {
 	// Memory mapping technology for WPK, or load into one solid byte slice otherwise.
 	WPKmmap bool `json:"wpk-mmap" yaml:"wpk-mmap"`
+	// Maximum timeout in milliseconds between two ajax-calls to think client is online.
+	OnlineTimeout int64 `json:"online-timeout" yaml:"online-timeout"`
 	// Default account for user on localhost.
 	DefAccID int `json:"default-account-id" yaml:"default-account-id"`
 	// Maximum size of image to make thumbnail.
@@ -96,6 +98,7 @@ var cfg = Config{ // inits default values:
 	},
 	CfgSpec: CfgSpec{
 		WPKmmap:          false,
+		OnlineTimeout:    3 * 60 * 1000,
 		DefAccID:         1,
 		ThumbFileMaxSize: 4096*3072*4 + 65536,
 		PUIDsize:         3,

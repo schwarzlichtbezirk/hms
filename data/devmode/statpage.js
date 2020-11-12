@@ -151,6 +151,13 @@ const app = new Vue({
 			} else {
 				return "N/A";
 			}
+		},
+		avrmedcchsize() {
+			if (this.cchinf.medcchnum) {
+				return (this.cchinf.medcchsize1 / this.cchinf.medcchnum).toFixed();
+			} else {
+				return "N/A";
+			}
 		}
 	},
 	methods: {

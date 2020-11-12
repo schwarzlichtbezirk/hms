@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
-	"time"
 
 	uas "github.com/avct/uasurfer"
 )
@@ -18,6 +17,7 @@ type HistItem struct {
 type User struct {
 	Addr      string     `json:"addr" yaml:"addr"`            // remote address
 	UserAgent string     `json:"useragent" yaml:"user-agent"` // user agent
+	Lang      string     `json:"lang" yaml:"lang"`            // accept language
 	LastPage  int64      `json:"lastpage" yaml:"last-page"`   // last page load UNIX-time in milliseconds
 	LastAjax  int64      `json:"lastajax" yaml:"last-ajax"`   // last ajax-call UNIX-time in milliseconds
 	AID       int        `json:"aid" yaml:"aid"`              // last call account ID
@@ -31,6 +31,7 @@ type User struct {
 type UserInfo struct {
 	Addr   string        `json:"addr"`
 	UA     uas.UserAgent `json:"ua"`
+	Lang   string        `json:"lang"`
 	Path   string        `json:"path"`
 	File   string        `json:"file"`
 	Online bool          `json:"online"`
@@ -64,6 +65,9 @@ func GetUser(r *http.Request) *User {
 			UserAgent: agent,
 		}
 		uas.ParseUserAgent(agent, &user.ua)
+		if lang, ok := r.Header["Accept-Language"]; ok && len(lang) > 0 {
+			user.Lang = lang[0]
+		}
 		usercache[key] = user
 		userlist = append(userlist, user)
 	}
@@ -121,7 +125,7 @@ func usrlstApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ret.Total = len(userlist)
-	var ot = UnixJSNow() - int64(5*time.Minute)
+	var ot = UnixJSNow() - cfg.OnlineTimeout
 	var n = 0
 	for i, user := range userlist {
 		if user.LastAjax > ot {
@@ -131,6 +135,7 @@ func usrlstApi(w http.ResponseWriter, r *http.Request) {
 			var ui UserInfo
 			ui.Addr = user.Addr
 			ui.UA = user.ua
+			ui.Lang = user.Lang
 			if len(user.Paths) > 0 {
 				var path, _ = pathcache.Path(user.Paths[len(user.Paths)-1].PUID)
 				ui.Path = PathBase(path)

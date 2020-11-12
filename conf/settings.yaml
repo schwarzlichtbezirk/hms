@@ -40,6 +40,8 @@ specification:
     # On 'true' use memory mapping technology for access to wpk-package nested files.
     # On 'false' use wpk-package loaded into one solid byte slice.
     wpk-mmap: false
+    # Maximum timeout in milliseconds between two ajax-calls to think client is online.
+    online-timeout: 180000 # 3 minutes
     # Default account ID for user on localhost.
     default-account-id: 1
     # Maximum size of image to make thumbnail.

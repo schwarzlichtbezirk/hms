@@ -340,6 +340,16 @@ func cchinfApi(w http.ResponseWriter, r *http.Request) {
 		s.num++
 	}
 
+	var mc = mediacache.GetALL(false)
+	var med stat
+	for _, v := range mc {
+		var md = v.(*MediaData)
+		var l = float64(len(md.Data))
+		med.size1 += l
+		med.size2 += l * l
+		med.num++
+	}
+
 	var ret = map[string]interface{}{
 		"pathcchnum":  pathnum,
 		"propcchnum":  propnum,
@@ -355,6 +365,9 @@ func cchinfApi(w http.ResponseWriter, r *http.Request) {
 		"tmbgifnum":   gif.num,
 		"tmbgifsize1": gif.size1,
 		"tmbgifsize2": gif.size2,
+		"medcchnum":   med.num,
+		"medcchsize1": med.size1,
+		"medcchsize2": med.size2,
 	}
 
 	WriteOK(w, ret)

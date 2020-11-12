@@ -1037,7 +1037,7 @@ const app = new Vue({
 			this.aid = Number(chunks[0].substr(2));
 			chunks.shift();
 		} else {
-			this.aid = 0;
+			this.aid = 1;
 		}
 
 		const hist = { aid: this.aid };
