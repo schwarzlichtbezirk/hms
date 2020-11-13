@@ -153,6 +153,7 @@ const geticonname = file => {
 	switch (file.type) {
 		case FT.ctgr:
 			switch (file.cid) {
+				case "home": return "home";
 				case "drives": return "drives";
 				case "shares": return "shares";
 				case "media": return "media";
@@ -630,10 +631,12 @@ const app = new Vue({
 			this.filelist = [];
 			// update folder settings
 			for (const fp of response.data || []) {
-				if (fp.type < 0) {
-					this.pathlist.push(fp);
-				} else {
-					this.filelist.push(fp);
+				if (fp.type !== FT.ctgr || hist.cid === "home") {
+					if (fp.type < 0) {
+						this.pathlist.push(fp);
+					} else {
+						this.filelist.push(fp);
+					}
 				}
 			}
 			// update shared
@@ -709,14 +712,17 @@ const app = new Vue({
 		},
 
 		async fetchopenroute(hist) {
-			if (hist.path || hist.puid) {
-				await this.fetchfolder(hist);
-				await this.fetchscanthumbs();
-			} else {
+			if (!hist.cid && !hist.puid && !hist.path) {
+				hist.cid = "home";
+			}
+			if (hist.cid) {
 				await this.fetchcategory(hist);
 				if (hist.cid === "shares") {
 					await this.fetchscanthumbs();
 				}
+			} else {
+				await this.fetchfolder(hist);
+				await this.fetchscanthumbs();
 			}
 			this.seturl();
 		},

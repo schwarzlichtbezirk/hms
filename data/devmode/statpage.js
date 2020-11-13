@@ -44,6 +44,31 @@ const DT = [
 	"Unknown", "Computer", "Tablet", "Phone", "Console", "Wearable", "TV"
 ];
 
+Vue.component('catitem-tag', {
+	template: `
+<div class="d-inline-flex mx-md-1 catitem">
+	<div v-bind:title="!widen&&text" v-on:click="onexpand"><i class="material-icons">{{icon}}</i></div>
+	<div v-show="widen" class="ml-md-1">{{text}}</div>
+</div>
+`,
+	props: ["icon", "text", "wide"],
+	data: function () {
+		return {
+			widen: true
+		};
+	},
+	computed: {
+	},
+	methods: {
+		onexpand() {
+			this.widen = !this.widen;
+		}
+	},
+	mounted() {
+		this.widen = this.wide;
+	}
+});
+
 Vue.component('user-tag', {
 	template: '#user-tpl',
 	props: ["user"],
@@ -56,7 +81,41 @@ Vue.component('user-tag', {
 			return this.user.online ? 'text-success' : 'text-secondary';
 		},
 		txtonline() {
-			return this.user.online ? 'radio_button_checked' : 'radio_button_unchecked';
+			if (this.user.authid) {
+				return this.user.isauth ? 'person' : 'person_outline';
+			} else {
+				return this.user.accid ? 'radio_button_checked' : 'radio_button_unchecked';
+			}
+		},
+		txtdevice() {
+			switch (this.user.ua.DeviceType) {
+				case 1:
+					switch (this.user.ua.OS.Platform) {
+						case 1: case 8: return 'laptop_windows';
+						case 2: case 4: case 5: case 6: return 'laptop_mac';
+						case 3: return 'laptop_chromebook';
+						default: return 'laptop';
+					}
+				case 2:
+					switch (this.user.ua.OS.Platform) {
+						case 2: case 4: case 5: case 6: return 'tablet_mac';
+						case 3: return 'tablet_android';
+						default: return 'tablet';
+					}
+				case 3:
+					switch (this.user.ua.OS.Platform) {
+						case 2: case 4: case 5: case 6: return 'phone_iphone';
+						case 3: return 'phone_android';
+						default: return 'smartphone';
+					}
+				case 4: return 'videogame_asset';
+				case 5: return 'watch';
+				case 6: return 'tv';
+				default: return 'device_unknown';
+			}
+		},
+		online() {
+			return this.user.online ? 'Online' : 'Offline';
 		},
 		browser() {
 			return `${BN[this.user.ua.Browser.Name]} (${this.user.ua.Browser.Version.Major}.${this.user.ua.Browser.Version.Minor}.${this.user.ua.Browser.Version.Patch})`;

@@ -174,7 +174,7 @@ func (uc *UserCache) Load(fpath string) (err error) {
 		return
 	}
 
-	uc.keyuser = make(map[string]*User, len(uc.list))
+	uc.keyuser = make(UserMap, len(uc.list))
 	for _, user := range uc.list {
 		user.ParseUserAgent()
 		var key = UserKey(user.Addr, user.UserAgent)

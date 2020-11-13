@@ -1,12 +1,28 @@
 
 <div class="user">
-	<div class="mx-md-2" v-bind:class="clsonline"><i class="material-icons">{{txtonline}}</i></div>
-	<div><span class="field-name">IP:</span><span class="field-value">{{user.addr}}</span></div>
-	<div v-show="user.ua.Browser.Name"><span class="field-name">browser:</span><span class="field-value">{{browser}}</span></div>
-	<div v-show="user.ua.OS.Name"><span class="field-name">OS:</span><span class="field-value">{{os}}</span></div>
-	<div v-show="user.ua.OS.Platform"><span class="field-name">Platform:</span><span class="field-value">{{platform}}</span></div>
-	<div v-show="user.ua.DeviceType"><span class="field-name">device:</span><span class="field-value">{{device}}</span></div>
-	<div v-show="user.lang"><span class="field-name">language:</span><span class="field-value">{{user.lang}}</span></div>
-	<div v-show="user.path"><span class="field-name">folder:</span><span class="field-value">{{user.path}}</span></div>
-	<div v-show="user.file"><span class="field-name">serve:</span><span class="field-value">{{user.file}}</span></div>
+	<div class="mx-md-2" v-bind:title="online" v-bind:class="clsonline"><i class="material-icons">{{txtonline}}</i></div>
+	<template>
+		<catitem-tag icon="person_pin_circle" v-bind:text="user.addr" wide="1" />
+	</template>
+	<template v-if="user.ua.DeviceType">
+		<catitem-tag v-bind:icon="txtdevice" v-bind:text="device" wide />
+	</template>
+	<template v-if="user.ua.Browser.Name">
+		<catitem-tag icon="web" v-bind:text="browser" wide="1" />
+	</template>
+	<template v-if="user.ua.OS.Name">
+		<catitem-tag icon="app_settings_alt" v-bind:text="os" wide="1" />
+	</template>
+	<template v-if="user.ua.OS.Platform">
+		<catitem-tag icon="api" v-bind:text="platform" wide />
+	</template>
+	<template v-if="user.lang">
+		<catitem-tag icon="language" v-bind:text="user.lang" wide />
+	</template>
+	<template v-if="user.path">
+		<catitem-tag icon="folder" v-bind:text="user.path" wide="1" />
+	</template>
+	<template v-if="user.file">
+		<catitem-tag icon="insert_drive_file" v-bind:text="user.file" wide="1" />
+	</template>
 </div>

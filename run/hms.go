@@ -4,8 +4,8 @@ import (
 	. "github.com/schwarzlichtbezirk/hms"
 )
 
-const buildvers = "0.6.0"
-const builddate = "2020.11.12"
+const buildvers = "0.6.1"
+const builddate = "2020.11.14"
 
 func main() {
 	Log.Printf("version: %s, builton: %s", buildvers, builddate)
@@ -16,11 +16,11 @@ func main() {
 	RegisterRoutes(gmux)
 	Run(gmux)
 	Log.Printf("ready")
-	Log.Printf("hint: Open localhost page in browser to view the player. If you want to stop the server, press 'Ctrl+C' for graceful network shutdown.")
+	Log.Printf("hint: Open localhost page in browser to view the player. If you want to stop the server, press 'Ctrl+C' for graceful network shutdown. Use localhost/stat for server state monitoring.")
 	WaitBreak()
-	Log.Println("shutting down")
+	Log.Println("shutting down begin")
 	Done()
-	Log.Println("server stopped")
+	Log.Println("shutting down complete.")
 }
 
 // The End.

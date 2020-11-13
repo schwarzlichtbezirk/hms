@@ -113,6 +113,13 @@ func IsLocalhost(addrport string) bool {
 // Returns account from authorization header if it present,
 // or default account with no error if authorization is absent.
 func GetAuth(r *http.Request) (auth *Account, aerr error) {
+	defer func() {
+		if auth != nil {
+			go func() { usermsg <- UsrMsg{r, "auth", auth.ID} }()
+		} else {
+			go func() { usermsg <- UsrMsg{r, "auth", 0} }()
+		}
+	}()
 	if pool, is := r.Header["Authorization"]; is {
 		var err error // stores last bearer error
 		var claims HMSClaims

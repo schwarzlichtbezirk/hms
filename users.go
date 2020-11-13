@@ -1,19 +1,22 @@
 package hms
 
 import (
-	"crypto/md5"
 	"encoding/json"
+	"hash/maphash"
 	"io/ioutil"
 	"net/http"
 
 	uas "github.com/avct/uasurfer"
 )
 
+// History item. Contains PUID of served file or opened directory and
+// UNIX-time in milliseconds of start of this event.
 type HistItem struct {
 	PUID string `json:"puid"`
 	Time int64  `json:"time"`
 }
 
+// Complete information about user activity on server, identified by remote address and user agent.
 type User struct {
 	Addr      string     `json:"addr" yaml:"addr"`            // remote address
 	UserAgent string     `json:"useragent" yaml:"user-agent"` // user agent
@@ -30,21 +33,32 @@ type User struct {
 	ua uas.UserAgent
 }
 
+// Parse and setup private data with structured user agent representation.
 func (user *User) ParseUserAgent() {
 	uas.ParseUserAgent(user.UserAgent, &user.ua)
 }
 
+// Map with users with uint64-keys produced as hash of address plus user-agent.
+type UserMap = map[uint64]*User
+
 type UserCache struct {
-	keyuser map[string]*User
+	keyuser UserMap
 	list    []*User
 }
 
-func UserKey(addr, agent string) string {
-	var h = md5.Sum([]byte(addr + agent))
-	var key = idenc.EncodeToString(h[:])
+var userkeyhash maphash.Hash
+
+// Returns unique for this server session key for address plus user-agent,
+// produced on fast uint64-hash.
+func UserKey(addr, agent string) uint64 {
+	userkeyhash.Reset()
+	userkeyhash.WriteString(addr)
+	userkeyhash.WriteString(agent)
+	var key = userkeyhash.Sum64()
 	return key
 }
 
+// Returns User structure depending on http-request, identified by remote address and user agent.
 func (uc *UserCache) Get(r *http.Request) *User {
 	var addr = StripPort(r.RemoteAddr)
 	var agent = r.UserAgent()
@@ -66,15 +80,11 @@ func (uc *UserCache) Get(r *http.Request) *User {
 }
 
 var usercache = UserCache{
-	keyuser: map[string]*User{},
+	keyuser: UserMap{},
 	list:    []*User{},
 }
 
-type userpuid struct {
-	r    *http.Request
-	puid string
-}
-
+// User message. Contains some chunk of data changes in user structure.
 type UsrMsg struct {
 	r   *http.Request
 	msg string
@@ -82,9 +92,9 @@ type UsrMsg struct {
 }
 
 var (
-	usermsg  = make(chan UsrMsg)
-	userajax = make(chan *http.Request)
-	userquit = make(chan int)
+	usermsg  = make(chan UsrMsg)        // message with some data of user-change
+	userajax = make(chan *http.Request) // sends on any ajax-call
+	userquit = make(chan int)           // breaks user scanner
 )
 
 // Users scanner goroutine. Receives data from any API-calls to update statistics.
@@ -95,13 +105,21 @@ func UserScanner() {
 			var user = usercache.Get(um.r)
 			user.LastAjax = UnixJSNow()
 			switch um.msg {
+			case "auth":
+				var aid = (um.val).(int)
+				if aid > 0 {
+					user.IsAuth = true
+					user.AuthID = aid
+				} else {
+					user.IsAuth = false
+				}
 			case "page":
 				user.LastPage = user.LastAjax
 				user.AccID = (um.val).(int)
 			case "path":
-				user.Paths = append(user.Paths, HistItem{(um.val).(string), UnixJSNow()})
+				user.Paths = append(user.Paths, HistItem{(um.val).(string), user.LastAjax})
 			case "file":
-				user.Files = append(user.Files, HistItem{(um.val).(string), UnixJSNow()})
+				user.Files = append(user.Files, HistItem{(um.val).(string), user.LastAjax})
 			}
 
 		case r := <-userajax:
@@ -123,6 +141,9 @@ func usrlstApi(w http.ResponseWriter, r *http.Request) {
 		Path   string        `json:"path"`
 		File   string        `json:"file"`
 		Online bool          `json:"online"`
+		IsAuth bool          `json:"isauth"`
+		AuthID int           `json:"authid"`
+		AccID  int           `json:"accid"`
 	}
 
 	var err error
@@ -168,6 +189,9 @@ func usrlstApi(w http.ResponseWriter, r *http.Request) {
 				ui.File = PathBase(path)
 			}
 			ui.Online = user.LastAjax > ot
+			ui.IsAuth = user.IsAuth
+			ui.AuthID = user.AuthID
+			ui.AccID = user.AccID
 			ret.List = append(ret.List, ui)
 			n++
 		}
