@@ -266,6 +266,12 @@ func Init() {
 		Log.Fatal("error on accounts file: " + err.Error())
 	}
 
+	// load previous users states
+	if err = usercache.Load(confpath + "userlist.yaml"); err != nil {
+		Log.Fatal("error on users list file: " + err.Error())
+	}
+	Log.Printf("loaded %d items into users list", len(usercache.list))
+
 	// run users scanner for statistics
 	go UserScanner()
 
@@ -395,14 +401,6 @@ func Done() {
 	srvwg.Add(1)
 	go func() {
 		defer srvwg.Done()
-		if err := acclist.Save(confpath + "accounts.yaml"); err != nil {
-			Log.Println("error on accounts list file: " + err.Error())
-		}
-	}()
-
-	srvwg.Add(1)
-	go func() {
-		defer srvwg.Done()
 		if err := pathcache.Save(confpath + "pathcache.yaml"); err != nil {
 			Log.Println("error on path cache file: " + err.Error())
 		}
@@ -413,6 +411,22 @@ func Done() {
 		defer srvwg.Done()
 		if err := dircache.Save(confpath + "dircache.yaml"); err != nil {
 			Log.Println("error on directories cache file: " + err.Error())
+		}
+	}()
+
+	srvwg.Add(1)
+	go func() {
+		defer srvwg.Done()
+		if err := acclist.Save(confpath + "accounts.yaml"); err != nil {
+			Log.Println("error on accounts list file: " + err.Error())
+		}
+	}()
+
+	srvwg.Add(1)
+	go func() {
+		defer srvwg.Done()
+		if err := usercache.Save(confpath + "userlist.yaml"); err != nil {
+			Log.Println("error on users list file: " + err.Error())
 		}
 	}()
 

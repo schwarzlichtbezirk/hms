@@ -42,7 +42,22 @@ func pageHandler(pref, name string) http.HandlerFunc {
 		if !ok {
 			WriteError(w, http.StatusNotFound, ErrNotFound, EC_pageabsent)
 		}
-		userpage <- r
+		if name == "main" {
+			go func() {
+				var chunks = strings.Split(r.URL.Path, "/")
+				var pos = 1
+				if len(chunks) > pos && chunks[pos] == "dev" {
+					pos++
+				}
+				var aid = cfg.DefAccID
+				if len(chunks) > pos && len(chunks[pos]) > 2 && chunks[pos][:2] == "id" {
+					if u64, err := strconv.ParseUint(chunks[pos][2:], 10, 32); err == nil {
+						aid = int(u64)
+					}
+				}
+				usermsg <- UsrMsg{r, "page", aid}
+			}()
+		}
 
 		WriteHtmlHeader(w)
 		http.ServeContent(w, r, alias, starttime, bytes.NewReader(content))
@@ -89,12 +104,16 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, ok := r.Header["If-Range"]; !ok { // not partial content
-		userfile <- userfilepath{r, prop.(Proper).PUID()}
-		Log.Printf("id%d: serve %s", acc.ID, PathBase(syspath))
-	} else {
-		userajax <- r // update statistics for partial content
-	}
+	go func() {
+		if _, ok := r.Header["If-Range"]; !ok {
+			// not partial content
+			usermsg <- UsrMsg{r, "file", prop.(Proper).PUID()}
+			Log.Printf("id%d: serve %s", acc.ID, PathBase(syspath))
+		} else {
+			// update statistics for partial content
+			userajax <- r
+		}
+	}()
 	WriteStdHeader(w)
 	http.ServeFile(w, r, syspath)
 }
@@ -151,12 +170,16 @@ func mediaHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		if _, ok := r.Header["If-Range"]; !ok { // not partial content
-			userfile <- userfilepath{r, puid}
-			Log.Printf("id%d: serve %s", acc.ID, PathBase(syspath))
-		} else {
-			userajax <- r // update statistics for partial content
-		}
+		go func() {
+			if _, ok := r.Header["If-Range"]; !ok {
+				// not partial content
+				usermsg <- UsrMsg{r, "file", puid}
+				Log.Printf("id%d: serve %s", acc.ID, PathBase(syspath))
+			} else {
+				// update statistics for partial content
+				userajax <- r
+			}
+		}()
 		WriteStdHeader(w)
 		http.ServeFile(w, r, syspath)
 		return
@@ -167,12 +190,16 @@ func mediaHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, ok := r.Header["If-Range"]; !ok { // not partial content
-		userfile <- userfilepath{r, puid}
-		Log.Printf("id%d: media %s", acc.ID, PathBase(syspath))
-	} else {
-		userajax <- r // update statistics for partial content
-	}
+	go func() {
+		if _, ok := r.Header["If-Range"]; !ok {
+			// not partial content
+			usermsg <- UsrMsg{r, "file", puid}
+			Log.Printf("id%d: media %s", acc.ID, PathBase(syspath))
+		} else {
+			// update statistics for partial content
+			userajax <- r
+		}
+	}()
 	w.Header().Set("Content-Type", md.Mime)
 	http.ServeContent(w, r, puid, starttime, bytes.NewReader(md.Data))
 }
@@ -404,27 +431,27 @@ func getlogApi(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
-func homeApi(w http.ResponseWriter, r *http.Request) {
+func ishomeApi(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
 		AID int `json:"aid"`
 	}
-	var ret = []Proper{}
+	var ret bool
 
 	// get arguments
 	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
 		if err = json.Unmarshal(jb, &arg); err != nil {
-			WriteError400(w, err, EC_homebadreq)
+			WriteError400(w, err, EC_ishomebadreq)
 			return
 		}
 	} else {
-		WriteError400(w, ErrNoJson, EC_homenoreq)
+		WriteError400(w, ErrNoJson, EC_ishomenoreq)
 		return
 	}
 
 	var acc *Account
 	if acc = acclist.ByID(arg.AID); acc == nil {
-		WriteError400(w, ErrNoAcc, EC_homenoacc)
+		WriteError400(w, ErrNoAcc, EC_ishomenoacc)
 		return
 	}
 	var auth *Account
@@ -433,14 +460,22 @@ func homeApi(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for _, path := range CatPath {
-		if auth == acc || acc.IsShared(path) {
-			var prop, _ = propcache.Get(path)
-			ret = append(ret, prop.(Proper))
+	if auth == acc {
+		ret = true
+	} else if acc.IsShared(CP_home) {
+		for _, path := range CatPath {
+			if path == CP_home {
+				continue
+			}
+			if acc.IsShared(path) {
+				if _, err := propcache.Get(path); err == nil {
+					ret = true
+					break
+				}
+			}
 		}
 	}
 
-	userpath <- userfilepath{r, ""}
 	Log.Printf("id%d: navigate to home", acc.ID)
 	WriteOK(w, ret)
 }
@@ -502,14 +537,25 @@ func ctgrApi(w http.ResponseWriter, r *http.Request) {
 	}
 	var catprop = func(puids []string) {
 		for _, puid := range puids {
-			if syspath, ok := pathcache.Path(puid); ok {
-				if prop, err := propcache.Get(syspath); err == nil {
+			if path, ok := pathcache.Path(puid); ok {
+				if prop, err := propcache.Get(path); err == nil {
 					ret = append(ret, prop.(Proper))
 				}
 			}
 		}
 	}
 	switch catpath {
+	case CP_home:
+		for _, path := range CatPath {
+			if path == CP_home {
+				continue
+			}
+			if auth == acc || acc.IsShared(path) {
+				if prop, err := propcache.Get(path); err == nil {
+					ret = append(ret, prop.(Proper))
+				}
+			}
+		}
 	case CP_drives:
 		ret = acc.ScanRoots()
 	case CP_shares:
@@ -531,7 +577,7 @@ func ctgrApi(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userpath <- userfilepath{r, arg.PUID}
+	usermsg <- UsrMsg{r, "path", arg.PUID}
 	Log.Printf("id%d: navigate to %s", acc.ID, catpath)
 	WriteOK(w, ret)
 }
@@ -602,7 +648,7 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, http.StatusNotFound, err, EC_folderfail)
 		return
 	}
-	userpath <- userfilepath{r, ret.PUID}
+	usermsg <- UsrMsg{r, "path", ret.PUID}
 	Log.Printf("id%d: navigate to %s", acc.ID, syspath)
 
 	WriteOK(w, ret)

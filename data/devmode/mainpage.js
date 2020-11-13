@@ -438,6 +438,7 @@ const app = new Vue({
 		isauth: false, // is authorized
 		authid: 0, // authorized ID
 		aid: 0, // account ID
+		ishome: false, // able to go home
 
 		loadcount: 0, // ajax working request count
 		shared: [], // list of shared folders
@@ -550,7 +551,7 @@ const app = new Vue({
 		// common buttons enablers
 
 		dishome() {
-			return this.curcid === "" && this.curpuid === "" && this.curpath === "";
+			return this.curcid === "home" || !(this.isadmin || this.ishome);
 		},
 		disback() {
 			return this.histpos < 2;
@@ -605,27 +606,15 @@ const app = new Vue({
 		}
 	},
 	methods: {
-		async fetchhome() {
-			const response = await fetchajaxauth("POST", "/api/card/home", {
+		async fetchishome() {
+			const response = await fetchajaxauth("POST", "/api/card/ishome", {
 				aid: this.aid
 			});
 			traceajax(response);
 			if (!response.ok) {
 				throw new HttpError(response.status, response.data);
 			}
-
-			this.pathlist = response.data || []; // all items are categories
-			this.filelist = [];
-
-			// current path & state
-			this.curscan = new Date(Date.now());
-			this.curcid = "";
-			this.curpuid = "";
-			this.curpath = "";
-			this.shrname = "";
-
-			// init map card
-			this.$refs.mapcard.new();
+			this.ishome = response.data;
 		},
 
 		async fetchcategory(hist) {
@@ -641,12 +630,10 @@ const app = new Vue({
 			this.filelist = [];
 			// update folder settings
 			for (const fp of response.data || []) {
-				if (fp && fp.type !== FT.ctgr) {
-					if (fp.type < 0) {
-						this.pathlist.push(fp);
-					} else {
-						this.filelist.push(fp);
-					}
+				if (fp.type < 0) {
+					this.pathlist.push(fp);
+				} else {
+					this.filelist.push(fp);
 				}
 			}
 			// update shared
@@ -722,16 +709,14 @@ const app = new Vue({
 		},
 
 		async fetchopenroute(hist) {
-			if (hist.cid) {
+			if (hist.path || hist.puid) {
+				await this.fetchfolder(hist);
+				await this.fetchscanthumbs();
+			} else {
 				await this.fetchcategory(hist);
 				if (hist.cid === "shares") {
 					await this.fetchscanthumbs();
 				}
-			} else if (hist.path || hist.puid) {
-				await this.fetchfolder(hist);
-				await this.fetchscanthumbs();
-			} else {
-				await this.fetchhome();
 			}
 			this.seturl();
 		},
@@ -874,7 +859,7 @@ const app = new Vue({
 				ajaxcc.emit('ajax', +1);
 				try {
 					// open route and push history step
-					const hist = { aid: this.aid };
+					const hist = { cid: "home", aid: this.aid };
 					await this.fetchopenroute(hist);
 					this.pushhist(hist);
 				} catch (e) {
@@ -941,6 +926,9 @@ const app = new Vue({
 					await this.fetchopenroute({ cid: this.curcid, aid: this.aid, puid: this.curpuid, path: this.curpath });
 					if (this.isadmin && this.curcid !== "shares") {
 						await this.fetchshared(); // get shares
+					}
+					if (!this.isadmin && this.curcid !== "home") {
+						await this.fetchishome();
 					}
 				} catch (e) {
 					ajaxfail(e);
@@ -1047,8 +1035,14 @@ const app = new Vue({
 		if (route === "ctgr") {
 			hist.cid = chunks[0];
 			chunks.shift();
+		} else if (route === "path") {
+			hist.path = chunks.join('/');
+		} else if (route === "main") {
+			hist.cid = "home";
 		}
-		hist.path = chunks.join('/');
+		if (!hist.cid && !hist.path) {
+			hist.cid = "home";
+		}
 
 		// open route
 		(async () => {
@@ -1058,6 +1052,9 @@ const app = new Vue({
 				await this.fetchopenroute(hist);
 				if (this.isadmin && hist.cid !== "share") {
 					await this.fetchshared(); // get shares
+				}
+				if (!this.isadmin && hist.cid !== "home") {
+					await this.fetchishome();
 				}
 				this.pushhist(hist);
 			} catch (e) {

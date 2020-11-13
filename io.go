@@ -11,29 +11,59 @@ import (
 
 const utf8bom = "\xef\xbb\xbf"
 
-func (c *PathCache) Load(fpath string) (err error) {
-	var body []byte
-	if body, err = ioutil.ReadFile(fpath); err == nil {
-		if err = yaml.Unmarshal(body, &c.keypath); err != nil {
-			return
-		}
-	} else {
+func WriteYaml(fpath, intro string, data interface{}) (err error) {
+	var file *os.File
+	if file, err = os.OpenFile(fpath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644); err != nil {
+		return
+	}
+	defer file.Close()
+
+	if _, err = file.WriteString(utf8bom); err != nil {
+		return
+	}
+	if _, err = file.WriteString(intro); err != nil {
 		return
 	}
 
-	c.pathkey = make(map[string]string, len(c.keypath))
-	for key, path := range c.keypath {
-		c.pathkey[path] = key
+	var body []byte
+	if body, err = yaml.Marshal(data); err != nil {
+		return
 	}
-
-	// cache categories paths
-	for _, path := range CatPath {
-		c.Cache(path)
+	if _, err = file.Write(body); err != nil {
+		return
 	}
 	return
 }
 
-func (c *PathCache) Save(fpath string) (err error) {
+func ReadYaml(fpath string, data interface{}) (err error) {
+	var body []byte
+	if body, err = ioutil.ReadFile(fpath); err != nil {
+		return
+	}
+	if err = yaml.Unmarshal(body, data); err != nil {
+		return
+	}
+	return
+}
+
+func (pc *PathCache) Load(fpath string) (err error) {
+	if err = ReadYaml(fpath, &pc.keypath); err != nil {
+		return
+	}
+
+	pc.pathkey = make(map[string]string, len(pc.keypath))
+	for key, path := range pc.keypath {
+		pc.pathkey[path] = key
+	}
+
+	// cache categories paths
+	for _, path := range CatPath {
+		pc.Cache(path)
+	}
+	return
+}
+
+func (pc *PathCache) Save(fpath string) error {
 	const intro = `
 # Here is rewritable cache with key/path pairs list.
 # It's loads on server start, and saves before exit.
@@ -44,41 +74,17 @@ func (c *PathCache) Save(fpath string) (err error) {
 # should be unique.
 
 `
+	return WriteYaml(fpath, intro, pc.keypath)
+}
 
-	var file *os.File
-	if file, err = os.OpenFile(fpath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644); err != nil {
-		return
-	}
-	defer file.Close()
-
-	if _, err = file.WriteString(utf8bom); err != nil {
-		return
-	}
-	if _, err = file.WriteString(intro); err != nil {
-		return
-	}
-
-	var body []byte
-	if body, err = yaml.Marshal(c.keypath); err != nil {
-		return
-	}
-	if _, err = file.Write(body); err != nil {
+func (dc *DirCache) Load(fpath string) (err error) {
+	if err = ReadYaml(fpath, &dc.keydir); err != nil {
 		return
 	}
 	return
 }
 
-func (c *DirCache) Load(fpath string) (err error) {
-	var body []byte
-	if body, err = ioutil.ReadFile(fpath); err == nil {
-		if err = yaml.Unmarshal(body, &c.keydir); err != nil {
-			return
-		}
-	}
-	return
-}
-
-func (c *DirCache) Save(fpath string) (err error) {
+func (dc *DirCache) Save(fpath string) error {
 	const intro = `
 # Here is rewritable cache with key/path pairs list.
 # It's loads on server start, and saves before exit.
@@ -89,79 +95,27 @@ func (c *DirCache) Save(fpath string) (err error) {
 # [misc, video, audio, image, books, txt, arch, dir]
 
 `
-
-	var file *os.File
-	if file, err = os.OpenFile(fpath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644); err != nil {
-		return
-	}
-	defer file.Close()
-
-	if _, err = file.WriteString(utf8bom); err != nil {
-		return
-	}
-	if _, err = file.WriteString(intro); err != nil {
-		return
-	}
-
-	var body []byte
-	if body, err = yaml.Marshal(c.keydir); err != nil {
-		return
-	}
-	if _, err = file.Write(body); err != nil {
-		return
-	}
-	return
+	return WriteYaml(fpath, intro, dc.keydir)
 }
 
 func (cfg *Config) Load(fpath string) (err error) {
-	var body []byte
-	if body, err = ioutil.ReadFile(fpath); err == nil {
-		if err = yaml.Unmarshal(body, &cfg); err != nil {
-			return
-		}
-	} else {
+	if err = ReadYaml(fpath, &cfg); err != nil {
 		return
 	}
 	return
 }
 
-func (cfg *Config) Save(fpath string) (err error) {
+func (cfg *Config) Save(fpath string) error {
 	const intro = `
 # Server configuration file. First of all you can change
 # "access-key" and "refresh-key" for tokens protection.
 
 `
-
-	var file *os.File
-	if file, err = os.OpenFile(fpath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644); err != nil {
-		return
-	}
-	defer file.Close()
-
-	if _, err = file.WriteString(utf8bom); err != nil {
-		return
-	}
-	if _, err = file.WriteString(intro); err != nil {
-		return
-	}
-
-	var body []byte
-	if body, err = yaml.Marshal(&cfg); err != nil {
-		return
-	}
-	if _, err = file.Write(body); err != nil {
-		return
-	}
-	return
+	return WriteYaml(fpath, intro, &cfg)
 }
 
 func (al *Accounts) Load(fpath string) (err error) {
-	var body []byte
-	if body, err = ioutil.ReadFile(fpath); err == nil {
-		if err = yaml.Unmarshal(body, &al.list); err != nil {
-			return
-		}
-	} else {
+	if err = ReadYaml(fpath, &al.list); err != nil {
 		return
 	}
 
@@ -204,7 +158,7 @@ func (al *Accounts) Load(fpath string) (err error) {
 	return
 }
 
-func (al *Accounts) Save(fpath string) (err error) {
+func (al *Accounts) Save(fpath string) error {
 	const intro = `
 # List of administrators accounts. Each account should be
 # with unique password, and allows to configure access to
@@ -212,28 +166,30 @@ func (al *Accounts) Save(fpath string) (err error) {
 # specified masks.
 
 `
+	return WriteYaml(fpath, intro, al.list)
+}
 
-	var file *os.File
-	if file, err = os.OpenFile(fpath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644); err != nil {
-		return
-	}
-	defer file.Close()
-
-	if _, err = file.WriteString(utf8bom); err != nil {
-		return
-	}
-	if _, err = file.WriteString(intro); err != nil {
+func (uc *UserCache) Load(fpath string) (err error) {
+	if err = ReadYaml(fpath, &uc.list); err != nil {
 		return
 	}
 
-	var body []byte
-	if body, err = yaml.Marshal(al.list); err != nil {
-		return
-	}
-	if _, err = file.Write(body); err != nil {
-		return
+	uc.keyuser = make(map[string]*User, len(uc.list))
+	for _, user := range uc.list {
+		user.ParseUserAgent()
+		var key = UserKey(user.Addr, user.UserAgent)
+		uc.keyuser[key] = user
 	}
 	return
+}
+
+func (uc *UserCache) Save(fpath string) (err error) {
+	const intro = `
+# Log of all clients that had activity on the server.
+# Each client identify by IP-address and user-agent.
+
+`
+	return WriteYaml(fpath, intro, uc.list)
 }
 
 // The End.

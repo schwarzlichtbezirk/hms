@@ -151,7 +151,9 @@ func GetAuth(r *http.Request) (auth *Account, aerr error) {
 // Handler wrapper for API with admin checkup.
 func AuthWrap(fn AuthHandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		userajax <- r
+		go func() {
+			userajax <- r
+		}()
 
 		var err error
 		var auth *Account

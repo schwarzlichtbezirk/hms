@@ -111,10 +111,10 @@ const (
 	EC_usrlstnoreq  = 63
 	EC_usrlstbadreq = 64
 
-	// home
-	EC_homenoreq  = 70
-	EC_homebadreq = 71
-	EC_homenoacc  = 72
+	// ishome
+	EC_ishomenoreq  = 70
+	EC_ishomebadreq = 71
+	EC_ishomenoacc  = 72
 
 	// ctgr
 	EC_ctgrnoreq  = 80
@@ -271,7 +271,7 @@ func RegisterRoutes(gmux *Router) {
 	reg.Path("/signin").HandlerFunc(AjaxWrap(signinApi))
 	reg.Path("/refrsh").HandlerFunc(AjaxWrap(refrshApi))
 	var crd = api.PathPrefix("/card").Subrouter()
-	crd.Path("/home").HandlerFunc(AjaxWrap(homeApi))
+	crd.Path("/ishome").HandlerFunc(AjaxWrap(ishomeApi))
 	crd.Path("/ctgr").HandlerFunc(AjaxWrap(ctgrApi))
 	crd.Path("/folder").HandlerFunc(AjaxWrap(folderApi))
 	crd.Path("/ispath").HandlerFunc(AuthWrap(ispathApi))
@@ -295,7 +295,9 @@ func RegisterRoutes(gmux *Router) {
 // Handler wrapper for AJAX API calls without authorization.
 func AjaxWrap(fn http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		userajax <- r
+		go func() {
+			userajax <- r
+		}()
 		fn(w, r)
 	}
 }

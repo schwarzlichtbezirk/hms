@@ -202,6 +202,7 @@ var extset = map[string]int{
 
 // Categories properties constants.
 const (
+	CP_home   = "[home/Home]"
 	CP_drives = "[drives/Drives list]"
 	CP_shares = "[shares/Shared resources]"
 	CP_media  = "[media/Multimedia files]"
@@ -214,6 +215,7 @@ const (
 
 // Paths list of categories properties.
 var CatPath = []string{
+	CP_home,
 	CP_drives,
 	CP_shares,
 	CP_media,
@@ -225,6 +227,7 @@ var CatPath = []string{
 }
 
 var CidCatPath = map[string]string{
+	"home":   CP_home,
 	"drives": CP_drives,
 	"shares": CP_shares,
 	"media":  CP_media,

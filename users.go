@@ -18,9 +18,11 @@ type User struct {
 	Addr      string     `json:"addr" yaml:"addr"`            // remote address
 	UserAgent string     `json:"useragent" yaml:"user-agent"` // user agent
 	Lang      string     `json:"lang" yaml:"lang"`            // accept language
-	LastPage  int64      `json:"lastpage" yaml:"last-page"`   // last page load UNIX-time in milliseconds
 	LastAjax  int64      `json:"lastajax" yaml:"last-ajax"`   // last ajax-call UNIX-time in milliseconds
-	AID       int        `json:"aid" yaml:"aid"`              // last call account ID
+	LastPage  int64      `json:"lastpage" yaml:"last-page"`   // last page load UNIX-time in milliseconds
+	IsAuth    bool       `json:"isauth" yaml:"is-auth"`       // is user authorized
+	AuthID    int        `json:"authid" yaml:"auth-id"`       // authorized ID
+	AccID     int        `json:"accid" yaml:"acc-id"`         // page account ID
 	Paths     []HistItem `json:"paths" yaml:"paths"`          // list of opened system paths
 	Files     []HistItem `json:"files" yaml:"files"`          // list of served files
 
@@ -28,71 +30,83 @@ type User struct {
 	ua uas.UserAgent
 }
 
-type UserInfo struct {
-	Addr   string        `json:"addr"`
-	UA     uas.UserAgent `json:"ua"`
-	Lang   string        `json:"lang"`
-	Path   string        `json:"path"`
-	File   string        `json:"file"`
-	Online bool          `json:"online"`
+func (user *User) ParseUserAgent() {
+	uas.ParseUserAgent(user.UserAgent, &user.ua)
 }
 
-type userfilepath struct {
-	r    *http.Request
-	puid string
+type UserCache struct {
+	keyuser map[string]*User
+	list    []*User
 }
 
-var usercache = map[string]*User{}
-var userlist = []*User{}
-
-var (
-	userpage = make(chan *http.Request)
-	userajax = make(chan *http.Request)
-	userquit = make(chan int)
-	userpath = make(chan userfilepath)
-	userfile = make(chan userfilepath)
-)
-
-func GetUser(r *http.Request) *User {
-	var addr = StripPort(r.RemoteAddr)
-	var agent = r.UserAgent()
+func UserKey(addr, agent string) string {
 	var h = md5.Sum([]byte(addr + agent))
 	var key = idenc.EncodeToString(h[:])
-	var user, ok = usercache[key]
+	return key
+}
+
+func (uc *UserCache) Get(r *http.Request) *User {
+	var addr = StripPort(r.RemoteAddr)
+	var agent = r.UserAgent()
+	var key = UserKey(addr, agent)
+	var user, ok = uc.keyuser[key]
 	if !ok {
 		user = &User{
 			Addr:      addr,
 			UserAgent: agent,
 		}
-		uas.ParseUserAgent(agent, &user.ua)
+		user.ParseUserAgent()
 		if lang, ok := r.Header["Accept-Language"]; ok && len(lang) > 0 {
 			user.Lang = lang[0]
 		}
-		usercache[key] = user
-		userlist = append(userlist, user)
+		uc.keyuser[key] = user
+		uc.list = append(uc.list, user)
 	}
 	return user
 }
+
+var usercache = UserCache{
+	keyuser: map[string]*User{},
+	list:    []*User{},
+}
+
+type userpuid struct {
+	r    *http.Request
+	puid string
+}
+
+type UsrMsg struct {
+	r   *http.Request
+	msg string
+	val interface{}
+}
+
+var (
+	usermsg  = make(chan UsrMsg)
+	userajax = make(chan *http.Request)
+	userquit = make(chan int)
+)
 
 // Users scanner goroutine. Receives data from any API-calls to update statistics.
 func UserScanner() {
 	for {
 		select {
-		case r := <-userpage:
-			var user = GetUser(r)
-			user.LastPage = UnixJSNow()
+		case um := <-usermsg:
+			var user = usercache.Get(um.r)
+			user.LastAjax = UnixJSNow()
+			switch um.msg {
+			case "page":
+				user.LastPage = user.LastAjax
+				user.AccID = (um.val).(int)
+			case "path":
+				user.Paths = append(user.Paths, HistItem{(um.val).(string), UnixJSNow()})
+			case "file":
+				user.Files = append(user.Files, HistItem{(um.val).(string), UnixJSNow()})
+			}
 
 		case r := <-userajax:
-			var user = GetUser(r)
+			var user = usercache.Get(r)
 			user.LastAjax = UnixJSNow()
-
-		case up := <-userpath:
-			var user = GetUser(up.r)
-			user.Paths = append(user.Paths, HistItem{up.puid, UnixJSNow()})
-
-		case up := <-userfile:
-			var user = GetUser(up.r)
-			user.Files = append(user.Files, HistItem{up.puid, UnixJSNow()})
 
 		case <-userquit:
 			return
@@ -102,15 +116,24 @@ func UserScanner() {
 
 // APIHANDLER
 func usrlstApi(w http.ResponseWriter, r *http.Request) {
+	type item struct { // user info
+		Addr   string        `json:"addr"`
+		UA     uas.UserAgent `json:"ua"`
+		Lang   string        `json:"lang"`
+		Path   string        `json:"path"`
+		File   string        `json:"file"`
+		Online bool          `json:"online"`
+	}
+
 	var err error
 	var arg struct {
 		Pos int `json:"pos"`
 		Num int `json:"num"`
 	}
 	var ret struct {
-		Total  int        `json:"total"`
-		Online int        `json:"online"`
-		List   []UserInfo `json:"list"`
+		Total  int    `json:"total"`
+		Online int    `json:"online"`
+		List   []item `json:"list"`
 	}
 
 	// get arguments
@@ -124,15 +147,15 @@ func usrlstApi(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ret.Total = len(userlist)
+	ret.Total = len(usercache.list)
 	var ot = UnixJSNow() - cfg.OnlineTimeout
 	var n = 0
-	for i, user := range userlist {
+	for i, user := range usercache.list {
 		if user.LastAjax > ot {
 			ret.Online++
 		}
 		if i >= arg.Pos && n < arg.Num {
-			var ui UserInfo
+			var ui item
 			ui.Addr = user.Addr
 			ui.UA = user.ua
 			ui.Lang = user.Lang
