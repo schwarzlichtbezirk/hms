@@ -69,6 +69,72 @@ Vue.component('catitem-tag', {
 	}
 });
 
+const maxpageitem = 5;
+
+Vue.component('pagination-tag', {
+	template: '#pagination-tpl',
+	props: ["num"],
+	data: function () {
+		return {
+			view: maxpageitem,
+			left: 0,
+			sel: 0
+		};
+	},
+	computed: {
+		pagelist() {
+			const lst = [];
+			for (let i = this.left; i < this.left + this.view && i < this.num; i++) {
+				lst.push(i);
+			}
+			return lst;
+		},
+
+		disleft() {
+			return this.left === 0;
+		},
+		disright() {
+			return this.left === (this.num > this.view ? this.num - this.view : 0);
+		},
+		clsleft() {
+			return this.disleft && 'disabled';
+		},
+		clsright() {
+			return this.disright && 'disabled';
+		}
+	},
+	methods: {
+		clsactive(page) {
+			return page === this.sel && 'active';
+		},
+
+		onpage(page) {
+			if (page !== this.sel) {
+				this.sel = page;
+				this.$emit('page', page);
+			}
+		},
+		onleft() {
+			if (this.left <= 0) {
+				this.left = 0;
+			} else if (this.left + this.view > this.num) {
+				this.left = this.num > this.view ? this.num - this.view : 0;
+			} else {
+				this.left--;
+			}
+		},
+		onright() {
+			if (this.left < 0) {
+				this.left = 0;
+			} else if (this.left + this.view > this.num - 2) {
+				this.left = this.num > this.view ? this.num - this.view : 0;
+			} else {
+				this.left++;
+			}
+		}
+	}
+});
+
 Vue.component('user-tag', {
 	template: '#user-tpl',
 	props: ["user"],
@@ -143,7 +209,9 @@ const app = new Vue({
 		cchinf: {},
 		log: [],
 		timemode: 1,
-		usrlst: {}
+		usrlst: {},
+		usrlstpage: 0,
+		usrlstsize: 20
 	},
 	computed: {
 		consolecontent() {
@@ -217,6 +285,10 @@ const app = new Vue({
 			} else {
 				return "N/A";
 			}
+		},
+
+		usrlstnum() {
+			return Math.ceil(this.usrlst.total / this.usrlstsize);
 		}
 	},
 	methods: {
@@ -255,9 +327,12 @@ const app = new Vue({
 		ontime() {
 			this.timemode = 1;
 		},
-
 		ondatetime() {
 			this.timemode = 2;
+		},
+
+		onusrlstpage(page) {
+			this.usrlstpage = page;
 		}
 	},
 	mounted() {
@@ -320,7 +395,7 @@ const app = new Vue({
 				try {
 					while (expanded) {
 						const response = await fetchjson("POST", "/api/stat/usrlst", {
-							pos: 0, num: 20
+							pos: this.usrlstpage * this.usrlstsize, num: this.usrlstsize
 						});
 						if (response.ok) {
 							this.usrlst = await response.json();

@@ -41,6 +41,7 @@ func (user *User) ParseUserAgent() {
 // Map with users with uint64-keys produced as hash of address plus user-agent.
 type UserMap = map[uint64]*User
 
+// Users cache ordered list and map.
 type UserCache struct {
 	keyuser UserMap
 	list    []*User
@@ -152,9 +153,8 @@ func usrlstApi(w http.ResponseWriter, r *http.Request) {
 		Num int `json:"num"`
 	}
 	var ret struct {
-		Total  int    `json:"total"`
-		Online int    `json:"online"`
-		List   []item `json:"list"`
+		Total int    `json:"total"`
+		List  []item `json:"list"`
 	}
 
 	// get arguments
@@ -170,31 +170,25 @@ func usrlstApi(w http.ResponseWriter, r *http.Request) {
 
 	ret.Total = len(usercache.list)
 	var ot = UnixJSNow() - cfg.OnlineTimeout
-	var n = 0
-	for i, user := range usercache.list {
-		if user.LastAjax > ot {
-			ret.Online++
+	for i := arg.Pos; i < arg.Pos+arg.Num && i < len(usercache.list); i++ {
+		var user = usercache.list[i]
+		var ui item
+		ui.Addr = user.Addr
+		ui.UA = user.ua
+		ui.Lang = user.Lang
+		if len(user.Paths) > 0 {
+			var path, _ = pathcache.Path(user.Paths[len(user.Paths)-1].PUID)
+			ui.Path = PathBase(path)
 		}
-		if i >= arg.Pos && n < arg.Num {
-			var ui item
-			ui.Addr = user.Addr
-			ui.UA = user.ua
-			ui.Lang = user.Lang
-			if len(user.Paths) > 0 {
-				var path, _ = pathcache.Path(user.Paths[len(user.Paths)-1].PUID)
-				ui.Path = PathBase(path)
-			}
-			if len(user.Files) > 0 {
-				var path, _ = pathcache.Path(user.Files[len(user.Files)-1].PUID)
-				ui.File = PathBase(path)
-			}
-			ui.Online = user.LastAjax > ot
-			ui.IsAuth = user.IsAuth
-			ui.AuthID = user.AuthID
-			ui.AccID = user.AccID
-			ret.List = append(ret.List, ui)
-			n++
+		if len(user.Files) > 0 {
+			var path, _ = pathcache.Path(user.Files[len(user.Files)-1].PUID)
+			ui.File = PathBase(path)
 		}
+		ui.Online = user.LastAjax > ot
+		ui.IsAuth = user.IsAuth
+		ui.AuthID = user.AuthID
+		ui.AccID = user.AccID
+		ret.List = append(ret.List, ui)
 	}
 
 	WriteOK(w, ret)

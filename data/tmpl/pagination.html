@@ -1,0 +1,19 @@
+
+<nav v-show="num>1" aria-label="page navigation">
+	<ul class="pagination justify-content-center">
+		<li class="page-item" v-bind:class="clsleft" v-bind:disabled="disleft">
+			<button v-on:click="onleft" class="page-link" aria-label="previous">
+				<span aria-hidden="true">&laquo;</span>
+			</button>
+		</li>
+		<template v-for="page in pagelist">
+			<li v-bind:class="clsactive(page)" class="page-item"><button v-on:click="onpage(page)" class="page-link">{{page+1}}</button></li>
+		</template>
+		<li class="page-item" v-bind:class="clsright" v-bind:disabled="disright">
+			<button v-on:click="onright" class="page-link" aria-label="next">
+				<span aria-hidden="true">&raquo;</span>
+			</button>
+		</li>
+	</ul>
+</nav>
+
