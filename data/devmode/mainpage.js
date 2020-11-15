@@ -27,6 +27,14 @@ const skinlist = [
 	}
 ];
 
+let iconmapping = {
+	shared: "",
+	cid: {},
+	drive: {},
+	dir: {},
+	file: {}
+};
+
 // File types
 const FT = {
 	ctgr: -3,
@@ -58,6 +66,34 @@ const FT = {
 	zip: 23,
 	rar: 24
 };
+
+const FTN = [
+	"file", // 0
+	"mp4", // 1
+	"webm", // 2
+	"wave", // 3
+	"flac", // 4
+	"mp3", // 5
+	"ogg", // 6
+	"tga", // 7
+	"bmp", // 8
+	"dds", // 9
+	"tiff", // 10
+	"jpeg", // 11
+	"gif", // 12
+	"png", // 13
+	"webp", // 14
+	"psd", // 15
+	"pdf", // 16
+	"html", // 17
+	"text", // 18
+	"scr", // 19
+	"cfg", // 20
+	"log", // 21
+	"cab", // 22
+	"zip", // 23
+	"rar" // 24
+];
 
 // File groups
 const FG = {
@@ -152,105 +188,53 @@ const shareprefix = "/file/";
 const geticonname = file => {
 	switch (file.type) {
 		case FT.ctgr:
-			switch (file.cid) {
-				case "home": return "home";
-				case "drives": return "drives";
-				case "shares": return "shares";
-				case "media": return "media";
-				case "video": return "video";
-				case "audio": return "music";
-				case "image": return "photo";
-				case "books": return "books";
-				case "texts": return "texts";
-				default: return "folder-close";
-			}
+			return iconmapping.cid[file.cid] || iconmapping.cid.cid;
 		case FT.drive:
 			if (file.latency < 0) {
-				return "drive-off";
+				return iconmapping.drive.offline;
 			} else if (file.latency < DS.yellow) {
-				return "drive";
+				return iconmapping.drive.green;
 			} else if (file.latency < DS.red) {
-				return "drive-yellow";
+				return iconmapping.drive.yellow;
 			} else {
-				return "drive-red";
+				return iconmapping.drive.red;
 			}
 		case FT.dir:
 			const suff = app.shrname.length ? "-pub" : "";
 			if (file.scan) {
 				let fnum = 0;
 				const fg = file.fgrp;
-				for (let n of fg) {
+				for (const n of fg) {
 					fnum += n;
 				}
 				if (!fnum) {
-					return "folder-empty" + suff;
-				} else if (fg[FG.audio] / fnum > 0.5) {
-					return "folder-mp3" + suff;
+					return iconmapping.folder.empty + suff;
+				} else if (fg[FG.other] / fnum > 0.5) {
+					return iconmapping.folder.empty + suff;
 				} else if (fg[FG.video] / fnum > 0.5) {
-					return "folder-movies" + suff;
+					return iconmapping.folder.video + suff;
+				} else if (fg[FG.audio] / fnum > 0.5) {
+					return iconmapping.folder.audio + suff;
 				} else if (fg[FG.image] / fnum > 0.5) {
-					return "folder-photo" + suff;
+					return iconmapping.folder.image + suff;
 				} else if (fg[FG.books] / fnum > 0.5) {
-					return "folder-doc" + suff;
+					return iconmapping.folder.books + suff;
 				} else if (fg[FG.texts] / fnum > 0.5) {
-					return "folder-doc" + suff;
+					return iconmapping.folder.texts + suff;
+				} else if (fg[FG.store] / fnum > 0.5) {
+					return iconmapping.folder.store + suff;
 				} else if (fg[FG.dir] / fnum > 0.5) {
-					return "folder-sub" + suff;
+					return iconmapping.folder.dir + suff;
 				} else if ((fg[FG.audio] + fg[FG.video] + fg[FG.image]) / fnum > 0.5) {
-					return "folder-media" + suff;
+					return iconmapping.folder.media + suff;
 				} else {
-					return "folder-empty" + suff;
+					return iconmapping.folder.empty + suff;
 				}
 			} else {
-				return "folder-close" + suff;
+				return iconmapping.folder.close + suff;
 			}
-		case FT.mp4:
-			return "doc-mp4";
-		case FT.webm:
-			return "doc-movie";
-		case FT.wave:
-			return "doc-wave";
-		case FT.flac:
-			return "doc-flac";
-		case FT.mp3:
-			return "doc-mp3";
-		case FT.ogg:
-			return "doc-music";
-		case FT.tga:
-		case FT.bmp:
-		case FT.dds:
-			return "doc-bitmap";
-		case FT.tiff:
-		case FT.jpeg:
-			return "doc-jpeg";
-		case FT.gif:
-			return "doc-gif";
-		case FT.png:
-			return "doc-png";
-		case FT.webp:
-			return "doc-webp";
-		case FT.psd:
-			return "doc-psd";
-		case FT.pdf:
-			return "doc-pdf";
-		case FT.html:
-			return "doc-html";
-		case FT.text:
-			return "doc-text";
-		case FT.scr:
-			return "doc-script";
-		case FT.cfg:
-			return "doc-config";
-		case FT.log:
-			return "doc-log";
-		case FT.cab:
-			return "doc-cab";
-		case FT.zip:
-			return "doc-zip";
-		case FT.rar:
-			return "doc-rar";
-		default: // File and others
-			return "doc-file";
+		default: // file types
+			return iconmapping.file[FTN[file.type]] || iconmapping.file.file;
 	}
 };
 
@@ -1054,6 +1038,12 @@ const app = new Vue({
 		(async () => {
 			ajaxcc.emit('ajax', +1);
 			try {
+				// load junior icons
+				const response = await fetch("/data/skin/junior.json");
+				if (!response.ok) {
+					throw new HttpError(response.status, { what: "can not load icons mapping file", when: Date.now(), code: 0 });
+				}
+				iconmapping = await response.json();
 				// open route and push history step
 				await this.fetchopenroute(hist);
 				if (this.isadmin && hist.cid !== "share") {

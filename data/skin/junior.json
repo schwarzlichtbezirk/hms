@@ -1,0 +1,61 @@
+{
+	"shared": "shared",
+	"cid": {
+		"home": "cid-home",
+		"drives": "cid-drives",
+		"shares": "cid-shares",
+		"media": "cid-media",
+		"video": "cid-video",
+		"audio": "cid-audio",
+		"image": "cid-image",
+		"books": "cid-books",
+		"texts": "cid-texts",
+		"cid": "folder-close"
+	},
+	"drive": {
+		"green": "drive-green",
+		"yellow": "drive-yellow",
+		"red": "drive-red",
+		"offline": "drive-off"
+	},
+	"folder": {
+		"other": "folder-empty",
+		"video": "folder-video",
+		"audio": "folder-mp3",
+		"image": "folder-photo",
+		"books": "folder-doc",
+		"texts": "folder-doc",
+		"store": "folder-empty",
+		"dir": "folder-dir",
+		"media": "folder-media",
+		"empty": "folder-empty",
+		"close": "folder-close"
+	},
+	"file": {
+		"file": "doc-file",
+		"mp4": "doc-mp4",
+		"webm": "doc-movie",
+		"wave": "doc-wave",
+		"flac": "doc-flac",
+		"mp3": "doc-mp3",
+		"ogg": "doc-music",
+		"tga": "doc-bitmap",
+		"bmp": "doc-bitmap",
+		"dds": "doc-bitmap",
+		"tiff": "doc-tiff",
+		"jpeg": "doc-jpeg",
+		"gif": "doc-gif",
+		"png": "doc-png",
+		"webp": "doc-webp",
+		"psd": "doc-psd",
+		"pdf": "doc-pdf",
+		"html": "doc-html",
+		"text": "doc-text",
+		"scr": "doc-script",
+		"cfg": "doc-config",
+		"log": "doc-log",
+		"cab": "doc-cab",
+		"zip": "doc-zip",
+		"rar": "doc-rar"
+	}
+}

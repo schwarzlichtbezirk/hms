@@ -282,6 +282,9 @@ Vue.component('file-icon-tag', {
 		pngicon() {
 			return filetmbpng(this.file);
 		},
+		sharedicon() {
+			return iconmapping.shared;
+		},
 
 		clsoverlay() {
 			switch (this.size) {
@@ -334,6 +337,9 @@ Vue.component('img-icon-tag', {
 		},
 		pngicon() {
 			return filetmbpng(this.file);
+		},
+		sharedicon() {
+			return iconmapping.shared;
 		},
 
 		// manage items classes
