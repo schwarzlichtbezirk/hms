@@ -2,10 +2,11 @@
 
 const filetmbwebp = file => file.ntmb === 1
 	? ''
-	: `/asst/file-webp/${geticonname(file)}.webp`;
+	: geticonname(file) + '.webp';
 const filetmbpng = file => file.ntmb === 1
 	? `/id${app.aid}/thumb/${file.puid}`
-	: `/asst/file-png/${geticonname(file)}.png`;
+	: geticonname(file) + '.png';
+const docfileicon = () => iconmapping.file.file;
 
 const makemarkercontent = file => `
 <div class="photoinfo">
@@ -18,7 +19,7 @@ const makemarkercontent = file => `
 			<picture>
 				<source srcset="${filetmbwebp(file)}" class="rounded thumb" type="image/webp">
 				<source srcset="${filetmbpng(file)}" class="rounded thumb" type="image/png">
-				<img src="/asst/file-png/doc-file.png" class="rounded thumb" alt="${file.name}">
+				<img src="${docfileicon}.png" class="rounded thumb" alt="${file.name}">
 			</picture>
 			<div class="d-flex flex-wrap latlng">
 				<div><div class="name">lat:</div> <div class="value">${file.latitude.toFixed(6)}</div></div>
@@ -282,6 +283,9 @@ Vue.component('file-icon-tag', {
 		pngicon() {
 			return filetmbpng(this.file);
 		},
+		docfileicon() {
+			return iconmapping.file.file;
+		},
 		sharedicon() {
 			return iconmapping.shared;
 		},
@@ -337,6 +341,9 @@ Vue.component('img-icon-tag', {
 		},
 		pngicon() {
 			return filetmbpng(this.file);
+		},
+		docfileicon() {
+			return iconmapping.file.file;
 		},
 		sharedicon() {
 			return iconmapping.shared;
