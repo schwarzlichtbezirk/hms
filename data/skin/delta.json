@@ -1,0 +1,75 @@
+
+{
+	"shared": "/data/assets/delta/shared",
+	"cid": {
+		"home": "/data/assets/delta/cid-home",
+		"drives": "/data/assets/delta/cid-drives",
+		"shares": "/data/assets/delta/cid-shares",
+		"media": "/data/assets/delta/cid-media",
+		"video": "/data/assets/delta/cid-video",
+		"audio": "/data/assets/delta/cid-audio",
+		"image": "/data/assets/delta/cid-image",
+		"books": "/data/assets/delta/cid-books",
+		"texts": "/data/assets/delta/cid-texts",
+		"cid": "/data/assets/delta/folder-close"
+	},
+	"drive": {
+		"green": "/data/assets/delta/drive-green",
+		"yellow": "/data/assets/delta/drive-yellow",
+		"red": "/data/assets/delta/drive-red",
+		"offline": "/data/assets/delta/drive-off"
+	},
+	"folder": {
+		"other": "/data/assets/delta/folder-briefcase",
+		"video": "/data/assets/delta/folder-video",
+		"audio": "/data/assets/delta/folder-music",
+		"image": "/data/assets/delta/folder-image",
+		"books": "/data/assets/delta/folder-briefcase",
+		"texts": "/data/assets/delta/folder-briefcase",
+		"store": "/data/assets/delta/folder-briefcase",
+		"dir": "/data/assets/delta/folder-open",
+		"media": "/data/assets/delta/folder-doc",
+		"open": "/data/assets/delta/folder-open",
+		"close": "/data/assets/delta/folder-close"
+	},
+	"folderpub": {
+		"other": "/data/assets/delta/folder-briefcase-pub",
+		"video": "/data/assets/delta/folder-video-pub",
+		"audio": "/data/assets/delta/folder-music-pub",
+		"image": "/data/assets/delta/folder-image-pub",
+		"books": "/data/assets/delta/folder-briefcase-pub",
+		"texts": "/data/assets/delta/folder-briefcase-pub",
+		"store": "/data/assets/delta/folder-briefcase-pub",
+		"dir": "/data/assets/delta/folder-open-pub",
+		"media": "/data/assets/delta/folder-doc-pub",
+		"open": "/data/assets/delta/folder-open-pub",
+		"close": "/data/assets/delta/folder-close-pub"
+	},
+	"file": {
+		"file": "/data/assets/delta/doc-file",
+		"mp4": "/data/assets/delta/doc-mp4",
+		"webm": "/data/assets/delta/doc-webm",
+		"wave": "/data/assets/delta/doc-wave",
+		"flac": "/data/assets/delta/doc-flac",
+		"mp3": "/data/assets/delta/doc-mp3",
+		"ogg": "/data/assets/delta/doc-ogg",
+		"tga": "/data/assets/delta/doc-tga",
+		"bmp": "/data/assets/delta/doc-bmp",
+		"dds": "/data/assets/delta/doc-dds",
+		"tiff": "/data/assets/delta/doc-tiff",
+		"jpeg": "/data/assets/delta/doc-jpeg",
+		"gif": "/data/assets/delta/doc-gif",
+		"png": "/data/assets/delta/doc-png",
+		"webp": "/data/assets/delta/doc-webp",
+		"psd": "/data/assets/delta/doc-psd",
+		"pdf": "/data/assets/delta/doc-pdf",
+		"html": "/data/assets/delta/doc-html",
+		"text": "/data/assets/delta/doc-script",
+		"scr": "/data/assets/delta/doc-script",
+		"cfg": "/data/assets/delta/doc-ini",
+		"log": "/data/assets/delta/doc-script",
+		"cab": "/data/assets/delta/doc-cab",
+		"zip": "/data/assets/delta/doc-zip",
+		"rar": "/data/assets/delta/doc-rar"
+	}
+}

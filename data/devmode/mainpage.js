@@ -208,9 +208,9 @@ const geticonpath = (file, im) => {
 					fnum += n;
 				}
 				if (!fnum) {
-					return folder.empty;
+					return folder.open;
 				} else if (fg[FG.other] / fnum > 0.5) {
-					return folder.empty;
+					return folder.other;
 				} else if (fg[FG.video] / fnum > 0.5) {
 					return folder.video;
 				} else if (fg[FG.audio] / fnum > 0.5) {
@@ -228,7 +228,7 @@ const geticonpath = (file, im) => {
 				} else if ((fg[FG.audio] + fg[FG.video] + fg[FG.image]) / fnum > 0.5) {
 					return folder.media;
 				} else {
-					return folder.empty;
+					return folder.open;
 				}
 			} else {
 				return folder.close;
@@ -1039,7 +1039,7 @@ const app = new Vue({
 			ajaxcc.emit('ajax', +1);
 			try {
 				// load junior icons
-				const response = await fetch("/data/skin/junior.json");
+				const response = await fetch("/data/skin/delta.json");
 				if (!response.ok) {
 					throw new HttpError(response.status, { what: "can not load icons mapping file", when: Date.now(), code: 0 });
 				}

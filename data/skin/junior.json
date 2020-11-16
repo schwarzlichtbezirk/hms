@@ -20,29 +20,29 @@
 		"offline": "/data/assets/junior/drive-off"
 	},
 	"folder": {
-		"other": "/data/assets/junior/folder-empty",
+		"other": "/data/assets/junior/folder-open",
 		"video": "/data/assets/junior/folder-video",
 		"audio": "/data/assets/junior/folder-mp3",
 		"image": "/data/assets/junior/folder-photo",
 		"books": "/data/assets/junior/folder-doc",
 		"texts": "/data/assets/junior/folder-doc",
-		"store": "/data/assets/junior/folder-empty",
+		"store": "/data/assets/junior/folder-open",
 		"dir": "/data/assets/junior/folder-dir",
 		"media": "/data/assets/junior/folder-media",
-		"empty": "/data/assets/junior/folder-empty",
+		"open": "/data/assets/junior/folder-open",
 		"close": "/data/assets/junior/folder-close"
 	},
 	"folderpub": {
-		"other": "/data/assets/junior/folder-empty-pub",
+		"other": "/data/assets/junior/folder-open-pub",
 		"video": "/data/assets/junior/folder-video-pub",
 		"audio": "/data/assets/junior/folder-mp3-pub",
 		"image": "/data/assets/junior/folder-photo-pub",
 		"books": "/data/assets/junior/folder-doc-pub",
 		"texts": "/data/assets/junior/folder-doc-pub",
-		"store": "/data/assets/junior/folder-empty-pub",
+		"store": "/data/assets/junior/folder-open-pub",
 		"dir": "/data/assets/junior/folder-dir-pub",
 		"media": "/data/assets/junior/folder-media-pub",
-		"empty": "/data/assets/junior/folder-empty-pub",
+		"open": "/data/assets/junior/folder-open-pub",
 		"close": "/data/assets/junior/folder-close-pub"
 	},
 	"file": {
