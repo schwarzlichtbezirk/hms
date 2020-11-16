@@ -1,0 +1,38 @@
+{
+	"skinlist": [
+		{
+			"name": "daylight",
+			"link": "/data/skin/daylight.css"
+		},
+		{
+			"name": "blue",
+			"link": "/data/skin/blue.css"
+		},
+		{
+			"name": "neon",
+			"link": "/data/skin/neon.css"
+		},
+		{
+			"name": "cup of coffee",
+			"link": "/data/skin/cup-of-coffee.css"
+		},
+		{
+			"name": "coffee beans",
+			"link": "/data/skin/coffee-beans.css"
+		},
+		{
+			"name": "old monitor",
+			"link": "/data/skin/old-monitor.css"
+		}
+	],
+	"iconlist": [
+		{
+			"name": "junior icons",
+			"link": "/data/skin/junior.json"
+		},
+		{
+			"name": "delta icons",
+			"link": "/data/skin/delta.json"
+		}
+	]
+}

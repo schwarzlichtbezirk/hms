@@ -40,6 +40,11 @@ a, .btn-link {
 		color: rgba(255, 255, 255, 0.5);
 	}
 
+	.bg-tool .dropdown-header {
+		color: rgba(80, 255, 80, 0.3);
+		background-color: rgba(0, 48, 0, 0.15);
+	}
+
 	.bg-tool button,
 	.bg-tool input {
 		color: rgba(255, 255, 255, 0.5);

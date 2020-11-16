@@ -39,10 +39,13 @@
 							<button class="btn toolbtn dropdown-toggle" data-toggle="dropdown" title="choose skin"><i class="material-icons">color_lens</i></button>
 							<div class="dropdown-menu bg-tool dropdown-menu-right">
 								<h6 class="dropdown-header">Skins:</h6>
-								<template v-for="item in skinlist">
+								<template v-for="item in resmodel.skinlist">
 									<button class="dropdown-item" v-on:click="setskin(item.link)" v-bind:class="{active:skinlink===item.link}">{{item.name}}</button>
 								</template>
 								<h6 class="dropdown-header">Icons:</h6>
+								<template v-for="item in resmodel.iconlist">
+									<button class="dropdown-item" v-on:click="seticon(item.link)" v-bind:class="{active:iconlink===item.link}">{{item.name}}</button>
+								</template>
 							</div>
 						</li>
 					</ul>

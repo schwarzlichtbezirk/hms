@@ -1,32 +1,5 @@
 ﻿"use strict";
 
-const skinlist = [
-	{
-		name: "daylight",
-		link: "/data/skin/daylight.css"
-	},
-	{
-		name: "blue",
-		link: "/data/skin/blue.css"
-	},
-	{
-		name: "neon",
-		link: "/data/skin/neon.css"
-	},
-	{
-		name: "cup of coffee",
-		link: "/data/skin/cup-of-coffee.css"
-	},
-	{
-		name: "coffee beans",
-		link: "/data/skin/coffee-beans.css"
-	},
-	{
-		name: "old monitor",
-		link: "/data/skin/old-monitor.css"
-	}
-];
-
 let iconmapping = imempty;
 let thumbmode = true;
 
@@ -418,7 +391,8 @@ const app = new Vue({
 	template: '#app-tpl',
 	data: {
 		skinlink: "", // URL of skin CSS
-		skinlist: skinlist,
+		iconlink: "", // URL of icons mapping json
+		resmodel: { skinlist: [], iconlist: [] },
 		showauth: false, // display authorization form
 		isauth: false, // is authorized
 		authid: 0, // authorized ID
@@ -591,6 +565,16 @@ const app = new Vue({
 		}
 	},
 	methods: {
+		async fetchicons(iconlink) {
+			const response = await fetch(iconlink);
+			if (!response.ok) {
+				throw new HttpError(response.status, { what: "can not load icons mapping file", when: Date.now(), code: 0 });
+			}
+			iconmapping = await response.json();
+			this.iconlink = iconlink;
+			iconev.emit('plug');
+		},
+
 		async fetchishome() {
 			const response = await fetchajaxauth("POST", "/api/card/ishome", {
 				aid: this.aid
@@ -824,6 +808,20 @@ const app = new Vue({
 			sessionStorage.setItem('skinlink', skinlink);
 		},
 
+		seticon(iconlink) {
+			(async () => {
+				ajaxcc.emit('ajax', +1);
+				try {
+					await this.fetchicons(iconlink);
+					sessionStorage.setItem('iconlink', iconlink);
+				} catch (e) {
+					ajaxfail(e);
+				} finally {
+					ajaxcc.emit('ajax', -1);
+				}
+			})();
+		},
+
 		seturl() {
 			const url = (() => {
 				if (this.curcid) {
@@ -976,9 +974,6 @@ const app = new Vue({
 		}
 	},
 	mounted() {
-		this.skinlink = sessionStorage.getItem('skinlink') || "/data/skin/neon.css";
-		$("#skinlink").attr("href", this.skinlink);
-
 		auth.on('auth', is => {
 			this.isauth = is;
 			if (is) {
@@ -1038,12 +1033,6 @@ const app = new Vue({
 		(async () => {
 			ajaxcc.emit('ajax', +1);
 			try {
-				// load junior icons
-				const response = await fetch("/data/skin/delta.json");
-				if (!response.ok) {
-					throw new HttpError(response.status, { what: "can not load icons mapping file", when: Date.now(), code: 0 });
-				}
-				iconmapping = await response.json();
 				// open route and push history step
 				await this.fetchopenroute(hist);
 				if (this.isadmin && hist.cid !== "share") {
@@ -1053,6 +1042,28 @@ const app = new Vue({
 					await this.fetchishome();
 				}
 				this.pushhist(hist);
+			} catch (e) {
+				ajaxfail(e);
+			} finally {
+				ajaxcc.emit('ajax', -1);
+			}
+		})();
+
+		// load resources
+		(async () => {
+			ajaxcc.emit('ajax', +1);
+			try {
+				this.skinlink = sessionStorage.getItem('skinlink') || "/data/skin/neon.css";
+				$("#skinlink").attr("href", this.skinlink);
+
+				const iconlink = sessionStorage.getItem('iconlink') || "/data/skin/junior.json";
+				await this.fetchicons(iconlink);
+
+				const response = await fetch("/data/skin/resmodel.json");
+				if (!response.ok) {
+					throw new HttpError(response.status, { what: "can not load resources model file", when: Date.now(), code: 0 });
+				}
+				this.resmodel = await response.json();
 			} catch (e) {
 				ajaxfail(e);
 			} finally {

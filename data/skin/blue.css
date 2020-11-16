@@ -21,6 +21,11 @@ body {
 		color: rgba(255, 255, 255, 0.5);
 	}
 
+	.bg-tool .dropdown-header {
+		color: rgba(255, 255, 255, 0.3);
+		background-color: rgba(41, 57, 85, 0.15);
+	}
+
 	.bg-tool button,
 	.bg-tool input {
 		color: rgba(255, 255, 255, 0.5);
