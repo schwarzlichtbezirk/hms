@@ -12,6 +12,7 @@
 			<li><button class="btn cardbtn" v-on:click="onorder" v-bind:title="hintorder"><i class="material-icons">{{clsorder}}</i></button></li>
 			<li><button class="btn cardbtn" v-on:click="onsortmode" v-bind:title="hintsortmode"><i class="material-icons">{{clssortmode}}</i></button></li>
 			<li><button class="btn cardbtn" v-on:click="onlistmode" v-bind:title="hintlist"><i class="material-icons">{{clslistmode}}</i></button></li>
+			<li><button class="btn cardbtn" v-bind:class="clsthumbmode" v-on:click="onthumbmode" title="thumbnails mode"><i class="material-icons">burst_mode</i></button></li>
 		</ul>
 		<ul class="navbar-nav flex-row ml-auto">
 			<li><button class="btn cardbtn" v-show="showvideo" v-bind:class="clsaudioonly" v-on:click="onaudioonly" title="play audio only"><i class="material-icons">headset</i></button></li>

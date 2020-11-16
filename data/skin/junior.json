@@ -1,3 +1,4 @@
+
 {
 	"shared": "/data/assets/junior/shared",
 	"cid": {
@@ -30,6 +31,19 @@
 		"media": "/data/assets/junior/folder-media",
 		"empty": "/data/assets/junior/folder-empty",
 		"close": "/data/assets/junior/folder-close"
+	},
+	"folderpub": {
+		"other": "/data/assets/junior/folder-empty-pub",
+		"video": "/data/assets/junior/folder-video-pub",
+		"audio": "/data/assets/junior/folder-mp3-pub",
+		"image": "/data/assets/junior/folder-photo-pub",
+		"books": "/data/assets/junior/folder-doc-pub",
+		"texts": "/data/assets/junior/folder-doc-pub",
+		"store": "/data/assets/junior/folder-empty-pub",
+		"dir": "/data/assets/junior/folder-dir-pub",
+		"media": "/data/assets/junior/folder-media-pub",
+		"empty": "/data/assets/junior/folder-empty-pub",
+		"close": "/data/assets/junior/folder-close-pub"
 	},
 	"file": {
 		"file": "/data/assets/junior/doc-file",

@@ -27,13 +27,11 @@ const skinlist = [
 	}
 ];
 
-let iconmapping = {
-	shared: "",
-	cid: {},
-	drive: {},
-	dir: {},
-	file: {}
-};
+let iconmapping = imempty;
+let thumbmode = true;
+
+// icon mapping event model
+const iconev = extend({}, makeeventmodel());
 
 // File types
 const FT = {
@@ -185,22 +183,24 @@ const DS = {
 
 const shareprefix = "/file/";
 
-const geticonname = file => {
+const geticonpath = (file, im) => {
 	switch (file.type) {
 		case FT.ctgr:
-			return iconmapping.cid[file.cid] || iconmapping.cid.cid;
+			return im.cid[file.cid] || im.cid.cid;
 		case FT.drive:
 			if (file.latency < 0) {
-				return iconmapping.drive.offline;
+				return im.drive.offline;
 			} else if (file.latency < DS.yellow) {
-				return iconmapping.drive.green;
+				return im.drive.green;
 			} else if (file.latency < DS.red) {
-				return iconmapping.drive.yellow;
+				return im.drive.yellow;
 			} else {
-				return iconmapping.drive.red;
+				return im.drive.red;
 			}
 		case FT.dir:
-			const suff = app.shrname.length ? "-pub" : "";
+			const folder = app.shrname.length
+				? im.folderpub
+				: im.folder;
 			if (file.scan) {
 				let fnum = 0;
 				const fg = file.fgrp;
@@ -208,33 +208,33 @@ const geticonname = file => {
 					fnum += n;
 				}
 				if (!fnum) {
-					return iconmapping.folder.empty + suff;
+					return folder.empty;
 				} else if (fg[FG.other] / fnum > 0.5) {
-					return iconmapping.folder.empty + suff;
+					return folder.empty;
 				} else if (fg[FG.video] / fnum > 0.5) {
-					return iconmapping.folder.video + suff;
+					return folder.video;
 				} else if (fg[FG.audio] / fnum > 0.5) {
-					return iconmapping.folder.audio + suff;
+					return folder.audio;
 				} else if (fg[FG.image] / fnum > 0.5) {
-					return iconmapping.folder.image + suff;
+					return folder.image;
 				} else if (fg[FG.books] / fnum > 0.5) {
-					return iconmapping.folder.books + suff;
+					return folder.books;
 				} else if (fg[FG.texts] / fnum > 0.5) {
-					return iconmapping.folder.texts + suff;
+					return folder.texts;
 				} else if (fg[FG.store] / fnum > 0.5) {
-					return iconmapping.folder.store + suff;
+					return folder.store;
 				} else if (fg[FG.dir] / fnum > 0.5) {
-					return iconmapping.folder.dir + suff;
+					return folder.dir;
 				} else if ((fg[FG.audio] + fg[FG.video] + fg[FG.image]) / fnum > 0.5) {
-					return iconmapping.folder.media + suff;
+					return folder.media;
 				} else {
-					return iconmapping.folder.empty + suff;
+					return folder.empty;
 				}
 			} else {
-				return iconmapping.folder.close + suff;
+				return folder.close;
 			}
 		default: // file types
-			return iconmapping.file[FTN[file.type]] || iconmapping.file.file;
+			return im.file[FTN[file.type]] || im.file.file;
 	}
 };
 

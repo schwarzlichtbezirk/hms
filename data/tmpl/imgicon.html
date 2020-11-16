@@ -3,12 +3,12 @@
 	<picture class="pict">
 		<source v-bind:srcset="webpicon" type="image/webp">
 		<source v-bind:srcset="pngicon" type="image/png">
-		<img v-bind:src="docfileicon+'.png'" v-bind:alt="file.name">
+		<img v-bind:src="im.file.file+'.png'" v-bind:alt="file.name">
 	</picture>
 	<picture v-if="file.pref" class="pref">
-		<source v-bind:srcset="sharedicon+'.webp'" type="image/webp">
-		<source v-bind:srcset="sharedicon+'.png'" type="image/png">
-		<img v-bind:src="sharedicon+'.png'" alt="shared">
+		<source v-bind:srcset="im.shared+'.webp'" type="image/webp">
+		<source v-bind:srcset="im.shared+'.png'" type="image/png">
+		<img v-bind:src="im.shared+'.png'" alt="shared">
 	</picture>
 	<img v-if="state.playback" class="bars" src="/asst/equalizer-bars.gif" alt="shared">
 	<div class="tag">{{file.name}}</div>

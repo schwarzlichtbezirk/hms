@@ -275,6 +275,7 @@ Vue.component('file-card-tag', {
 			sortorder: 1,
 			sortmode: sortmode.byalpha,
 			listmode: "smicon",
+			thumbmode: true,
 			audio: true, video: true, image: true, books: true, texts: true, other: false,
 			audioonly: false,
 			viewer: null, // file viewers
@@ -375,6 +376,9 @@ Vue.component('file-card-tag', {
 				|| FTtoFG[file.type] === FG.other);
 		},
 
+		clsthumbmode() {
+			return { active: this.thumbmode };
+		},
 		clsaudioonly() {
 			return { active: this.audioonly };
 		},
@@ -489,6 +493,10 @@ Vue.component('file-card-tag', {
 		},
 		onlistmode() {
 			this.listmode = listmodenext[this.listmode];
+		},
+		onthumbmode() {
+			thumbmode = this.thumbmode = !this.thumbmode;
+			iconev.emit('thumb');
 		},
 
 		onaudioonly() {
@@ -634,7 +642,7 @@ Vue.component('map-card-tag', {
 				};
 				if (this.markermode === 'thumb' && file.puid) {
 					opt.icon = L.divIcon({
-						html: `<img src="${filetmbpng(file)}">`,
+						html: `<img src="${filetmbpng(file, iconmapping)}">`,
 						className: "photomarker",
 						iconSize: [size, size],
 						iconAnchor: [size / 2, size / 2],
