@@ -31,12 +31,16 @@
 			"link": "/data/skin/junior.json"
 		},
 		{
+			"name": "delta icons",
+			"link": "/data/skin/delta.json"
+		},
+		{
 			"name": "ubuntu icons",
 			"link": "/data/skin/ubuntu.json"
 		},
 		{
-			"name": "delta icons",
-			"link": "/data/skin/delta.json"
+			"name": "whistlepuff icons",
+			"link": "/data/skin/whistlepuff.json"
 		}
 	]
 }
