@@ -31,6 +31,10 @@
 			"link": "/data/skin/junior.json"
 		},
 		{
+			"name": "ubuntu icons",
+			"link": "/data/skin/ubuntu.json"
+		},
+		{
 			"name": "delta icons",
 			"link": "/data/skin/delta.json"
 		}
