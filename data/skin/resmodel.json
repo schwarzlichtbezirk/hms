@@ -28,19 +28,28 @@
 	"iconlist": [
 		{
 			"name": "junior icons",
-			"link": "/data/skin/junior.json"
+			"link": "/data/skin/junior.json",
+			"source": "https://iconarchive.com/show/junior-icons-by-treetog.html"
 		},
 		{
 			"name": "delta icons",
-			"link": "/data/skin/delta.json"
+			"link": "/data/skin/delta.json",
+			"source": "https://iconarchive.com/show/delta-icons-by-aroche.html"
 		},
 		{
 			"name": "ubuntu icons",
-			"link": "/data/skin/ubuntu.json"
+			"link": "/data/skin/ubuntu.json",
+			"source": "https://iconarchive.com/show/fs-icons-by-franksouza183.html"
+		},
+		{
+			"name": "chakram 2 icons",
+			"link": "/data/skin/chakram.json",
+			"source": "https://iconarchive.com/show/chakram-2-icons-by-apathae.html"
 		},
 		{
 			"name": "whistlepuff icons",
-			"link": "/data/skin/whistlepuff.json"
+			"link": "/data/skin/whistlepuff.json",
+			"source": "https://iconarchive.com/show/whistlepuff-icons-by-firstfear.html"
 		}
 	]
 }
