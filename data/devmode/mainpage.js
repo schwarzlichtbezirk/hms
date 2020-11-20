@@ -1059,7 +1059,7 @@ const app = new Vue({
 				const iconlink = sessionStorage.getItem('iconlink') || "/data/skin/junior.json";
 				await this.fetchicons(iconlink);
 
-				const response = await fetch("/data/skin/resmodel.json");
+				const response = await fetch("/data/assets/resmodel.json");
 				if (!response.ok) {
 					throw new HttpError(response.status, { what: "can not load resources model file", when: Date.now(), code: 0 });
 				}
