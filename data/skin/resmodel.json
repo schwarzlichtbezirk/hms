@@ -32,6 +32,11 @@
 			"source": "https://iconarchive.com/show/junior-icons-by-treetog.html"
 		},
 		{
+			"name": "oxygen icons",
+			"link": "/data/icon/oxygen.json",
+			"source": "https://iconarchive.com/show/oxygen-icons-by-oxygen-icons.org.html"
+		},
+		{
 			"name": "delta icons",
 			"link": "/data/skin/delta.json",
 			"source": "https://iconarchive.com/show/delta-icons-by-aroche.html"
