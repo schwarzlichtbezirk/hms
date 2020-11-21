@@ -45,7 +45,7 @@
 		"close": "/data/icon/delta/folder-close-pub"
 	},
 	"file": {
-		"file": "/data/icon/delta/file-file",
+		"file": "/data/icon/delta/file-blank",
 		"mp4": "/data/icon/delta/file-mp4",
 		"webm": "/data/icon/delta/file-webm",
 		"wave": "/data/icon/delta/file-wave",

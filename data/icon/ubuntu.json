@@ -45,7 +45,7 @@
 		"close": "/data/icon/ubuntu/folder-close-pub"
 	},
 	"file": {
-		"file": "/data/icon/ubuntu/file-file",
+		"file": "/data/icon/ubuntu/file-blank",
 		"mp4": "/data/icon/ubuntu/file-video",
 		"webm": "/data/icon/ubuntu/file-video",
 		"wave": "/data/icon/ubuntu/file-audio",
