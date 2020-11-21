@@ -49,6 +49,8 @@ type CfgServ struct {
 }
 
 type CfgSpec struct {
+	// Name of wpk-file with program resources.
+	WPKName string `json:"wpk-name" yaml:"wpk-name"`
 	// Memory mapping technology for WPK, or load into one solid byte slice otherwise.
 	WPKmmap bool `json:"wpk-mmap" yaml:"wpk-mmap"`
 	// Maximum timeout in milliseconds between two ajax-calls to think client is online.
@@ -97,6 +99,7 @@ var cfg = Config{ // inits default values:
 		MaxHeaderBytes:    1 << 20,
 	},
 	CfgSpec: CfgSpec{
+		WPKName:          "hms.wpk",
 		WPKmmap:          false,
 		OnlineTimeout:    3 * 60 * 1000,
 		DefAccID:         1,
@@ -240,7 +243,7 @@ func Init() {
 		datapack = pack.Package
 		packager = &pack
 	}
-	if err = packager.OpenWPK(destpath + "hms.wpk"); err != nil {
+	if err = packager.OpenWPK(destpath + cfg.WPKName); err != nil {
 		Log.Fatal("can not load wpk-package: " + err.Error())
 	}
 	Log.Printf("cached %d package files to %d aliases on %d bytes", datapack.RecNumber, datapack.TagNumber, datapack.TagOffset)

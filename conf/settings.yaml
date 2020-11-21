@@ -37,6 +37,8 @@ webserver: # See https://golang.org/pkg/net/http/#Server for details.
     # the request header's keys and values, including the request line, in bytes.
     max-header-bytes: 1048576 # 1M
 specification:
+    # Name of wpk-file with program resources.
+    wpk-name: hms.wpk
     # On 'true' use memory mapping technology for access to wpk-package nested files.
     # On 'false' use wpk-package loaded into one solid byte slice.
     wpk-mmap: false

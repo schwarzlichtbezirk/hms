@@ -390,8 +390,8 @@ const app = new Vue({
 	el: '#app',
 	template: '#app-tpl',
 	data: {
-		skinlink: "", // URL of skin CSS
-		iconlink: "", // URL of icons mapping json
+		skinid: "", // ID of skin CSS
+		iconid: "", // ID of icons mapping json
 		resmodel: { skinlist: [], iconlist: [] },
 		showauth: false, // display authorization form
 		isauth: false, // is authorized
@@ -565,13 +565,12 @@ const app = new Vue({
 		}
 	},
 	methods: {
-		async fetchicons(iconlink) {
-			const response = await fetch(iconlink);
+		async fetchicons(link) {
+			const response = await fetch(link);
 			if (!response.ok) {
 				throw new HttpError(response.status, { what: "can not load icons mapping file", when: Date.now(), code: 0 });
 			}
 			iconmapping = await response.json();
-			this.iconlink = iconlink;
 			iconev.emit('plug');
 		},
 
@@ -802,18 +801,27 @@ const app = new Vue({
 			return false;
 		},
 
-		setskin(skinlink) {
-			this.skinlink = skinlink;
-			$("#skinlink").attr("href", skinlink);
-			sessionStorage.setItem('skinlink', skinlink);
+		setskin(skinid) {
+			for (const v of this.resmodel.skinlist) {
+				if (v.id === skinid) {
+					$("#skinmodel").attr("href", v.link);
+					sessionStorage.setItem('skinid', skinid);
+					this.skinid = skinid;
+				}
+			}
 		},
 
-		seticon(iconlink) {
+		seticon(iconid) {
 			(async () => {
 				ajaxcc.emit('ajax', +1);
 				try {
-					await this.fetchicons(iconlink);
-					sessionStorage.setItem('iconlink', iconlink);
+					for (const v of this.resmodel.iconlist) {
+						if (v.id === iconid) {
+							await this.fetchicons(v.link);
+							sessionStorage.setItem('iconid', iconid);
+							this.iconid = iconid;
+						}
+					}
 				} catch (e) {
 					ajaxfail(e);
 				} finally {
@@ -1053,17 +1061,28 @@ const app = new Vue({
 		(async () => {
 			ajaxcc.emit('ajax', +1);
 			try {
-				this.skinlink = sessionStorage.getItem('skinlink') || "/data/skin/neon.css";
-				$("#skinlink").attr("href", this.skinlink);
-
-				const iconlink = sessionStorage.getItem('iconlink') || "/data/skin/junior.json";
-				await this.fetchicons(iconlink);
-
+				// load model at first to give an opportunity switch to another skin/iconset on failure
 				const response = await fetch("/data/assets/resmodel.json");
 				if (!response.ok) {
 					throw new HttpError(response.status, { what: "can not load resources model file", when: Date.now(), code: 0 });
 				}
 				this.resmodel = await response.json();
+
+				const skinid = sessionStorage.getItem('skinid') || this.resmodel.defskinid;
+				for (const v of this.resmodel.skinlist) {
+					if (v.id === skinid) {
+						$("#skinmodel").attr("href", v.link);
+						this.skinid = skinid;
+					}
+				}
+
+				const iconid = sessionStorage.getItem('iconid') || this.resmodel.deficonid;
+				for (const v of this.resmodel.iconlist) {
+					if (v.id === iconid) {
+						await this.fetchicons(v.link);
+						this.iconid = iconid;
+					}
+				}
 			} catch (e) {
 				ajaxfail(e);
 			} finally {

@@ -40,11 +40,11 @@
 							<div class="dropdown-menu bg-tool dropdown-menu-right">
 								<h6 class="dropdown-header">Skins:</h6>
 								<template v-for="item in resmodel.skinlist">
-									<button class="dropdown-item" v-on:click="setskin(item.link)" v-bind:class="{active:skinlink===item.link}">{{item.name}}</button>
+									<button class="dropdown-item" v-on:click="setskin(item.id)" v-bind:class="{active:skinid===item.id}">{{item.name}}</button>
 								</template>
 								<h6 class="dropdown-header">Icons:</h6>
 								<template v-for="item in resmodel.iconlist">
-									<button class="dropdown-item" v-on:click="seticon(item.link)" v-bind:class="{active:iconlink===item.link}">{{item.name}}</button>
+									<button class="dropdown-item" v-on:click="seticon(item.id)" v-bind:class="{active:iconid===item.id}">{{item.name}}</button>
 								</template>
 							</div>
 						</li>
