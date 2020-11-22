@@ -10,11 +10,11 @@ local fullskinmap = {
 }
 -- full list of skins identifiers
 local fullskinset = {
-	"daylight", "blue", "neon", "cup-of-coffee", "coffee-beans", "old-monitor"
+	"daylight", "blue", "neon", "cup-of-coffee", "coffee-beans", "old-monitor",
 }
 -- full list of icons identifiers
 local fulliconset = {
-	"junior", "oxygen", "delta", "ubuntu", "chakram", "whistlepuff",
+	"junior", "oxygen", "delta", "ubuntu", "chakram", "whistlepuff", "xrabbit",
 }
 
 -- let's set package configuration to default if it was not provided

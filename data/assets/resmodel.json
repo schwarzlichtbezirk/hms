@@ -67,6 +67,12 @@
 			"name": "whistlepuff icons",
 			"link": "/data/icon/whistlepuff.json",
 			"source": "https://iconarchive.com/show/whistlepuff-icons-by-firstfear.html"
+		},
+		{
+			"id": "xrabbit",
+			"name": "xrabbit Icons",
+			"link": "/data/icon/xrabbit.json",
+			"source": "https://iconarchive.com/show/xrabbit-icons-by-flameia.html"
 		}
 	],
 	"defskinid": "neon",
