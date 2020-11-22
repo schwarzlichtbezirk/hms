@@ -40,6 +40,8 @@ const (
 	FT_cab   = 22
 	FT_zip   = 23
 	FT_rar   = 24
+	FT_tar   = 25
+	FT_disk  = 26
 )
 
 // File groups
@@ -85,6 +87,8 @@ var typetogroup = map[int]int{
 	FT_cab:   FG_store,
 	FT_zip:   FG_store,
 	FT_rar:   FG_store,
+	FT_tar:   FG_store,
+	FT_disk:  FG_store,
 }
 
 var extset = map[string]int{
@@ -194,10 +198,14 @@ var extset = map[string]int{
 
 	// archive
 	".cab": FT_cab,
-	".tar": FT_cab,
 	".zip": FT_zip,
 	".7z":  FT_zip,
 	".rar": FT_rar,
+	".tar": FT_tar,
+	".tgz": FT_tar,
+	".iso": FT_disk,
+	".nrg": FT_disk,
+	".mdf": FT_disk,
 }
 
 // Categories properties constants.

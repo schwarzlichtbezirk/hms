@@ -69,6 +69,8 @@
 		"log": "/data/icon/ubuntu/file-log",
 		"cab": "/data/icon/ubuntu/file-cab",
 		"zip": "/data/icon/ubuntu/file-zip",
-		"rar": "/data/icon/ubuntu/file-rar"
+		"rar": "/data/icon/ubuntu/file-rar",
+		"tar": "/data/icon/ubuntu/file-tar",
+		"disk": "/data/icon/ubuntu/file-disk"
 	}
 }

@@ -69,6 +69,8 @@
 		"log": "/data/icon/delta/file-script",
 		"cab": "/data/icon/delta/file-cab",
 		"zip": "/data/icon/delta/file-zip",
-		"rar": "/data/icon/delta/file-rar"
+		"rar": "/data/icon/delta/file-rar",
+		"tar": "/data/icon/delta/file-tar",
+		"disk": "/data/icon/delta/file-disk"
 	}
 }

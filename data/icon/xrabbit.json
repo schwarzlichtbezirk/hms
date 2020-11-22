@@ -69,6 +69,8 @@
 		"log": "/data/icon/xrabbit/file-log",
 		"cab": "/data/icon/xrabbit/file-cab",
 		"zip": "/data/icon/xrabbit/file-zip",
-		"rar": "/data/icon/xrabbit/file-rar"
+		"rar": "/data/icon/xrabbit/file-rar",
+		"tar": "/data/icon/xrabbit/file-tar",
+		"disk": "/data/icon/xrabbit/file-disk"
 	}
 }

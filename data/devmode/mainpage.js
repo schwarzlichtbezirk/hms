@@ -35,7 +35,9 @@ const FT = {
 	log: 21,
 	cab: 22,
 	zip: 23,
-	rar: 24
+	rar: 24,
+	tar: 25,
+	disk: 26
 };
 
 const FTN = [
@@ -63,7 +65,9 @@ const FTN = [
 	"log", // 21
 	"cab", // 22
 	"zip", // 23
-	"rar" // 24
+	"rar", // 24
+	"tar", // 25
+	"disk" // 26
 ];
 
 // File groups
@@ -106,7 +110,9 @@ const FTtoFG = {
 	[FT.log]: FG.texts,
 	[FT.cab]: FG.store,
 	[FT.zip]: FG.store,
-	[FT.rar]: FG.store
+	[FT.rar]: FG.store,
+	[FT.tar]: FG.store,
+	[FT.disk]: FG.store
 };
 
 // File viewers
@@ -145,7 +151,9 @@ const FTtoFV = {
 	[FT.log]: FV.none,
 	[FT.cab]: FV.none,
 	[FT.zip]: FV.none,
-	[FT.rar]: FV.none
+	[FT.rar]: FV.none,
+	[FT.tar]: FV.none,
+	[FT.disk]: FV.none
 };
 
 // Drive state

@@ -69,6 +69,8 @@
 		"log": "/data/icon/chakram/file-code",
 		"cab": "/data/icon/chakram/file-cab",
 		"zip": "/data/icon/chakram/file-zip",
-		"rar": "/data/icon/chakram/file-rar"
+		"rar": "/data/icon/chakram/file-rar",
+		"tar": "/data/icon/chakram/file-tar",
+		"disk": "/data/icon/chakram/file-disk"
 	}
 }

@@ -69,6 +69,8 @@
 		"log": "/data/icon/whistlepuff/file-textfile",
 		"cab": "/data/icon/whistlepuff/file-textfile",
 		"zip": "/data/icon/whistlepuff/file-textfile",
-		"rar": "/data/icon/whistlepuff/file-textfile"
+		"rar": "/data/icon/whistlepuff/file-textfile",
+		"tar": "/data/icon/whistlepuff/file-textfile",
+		"disk": "/data/icon/whistlepuff/file-disk"
 	}
 }
