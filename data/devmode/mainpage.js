@@ -164,24 +164,26 @@ const DS = {
 
 const shareprefix = "/file/";
 
-const geticonpath = (file, im) => {
+const geticonpath = (file, im, shr) => {
+	const org = shr ? im.shared : im.private;
+	const alt = shr ? im.private : im.shared;
 	switch (file.type) {
 		case FT.ctgr:
-			return im.cid[file.cid] || im.cid.cid;
+			return {
+				org: org.cid[file.cid] || org.cid.cid,
+				alt: alt.cid[file.cid] || alt.cid.cid
+			};
 		case FT.drive:
 			if (file.latency < 0) {
-				return im.drive.offline;
+				return { org: org.drive.offline, alt: alt.drive.offline };
 			} else if (file.latency < DS.yellow) {
-				return im.drive.green;
+				return { org: org.drive.green, alt: alt.drive.green };
 			} else if (file.latency < DS.red) {
-				return im.drive.yellow;
+				return { org: org.drive.yellow, alt: alt.drive.yellow };
 			} else {
-				return im.drive.red;
+				return { org: org.drive.red, alt: alt.drive.red };
 			}
 		case FT.dir:
-			const folder = app.shrname.length
-				? im.folderpub
-				: im.folder;
 			if (file.scan) {
 				let fnum = 0;
 				const fg = file.fgrp;
@@ -189,33 +191,36 @@ const geticonpath = (file, im) => {
 					fnum += n;
 				}
 				if (!fnum) {
-					return folder.open;
+					return { org: org.folder.open, alt: alt.folder.open };
 				} else if (fg[FG.other] / fnum > 0.5) {
-					return folder.other;
+					return { org: org.folder.other, alt: alt.folder.other };
 				} else if (fg[FG.video] / fnum > 0.5) {
-					return folder.video;
+					return { org: org.folder.video, alt: alt.folder.video };
 				} else if (fg[FG.audio] / fnum > 0.5) {
-					return folder.audio;
+					return { org: org.folder.audio, alt: alt.folder.audio };
 				} else if (fg[FG.image] / fnum > 0.5) {
-					return folder.image;
+					return { org: org.folder.image, alt: alt.folder.image };
 				} else if (fg[FG.books] / fnum > 0.5) {
-					return folder.books;
+					return { org: org.folder.books, alt: alt.folder.books };
 				} else if (fg[FG.texts] / fnum > 0.5) {
-					return folder.texts;
+					return { org: org.folder.texts, alt: alt.folder.texts };
 				} else if (fg[FG.store] / fnum > 0.5) {
-					return folder.store;
+					return { org: org.folder.store, alt: alt.folder.store };
 				} else if (fg[FG.dir] / fnum > 0.5) {
-					return folder.dir;
+					return { org: org.folder.dir, alt: alt.folder.dir };
 				} else if ((fg[FG.audio] + fg[FG.video] + fg[FG.image]) / fnum > 0.5) {
-					return folder.media;
+					return { org: org.folder.media, alt: alt.folder.media };
 				} else {
-					return folder.open;
+					return { org: org.folder.open, alt: alt.folder.open };
 				}
 			} else {
-				return folder.close;
+				return { org: org.folder.close, alt: alt.folder.close };
 			}
 		default: // file types
-			return im.file[FTN[file.type]] || im.file.file;
+			return {
+				org: org.file[FTN[file.type]] || org.file.file,
+				alt: alt.file[FTN[file.type]] || alt.file.file
+			};
 	}
 };
 

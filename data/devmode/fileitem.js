@@ -1,20 +1,38 @@
 "use strict";
 
 const imempty = {
-	shared: "",
-	cid: { cid: "" },
-	drive: {},
-	folder: {},
-	folderpub: {},
-	file: { file: "" }
+	private: {
+		label: "",
+		cid: { cid: "" },
+		drive: {},
+		folder: {},
+		file: { file: "" }
+	},
+	shared: {
+		label: "",
+		cid: { cid: "" },
+		drive: {},
+		folder: {},
+		file: { file: "" }
+	}
 };
 
-const filetmbwebp = (file, im) => file.ntmb === 1
-	? ''
-	: geticonpath(file, im) + '.webp';
-const filetmbpng = (file, im) => file.ntmb === 1
-	? `/id${app.aid}/thumb/${file.puid}`
-	: geticonpath(file, im) + '.png';
+const filetmbwebp = (file, im) => {
+	if (file.ntmb === 1) {
+		return '';
+	} else {
+		const res = geticonpath(file, im, false);
+		return (res.org || res.alt) + '.webp';
+	}
+};
+const filetmbpng = (file, im) => {
+	if (file.ntmb === 1) {
+		return `/id${app.aid}/thumb/${file.puid}`;
+	} else {
+		const res = geticonpath(file, im, false);
+		return (res.org || res.alt) + '.png';
+	}
+};
 
 const makemarkercontent = file => `
 <div class="photoinfo">
@@ -27,7 +45,7 @@ const makemarkercontent = file => `
 			<picture>
 				<source srcset="${filetmbwebp(file, iconmapping)}" class="rounded thumb" type="image/webp">
 				<source srcset="${filetmbpng(file, iconmapping)}" class="rounded thumb" type="image/png">
-				<img src="${iconmapping.file.file}.png" class="rounded thumb" alt="${file.name}">
+				<img src="${filetmbpng(file, iconmapping)}.png" class="rounded thumb" alt="${file.name}">
 			</picture>
 			<div class="d-flex flex-wrap latlng">
 				<div><div class="name">lat:</div> <div class="value">${file.latitude.toFixed(6)}</div></div>
@@ -291,15 +309,29 @@ Vue.component('file-icon-tag', {
 			return filehint(this.file).join('\n');
 		},
 
+		label() {
+			if (this.file.ntmb === 1 && this.tm
+				|| !geticonpath(this.file, this.im, this.state.shared).org) {
+				return this.state.shared
+					? this.im.shared.label
+					: this.im.private.label;
+			}
+		},
 		webpicon() {
-			return this.file.ntmb === 1 && this.tm
-				? ''
-				: geticonpath(this.file, this.im) + '.webp';
+			if (this.file.ntmb === 1 && this.tm) {
+				return '';
+			} else {
+				const res = geticonpath(this.file, this.im, this.state.shared);
+				return (res.org || res.alt) + '.webp';
+			}
 		},
 		pngicon() {
-			return this.file.ntmb === 1 && this.tm
-				? `/id${app.aid}/thumb/${this.file.puid}`
-				: geticonpath(this.file, this.im) + '.png';
+			if (this.file.ntmb === 1 && this.tm) {
+				return `/id${app.aid}/thumb/${this.file.puid}`;
+			} else {
+				const res = geticonpath(this.file, this.im, this.state.shared);
+				return (res.org || res.alt) + '.png';
+			}
 		},
 
 		clsoverlay() {
@@ -370,15 +402,29 @@ Vue.component('img-icon-tag', {
 			return filehint(this.file).join('\n');
 		},
 
+		label() {
+			if (this.file.ntmb === 1 && this.tm
+				|| !geticonpath(this.file, this.im, this.state.shared).org) {
+				return this.state.shared
+					? this.im.shared.label
+					: this.im.private.label;
+			}
+		},
 		webpicon() {
-			return this.file.ntmb === 1 && this.tm
-				? ''
-				: geticonpath(this.file, this.im) + '.webp';
+			if (this.file.ntmb === 1 && this.tm) {
+				return '';
+			} else {
+				const res = geticonpath(this.file, this.im, this.state.shared);
+				return (res.org || res.alt) + '.webp';
+			}
 		},
 		pngicon() {
-			return this.file.ntmb === 1 && this.tm
-				? `/id${app.aid}/thumb/${this.file.puid}`
-				: geticonpath(this.file, this.im) + '.png';
+			if (this.file.ntmb === 1 && this.tm) {
+				return `/id${app.aid}/thumb/${this.file.puid}`;
+			} else {
+				const res = geticonpath(this.file, this.im, this.state.shared);
+				return (res.org || res.alt) + '.png';
+			}
 		},
 
 		// manage items classes

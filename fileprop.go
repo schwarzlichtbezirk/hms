@@ -128,9 +128,11 @@ var extset = map[string]int{
 	".xhtml": FT_html,
 	".phtml": FT_html,
 	".hta":   FT_html,
+	".mht":   FT_html,
 
 	// Text
 	".txt":   FT_text,
+	".md":    FT_text,
 	".css":   FT_scr,
 	".js":    FT_scr,
 	".jsm":   FT_scr,
@@ -177,6 +179,7 @@ var extset = map[string]int{
 	".rbw":   FT_scr,
 	".rc":    FT_scr,
 	".ps":    FT_scr,
+	".cfg":   FT_cfg,
 	".ini":   FT_cfg,
 	".inf":   FT_cfg,
 	".reg":   FT_cfg,
@@ -190,6 +193,7 @@ var extset = map[string]int{
 	".xlf":   FT_cfg,
 	".xliff": FT_cfg,
 	".yml":   FT_cfg,
+	".yaml":  FT_cfg,
 	".cmake": FT_cfg,
 	".vhd":   FT_cfg,
 	".vhdl":  FT_cfg,
@@ -203,9 +207,12 @@ var extset = map[string]int{
 	".rar": FT_rar,
 	".tar": FT_tar,
 	".tgz": FT_tar,
+	".gz":  FT_tar,
+	".bz2": FT_tar,
 	".iso": FT_disk,
 	".nrg": FT_disk,
 	".mdf": FT_disk,
+	".wpk": FT_disk,
 }
 
 // Categories properties constants.
@@ -328,15 +335,17 @@ type DirProp struct {
 
 func PathBase(syspath string) string {
 	if len(syspath) > 0 {
-		if syspath[0] == '[' && syspath[len(syspath)-1] == ']' {
+		var pos1 int
+		var pos2 = len(syspath)
+		if syspath[0] == '[' && syspath[pos2-1] == ']' {
 			return syspath
 		}
-		var name = filepath.Base(syspath)
-		if len(name) > 1 {
-			return name
-		} else if syspath[len(syspath)-1] == '/' {
-			return syspath[:len(syspath)-1]
+		if syspath[pos2-1] == '/' || syspath[pos2-1] == '\\' {
+			pos2--
 		}
+		for pos1 = pos2; pos1 > 0 && syspath[pos1-1] != '/' && syspath[pos1-1] != '\\'; pos1-- {
+		}
+		return syspath[pos1:pos2]
 	}
 	return syspath
 }
