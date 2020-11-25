@@ -308,6 +308,9 @@ Vue.component('file-icon-tag', {
 		fmttitle() {
 			return filehint(this.file).join('\n');
 		},
+		fmtalt() {
+			return FTN[this.file.type];
+		},
 
 		label() {
 			if (this.file.ntmb === 1 && this.tm
@@ -400,6 +403,9 @@ Vue.component('img-icon-tag', {
 	computed: {
 		fmttitle() {
 			return filehint(this.file).join('\n');
+		},
+		fmtalt() {
+			return FTN[this.file.type];
 		},
 
 		label() {

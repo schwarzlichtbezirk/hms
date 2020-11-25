@@ -3,13 +3,13 @@
 	<picture class="pict">
 		<source v-bind:srcset="webpicon" type="image/webp">
 		<source v-bind:srcset="pngicon" type="image/png">
-		<img v-bind:src="pngicon+'.png'" v-bind:alt="file.name">
+		<img v-bind:src="pngicon+'.png'" v-bind:alt="fmtalt">
 	</picture>
 	<picture v-if="label" class="pref">
 		<source v-bind:srcset="label+'.webp'" type="image/webp">
 		<source v-bind:srcset="label+'.png'" type="image/png">
 		<img v-bind:src="label+'.png'" alt="shared">
 	</picture>
-	<img v-if="state.playback" class="bars" src="/asst/equalizer-bars.gif" alt="shared">
+	<img v-if="state.playback" class="bars" src="/asst/equalizer-bars.gif" alt="play">
 	<div class="tag">{{file.name}}</div>
 </div>

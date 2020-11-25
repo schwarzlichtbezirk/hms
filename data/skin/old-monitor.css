@@ -196,6 +196,9 @@ a, .btn-link {
 	border: 1px solid transparent;
 	border-radius: 0;
 	padding: 4px;
+	line-height: 1.25;
+	font-size: 0.72rem;
+	overflow: hidden;
 }
 
 	.fileitem:hover {
@@ -233,9 +236,6 @@ a, .btn-link {
 		color: Lime;
 		background: #003000;
 		max-height: 3.8rem;
-		line-height: 1.25;
-		font-size: 0.72rem;
-		overflow: hidden;
 	}
 
 	.fileitem:hover > .tag {
@@ -244,6 +244,9 @@ a, .btn-link {
 
 .imgitem {
 	position: relative;
+	line-height: 1.25;
+	font-size: 0.72rem;
+	overflow: hidden;
 }
 
 	.imgitem:hover {
@@ -297,9 +300,6 @@ a, .btn-link {
 		background: rgba(0, 48, 0, 0.33);
 		max-width: 112px;
 		max-height: 3.8rem;
-		line-height: 1.25;
-		font-size: 0.72rem;
-		overflow: hidden;
 	}
 
 	.imgitem:hover > .tag {

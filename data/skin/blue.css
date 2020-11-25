@@ -175,6 +175,9 @@ body {
 	border: 1px solid transparent;
 	border-radius: 0.25rem;
 	padding: 0.25rem;
+	line-height: 1.25;
+	font-size: 0.72rem;
+	overflow: hidden;
 }
 
 	.fileitem:hover {
@@ -212,9 +215,6 @@ body {
 		color: #404040;
 		background: #cccedb;
 		max-height: 3.8rem;
-		line-height: 1.25;
-		font-size: 0.72rem;
-		overflow: hidden;
 	}
 
 	.fileitem:hover > .tag {
@@ -229,6 +229,9 @@ body {
 
 .imgitem {
 	position: relative;
+	line-height: 1.25;
+	font-size: 0.72rem;
+	overflow: hidden;
 }
 
 	.imgitem:hover {
@@ -282,9 +285,6 @@ body {
 		background: rgba(204, 206, 219, 0.5);
 		max-width: 112px;
 		max-height: 3.8rem;
-		line-height: 1.25;
-		font-size: 0.72rem;
-		overflow: hidden;
 	}
 
 	.imgitem:hover > .tag {

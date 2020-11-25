@@ -2,11 +2,11 @@ package hms
 
 import (
 	"encoding/json"
-	"hash/maphash"
 	"io/ioutil"
 	"net/http"
 
 	uas "github.com/avct/uasurfer"
+	"github.com/cespare/xxhash"
 )
 
 // History item. Contains PUID of served file or opened directory and
@@ -47,7 +47,7 @@ type UserCache struct {
 	list    []*User
 }
 
-var userkeyhash maphash.Hash
+var userkeyhash = xxhash.New()
 
 // Returns unique for this server session key for address plus user-agent,
 // produced on fast uint64-hash.
@@ -55,8 +55,7 @@ func UserKey(addr, agent string) uint64 {
 	userkeyhash.Reset()
 	userkeyhash.WriteString(addr)
 	userkeyhash.WriteString(agent)
-	var key = userkeyhash.Sum64()
-	return key
+	return userkeyhash.Sum64()
 }
 
 // Returns User structure depending on http-request, identified by remote address and user agent.
