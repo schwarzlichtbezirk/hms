@@ -45,6 +45,12 @@
 			"source": "https://iconarchive.com/show/oxygen-icons-by-oxygen-icons.org.html"
 		},
 		{
+			"id": "senary",
+			"name": "senary icons",
+			"link": "/data/icon/senary.json",
+			"source": "https://www.iconarchive.com/show/senary-icons-by-arrioch.html"
+		},
+		{
 			"id": "delta",
 			"name": "delta icons",
 			"link": "/data/icon/delta.json",

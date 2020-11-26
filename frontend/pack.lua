@@ -14,7 +14,8 @@ local fullskinset = {
 }
 -- full list of icons identifiers
 local fulliconset = {
-	"junior", "oxygen", "delta", "ubuntu", "chakram", "whistlepuff", "xrabbit",
+	"junior", "oxygen", "senary", "delta", "ubuntu", "chakram",
+	"whistlepuff", "xrabbit",
 }
 
 -- let's set package configuration to default if it was not provided
