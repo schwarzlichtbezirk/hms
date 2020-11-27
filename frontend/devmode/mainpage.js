@@ -217,9 +217,10 @@ const geticonpath = (file, im, shr) => {
 				return { org: org.folder.close, alt: alt.folder.close };
 			}
 		default: // file types
+			const ext = file.name.slice((file.name.lastIndexOf(".") - 1 >>> 0) + 2).toLowerCase();
 			return {
-				org: org.file[FTN[file.type]] || org.file.file,
-				alt: alt.file[FTN[file.type]] || alt.file.file
+				org: org.ext[ext] || org.file[FTN[file.type]] || org.file.file,
+				alt: alt.ext[ext] || alt.file[FTN[file.type]] || alt.file.file
 			};
 	}
 };

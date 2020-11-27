@@ -187,11 +187,11 @@ func (acc *Account) FindRoots() {
 }
 
 // Scan drives from roots list.
-func (acc *Account) ScanRoots() []Proper {
+func (acc *Account) ScanRoots() []Pather {
 	acc.mux.RLock()
 	defer acc.mux.RUnlock()
 
-	var lst = make([]Proper, len(acc.Roots), len(acc.Roots))
+	var lst = make([]Pather, len(acc.Roots))
 	for i, path := range acc.Roots {
 		var dk DriveKit
 		dk.Setup(path)
@@ -202,14 +202,14 @@ func (acc *Account) ScanRoots() []Proper {
 }
 
 // Scan actual shares from shares list.
-func (acc *Account) ScanShares() []Proper {
+func (acc *Account) ScanShares() []Pather {
 	acc.mux.RLock()
 	defer acc.mux.RUnlock()
 
-	var lst []Proper
+	var lst []Pather
 	for _, path := range acc.Shares {
 		if prop, err := propcache.Get(path); err == nil {
-			lst = append(lst, prop.(Proper))
+			lst = append(lst, prop.(Pather))
 		}
 	}
 	return lst
@@ -246,7 +246,7 @@ func (acc *Account) UpdateShares() {
 	for _, shr := range acc.Shares {
 		var syspath = shr
 		if prop, err := propcache.Get(syspath); err == nil {
-			var puid = prop.(Proper).PUID()
+			var puid = prop.(Pather).PUID()
 			acc.sharepuid[syspath] = puid
 			acc.puidshare[puid] = syspath
 			Log.Printf("id%d: shared '%s' as %s", acc.ID, syspath, puid)
@@ -411,8 +411,8 @@ func (acc *Account) PathAdmin(syspath string) bool {
 	return false
 }
 
-// Reads directory with given system path and returns Proper for each entry.
-func (acc *Account) Readdir(syspath string, cg *CatGrp) (ret []Proper, err error) {
+// Reads directory with given system path and returns Pather for each entry.
+func (acc *Account) Readdir(syspath string, cg *CatGrp) (ret []Pather, err error) {
 	if !strings.HasSuffix(syspath, "/") {
 		syspath += "/"
 	}
@@ -445,7 +445,7 @@ func (acc *Account) Readdir(syspath string, cg *CatGrp) (ret []Proper, err error
 				fpath += "/"
 			}
 			if !acc.IsHidden(fpath) {
-				var prop = CacheProp(fpath, fi)
+				var prop = CacheProp(fpath, fi).(Pather)
 				var grp = typetogroup[prop.Type()]
 				if cg[grp] {
 					ret = append(ret, prop)

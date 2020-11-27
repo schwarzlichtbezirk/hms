@@ -253,22 +253,22 @@ func initcaches() {
 				return // file path not found
 			}
 
-			var cp interface{}
-			if cp, err = propcache.Get(syspath); err != nil {
+			var prop interface{}
+			if prop, err = propcache.Get(syspath); err != nil {
 				return // can not get properties
 			}
-			var prop = cp.(Proper)
-			if prop.NTmb() == TMB_reject {
+			var pp = prop.(Pather)
+			if pp.NTmb() == TMB_reject {
 				err = ErrNotThumb
 				return // thumbnail rejected
 			}
 
 			var md *MediaData
-			if md, err = FindTmb(prop, syspath); md != nil {
-				prop.SetNTmb(TMB_cached)
+			if md, err = FindTmb(pp, syspath); md != nil {
+				pp.SetNTmb(TMB_cached)
 				ret = md
 			} else {
-				prop.SetNTmb(TMB_reject)
+				pp.SetNTmb(TMB_reject)
 			}
 			return // ok
 		}).
@@ -284,12 +284,17 @@ func initcaches() {
 				return // file path not found
 			}
 
-			var cp interface{}
-			if cp, err = propcache.Get(syspath); err != nil {
+			var prop interface{}
+			if prop, err = propcache.Get(syspath); err != nil {
 				return // can not get properties
 			}
+			var fp = prop.(Pather)
+			if fp.Type() < 0 {
+				err = ErrNotFile
+				return
+			}
 
-			switch cp.(Proper).Type() {
+			switch fp.Type() {
 			case FT_tga, FT_bmp, FT_tiff:
 				var file *os.File
 				if file, err = os.Open(syspath); err != nil {
@@ -346,10 +351,10 @@ func initcaches() {
 }
 
 // File properties factory, prevents double os.Stat slow call.
-func CacheProp(syspath string, fi os.FileInfo) Proper {
+func CacheProp(syspath string, fi os.FileInfo) interface{} {
 	if propcache.Has(syspath) {
-		var cp, _ = propcache.Get(syspath)
-		return cp.(Proper)
+		var prop, _ = propcache.Get(syspath)
+		return prop
 	}
 	var prop = MakeProp(syspath, fi)
 	propcache.Set(syspath, prop)

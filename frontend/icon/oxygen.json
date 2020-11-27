@@ -59,13 +59,15 @@
 			"rar": "/data/icon/oxygen/file-store",
 			"tar": "/data/icon/oxygen/file-tar",
 			"disk": "/data/icon/oxygen/file-disk"
-		}
+		},
+		"ext": {}
 	},
 	"shared": {
 		"label": "/data/icon/oxygen/shared",
 		"cid": {},
 		"drive": {},
 		"folder": {},
-		"file": {}
+		"file": {},
+		"ext": {}
 	}
 }

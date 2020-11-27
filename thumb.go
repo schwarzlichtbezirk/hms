@@ -45,6 +45,7 @@ var thumbpngenc = png.Encoder{
 var (
 	ErrBadMedia = errors.New("media content is corrupted")
 	ErrNotThumb = errors.New("thumbnail content can not be created")
+	ErrNotFile  = errors.New("property is not file")
 	ErrNotImg   = errors.New("file is not image")
 	ErrTooBig   = errors.New("file is too big")
 )
@@ -91,7 +92,12 @@ func (tp *TmbProp) SetNTmb(v int) {
 	tp.NTmbVal = v
 }
 
-func FindTmb(prop Proper, syspath string) (md *MediaData, err error) {
+func FindTmb(prop Pather, syspath string) (md *MediaData, err error) {
+	if prop.Type() < 0 {
+		err = ErrNotFile
+		return // not a file
+	}
+
 	// try to extract from EXIF
 	if _, ok := prop.(*ExifKit); ok { // skip non-EXIF properties
 		if md, err = GetExifTmb(syspath); err == nil {
@@ -193,7 +199,7 @@ func tmbchkApi(w http.ResponseWriter, r *http.Request) {
 	for _, tp := range arg.Tmbs {
 		if syspath, ok := pathcache.Path(tp.PUID()); ok {
 			if prop, err := propcache.Get(syspath); err == nil {
-				tp.NTmbVal = prop.(Proper).NTmb()
+				tp.NTmbVal = prop.(Pather).NTmb()
 			}
 		}
 	}

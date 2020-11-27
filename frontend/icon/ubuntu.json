@@ -59,7 +59,8 @@
 			"rar": "/data/icon/ubuntu/file-rar",
 			"tar": "/data/icon/ubuntu/file-tar",
 			"disk": "/data/icon/ubuntu/file-disk"
-		}
+		},
+		"ext": {}
 	},
 	"shared": {
 		"label": "/data/icon/ubuntu/shared",
@@ -78,6 +79,7 @@
 			"open": "/data/icon/ubuntu/folder-open-pub",
 			"close": "/data/icon/ubuntu/folder-close-pub"
 		},
-		"file": {}
+		"file": {},
+		"ext": {}
 	}
 }

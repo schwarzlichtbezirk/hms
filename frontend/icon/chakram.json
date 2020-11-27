@@ -59,13 +59,15 @@
 			"rar": "/data/icon/chakram/file-rar",
 			"tar": "/data/icon/chakram/file-tar",
 			"disk": "/data/icon/chakram/file-disk"
-		}
+		},
+		"ext": {}
 	},
 	"shared": {
 		"label": "/data/icon/chakram/shared",
 		"cid": {},
 		"drive": {},
 		"folder": {},
-		"file": {}
+		"file": {},
+		"ext": {}
 	}
 }

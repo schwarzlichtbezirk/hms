@@ -59,13 +59,15 @@
 			"rar": "/data/icon/whistlepuff/file-textfile",
 			"tar": "/data/icon/whistlepuff/file-textfile",
 			"disk": "/data/icon/whistlepuff/file-disk"
-		}
+		},
+		"ext": {}
 	},
 	"shared": {
 		"label": "/data/icon/whistlepuff/shared",
 		"cid": {},
 		"drive": {},
 		"folder": {},
-		"file": {}
+		"file": {},
+		"ext": {}
 	}
 }

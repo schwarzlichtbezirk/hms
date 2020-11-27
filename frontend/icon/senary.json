@@ -59,13 +59,15 @@
 			"rar": "/data/icon/senary/file-rar",
 			"tar": "/data/icon/senary/file-rar",
 			"disk": "/data/icon/senary/file-iso"
-		}
+		},
+		"ext": {}
 	},
 	"shared": {
 		"label": "/data/icon/senary/shared",
 		"cid": {},
 		"drive": {},
 		"folder": {},
-		"file": {}
+		"file": {},
+		"ext": {}
 	}
 }

@@ -135,14 +135,14 @@ func (ep *ExifProp) Setup(x *exif.Exif) {
 
 // File with EXIF tags.
 type ExifKit struct {
-	StdProp
+	FileProp
 	TmbProp
 	ExifProp
 }
 
 // Fills fields with given path.
 func (ek *ExifKit) Setup(syspath string, fi os.FileInfo) {
-	ek.StdProp.Setup(fi)
+	ek.FileProp.Setup(fi)
 
 	if file, err := os.Open(syspath); err == nil {
 		defer file.Close()

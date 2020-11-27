@@ -59,7 +59,8 @@
 			"rar": "/data/icon/junior/file-rar",
 			"tar": "/data/icon/junior/file-rar",
 			"disk": "/data/icon/junior/file-disk"
-		}
+		},
+		"ext": {}
 	},
 	"shared": {
 		"label": "/data/icon/junior/shared",
@@ -78,6 +79,7 @@
 			"open": "/data/icon/junior/folder-open-pub",
 			"close": "/data/icon/junior/folder-close-pub"
 		},
-		"file": {}
+		"file": {},
+		"ext": {}
 	}
 }

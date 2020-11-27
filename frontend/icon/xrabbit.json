@@ -59,13 +59,15 @@
 			"rar": "/data/icon/xrabbit/file-rar",
 			"tar": "/data/icon/xrabbit/file-tar",
 			"disk": "/data/icon/xrabbit/file-disk"
-		}
+		},
+		"ext": {}
 	},
 	"shared": {
 		"label": "/data/icon/xrabbit/shared",
 		"cid": {},
 		"drive": {},
 		"folder": {},
-		"file": {}
+		"file": {},
+		"ext": {}
 	}
 }

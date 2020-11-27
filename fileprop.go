@@ -253,62 +253,76 @@ var CidCatPath = map[string]string{
 	"texts":  CP_texts,
 }
 
-// File properties interface.
-type Proper interface {
+// Path properties interface.
+type Pather interface {
 	Name() string // string identifier
+	Type() int    // type identifier
 	Size() int64  // size in bytes
 	Time() int64  // UNIX time in milliseconds
-	Type() int    // type identifier
 	PUID() string // path unique ID encoded to hex-base32
 	NTmb() int    // -1 - can not make thumbnail; 0 - not cached; 1 - cached
 	SetNTmb(int)
 }
 
-// Common file properties chunk.
-type StdProp struct {
+// Any path base properties.
+type PathProp struct {
 	NameVal string `json:"name,omitempty" yaml:"name,omitempty"`
-	PathVal string `json:"path,omitempty" yaml:"path,omitempty"`
-	SizeVal int64  `json:"size,omitempty" yaml:"size,omitempty"`
-	TimeVal int64  `json:"time,omitempty" yaml:"time,omitempty"`
 	TypeVal int    `json:"type,omitempty" yaml:"type,omitempty"`
 }
 
-// Fills fields from os.FileInfo structure. Do not looks for share.
-func (sp *StdProp) Setup(fi os.FileInfo) {
-	sp.NameVal = fi.Name()
-	sp.SizeVal = fi.Size()
-	sp.TimeVal = UnixJS(fi.ModTime())
-}
-
 // File name with extension without path.
-func (sp *StdProp) Name() string {
-	return sp.NameVal
-}
-
-// File size in bytes.
-func (sp *StdProp) Size() int64 {
-	return sp.SizeVal
-}
-
-// File creation time in UNIX format, milliseconds.
-func (sp *StdProp) Time() int64 {
-	return sp.TimeVal
+func (pp *PathProp) Name() string {
+	return pp.NameVal
 }
 
 // Enumerated file type.
-func (sp *StdProp) Type() int {
-	return sp.TypeVal
+func (pp *PathProp) Type() int {
+	return pp.TypeVal
+}
+
+// File size in bytes.
+func (pp *PathProp) Size() int64 {
+	return 0
+}
+
+// File creation time in UNIX format, milliseconds.
+func (pp *PathProp) Time() int64 {
+	return 0
+}
+
+// Common file properties chunk.
+type FileProp struct {
+	PathProp
+	SizeVal int64 `json:"size,omitempty" yaml:"size,omitempty"`
+	TimeVal int64 `json:"time,omitempty" yaml:"time,omitempty"`
+}
+
+// Fills fields from os.FileInfo structure. Do not looks for share.
+func (fp *FileProp) Setup(fi os.FileInfo) {
+	fp.NameVal = fi.Name()
+	fp.SizeVal = fi.Size()
+	fp.TimeVal = UnixJS(fi.ModTime())
+}
+
+// File size in bytes.
+func (fp *FileProp) Size() int64 {
+	return fp.SizeVal
+}
+
+// File creation time in UNIX format, milliseconds.
+func (fp *FileProp) Time() int64 {
+	return fp.TimeVal
 }
 
 // Common files properties kit.
 type FileKit struct {
-	StdProp
+	FileProp
 	TmbProp
 }
 
 // Calls nested structures setups.
 func (fk *FileKit) Setup(syspath string, fi os.FileInfo) {
-	fk.StdProp.Setup(fi)
+	fk.FileProp.Setup(fi)
 	fk.TmbProp.Setup(syspath)
 }
 
@@ -323,14 +337,6 @@ func (fg *FileGrp) IsZero() bool {
 		}
 	}
 	return true
-}
-
-// Directory properties chunk.
-type DirProp struct {
-	// Directory scanning time in UNIX format, milliseconds.
-	Scan int64 `json:"scan" yaml:"scan"`
-	// Directory file groups counters.
-	FGrp FileGrp `json:"fgrp" yaml:"fgrp,flow"`
 }
 
 func PathBase(syspath string) string {
@@ -350,9 +356,17 @@ func PathBase(syspath string) string {
 	return syspath
 }
 
+// Directory properties chunk.
+type DirProp struct {
+	// Directory scanning time in UNIX format, milliseconds.
+	Scan int64 `json:"scan" yaml:"scan"`
+	// Directory file groups counters.
+	FGrp FileGrp `json:"fgrp" yaml:"fgrp,flow"`
+}
+
 // Directory properties kit.
 type DirKit struct {
-	StdProp
+	PathProp
 	TmbProp
 	DirProp
 }
@@ -369,7 +383,8 @@ func (dk *DirKit) Setup(syspath string) {
 }
 
 type DriveKit struct {
-	DirKit
+	PathProp
+	TmbProp
 	Latency int `json:"latency"` // drive connection latency in ms, or -1 on error
 }
 
@@ -396,7 +411,7 @@ func (dk *DriveKit) Scan(syspath string) error {
 }
 
 type CatKit struct {
-	StdProp
+	PathProp
 	TmbProp
 	CID string `json:"cid"`
 }
@@ -452,7 +467,7 @@ func (tp *TagProp) Setup(m tag.Metadata) {
 
 // Music file tags properties kit.
 type TagKit struct {
-	StdProp
+	FileProp
 	TmbProp
 	TagProp
 }
@@ -460,7 +475,7 @@ type TagKit struct {
 // Fills fields with given path.
 // Puts into the cache nested at the tags thumbnail if it present.
 func (tk *TagKit) Setup(syspath string, fi os.FileInfo) {
-	tk.StdProp.Setup(fi)
+	tk.FileProp.Setup(fi)
 
 	var md *MediaData
 	if file, err := os.Open(syspath); err == nil {
@@ -524,7 +539,7 @@ func GetTagTmb(syspath string) (md *MediaData, err error) {
 }
 
 // File properties factory.
-func MakeProp(syspath string, fi os.FileInfo) Proper {
+func MakeProp(syspath string, fi os.FileInfo) interface{} {
 	if fi.IsDir() {
 		var dk DirKit
 		dk.Setup(syspath)

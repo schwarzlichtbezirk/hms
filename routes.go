@@ -64,6 +64,7 @@ const (
 	EC_filenoacc    = 11
 	EC_fileaccess   = 12
 	EC_filenoprop   = 13
+	EC_filenofile   = 14
 
 	// media
 	EC_mediabadaccid = 20
@@ -71,8 +72,9 @@ const (
 	EC_medianopath   = 22
 	EC_mediaaccess   = 23
 	EC_medianoprop   = 24
-	EC_mediaabsent   = 25
-	EC_mediabadcnt   = 26
+	EC_medianofile   = 25
+	EC_mediaabsent   = 26
+	EC_mediabadcnt   = 27
 
 	// thumb
 	EC_thumbbadaccid = 30
@@ -80,8 +82,9 @@ const (
 	EC_thumbnopath   = 32
 	EC_thumbaccess   = 33
 	EC_thumbnoprop   = 34
-	EC_thumbabsent   = 35
-	EC_thumbbadcnt   = 36
+	EC_thumbnofile   = 35
+	EC_thumbabsent   = 36
+	EC_thumbbadcnt   = 37
 
 	// pubkey
 	EC_pubkeyrand = 40

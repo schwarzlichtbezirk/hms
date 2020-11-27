@@ -6,14 +6,16 @@ const imempty = {
 		cid: { cid: "" },
 		drive: {},
 		folder: {},
-		file: { file: "" }
+		file: { file: "" },
+		ext: {}
 	},
 	shared: {
 		label: "",
 		cid: { cid: "" },
 		drive: {},
 		folder: {},
-		file: { file: "" }
+		file: { file: "" },
+		ext: {}
 	}
 };
 

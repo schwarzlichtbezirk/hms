@@ -97,8 +97,13 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, http.StatusNotFound, err, EC_filenoprop)
 		return
 	}
+	var fp = prop.(Pather)
+	if fp.Type() < 0 {
+		WriteError(w, http.StatusUnsupportedMediaType, ErrNotFile, EC_filenofile)
+		return
+	}
 	var cg = acc.PathAccess(syspath, auth == acc)
-	var grp = typetogroup[prop.(Proper).Type()]
+	var grp = typetogroup[fp.Type()]
 	if !cg[grp] {
 		WriteError(w, http.StatusForbidden, ErrNoAccess, EC_fileaccess)
 		return
@@ -107,7 +112,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		if _, ok := r.Header["If-Range"]; !ok {
 			// not partial content
-			usermsg <- UsrMsg{r, "file", prop.(Proper).PUID()}
+			usermsg <- UsrMsg{r, "file", fp.PUID()}
 			Log.Printf("id%d: serve %s", acc.ID, PathBase(syspath))
 		} else {
 			// update statistics for partial content
@@ -156,8 +161,13 @@ func mediaHandler(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, http.StatusNotFound, err, EC_medianoprop)
 		return
 	}
+	var fp = prop.(Pather)
+	if fp.Type() < 0 {
+		WriteError(w, http.StatusUnsupportedMediaType, ErrNotFile, EC_medianofile)
+		return
+	}
 	var cg = acc.PathAccess(syspath, auth == acc)
-	var grp = typetogroup[prop.(Proper).Type()]
+	var grp = typetogroup[fp.Type()]
 	if !cg[grp] {
 		WriteError(w, http.StatusForbidden, ErrNoAccess, EC_mediaaccess)
 		return
@@ -242,8 +252,13 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, http.StatusNotFound, err, EC_thumbnoprop)
 		return
 	}
+	var fp = prop.(Pather)
+	if fp.Type() < 0 {
+		WriteError(w, http.StatusUnsupportedMediaType, ErrNotFile, EC_thumbnofile)
+		return
+	}
 	var cg = acc.PathAccess(syspath, auth == acc)
-	var grp = typetogroup[prop.(Proper).Type()]
+	var grp = typetogroup[fp.Type()]
 	if !cg[grp] {
 		WriteError(w, http.StatusForbidden, ErrNoAccess, EC_thumbaccess)
 		return
@@ -488,7 +503,7 @@ func ctgrApi(w http.ResponseWriter, r *http.Request) {
 		PUID string `json:"puid"`
 		CID  string `json:"cid"`
 	}
-	var ret = []Proper{}
+	var ret = []Pather{}
 
 	// get arguments
 	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
@@ -539,7 +554,7 @@ func ctgrApi(w http.ResponseWriter, r *http.Request) {
 		for _, puid := range puids {
 			if path, ok := pathcache.Path(puid); ok {
 				if prop, err := propcache.Get(path); err == nil {
-					ret = append(ret, prop.(Proper))
+					ret = append(ret, prop.(Pather))
 				}
 			}
 		}
@@ -552,7 +567,7 @@ func ctgrApi(w http.ResponseWriter, r *http.Request) {
 			}
 			if auth == acc || acc.IsShared(path) {
 				if prop, err := propcache.Get(path); err == nil {
-					ret = append(ret, prop.(Proper))
+					ret = append(ret, prop.(Pather))
 				}
 			}
 		}
@@ -591,7 +606,7 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 		Path string `json:"path,omitempty"`
 	}
 	var ret struct {
-		List []Proper `json:"list"`
+		List []Pather `json:"list"`
 		PUID string   `json:"puid"`
 		Path string   `json:"path"`
 		Name string   `json:"shrname"`
@@ -693,7 +708,7 @@ func shrlstApi(w http.ResponseWriter, r *http.Request) {
 	var arg struct {
 		AID int `json:"aid"`
 	}
-	var ret = []Proper{}
+	var ret = []Pather{}
 
 	// get arguments
 	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
@@ -821,7 +836,7 @@ func drvlstApi(w http.ResponseWriter, r *http.Request) {
 	var arg struct {
 		AID int `json:"aid"`
 	}
-	var ret []Proper
+	var ret []Pather
 
 	// get arguments
 	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
