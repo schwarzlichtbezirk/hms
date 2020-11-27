@@ -205,6 +205,7 @@ var extset = map[string]int{
 	".zip": FT_zip,
 	".7z":  FT_zip,
 	".rar": FT_rar,
+	".rev": FT_rar,
 	".tar": FT_tar,
 	".tgz": FT_tar,
 	".gz":  FT_tar,
