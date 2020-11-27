@@ -176,7 +176,6 @@ body {
 	padding: 4px;
 	line-height: 1.25;
 	font-size: 0.72rem;
-	overflow: hidden;
 }
 
 	.fileitem:hover {
@@ -212,13 +211,13 @@ body {
 		color: Black;
 		background: NavajoWhite;
 		max-height: 3.8rem;
+		overflow: hidden;
 	}
 
 .imgitem {
 	position: relative;
 	line-height: 1.25;
 	font-size: 0.72rem;
-	overflow: hidden;
 }
 
 	.imgitem:hover {
@@ -275,6 +274,7 @@ body {
 		background: rgba(255, 222, 173, 0.50); /*NavajoWhite*/
 		max-width: 112px;
 		max-height: 3.8rem;
+		overflow: hidden;
 	}
 
 	.imgitem:hover > .tag {
