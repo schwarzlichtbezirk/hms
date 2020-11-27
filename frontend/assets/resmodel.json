@@ -45,18 +45,6 @@
 			"source": "https://iconarchive.com/show/oxygen-icons-by-oxygen-icons.org.html"
 		},
 		{
-			"id": "senary",
-			"name": "senary icons",
-			"link": "/data/icon/senary.json",
-			"source": "https://www.iconarchive.com/show/senary-icons-by-arrioch.html"
-		},
-		{
-			"id": "delta",
-			"name": "delta icons",
-			"link": "/data/icon/delta.json",
-			"source": "https://iconarchive.com/show/delta-icons-by-aroche.html"
-		},
-		{
 			"id": "ubuntu",
 			"name": "ubuntu icons",
 			"link": "/data/icon/ubuntu.json",
@@ -67,6 +55,24 @@
 			"name": "chakram 2 icons",
 			"link": "/data/icon/chakram.json",
 			"source": "https://iconarchive.com/show/chakram-2-icons-by-apathae.html"
+		},
+		{
+			"id": "senary",
+			"name": "senary icons",
+			"link": "/data/icon/senary.json",
+			"source": "https://www.iconarchive.com/show/senary-icons-by-arrioch.html"
+		},
+		{
+			"id": "senary2",
+			"name": "senary v2 icons",
+			"link": "/data/icon/senary2.json",
+			"source": "https://www.iconarchive.com/show/senary-icons-by-arrioch.html"
+		},
+		{
+			"id": "delta",
+			"name": "delta icons",
+			"link": "/data/icon/delta.json",
+			"source": "https://iconarchive.com/show/delta-icons-by-aroche.html"
 		},
 		{
 			"id": "whistlepuff",
