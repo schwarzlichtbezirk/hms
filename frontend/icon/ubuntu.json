@@ -85,6 +85,7 @@
 			"jar": "/data/icon/ubuntu/file-jar",
 			"bat": "/data/icon/ubuntu/file-batch",
 			"cmd": "/data/icon/ubuntu/file-batch",
+			"sh": "/data/icon/ubuntu/file-batch",
 			"dll": "/data/icon/ubuntu/file-dll",
 			"ocx": "/data/icon/ubuntu/file-dll",
 			"php": "/data/icon/ubuntu/file-php",
