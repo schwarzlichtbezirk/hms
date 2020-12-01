@@ -150,6 +150,7 @@
 			"xsl": "/data/icon/oxygen/file-xslt",
 			"zip": "/data/icon/oxygen/file-zip",
 			"midi": "/data/icon/oxygen/file-midi",
+			"mid": "/data/icon/oxygen/file-midi",
 			"ogg": "/data/icon/oxygen/file-ogg",
 			"wav": "/data/icon/oxygen/file-wav",
 			"svg": "/data/icon/oxygen/file-svg",
