@@ -54,11 +54,9 @@
 			"scr": "/data/icon/junior/file-script",
 			"cfg": "/data/icon/junior/file-config",
 			"log": "/data/icon/junior/file-log",
-			"cab": "/data/icon/junior/file-cab",
-			"zip": "/data/icon/junior/file-zip",
-			"rar": "/data/icon/junior/file-rar",
-			"tar": "/data/icon/junior/file-rar",
-			"disk": "/data/icon/junior/file-disk"
+			"arch": "/data/icon/junior/file-zip",
+			"disk": "/data/icon/junior/file-disk",
+			"pack": "/data/icon/junior/file-cab"
 		},
 		"ext": {
 			"as": "/data/icon/junior/file-flash",

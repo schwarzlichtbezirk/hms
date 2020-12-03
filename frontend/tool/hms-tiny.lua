@@ -6,10 +6,10 @@ wpkconf = {
 		"daylight", "blue",
 	},
 	iconset = {
-		"oxygen",
+		"ubuntu",
 	},
 	defskinid = "blue",
-	deficonid = "oxygen",
+	deficonid = "ubuntu",
 }
 
 dofile(scrdir.."pack.lua")

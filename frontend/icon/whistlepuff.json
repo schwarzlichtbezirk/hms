@@ -54,11 +54,9 @@
 			"scr": "/data/icon/whistlepuff/file-textfile",
 			"cfg": "/data/icon/whistlepuff/file-textfile",
 			"log": "/data/icon/whistlepuff/file-textfile",
-			"cab": "/data/icon/whistlepuff/file-textfile",
-			"zip": "/data/icon/whistlepuff/file-textfile",
-			"rar": "/data/icon/whistlepuff/file-textfile",
-			"tar": "/data/icon/whistlepuff/file-textfile",
-			"disk": "/data/icon/whistlepuff/file-disk"
+			"arch": "/data/icon/whistlepuff/file-textfile",
+			"disk": "/data/icon/whistlepuff/file-disk",
+			"pack": "/data/icon/whistlepuff/file-disk"
 		},
 		"ext": {
 			"ai": "/data/icon/whistlepuff/file-ai",

@@ -54,11 +54,9 @@
 			"scr": "/data/icon/delta/file-script",
 			"cfg": "/data/icon/delta/file-ini",
 			"log": "/data/icon/delta/file-script",
-			"cab": "/data/icon/delta/file-cab",
-			"zip": "/data/icon/delta/file-zip",
-			"rar": "/data/icon/delta/file-rar",
-			"tar": "/data/icon/delta/file-tar",
-			"disk": "/data/icon/delta/file-disk"
+			"arch": "/data/icon/delta/file-pack",
+			"disk": "/data/icon/delta/file-disk",
+			"pack": "/data/icon/delta/file-pack"
 		},
 		"ext": {
 			"aif": "/data/icon/delta/file-aif",
@@ -101,7 +99,12 @@
 			"wmv": "/data/icon/delta/file-wmv",
 			"wmz": "/data/icon/delta/file-wmz",
 			"wvx": "/data/icon/delta/file-wvx",
-			"html": "/data/icon/delta/file-html"
+			"html": "/data/icon/delta/file-html",
+			"cab": "/data/icon/delta/file-cab",
+			"zip": "/data/icon/delta/file-zip",
+			"rar": "/data/icon/delta/file-rar",
+			"rev": "/data/icon/delta/file-rar",
+			"tar": "/data/icon/delta/file-tar"
 		}
 	},
 	"shared": {

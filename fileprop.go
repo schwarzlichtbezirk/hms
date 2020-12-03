@@ -37,11 +37,9 @@ const (
 	FT_scr   = 19
 	FT_cfg   = 20
 	FT_log   = 21
-	FT_cab   = 22
-	FT_zip   = 23
-	FT_rar   = 24
-	FT_tar   = 25
-	FT_disk  = 26
+	FT_arch  = 22
+	FT_disk  = 23
+	FT_pack  = 24
 )
 
 // File groups
@@ -84,11 +82,9 @@ var typetogroup = map[int]int{
 	FT_scr:   FG_texts,
 	FT_cfg:   FG_texts,
 	FT_log:   FG_texts,
-	FT_cab:   FG_store,
-	FT_zip:   FG_store,
-	FT_rar:   FG_store,
-	FT_tar:   FG_store,
+	FT_arch:  FG_store,
 	FT_disk:  FG_store,
+	FT_pack:  FG_store,
 }
 
 var extset = map[string]int{
@@ -130,7 +126,7 @@ var extset = map[string]int{
 	".hta":   FT_html,
 	".mht":   FT_html,
 
-	// Text
+	// Texts
 	".txt":   FT_text,
 	".md":    FT_text,
 	".css":   FT_scr,
@@ -195,25 +191,37 @@ var extset = map[string]int{
 	".yml":   FT_cfg,
 	".yaml":  FT_cfg,
 	".cmake": FT_cfg,
-	".vhd":   FT_cfg,
-	".vhdl":  FT_cfg,
 	".json":  FT_cfg,
 	".log":   FT_log,
 
-	// archive
-	".cab": FT_cab,
-	".zip": FT_zip,
-	".7z":  FT_zip,
-	".rar": FT_rar,
-	".rev": FT_rar,
-	".tar": FT_tar,
-	".tgz": FT_tar,
-	".gz":  FT_tar,
-	".bz2": FT_tar,
-	".iso": FT_disk,
-	".nrg": FT_disk,
-	".mdf": FT_disk,
-	".wpk": FT_disk,
+	// storage
+	".cab":  FT_arch,
+	".zip":  FT_arch,
+	".7z":   FT_arch,
+	".rar":  FT_arch,
+	".rev":  FT_arch,
+	".tar":  FT_arch,
+	".tgz":  FT_arch,
+	".gz":   FT_arch,
+	".bz2":  FT_arch,
+	".iso":  FT_disk,
+	".isz":  FT_disk,
+	".udf":  FT_disk,
+	".nrg":  FT_disk,
+	".mdf":  FT_disk,
+	".mdx":  FT_disk,
+	".img":  FT_disk,
+	".ima":  FT_disk,
+	".imz":  FT_disk,
+	".ccd":  FT_disk,
+	".vc4":  FT_disk,
+	".dmg":  FT_disk,
+	".daa":  FT_disk,
+	".uif":  FT_disk,
+	".vhd":  FT_disk,
+	".vhdx": FT_disk,
+	".vmdk": FT_disk,
+	".wpk":  FT_pack,
 }
 
 // Categories properties constants.

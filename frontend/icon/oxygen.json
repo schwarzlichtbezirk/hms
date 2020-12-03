@@ -54,11 +54,9 @@
 			"scr": "/data/icon/oxygen/file-script",
 			"cfg": "/data/icon/oxygen/file-config",
 			"log": "/data/icon/oxygen/file-log",
-			"cab": "/data/icon/oxygen/file-store",
-			"zip": "/data/icon/oxygen/file-zip",
-			"rar": "/data/icon/oxygen/file-store",
-			"tar": "/data/icon/oxygen/file-tar",
-			"disk": "/data/icon/oxygen/file-disk"
+			"arch": "/data/icon/oxygen/file-store",
+			"disk": "/data/icon/oxygen/file-disk",
+			"pack": "/data/icon/oxygen/file-package"
 		},
 		"ext": {
 			"ai": "/data/icon/oxygen/file-ai",

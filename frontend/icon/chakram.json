@@ -54,10 +54,6 @@
 			"scr": "/data/icon/chakram/file-code",
 			"cfg": "/data/icon/chakram/file-code",
 			"log": "/data/icon/chakram/file-code",
-			"cab": "/data/icon/chakram/file-cab",
-			"zip": "/data/icon/chakram/file-zip",
-			"rar": "/data/icon/chakram/file-rar",
-			"tar": "/data/icon/chakram/file-tar",
 			"disk": "/data/icon/chakram/file-disk"
 		},
 		"ext": {
@@ -94,6 +90,7 @@
 			"png": "/data/icon/chakram/file-png",
 			"psd": "/data/icon/chakram/file-psd",
 			"rar": "/data/icon/chakram/file-rar",
+			"rev": "/data/icon/chakram/file-rar",
 			"reg": "/data/icon/chakram/file-reg",
 			"rtf": "/data/icon/chakram/file-rtf",
 			"sit": "/data/icon/chakram/file-sit",
@@ -104,7 +101,10 @@
 			"wav": "/data/icon/chakram/file-wav",
 			"wma": "/data/icon/chakram/file-wma",
 			"wmv": "/data/icon/chakram/file-wmv",
-			"xml": "/data/icon/chakram/file-xml"
+			"xml": "/data/icon/chakram/file-xml",
+			"cab": "/data/icon/chakram/file-cab",
+			"tar": "/data/icon/chakram/file-tar",
+			"7z": "/data/icon/chakram/file-7z"
 		}
 	},
 	"shared": {

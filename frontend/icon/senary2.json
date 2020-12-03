@@ -54,10 +54,6 @@
 			"scr": "/data/icon/senary/file-js",
 			"cfg": "/data/icon/senary/file-ini",
 			"log": "/data/icon/senary/file-txt",
-			"cab": "/data/icon/senary/file-cab",
-			"zip": "/data/icon/senary/file-zip",
-			"rar": "/data/icon/senary/file-rar",
-			"tar": "/data/icon/senary/file-rar",
 			"disk": "/data/icon/senary/file-iso"
 		},
 		"ext": {

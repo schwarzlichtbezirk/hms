@@ -62,8 +62,6 @@ end
 -- patterns for ignored files
 local skippattern = {
 	"^resmodel%.json$", -- skip original script
-	"^pack%.lua$", -- script that generate this package
-	"^build%.%w+%.cmd$",
 	"^thumb%.db$",
 }
 -- extensions of files that should not be included to package
@@ -114,30 +112,32 @@ end
 
 if logdir then logfmt("writes %s package", pkg.path) end
 
+local rootdir = path.toslash(path.clean(scrdir.."..")).."/"
 -- put some directories as is
-packdir("assets/", scrdir.."assets/")
-packdir("build/", scrdir.."build/")
-packdir("devmode/", scrdir.."devmode/")
-packdir("plugin/", scrdir.."plugin/")
-packdir("tmpl/", scrdir.."tmpl/")
+packdir("assets/", rootdir.."assets/")
+packdir("build/", rootdir.."build/")
+packdir("devmode/", rootdir.."devmode/")
+packdir("plugin/", rootdir.."plugin/")
+packdir("tmpl/", rootdir.."tmpl/")
+packdir("tool/", rootdir.."tool/")
 -- put skins
 for i, id in ipairs(wpkconf.skinset) do
 	for j, fname in ipairs(fullskinmap[id]) do
 		local kpath = "skin/"..fname
-		pkg:putfile(kpath, scrdir..kpath)
+		pkg:putfile(kpath, rootdir..kpath)
 		pkg:settag(kpath, "author", "schwarzlichtbezirk")
 	end
 end
 -- put icons
 for i, id in ipairs(wpkconf.iconset) do
 	local kpath = "icon/"..id.."/"
-	packdir(kpath, scrdir..kpath)
+	packdir(kpath, rootdir..kpath)
 	local kpath = "icon/"..id..".json"
-	pkg:putfile(kpath, scrdir..kpath)
+	pkg:putfile(kpath, rootdir..kpath)
 	pkg:settag(kpath, "author", "schwarzlichtbezirk")
 end
 -- put sources
-for i, fpath in ipairs{path.glob(scrdir.."../?*.?*")} do
+for i, fpath in ipairs{path.glob(rootdir.."../?*.?*")} do
 	local fname = string.match(fpath, "/([%w_]+%.%w+)$")
 	if fname then
 		local kpath = "src/"..fname
@@ -149,7 +149,7 @@ end
 
 -- put modified resmodel.json
 do
-	local f = assert(io.open(scrdir.."assets/resmodel.json", "rb"))
+	local f = assert(io.open(rootdir.."assets/resmodel.json", "rb"))
 	local content = f:read("*all")
 	f:close()
 	local function cut(id1, list)

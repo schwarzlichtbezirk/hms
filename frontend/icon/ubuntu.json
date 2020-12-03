@@ -54,11 +54,9 @@
 			"scr": "/data/icon/ubuntu/file-javascript",
 			"cfg": "/data/icon/ubuntu/file-ini",
 			"log": "/data/icon/ubuntu/file-log",
-			"cab": "/data/icon/ubuntu/file-cab",
-			"zip": "/data/icon/ubuntu/file-zip",
-			"rar": "/data/icon/ubuntu/file-rar",
-			"tar": "/data/icon/ubuntu/file-tar",
-			"disk": "/data/icon/ubuntu/file-disk"
+			"arch": "/data/icon/ubuntu/file-tgz",
+			"disk": "/data/icon/ubuntu/file-disk",
+			"pack": "/data/icon/ubuntu/file-tgz"
 		},
 		"ext": {
 			"ai": "/data/icon/ubuntu/file-ai",
@@ -107,7 +105,6 @@
 			"kpr": "/data/icon/ubuntu/file-kpr",
 			"pdf": "/data/icon/ubuntu/file-pdf",
 			"svg": "/data/icon/ubuntu/file-svg",
-			"tar": "/data/icon/ubuntu/file-tar",
 			"css": "/data/icon/ubuntu/file-css",
 			"txt": "/data/icon/ubuntu/file-text",
 			"log": "/data/icon/ubuntu/file-log",
@@ -126,6 +123,10 @@
 			"odt": "/data/icon/ubuntu/file-wordprocessing",
 			"html": "/data/icon/ubuntu/file-html",
 			"lnk": "/data/icon/ubuntu/file-lnk",
+			"rar": "/data/icon/ubuntu/file-rar",
+			"rev": "/data/icon/ubuntu/file-rar",
+			"rpm": "/data/icon/ubuntu/file-rpm",
+			"tar": "/data/icon/ubuntu/file-tar",
 			"zip": "/data/icon/ubuntu/file-zip"
 		}
 	},

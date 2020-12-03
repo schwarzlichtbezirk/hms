@@ -33,11 +33,9 @@ const FT = {
 	scr: 19,
 	cfg: 20,
 	log: 21,
-	cab: 22,
-	zip: 23,
-	rar: 24,
-	tar: 25,
-	disk: 26
+	arch: 22,
+	disk: 23,
+	pack: 24
 };
 
 const FTN = [
@@ -63,11 +61,9 @@ const FTN = [
 	"scr", // 19
 	"cfg", // 20
 	"log", // 21
-	"cab", // 22
-	"zip", // 23
-	"rar", // 24
-	"tar", // 25
-	"disk" // 26
+	"arch", // 22
+	"disk", // 23
+	"pack" // 24
 ];
 
 // File groups
@@ -108,11 +104,9 @@ const FTtoFG = {
 	[FT.scr]: FG.texts,
 	[FT.cfg]: FG.texts,
 	[FT.log]: FG.texts,
-	[FT.cab]: FG.store,
-	[FT.zip]: FG.store,
-	[FT.rar]: FG.store,
-	[FT.tar]: FG.store,
-	[FT.disk]: FG.store
+	[FT.arch]: FG.store,
+	[FT.disk]: FG.store,
+	[FT.pack]: FG.store
 };
 
 // File viewers
@@ -149,11 +143,9 @@ const FTtoFV = {
 	[FT.scr]: FV.none,
 	[FT.cfg]: FV.none,
 	[FT.log]: FV.none,
-	[FT.cab]: FV.none,
-	[FT.zip]: FV.none,
-	[FT.rar]: FV.none,
-	[FT.tar]: FV.none,
-	[FT.disk]: FV.none
+	[FT.arch]: FV.none,
+	[FT.disk]: FV.none,
+	[FT.pack]: FV.none
 };
 
 // Drive state
