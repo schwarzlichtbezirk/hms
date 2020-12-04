@@ -37,8 +37,7 @@
 			"webm": "/data/icon/xrabbit/file-doc",
 			"wave": "/data/icon/xrabbit/file-audio",
 			"flac": "/data/icon/xrabbit/file-audio",
-			"mp3": "/data/icon/xrabbit/file-audio",
-			"ogg": "/data/icon/xrabbit/file-audio",
+			"mus": "/data/icon/xrabbit/file-audio",
 			"tga": "/data/icon/xrabbit/file-image",
 			"bmp": "/data/icon/xrabbit/file-image",
 			"dds": "/data/icon/xrabbit/file-image",
@@ -58,14 +57,6 @@
 			"disk": "/data/icon/xrabbit/file-disk",
 			"pack": "/data/icon/xrabbit/file-disk"
 		},
-		"ext": {}
-	},
-	"shared": {
-		"label": "/data/icon/xrabbit/shared",
-		"cid": {},
-		"drive": {},
-		"folder": {},
-		"file": {},
 		"ext": {
 			"cab": "/data/icon/xrabbit/file-cab",
 			"zip": "/data/icon/xrabbit/file-zip",
@@ -76,5 +67,13 @@
 			"gz": "/data/icon/xrabbit/file-tar",
 			"bz2": "/data/icon/xrabbit/file-tar"
 		}
+	},
+	"shared": {
+		"label": "/data/icon/xrabbit/shared",
+		"cid": {},
+		"drive": {},
+		"folder": {},
+		"file": {},
+		"ext": {}
 	}
 }

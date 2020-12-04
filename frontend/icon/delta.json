@@ -37,8 +37,7 @@
 			"webm": "/data/icon/delta/file-webm",
 			"wave": "/data/icon/delta/file-wav",
 			"flac": "/data/icon/delta/file-flac",
-			"mp3": "/data/icon/delta/file-mp3",
-			"ogg": "/data/icon/delta/file-ogg",
+			"mus": "/data/icon/delta/file-music",
 			"tga": "/data/icon/delta/file-tga",
 			"bmp": "/data/icon/delta/file-bmp",
 			"dds": "/data/icon/delta/file-dds",
@@ -104,7 +103,8 @@
 			"zip": "/data/icon/delta/file-zip",
 			"rar": "/data/icon/delta/file-rar",
 			"rev": "/data/icon/delta/file-rar",
-			"tar": "/data/icon/delta/file-tar"
+			"tar": "/data/icon/delta/file-tar",
+			"ogg": "/data/icon/delta/file-ogg"
 		}
 	},
 	"shared": {

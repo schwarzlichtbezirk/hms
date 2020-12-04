@@ -9,33 +9,32 @@ const iconev = extend({}, makeeventmodel());
 // File types
 const FT = {
 	ctgr: -3,
-	drive: -2,
+	drv: -2,
 	dir: -1,
 	file: 0,
 	mp4: 1,
 	webm: 2,
 	wave: 3,
 	flac: 4,
-	mp3: 5,
-	ogg: 6,
-	tga: 7,
-	bmp: 8,
-	dds: 9,
-	tiff: 10,
-	jpeg: 11,
-	gif: 12,
-	png: 13,
-	webp: 14,
-	psd: 15,
-	pdf: 16,
-	html: 17,
-	text: 18,
-	scr: 19,
-	cfg: 20,
-	log: 21,
-	arch: 22,
-	disk: 23,
-	pack: 24
+	mus: 5,
+	tga: 6,
+	bmp: 7,
+	dds: 8,
+	tiff: 9,
+	jpeg: 10,
+	gif: 11,
+	png: 12,
+	webp: 13,
+	psd: 14,
+	pdf: 15,
+	html: 16,
+	text: 17,
+	scr: 18,
+	cfg: 19,
+	log: 20,
+	arch: 21,
+	disk: 22,
+	pack: 23
 };
 
 const FTN = [
@@ -44,26 +43,25 @@ const FTN = [
 	"webm", // 2
 	"wave", // 3
 	"flac", // 4
-	"mp3", // 5
-	"ogg", // 6
-	"tga", // 7
-	"bmp", // 8
-	"dds", // 9
-	"tiff", // 10
-	"jpeg", // 11
-	"gif", // 12
-	"png", // 13
-	"webp", // 14
-	"psd", // 15
-	"pdf", // 16
-	"html", // 17
-	"text", // 18
-	"scr", // 19
-	"cfg", // 20
-	"log", // 21
-	"arch", // 22
-	"disk", // 23
-	"pack" // 24
+	"mus", // 5
+	"tga", // 6
+	"bmp", // 7
+	"dds", // 8
+	"tiff", // 9
+	"jpeg", // 10
+	"gif", // 11
+	"png", // 12
+	"webp", // 13
+	"psd", // 14
+	"pdf", // 15
+	"html", // 16
+	"text", // 17
+	"scr", // 18
+	"cfg", // 19
+	"log", // 20
+	"arch", // 21
+	"disk", // 22
+	"pack" // 23
 ];
 
 // File groups
@@ -80,15 +78,14 @@ const FG = {
 
 const FTtoFG = {
 	[FT.ctgr]: FG.dir,
-	[FT.drive]: FG.dir,
+	[FT.drv]: FG.dir,
 	[FT.dir]: FG.dir,
 	[FT.file]: FG.other,
-	[FT.ogg]: FG.video,
 	[FT.mp4]: FG.video,
 	[FT.webm]: FG.video,
 	[FT.wave]: FG.audio,
 	[FT.flac]: FG.audio,
-	[FT.mp3]: FG.audio,
+	[FT.mus]: FG.audio,
 	[FT.tga]: FG.image,
 	[FT.bmp]: FG.image,
 	[FT.dds]: FG.image,
@@ -119,15 +116,14 @@ const FV = {
 
 const FTtoFV = {
 	[FT.ctgr]: FV.none,
-	[FT.drive]: FV.none,
+	[FT.drv]: FV.none,
 	[FT.dir]: FV.none,
 	[FT.file]: FV.none,
-	[FT.ogg]: FV.video,
 	[FT.mp4]: FV.video,
 	[FT.webm]: FV.video,
 	[FT.wave]: FV.audio,
 	[FT.flac]: FV.audio,
-	[FT.mp3]: FV.audio,
+	[FT.mus]: FV.audio,
 	[FT.tga]: FV.image,
 	[FT.bmp]: FV.image,
 	[FT.dds]: FV.image,
@@ -165,7 +161,7 @@ const geticonpath = (file, im, shr) => {
 				org: org.cid[file.cid] || org.cid.cid,
 				alt: alt.cid[file.cid] || alt.cid.cid
 			};
-		case FT.drive:
+		case FT.drv:
 			if (file.latency < 0) {
 				return { org: org.drive.offline, alt: alt.drive.offline };
 			} else if (file.latency < DS.yellow) {

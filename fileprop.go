@@ -12,34 +12,33 @@ import (
 
 // File types
 const (
-	FT_ctgr  = -3
-	FT_drive = -2
-	FT_dir   = -1
-	FT_file  = 0
-	FT_mp4   = 1
-	FT_webm  = 2
-	FT_wave  = 3
-	FT_flac  = 4
-	FT_mp3   = 5
-	FT_ogg   = 6
-	FT_tga   = 7
-	FT_bmp   = 8
-	FT_dds   = 9
-	FT_tiff  = 10
-	FT_jpeg  = 11
-	FT_gif   = 12
-	FT_png   = 13
-	FT_webp  = 14
-	FT_psd   = 15
-	FT_pdf   = 16
-	FT_html  = 17
-	FT_text  = 18
-	FT_scr   = 19
-	FT_cfg   = 20
-	FT_log   = 21
-	FT_arch  = 22
-	FT_disk  = 23
-	FT_pack  = 24
+	FT_ctgr = -3
+	FT_drv  = -2
+	FT_dir  = -1
+	FT_file = 0
+	FT_mp4  = 1
+	FT_webm = 2
+	FT_wave = 3
+	FT_flac = 4
+	FT_mus  = 5
+	FT_tga  = 6
+	FT_bmp  = 7
+	FT_dds  = 8
+	FT_tiff = 9
+	FT_jpeg = 10
+	FT_gif  = 11
+	FT_png  = 12
+	FT_webp = 13
+	FT_psd  = 14
+	FT_pdf  = 15
+	FT_html = 16
+	FT_text = 17
+	FT_scr  = 18
+	FT_cfg  = 19
+	FT_log  = 20
+	FT_arch = 21
+	FT_disk = 22
+	FT_pack = 23
 )
 
 // File groups
@@ -57,34 +56,33 @@ const (
 const FG_num = 8
 
 var typetogroup = map[int]int{
-	FT_ctgr:  FG_dir,
-	FT_drive: FG_dir,
-	FT_dir:   FG_dir,
-	FT_file:  FG_other,
-	FT_mp4:   FG_video,
-	FT_webm:  FG_video,
-	FT_wave:  FG_audio,
-	FT_flac:  FG_audio,
-	FT_mp3:   FG_audio,
-	FT_ogg:   FG_audio,
-	FT_tga:   FG_image,
-	FT_bmp:   FG_image,
-	FT_dds:   FG_image,
-	FT_tiff:  FG_image,
-	FT_jpeg:  FG_image,
-	FT_gif:   FG_image,
-	FT_png:   FG_image,
-	FT_webp:  FG_image,
-	FT_psd:   FG_image,
-	FT_pdf:   FG_books,
-	FT_html:  FG_books,
-	FT_text:  FG_texts,
-	FT_scr:   FG_texts,
-	FT_cfg:   FG_texts,
-	FT_log:   FG_texts,
-	FT_arch:  FG_store,
-	FT_disk:  FG_store,
-	FT_pack:  FG_store,
+	FT_ctgr: FG_dir,
+	FT_drv:  FG_dir,
+	FT_dir:  FG_dir,
+	FT_file: FG_other,
+	FT_mp4:  FG_video,
+	FT_webm: FG_video,
+	FT_wave: FG_audio,
+	FT_flac: FG_audio,
+	FT_mus:  FG_audio,
+	FT_tga:  FG_image,
+	FT_bmp:  FG_image,
+	FT_dds:  FG_image,
+	FT_tiff: FG_image,
+	FT_jpeg: FG_image,
+	FT_gif:  FG_image,
+	FT_png:  FG_image,
+	FT_webp: FG_image,
+	FT_psd:  FG_image,
+	FT_pdf:  FG_books,
+	FT_html: FG_books,
+	FT_text: FG_texts,
+	FT_scr:  FG_texts,
+	FT_cfg:  FG_texts,
+	FT_log:  FG_texts,
+	FT_arch: FG_store,
+	FT_disk: FG_store,
+	FT_pack: FG_store,
 }
 
 var extset = map[string]int{
@@ -95,8 +93,11 @@ var extset = map[string]int{
 	// Audio
 	".wav":  FT_wave,
 	".flac": FT_flac,
-	".mp3":  FT_mp3,
-	".ogg":  FT_ogg,
+	".mp3":  FT_mus,
+	".ogg":  FT_mus,
+	".opus": FT_mus,
+	".acc":  FT_mus,
+	".m4a":  FT_mus,
 
 	// Images
 	".tga":  FT_tga,
@@ -400,7 +401,7 @@ type DriveKit struct {
 // Fills fields with given path. Do not looks for share.
 func (dk *DriveKit) Setup(syspath string) {
 	dk.NameVal = PathBase(syspath)
-	dk.TypeVal = FT_drive
+	dk.TypeVal = FT_drv
 	dk.PUIDVal = pathcache.Cache(syspath)
 	dk.NTmbVal = TMB_reject
 }
@@ -555,7 +556,7 @@ func MakeProp(syspath string, fi os.FileInfo) interface{} {
 		return &dk
 	} else {
 		var ft = extset[strings.ToLower(filepath.Ext(syspath))]
-		if ft == FT_flac || ft == FT_mp3 || ft == FT_ogg || ft == FT_mp4 {
+		if ft == FT_flac || ft == FT_mus || ft == FT_mp4 {
 			var tk TagKit
 			tk.TypeVal = ft
 			tk.Setup(syspath, fi)

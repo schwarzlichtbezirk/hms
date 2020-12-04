@@ -37,8 +37,7 @@
 			"webm": "/data/icon/chakram/file-webm",
 			"wave": "/data/icon/chakram/file-wav",
 			"flac": "/data/icon/chakram/file-flac",
-			"mp3": "/data/icon/chakram/file-mp3",
-			"ogg": "/data/icon/chakram/file-ogg",
+			"mus": "/data/icon/chakram/file-music",
 			"tga": "/data/icon/chakram/file-tga",
 			"bmp": "/data/icon/chakram/file-bmp",
 			"dds": "/data/icon/chakram/file-dds",
@@ -104,7 +103,8 @@
 			"xml": "/data/icon/chakram/file-xml",
 			"cab": "/data/icon/chakram/file-cab",
 			"tar": "/data/icon/chakram/file-tar",
-			"7z": "/data/icon/chakram/file-7z"
+			"7z": "/data/icon/chakram/file-7z",
+			"ogg": "/data/icon/chakram/file-ogg"
 		}
 	},
 	"shared": {

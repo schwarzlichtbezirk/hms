@@ -113,7 +113,7 @@ Vue.component('dir-card-tag', {
 			return !this.diskpath.length;
 		},
 		disdiskremove() {
-			return !this.selfile || this.selfile.type !== FT.drive;
+			return !this.selfile || this.selfile.type !== FT.drv;
 		},
 
 		clsorder() {

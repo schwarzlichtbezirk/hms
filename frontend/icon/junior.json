@@ -37,8 +37,7 @@
 			"webm": "/data/icon/junior/file-movie3",
 			"wave": "/data/icon/junior/file-wave",
 			"flac": "/data/icon/junior/file-flac",
-			"mp3": "/data/icon/junior/file-mp3",
-			"ogg": "/data/icon/junior/file-music",
+			"mus": "/data/icon/junior/file-music",
 			"tga": "/data/icon/junior/file-bitmap",
 			"bmp": "/data/icon/junior/file-bitmap",
 			"dds": "/data/icon/junior/file-bitmap",
@@ -104,7 +103,8 @@
 			"mkv": "/data/icon/junior/file-movie1",
 			"avi": "/data/icon/junior/file-movie2",
 			"mov": "/data/icon/junior/file-movie2",
-			"wmv": "/data/icon/junior/file-movie3"
+			"wmv": "/data/icon/junior/file-movie3",
+			"mp3": "/data/icon/junior/file-mp3"
 		}
 	},
 	"shared": {
