@@ -14,54 +14,58 @@ const FT = {
 	file: 0,
 	mp4: 1,
 	webm: 2,
-	wave: 3,
-	flac: 4,
-	mus: 5,
-	tga: 6,
-	bmp: 7,
-	dds: 8,
-	tiff: 9,
-	jpeg: 10,
-	gif: 11,
-	png: 12,
-	webp: 13,
-	psd: 14,
-	pdf: 15,
-	html: 16,
-	text: 17,
-	scr: 18,
-	cfg: 19,
-	log: 20,
-	arch: 21,
-	disk: 22,
-	pack: 23
+	mov: 3,
+	wave: 4,
+	flac: 5,
+	mus: 6,
+	tga: 7,
+	bmp: 8,
+	dds: 9,
+	tiff: 10,
+	jpeg: 11,
+	gif: 12,
+	png: 13,
+	webp: 14,
+	psd: 15,
+	img: 16,
+	pdf: 17,
+	html: 18,
+	text: 19,
+	scr: 20,
+	cfg: 21,
+	log: 22,
+	arch: 23,
+	disk: 24,
+	pack: 25
 };
 
 const FTN = [
 	"file", // 0
 	"mp4", // 1
 	"webm", // 2
-	"wave", // 3
-	"flac", // 4
-	"mus", // 5
-	"tga", // 6
-	"bmp", // 7
-	"dds", // 8
-	"tiff", // 9
-	"jpeg", // 10
-	"gif", // 11
-	"png", // 12
-	"webp", // 13
-	"psd", // 14
-	"pdf", // 15
-	"html", // 16
-	"text", // 17
-	"scr", // 18
-	"cfg", // 19
-	"log", // 20
-	"arch", // 21
-	"disk", // 22
-	"pack" // 23
+	"mov", // 3
+	"wave", // 4
+	"flac", // 5
+	"mus", // 6
+	"tga", // 7
+	"bmp", // 8
+	"dds", // 9
+	"tiff", // 10
+	"jpeg", // 11
+	"gif", // 12
+	"png", // 13
+	"webp", // 14
+	"psd", // 15
+	"img", // 16
+	"pdf", // 17
+	"html", // 18
+	"text", // 19
+	"scr", // 20
+	"cfg", // 21
+	"log", // 22
+	"arch", // 23
+	"disk", // 24
+	"pack" // 25
 ];
 
 // File groups
@@ -83,6 +87,7 @@ const FTtoFG = {
 	[FT.file]: FG.other,
 	[FT.mp4]: FG.video,
 	[FT.webm]: FG.video,
+	[FT.mov]: FG.video,
 	[FT.wave]: FG.audio,
 	[FT.flac]: FG.audio,
 	[FT.mus]: FG.audio,
@@ -95,6 +100,7 @@ const FTtoFG = {
 	[FT.png]: FG.image,
 	[FT.webp]: FG.image,
 	[FT.psd]: FG.image,
+	[FT.img]: FG.image,
 	[FT.pdf]: FG.books,
 	[FT.html]: FG.books,
 	[FT.text]: FG.texts,
@@ -121,6 +127,7 @@ const FTtoFV = {
 	[FT.file]: FV.none,
 	[FT.mp4]: FV.video,
 	[FT.webm]: FV.video,
+	[FT.mov]: FV.video,
 	[FT.wave]: FV.audio,
 	[FT.flac]: FV.audio,
 	[FT.mus]: FV.audio,
@@ -133,6 +140,7 @@ const FTtoFV = {
 	[FT.png]: FV.image,
 	[FT.webp]: FV.image,
 	[FT.psd]: FV.image,
+	[FT.img]: FV.image,
 	[FT.pdf]: FV.none,
 	[FT.html]: FV.none,
 	[FT.text]: FV.none,

@@ -18,27 +18,29 @@ const (
 	FT_file = 0
 	FT_mp4  = 1
 	FT_webm = 2
-	FT_wave = 3
-	FT_flac = 4
-	FT_mus  = 5
-	FT_tga  = 6
-	FT_bmp  = 7
-	FT_dds  = 8
-	FT_tiff = 9
-	FT_jpeg = 10
-	FT_gif  = 11
-	FT_png  = 12
-	FT_webp = 13
-	FT_psd  = 14
-	FT_pdf  = 15
-	FT_html = 16
-	FT_text = 17
-	FT_scr  = 18
-	FT_cfg  = 19
-	FT_log  = 20
-	FT_arch = 21
-	FT_disk = 22
-	FT_pack = 23
+	FT_mov  = 3
+	FT_wave = 4
+	FT_flac = 5
+	FT_mus  = 6
+	FT_tga  = 7
+	FT_bmp  = 8
+	FT_dds  = 9
+	FT_tiff = 10
+	FT_jpeg = 11
+	FT_gif  = 12
+	FT_png  = 13
+	FT_webp = 14
+	FT_psd  = 15
+	FT_img  = 16
+	FT_pdf  = 17
+	FT_html = 18
+	FT_text = 19
+	FT_scr  = 20
+	FT_cfg  = 21
+	FT_log  = 22
+	FT_arch = 23
+	FT_disk = 24
+	FT_pack = 25
 )
 
 // File groups
@@ -62,6 +64,7 @@ var typetogroup = map[int]int{
 	FT_file: FG_other,
 	FT_mp4:  FG_video,
 	FT_webm: FG_video,
+	FT_mov:  FG_video,
 	FT_wave: FG_audio,
 	FT_flac: FG_audio,
 	FT_mus:  FG_audio,
@@ -74,6 +77,7 @@ var typetogroup = map[int]int{
 	FT_png:  FG_image,
 	FT_webp: FG_image,
 	FT_psd:  FG_image,
+	FT_img:  FG_image,
 	FT_pdf:  FG_books,
 	FT_html: FG_books,
 	FT_text: FG_texts,
@@ -89,6 +93,9 @@ var extset = map[string]int{
 	// Video
 	".mp4":  FT_mp4,
 	".webm": FT_webm,
+	".mov":  FT_mov,
+	".avi":  FT_mov,
+	".mkv":  FT_mov,
 
 	// Audio
 	".wav":  FT_wave,
@@ -98,11 +105,13 @@ var extset = map[string]int{
 	".opus": FT_mus,
 	".acc":  FT_mus,
 	".m4a":  FT_mus,
+	".wma":  FT_mus,
 
 	// Images
 	".tga":  FT_tga,
 	".bmp":  FT_bmp,
 	".dib":  FT_bmp,
+	".rle":  FT_bmp,
 	".dds":  FT_dds,
 	".tif":  FT_tiff,
 	".tiff": FT_tiff,
@@ -115,6 +124,10 @@ var extset = map[string]int{
 	".webp": FT_webp,
 	".psd":  FT_psd,
 	".psb":  FT_psd,
+	".jp2":  FT_img,
+	".jpg2": FT_img,
+	".jpx":  FT_img,
+	".jxr":  FT_img,
 
 	// Books
 	".pdf":   FT_pdf,
