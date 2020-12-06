@@ -88,5 +88,7 @@
 		}
 	],
 	"defskinid": "neon",
-	"deficonid": "junior"
+	"deficonid": "junior",
+	"iconwebp": true,
+	"iconpng": true
 }

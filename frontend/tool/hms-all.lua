@@ -2,16 +2,9 @@
 -- only with free resources iconset
 -- with allowed commercial usage
 wpkconf = {
-	fname = "hms-free.wpk",
-	skinset = {
-		"daylight", "blue", "neon",
-		"cup-of-coffee", "coffee-beans", "old-monitor",
-	},
-	iconset = {
-		"oxygen", "ubuntu",
-	},
+	fname = "hms-all.wpk",
 	defskinid = "neon",
-	deficonid = "ubuntu",
+	deficonid = "junior",
 }
 
 -- enable/disable progress log

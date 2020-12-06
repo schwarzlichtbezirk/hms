@@ -581,6 +581,8 @@ const app = new Vue({
 				throw new HttpError(response.status, { what: "can not load icons mapping file", when: Date.now(), code: 0 });
 			}
 			iconmapping = await response.json();
+			iconmapping.iconwebp = this.resmodel.iconwebp;
+			iconmapping.iconpng = this.resmodel.iconpng;
 			iconev.emit('plug');
 		},
 

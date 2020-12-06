@@ -338,6 +338,11 @@ Vue.component('file-icon-tag', {
 				return (res.org || res.alt) + '.png';
 			}
 		},
+		imgicon() {
+			if (this.im.iconpng) return this.pngicon;
+			if (this.im.iconwebp) return this.webpicon;
+			return '';
+		},
 
 		clsoverlay() {
 			switch (this.size) {
@@ -433,6 +438,11 @@ Vue.component('img-icon-tag', {
 				const res = geticonpath(this.file, this.im, this.state.shared);
 				return (res.org || res.alt) + '.png';
 			}
+		},
+		imgicon() {
+			if (this.im.iconpng) return this.pngicon;
+			if (this.im.iconwebp) return this.webpicon;
+			return '';
 		},
 
 		// manage items classes

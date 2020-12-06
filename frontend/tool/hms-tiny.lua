@@ -12,4 +12,12 @@ wpkconf = {
 	deficonid = "ubuntu",
 }
 
+-- enable/disable progress log
+logrec = false
+logdir = false
+
+-- icons format
+iconwebp = true
+iconpng = false
+
 dofile(scrdir.."pack.lua")

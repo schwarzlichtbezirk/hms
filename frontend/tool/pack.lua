@@ -20,17 +20,15 @@ local fulliconset = {
 }
 
 -- let's set package configuration to default if it was not provided
-wpkconf = wpkconf or {
-	fname = "hms-full.wpk",
-	skinset = fullskinset,
-	iconset = fulliconset,
-	defskinid = "neon",
-	deficonid = "junior",
-}
-
--- enable/disable progress log
-logrec = false
-logdir = false
+wpkconf = wpkconf or {}
+wpkconf.fname = wpkconf.fname or "hms-full.wpk"
+wpkconf.skinset = wpkconf.skinset or fullskinset
+wpkconf.iconset = wpkconf.iconset or fulliconset
+wpkconf.defskinid = wpkconf.defskinid or "neon"
+wpkconf.deficonid = wpkconf.deficonid or "junior"
+-- correct icons format
+iconwebp = type(iconwebp) ~= "boolean" or iconwebp
+iconpng = type(iconpng) ~= "boolean" or iconpng
 
 -- write to log formatted string
 local function logfmt(...)
@@ -90,20 +88,31 @@ local function checkname(name)
 	return true
 end
 -- pack given directory and add to each file name given prefix
-local function packdir(prefix, dir)
+local function commonput(kpath, fpath)
+	pkg:putfile(kpath, fpath)
+	if logrec then logfile(kpath) end
+end
+local function authput(kpath, fpath)
+	pkg:putfile(kpath, fpath)
+	pkg:settag(kpath, "author", "schwarzlichtbezirk")
+	if logrec then logfile(kpath) end
+end
+local function iconput(kpath, fpath)
+	if string.sub(kpath, -5) == ".webp" and not iconwebp then return end
+	if string.sub(kpath, -4) == ".png" and not iconpng then return end
+	pkg:putfile(kpath, fpath)
+	if logrec then logfile(kpath) end
+end
+local function packdir(prefix, dir, putfunc)
 	for i, name in ipairs(path.enum(dir)) do
 		local kpath = prefix..name
 		local fpath = dir..name
 		local access, isdir = checkfile(fpath)
 		if access and checkname(name) then
 			if isdir then
-				packdir(kpath.."/", fpath.."/")
+				packdir(kpath.."/", fpath.."/", putfunc)
 			else
-				pkg:putfile(kpath, fpath)
-				if prefix == "devmode/" then
-					pkg:settag(kpath, "author", "schwarzlichtbezirk")
-				end
-				if logrec then logfile(kpath) end
+				putfunc(kpath, fpath)
 			end
 		end
 	end
@@ -114,27 +123,25 @@ if logdir then logfmt("writes %s package", pkg.path) end
 
 local rootdir = path.toslash(path.clean(scrdir.."..")).."/"
 -- put some directories as is
-packdir("assets/", rootdir.."assets/")
-packdir("build/", rootdir.."build/")
-packdir("devmode/", rootdir.."devmode/")
-packdir("plugin/", rootdir.."plugin/")
-packdir("tmpl/", rootdir.."tmpl/")
-packdir("tool/", rootdir.."tool/")
+packdir("assets/", rootdir.."assets/", commonput)
+packdir("build/", rootdir.."build/", commonput)
+packdir("devmode/", rootdir.."devmode/", authput)
+packdir("plugin/", rootdir.."plugin/", commonput)
+packdir("tmpl/", rootdir.."tmpl/", commonput)
+packdir("tool/", rootdir.."tool/", commonput)
 -- put skins
 for i, id in ipairs(wpkconf.skinset) do
 	for j, fname in ipairs(fullskinmap[id]) do
 		local kpath = "skin/"..fname
-		pkg:putfile(kpath, rootdir..kpath)
-		pkg:settag(kpath, "author", "schwarzlichtbezirk")
+		authput(kpath, rootdir..kpath)
 	end
 end
 -- put icons
 for i, id in ipairs(wpkconf.iconset) do
 	local kpath = "icon/"..id.."/"
-	packdir(kpath, rootdir..kpath)
+	packdir(kpath, rootdir..kpath, iconput)
 	local kpath = "icon/"..id..".json"
-	pkg:putfile(kpath, rootdir..kpath)
-	pkg:settag(kpath, "author", "schwarzlichtbezirk")
+	authput(kpath, rootdir..kpath)
 end
 -- put sources
 for i, fpath in ipairs{path.glob(rootdir.."../?*.?*")} do
@@ -176,6 +183,14 @@ do
 	content = string.gsub(content, "\"defskinid\": \"[%w%-]+\"", "\"defskinid\": \""..wpkconf.defskinid.."\"")
 	-- replace deficonid
 	content = string.gsub(content, "\"deficonid\": \"[%w%-]+\"", "\"deficonid\": \""..wpkconf.deficonid.."\"")
+	-- replace iconwebp
+	if not iconwebp then
+		content = string.gsub(content, "\"iconwebp\": [%w%-]+", "\"iconwebp\": false")
+	end
+	-- replace iconpng
+	if not iconpng then
+		content = string.gsub(content, "\"iconpng\": [%w%-]+", "\"iconpng\": false")
+	end
 	content = string.gsub(content, "%[,", "[")
 	pkg:putdata("assets/resmodel.json", content)
 end

@@ -1,13 +1,13 @@
 
 <div class="imgitem" v-bind:class="itemview" v-on:click.stop="onselect" v-on:dblclick.stop="onopen" v-bind:title="fmttitle">
 	<picture class="pict">
-		<source v-bind:srcset="webpicon" type="image/webp">
-		<source v-bind:srcset="pngicon" type="image/png">
-		<img v-bind:src="pngicon+'.png'" v-bind:alt="fmtalt">
+		<source v-if="im.iconwebp" v-bind:srcset="webpicon" type="image/webp">
+		<source v-if="im.iconpng" v-bind:srcset="pngicon" type="image/png">
+		<img v-bind:src="imgicon" v-bind:alt="fmtalt">
 	</picture>
 	<picture v-if="label" class="pref">
-		<source v-bind:srcset="label+'.webp'" type="image/webp">
-		<source v-bind:srcset="label+'.png'" type="image/png">
+		<source v-if="im.iconwebp" v-bind:srcset="label+'.webp'" type="image/webp">
+		<source v-if="im.iconpng" v-bind:srcset="label+'.png'" type="image/png">
 		<img v-bind:src="label+'.png'" alt="shared">
 	</picture>
 	<img v-if="state.playback" class="bars" src="/asst/equalizer-bars.gif" alt="play">
