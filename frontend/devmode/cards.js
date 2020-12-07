@@ -642,7 +642,7 @@ Vue.component('map-card-tag', {
 				};
 				if (this.markermode === 'thumb' && file.puid) {
 					opt.icon = L.divIcon({
-						html: `<img src="${filetmbpng(file, iconmapping)}">`,
+						html: `<img src="${filetmbimg(file)}">`,
 						className: "photomarker",
 						iconSize: [size, size],
 						iconAnchor: [size / 2, size / 2],

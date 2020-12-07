@@ -20,7 +20,7 @@ const imempty = {
 };
 
 const filetmbwebp = (file, im) => {
-	if (file.ntmb === 1) {
+	if (file.ntmb === 1 || !im.iconwebp) {
 		return '';
 	} else {
 		const res = geticonpath(file, im, false);
@@ -30,9 +30,26 @@ const filetmbwebp = (file, im) => {
 const filetmbpng = (file, im) => {
 	if (file.ntmb === 1) {
 		return `/id${app.aid}/thumb/${file.puid}`;
-	} else {
+	} else if (im.iconpng) {
 		const res = geticonpath(file, im, false);
 		return (res.org || res.alt) + '.png';
+	} else {
+		return '';
+	}
+};
+const filetmbimg = (file) => {
+	if (file.ntmb === 1) {
+		return `/id${app.aid}/thumb/${file.puid}`;
+	} else {
+		if (iconmapping.iconpng) {
+			const res = geticonpath(file, iconmapping, false);
+			return (res.org || res.alt) + '.png';
+		}
+		if (iconmapping.iconwebp) {
+			const res = geticonpath(file, iconmapping, false);
+			return (res.org || res.alt) + '.webp';
+		}
+		return '';
 	}
 };
 
@@ -45,9 +62,9 @@ const makemarkercontent = file => `
 	<div class="tab-content">
 		<div class="tab-pane active" id="pict">
 			<picture>
-				<source srcset="${filetmbwebp(file, iconmapping)}" class="rounded thumb" type="image/webp">
-				<source srcset="${filetmbpng(file, iconmapping)}" class="rounded thumb" type="image/png">
-				<img src="${filetmbpng(file, iconmapping)}.png" class="rounded thumb" alt="${file.name}">
+				<source srcset="${filetmbwebp(file, iconmapping)}" type="image/webp">
+				<source srcset="${filetmbpng(file, iconmapping)}" type="image/png">
+				<img class="rounded thumb" alt="${file.name}">
 			</picture>
 			<div class="d-flex flex-wrap latlng">
 				<div><div class="name">lat:</div> <div class="value">${file.latitude.toFixed(6)}</div></div>
@@ -323,7 +340,7 @@ Vue.component('file-icon-tag', {
 			}
 		},
 		webpicon() {
-			if (this.file.ntmb === 1 && this.tm) {
+			if (this.file.ntmb === 1 && this.tm || !this.im.iconwebp) {
 				return '';
 			} else {
 				const res = geticonpath(this.file, this.im, this.state.shared);
@@ -333,15 +350,12 @@ Vue.component('file-icon-tag', {
 		pngicon() {
 			if (this.file.ntmb === 1 && this.tm) {
 				return `/id${app.aid}/thumb/${this.file.puid}`;
-			} else {
+			} else if (this.im.iconpng) {
 				const res = geticonpath(this.file, this.im, this.state.shared);
 				return (res.org || res.alt) + '.png';
+			} else {
+				return '';
 			}
-		},
-		imgicon() {
-			if (this.im.iconpng) return this.pngicon;
-			if (this.im.iconwebp) return this.webpicon;
-			return '';
 		},
 
 		clsoverlay() {
@@ -424,7 +438,7 @@ Vue.component('img-icon-tag', {
 			}
 		},
 		webpicon() {
-			if (this.file.ntmb === 1 && this.tm) {
+			if (this.file.ntmb === 1 && this.tm || !this.im.iconwebp) {
 				return '';
 			} else {
 				const res = geticonpath(this.file, this.im, this.state.shared);
@@ -434,15 +448,12 @@ Vue.component('img-icon-tag', {
 		pngicon() {
 			if (this.file.ntmb === 1 && this.tm) {
 				return `/id${app.aid}/thumb/${this.file.puid}`;
-			} else {
+			} else if (this.im.iconpng) {
 				const res = geticonpath(this.file, this.im, this.state.shared);
 				return (res.org || res.alt) + '.png';
+			} else {
+				return '';
 			}
-		},
-		imgicon() {
-			if (this.im.iconpng) return this.pngicon;
-			if (this.im.iconwebp) return this.webpicon;
-			return '';
 		},
 
 		// manage items classes

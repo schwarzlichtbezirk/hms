@@ -589,18 +589,19 @@ body {
 		overflow-x: hidden;
 	}
 
-		.thumbslider > .slide > .thumb {
-			opacity: 0.75;
-			border: 0.25rem solid Silver;
+	.thumbslider .thumb {
+		height: 100%;
+		opacity: 0.75;
+		border: 0.25rem solid Silver;
+	}
+
+		.thumbslider .thumb:hover {
+			opacity: 1;
+			border: 0.25rem solid Lavender;
 		}
 
-			.thumbslider > .slide > .thumb:hover {
-				opacity: 1;
-				border: 0.25rem solid Lavender;
-			}
-
-			.thumbslider > .slide > .thumb.active {
-				z-index: 1036;
-				opacity: 1;
-				border: 0.25rem solid Azure;
-			}
+		.thumbslider .thumb.active {
+			z-index: 1036;
+			opacity: 1;
+			border: 0.25rem solid Azure;
+		}

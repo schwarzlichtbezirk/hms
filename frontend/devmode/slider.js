@@ -1,6 +1,6 @@
 "use strict";
 
-const photofilter = file => FTtoFV[file.type] === FV.image;
+const photofilter = file => file.size && FTtoFV[file.type] === FV.image;
 
 Vue.component('thumbslider-tag', {
 	template: '#thumbslider-tpl',
@@ -17,8 +17,8 @@ Vue.component('thumbslider-tag', {
 		}
 	},
 	methods: {
-		getthumb(file) {
-			return filetmbpng(file, iconmapping);
+		imgicon(file) {
+			return filetmbimg(file);
 		},
 
 		onprev() {
@@ -39,12 +39,15 @@ Vue.component('photoslider-tag', {
 	data: function () {
 		return {
 			selfile: null,
-			selfileurl: null,
 			imgloading: false,
 			repeatmode: 0 // 0 - no any repeat, 1 - repeat single, 2 - repeat playlist
 		};
 	},
 	computed: {
+		// image url
+		selfileurl() {
+			return this.selfile && mediaurl(this.selfile);
+		},
 		// index of selected file
 		selfilepos() {
 			for (const i in this.list) {
@@ -82,25 +85,27 @@ Vue.component('photoslider-tag', {
 		}
 	},
 	methods: {
-		load(url) {
-			if (url) {
-				this.imgloading = true;
+		load(file) {
+			if (this.selfile !== file) {
+				if (file) {
+					this.selfile = file;
+					this.imgloading = true;
+				} else {
+					this.selfile = null;
+					this.imgloading = false;
+				}
 			}
-			this.selfileurl = url;
 		},
 		select(file) {
-			this.selfile = file;
-			this.load(mediaurl(file));
+			this.load(file);
 			this.$emit('select', file);
 		},
 		popup(file) {
-			this.selfile = file;
-			this.load(mediaurl(file));
+			this.load(file);
 			$(this.$refs.modal).modal('show');
 		},
 		close() {
-			this.selfile = null;
-			this.load(mediaurl(file));
+			this.load(null);
 			$(this.$refs.modal).modal('hide');
 		},
 
