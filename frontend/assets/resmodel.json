@@ -45,6 +45,12 @@
 			"source": "https://iconarchive.com/show/oxygen-icons-by-oxygen-icons.org.html"
 		},
 		{
+			"id": "tulliana",
+			"name": "tulliana 2 icons",
+			"link": "/data/icon/tulliana.json",
+			"source": "https://www.iconarchive.com/show/tulliana-2-icons-by-umut-pulat.html"
+		},
+		{
 			"id": "ubuntu",
 			"name": "ubuntu icons",
 			"link": "/data/icon/ubuntu.json",

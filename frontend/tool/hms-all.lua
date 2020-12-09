@@ -1,9 +1,12 @@
 
--- only with free resources iconset
--- with allowed commercial usage
+-- all icons collections in webp format
+
 wpkconf = {
+	-- result package name
 	fname = "hms-all.wpk",
+	-- default skin ID if nothing was selected
 	defskinid = "neon",
+	-- default icons collection ID if nothing was selected
 	deficonid = "junior",
 }
 

@@ -1,15 +1,21 @@
 
--- minimal size resources
+-- package with minimal resources size
+
 wpkconf = {
+	-- result package name
 	fname = "hms-tiny.wpk",
+	-- list of skins IDs, see 'id' tags of 'skinlist' in 'resmodel.json' file
 	skinset = {
 		"daylight", "blue",
 	},
+	-- list of icons collections IDs, see 'id' tags of 'iconlist' in 'resmodel.json' file
 	iconset = {
-		"ubuntu",
+		"tulliana",
 	},
+	-- default skin ID if nothing was selected
 	defskinid = "blue",
-	deficonid = "ubuntu",
+	-- default icons collection ID if nothing was selected
+	deficonid = "tulliana",
 }
 
 -- enable/disable progress log

@@ -14,7 +14,8 @@ local fullskinset = {
 }
 -- full list of icons identifiers
 local fulliconset = {
-	"junior", "oxygen", "ubuntu", "chakram",
+	"junior", "oxygen", "tulliana",
+	"ubuntu", "chakram",
 	"senary", "senary2", "delta",
 	"whistlepuff", "xrabbit",
 }
