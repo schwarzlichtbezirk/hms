@@ -1,5 +1,5 @@
 @echo off
-cd /d %~dp0
+cd /d %~dp0/..
 
 java -jar %~d0/tools/closure-compiler.jar^
  --js plugin/jquery.slim.min.js^
