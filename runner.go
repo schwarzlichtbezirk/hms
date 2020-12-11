@@ -55,8 +55,8 @@ type CfgSpec struct {
 	WPKmmap bool `json:"wpk-mmap" yaml:"wpk-mmap"`
 	// Maximum timeout in milliseconds between two ajax-calls to think client is online.
 	OnlineTimeout int64 `json:"online-timeout" yaml:"online-timeout"`
-	// Default account for user on localhost.
-	DefAccID int `json:"default-account-id" yaml:"default-account-id"`
+	// Default profile for user on localhost.
+	DefAccID int `json:"default-profile-id" yaml:"default-profile-id"`
 	// Maximum size of image to make thumbnail.
 	ThumbFileMaxSize int64 `json:"thumb-file-maxsize" yaml:"thumb-file-maxsize"`
 	// Stretch big image embedded into mp3-file to fit into standard icon size.
@@ -274,9 +274,9 @@ func Init() {
 		Log.Printf("loaded %d items into users list", len(usercache.list))
 	}
 
-	// load accounts with roots, hidden and shares lists
-	if err = acclist.Load(confpath + "accounts.yaml"); err != nil {
-		Log.Fatal("error on accounts file: " + err.Error())
+	// load profiles with roots, hidden and shares lists
+	if err = prflist.Load(confpath + "profiles.yaml"); err != nil {
+		Log.Fatal("error on profiles file: " + err.Error())
 	}
 
 	// run users scanner for statistics
@@ -440,8 +440,8 @@ func Done() {
 	srvwg.Add(1)
 	go func() {
 		defer srvwg.Done()
-		if err := acclist.Save(confpath + "accounts.yaml"); err != nil {
-			Log.Println("error on accounts list file: " + err.Error())
+		if err := prflist.Save(confpath + "profiles.yaml"); err != nil {
+			Log.Println("error on profiles list file: " + err.Error())
 		}
 	}()
 

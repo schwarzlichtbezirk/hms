@@ -4,7 +4,7 @@ import (
 	. "github.com/schwarzlichtbezirk/hms"
 )
 
-const buildvers = "0.6.9"
+const buildvers = "0.6.10"
 const builddate = "2020.12.10"
 
 func main() {

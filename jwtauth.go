@@ -22,7 +22,7 @@ import (
 // "sub" field for this tokens.
 const jwtsubject = "hms"
 
-// Claims of JWT-tokens. Contains additional account identifier.
+// Claims of JWT-tokens. Contains additional profile identifier.
 type HMSClaims struct {
 	jwt.StandardClaims
 	AID int `json:"aid"`
@@ -46,7 +46,7 @@ var (
 	ErrNoUserID = errors.New("token does not have user id")
 	ErrNoPubKey = errors.New("public key does not exist any more")
 	ErrBadPass  = errors.New("password is incorrect")
-	ErrNoAcc    = errors.New("account is absent")
+	ErrNoAcc    = errors.New("profile is absent")
 )
 
 // Zero hash value.
@@ -59,7 +59,7 @@ type Tokens struct {
 }
 
 // Type of handler for authorized API calls.
-type AuthHandlerFunc func(w http.ResponseWriter, r *http.Request, auth *Account)
+type AuthHandlerFunc func(w http.ResponseWriter, r *http.Request, auth *Profile)
 
 // Creates access and refresh tokens pair for given AID.
 func (t *Tokens) Make(aid int) {
@@ -110,9 +110,9 @@ func IsLocalhost(addrport string) bool {
 	return net.ParseIP(StripPort(addrport)).IsLoopback()
 }
 
-// Returns account from authorization header if it present,
-// or default account with no error if authorization is absent.
-func GetAuth(r *http.Request) (auth *Account, aerr error) {
+// Returns profile from authorization header if it present,
+// or default profile with no error if authorization is absent.
+func GetAuth(r *http.Request) (auth *Profile, aerr error) {
 	defer func() {
 		if auth != nil {
 			go func() { usermsg <- UsrMsg{r, "auth", auth.ID} }()
@@ -143,14 +143,14 @@ func GetAuth(r *http.Request) (auth *Account, aerr error) {
 		} else if err != nil {
 			aerr = &ErrAjax{err, EC_tokenbad}
 			return
-		} else if auth = acclist.ByID(claims.AID); auth == nil {
+		} else if auth = prflist.ByID(claims.AID); auth == nil {
 			aerr = &ErrAjax{ErrNoAcc, EC_tokennoacc}
 			return
 		}
 		return
 	}
 	if IsLocalhost(r.RemoteAddr) {
-		auth = acclist.ByID(cfg.DefAccID)
+		auth = prflist.ByID(cfg.DefAccID)
 	}
 	return
 }
@@ -163,7 +163,7 @@ func AuthWrap(fn AuthHandlerFunc) http.HandlerFunc {
 		}()
 
 		var err error
-		var auth *Account
+		var auth *Profile
 		if auth, err = GetAuth(r); err != nil {
 			WriteJson(w, http.StatusUnauthorized, err)
 			return
@@ -214,8 +214,8 @@ func signinApi(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var acc *Account
-	if acc = acclist.ByLogin(arg.Name); acc == nil {
+	var prf *Profile
+	if prf = prflist.ByLogin(arg.Name); prf == nil {
 		WriteError(w, http.StatusForbidden, ErrNoAcc, EC_signinnoacc)
 		return
 	}
@@ -226,14 +226,14 @@ func signinApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var mac = hmac.New(sha256.New, arg.PubK[:])
-	mac.Write([]byte(acc.Password))
+	mac.Write([]byte(prf.Password))
 	var cmp = mac.Sum(nil)
 	if !hmac.Equal(arg.Hash[:], cmp) {
 		WriteError(w, http.StatusForbidden, ErrBadPass, EC_signindeny)
 		return
 	}
 
-	res.Make(acc.ID)
+	res.Make(prf.ID)
 
 	WriteOK(w, &res)
 }

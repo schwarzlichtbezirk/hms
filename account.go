@@ -26,7 +26,7 @@ var DefHidden = []string{
 
 // File path access.
 const (
-	FPA_none  = 0 // account have no any access to specified file path
+	FPA_none  = 0 // profile have no any access to specified file path
 	FPA_admin = 1 // only authorized access to specified file path
 	FPA_share = 2 // access to specified file path is shared
 )
@@ -50,7 +50,7 @@ func (cg *CatGrp) SetAll(v bool) {
 	}
 }
 
-type Account struct {
+type Profile struct {
 	ID       int    `json:"id"`
 	Login    string `json:"login"`
 	Password string `json:"password"`
@@ -67,13 +67,13 @@ type Account struct {
 	mux sync.RWMutex
 }
 
-type Accounts struct {
-	list []*Account
+type Profiles struct {
+	list []*Profile
 	mux  sync.RWMutex
 }
 
-func (al *Accounts) NewAccount(login, password string) *Account {
-	var acc = &Account{
+func (pl *Profiles) NewAccount(login, password string) *Profile {
+	var prf = &Profile{
 		Login:     login,
 		Password:  password,
 		Roots:     []string{},
@@ -82,75 +82,75 @@ func (al *Accounts) NewAccount(login, password string) *Account {
 		sharepuid: map[string]string{},
 		puidshare: map[string]string{},
 	}
-	if len(al.list) > 0 {
-		acc.ID = al.list[len(al.list)-1].ID + 1
+	if len(pl.list) > 0 {
+		prf.ID = pl.list[len(pl.list)-1].ID + 1
 	}
 
-	al.Insert(acc)
-	return acc
+	pl.Insert(prf)
+	return prf
 }
 
-func (al *Accounts) ByID(aid int) *Account {
-	al.mux.RLock()
-	defer al.mux.RUnlock()
-	for _, acc := range al.list {
-		if acc.ID == aid {
-			return acc
+func (pl *Profiles) ByID(prfid int) *Profile {
+	pl.mux.RLock()
+	defer pl.mux.RUnlock()
+	for _, prf := range pl.list {
+		if prf.ID == prfid {
+			return prf
 		}
 	}
 	return nil
 }
 
-func (al *Accounts) ByLogin(login string) *Account {
-	al.mux.RLock()
-	defer al.mux.RUnlock()
-	for _, acc := range al.list {
-		if acc.Login == login {
-			return acc
+func (pl *Profiles) ByLogin(login string) *Profile {
+	pl.mux.RLock()
+	defer pl.mux.RUnlock()
+	for _, prf := range pl.list {
+		if prf.Login == login {
+			return prf
 		}
 	}
 	return nil
 }
 
-func (al *Accounts) Insert(acc *Account) {
-	al.mux.Lock()
-	defer al.mux.Unlock()
-	al.list = append(al.list, acc)
+func (pl *Profiles) Insert(prf *Profile) {
+	pl.mux.Lock()
+	defer pl.mux.Unlock()
+	pl.list = append(pl.list, prf)
 }
 
-func (al *Accounts) Delete(aid int) bool {
-	al.mux.RLock()
-	defer al.mux.RUnlock()
-	for i, acc := range al.list {
-		if acc.ID == aid {
-			al.list = append(al.list[:i], al.list[i+1:]...)
+func (pl *Profiles) Delete(prfid int) bool {
+	pl.mux.RLock()
+	defer pl.mux.RUnlock()
+	for i, prf := range pl.list {
+		if prf.ID == prfid {
+			pl.list = append(pl.list[:i], pl.list[i+1:]...)
 			return true
 		}
 	}
 	return false
 }
 
-// Accounts list.
-var acclist Accounts
+// Profiles list.
+var prflist Profiles
 
 // Set hidden files array to default predefined list.
-func (acc *Account) SetDefaultHidden() {
-	acc.mux.Lock()
-	defer acc.mux.Unlock()
+func (prf *Profile) SetDefaultHidden() {
+	prf.mux.Lock()
+	defer prf.mux.Unlock()
 
-	acc.Hidden = make([]string, len(DefHidden))
-	copy(acc.Hidden, DefHidden)
+	prf.Hidden = make([]string, len(DefHidden))
+	copy(prf.Hidden, DefHidden)
 }
 
 // Check up that file path is in hidden list.
-func (acc *Account) IsHidden(fpath string) bool {
+func (prf *Profile) IsHidden(fpath string) bool {
 	var matched bool
 	var kpath = strings.TrimSuffix(strings.ToLower(filepath.ToSlash(fpath)), "/")
 
-	acc.mux.RLock()
-	defer acc.mux.RUnlock()
+	prf.mux.RLock()
+	defer prf.mux.RUnlock()
 
-	for _, pattern := range acc.Hidden {
+	for _, pattern := range prf.Hidden {
 		if matched, _ = filepath.Match(pattern, kpath); matched {
 			break
 		}
@@ -159,11 +159,11 @@ func (acc *Account) IsHidden(fpath string) bool {
 }
 
 // Returns index of given path in roots list or -1 if not found.
-func (acc *Account) RootIndex(path string) int {
-	acc.mux.RLock()
-	defer acc.mux.RUnlock()
+func (prf *Profile) RootIndex(path string) int {
+	prf.mux.RLock()
+	defer prf.mux.RUnlock()
 
-	for i, root := range acc.Roots {
+	for i, root := range prf.Roots {
 		if root == path {
 			return i
 		}
@@ -172,27 +172,27 @@ func (acc *Account) RootIndex(path string) int {
 }
 
 // Scan all available drives installed on local machine.
-func (acc *Account) FindRoots() {
+func (prf *Profile) FindRoots() {
 	const windisks = "CDEFGHIJKLMNOPQRSTUVWXYZ"
 	for _, d := range windisks {
 		var root = string(d) + ":/"
 		if _, err := os.Stat(root); err == nil {
-			if acc.RootIndex(root) < 0 {
-				acc.mux.Lock()
-				acc.Roots = append(acc.Roots, root)
-				acc.mux.Unlock()
+			if prf.RootIndex(root) < 0 {
+				prf.mux.Lock()
+				prf.Roots = append(prf.Roots, root)
+				prf.mux.Unlock()
 			}
 		}
 	}
 }
 
 // Scan drives from roots list.
-func (acc *Account) ScanRoots() []Pather {
-	acc.mux.RLock()
-	defer acc.mux.RUnlock()
+func (prf *Profile) ScanRoots() []Pather {
+	prf.mux.RLock()
+	defer prf.mux.RUnlock()
 
-	var lst = make([]Pather, len(acc.Roots))
-	for i, path := range acc.Roots {
+	var lst = make([]Pather, len(prf.Roots))
+	for i, path := range prf.Roots {
 		var dk DriveKit
 		dk.Setup(path)
 		dk.Scan(path)
@@ -202,12 +202,12 @@ func (acc *Account) ScanRoots() []Pather {
 }
 
 // Scan actual shares from shares list.
-func (acc *Account) ScanShares() []Pather {
-	acc.mux.RLock()
-	defer acc.mux.RUnlock()
+func (prf *Profile) ScanShares() []Pather {
+	prf.mux.RLock()
+	defer prf.mux.RUnlock()
 
 	var lst []Pather
-	for _, path := range acc.Shares {
+	for _, path := range prf.Shares {
 		if prop, err := propcache.Get(path); err == nil {
 			lst = append(lst, prop.(Pather))
 		}
@@ -215,16 +215,16 @@ func (acc *Account) ScanShares() []Pather {
 	return lst
 }
 
-// Private function to update account shares private data.
-func (acc *Account) updateGrp() {
+// Private function to update profile shares private data.
+func (prf *Profile) updateGrp() {
 	var is = func(path string) bool {
-		var _, ok = acc.sharepuid[path]
+		var _, ok = prf.sharepuid[path]
 		return ok
 	}
 
 	var all = is(CP_drives)
 	var media = is(CP_media)
-	acc.ctgrshare = CatGrp{
+	prf.ctgrshare = CatGrp{
 		all,
 		all || is(CP_video) || media,
 		all || is(CP_audio) || media,
@@ -237,31 +237,31 @@ func (acc *Account) updateGrp() {
 }
 
 // Recreates shares maps, puts share property to cache.
-func (acc *Account) UpdateShares() {
-	acc.mux.Lock()
-	defer acc.mux.Unlock()
+func (prf *Profile) UpdateShares() {
+	prf.mux.Lock()
+	defer prf.mux.Unlock()
 
-	acc.sharepuid = map[string]string{}
-	acc.puidshare = map[string]string{}
-	for _, shr := range acc.Shares {
+	prf.sharepuid = map[string]string{}
+	prf.puidshare = map[string]string{}
+	for _, shr := range prf.Shares {
 		var syspath = shr
 		if prop, err := propcache.Get(syspath); err == nil {
 			var puid = prop.(Pather).PUID()
-			acc.sharepuid[syspath] = puid
-			acc.puidshare[puid] = syspath
-			Log.Printf("id%d: shared '%s' as %s", acc.ID, syspath, puid)
+			prf.sharepuid[syspath] = puid
+			prf.puidshare[puid] = syspath
+			Log.Printf("id%d: shared '%s' as %s", prf.ID, syspath, puid)
 		} else {
-			Log.Printf("id%d: can not share '%s'", acc.ID, syspath)
+			Log.Printf("id%d: can not share '%s'", prf.ID, syspath)
 		}
 	}
-	acc.updateGrp()
+	prf.updateGrp()
 }
 
 // Checks that syspath is become in any share.
-func (acc *Account) IsShared(syspath string) bool {
-	acc.mux.RLock()
-	defer acc.mux.RUnlock()
-	for _, path := range acc.Shares {
+func (prf *Profile) IsShared(syspath string) bool {
+	prf.mux.RLock()
+	defer prf.mux.RUnlock()
+	for _, path := range prf.Shares {
 		if path == syspath {
 			return true
 		}
@@ -270,10 +270,10 @@ func (acc *Account) IsShared(syspath string) bool {
 }
 
 // Checks that syspath is become in any root.
-func (acc *Account) IsRooted(syspath string) bool {
-	acc.mux.RLock()
-	defer acc.mux.RUnlock()
-	for _, path := range acc.Roots {
+func (prf *Profile) IsRooted(syspath string) bool {
+	prf.mux.RLock()
+	defer prf.mux.RUnlock()
+	for _, path := range prf.Roots {
 		if path == syspath {
 			return true
 		}
@@ -282,42 +282,42 @@ func (acc *Account) IsRooted(syspath string) bool {
 }
 
 // Add share with given path unigue identifier.
-func (acc *Account) AddShare(syspath string) bool {
-	acc.mux.Lock()
-	defer acc.mux.Unlock()
+func (prf *Profile) AddShare(syspath string) bool {
+	prf.mux.Lock()
+	defer prf.mux.Unlock()
 
 	var puid = pathcache.Cache(syspath)
-	if _, ok := acc.puidshare[puid]; !ok {
-		acc.Shares = append(acc.Shares, syspath)
-		acc.sharepuid[syspath] = puid
-		acc.puidshare[puid] = syspath
-		acc.updateGrp()
+	if _, ok := prf.puidshare[puid]; !ok {
+		prf.Shares = append(prf.Shares, syspath)
+		prf.sharepuid[syspath] = puid
+		prf.puidshare[puid] = syspath
+		prf.updateGrp()
 		return true
 	}
 	return false
 }
 
 // Delete share by given path unigue identifier.
-func (acc *Account) DelShare(puid string) bool {
-	acc.mux.Lock()
-	defer acc.mux.Unlock()
+func (prf *Profile) DelShare(puid string) bool {
+	prf.mux.Lock()
+	defer prf.mux.Unlock()
 
-	if syspath, ok := acc.puidshare[puid]; ok {
-		for i, shr := range acc.Shares {
+	if syspath, ok := prf.puidshare[puid]; ok {
+		for i, shr := range prf.Shares {
 			if shr == syspath {
-				acc.Shares = append(acc.Shares[:i], acc.Shares[i+1:]...)
+				prf.Shares = append(prf.Shares[:i], prf.Shares[i+1:]...)
 			}
 		}
-		delete(acc.sharepuid, syspath)
-		delete(acc.puidshare, puid)
-		acc.updateGrp()
+		delete(prf.sharepuid, syspath)
+		delete(prf.puidshare, puid)
+		prf.updateGrp()
 		return true
 	}
 	return false
 }
 
 // Brings system path to largest share path.
-func (acc *Account) GetSharePath(syspath string, isadmin bool) (shrpath string, base string, cg CatGrp) {
+func (prf *Profile) GetSharePath(syspath string, isadmin bool) (shrpath string, base string, cg CatGrp) {
 	var concat = func() {
 		var pref, suff = pathcache.Cache(base), syspath[len(base):]
 		if len(suff) > 0 && suff[0] != '/' {
@@ -327,10 +327,10 @@ func (acc *Account) GetSharePath(syspath string, isadmin bool) (shrpath string, 
 		}
 	}
 
-	acc.mux.RLock()
-	defer acc.mux.RUnlock()
+	prf.mux.RLock()
+	defer prf.mux.RUnlock()
 
-	for _, path := range acc.Shares {
+	for _, path := range prf.Shares {
 		if strings.HasPrefix(syspath, path) {
 			if len(path) > len(base) {
 				base = path
@@ -343,7 +343,7 @@ func (acc *Account) GetSharePath(syspath string, isadmin bool) (shrpath string, 
 		return
 	}
 
-	for _, path := range acc.Roots {
+	for _, path := range prf.Roots {
 		if strings.HasPrefix(syspath, path) {
 			if len(path) > len(base) {
 				base = path
@@ -355,7 +355,7 @@ func (acc *Account) GetSharePath(syspath string, isadmin bool) (shrpath string, 
 		if isadmin {
 			cg.SetAll(true)
 		} else {
-			cg = acc.ctgrshare
+			cg = prf.ctgrshare
 		}
 		return
 	}
@@ -365,22 +365,22 @@ func (acc *Account) GetSharePath(syspath string, isadmin bool) (shrpath string, 
 }
 
 // Returns file group access state for given file path.
-func (acc *Account) PathAccess(syspath string, isadmin bool) (cg CatGrp) {
-	acc.mux.RLock()
-	defer acc.mux.RUnlock()
+func (prf *Profile) PathAccess(syspath string, isadmin bool) (cg CatGrp) {
+	prf.mux.RLock()
+	defer prf.mux.RUnlock()
 
-	for _, path := range acc.Shares {
+	for _, path := range prf.Shares {
 		if strings.HasPrefix(syspath, path) {
 			cg.SetAll(true)
 			return
 		}
 	}
-	for _, path := range acc.Roots {
+	for _, path := range prf.Roots {
 		if strings.HasPrefix(syspath, path) {
 			if isadmin {
 				cg.SetAll(true)
 			} else {
-				cg = acc.ctgrshare
+				cg = prf.ctgrshare
 			}
 			return
 		}
@@ -388,17 +388,17 @@ func (acc *Account) PathAccess(syspath string, isadmin bool) (cg CatGrp) {
 	return
 }
 
-// Returns whether account has admin access to file path or category path.
-func (acc *Account) PathAdmin(syspath string) bool {
-	acc.mux.RLock()
-	defer acc.mux.RUnlock()
+// Returns whether profile has admin access to file path or category path.
+func (prf *Profile) PathAdmin(syspath string) bool {
+	prf.mux.RLock()
+	defer prf.mux.RUnlock()
 
-	for _, path := range acc.Shares {
+	for _, path := range prf.Shares {
 		if strings.HasPrefix(syspath, path) {
 			return true
 		}
 	}
-	for _, path := range acc.Roots {
+	for _, path := range prf.Roots {
 		if strings.HasPrefix(syspath, path) {
 			return true
 		}
@@ -412,7 +412,7 @@ func (acc *Account) PathAdmin(syspath string) bool {
 }
 
 // Reads directory with given system path and returns Pather for each entry.
-func (acc *Account) Readdir(syspath string, cg *CatGrp) (ret []Pather, err error) {
+func (prf *Profile) Readdir(syspath string, cg *CatGrp) (ret []Pather, err error) {
 	if !strings.HasSuffix(syspath, "/") {
 		syspath += "/"
 	}
@@ -444,7 +444,7 @@ func (acc *Account) Readdir(syspath string, cg *CatGrp) (ret []Pather, err error
 			if fi.IsDir() {
 				fpath += "/"
 			}
-			if !acc.IsHidden(fpath) {
+			if !prf.IsHidden(fpath) {
 				var prop = CacheProp(fpath, fi).(Pather)
 				var grp = typetogroup[prop.Type()]
 				if cg[grp] {

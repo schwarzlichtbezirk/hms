@@ -2,7 +2,7 @@
 
 // This file is included for release mode linkage
 
-const buildvers = "0.6.9";
+const buildvers = "0.6.10";
 const builddate = "2020.12.10";
 const devmode = false;
 

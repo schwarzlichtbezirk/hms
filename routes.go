@@ -62,29 +62,32 @@ const (
 	// file
 	EC_filebadaccid = 10
 	EC_filenoacc    = 11
-	EC_fileaccess   = 12
+	EC_filehidden   = 12
 	EC_filenoprop   = 13
 	EC_filenofile   = 14
+	EC_fileaccess   = 15
 
 	// media
 	EC_mediabadaccid = 20
 	EC_medianoacc    = 21
 	EC_medianopath   = 22
-	EC_mediaaccess   = 23
+	EC_mediahidden   = 23
 	EC_medianoprop   = 24
 	EC_medianofile   = 25
-	EC_mediaabsent   = 26
-	EC_mediabadcnt   = 27
+	EC_mediaaccess   = 26
+	EC_mediaabsent   = 27
+	EC_mediabadcnt   = 28
 
 	// thumb
 	EC_thumbbadaccid = 30
 	EC_thumbnoacc    = 31
 	EC_thumbnopath   = 32
-	EC_thumbaccess   = 33
+	EC_thumbhidden   = 33
 	EC_thumbnoprop   = 34
 	EC_thumbnofile   = 35
-	EC_thumbabsent   = 36
-	EC_thumbbadcnt   = 37
+	EC_thumbaccess   = 36
+	EC_thumbabsent   = 37
+	EC_thumbbadcnt   = 38
 
 	// pubkey
 	EC_pubkeyrand = 40

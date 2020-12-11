@@ -230,12 +230,12 @@ func tmbscnApi(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var acc *Account
-	if acc = acclist.ByID(int(arg.AID)); acc == nil {
+	var prf *Profile
+	if prf = prflist.ByID(int(arg.AID)); prf == nil {
 		WriteError400(w, ErrNoAcc, EC_tmbscnnoacc)
 		return
 	}
-	var auth *Account
+	var auth *Profile
 	if auth, err = GetAuth(r); err != nil {
 		WriteJson(w, http.StatusUnauthorized, err)
 		return
@@ -244,7 +244,7 @@ func tmbscnApi(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		for _, puid := range arg.PUIDs {
 			if syspath, ok := pathcache.Path(puid); ok {
-				if cg := acc.PathAccess(syspath, auth == acc); cg.IsZero() {
+				if cg := prf.PathAccess(syspath, auth == prf); cg.IsZero() {
 					continue
 				}
 				thumbcache.Get(puid)

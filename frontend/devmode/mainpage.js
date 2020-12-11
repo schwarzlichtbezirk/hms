@@ -406,7 +406,7 @@ const app = new Vue({
 		showauth: false, // display authorization form
 		isauth: false, // is authorized
 		authid: 0, // authorized ID
-		aid: 0, // account ID
+		aid: 0, // profile ID
 		ishome: false, // able to go home
 
 		loadcount: 0, // ajax working request count
@@ -1025,7 +1025,7 @@ const app = new Vue({
 			chunks.shift();
 		}
 
-		// get account id
+		// get profile id
 		if (chunks[0].substr(0, 2) === "id") {
 			this.aid = Number(chunks[0].substr(2));
 			chunks.shift();

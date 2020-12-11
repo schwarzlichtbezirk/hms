@@ -114,59 +114,58 @@ func (cfg *Config) Save(fpath string) error {
 	return WriteYaml(fpath, intro, &cfg)
 }
 
-func (al *Accounts) Load(fpath string) (err error) {
-	if err = ReadYaml(fpath, &al.list); err != nil {
+func (pl *Profiles) Load(fpath string) (err error) {
+	if err = ReadYaml(fpath, &pl.list); err != nil {
 		return
 	}
 
-	if len(al.list) > 0 {
-		for _, acc := range al.list {
-			Log.Printf("loaded account id%d, login='%s'", acc.ID, acc.Login)
+	if len(pl.list) > 0 {
+		for _, prf := range pl.list {
+			Log.Printf("loaded profile id%d, login='%s'", prf.ID, prf.Login)
 			// cache roots
-			for _, path := range acc.Roots {
+			for _, path := range prf.Roots {
 				pathcache.Cache(path)
 			}
 			// cache shares
-			for _, path := range acc.Shares {
+			for _, path := range prf.Shares {
 				pathcache.Cache(path)
 			}
 
 			// bring all hidden to lowercase
-			for i, path := range acc.Hidden {
-				acc.Hidden[i] = strings.ToLower(filepath.ToSlash(path))
+			for i, path := range prf.Hidden {
+				prf.Hidden[i] = strings.ToLower(filepath.ToSlash(path))
 			}
 
 			// build shares tables
-			acc.UpdateShares()
+			prf.UpdateShares()
 		}
 
-		// check up default account
-		if acc := al.ByID(cfg.DefAccID); acc != nil {
-			if len(acc.Roots) == 0 {
-				acc.FindRoots()
+		// check up default profile
+		if prf := pl.ByID(cfg.DefAccID); prf != nil {
+			if len(prf.Roots) == 0 {
+				prf.FindRoots()
 			}
 		} else {
-			Log.Fatal("default account is not found")
+			Log.Fatal("default profile is not found")
 		}
 	} else {
-		var acc = al.NewAccount("admin", "dag qus fly in the sky")
-		acc.ID = cfg.DefAccID
-		Log.Printf("created account id%d, login='%s'", acc.ID, acc.Login)
-		acc.SetDefaultHidden()
-		acc.FindRoots()
+		var prf = pl.NewAccount("admin", "dag qus fly in the sky")
+		prf.ID = cfg.DefAccID
+		Log.Printf("created profile id%d, login='%s'", prf.ID, prf.Login)
+		prf.SetDefaultHidden()
+		prf.FindRoots()
 	}
 	return
 }
 
-func (al *Accounts) Save(fpath string) error {
+func (pl *Profiles) Save(fpath string) error {
 	const intro = `
-# List of administrators accounts. Each account should be
-# with unique password, and allows to configure access to
-# specified root drives, shares, and to hide files on
-# specified masks.
+# List of administration profiles. Each profile should be with
+# unique password, and allows to configure access to specified
+# root drives, shares, and to hide files on specified masks.
 
 `
-	return WriteYaml(fpath, intro, al.list)
+	return WriteYaml(fpath, intro, pl.list)
 }
 
 func (uc *UserCache) Load(fpath string) (err error) {

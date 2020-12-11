@@ -1,8 +1,7 @@
 ﻿
-# List of administrators accounts. Each account should be
-# with unique password, and allows to configure access to
-# specified root drives, shares, and to hide files on
-# specified masks.
+# List of administration profiles. Each profile should be with
+# unique password, and allows to configure access to specified
+# root drives, shares, and to hide files on specified masks.
 
 - id: 1
   login: admin

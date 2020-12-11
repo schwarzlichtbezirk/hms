@@ -25,7 +25,7 @@ type User struct {
 	LastPage  int64      `json:"lastpage" yaml:"last-page"`   // last page load UNIX-time in milliseconds
 	IsAuth    bool       `json:"isauth" yaml:"is-auth"`       // is user authorized
 	AuthID    int        `json:"authid" yaml:"auth-id"`       // authorized ID
-	AccID     int        `json:"accid" yaml:"acc-id"`         // page account ID
+	PrfID     int        `json:"prfid" yaml:"prf-id"`         // page profile ID
 	Paths     []HistItem `json:"paths" yaml:"paths"`          // list of opened system paths
 	Files     []HistItem `json:"files" yaml:"files"`          // list of served files
 
@@ -115,7 +115,7 @@ func UserScanner() {
 				}
 			case "page":
 				user.LastPage = user.LastAjax
-				user.AccID = (um.val).(int)
+				user.PrfID = (um.val).(int)
 			case "path":
 				user.Paths = append(user.Paths, HistItem{(um.val).(string), user.LastAjax})
 			case "file":
@@ -143,7 +143,7 @@ func usrlstApi(w http.ResponseWriter, r *http.Request) {
 		Online bool          `json:"online"`
 		IsAuth bool          `json:"isauth"`
 		AuthID int           `json:"authid"`
-		AccID  int           `json:"accid"`
+		PrfID  int           `json:"prfid"`
 	}
 
 	var err error
@@ -186,7 +186,7 @@ func usrlstApi(w http.ResponseWriter, r *http.Request) {
 		ui.Online = user.LastAjax > ot
 		ui.IsAuth = user.IsAuth
 		ui.AuthID = user.AuthID
-		ui.AccID = user.AccID
+		ui.PrfID = user.PrfID
 		ret.List = append(ret.List, ui)
 	}
 
