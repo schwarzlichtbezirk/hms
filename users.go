@@ -53,8 +53,7 @@ var userkeyhash = xxhash.New()
 // produced on fast uint64-hash.
 func UserKey(addr, agent string) uint64 {
 	userkeyhash.Reset()
-	userkeyhash.WriteString(addr)
-	userkeyhash.WriteString(agent)
+	userkeyhash.Write([]byte(addr + agent))
 	return userkeyhash.Sum64()
 }
 

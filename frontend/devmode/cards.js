@@ -694,11 +694,14 @@ Vue.component('map-card-tag', {
 		}
 	},
 	mounted() {
-		const tiles = L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.jpg?access_token=pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw', {
+		const tiles = L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
 			attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/" target="_blank">OpenStreetMap</a> contributors, ' +
 				'Imagery &copy <a href="https://www.mapbox.com/" target="_blank">Mapbox</a>',
+			tileSize: 512,
 			minZoom: 2,
-			id: 'mapbox.streets-satellite'
+			zoomOffset: -1,
+			id: 'mapbox/satellite-streets-v11',
+			accessToken: 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw'
 		});
 
 		this.map = L.map(this.$refs.map, {
