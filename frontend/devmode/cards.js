@@ -588,7 +588,9 @@ Vue.component('map-card-tag', {
 	template: '#map-card-tpl',
 	data: function () {
 		return {
+			styleid: 'hybrid',
 			map: null, // set it on mounted event
+			tiles: null,
 			markers: null,
 			markermode: "thumb",
 			gpslist: [],
@@ -600,11 +602,22 @@ Vue.component('map-card-tag', {
 		isvisible() {
 			return this.gpslist.length > 0;
 		},
+		clslandscape() {
+			return { active: this.styleid === 'hybrid' };
+		},
 
 		iconmarkermode() {
 			switch (this.markermode) {
 				case 'marker': return 'place';
 				case 'thumb': return 'local_see';
+			}
+		},
+		hintlandscape() {
+			switch (this.styleid) {
+				case 'streets':
+					return "streets map mode";
+				case 'hybrid':
+					return "satellite & streets map mode";
 			}
 		},
 		hintmarkermode() {
@@ -628,6 +641,27 @@ Vue.component('map-card-tag', {
 				this.map.addLayer(this.markers);
 				this.gpslist = [];
 			}
+		},
+		// make tiles layer
+		maketiles() {
+			const id = (() => {
+				switch (this.styleid) {
+					case 'streets':
+						return 'mapbox/streets-v11';
+					case 'hybrid':
+						return 'mapbox/satellite-streets-v11';
+				}
+			})();
+			const uri = 'https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}'
+			this.tiles = L.tileLayer(uri, {
+				attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/" target="_blank">OpenStreetMap</a> contributors, ' +
+					'Imagery &copy <a href="https://www.mapbox.com/" target="_blank">Mapbox</a>',
+				tileSize: 512,
+				minZoom: 2,
+				zoomOffset: -1,
+				id: id,
+				accessToken: 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw'
+			});
 		},
 		// setup markers on map, remove previous
 		addmarkers(gpslist) {
@@ -674,6 +708,19 @@ Vue.component('map-card-tag', {
 			this.gpslist.push(...gpslist);
 		},
 
+		onlandscape() {
+			this.map.removeLayer(this.tiles);
+			this.styleid = (() => {
+				switch (this.styleid) {
+					case 'streets':
+						return 'hybrid';
+					case 'hybrid':
+						return 'streets';
+				}
+			})();
+			this.maketiles();
+			this.map.addLayer(this.tiles);
+		},
 		onmarkermode() {
 			switch (this.markermode) {
 				case 'marker':
@@ -694,20 +741,11 @@ Vue.component('map-card-tag', {
 		}
 	},
 	mounted() {
-		const tiles = L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
-			attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/" target="_blank">OpenStreetMap</a> contributors, ' +
-				'Imagery &copy <a href="https://www.mapbox.com/" target="_blank">Mapbox</a>',
-			tileSize: 512,
-			minZoom: 2,
-			zoomOffset: -1,
-			id: 'mapbox/satellite-streets-v11',
-			accessToken: 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw'
-		});
-
+		this.maketiles();
 		this.map = L.map(this.$refs.map, {
 			center: [0, 0],
 			zoom: 8,
-			layers: [tiles]
+			layers: [this.tiles]
 		});
 	}
 });
