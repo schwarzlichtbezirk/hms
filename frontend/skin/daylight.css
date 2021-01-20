@@ -61,28 +61,6 @@ body {
 	border-radius: 0.25rem;
 }
 
-.cardbtn {
-	text-decoration: none;
-	padding: 0;
-	color: rgba(0, 0, 0, 0.5);
-}
-
-	.cardbtn:hover, .cardbtn:focus {
-		color: rgba(0, 0, 0, 0.7);
-		background-color: rgba(189, 183, 107, 0.5); /* DarkKhaki */
-	}
-
-	.cardbtn:disabled, cardbtn.disabled {
-		pointer-events: none;
-		cursor: default;
-		color: rgba(0, 0, 0, 0.3);
-		background-color: transparent;
-	}
-
-	.cardbtn.active, .active > .cardbtn {
-		color: rgba(0, 0, 0, 0.8);
-	}
-
 .toolinp {
 	border: 1px solid rgba(255, 255, 255, 0.1);
 	border-radius: 0.25rem;
@@ -120,26 +98,59 @@ body {
 	background-color: LemonChiffon;
 }
 
-.hmscard > .card-header {
-	padding-top: 0.25rem;
-	padding-bottom: 0.25rem;
+.bg-card {
+	background: #f3eec3;
 }
 
-	.hmscard > .card-header > .navbar-nav ~ .navbar-nav {
-		padding-left: 1.25rem;
+	.bg-card.card-header {
+		padding-top: 0.25rem;
+		padding-bottom: 0.25rem;
 	}
 
-.hmscard .navbar-text {
-	color: rgba(0, 0, 0, 0.5);
-}
+		.bg-card.card-header > .navbar-nav ~ .navbar-nav {
+			padding-left: 1.25rem;
+		}
 
-	.hmscard .navbar-text a {
-		color: rgba(0, 0, 0, 0.9);
+	.bg-card .navbar-text {
+		color: rgba(0, 0, 0, 0.5);
 	}
 
-		.hmscard .navbar-text a:hover, .hmscard .navbar-text a:focus {
+		.bg-card .navbar-text a {
 			color: rgba(0, 0, 0, 0.9);
 		}
+
+			.bg-card .navbar-text a:hover, .bg-card .navbar-text a:focus {
+				color: rgba(0, 0, 0, 0.9);
+			}
+
+	.bg-card .btn {
+		padding: 0;
+	}
+
+	.bg-card button {
+		text-decoration: none;
+		color: rgba(0, 0, 0, 0.5);
+	}
+
+		.bg-card button:hover, .bg-card button:focus {
+			color: rgba(0, 0, 0, 0.7);
+			background-color: rgba(189, 183, 107, 0.5); /* DarkKhaki */
+		}
+
+		.bg-card button:disabled, bg-card button.disabled {
+			color: rgba(0, 0, 0, 0.3);
+			background-color: transparent;
+			pointer-events: none;
+			cursor: default;
+		}
+
+		.bg-card button.active, .bg-card .active > button {
+			color: rgba(0, 0, 0, 0.8);
+		}
+
+	.bg-card .dropdown-item.active, .bg-card .active > .dropdown-item {
+		background: Tan;
+	}
 
 .smoverlay {
 	width: 96px;

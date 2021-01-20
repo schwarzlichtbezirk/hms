@@ -79,29 +79,6 @@ a, .btn-link {
 	border-radius: 0;
 }
 
-.cardbtn {
-	text-decoration: none;
-	padding: 0;
-	color: rgba(255, 255, 255, 0.5);
-	border-radius: 0;
-}
-
-	.cardbtn:hover, .cardbtn:focus {
-		color: rgba(255, 255, 255, 0.75);
-		background-color: rgba(0, 128, 0, 0.5); /* Green */
-	}
-
-	.cardbtn:disabled, cardbtn.disabled {
-		pointer-events: none;
-		cursor: default;
-		color: rgba(255, 255, 255, 0.25);
-		background-color: transparent;
-	}
-
-	.cardbtn.active, .active > .cardbtn {
-		color: PaleGreen;
-	}
-
 .toolinp {
 	border: 1px solid rgba(255, 255, 255, 0.1);
 	border-radius: 0;
@@ -139,28 +116,62 @@ a, .btn-link {
 	background-color: #001800;
 }
 
-.hmscard > .card-header {
-	padding-top: 0.25rem;
-	padding-bottom: 0.25rem;
+.bg-card {
 	background: #003c00;
-	font-size: 1.25rem;
 }
 
-	.hmscard > .card-header > .navbar-nav ~ .navbar-nav {
-		padding-left: 1.25rem;
+	.bg-card.card-header {
+		padding-top: 0.25rem;
+		padding-bottom: 0.25rem;
+		font-size: 1.25rem;
 	}
 
-.hmscard .navbar-text {
-	color: rgba(255, 255, 255, 0.5);
-}
+		.bg-card.card-header > .navbar-nav ~ .navbar-nav {
+			padding-left: 1.25rem;
+		}
 
-	.hmscard .navbar-text a {
-		color: LightGreen;
+	.bg-card .navbar-text {
+		color: rgba(255, 255, 255, 0.5);
 	}
 
-		.hmscard .navbar-text a:hover, .hmscard .navbar-text a:focus {
+		.bg-card .navbar-text a {
 			color: LightGreen;
 		}
+
+			.bg-card .navbar-text a:hover, .bg-card .navbar-text a:focus {
+				color: LightGreen;
+			}
+
+	.bg-card .btn {
+		padding: 0;
+	}
+
+	.bg-card button {
+		text-decoration: none;
+		color: rgba(255, 255, 255, 0.5);
+		border-radius: 0;
+	}
+
+		.bg-card button:hover, .bg-card button:focus {
+			color: rgba(255, 255, 255, 0.75);
+			background-color: rgba(0, 128, 0, 0.5); /* Green */
+		}
+
+		.bg-card button:disabled, bg-card button.disabled {
+			color: rgba(255, 255, 255, 0.25);
+			background-color: transparent;
+			pointer-events: none;
+			cursor: default;
+		}
+
+		.bg-card button.active, .bg-card .active > button {
+			color: PaleGreen;
+		}
+
+	.bg-card .dropdown-item.active, .bg-card .active > .dropdown-item {
+		color: #001800;
+		background: rgba(255, 255, 255, 0.5);
+	}
 
 .smoverlay {
 	width: 96px;

@@ -602,8 +602,11 @@ Vue.component('map-card-tag', {
 		isvisible() {
 			return this.gpslist.length > 0;
 		},
-		clslandscape() {
+		clsmapboxhybrid() {
 			return { active: this.styleid === 'hybrid' };
+		},
+		clsmapboxstreets() {
+			return { active: this.styleid === 'streets' };
 		},
 
 		iconmarkermode() {
@@ -708,16 +711,15 @@ Vue.component('map-card-tag', {
 			this.gpslist.push(...gpslist);
 		},
 
-		onlandscape() {
+		onhybrid() {
 			this.map.removeLayer(this.tiles);
-			this.styleid = (() => {
-				switch (this.styleid) {
-					case 'streets':
-						return 'hybrid';
-					case 'hybrid':
-						return 'streets';
-				}
-			})();
+			this.styleid = 'hybrid';
+			this.maketiles();
+			this.map.addLayer(this.tiles);
+		},
+		onstreets() {
+			this.map.removeLayer(this.tiles);
+			this.styleid = 'streets';
 			this.maketiles();
 			this.map.addLayer(this.tiles);
 		},

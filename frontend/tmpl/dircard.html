@@ -1,20 +1,20 @@
 
-<div v-show="isvisible" class="card hmscard">
-	<div class="card-header d-flex flex-wrap align-items-center">
+<div v-show="isvisible" class="card">
+	<div class="card-header bg-card d-flex flex-wrap align-items-center">
 		<div class="navbar-text flex-grow-1 py-0">
 			<a class="card-link d-block" data-toggle="collapse" v-bind:href="'#card'+iid">folders</a>
 		</div>
 		<ul v-show="isadmin" class="navbar-nav flex-row ml-auto">
-			<li><button class="btn cardbtn" title="add disk" data-toggle="modal" v-bind:data-target="'#diskadd'+iid"><i class="material-icons">add_circle_outline</i></button></li>
-			<li><button class="btn cardbtn" v-bind:disabled="disdiskremove" v-on:click="ondiskremove" title="remove disk"><i class="material-icons">remove_circle_outline</i></button></li>
+			<li><button class="btn" title="add disk" data-toggle="modal" v-bind:data-target="'#diskadd'+iid"><i class="material-icons">add_circle_outline</i></button></li>
+			<li><button class="btn" v-bind:disabled="disdiskremove" v-on:click="ondiskremove" title="remove disk"><i class="material-icons">remove_circle_outline</i></button></li>
 		</ul>
 		<ul class="navbar-nav flex-row ml-auto">
-			<li><button class="btn cardbtn" v-on:click="onlink" v-bind:disabled="dislink" title="copy link to folder"><i class="material-icons">link</i></button></li>
-			<li v-show="isadmin"><button class="btn cardbtn" v-on:click="onshare" v-bind:disabled="disshared" v-bind:class="clsshared" title="share folder to get access from internet"><i class="material-icons">share</i></button></li>
+			<li><button class="btn" v-on:click="onlink" v-bind:disabled="dislink" title="copy link to folder"><i class="material-icons">link</i></button></li>
+			<li v-show="isadmin"><button class="btn" v-on:click="onshare" v-bind:disabled="disshared" v-bind:class="clsshared" title="share folder to get access from internet"><i class="material-icons">share</i></button></li>
 		</ul>
 		<ul class="navbar-nav flex-row ml-auto">
-			<li v-show="sortable"><button class="btn cardbtn" v-on:click="onorder" v-bind:title="hintorder"><i class="material-icons">{{clsorder}}</i></button></li>
-			<li><button class="btn cardbtn" v-on:click="onlistmode" v-bind:title="hintlist"><i class="material-icons">{{clslistmode}}</i></button></li>
+			<li v-show="sortable"><button class="btn" v-on:click="onorder" v-bind:title="hintorder"><i class="material-icons">{{clsorder}}</i></button></li>
+			<li><button class="btn" v-on:click="onlistmode" v-bind:title="hintlist"><i class="material-icons">{{clslistmode}}</i></button></li>
 		</ul>
 	</div>
 	<div v-bind:id="'card'+iid" class="collapse show">

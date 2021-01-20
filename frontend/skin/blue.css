@@ -60,28 +60,6 @@ body {
 	border-radius: 0.25rem;
 }
 
-.cardbtn {
-	text-decoration: none;
-	padding: 0;
-	color: rgba(255, 255, 255, 0.5);
-}
-
-	.cardbtn:hover, .cardbtn:focus {
-		color: rgba(255, 255, 255, 0.75);
-		background-color: SlateGray;
-	}
-
-	.cardbtn:disabled, cardbtn.disabled {
-		pointer-events: none;
-		cursor: default;
-		color: rgba(255, 255, 255, 0.25);
-		background-color: transparent;
-	}
-
-	.cardbtn.active, .active > .cardbtn {
-		color: #fff;
-	}
-
 .toolinp {
 	border: 1px solid rgba(255, 255, 255, 0.1);
 	border-radius: 0.5rem;
@@ -119,27 +97,59 @@ body {
 	background-color: #d6dbe9;
 }
 
-.hmscard > .card-header {
-	padding-top: 0.25rem;
-	padding-bottom: 0.25rem;
+.bg-card {
 	background: #5b7199;
 }
 
-	.hmscard > .card-header > .navbar-nav ~ .navbar-nav {
-		padding-left: 1.25rem;
+	.bg-card.card-header {
+		padding-top: 0.25rem;
+		padding-bottom: 0.25rem;
 	}
 
-.hmscard .navbar-text {
-	color: rgba(255, 255, 255, 0.5);
-}
+		.bg-card.card-header > .navbar-nav ~ .navbar-nav {
+			padding-left: 1.25rem;
+		}
 
-	.hmscard .navbar-text a {
-		color: #fff;
+	.bg-card .navbar-text {
+		color: rgba(255, 255, 255, 0.5);
 	}
 
-		.hmscard .navbar-text a:hover, .hmscard .navbar-text a:focus {
+		.bg-card .navbar-text a {
 			color: #fff;
 		}
+
+			.bg-card .navbar-text a:hover, .bg-card .navbar-text a:focus {
+				color: #fff;
+			}
+
+	.bg-card .btn {
+		padding: 0;
+	}
+
+	.bg-card button {
+		text-decoration: none;
+		color: rgba(255, 255, 255, 0.5);
+	}
+
+		.bg-card button:hover, .bg-card button:focus {
+			color: rgba(255, 255, 255, 0.75);
+			background-color: SlateGray;
+		}
+
+		.bg-card button:disabled, bg-card button.disabled {
+			color: rgba(255, 255, 255, 0.25);
+			background-color: transparent;
+			pointer-events: none;
+			cursor: default;
+		}
+
+		.bg-card button.active, .bg-card .active > button {
+			color: #fff;
+		}
+
+	.bg-card .dropdown-item.active, .bg-card .active > .dropdown-item {
+		background-color: rgba(255, 255, 255, 0.25);
+	}
 
 .smoverlay {
 	width: 96px;

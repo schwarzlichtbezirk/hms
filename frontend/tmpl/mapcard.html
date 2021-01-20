@@ -1,13 +1,23 @@
 
-<div v-show="isvisible" class="card hmscard">
-	<div class="card-header d-flex flex-wrap align-items-center">
+<div v-show="isvisible" class="card">
+	<div class="card-header bg-card d-flex flex-wrap align-items-center">
 		<div class="navbar-text flex-grow-1 py-0">
 			<a class="card-link d-block" data-toggle="collapse" v-bind:href="'#card'+iid">map</a>
 		</div>
 		<ul class="navbar-nav flex-row ml-auto">
-			<li><button class="btn cardbtn" v-bind:class="clslandscape" v-on:click="onlandscape" v-bind:title="hintlandscape"><i class="material-icons">landscape</i></button></li>
-			<li><button class="btn cardbtn" v-on:click="onmarkermode" v-bind:title="hintmarkermode"><i class="material-icons">{{iconmarkermode}}</i></button></li>
-			<li><button class="btn cardbtn" v-on:click="onfitbounds" title="fit to bounds"><span class="material-icons">adjust</span></button></li>
+			<li>
+				<div class="btn-group">
+					<button type="button" class="btn dropdown-toggle" v-bind:title="hintlandscape" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+						<i class="material-icons">landscape</i>
+					</button>
+					<div class="dropdown-menu bg-card dropdown-menu-right">
+						<button class="dropdown-item" type="button" v-on:click="onhybrid" v-bind:class="clsmapboxhybrid">Mapbox hybrid</button>
+						<button class="dropdown-item" type="button" v-on:click="onstreets" v-bind:class="clsmapboxstreets">Mapbox streets</button>
+					</div>
+				</div>
+			</li>
+			<li><button class="btn" v-on:click="onmarkermode" v-bind:title="hintmarkermode"><i class="material-icons">{{iconmarkermode}}</i></button></li>
+			<li><button class="btn" v-on:click="onfitbounds" title="fit to bounds"><span class="material-icons">adjust</span></button></li>
 		</ul>
 	</div>
 	<div v-bind:id="'card'+iid" class="collapse show">
