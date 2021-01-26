@@ -605,22 +605,47 @@ Vue.component('map-card-tag', {
 		clsmapboxhybrid() {
 			return { active: this.styleid === 'hybrid' };
 		},
+		clsmapboxsatellite() {
+			return { active: this.styleid === 'satellite' };
+		},
+		clsmapboxoutdoors() {
+			return { active: this.styleid === 'outdoors' };
+		},
 		clsmapboxstreets() {
 			return { active: this.styleid === 'streets' };
+		},
+		clsosm() {
+			return { active: this.styleid === 'osm' };
+		},
+		clsopentopomap() {
+			return { active: this.styleid === 'opentopo' };
+		},
+		clshikebike() {
+			return { active: this.styleid === 'hikebike' };
 		},
 
 		iconmarkermode() {
 			switch (this.markermode) {
 				case 'marker': return 'place';
 				case 'thumb': return 'local_see';
-			}
+		}
 		},
 		hintlandscape() {
 			switch (this.styleid) {
-				case 'streets':
-					return "streets map mode";
 				case 'hybrid':
-					return "satellite & streets map mode";
+					return "Mapbox satellite & streets map";
+				case 'satellite':
+					return "Mapbox satellite map";
+				case 'outdoors':
+					return "Mapbox outdoors map";
+				case 'streets':
+					return "Mapbox streets map";
+				case 'osm':
+					return "Open Street Map";
+				case 'opentopo':
+					return "Open topo map";
+				case 'hikebike':
+					return "HikeBike map";
 			}
 		},
 		hintmarkermode() {
@@ -646,25 +671,74 @@ Vue.component('map-card-tag', {
 			}
 		},
 		// make tiles layer
-		maketiles() {
-			const id = (() => {
-				switch (this.styleid) {
-					case 'streets':
-						return 'mapbox/streets-v11';
-					case 'hybrid':
-						return 'mapbox/satellite-streets-v11';
-				}
-			})();
-			const uri = 'https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}'
-			this.tiles = L.tileLayer(uri, {
-				attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/" target="_blank">OpenStreetMap</a> contributors, ' +
-					'Imagery &copy <a href="https://www.mapbox.com/" target="_blank">Mapbox</a>',
-				tileSize: 512,
-				minZoom: 2,
-				zoomOffset: -1,
-				id: id,
-				accessToken: 'pk.eyJ1IjoibWFwYm94IiwiYSI6ImNpejY4NXVycTA2emYycXBndHRqcmZ3N3gifQ.rJcFIG214AriISLbB6B5aw'
-			});
+		maketiles(id) {
+			switch (id) {
+				case 'hybrid':
+					return L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+						attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors, ' +
+							'Imagery &copy <a href="https://www.mapbox.com/" target="_blank">Mapbox</a>',
+						tileSize: 512,
+						minZoom: 2,
+						zoomOffset: -1,
+						id: 'mapbox/satellite-streets-v11',
+						accessToken: 'pk.eyJ1Ijoic2Nod2FyemxpY2h0YmV6aXJrIiwiYSI6ImNrazdseXRxZjBlemsycG8wZ3BodTR1aWUifQ.Mt99AhglX08nolRj_bsyog'
+					});
+				case 'satellite':
+					return L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+						attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors, ' +
+							'Imagery &copy <a href="https://www.mapbox.com/" target="_blank">Mapbox</a>',
+						tileSize: 512,
+						minZoom: 2,
+						zoomOffset: -1,
+						id: 'mapbox/satellite-v9',
+						accessToken: 'pk.eyJ1Ijoic2Nod2FyemxpY2h0YmV6aXJrIiwiYSI6ImNrazdseXRxZjBlemsycG8wZ3BodTR1aWUifQ.Mt99AhglX08nolRj_bsyog'
+					});
+				case 'outdoors':
+					return L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+						attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors, ' +
+							'Imagery &copy <a href="https://www.mapbox.com/" target="_blank">Mapbox</a>',
+						tileSize: 512,
+						minZoom: 2,
+						zoomOffset: -1,
+						id: 'mapbox/outdoors-v11',
+						accessToken: 'pk.eyJ1Ijoic2Nod2FyemxpY2h0YmV6aXJrIiwiYSI6ImNrazdseXRxZjBlemsycG8wZ3BodTR1aWUifQ.Mt99AhglX08nolRj_bsyog'
+					});
+				case 'streets':
+					return L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
+						attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors, ' +
+							'Imagery &copy <a href="https://www.mapbox.com/" target="_blank">Mapbox</a>',
+						tileSize: 512,
+						minZoom: 2,
+						zoomOffset: -1,
+						id: 'mapbox/streets-v11',
+						accessToken: 'pk.eyJ1Ijoic2Nod2FyemxpY2h0YmV6aXJrIiwiYSI6ImNrazdseXRxZjBlemsycG8wZ3BodTR1aWUifQ.Mt99AhglX08nolRj_bsyog'
+					});
+				case 'osm':
+					return L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+						maxZoom: 19,
+						attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors'
+					});
+				case 'opentopo':
+					return L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+						attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors, ' +
+							'<a href="http://viewfinderpanoramas.org" target="_blank">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org" target="_blank">OpenTopoMap</a>',
+						minZoom: 2,
+						maxZoom: 17
+					});
+				case 'hikebike':
+					return L.tileLayer('https://tiles.wmflabs.org/hikebike/{z}/{x}/{y}.png', {
+						attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors',
+						minZoom: 2,
+						maxZoom: 19
+					});
+			}
+		},
+		// change tiles layer
+		changetiles(id) {
+			this.map.removeLayer(this.tiles);
+			this.styleid = id;
+			this.tiles = this.maketiles(id);
+			this.map.addLayer(this.tiles);
 		},
 		// setup markers on map, remove previous
 		addmarkers(gpslist) {
@@ -712,16 +786,25 @@ Vue.component('map-card-tag', {
 		},
 
 		onhybrid() {
-			this.map.removeLayer(this.tiles);
-			this.styleid = 'hybrid';
-			this.maketiles();
-			this.map.addLayer(this.tiles);
+			this.changetiles('hybrid');
+		},
+		onsatellite() {
+			this.changetiles('satellite');
+		},
+		onoutdoors() {
+			this.changetiles('outdoors');
 		},
 		onstreets() {
-			this.map.removeLayer(this.tiles);
-			this.styleid = 'streets';
-			this.maketiles();
-			this.map.addLayer(this.tiles);
+			this.changetiles('streets');
+		},
+		onosm() {
+			this.changetiles('osm');
+		},
+		onopentopo() {
+			this.changetiles('opentopo');
+		},
+		onhikebike() {
+			this.changetiles('hikebike');
 		},
 		onmarkermode() {
 			switch (this.markermode) {
@@ -743,7 +826,7 @@ Vue.component('map-card-tag', {
 		}
 	},
 	mounted() {
-		this.maketiles();
+		this.tiles = this.maketiles('hybrid');
 		this.map = L.map(this.$refs.map, {
 			center: [0, 0],
 			zoom: 8,
