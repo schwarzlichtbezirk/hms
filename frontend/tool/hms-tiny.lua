@@ -6,7 +6,7 @@ wpkconf = {
 	fname = "hms-tiny.wpk",
 	-- list of skins IDs, see 'id' tags of 'skinlist' in 'resmodel.json' file
 	skinset = {
-		"daylight", "blue",
+		"daylight", "blue", "dark",
 	},
 	-- list of icons collections IDs, see 'id' tags of 'iconlist' in 'resmodel.json' file
 	iconset = {

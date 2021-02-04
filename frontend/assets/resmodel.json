@@ -11,6 +11,11 @@
 			"link": "/data/skin/blue.css"
 		},
 		{
+			"id": "dark",
+			"name": "dark",
+			"link": "/data/skin/dark.css"
+		},
+		{
 			"id": "neon",
 			"name": "neon",
 			"link": "/data/skin/neon.css"

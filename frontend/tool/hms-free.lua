@@ -7,7 +7,7 @@ wpkconf = {
 	fname = "hms-free.wpk",
 	-- list of skins IDs, see 'id' tags of 'skinlist' in 'resmodel.json' file
 	skinset = {
-		"daylight", "blue", "neon",
+		"daylight", "blue", "dark", "neon",
 		"cup-of-coffee", "coffee-beans", "old-monitor",
 	},
 	-- list of icons collections IDs, see 'id' tags of 'iconlist' in 'resmodel.json' file

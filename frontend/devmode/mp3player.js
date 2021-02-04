@@ -142,28 +142,49 @@ Vue.component('mp3-player-tag', {
 				// enable UI
 				this.ready = true;
 
-				if (this.isflowing) {
+				if (this.isflowing && this.media.paused) {
 					this.media.play();
-					this.isplay = true;
-					this.$emit('playback', this.selfile);
 				}
 			});
 			this.media.addEventListener('timeupdate', () => this.updateprogress());
 			this.media.addEventListener('seeked', () => this.updateprogress());
 			this.media.addEventListener('progress', () => this.updateprogress());
-			this.media.addEventListener('play', () => { });
-			this.media.addEventListener('pause', () => { });
-			this.media.addEventListener('ended', () => {
+			this.media.addEventListener('durationchange', () => this.updateprogress());
+			this.media.addEventListener('play', () => {
+				this.isplay = true;
+				this.$emit('playback', this.selfile);
+			});
+			this.media.addEventListener('pause', () => {
 				this.isplay = false;
 				this.$emit('playback', null);
+			});
+			this.media.addEventListener('ended', () => {
 				this.onnext();
+			});
+			this.media.addEventListener('error', e => {
+				console.error("Error " + e.code + "; details: " + e.message);
+			});
+			this.media.addEventListener('volumechange', () => {
+				this.volval = this.media.volume * 100;
+			});
+			this.media.addEventListener('ratechange', () => {
+				this.ratval = (() => {
+					const r = this.media.playbackRate;
+					let pp = 1 / 3.0, pi = this.ratevals[0];
+					for (let i = 0; i < this.ratevals.length - 1; i++) {
+						let pn = this.ratevals[i + 1];
+						if (r >= (pi + pp) / 2 && r < (pi + pn) / 2) {
+							return i;
+						}
+						pp = pi, pi = pn;
+					}
+					return this.ratevals.length - 1;
+				})();
 			});
 		},
 		close() {
 			if (this.media && !this.media.paused) {
 				this.media.pause();
-				this.isplay = false;
-				this.$emit('playback', null);
 				return true;
 			}
 			return false;
@@ -173,14 +194,10 @@ Vue.component('mp3-player-tag', {
 			if (!this.media) return;
 			if (this.media.paused) {
 				this.media.play();
-				this.isplay = true;
 				this.isflowing = true;
-				this.$emit('playback', this.selfile);
 			} else {
 				this.media.pause();
-				this.isplay = false;
 				this.isflowing = false;
-				this.$emit('playback', null);
 			}
 		},
 
