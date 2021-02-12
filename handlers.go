@@ -15,7 +15,7 @@ import (
 
 // HTTP error messages
 var (
-	ErrNoJson = errors.New("data not given")
+	ErrNoJSON = errors.New("data not given")
 	ErrNoData = errors.New("data is empty")
 
 	ErrNotFound  = errors.New("404 page not found")
@@ -60,7 +60,7 @@ func pageHandler(pref, name string) http.HandlerFunc {
 			}()
 		}
 
-		WriteHtmlHeader(w)
+		WriteHTMLHeader(w)
 		http.ServeContent(w, r, alias, starttime, bytes.NewReader(content))
 	}
 }
@@ -87,7 +87,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	var auth *Profile
 	if auth, err = GetAuth(r); err != nil {
-		WriteJson(w, http.StatusUnauthorized, err)
+		WriteJSON(w, http.StatusUnauthorized, err)
 		return
 	}
 
@@ -151,7 +151,7 @@ func mediaHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	var auth *Profile
 	if auth, err = GetAuth(r); err != nil {
-		WriteJson(w, http.StatusUnauthorized, err)
+		WriteJSON(w, http.StatusUnauthorized, err)
 		return
 	}
 
@@ -247,7 +247,7 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	var auth *Profile
 	if auth, err = GetAuth(r); err != nil {
-		WriteJson(w, http.StatusUnauthorized, err)
+		WriteJSON(w, http.StatusUnauthorized, err)
 		return
 	}
 
@@ -476,7 +476,7 @@ func ishomeApi(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		WriteError400(w, ErrNoJson, EC_ishomenoreq)
+		WriteError400(w, ErrNoJSON, EC_ishomenoreq)
 		return
 	}
 
@@ -487,7 +487,7 @@ func ishomeApi(w http.ResponseWriter, r *http.Request) {
 	}
 	var auth *Profile
 	if auth, err = GetAuth(r); err != nil {
-		WriteJson(w, http.StatusUnauthorized, err)
+		WriteJSON(w, http.StatusUnauthorized, err)
 		return
 	}
 
@@ -528,7 +528,7 @@ func ctgrApi(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		WriteError400(w, ErrNoJson, EC_ctgrnoreq)
+		WriteError400(w, ErrNoJSON, EC_ctgrnoreq)
 		return
 	}
 
@@ -558,7 +558,7 @@ func ctgrApi(w http.ResponseWriter, r *http.Request) {
 	}
 	var auth *Profile
 	if auth, err = GetAuth(r); err != nil {
-		WriteJson(w, http.StatusUnauthorized, err)
+		WriteJSON(w, http.StatusUnauthorized, err)
 		return
 	}
 
@@ -639,7 +639,7 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		WriteError400(w, ErrNoJson, EC_foldernoreq)
+		WriteError400(w, ErrNoJSON, EC_foldernoreq)
 		return
 	}
 
@@ -650,7 +650,7 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 	}
 	var auth *Profile
 	if auth, err = GetAuth(r); err != nil {
-		WriteJson(w, http.StatusUnauthorized, err)
+		WriteJSON(w, http.StatusUnauthorized, err)
 		return
 	}
 
@@ -700,7 +700,7 @@ func ispathApi(w http.ResponseWriter, r *http.Request, auth *Profile) {
 			return
 		}
 	} else {
-		WriteError400(w, ErrNoJson, EC_ispathnoreq)
+		WriteError400(w, ErrNoJSON, EC_ispathnoreq)
 		return
 	}
 
@@ -733,7 +733,7 @@ func shrlstApi(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		WriteError400(w, ErrNoJson, EC_shrlstnoreq)
+		WriteError400(w, ErrNoJSON, EC_shrlstnoreq)
 		return
 	}
 
@@ -744,7 +744,7 @@ func shrlstApi(w http.ResponseWriter, r *http.Request) {
 	}
 	var auth *Profile
 	if auth, err = GetAuth(r); err != nil {
-		WriteJson(w, http.StatusUnauthorized, err)
+		WriteJSON(w, http.StatusUnauthorized, err)
 		return
 	}
 
@@ -776,7 +776,7 @@ func shraddApi(w http.ResponseWriter, r *http.Request, auth *Profile) {
 			return
 		}
 	} else {
-		WriteError400(w, ErrNoJson, EC_shraddnoreq)
+		WriteError400(w, ErrNoJSON, EC_shraddnoreq)
 		return
 	}
 
@@ -825,7 +825,7 @@ func shrdelApi(w http.ResponseWriter, r *http.Request, auth *Profile) {
 			return
 		}
 	} else {
-		WriteError400(w, ErrNoJson, EC_shrdelnoreq)
+		WriteError400(w, ErrNoJSON, EC_shrdelnoreq)
 		return
 	}
 
@@ -861,7 +861,7 @@ func drvlstApi(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		WriteError400(w, ErrNoJson, EC_drvlstnoreq)
+		WriteError400(w, ErrNoJSON, EC_drvlstnoreq)
 		return
 	}
 
@@ -872,7 +872,7 @@ func drvlstApi(w http.ResponseWriter, r *http.Request) {
 	}
 	var auth *Profile
 	if auth, err = GetAuth(r); err != nil {
-		WriteJson(w, http.StatusUnauthorized, err)
+		WriteJSON(w, http.StatusUnauthorized, err)
 		return
 	}
 
@@ -909,7 +909,7 @@ func drvaddApi(w http.ResponseWriter, r *http.Request, auth *Profile) {
 			arg.Path += "/"
 		}
 	} else {
-		WriteError400(w, ErrNoJson, EC_drvaddnoreq)
+		WriteError400(w, ErrNoJSON, EC_drvaddnoreq)
 		return
 	}
 
@@ -961,7 +961,7 @@ func drvdelApi(w http.ResponseWriter, r *http.Request, auth *Profile) {
 			return
 		}
 	} else {
-		WriteError400(w, ErrNoJson, EC_drvdelnoreq)
+		WriteError400(w, ErrNoJSON, EC_drvdelnoreq)
 		return
 	}
 

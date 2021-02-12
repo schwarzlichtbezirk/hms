@@ -162,7 +162,7 @@ func usrlstApi(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		WriteError400(w, ErrNoJson, EC_usrlstnoreq)
+		WriteError400(w, ErrNoJSON, EC_usrlstnoreq)
 		return
 	}
 

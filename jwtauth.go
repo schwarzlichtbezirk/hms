@@ -28,18 +28,6 @@ type HMSClaims struct {
 	AID int `json:"aid"`
 }
 
-// Authentication settings.
-type CfgAuth struct {
-	// Access token time to live.
-	AccessTTL int `json:"access-ttl" yaml:"access-ttl"`
-	// Refresh token time to live.
-	RefreshTTL int `json:"refresh-ttl" yaml:"refresh-ttl"`
-	// Key for access HS-256 JWT-tokens.
-	AccessKey string `json:"access-key" yaml:"access-key"`
-	// Key for refresh HS-256 JWT-tokens.
-	RefreshKey string `json:"refresh-key" yaml:"refresh-key"`
-}
-
 var (
 	ErrNoAuth   = errors.New("authorization is absent")
 	ErrNoBearer = errors.New("authorization does not have bearer format")
@@ -82,12 +70,12 @@ func (t *Tokens) Make(aid int) {
 	}).SignedString([]byte(cfg.RefreshKey))
 }
 
-// Convert time to UNIX-time in milliseconds, compatible with javascript time format.
+// UnixJS converts time to UNIX-time in milliseconds, compatible with javascript time format.
 func UnixJS(u time.Time) int64 {
 	return u.UnixNano() / 1000000
 }
 
-// Returns same result as Date.now() in javascript.
+// UnixJSNow returns same result as Date.now() in javascript.
 func UnixJSNow() int64 {
 	return time.Now().UnixNano() / 1000000
 }
@@ -165,7 +153,7 @@ func AuthWrap(fn AuthHandlerFunc) http.HandlerFunc {
 		var err error
 		var auth *Profile
 		if auth, err = GetAuth(r); err != nil {
-			WriteJson(w, http.StatusUnauthorized, err)
+			WriteJSON(w, http.StatusUnauthorized, err)
 			return
 		}
 		if auth == nil {
@@ -210,7 +198,7 @@ func signinApi(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		WriteError400(w, ErrNoJson, EC_signinnoreq)
+		WriteError400(w, ErrNoJSON, EC_signinnoreq)
 		return
 	}
 
@@ -254,7 +242,7 @@ func refrshApi(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		WriteError400(w, ErrNoJson, EC_refrshnoreq)
+		WriteError400(w, ErrNoJSON, EC_refrshnoreq)
 		return
 	}
 

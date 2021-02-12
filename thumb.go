@@ -192,7 +192,7 @@ func tmbchkApi(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		WriteError400(w, ErrNoJson, EC_tmbchknoreq)
+		WriteError400(w, ErrNoJSON, EC_tmbchknoreq)
 		return
 	}
 
@@ -226,7 +226,7 @@ func tmbscnApi(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		WriteError400(w, ErrNoJson, EC_tmbscnnoreq)
+		WriteError400(w, ErrNoJSON, EC_tmbscnnoreq)
 		return
 	}
 
@@ -237,7 +237,7 @@ func tmbscnApi(w http.ResponseWriter, r *http.Request) {
 	}
 	var auth *Profile
 	if auth, err = GetAuth(r); err != nil {
-		WriteJson(w, http.StatusUnauthorized, err)
+		WriteJSON(w, http.StatusUnauthorized, err)
 		return
 	}
 

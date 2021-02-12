@@ -4,8 +4,8 @@ import (
 	. "github.com/schwarzlichtbezirk/hms"
 )
 
-const buildvers = "0.6.10"
-const builddate = "2020.12.10"
+const buildvers = "0.7.1"
+const builddate = "2021.02.12"
 
 func main() {
 	Log.Printf("version: %s, builton: %s", buildvers, builddate)

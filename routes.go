@@ -11,7 +11,7 @@ import (
 
 type void = struct{}
 
-// Error on AJAX API handlers calls.
+// ErrAjax is error object on AJAX API handlers calls.
 type ErrAjax struct {
 	What error
 	Code int
@@ -25,6 +25,7 @@ func (e *ErrAjax) Unwrap() error {
 	return e.What
 }
 
+// MarshalJSON is standard JSON interface implementation for errors on Ajax.
 func (e *ErrAjax) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		What string `json:"what"`
@@ -37,10 +38,10 @@ func (e *ErrAjax) MarshalJSON() ([]byte, error) {
 	})
 }
 
-// Local alias for router type.
+// Router is local alias for router type.
 type Router = mux.Router
 
-// Local alias for router creation function.
+// NewRouter is local alias for router creation function.
 var NewRouter = mux.NewRouter
 
 // API error codes
@@ -229,7 +230,7 @@ var routealias = map[string]string{
 	"/asst/": asstsuff,
 }
 
-// Puts application routes to given router.
+// RegisterRoutes puts application routes to given router.
 func RegisterRoutes(gmux *Router) {
 	// main page
 	var devm = gmux.PathPrefix("/dev").Subrouter()
@@ -321,25 +322,29 @@ func MakeServerLabel(label, version string) {
 	serverlabel = fmt.Sprintf("%s/%s (%s)", label, version, runtime.GOOS)
 }
 
+// WriteStdHeader setup common response headers.
 func WriteStdHeader(w http.ResponseWriter) {
 	w.Header().Set("Connection", "keep-alive")
 	w.Header().Set("Server", serverlabel)
 	w.Header().Set("X-Frame-Options", "sameorigin")
 }
 
-func WriteHtmlHeader(w http.ResponseWriter) {
+// WriteHTMLHeader setup standard response headers for message with HTML content.
+func WriteHTMLHeader(w http.ResponseWriter) {
 	WriteStdHeader(w)
 	w.Header().Set("Content-Type", htmlcontent)
 }
 
-func WriteJsonHeader(w http.ResponseWriter) {
+// WriteJSONHeader setup standard response headers for message with JSON content.
+func WriteJSONHeader(w http.ResponseWriter) {
 	WriteStdHeader(w)
 	w.Header().Set("Content-Type", jsoncontent)
 	w.Header().Set("X-Content-Type-Options", "nosniff")
 }
 
-func WriteJson(w http.ResponseWriter, status int, body interface{}) {
-	WriteJsonHeader(w)
+// WriteJSON writes to response given status code and marshaled body.
+func WriteJSON(w http.ResponseWriter, status int, body interface{}) {
+	WriteJSONHeader(w)
 
 	if body != nil {
 		var b, err = json.Marshal(body)
@@ -356,21 +361,25 @@ func WriteJson(w http.ResponseWriter, status int, body interface{}) {
 	}
 }
 
+// WriteOK puts 200 status code and some data to response.
 func WriteOK(w http.ResponseWriter, body interface{}) {
-	WriteJson(w, http.StatusOK, body)
+	WriteJSON(w, http.StatusOK, body)
 }
 
+// WriteError puts to response given error status code and ErrAjax formed by given error object.
 func WriteError(w http.ResponseWriter, status int, err error, code int) {
-	WriteJsonHeader(w)
+	WriteJSONHeader(w)
 	w.WriteHeader(status)
 	var b, _ = json.Marshal(&ErrAjax{err, code})
 	w.Write(b)
 }
 
+// WriteError400 puts to response 400 status code and ErrAjax formed by given error object.
 func WriteError400(w http.ResponseWriter, err error, code int) {
 	WriteError(w, http.StatusBadRequest, err, code)
 }
 
+// WriteError500 puts to response 500 status code and ErrAjax formed by given error object.
 func WriteError500(w http.ResponseWriter, err error, code int) {
 	WriteError(w, http.StatusInternalServerError, err, code)
 }
