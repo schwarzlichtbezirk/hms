@@ -21,11 +21,12 @@ import (
 const jwtsubject = "hms"
 
 // Claims of JWT-tokens. Contains additional profile identifier.
-type HMSClaims struct {
+type Claims struct {
 	jwt.StandardClaims
 	AID int `json:"aid"`
 }
 
+// HTTP error messages
 var (
 	ErrNoAuth   = errors.New("authorization is absent")
 	ErrNoBearer = errors.New("authorization does not have bearer format")
@@ -38,19 +39,19 @@ var (
 // Zero hash value.
 var zero32 [32]byte
 
-// Access and refresh tokens pair.
+// Tokens is access and refresh tokens pair.
 type Tokens struct {
 	Access string `json:"access"`
 	Refrsh string `json:"refrsh"`
 }
 
-// Type of handler for authorized API calls.
+// AuthHandlerFunc is type of handler for authorized API calls.
 type AuthHandlerFunc func(w http.ResponseWriter, r *http.Request, auth *Profile)
 
-// Creates access and refresh tokens pair for given AID.
+// Make creates access and refresh tokens pair for given AID.
 func (t *Tokens) Make(aid int) {
 	var now = time.Now()
-	t.Access, _ = jwt.NewWithClaims(jwt.SigningMethodHS256, &HMSClaims{
+	t.Access, _ = jwt.NewWithClaims(jwt.SigningMethodHS256, &Claims{
 		StandardClaims: jwt.StandardClaims{
 			NotBefore: now.Unix(),
 			ExpiresAt: now.Add(time.Duration(cfg.AccessTTL) * time.Second).Unix(),
@@ -58,7 +59,7 @@ func (t *Tokens) Make(aid int) {
 		},
 		AID: aid,
 	}).SignedString([]byte(cfg.AccessKey))
-	t.Refrsh, _ = jwt.NewWithClaims(jwt.SigningMethodHS256, &HMSClaims{
+	t.Refrsh, _ = jwt.NewWithClaims(jwt.SigningMethodHS256, &Claims{
 		StandardClaims: jwt.StandardClaims{
 			NotBefore: now.Unix(),
 			ExpiresAt: now.Add(time.Duration(cfg.RefreshTTL) * time.Second).Unix(),
@@ -78,7 +79,7 @@ func UnixJSNow() int64 {
 	return time.Now().UnixNano() / 1000000
 }
 
-// Fast IP-address extract from valid host:port string.
+// StripPort makes fast IP-address extract from valid host:port string.
 func StripPort(addrport string) string {
 	// IPv6
 	if pos := strings.IndexByte(addrport, ']'); pos != -1 {
@@ -91,12 +92,12 @@ func StripPort(addrport string) string {
 	return addrport // return as is otherwise
 }
 
-// Check up host:port string refer is to localhost.
+// IsLocalhost do check up host:port string refer is to localhost.
 func IsLocalhost(addrport string) bool {
 	return net.ParseIP(StripPort(addrport)).IsLoopback()
 }
 
-// Returns profile from authorization header if it present,
+// GetAuth returns profile from authorization header if it present,
 // or default profile with no error if authorization is absent.
 func GetAuth(r *http.Request) (auth *Profile, aerr error) {
 	defer func() {
@@ -108,7 +109,7 @@ func GetAuth(r *http.Request) (auth *Profile, aerr error) {
 	}()
 	if pool, is := r.Header["Authorization"]; is {
 		var err error // stores last bearer error
-		var claims HMSClaims
+		var claims Claims
 		var bearer = false
 		for _, val := range pool {
 			if strings.HasPrefix(val, "Bearer ") {
@@ -141,7 +142,7 @@ func GetAuth(r *http.Request) (auth *Profile, aerr error) {
 	return
 }
 
-// Handler wrapper for API with admin checkup.
+// AuthWrap is handler wrapper for API with admin checkup.
 func AuthWrap(fn AuthHandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		go func() {
@@ -163,7 +164,7 @@ func AuthWrap(fn AuthHandlerFunc) http.HandlerFunc {
 	}
 }
 
-func pubkeyApi(w http.ResponseWriter, r *http.Request) {
+func pubkeyAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var buf [32]byte
 	if _, err = rand.Read(buf[:]); err != nil {
@@ -176,7 +177,7 @@ func pubkeyApi(w http.ResponseWriter, r *http.Request) {
 	WriteOK(w, buf)
 }
 
-func signinApi(w http.ResponseWriter, r *http.Request) {
+func signinAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
 		Name string   `json:"name"`
@@ -219,7 +220,7 @@ func signinApi(w http.ResponseWriter, r *http.Request) {
 	WriteOK(w, &res)
 }
 
-func refrshApi(w http.ResponseWriter, r *http.Request) {
+func refrshAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg Tokens
 	var res Tokens
@@ -234,7 +235,7 @@ func refrshApi(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var claims HMSClaims
+	var claims Claims
 	if _, err = jwt.ParseWithClaims(arg.Refrsh, &claims, func(token *jwt.Token) (interface{}, error) {
 		return []byte(cfg.RefreshKey), nil
 	}); err != nil {

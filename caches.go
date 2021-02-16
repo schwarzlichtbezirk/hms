@@ -41,14 +41,14 @@ var (
 	ErrUncacheable = errors.New("file format is uncacheable")
 )
 
-// Unlimited cache with puid/syspath and syspath/puid values.
+// PathCache is unlimited cache with puid/syspath and syspath/puid values.
 type PathCache struct {
 	keypath map[string]string // puid/path key/values
 	pathkey map[string]string // path/puid key/values
 	mux     sync.RWMutex
 }
 
-// Returns cached PUID for specified system path.
+// PUID returns cached PUID for specified system path.
 func (c *PathCache) PUID(syspath string) (puid string, ok bool) {
 	c.mux.RLock()
 	defer c.mux.RUnlock()
@@ -56,7 +56,7 @@ func (c *PathCache) PUID(syspath string) (puid string, ok bool) {
 	return
 }
 
-// Returns cached system path of specified PUID (path unique identifier).
+// Path returns cached system path of specified PUID (path unique identifier).
 func (c *PathCache) Path(puid string) (syspath string, ok bool) {
 	c.mux.RLock()
 	defer c.mux.RUnlock()
@@ -64,7 +64,7 @@ func (c *PathCache) Path(puid string) (syspath string, ok bool) {
 	return
 }
 
-// Generate new path unique ID.
+// MakePUID generates new path unique ID.
 func (c *PathCache) MakePUID() string {
 	c.mux.RLock()
 	defer c.mux.RUnlock()
@@ -95,7 +95,7 @@ func (c *PathCache) MakePUID() string {
 	return puid
 }
 
-// Returns cached PUID for specified system path, or make it and put into cache.
+// Cache returns cached PUID for specified system path, or make it and put into cache.
 func (c *PathCache) Cache(syspath string) string {
 	if puid, ok := c.PUID(syspath); ok {
 		return puid
@@ -125,7 +125,7 @@ var puidsym = (func() (t [256]bool) {
 	return
 })()
 
-// Splits given share path to share prefix and remained suffix.
+// SplitPrefSuff splits given share path to share prefix and remained suffix.
 func SplitPrefSuff(shrpath string) (string, string) {
 	for i, c := range shrpath {
 		if c == '/' || c == '\\' {
@@ -137,7 +137,7 @@ func SplitPrefSuff(shrpath string) (string, string) {
 	return shrpath, "" // root of share
 }
 
-// Brings any share path to system file path.
+// UnfoldPath brings any share path to system file path.
 func UnfoldPath(shrpath string) string {
 	var pref, suff = SplitPrefSuff(shrpath)
 	if pref == "" {
@@ -156,7 +156,7 @@ var pathcache = PathCache{
 	pathkey: map[string]string{},
 }
 
-// Unlimited cache with puid/DirProp values.
+// DirCache is unlimited cache with puid/DirProp values.
 type DirCache struct {
 	keydir map[string]DirProp
 	mux    sync.RWMutex
@@ -177,6 +177,8 @@ func (c *DirCache) Set(puid string, dp DirProp) {
 	c.keydir[puid] = dp
 }
 
+// Category returns PUIDs list of directories where number
+// of files of given category is more then given percent.
 func (c *DirCache) Category(ctgr int, percent float64) (ret []string) {
 	c.mux.RLock()
 	defer c.mux.RUnlock()
@@ -192,6 +194,8 @@ func (c *DirCache) Category(ctgr int, percent float64) (ret []string) {
 	return
 }
 
+// Categories return PUIDs list of directories where number
+// of files of any given categories is more then given percent.
 func (c *DirCache) Categories(cats []int, percent float64) (ret []string) {
 	c.mux.RLock()
 	defer c.mux.RUnlock()
@@ -258,17 +262,17 @@ func initcaches() {
 				return // can not get properties
 			}
 			var pp = prop.(Pather)
-			if pp.NTmb() == TMB_reject {
+			if pp.NTmb() == TMBreject {
 				err = ErrNotThumb
 				return // thumbnail rejected
 			}
 
 			var md *MediaData
 			if md, err = FindTmb(pp, syspath); md != nil {
-				pp.SetNTmb(TMB_cached)
+				pp.SetNTmb(TMBcached)
 				ret = md
 			} else {
-				pp.SetNTmb(TMB_reject)
+				pp.SetNTmb(TMBreject)
 			}
 			return // ok
 		}).
@@ -295,7 +299,7 @@ func initcaches() {
 			}
 
 			switch fp.Type() {
-			case FT_tga, FT_bmp, FT_tiff:
+			case FTtga, FTbmp, FTtiff:
 				var file *os.File
 				if file, err = os.Open(syspath); err != nil {
 					return // can not open file
@@ -319,7 +323,7 @@ func initcaches() {
 				}
 				return
 
-			case FT_dds, FT_psd:
+			case FTdds, FTpsd:
 				var file *os.File
 				if file, err = os.Open(syspath); err != nil {
 					return // can not open file
@@ -350,7 +354,7 @@ func initcaches() {
 		Build()
 }
 
-// File properties factory, prevents double os.Stat slow call.
+// CacheProp is file properties factory, prevents double os.Stat slow call.
 func CacheProp(syspath string, fi os.FileInfo) interface{} {
 	if propcache.Has(syspath) {
 		var prop, _ = propcache.Get(syspath)

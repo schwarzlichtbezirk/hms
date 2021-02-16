@@ -53,7 +53,7 @@ type Logger struct {
 	flag int        // properties
 }
 
-// New creates a new Logger. The out variable sets the
+// NewLogger creates a new Logger. The out variable sets the
 // destination to which log data will be written.
 // The flag argument defines the logging properties.
 func NewLogger(out io.Writer, flag int, lim int) *Logger {
@@ -261,7 +261,7 @@ func (l *Logger) Panicln(v ...interface{}) {
 	panic(s)
 }
 
-// Returns last element of ring of log items.
+// Ring returns last element of ring of log items.
 // Ring must be viewed only in backward order.
 func (l *Logger) Ring() *ring.Ring {
 	defer l.mux.Unlock()
@@ -269,7 +269,7 @@ func (l *Logger) Ring() *ring.Ring {
 	return l.ring
 }
 
-// Returns current size of ring of log items.
+// Size returns current size of ring of log items.
 // Ring must be viewed only in backward order.
 func (l *Logger) Size() int {
 	defer l.mux.Unlock()

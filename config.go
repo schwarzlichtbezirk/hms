@@ -22,7 +22,7 @@ var (
 	confpath string // configuration folder path
 )
 
-// Authentication settings.
+// CfgAuth is authentication settings.
 type CfgAuth struct {
 	// Access token time to live.
 	AccessTTL int `json:"access-ttl" yaml:"access-ttl"`
@@ -34,7 +34,7 @@ type CfgAuth struct {
 	RefreshKey string `json:"refresh-key" yaml:"refresh-key"`
 }
 
-// Web server settings.
+// CfgServ is web server settings.
 type CfgServ struct {
 	AutoCert          bool     `json:"auto-cert" yaml:"auto-cert"`
 	AddrHTTP          []string `json:"addr-http" yaml:"addr-http"`
@@ -47,6 +47,7 @@ type CfgServ struct {
 	ShutdownTimeout   int      `json:"shutdown-timeout" yaml:"shutdown-timeout"`
 }
 
+// CfgSpec is settings for application-specific logic.
 type CfgSpec struct {
 	// Name of wpk-file with program resources.
 	WPKName string `json:"wpk-name" yaml:"wpk-name"`

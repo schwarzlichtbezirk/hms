@@ -448,7 +448,7 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
-func pingApi(w http.ResponseWriter, r *http.Request) {
+func pingAPI(w http.ResponseWriter, r *http.Request) {
 	var body, _ = ioutil.ReadAll(r.Body)
 	w.WriteHeader(http.StatusOK)
 	WriteJSONHeader(w)
@@ -456,7 +456,7 @@ func pingApi(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
-func purgeApi(w http.ResponseWriter, r *http.Request, auth *Profile) {
+func purgeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	propcache.Purge()
 	thumbcache.Purge()
 
@@ -470,7 +470,7 @@ func purgeApi(w http.ResponseWriter, r *http.Request, auth *Profile) {
 }
 
 // APIHANDLER
-func reloadApi(w http.ResponseWriter, r *http.Request, auth *Profile) {
+func reloadAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var err error
 
 	if err = packager.OpenWPK(destpath + "hms.wpk"); err != nil {
@@ -486,7 +486,7 @@ func reloadApi(w http.ResponseWriter, r *http.Request, auth *Profile) {
 }
 
 // APIHANDLER
-func srvinfApi(w http.ResponseWriter, r *http.Request) {
+func srvinfAPI(w http.ResponseWriter, r *http.Request) {
 	var ret = map[string]interface{}{
 		"started":  UnixJS(starttime),
 		"govers":   runtime.Version(),
@@ -501,7 +501,7 @@ func srvinfApi(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
-func memusgApi(w http.ResponseWriter, r *http.Request) {
+func memusgAPI(w http.ResponseWriter, r *http.Request) {
 	var mem runtime.MemStats
 	runtime.ReadMemStats(&mem)
 
@@ -520,7 +520,7 @@ func memusgApi(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
-func cchinfApi(w http.ResponseWriter, r *http.Request) {
+func cchinfAPI(w http.ResponseWriter, r *http.Request) {
 	pathcache.mux.RLock()
 	var pathnum = len(pathcache.keypath)
 	pathcache.mux.RUnlock()
@@ -587,7 +587,7 @@ func cchinfApi(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
-func getlogApi(w http.ResponseWriter, r *http.Request) {
+func getlogAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
 
 	var size = Log.Size()
@@ -617,7 +617,7 @@ func getlogApi(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
-func ishomeApi(w http.ResponseWriter, r *http.Request) {
+func ishomeAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
 		AID int `json:"aid"`
@@ -643,9 +643,9 @@ func ishomeApi(w http.ResponseWriter, r *http.Request) {
 
 	if auth == prf {
 		ret = true
-	} else if prf.IsShared(CP_home) {
+	} else if prf.IsShared(CPhome) {
 		for _, path := range CatPath {
-			if path == CP_home {
+			if path == CPhome {
 				continue
 			}
 			if prf.IsShared(path) {
@@ -662,7 +662,7 @@ func ishomeApi(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
-func ctgrApi(w http.ResponseWriter, r *http.Request) {
+func ctgrAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
 		AID  int    `json:"aid"`
@@ -721,9 +721,9 @@ func ctgrApi(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	switch catpath {
-	case CP_home:
+	case CPhome:
 		for _, path := range CatPath {
-			if path == CP_home {
+			if path == CPhome {
 				continue
 			}
 			if auth == prf || prf.IsShared(path) {
@@ -732,22 +732,22 @@ func ctgrApi(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 		}
-	case CP_drives:
+	case CPdrives:
 		ret = prf.ScanRoots()
-	case CP_shares:
+	case CPshares:
 		ret = prf.ScanShares()
-	case CP_media:
-		catprop(dircache.Categories([]int{FG_video, FG_audio, FG_image}, 0.5))
-	case CP_video:
-		catprop(dircache.Category(FG_video, 0.5))
-	case CP_audio:
-		catprop(dircache.Category(FG_audio, 0.5))
-	case CP_image:
-		catprop(dircache.Category(FG_image, 0.5))
-	case CP_books:
-		catprop(dircache.Category(FG_books, 0.5))
-	case CP_texts:
-		catprop(dircache.Category(FG_texts, 0.5))
+	case CPmedia:
+		catprop(dircache.Categories([]int{FGvideo, FGaudio, FGimage}, 0.5))
+	case CPvideo:
+		catprop(dircache.Category(FGvideo, 0.5))
+	case CPaudio:
+		catprop(dircache.Category(FGaudio, 0.5))
+	case CPimage:
+		catprop(dircache.Category(FGimage, 0.5))
+	case CPbooks:
+		catprop(dircache.Category(FGbooks, 0.5))
+	case CPtexts:
+		catprop(dircache.Category(FGtexts, 0.5))
 	default:
 		WriteError(w, http.StatusMethodNotAllowed, ErrNotCat, AECctgrnotcat)
 		return
@@ -759,7 +759,7 @@ func ctgrApi(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
-func folderApi(w http.ResponseWriter, r *http.Request) {
+func folderAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
 		AID  int    `json:"aid"`
@@ -826,7 +826,7 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
-func ispathApi(w http.ResponseWriter, r *http.Request, auth *Profile) {
+func ispathAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var err error
 	var arg struct {
 		AID  int    `json:"aid"`
@@ -854,7 +854,7 @@ func ispathApi(w http.ResponseWriter, r *http.Request, auth *Profile) {
 }
 
 // APIHANDLER
-func shrlstApi(w http.ResponseWriter, r *http.Request) {
+func shrlstAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
 		AID int `json:"aid"`
@@ -878,7 +878,7 @@ func shrlstApi(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if auth != prf && !prf.IsShared(CP_shares) {
+	if auth != prf && !prf.IsShared(CPshares) {
 		WriteError(w, http.StatusForbidden, ErrNotShared, AECshrlstnoshr)
 		return
 	}
@@ -888,7 +888,7 @@ func shrlstApi(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
-func shraddApi(w http.ResponseWriter, r *http.Request, auth *Profile) {
+func shraddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var err error
 	var arg struct {
 		AID  int    `json:"aid"`
@@ -931,7 +931,7 @@ func shraddApi(w http.ResponseWriter, r *http.Request, auth *Profile) {
 }
 
 // APIHANDLER
-func shrdelApi(w http.ResponseWriter, r *http.Request, auth *Profile) {
+func shrdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var err error
 	var arg struct {
 		AID  int    `json:"aid"`
@@ -967,7 +967,7 @@ func shrdelApi(w http.ResponseWriter, r *http.Request, auth *Profile) {
 }
 
 // APIHANDLER
-func drvlstApi(w http.ResponseWriter, r *http.Request) {
+func drvlstAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
 		AID int `json:"aid"`
@@ -991,7 +991,7 @@ func drvlstApi(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if auth != prf && !prf.IsShared(CP_drives) {
+	if auth != prf && !prf.IsShared(CPdrives) {
 		WriteError(w, http.StatusForbidden, ErrNotShared, AECdrvlstnoshr)
 		return
 	}
@@ -1002,7 +1002,7 @@ func drvlstApi(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
-func drvaddApi(w http.ResponseWriter, r *http.Request, auth *Profile) {
+func drvaddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var err error
 	var arg struct {
 		AID  int    `json:"aid"`
@@ -1053,7 +1053,7 @@ func drvaddApi(w http.ResponseWriter, r *http.Request, auth *Profile) {
 }
 
 // APIHANDLER
-func drvdelApi(w http.ResponseWriter, r *http.Request, auth *Profile) {
+func drvdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var err error
 	var arg struct {
 		AID  int    `json:"aid"`

@@ -11,6 +11,8 @@ import (
 
 const utf8bom = "\xef\xbb\xbf"
 
+// WriteYaml writes "data" object to YAML-file with given file path.
+// File writes in UTF-8 format with BOM, and "intro" comment.
 func WriteYaml(fpath, intro string, data interface{}) (err error) {
 	var file *os.File
 	if file, err = os.OpenFile(fpath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644); err != nil {
@@ -35,6 +37,7 @@ func WriteYaml(fpath, intro string, data interface{}) (err error) {
 	return
 }
 
+// ReadYaml reads "data" object from YAML-file with given file path.
 func ReadYaml(fpath string, data interface{}) (err error) {
 	var body []byte
 	if body, err = ioutil.ReadFile(fpath); err != nil {
@@ -46,6 +49,7 @@ func ReadYaml(fpath string, data interface{}) (err error) {
 	return
 }
 
+// Load content of PathCache structure from YAML-file with given file path.
 func (pc *PathCache) Load(fpath string) (err error) {
 	if err = ReadYaml(fpath, &pc.keypath); err != nil {
 		return
@@ -63,6 +67,8 @@ func (pc *PathCache) Load(fpath string) (err error) {
 	return
 }
 
+// Save content of PathCache object in YAML format with
+// header comment to file with given file path.
 func (pc *PathCache) Save(fpath string) error {
 	const intro = `
 # Here is rewritable cache with key/path pairs list.
@@ -77,6 +83,7 @@ func (pc *PathCache) Save(fpath string) error {
 	return WriteYaml(fpath, intro, pc.keypath)
 }
 
+// Load content of DirCache structure from YAML-file with given file path.
 func (dc *DirCache) Load(fpath string) (err error) {
 	if err = ReadYaml(fpath, &dc.keydir); err != nil {
 		return
@@ -84,6 +91,8 @@ func (dc *DirCache) Load(fpath string) (err error) {
 	return
 }
 
+// Save content of DirCache object in YAML format with
+// header comment to file with given file path.
 func (dc *DirCache) Save(fpath string) error {
 	const intro = `
 # Here is rewritable cache with key/path pairs list.
@@ -98,6 +107,7 @@ func (dc *DirCache) Save(fpath string) error {
 	return WriteYaml(fpath, intro, dc.keydir)
 }
 
+// Load content of Config structure from YAML-file with given file path.
 func (cfg *Config) Load(fpath string) (err error) {
 	if err = ReadYaml(fpath, &cfg); err != nil {
 		return
@@ -105,6 +115,8 @@ func (cfg *Config) Load(fpath string) (err error) {
 	return
 }
 
+// Save content of Config object in YAML format with
+// header comment to file with given file path.
 func (cfg *Config) Save(fpath string) error {
 	const intro = `
 # Server configuration file. First of all you can change
@@ -114,6 +126,7 @@ func (cfg *Config) Save(fpath string) error {
 	return WriteYaml(fpath, intro, &cfg)
 }
 
+// Load content of Profiles structure from YAML-file with given file path.
 func (pl *Profiles) Load(fpath string) (err error) {
 	if err = ReadYaml(fpath, &pl.list); err != nil {
 		return
@@ -149,7 +162,7 @@ func (pl *Profiles) Load(fpath string) (err error) {
 			Log.Fatal("default profile is not found")
 		}
 	} else {
-		var prf = pl.NewAccount("admin", "dag qus fly in the sky")
+		var prf = pl.NewProfile("admin", "dag qus fly in the sky")
 		prf.ID = cfg.DefAccID
 		Log.Printf("created profile id%d, login='%s'", prf.ID, prf.Login)
 		prf.SetDefaultHidden()
@@ -158,6 +171,8 @@ func (pl *Profiles) Load(fpath string) (err error) {
 	return
 }
 
+// Save content of Profiles object in YAML format with
+// header comment to file with given file path.
 func (pl *Profiles) Save(fpath string) error {
 	const intro = `
 # List of administration profiles. Each profile should be with
@@ -168,6 +183,7 @@ func (pl *Profiles) Save(fpath string) error {
 	return WriteYaml(fpath, intro, pl.list)
 }
 
+// Load content of UserCache structure from YAML-file with given file path.
 func (uc *UserCache) Load(fpath string) (err error) {
 	if err = ReadYaml(fpath, &uc.list); err != nil {
 		return
@@ -182,6 +198,8 @@ func (uc *UserCache) Load(fpath string) (err error) {
 	return
 }
 
+// Save content of UserCache object in YAML format with
+// header comment to file with given file path.
 func (uc *UserCache) Save(fpath string) (err error) {
 	const intro = `
 # Log of all clients that had activity on the server.

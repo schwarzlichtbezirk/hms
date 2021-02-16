@@ -9,7 +9,7 @@ import (
 	"github.com/rwcarlsen/goexif/tiff"
 )
 
-// EXIF tags properties chunk.
+// ExifProp is EXIF tags properties chunk.
 type ExifProp struct {
 	Width  int `json:"width,omitempty" yaml:"width,omitempty"`
 	Height int `json:"height,omitempty" yaml:"height,omitempty"`
@@ -47,7 +47,7 @@ func ratfloat(t *tiff.Tag) float64 {
 	return 0
 }
 
-// Fills fields from given EXIF structure.
+// Setup fills fields from given EXIF structure.
 func (ep *ExifProp) Setup(x *exif.Exif) {
 	var err error
 	var t *tiff.Tag
@@ -133,14 +133,14 @@ func (ep *ExifProp) Setup(x *exif.Exif) {
 	}
 }
 
-// File with EXIF tags.
+// ExifKit is file with EXIF tags.
 type ExifKit struct {
 	FileProp
 	TmbProp
 	ExifProp
 }
 
-// Fills fields with given path.
+// Setup fills fields with given path.
 func (ek *ExifKit) Setup(syspath string, fi os.FileInfo) {
 	ek.FileProp.Setup(fi)
 
@@ -152,7 +152,7 @@ func (ek *ExifKit) Setup(syspath string, fi os.FileInfo) {
 			var pic []byte
 			if pic, err = x.JpegThumbnail(); err == nil {
 				ek.PUIDVal = pathcache.Cache(syspath)
-				ek.NTmbVal = TMB_cached
+				ek.NTmbVal = TMBcached
 				thumbcache.Set(ek.PUIDVal, &MediaData{
 					Data: pic,
 					Mime: "image/jpeg",
@@ -164,6 +164,7 @@ func (ek *ExifKit) Setup(syspath string, fi os.FileInfo) {
 	ek.TmbProp.Setup(syspath)
 }
 
+// GetExifTmb extracts JPEG thumbnail from the image file.
 func GetExifTmb(syspath string) (md *MediaData, err error) {
 	var file *os.File
 	if file, err = os.Open(syspath); err != nil {

@@ -7,6 +7,7 @@ import (
 	"sync"
 )
 
+// DefHidden is default hidden path templates.
 var DefHidden = []string{
 	"?:/system volume information",
 	"*.sys",
@@ -26,14 +27,18 @@ var DefHidden = []string{
 
 // File path access.
 const (
-	FPA_none  = 0 // profile have no any access to specified file path
-	FPA_admin = 1 // only authorized access to specified file path
-	FPA_share = 2 // access to specified file path is shared
+	// FPAnone - profile have no any access to specified file path.
+	FPAnone = 0
+	// FPAadmin - only authorized access to specified file path.
+	FPAadmin = 1
+	// FPAshare - access to specified file path is shared.
+	FPAshare = 2
 )
 
-type CatGrp [FG_num]bool
+// CatGrp indicates access to each file group.
+type CatGrp [FGnum]bool
 
-// Used to check whether an object is zero to determine whether
+// IsZero used to check whether an object is zero to determine whether
 // it should be omitted when marshaling to yaml.
 func (cg *CatGrp) IsZero() bool {
 	for _, v := range cg {
@@ -44,12 +49,14 @@ func (cg *CatGrp) IsZero() bool {
 	return true
 }
 
+// SetAll sets all elements to given boolean value.
 func (cg *CatGrp) SetAll(v bool) {
 	for i := range cg {
 		cg[i] = v
 	}
 }
 
+// Profile contains access configuration to resources.
 type Profile struct {
 	ID       int    `json:"id"`
 	Login    string `json:"login"`
@@ -67,12 +74,14 @@ type Profile struct {
 	mux sync.RWMutex
 }
 
+// Profiles is the list of Profile structures.
 type Profiles struct {
 	list []*Profile
 	mux  sync.RWMutex
 }
 
-func (pl *Profiles) NewAccount(login, password string) *Profile {
+// NewProfile make new profile and insert it to the list.
+func (pl *Profiles) NewProfile(login, password string) *Profile {
 	var prf = &Profile{
 		Login:     login,
 		Password:  password,
@@ -90,6 +99,7 @@ func (pl *Profiles) NewAccount(login, password string) *Profile {
 	return prf
 }
 
+// ByID finds profile with given identifier.
 func (pl *Profiles) ByID(prfid int) *Profile {
 	pl.mux.RLock()
 	defer pl.mux.RUnlock()
@@ -101,6 +111,7 @@ func (pl *Profiles) ByID(prfid int) *Profile {
 	return nil
 }
 
+// ByLogin finds profile with given login.
 func (pl *Profiles) ByLogin(login string) *Profile {
 	pl.mux.RLock()
 	defer pl.mux.RUnlock()
@@ -112,12 +123,14 @@ func (pl *Profiles) ByLogin(login string) *Profile {
 	return nil
 }
 
+// Insert new profile to the list.
 func (pl *Profiles) Insert(prf *Profile) {
 	pl.mux.Lock()
 	defer pl.mux.Unlock()
 	pl.list = append(pl.list, prf)
 }
 
+// Delete profile with "prfid" identifier from the list.
 func (pl *Profiles) Delete(prfid int) bool {
 	pl.mux.RLock()
 	defer pl.mux.RUnlock()
@@ -133,7 +146,7 @@ func (pl *Profiles) Delete(prfid int) bool {
 // Profiles list.
 var prflist Profiles
 
-// Set hidden files array to default predefined list.
+// SetDefaultHidden sest hidden files array to default predefined list.
 func (prf *Profile) SetDefaultHidden() {
 	prf.mux.Lock()
 	defer prf.mux.Unlock()
@@ -142,7 +155,7 @@ func (prf *Profile) SetDefaultHidden() {
 	copy(prf.Hidden, DefHidden)
 }
 
-// Check up that file path is in hidden list.
+// IsHidden do check up that file path is in hidden list.
 func (prf *Profile) IsHidden(fpath string) bool {
 	var matched bool
 	var kpath = strings.TrimSuffix(strings.ToLower(filepath.ToSlash(fpath)), "/")
@@ -158,7 +171,7 @@ func (prf *Profile) IsHidden(fpath string) bool {
 	return matched
 }
 
-// Returns index of given path in roots list or -1 if not found.
+// RootIndex returns index of given path in roots list or -1 if not found.
 func (prf *Profile) RootIndex(path string) int {
 	prf.mux.RLock()
 	defer prf.mux.RUnlock()
@@ -171,7 +184,7 @@ func (prf *Profile) RootIndex(path string) int {
 	return -1
 }
 
-// Scan all available drives installed on local machine.
+// FindRoots scan all available drives installed on local machine.
 func (prf *Profile) FindRoots() {
 	const windisks = "CDEFGHIJKLMNOPQRSTUVWXYZ"
 	for _, d := range windisks {
@@ -186,7 +199,7 @@ func (prf *Profile) FindRoots() {
 	}
 }
 
-// Scan drives from roots list.
+// ScanRoots scan drives from roots list.
 func (prf *Profile) ScanRoots() []Pather {
 	prf.mux.RLock()
 	defer prf.mux.RUnlock()
@@ -201,7 +214,7 @@ func (prf *Profile) ScanRoots() []Pather {
 	return lst
 }
 
-// Scan actual shares from shares list.
+// ScanShares scan actual shares from shares list.
 func (prf *Profile) ScanShares() []Pather {
 	prf.mux.RLock()
 	defer prf.mux.RUnlock()
@@ -222,21 +235,21 @@ func (prf *Profile) updateGrp() {
 		return ok
 	}
 
-	var all = is(CP_drives)
-	var media = is(CP_media)
+	var all = is(CPdrives)
+	var media = is(CPmedia)
 	prf.ctgrshare = CatGrp{
 		all,
-		all || is(CP_video) || media,
-		all || is(CP_audio) || media,
-		all || is(CP_image) || media,
-		all || is(CP_books),
-		all || is(CP_texts),
+		all || is(CPvideo) || media,
+		all || is(CPaudio) || media,
+		all || is(CPimage) || media,
+		all || is(CPbooks),
+		all || is(CPtexts),
 		all,
 		all,
 	}
 }
 
-// Recreates shares maps, puts share property to cache.
+// UpdateShares recreates shares maps, puts share property to cache.
 func (prf *Profile) UpdateShares() {
 	prf.mux.Lock()
 	defer prf.mux.Unlock()
@@ -257,7 +270,7 @@ func (prf *Profile) UpdateShares() {
 	prf.updateGrp()
 }
 
-// Checks that syspath is become in any share.
+// IsShared checks that syspath is become in any share.
 func (prf *Profile) IsShared(syspath string) bool {
 	prf.mux.RLock()
 	defer prf.mux.RUnlock()
@@ -269,7 +282,7 @@ func (prf *Profile) IsShared(syspath string) bool {
 	return false
 }
 
-// Checks that syspath is become in any root.
+// IsRooted checks that syspath is become in any root.
 func (prf *Profile) IsRooted(syspath string) bool {
 	prf.mux.RLock()
 	defer prf.mux.RUnlock()
@@ -281,7 +294,7 @@ func (prf *Profile) IsRooted(syspath string) bool {
 	return false
 }
 
-// Add share with given path unigue identifier.
+// AddShare adds share with given path unigue identifier.
 func (prf *Profile) AddShare(syspath string) bool {
 	prf.mux.Lock()
 	defer prf.mux.Unlock()
@@ -297,7 +310,7 @@ func (prf *Profile) AddShare(syspath string) bool {
 	return false
 }
 
-// Delete share by given path unigue identifier.
+// DelShare deletes share by given path unigue identifier.
 func (prf *Profile) DelShare(puid string) bool {
 	prf.mux.Lock()
 	defer prf.mux.Unlock()
@@ -316,7 +329,7 @@ func (prf *Profile) DelShare(puid string) bool {
 	return false
 }
 
-// Brings system path to largest share path.
+// GetSharePath brings system path to largest share path.
 func (prf *Profile) GetSharePath(syspath string, isadmin bool) (shrpath string, base string, cg CatGrp) {
 	var concat = func() {
 		var pref, suff = pathcache.Cache(base), syspath[len(base):]
@@ -364,7 +377,7 @@ func (prf *Profile) GetSharePath(syspath string, isadmin bool) (shrpath string, 
 	return
 }
 
-// Returns file group access state for given file path.
+// PathAccess returns file group access state for given file path.
 func (prf *Profile) PathAccess(syspath string, isadmin bool) (cg CatGrp) {
 	prf.mux.RLock()
 	defer prf.mux.RUnlock()
@@ -388,7 +401,7 @@ func (prf *Profile) PathAccess(syspath string, isadmin bool) (cg CatGrp) {
 	return
 }
 
-// Returns whether profile has admin access to file path or category path.
+// PathAdmin returns whether profile has admin access to file path or category path.
 func (prf *Profile) PathAdmin(syspath string) bool {
 	prf.mux.RLock()
 	defer prf.mux.RUnlock()
@@ -411,7 +424,7 @@ func (prf *Profile) PathAdmin(syspath string) bool {
 	return false
 }
 
-// Reads directory with given system path and returns Pather for each entry.
+// Readdir reads directory with given system path and returns Pather for each entry.
 func (prf *Profile) Readdir(syspath string, cg *CatGrp) (ret []Pather, err error) {
 	if !strings.HasSuffix(syspath, "/") {
 		syspath += "/"

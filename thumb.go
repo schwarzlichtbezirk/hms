@@ -12,19 +12,22 @@ import (
 	"os"
 
 	"github.com/disintegration/gift"
-	_ "github.com/oov/psd"
-	_ "github.com/spate/glimage/dds"
-	_ "golang.org/x/image/bmp"
-	_ "golang.org/x/image/tiff"
-	_ "golang.org/x/image/webp"
+	_ "github.com/oov/psd"           // register PSD format
+	_ "github.com/spate/glimage/dds" // register DDS format
+	_ "golang.org/x/image/bmp"       // register BMP format
+	_ "golang.org/x/image/tiff"      // register TIFF format
+	_ "golang.org/x/image/webp"      // register WebP format
 
 	_ "github.com/ftrvxmtrx/tga" // put TGA to end, decoder does not register magic prefix
 )
 
 const (
-	TMB_none   = 0
-	TMB_reject = -1
-	TMB_cached = 1
+	// TMBnone - file is not cached for thumbnails.
+	TMBnone = 0
+	// TMBreject - file can not be cached for thumbnails.
+	TMBreject = -1
+	// TMBcached - file is already cached for thumbnails.
+	TMBcached = 1
 )
 
 // Allow images a bit larger than standard icon stay as is.
@@ -48,48 +51,49 @@ var (
 	ErrTooBig   = errors.New("file is too big")
 )
 
-// Thumbnails cache element.
+// MediaData is thumbnails cache element.
 type MediaData struct {
 	Data []byte
 	Mime string
 }
 
-// Thumbnails properties.
+// TmbProp is thumbnails properties.
 type TmbProp struct {
 	PUIDVal string `json:"puid,omitempty" yaml:"puid,omitempty"`
 	NTmbVal int    `json:"ntmb,omitempty" yaml:"ntmb,omitempty"`
 }
 
-// Generates PUID (path unique identifier) and updates cached state.
+// Setup generates PUID (path unique identifier) and updates cached state.
 func (tp *TmbProp) Setup(syspath string) {
 	tp.PUIDVal = pathcache.Cache(syspath)
 	tp.NTmbCached()
 }
 
-// Updates cached state for this cache key.
+// NTmbCached updates cached state for this cache key.
 func (tp *TmbProp) NTmbCached() {
 	if thumbcache.Has(tp.PUIDVal) {
-		tp.NTmbVal = TMB_cached
+		tp.NTmbVal = TMBcached
 	} else {
-		tp.NTmbVal = TMB_none
+		tp.NTmbVal = TMBnone
 	}
 }
 
-// Thumbnail key, it's full system path unique ID.
+// PUID returns thumbnail key, it's full system path unique ID.
 func (tp *TmbProp) PUID() string {
 	return tp.PUIDVal
 }
 
-// Thumbnail state, -1 impossible, 0 undefined, 1 ready.
+// NTmb returns thumbnail state, -1 impossible, 0 undefined, 1 ready.
 func (tp *TmbProp) NTmb() int {
 	return tp.NTmbVal
 }
 
-// Updates thumbnail state to given value.
+// SetNTmb updates thumbnail state to given value.
 func (tp *TmbProp) SetNTmb(v int) {
 	tp.NTmbVal = v
 }
 
+// FindTmb finds thumbnail in embedded file tags, or build it if it possible.
 func FindTmb(prop Pather, syspath string) (md *MediaData, err error) {
 	if prop.Type() < 0 {
 		err = ErrNotFile
@@ -116,7 +120,7 @@ func FindTmb(prop Pather, syspath string) (md *MediaData, err error) {
 	}
 
 	// check all others are images
-	if typetogroup[prop.Type()] != FG_image {
+	if typetogroup[prop.Type()] != FGimage {
 		err = ErrNotImg
 		return // file is not image
 	}
@@ -130,6 +134,8 @@ func FindTmb(prop Pather, syspath string) (md *MediaData, err error) {
 	return MakeTmb(file)
 }
 
+// MakeTmb reads image from the stream and makes thumbnail with format
+// depended from alpha-channel is present in the original image.
 func MakeTmb(r io.Reader) (md *MediaData, err error) {
 	var ftype string
 	var src, dst image.Image
@@ -173,7 +179,7 @@ func MakeTmb(r io.Reader) (md *MediaData, err error) {
 }
 
 // APIHANDLER
-func tmbchkApi(w http.ResponseWriter, r *http.Request) {
+func tmbchkAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
 		Tmbs []*TmbProp `json:"tmbs"`
@@ -201,7 +207,7 @@ func tmbchkApi(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
-func tmbscnApi(w http.ResponseWriter, r *http.Request) {
+func tmbscnAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
 		AID   int      `json:"aid"`

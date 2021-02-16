@@ -21,9 +21,12 @@ import (
 	"golang.org/x/crypto/acme/autocert"
 )
 
+// Log is global static ring logger object.
 var Log = NewLogger(os.Stderr, LstdFlags, 300)
 
-var httpsrv, tlssrv []*http.Server
+var (
+	httpsrv, tlssrv []*http.Server
+)
 
 // Package root dir.
 var datapack *wpk.Package
@@ -115,7 +118,7 @@ func pathexists(path string) (bool, error) {
 	return true, err
 }
 
-// Performs global data initialisation. Loads configuration files, initializes file cache.
+// Init performs global data initialisation. Loads configuration files, initializes file cache.
 func Init() {
 	var err error
 	var path string

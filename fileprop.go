@@ -12,271 +12,273 @@ import (
 
 // File types
 const (
-	FT_ctgr = -3
-	FT_drv  = -2
-	FT_dir  = -1
-	FT_file = 0
-	FT_mp4  = 1
-	FT_webm = 2
-	FT_mov  = 3
-	FT_wave = 4
-	FT_flac = 5
-	FT_mus  = 6
-	FT_tga  = 7
-	FT_bmp  = 8
-	FT_dds  = 9
-	FT_tiff = 10
-	FT_jpeg = 11
-	FT_gif  = 12
-	FT_png  = 13
-	FT_webp = 14
-	FT_psd  = 15
-	FT_img  = 16
-	FT_pdf  = 17
-	FT_html = 18
-	FT_text = 19
-	FT_scr  = 20
-	FT_cfg  = 21
-	FT_log  = 22
-	FT_arch = 23
-	FT_disk = 24
-	FT_pack = 25
+	FTctgr = -3
+	FTdrv  = -2
+	FTdir  = -1
+	FTfile = 0
+	FTmp4  = 1
+	FTwebm = 2
+	FTmov  = 3
+	FTwave = 4
+	FTflac = 5
+	FTmus  = 6
+	FTtga  = 7
+	FTbmp  = 8
+	FTdds  = 9
+	FTtiff = 10
+	FTjpeg = 11
+	FTgif  = 12
+	FTpng  = 13
+	FTwebp = 14
+	FTpsd  = 15
+	FTimg  = 16
+	FTpdf  = 17
+	FThtml = 18
+	FTtext = 19
+	FTscr  = 20
+	FTcfg  = 21
+	FTlog  = 22
+	FTarch = 23
+	FTdisk = 24
+	FTpack = 25
 )
 
 // File groups
 const (
-	FG_other = 0
-	FG_video = 1
-	FG_audio = 2
-	FG_image = 3
-	FG_books = 4
-	FG_texts = 5
-	FG_store = 6
-	FG_dir   = 7
+	FGother = 0
+	FGvideo = 1
+	FGaudio = 2
+	FGimage = 3
+	FGbooks = 4
+	FGtexts = 5
+	FGstore = 6
+	FGdir   = 7
 )
 
-const FG_num = 8
+// FGnum is count of file groups
+const FGnum = 8
 
 var typetogroup = map[int]int{
-	FT_ctgr: FG_dir,
-	FT_drv:  FG_dir,
-	FT_dir:  FG_dir,
-	FT_file: FG_other,
-	FT_mp4:  FG_video,
-	FT_webm: FG_video,
-	FT_mov:  FG_video,
-	FT_wave: FG_audio,
-	FT_flac: FG_audio,
-	FT_mus:  FG_audio,
-	FT_tga:  FG_image,
-	FT_bmp:  FG_image,
-	FT_dds:  FG_image,
-	FT_tiff: FG_image,
-	FT_jpeg: FG_image,
-	FT_gif:  FG_image,
-	FT_png:  FG_image,
-	FT_webp: FG_image,
-	FT_psd:  FG_image,
-	FT_img:  FG_image,
-	FT_pdf:  FG_books,
-	FT_html: FG_books,
-	FT_text: FG_texts,
-	FT_scr:  FG_texts,
-	FT_cfg:  FG_texts,
-	FT_log:  FG_texts,
-	FT_arch: FG_store,
-	FT_disk: FG_store,
-	FT_pack: FG_store,
+	FTctgr: FGdir,
+	FTdrv:  FGdir,
+	FTdir:  FGdir,
+	FTfile: FGother,
+	FTmp4:  FGvideo,
+	FTwebm: FGvideo,
+	FTmov:  FGvideo,
+	FTwave: FGaudio,
+	FTflac: FGaudio,
+	FTmus:  FGaudio,
+	FTtga:  FGimage,
+	FTbmp:  FGimage,
+	FTdds:  FGimage,
+	FTtiff: FGimage,
+	FTjpeg: FGimage,
+	FTgif:  FGimage,
+	FTpng:  FGimage,
+	FTwebp: FGimage,
+	FTpsd:  FGimage,
+	FTimg:  FGimage,
+	FTpdf:  FGbooks,
+	FThtml: FGbooks,
+	FTtext: FGtexts,
+	FTscr:  FGtexts,
+	FTcfg:  FGtexts,
+	FTlog:  FGtexts,
+	FTarch: FGstore,
+	FTdisk: FGstore,
+	FTpack: FGstore,
 }
 
 var extset = map[string]int{
 	// Video
-	".mp4":  FT_mp4,
-	".webm": FT_webm,
-	".mov":  FT_mov,
-	".avi":  FT_mov,
-	".mkv":  FT_mov,
+	".mp4":  FTmp4,
+	".webm": FTwebm,
+	".mov":  FTmov,
+	".avi":  FTmov,
+	".mkv":  FTmov,
 
 	// Audio
-	".wav":  FT_wave,
-	".flac": FT_flac,
-	".mp3":  FT_mus,
-	".ogg":  FT_mus,
-	".opus": FT_mus,
-	".acc":  FT_mus,
-	".m4a":  FT_mus,
-	".wma":  FT_mus,
+	".wav":  FTwave,
+	".flac": FTflac,
+	".mp3":  FTmus,
+	".ogg":  FTmus,
+	".opus": FTmus,
+	".acc":  FTmus,
+	".m4a":  FTmus,
+	".wma":  FTmus,
 
 	// Images
-	".tga":  FT_tga,
-	".bmp":  FT_bmp,
-	".dib":  FT_bmp,
-	".rle":  FT_bmp,
-	".dds":  FT_dds,
-	".tif":  FT_tiff,
-	".tiff": FT_tiff,
-	".jpg":  FT_jpeg,
-	".jpe":  FT_jpeg,
-	".jpeg": FT_jpeg,
-	".jfif": FT_jpeg,
-	".gif":  FT_gif,
-	".png":  FT_png,
-	".webp": FT_webp,
-	".psd":  FT_psd,
-	".psb":  FT_psd,
-	".jp2":  FT_img,
-	".jpg2": FT_img,
-	".jpx":  FT_img,
-	".jxr":  FT_img,
+	".tga":  FTtga,
+	".bmp":  FTbmp,
+	".dib":  FTbmp,
+	".rle":  FTbmp,
+	".dds":  FTdds,
+	".tif":  FTtiff,
+	".tiff": FTtiff,
+	".jpg":  FTjpeg,
+	".jpe":  FTjpeg,
+	".jpeg": FTjpeg,
+	".jfif": FTjpeg,
+	".gif":  FTgif,
+	".png":  FTpng,
+	".webp": FTwebp,
+	".psd":  FTpsd,
+	".psb":  FTpsd,
+	".jp2":  FTimg,
+	".jpg2": FTimg,
+	".jpx":  FTimg,
+	".jxr":  FTimg,
 
 	// Books
-	".pdf":   FT_pdf,
-	".html":  FT_html,
-	".htm":   FT_html,
-	".shtml": FT_html,
-	".shtm":  FT_html,
-	".xhtml": FT_html,
-	".phtml": FT_html,
-	".hta":   FT_html,
-	".mht":   FT_html,
+	".pdf":   FTpdf,
+	".html":  FThtml,
+	".htm":   FThtml,
+	".shtml": FThtml,
+	".shtm":  FThtml,
+	".xhtml": FThtml,
+	".phtml": FThtml,
+	".hta":   FThtml,
+	".mht":   FThtml,
 
 	// Texts
-	".txt":   FT_text,
-	".md":    FT_text,
-	".css":   FT_scr,
-	".js":    FT_scr,
-	".jsm":   FT_scr,
-	".vb":    FT_scr,
-	".vbs":   FT_scr,
-	".bat":   FT_scr,
-	".cmd":   FT_scr,
-	".sh":    FT_scr,
-	".mak":   FT_scr,
-	".iss":   FT_scr,
-	".nsi":   FT_scr,
-	".nsh":   FT_scr,
-	".bsh":   FT_scr,
-	".sql":   FT_scr,
-	".as":    FT_scr,
-	".mx":    FT_scr,
-	".php":   FT_scr,
-	".phpt":  FT_scr,
-	".java":  FT_scr,
-	".jsp":   FT_scr,
-	".asp":   FT_scr,
-	".lua":   FT_scr,
-	".tcl":   FT_scr,
-	".asm":   FT_scr,
-	".c":     FT_scr,
-	".h":     FT_scr,
-	".hpp":   FT_scr,
-	".hxx":   FT_scr,
-	".cpp":   FT_scr,
-	".cxx":   FT_scr,
-	".cc":    FT_scr,
-	".cs":    FT_scr,
-	".go":    FT_scr,
-	".r":     FT_scr,
-	".d":     FT_scr,
-	".pas":   FT_scr,
-	".inc":   FT_scr,
-	".py":    FT_scr,
-	".pyw":   FT_scr,
-	".pl":    FT_scr,
-	".pm":    FT_scr,
-	".plx":   FT_scr,
-	".rb":    FT_scr,
-	".rbw":   FT_scr,
-	".rc":    FT_scr,
-	".ps":    FT_scr,
-	".cfg":   FT_cfg,
-	".ini":   FT_cfg,
-	".inf":   FT_cfg,
-	".reg":   FT_cfg,
-	".url":   FT_cfg,
-	".xml":   FT_cfg,
-	".xsml":  FT_cfg,
-	".xsl":   FT_cfg,
-	".xsd":   FT_cfg,
-	".kml":   FT_cfg,
-	".wsdl":  FT_cfg,
-	".xlf":   FT_cfg,
-	".xliff": FT_cfg,
-	".yml":   FT_cfg,
-	".yaml":  FT_cfg,
-	".cmake": FT_cfg,
-	".json":  FT_cfg,
-	".log":   FT_log,
+	".txt":   FTtext,
+	".md":    FTtext,
+	".css":   FTscr,
+	".js":    FTscr,
+	".jsm":   FTscr,
+	".vb":    FTscr,
+	".vbs":   FTscr,
+	".bat":   FTscr,
+	".cmd":   FTscr,
+	".sh":    FTscr,
+	".mak":   FTscr,
+	".iss":   FTscr,
+	".nsi":   FTscr,
+	".nsh":   FTscr,
+	".bsh":   FTscr,
+	".sql":   FTscr,
+	".as":    FTscr,
+	".mx":    FTscr,
+	".php":   FTscr,
+	".phpt":  FTscr,
+	".java":  FTscr,
+	".jsp":   FTscr,
+	".asp":   FTscr,
+	".lua":   FTscr,
+	".tcl":   FTscr,
+	".asm":   FTscr,
+	".c":     FTscr,
+	".h":     FTscr,
+	".hpp":   FTscr,
+	".hxx":   FTscr,
+	".cpp":   FTscr,
+	".cxx":   FTscr,
+	".cc":    FTscr,
+	".cs":    FTscr,
+	".go":    FTscr,
+	".r":     FTscr,
+	".d":     FTscr,
+	".pas":   FTscr,
+	".inc":   FTscr,
+	".py":    FTscr,
+	".pyw":   FTscr,
+	".pl":    FTscr,
+	".pm":    FTscr,
+	".plx":   FTscr,
+	".rb":    FTscr,
+	".rbw":   FTscr,
+	".rc":    FTscr,
+	".ps":    FTscr,
+	".cfg":   FTcfg,
+	".ini":   FTcfg,
+	".inf":   FTcfg,
+	".reg":   FTcfg,
+	".url":   FTcfg,
+	".xml":   FTcfg,
+	".xsml":  FTcfg,
+	".xsl":   FTcfg,
+	".xsd":   FTcfg,
+	".kml":   FTcfg,
+	".wsdl":  FTcfg,
+	".xlf":   FTcfg,
+	".xliff": FTcfg,
+	".yml":   FTcfg,
+	".yaml":  FTcfg,
+	".cmake": FTcfg,
+	".json":  FTcfg,
+	".log":   FTlog,
 
 	// storage
-	".cab":  FT_arch,
-	".zip":  FT_arch,
-	".7z":   FT_arch,
-	".rar":  FT_arch,
-	".rev":  FT_arch,
-	".tar":  FT_arch,
-	".tgz":  FT_arch,
-	".gz":   FT_arch,
-	".bz2":  FT_arch,
-	".iso":  FT_disk,
-	".isz":  FT_disk,
-	".udf":  FT_disk,
-	".nrg":  FT_disk,
-	".mdf":  FT_disk,
-	".mdx":  FT_disk,
-	".img":  FT_disk,
-	".ima":  FT_disk,
-	".imz":  FT_disk,
-	".ccd":  FT_disk,
-	".vc4":  FT_disk,
-	".dmg":  FT_disk,
-	".daa":  FT_disk,
-	".uif":  FT_disk,
-	".vhd":  FT_disk,
-	".vhdx": FT_disk,
-	".vmdk": FT_disk,
-	".wpk":  FT_pack,
+	".cab":  FTarch,
+	".zip":  FTarch,
+	".7z":   FTarch,
+	".rar":  FTarch,
+	".rev":  FTarch,
+	".tar":  FTarch,
+	".tgz":  FTarch,
+	".gz":   FTarch,
+	".bz2":  FTarch,
+	".iso":  FTdisk,
+	".isz":  FTdisk,
+	".udf":  FTdisk,
+	".nrg":  FTdisk,
+	".mdf":  FTdisk,
+	".mdx":  FTdisk,
+	".img":  FTdisk,
+	".ima":  FTdisk,
+	".imz":  FTdisk,
+	".ccd":  FTdisk,
+	".vc4":  FTdisk,
+	".dmg":  FTdisk,
+	".daa":  FTdisk,
+	".uif":  FTdisk,
+	".vhd":  FTdisk,
+	".vhdx": FTdisk,
+	".vmdk": FTdisk,
+	".wpk":  FTpack,
 }
 
 // Categories properties constants.
 const (
-	CP_home   = "[home/Home]"
-	CP_drives = "[drives/Drives list]"
-	CP_shares = "[shares/Shared resources]"
-	CP_media  = "[media/Multimedia files]"
-	CP_video  = "[video/Movie and video files]"
-	CP_audio  = "[audio/Music and audio files]"
-	CP_image  = "[image/Photos and images]"
-	CP_books  = "[books/Books]"
-	CP_texts  = "[texts/Text files]"
+	CPhome   = "[home/Home]"
+	CPdrives = "[drives/Drives list]"
+	CPshares = "[shares/Shared resources]"
+	CPmedia  = "[media/Multimedia files]"
+	CPvideo  = "[video/Movie and video files]"
+	CPaudio  = "[audio/Music and audio files]"
+	CPimage  = "[image/Photos and images]"
+	CPbooks  = "[books/Books]"
+	CPtexts  = "[texts/Text files]"
 )
 
-// Paths list of categories properties.
+// CatPath is paths list of categories properties.
 var CatPath = []string{
-	CP_home,
-	CP_drives,
-	CP_shares,
-	CP_media,
-	CP_video,
-	CP_audio,
-	CP_image,
-	CP_books,
-	CP_texts,
+	CPhome,
+	CPdrives,
+	CPshares,
+	CPmedia,
+	CPvideo,
+	CPaudio,
+	CPimage,
+	CPbooks,
+	CPtexts,
 }
 
+// CidCatPath is map where key is CID, value is categories paths.
 var CidCatPath = map[string]string{
-	"home":   CP_home,
-	"drives": CP_drives,
-	"shares": CP_shares,
-	"media":  CP_media,
-	"video":  CP_video,
-	"audio":  CP_audio,
-	"image":  CP_image,
-	"books":  CP_books,
-	"texts":  CP_texts,
+	"home":   CPhome,
+	"drives": CPdrives,
+	"shares": CPshares,
+	"media":  CPmedia,
+	"video":  CPvideo,
+	"audio":  CPaudio,
+	"image":  CPimage,
+	"books":  CPbooks,
+	"texts":  CPtexts,
 }
 
-// Path properties interface.
+// Pather is path properties interface.
 type Pather interface {
 	Name() string // string identifier
 	Type() int    // type identifier
@@ -287,71 +289,72 @@ type Pather interface {
 	SetNTmb(int)
 }
 
-// Any path base properties.
+// PathProp is any path base properties.
 type PathProp struct {
 	NameVal string `json:"name,omitempty" yaml:"name,omitempty"`
 	TypeVal int    `json:"type,omitempty" yaml:"type,omitempty"`
 }
 
-// File name with extension without path.
+// Name is file name with extension without path.
 func (pp *PathProp) Name() string {
 	return pp.NameVal
 }
 
-// Enumerated file type.
+// Type is enumerated file type.
 func (pp *PathProp) Type() int {
 	return pp.TypeVal
 }
 
-// File size in bytes.
+// Size is file size in bytes.
 func (pp *PathProp) Size() int64 {
 	return 0
 }
 
-// File creation time in UNIX format, milliseconds.
+// Time is file creation time in UNIX format, milliseconds.
 func (pp *PathProp) Time() int64 {
 	return 0
 }
 
-// Common file properties chunk.
+// FileProp is common file properties chunk.
 type FileProp struct {
 	PathProp
 	SizeVal int64 `json:"size,omitempty" yaml:"size,omitempty"`
 	TimeVal int64 `json:"time,omitempty" yaml:"time,omitempty"`
 }
 
-// Fills fields from os.FileInfo structure. Do not looks for share.
+// Setup fills fields from os.FileInfo structure. Do not looks for share.
 func (fp *FileProp) Setup(fi os.FileInfo) {
 	fp.NameVal = fi.Name()
 	fp.SizeVal = fi.Size()
 	fp.TimeVal = UnixJS(fi.ModTime())
 }
 
-// File size in bytes.
+// Size is file size in bytes.
 func (fp *FileProp) Size() int64 {
 	return fp.SizeVal
 }
 
-// File creation time in UNIX format, milliseconds.
+// Time is file creation time in UNIX format, milliseconds.
 func (fp *FileProp) Time() int64 {
 	return fp.TimeVal
 }
 
-// Common files properties kit.
+// FileKit is common files properties kit.
 type FileKit struct {
 	FileProp
 	TmbProp
 }
 
-// Calls nested structures setups.
+// Setup calls nested structures setups.
 func (fk *FileKit) Setup(syspath string, fi os.FileInfo) {
 	fk.FileProp.Setup(fi)
 	fk.TmbProp.Setup(syspath)
 }
 
-type FileGrp [FG_num]int
+// FileGrp is files group alias.
+type FileGrp [FGnum]int
 
-// Used to check whether an object is zero to determine whether
+// IsZero used to check whether an object is zero to determine whether
 // it should be omitted when marshaling to yaml.
 func (fg *FileGrp) IsZero() bool {
 	for _, v := range fg {
@@ -362,6 +365,7 @@ func (fg *FileGrp) IsZero() bool {
 	return true
 }
 
+// PathBase returns safe base of path or CID as is.
 func PathBase(syspath string) string {
 	if len(syspath) > 0 {
 		var pos1 int
@@ -379,7 +383,7 @@ func PathBase(syspath string) string {
 	return syspath
 }
 
-// Directory properties chunk.
+// DirProp is directory properties chunk.
 type DirProp struct {
 	// Directory scanning time in UNIX format, milliseconds.
 	Scan int64 `json:"scan" yaml:"scan"`
@@ -387,38 +391,40 @@ type DirProp struct {
 	FGrp FileGrp `json:"fgrp" yaml:"fgrp,flow"`
 }
 
-// Directory properties kit.
+// DirKit is directory properties kit.
 type DirKit struct {
 	PathProp
 	TmbProp
 	DirProp
 }
 
-// Fills fields with given path. Do not looks for share.
+// Setup fills fields with given path. Do not looks for share.
 func (dk *DirKit) Setup(syspath string) {
 	dk.NameVal = PathBase(syspath)
-	dk.TypeVal = FT_dir
+	dk.TypeVal = FTdir
 	dk.PUIDVal = pathcache.Cache(syspath)
-	dk.NTmbVal = TMB_reject
+	dk.NTmbVal = TMBreject
 	if dp, ok := dircache.Get(dk.PUIDVal); ok {
 		dk.DirProp = dp
 	}
 }
 
+// DriveKit is drive properties kit.
 type DriveKit struct {
 	PathProp
 	TmbProp
 	Latency int `json:"latency"` // drive connection latency in ms, or -1 on error
 }
 
-// Fills fields with given path. Do not looks for share.
+// Setup fills fields with given path. Do not looks for share.
 func (dk *DriveKit) Setup(syspath string) {
 	dk.NameVal = PathBase(syspath)
-	dk.TypeVal = FT_drv
+	dk.TypeVal = FTdrv
 	dk.PUIDVal = pathcache.Cache(syspath)
-	dk.NTmbVal = TMB_reject
+	dk.NTmbVal = TMBreject
 }
 
+// Scan drive to check its latency.
 func (dk *DriveKit) Scan(syspath string) error {
 	var t1 = time.Now()
 	var fi, err = os.Stat(syspath)
@@ -433,34 +439,36 @@ func (dk *DriveKit) Scan(syspath string) error {
 	return err
 }
 
+// CatKit is categories properties kit.
 type CatKit struct {
 	PathProp
 	TmbProp
 	CID string `json:"cid"`
 }
 
+// Setup fills fields with given path. Do not looks for share.
 func (ck *CatKit) Setup(path string) {
 	var pos = strings.IndexByte(path, '/')
 	ck.NameVal = path[pos+1 : len(path)-1]
-	ck.TypeVal = FT_ctgr
+	ck.TypeVal = FTctgr
 	ck.PUIDVal = pathcache.Cache(path)
-	ck.NTmbVal = TMB_reject
+	ck.NTmbVal = TMBreject
 	ck.CID = path[1:pos]
 }
 
-// Descriptor for discs and tracks.
+// TagEnum is descriptor for discs and tracks.
 type TagEnum struct {
 	Number int `json:"number,omitempty" yaml:"number,omitempty"`
 	Total  int `json:"total,omitempty" yaml:"total,omitempty"`
 }
 
-// Used to check whether an object is zero to determine whether
+// IsZero used to check whether an object is zero to determine whether
 // it should be omitted when marshaling to yaml.
 func (te *TagEnum) IsZero() bool {
 	return te.Number == 0 && te.Total == 0
 }
 
-// Music file tags properties chunk.
+// TagProp is Music file tags properties chunk.
 type TagProp struct {
 	Title    string  `json:"title,omitempty" yaml:"title,omitempty"`
 	Album    string  `json:"album,omitempty" yaml:"album,omitempty"`
@@ -474,7 +482,7 @@ type TagProp struct {
 	Comment  string  `json:"comment,omitempty" yaml:"comment,omitempty"`
 }
 
-// Fills fields from tags metadata.
+// Setup fills fields from tags metadata.
 func (tp *TagProp) Setup(m tag.Metadata) {
 	tp.Title = m.Title()
 	tp.Album = m.Album()
@@ -488,14 +496,14 @@ func (tp *TagProp) Setup(m tag.Metadata) {
 	tp.Comment = m.Comment()
 }
 
-// Music file tags properties kit.
+// TagKit is music file tags properties kit.
 type TagKit struct {
 	FileProp
 	TmbProp
 	TagProp
 }
 
-// Fills fields with given path.
+// Setup fills fields with given path.
 // Puts into the cache nested at the tags thumbnail if it present.
 func (tk *TagKit) Setup(syspath string, fi os.FileInfo) {
 	tk.FileProp.Setup(fi)
@@ -524,13 +532,14 @@ func (tk *TagKit) Setup(syspath string, fi os.FileInfo) {
 	}
 	tk.PUIDVal = pathcache.Cache(syspath)
 	if md != nil {
-		tk.NTmbVal = TMB_cached
+		tk.NTmbVal = TMBcached
 		thumbcache.Set(tk.PUIDVal, md)
 	} else {
-		tk.NTmbVal = TMB_reject
+		tk.NTmbVal = TMBreject
 	}
 }
 
+// GetTagTmb extracts embedded thumbnail from image file.
 func GetTagTmb(syspath string) (md *MediaData, err error) {
 	var file *os.File
 	if file, err = os.Open(syspath); err != nil {
@@ -561,30 +570,29 @@ func GetTagTmb(syspath string) (md *MediaData, err error) {
 	return
 }
 
-// File properties factory.
+// MakeProp is file properties factory.
 func MakeProp(syspath string, fi os.FileInfo) interface{} {
 	if fi.IsDir() {
 		var dk DirKit
 		dk.Setup(syspath)
 		return &dk
+	}
+	var ft = extset[strings.ToLower(filepath.Ext(syspath))]
+	if ft == FTflac || ft == FTmus || ft == FTmp4 {
+		var tk TagKit
+		tk.TypeVal = ft
+		tk.Setup(syspath, fi)
+		return &tk
+	} else if ft == FTjpeg || ft == FTtiff || ft == FTpng || ft == FTwebp {
+		var ek ExifKit
+		ek.TypeVal = ft
+		ek.Setup(syspath, fi)
+		return &ek
 	} else {
-		var ft = extset[strings.ToLower(filepath.Ext(syspath))]
-		if ft == FT_flac || ft == FT_mus || ft == FT_mp4 {
-			var tk TagKit
-			tk.TypeVal = ft
-			tk.Setup(syspath, fi)
-			return &tk
-		} else if ft == FT_jpeg || ft == FT_tiff || ft == FT_png || ft == FT_webp {
-			var ek ExifKit
-			ek.TypeVal = ft
-			ek.Setup(syspath, fi)
-			return &ek
-		} else {
-			var fk FileKit
-			fk.TypeVal = ft
-			fk.Setup(syspath, fi)
-			return &fk
-		}
+		var fk FileKit
+		fk.TypeVal = ft
+		fk.Setup(syspath, fi)
+		return &fk
 	}
 }
 

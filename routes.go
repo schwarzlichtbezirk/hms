@@ -105,42 +105,42 @@ func RegisterRoutes(gmux *Router) {
 
 	// API routes
 	var api = gmux.PathPrefix("/api").Subrouter()
-	api.Path("/ping").HandlerFunc(AjaxWrap(pingApi))
-	api.Path("/purge").HandlerFunc(AuthWrap(purgeApi))
-	api.Path("/reload").HandlerFunc(AuthWrap(reloadApi))
+	api.Path("/ping").HandlerFunc(AjaxWrap(pingAPI))
+	api.Path("/purge").HandlerFunc(AuthWrap(purgeAPI))
+	api.Path("/reload").HandlerFunc(AuthWrap(reloadAPI))
 	var stc = api.PathPrefix("/stat").Subrouter()
-	stc.Path("/srvinf").HandlerFunc(AjaxWrap(srvinfApi))
-	stc.Path("/memusg").HandlerFunc(AjaxWrap(memusgApi))
-	stc.Path("/cchinf").HandlerFunc(AjaxWrap(cchinfApi))
-	stc.Path("/getlog").HandlerFunc(AjaxWrap(getlogApi))
-	stc.Path("/usrlst").HandlerFunc(AjaxWrap(usrlstApi))
+	stc.Path("/srvinf").HandlerFunc(AjaxWrap(srvinfAPI))
+	stc.Path("/memusg").HandlerFunc(AjaxWrap(memusgAPI))
+	stc.Path("/cchinf").HandlerFunc(AjaxWrap(cchinfAPI))
+	stc.Path("/getlog").HandlerFunc(AjaxWrap(getlogAPI))
+	stc.Path("/usrlst").HandlerFunc(AjaxWrap(usrlstAPI))
 	var reg = api.PathPrefix("/auth").Subrouter()
-	reg.Path("/pubkey").HandlerFunc(AjaxWrap(pubkeyApi))
-	reg.Path("/signin").HandlerFunc(AjaxWrap(signinApi))
-	reg.Path("/refrsh").HandlerFunc(AjaxWrap(refrshApi))
+	reg.Path("/pubkey").HandlerFunc(AjaxWrap(pubkeyAPI))
+	reg.Path("/signin").HandlerFunc(AjaxWrap(signinAPI))
+	reg.Path("/refrsh").HandlerFunc(AjaxWrap(refrshAPI))
 	var crd = api.PathPrefix("/card").Subrouter()
-	crd.Path("/ishome").HandlerFunc(AjaxWrap(ishomeApi))
-	crd.Path("/ctgr").HandlerFunc(AjaxWrap(ctgrApi))
-	crd.Path("/folder").HandlerFunc(AjaxWrap(folderApi))
-	crd.Path("/ispath").HandlerFunc(AuthWrap(ispathApi))
+	crd.Path("/ishome").HandlerFunc(AjaxWrap(ishomeAPI))
+	crd.Path("/ctgr").HandlerFunc(AjaxWrap(ctgrAPI))
+	crd.Path("/folder").HandlerFunc(AjaxWrap(folderAPI))
+	crd.Path("/ispath").HandlerFunc(AuthWrap(ispathAPI))
 	var tmb = api.PathPrefix("/tmb").Subrouter()
-	tmb.Path("/chk").HandlerFunc(AjaxWrap(tmbchkApi))
-	tmb.Path("/scn").HandlerFunc(AjaxWrap(tmbscnApi))
+	tmb.Path("/chk").HandlerFunc(AjaxWrap(tmbchkAPI))
+	tmb.Path("/scn").HandlerFunc(AjaxWrap(tmbscnAPI))
 	var shr = api.PathPrefix("/share").Subrouter()
-	shr.Path("/lst").HandlerFunc(AjaxWrap(shrlstApi))
-	shr.Path("/add").HandlerFunc(AuthWrap(shraddApi))
-	shr.Path("/del").HandlerFunc(AuthWrap(shrdelApi))
+	shr.Path("/lst").HandlerFunc(AjaxWrap(shrlstAPI))
+	shr.Path("/add").HandlerFunc(AuthWrap(shraddAPI))
+	shr.Path("/del").HandlerFunc(AuthWrap(shrdelAPI))
 	var drv = api.PathPrefix("/drive").Subrouter()
-	drv.Path("/lst").HandlerFunc(AjaxWrap(drvlstApi))
-	drv.Path("/add").HandlerFunc(AuthWrap(drvaddApi))
-	drv.Path("/del").HandlerFunc(AuthWrap(drvdelApi))
+	drv.Path("/lst").HandlerFunc(AjaxWrap(drvlstAPI))
+	drv.Path("/add").HandlerFunc(AuthWrap(drvaddAPI))
+	drv.Path("/del").HandlerFunc(AuthWrap(drvdelAPI))
 }
 
 ////////////////
 // Routes API //
 ////////////////
 
-// Handler wrapper for AJAX API calls without authorization.
+// AjaxWrap is handler wrapper for AJAX API calls without authorization.
 func AjaxWrap(fn http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		go func() {
@@ -159,6 +159,7 @@ const (
 
 var serverlabel string
 
+// MakeServerLabel formats "Server" field for HTTP headers.
 func MakeServerLabel(label, version string) {
 	serverlabel = fmt.Sprintf("%s/%s (%s)", label, version, runtime.GOOS)
 }
