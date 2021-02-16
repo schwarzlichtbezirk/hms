@@ -2,14 +2,12 @@ package hms
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"image"
 	"image/gif"
 	"image/jpeg"
 	"image/png"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 
@@ -182,17 +180,12 @@ func tmbchkApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get arguments
-	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
-		if err = json.Unmarshal(jb, &arg); err != nil {
-			WriteError400(w, err, EC_tmbchkbadreq)
-			return
-		}
-		if len(arg.Tmbs) == 0 {
-			WriteError400(w, ErrNoData, EC_tmbchknodata)
-			return
-		}
-	} else {
-		WriteError400(w, ErrNoJSON, EC_tmbchknoreq)
+	if err = AjaxGetArg(r, &arg); err != nil {
+		WriteJSON(w, http.StatusBadRequest, err)
+		return
+	}
+	if len(arg.Tmbs) == 0 {
+		WriteError400(w, ErrNoData, AECtmbchknodata)
 		return
 	}
 
@@ -216,23 +209,18 @@ func tmbscnApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get arguments
-	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
-		if err = json.Unmarshal(jb, &arg); err != nil {
-			WriteError400(w, err, EC_tmbscnbadreq)
-			return
-		}
-		if len(arg.PUIDs) == 0 {
-			WriteError400(w, ErrNoData, EC_tmbscnnodata)
-			return
-		}
-	} else {
-		WriteError400(w, ErrNoJSON, EC_tmbscnnoreq)
+	if err = AjaxGetArg(r, &arg); err != nil {
+		WriteJSON(w, http.StatusBadRequest, err)
+		return
+	}
+	if len(arg.PUIDs) == 0 {
+		WriteError400(w, ErrNoData, AECtmbscnnodata)
 		return
 	}
 
 	var prf *Profile
 	if prf = prflist.ByID(int(arg.AID)); prf == nil {
-		WriteError400(w, ErrNoAcc, EC_tmbscnnoacc)
+		WriteError400(w, ErrNoAcc, AECtmbscnnoacc)
 		return
 	}
 	var auth *Profile

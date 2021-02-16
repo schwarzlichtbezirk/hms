@@ -3,6 +3,7 @@ package hms
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"runtime"
 
@@ -43,166 +44,6 @@ type Router = mux.Router
 
 // NewRouter is local alias for router creation function.
 var NewRouter = mux.NewRouter
-
-// API error codes
-const (
-	EC_null    = 0
-	EC_badjson = 1
-
-	// auth
-	EC_noauth     = 2
-	EC_tokenless  = 3
-	EC_tokenerror = 4
-	EC_tokenbad   = 5
-	EC_tokennoacc = 6
-
-	// page
-	EC_pageabsent = 7
-	EC_fileabsent = 8
-
-	// file
-	EC_filebadaccid = 10
-	EC_filenoacc    = 11
-	EC_filehidden   = 12
-	EC_filenoprop   = 13
-	EC_filenofile   = 14
-	EC_fileaccess   = 15
-
-	// media
-	EC_mediabadaccid = 20
-	EC_medianoacc    = 21
-	EC_medianopath   = 22
-	EC_mediahidden   = 23
-	EC_medianoprop   = 24
-	EC_medianofile   = 25
-	EC_mediaaccess   = 26
-	EC_mediaabsent   = 27
-	EC_mediabadcnt   = 28
-
-	// thumb
-	EC_thumbbadaccid = 30
-	EC_thumbnoacc    = 31
-	EC_thumbnopath   = 32
-	EC_thumbhidden   = 33
-	EC_thumbnoprop   = 34
-	EC_thumbnofile   = 35
-	EC_thumbaccess   = 36
-	EC_thumbabsent   = 37
-	EC_thumbbadcnt   = 38
-
-	// pubkey
-	EC_pubkeyrand = 40
-
-	// signin
-	EC_signinnoreq  = 41
-	EC_signinbadreq = 42
-	EC_signinnodata = 43
-	EC_signinnoacc  = 44
-	EC_signinpkey   = 45
-	EC_signindeny   = 46
-
-	// refrsh
-	EC_refrshnoreq  = 50
-	EC_refrshbadreq = 51
-	EC_refrshnodata = 52
-	EC_refrshparse  = 53
-
-	// reload
-	EC_reloadload = 60
-	EC_reloadtmpl = 61
-
-	// getlog
-	EC_getlogbadnum = 62
-
-	// usrlst
-	EC_usrlstnoreq  = 63
-	EC_usrlstbadreq = 64
-
-	// ishome
-	EC_ishomenoreq  = 70
-	EC_ishomebadreq = 71
-	EC_ishomenoacc  = 72
-
-	// ctgr
-	EC_ctgrnoreq  = 80
-	EC_ctgrbadreq = 81
-	EC_ctgrnodata = 82
-	EC_ctgrnopath = 83
-	EC_ctgrnocid  = 84
-	EC_ctgrnoacc  = 85
-	EC_ctgrnoshr  = 86
-	EC_ctgrnotcat = 87
-
-	// folder
-	EC_foldernoreq  = 90
-	EC_folderbadreq = 91
-	EC_foldernodata = 92
-	EC_foldernoacc  = 93
-	EC_foldernopath = 94
-	EC_folderaccess = 95
-	EC_folderfail   = 96
-
-	// ispath
-	EC_ispathnoreq  = 100
-	EC_ispathbadreq = 101
-	EC_ispathnoacc  = 102
-	EC_ispathdeny   = 103
-
-	// tmb/chk
-	EC_tmbchknoreq  = 110
-	EC_tmbchkbadreq = 111
-	EC_tmbchknodata = 112
-
-	// tmb/scn
-	EC_tmbscnnoreq  = 113
-	EC_tmbscnbadreq = 114
-	EC_tmbscnnodata = 115
-	EC_tmbscnnoacc  = 116
-
-	// share/lst
-	EC_shrlstnoreq  = 120
-	EC_shrlstbadreq = 121
-	EC_shrlstnoacc  = 122
-	EC_shrlstnoshr  = 123
-
-	// share/add
-	EC_shraddnoreq  = 130
-	EC_shraddbadreq = 131
-	EC_shraddnodata = 132
-	EC_shraddnoacc  = 133
-	EC_shradddeny   = 134
-	EC_shraddnopath = 135
-	EC_shraddaccess = 136
-
-	// share/del
-	EC_shrdelnoreq  = 140
-	EC_shrdelbadreq = 141
-	EC_shrdelnodata = 142
-	EC_shrdelnoacc  = 143
-	EC_shrdeldeny   = 144
-
-	// drive/lst
-	EC_drvlstnoreq  = 150
-	EC_drvlstbadreq = 151
-	EC_drvlstnoacc  = 152
-	EC_drvlstnoshr  = 153
-
-	// drive/add
-	EC_drvaddnoreq  = 160
-	EC_drvaddbadreq = 161
-	EC_drvaddnodata = 162
-	EC_drvaddnoacc  = 163
-	EC_drvadddeny   = 164
-	EC_drvaddfile   = 165
-
-	// drive/del
-	EC_drvdelnoreq  = 170
-	EC_drvdelbadreq = 171
-	EC_drvdelnodata = 172
-	EC_drvdelnoacc  = 173
-	EC_drvdeldeny   = 174
-	EC_drvdelnopath = 175
-)
 
 //////////////////
 // Routes table //
@@ -322,6 +163,18 @@ func MakeServerLabel(label, version string) {
 	serverlabel = fmt.Sprintf("%s/%s (%s)", label, version, runtime.GOOS)
 }
 
+// AjaxGetArg fetch and unmarshal request argument.
+func AjaxGetArg(r *http.Request, arg interface{}) error {
+	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
+		if err := json.Unmarshal(jb, arg); err != nil {
+			return &ErrAjax{err, AECbadjson}
+		}
+	} else {
+		return &ErrAjax{ErrNoJSON, AECnoreq}
+	}
+	return nil
+}
+
 // WriteStdHeader setup common response headers.
 func WriteStdHeader(w http.ResponseWriter) {
 	w.Header().Set("Connection", "keep-alive")
@@ -344,20 +197,27 @@ func WriteJSONHeader(w http.ResponseWriter) {
 
 // WriteJSON writes to response given status code and marshaled body.
 func WriteJSON(w http.ResponseWriter, status int, body interface{}) {
-	WriteJSONHeader(w)
-
-	if body != nil {
-		var b, err = json.Marshal(body)
-		if err == nil {
-			w.WriteHeader(status)
-			w.Write(b)
-		} else {
-			b, _ = json.Marshal(&ErrAjax{err, EC_badjson})
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write(b)
-		}
-	} else {
+	if body == nil {
 		w.WriteHeader(status)
+		WriteJSONHeader(w)
+		return
+	}
+	/*if b, ok := body.([]byte); ok {
+		w.WriteHeader(status)
+		WriteJSONHeader(w)
+		w.Write(b)
+		return
+	}*/
+	var b, err = json.Marshal(body)
+	if err == nil {
+		w.WriteHeader(status)
+		WriteJSONHeader(w)
+		w.Write(b)
+	} else {
+		b, _ = json.Marshal(&ErrAjax{err, AECbadbody})
+		w.WriteHeader(http.StatusInternalServerError)
+		WriteJSONHeader(w)
+		w.Write(b)
 	}
 }
 
@@ -368,20 +228,17 @@ func WriteOK(w http.ResponseWriter, body interface{}) {
 
 // WriteError puts to response given error status code and ErrAjax formed by given error object.
 func WriteError(w http.ResponseWriter, status int, err error, code int) {
-	WriteJSONHeader(w)
-	w.WriteHeader(status)
-	var b, _ = json.Marshal(&ErrAjax{err, code})
-	w.Write(b)
+	WriteJSON(w, status, &ErrAjax{err, code})
 }
 
 // WriteError400 puts to response 400 status code and ErrAjax formed by given error object.
 func WriteError400(w http.ResponseWriter, err error, code int) {
-	WriteError(w, http.StatusBadRequest, err, code)
+	WriteJSON(w, http.StatusBadRequest, &ErrAjax{err, code})
 }
 
 // WriteError500 puts to response 500 status code and ErrAjax formed by given error object.
 func WriteError500(w http.ResponseWriter, err error, code int) {
-	WriteError(w, http.StatusInternalServerError, err, code)
+	WriteJSON(w, http.StatusInternalServerError, &ErrAjax{err, code})
 }
 
 // The End.

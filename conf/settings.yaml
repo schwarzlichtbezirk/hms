@@ -36,6 +36,8 @@ webserver: # See https://golang.org/pkg/net/http/#Server for details.
     # Controls the maximum number of bytes the server will read parsing
     # the request header's keys and values, including the request line, in bytes.
     max-header-bytes: 1048576 # 1M
+    # Maximum duration to wait for graceful shutdown, in seconds.
+    shutdown-timeout: 15
 specification:
     # Name of wpk-file with program resources.
     wpk-name: hms.wpk

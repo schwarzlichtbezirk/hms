@@ -4,9 +4,7 @@ import (
 	"bytes"
 	"crypto/hmac"
 	"crypto/sha256"
-	"encoding/json"
 	"errors"
-	"io/ioutil"
 	"math/rand"
 	"net"
 	"net/http"
@@ -123,16 +121,16 @@ func GetAuth(r *http.Request) (auth *Profile, aerr error) {
 			}
 		}
 		if !bearer {
-			aerr = &ErrAjax{ErrNoBearer, EC_tokenless}
+			aerr = &ErrAjax{ErrNoBearer, AECtokenless}
 			return
 		} else if _, is := err.(*jwt.ValidationError); is {
-			aerr = &ErrAjax{err, EC_tokenerror}
+			aerr = &ErrAjax{err, AECtokenerror}
 			return
 		} else if err != nil {
-			aerr = &ErrAjax{err, EC_tokenbad}
+			aerr = &ErrAjax{err, AECtokenbad}
 			return
 		} else if auth = prflist.ByID(claims.AID); auth == nil {
-			aerr = &ErrAjax{ErrNoAcc, EC_tokennoacc}
+			aerr = &ErrAjax{ErrNoAcc, AECtokennoacc}
 			return
 		}
 		return
@@ -157,7 +155,7 @@ func AuthWrap(fn AuthHandlerFunc) http.HandlerFunc {
 			return
 		}
 		if auth == nil {
-			WriteError(w, http.StatusUnauthorized, ErrNoAuth, EC_noauth)
+			WriteError(w, http.StatusUnauthorized, ErrNoAuth, AECnoauth)
 			return
 		}
 
@@ -169,7 +167,7 @@ func pubkeyApi(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var buf [32]byte
 	if _, err = rand.Read(buf[:]); err != nil {
-		WriteError500(w, err, EC_pubkeyrand)
+		WriteError500(w, err, AECpubkeyrand)
 		return
 	}
 
@@ -188,28 +186,23 @@ func signinApi(w http.ResponseWriter, r *http.Request) {
 	var res Tokens
 
 	// get arguments
-	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
-		if err = json.Unmarshal(jb, &arg); err != nil {
-			WriteError400(w, err, EC_signinbadreq)
-			return
-		}
-		if arg.Name == "" || bytes.Equal(arg.PubK[:], zero32[:]) || bytes.Equal(arg.Hash[:], zero32[:]) {
-			WriteError400(w, ErrNoData, EC_signinnodata)
-			return
-		}
-	} else {
-		WriteError400(w, ErrNoJSON, EC_signinnoreq)
+	if err = AjaxGetArg(r, &arg); err != nil {
+		WriteJSON(w, http.StatusBadRequest, err)
+		return
+	}
+	if arg.Name == "" || bytes.Equal(arg.PubK[:], zero32[:]) || bytes.Equal(arg.Hash[:], zero32[:]) {
+		WriteError400(w, ErrNoData, AECsigninnodata)
 		return
 	}
 
 	var prf *Profile
 	if prf = prflist.ByLogin(arg.Name); prf == nil {
-		WriteError(w, http.StatusForbidden, ErrNoAcc, EC_signinnoacc)
+		WriteError(w, http.StatusForbidden, ErrNoAcc, AECsigninnoacc)
 		return
 	}
 
 	if _, err = pubkeycache.Get(idenc.EncodeToString(arg.PubK[:])); err != nil {
-		WriteError(w, http.StatusForbidden, ErrNoPubKey, EC_signinpkey)
+		WriteError(w, http.StatusForbidden, ErrNoPubKey, AECsigninpkey)
 		return
 	}
 
@@ -217,7 +210,7 @@ func signinApi(w http.ResponseWriter, r *http.Request) {
 	mac.Write([]byte(prf.Password))
 	var cmp = mac.Sum(nil)
 	if !hmac.Equal(arg.Hash[:], cmp) {
-		WriteError(w, http.StatusForbidden, ErrBadPass, EC_signindeny)
+		WriteError(w, http.StatusForbidden, ErrBadPass, AECsignindeny)
 		return
 	}
 
@@ -232,17 +225,12 @@ func refrshApi(w http.ResponseWriter, r *http.Request) {
 	var res Tokens
 
 	// get arguments
-	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
-		if err = json.Unmarshal(jb, &arg); err != nil {
-			WriteError400(w, err, EC_refrshbadreq)
-			return
-		}
-		if len(arg.Refrsh) == 0 {
-			WriteError400(w, ErrNoData, EC_refrshnodata)
-			return
-		}
-	} else {
-		WriteError400(w, ErrNoJSON, EC_refrshnoreq)
+	if err = AjaxGetArg(r, &arg); err != nil {
+		WriteJSON(w, http.StatusBadRequest, err)
+		return
+	}
+	if len(arg.Refrsh) == 0 {
+		WriteError400(w, ErrNoData, AECrefrshnodata)
 		return
 	}
 
@@ -250,7 +238,7 @@ func refrshApi(w http.ResponseWriter, r *http.Request) {
 	if _, err = jwt.ParseWithClaims(arg.Refrsh, &claims, func(token *jwt.Token) (interface{}, error) {
 		return []byte(cfg.RefreshKey), nil
 	}); err != nil {
-		WriteError400(w, err, EC_refrshparse)
+		WriteError400(w, err, AECrefrshparse)
 		return
 	}
 

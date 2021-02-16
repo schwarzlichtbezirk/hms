@@ -197,7 +197,7 @@ func Init() {
 	exifparsers()
 }
 
-// Launch server listeners.
+// Run launches server listeners.
 func Run(gmux *Router) {
 	httpsrv = make([]*http.Server, len(cfg.AddrHTTP))
 	for i, addr := range cfg.AddrHTTP {
@@ -262,26 +262,28 @@ func Run(gmux *Router) {
 	}
 }
 
-// Blocks goroutine until Ctrl+C will be pressed.
+// WaitBreak blocks goroutine until Ctrl+C will be pressed.
 func WaitBreak() {
 	var sigint = make(chan os.Signal, 1)
-	// We'll accept graceful shutdowns when quit via SIGINT (Ctrl+C)
-	// SIGKILL, SIGQUIT or SIGTERM (Ctrl+/) will not be caught.
+	// We'll accept graceful shutdowns when quit via SIGINT (Ctrl+C) or SIGTERM (Ctrl+/)
+	// SIGKILL, SIGQUIT will not be caught.
 	signal.Notify(sigint, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	// Block until we receive our signal.
 	<-sigint
 }
 
-// Graceful stop network processing, waits until all server threads will be stopped.
-func Done() {
+// Shutdown performs graceful network shutdown,
+// waits until all server threads will be stopped.
+func Shutdown() {
 	// Create a deadline to wait for.
 	var ctx, cancel = context.WithTimeout(
 		context.Background(),
-		time.Duration(cfg.ReadTimeout)*time.Second)
+		time.Duration(cfg.ShutdownTimeout)*time.Second)
 	defer cancel()
 
-	var srvwg sync.WaitGroup
+	var wg sync.WaitGroup // perform shutdown in several goroutines
+
 	// Doesn't block if no connections, but will otherwise wait
 	// until the timeout deadline.
 	for _, srv := range httpsrv {
@@ -289,9 +291,9 @@ func Done() {
 		if srv == nil {
 			continue
 		}
-		srvwg.Add(1)
+		wg.Add(1)
 		go func() {
-			defer srvwg.Done()
+			defer wg.Done()
 			srv.SetKeepAlivesEnabled(false)
 			if err := srv.Shutdown(ctx); err != nil {
 				Log.Printf("HTTP server Shutdown: %v", err)
@@ -303,54 +305,55 @@ func Done() {
 		if srv == nil {
 			continue
 		}
-		srvwg.Add(1)
+		wg.Add(1)
 		go func() {
-			defer srvwg.Done()
+			defer wg.Done()
 			srv.SetKeepAlivesEnabled(false)
 			if err := srv.Shutdown(ctx); err != nil {
 				Log.Printf("TLS server Shutdown: %v", err)
 			}
 		}()
 	}
-	srvwg.Wait()
+
+	wg.Wait()
 	Log.Println("web server stopped")
 
 	// Stop users scanner
-	srvwg.Add(1)
+	wg.Add(1)
 	go func() {
-		defer srvwg.Done()
+		defer wg.Done()
 		close(userquit)
 	}()
 
-	srvwg.Add(1)
+	wg.Add(1)
 	go func() {
-		defer srvwg.Done()
+		defer wg.Done()
 		if err := pathcache.Save(confpath + "pathcache.yaml"); err != nil {
 			Log.Println("error on path cache file: " + err.Error())
 			Log.Println("saving of directories cache and users list were missed for a reason path cache saving failure")
 			return
 		}
 
-		srvwg.Add(1)
+		wg.Add(1)
 		go func() {
-			defer srvwg.Done()
+			defer wg.Done()
 			if err := dircache.Save(confpath + "dircache.yaml"); err != nil {
 				Log.Println("error on directories cache file: " + err.Error())
 			}
 		}()
 
-		srvwg.Add(1)
+		wg.Add(1)
 		go func() {
-			defer srvwg.Done()
+			defer wg.Done()
 			if err := usercache.Save(confpath + "userlist.yaml"); err != nil {
 				Log.Println("error on users list file: " + err.Error())
 			}
 		}()
 	}()
 
-	srvwg.Add(1)
+	wg.Add(1)
 	go func() {
-		defer srvwg.Done()
+		defer wg.Done()
 		if err := prflist.Save(confpath + "profiles.yaml"); err != nil {
 			Log.Println("error on profiles list file: " + err.Error())
 		}
@@ -358,7 +361,7 @@ func Done() {
 
 	packager.Close()
 
-	srvwg.Wait()
+	wg.Wait()
 }
 
 // The End.

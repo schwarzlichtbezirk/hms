@@ -5,7 +5,7 @@ import (
 )
 
 const buildvers = "0.7.1"
-const builddate = "2021.02.12"
+const builddate = "2021.02.13"
 
 func main() {
 	Log.Printf("version: %s, builton: %s", buildvers, builddate)
@@ -19,7 +19,7 @@ func main() {
 	Log.Printf("hint: Open localhost page in browser to view the player. If you want to stop the server, press 'Ctrl+C' for graceful network shutdown. Use localhost/stat for server state monitoring.")
 	WaitBreak()
 	Log.Println("shutting down begin")
-	Done()
+	Shutdown()
 	Log.Println("shutting down complete.")
 }
 

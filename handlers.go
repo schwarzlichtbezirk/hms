@@ -2,7 +2,6 @@ package hms
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"io/ioutil"
 	"net/http"
@@ -11,6 +10,160 @@ import (
 	"strconv"
 	"strings"
 	"time"
+)
+
+// API error codes.
+// Each error code have unique source code point,
+// so this error code at service reply exactly points to error place.
+const (
+	AECnull    = 0
+	AECbadbody = 1
+	AECnoreq   = 2
+	AECbadjson = 3
+
+	// auth
+
+	AECnoauth     = 4
+	AECtokenless  = 5
+	AECtokenerror = 6
+	AECtokenbad   = 7
+	AECtokennoacc = 8
+
+	// page
+
+	AECpageabsent = 10
+	AECfileabsent = 11
+
+	// file
+
+	AECfilebadaccid = 12
+	AECfilenoacc    = 13
+	AECfilehidden   = 14
+	AECfilenoprop   = 15
+	AECfilenofile   = 16
+	AECfileaccess   = 17
+
+	// media
+
+	AECmediabadaccid = 20
+	AECmedianoacc    = 21
+	AECmedianopath   = 22
+	AECmediahidden   = 23
+	AECmedianoprop   = 24
+	AECmedianofile   = 25
+	AECmediaaccess   = 26
+	AECmediaabsent   = 27
+	AECmediabadcnt   = 28
+
+	// thumb
+
+	AECthumbbadaccid = 30
+	AECthumbnoacc    = 31
+	AECthumbnopath   = 32
+	AECthumbhidden   = 33
+	AECthumbnoprop   = 34
+	AECthumbnofile   = 35
+	AECthumbaccess   = 36
+	AECthumbabsent   = 37
+	AECthumbbadcnt   = 38
+
+	// pubkey
+
+	AECpubkeyrand = 40
+
+	// signin
+
+	AECsigninnodata = 41
+	AECsigninnoacc  = 42
+	AECsigninpkey   = 43
+	AECsignindeny   = 44
+
+	// refrsh
+
+	AECrefrshnodata = 45
+	AECrefrshparse  = 46
+
+	// reload
+
+	AECreloadload = 50
+	AECreloadtmpl = 51
+
+	// getlog
+
+	AECgetlogbadnum = 52
+
+	// ishome
+
+	AECishomenoacc = 53
+
+	// ctgr
+
+	AECctgrnodata = 60
+	AECctgrnopath = 61
+	AECctgrnocid  = 62
+	AECctgrnoacc  = 63
+	AECctgrnoshr  = 64
+	AECctgrnotcat = 65
+
+	// folder
+
+	AECfoldernodata = 70
+	AECfoldernoacc  = 71
+	AECfoldernopath = 72
+	AECfolderaccess = 73
+	AECfolderfail   = 74
+
+	// ispath
+
+	AECispathnoacc = 75
+	AECispathdeny  = 76
+
+	// tmb/chk
+
+	AECtmbchknodata = 80
+
+	// tmb/scn
+
+	AECtmbscnnodata = 81
+	AECtmbscnnoacc  = 82
+
+	// share/lst
+
+	AECshrlstnoacc = 90
+	AECshrlstnoshr = 91
+
+	// share/add
+
+	AECshraddnodata = 92
+	AECshraddnoacc  = 93
+	AECshradddeny   = 94
+	AECshraddnopath = 95
+	AECshraddaccess = 96
+
+	// share/del
+
+	AECshrdelnodata = 97
+	AECshrdelnoacc  = 98
+	AECshrdeldeny   = 99
+
+	// drive/lst
+
+	AECdrvlstnoacc = 100
+	AECdrvlstnoshr = 101
+
+	// drive/add
+
+	AECdrvaddnodata = 102
+	AECdrvaddnoacc  = 103
+	AECdrvadddeny   = 104
+	AECdrvaddfile   = 105
+
+	// drive/del
+
+	AECdrvdelnodata = 106
+	AECdrvdelnoacc  = 107
+	AECdrvdeldeny   = 108
+	AECdrvdelnopath = 109
 )
 
 // HTTP error messages
@@ -41,7 +194,7 @@ func pageHandler(pref, name string) http.HandlerFunc {
 		var alias = pagealias[name]
 		var content, ok = pagecache[pref+alias]
 		if !ok {
-			WriteError(w, http.StatusNotFound, ErrNotFound, EC_pageabsent)
+			WriteError(w, http.StatusNotFound, ErrNotFound, AECpageabsent)
 		}
 		if name == "main" {
 			go func() {
@@ -76,13 +229,13 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 
 	var aid uint64
 	if aid, err = strconv.ParseUint(chunks[1][2:], 10, 32); err != nil {
-		WriteError400(w, err, EC_filebadaccid)
+		WriteError400(w, err, AECfilebadaccid)
 		return
 	}
 
 	var prf *Profile
 	if prf = prflist.ByID(int(aid)); prf == nil {
-		WriteError400(w, ErrNoAcc, EC_filenoacc)
+		WriteError400(w, ErrNoAcc, AECfilenoacc)
 		return
 	}
 	var auth *Profile
@@ -94,24 +247,24 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 	var syspath = UnfoldPath(strings.Join(chunks[3:], "/"))
 
 	if prf.IsHidden(syspath) {
-		WriteError(w, http.StatusForbidden, ErrHidden, EC_filehidden)
+		WriteError(w, http.StatusForbidden, ErrHidden, AECfilehidden)
 		return
 	}
 
 	var prop interface{}
 	if prop, err = propcache.Get(syspath); err != nil {
-		WriteError(w, http.StatusNotFound, err, EC_filenoprop)
+		WriteError(w, http.StatusNotFound, err, AECfilenoprop)
 		return
 	}
 	var fp = prop.(Pather)
 	if fp.Type() < 0 {
-		WriteError(w, http.StatusUnsupportedMediaType, ErrNotFile, EC_filenofile)
+		WriteError(w, http.StatusUnsupportedMediaType, ErrNotFile, AECfilenofile)
 		return
 	}
 	var cg = prf.PathAccess(syspath, auth == prf)
 	var grp = typetogroup[fp.Type()]
 	if !cg[grp] {
-		WriteError(w, http.StatusForbidden, ErrNoAccess, EC_fileaccess)
+		WriteError(w, http.StatusForbidden, ErrNoAccess, AECfileaccess)
 		return
 	}
 
@@ -140,13 +293,13 @@ func mediaHandler(w http.ResponseWriter, r *http.Request) {
 
 	var aid uint64
 	if aid, err = strconv.ParseUint(chunks[1][2:], 10, 32); err != nil {
-		WriteError400(w, err, EC_mediabadaccid)
+		WriteError400(w, err, AECmediabadaccid)
 		return
 	}
 
 	var prf *Profile
 	if prf = prflist.ByID(int(aid)); prf == nil {
-		WriteError400(w, ErrNoAcc, EC_medianoacc)
+		WriteError400(w, ErrNoAcc, AECmedianoacc)
 		return
 	}
 	var auth *Profile
@@ -158,36 +311,36 @@ func mediaHandler(w http.ResponseWriter, r *http.Request) {
 	var puid = chunks[3]
 	var syspath, ok = pathcache.Path(puid)
 	if !ok {
-		WriteError(w, http.StatusNotFound, ErrNoPath, EC_medianopath)
+		WriteError(w, http.StatusNotFound, ErrNoPath, AECmedianopath)
 		return
 	}
 
 	if prf.IsHidden(syspath) {
-		WriteError(w, http.StatusForbidden, ErrHidden, EC_mediahidden)
+		WriteError(w, http.StatusForbidden, ErrHidden, AECmediahidden)
 		return
 	}
 
 	var prop interface{}
 	if prop, err = propcache.Get(syspath); err != nil {
-		WriteError(w, http.StatusNotFound, err, EC_medianoprop)
+		WriteError(w, http.StatusNotFound, err, AECmedianoprop)
 		return
 	}
 	var fp = prop.(Pather)
 	if fp.Type() < 0 {
-		WriteError(w, http.StatusUnsupportedMediaType, ErrNotFile, EC_medianofile)
+		WriteError(w, http.StatusUnsupportedMediaType, ErrNotFile, AECmedianofile)
 		return
 	}
 	var cg = prf.PathAccess(syspath, auth == prf)
 	var grp = typetogroup[fp.Type()]
 	if !cg[grp] {
-		WriteError(w, http.StatusForbidden, ErrNoAccess, EC_mediaaccess)
+		WriteError(w, http.StatusForbidden, ErrNoAccess, AECmediaaccess)
 		return
 	}
 
 	var val interface{}
 	if val, err = mediacache.Get(puid); err != nil {
 		if !errors.Is(err, ErrUncacheable) {
-			WriteError(w, http.StatusNotFound, err, EC_mediaabsent)
+			WriteError(w, http.StatusNotFound, err, AECmediaabsent)
 			return
 		}
 
@@ -207,7 +360,7 @@ func mediaHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	var md *MediaData
 	if md, ok = val.(*MediaData); !ok || md == nil {
-		WriteError500(w, ErrBadMedia, EC_mediabadcnt)
+		WriteError500(w, ErrBadMedia, AECmediabadcnt)
 		return
 	}
 
@@ -236,13 +389,13 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) {
 
 	var aid uint64
 	if aid, err = strconv.ParseUint(chunks[1][2:], 10, 32); err != nil {
-		WriteError400(w, err, EC_thumbbadaccid)
+		WriteError400(w, err, AECthumbbadaccid)
 		return
 	}
 
 	var prf *Profile
 	if prf = prflist.ByID(int(aid)); prf == nil {
-		WriteError400(w, ErrNoAcc, EC_thumbnoacc)
+		WriteError400(w, ErrNoAcc, AECthumbnoacc)
 		return
 	}
 	var auth *Profile
@@ -254,40 +407,40 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) {
 	var puid = chunks[3]
 	var syspath, ok = pathcache.Path(puid)
 	if !ok {
-		WriteError(w, http.StatusNotFound, ErrNoPath, EC_thumbnopath)
+		WriteError(w, http.StatusNotFound, ErrNoPath, AECthumbnopath)
 		return
 	}
 
 	if prf.IsHidden(syspath) {
-		WriteError(w, http.StatusForbidden, ErrHidden, EC_thumbhidden)
+		WriteError(w, http.StatusForbidden, ErrHidden, AECthumbhidden)
 		return
 	}
 
 	var prop interface{}
 	if prop, err = propcache.Get(syspath); err != nil {
-		WriteError(w, http.StatusNotFound, err, EC_thumbnoprop)
+		WriteError(w, http.StatusNotFound, err, AECthumbnoprop)
 		return
 	}
 	var fp = prop.(Pather)
 	if fp.Type() < 0 {
-		WriteError(w, http.StatusUnsupportedMediaType, ErrNotFile, EC_thumbnofile)
+		WriteError(w, http.StatusUnsupportedMediaType, ErrNotFile, AECthumbnofile)
 		return
 	}
 	var cg = prf.PathAccess(syspath, auth == prf)
 	var grp = typetogroup[fp.Type()]
 	if !cg[grp] {
-		WriteError(w, http.StatusForbidden, ErrNoAccess, EC_thumbaccess)
+		WriteError(w, http.StatusForbidden, ErrNoAccess, AECthumbaccess)
 		return
 	}
 
 	var val interface{}
 	if val, err = thumbcache.Get(puid); err != nil {
-		WriteError(w, http.StatusNotFound, err, EC_thumbabsent)
+		WriteError(w, http.StatusNotFound, err, AECthumbabsent)
 		return
 	}
 	var md *MediaData
 	if md, ok = val.(*MediaData); !ok || md == nil {
-		WriteError500(w, ErrBadMedia, EC_thumbbadcnt)
+		WriteError500(w, ErrBadMedia, AECthumbbadcnt)
 		return
 	}
 	w.Header().Set("Content-Type", md.Mime)
@@ -297,7 +450,9 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) {
 // APIHANDLER
 func pingApi(w http.ResponseWriter, r *http.Request) {
 	var body, _ = ioutil.ReadAll(r.Body)
-	WriteOK(w, body)
+	w.WriteHeader(http.StatusOK)
+	WriteJSONHeader(w)
+	w.Write(body)
 }
 
 // APIHANDLER
@@ -319,11 +474,11 @@ func reloadApi(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var err error
 
 	if err = packager.OpenWPK(destpath + "hms.wpk"); err != nil {
-		WriteError500(w, err, EC_reloadload)
+		WriteError500(w, err, AECreloadload)
 		return
 	}
 	if err = loadtemplates(); err != nil {
-		WriteError500(w, err, EC_reloadtmpl)
+		WriteError500(w, err, AECreloadtmpl)
 		return
 	}
 
@@ -442,7 +597,7 @@ func getlogApi(w http.ResponseWriter, r *http.Request) {
 	if s := r.FormValue("num"); len(s) > 0 {
 		var i64 int64
 		if i64, err = strconv.ParseInt(s, 10, 64); err != nil {
-			WriteError400(w, ErrArgNoNum, EC_getlogbadnum)
+			WriteError400(w, ErrArgNoNum, AECgetlogbadnum)
 			return
 		}
 		num = int(i64)
@@ -470,19 +625,14 @@ func ishomeApi(w http.ResponseWriter, r *http.Request) {
 	var ret bool
 
 	// get arguments
-	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
-		if err = json.Unmarshal(jb, &arg); err != nil {
-			WriteError400(w, err, EC_ishomebadreq)
-			return
-		}
-	} else {
-		WriteError400(w, ErrNoJSON, EC_ishomenoreq)
+	if err = AjaxGetArg(r, &arg); err != nil {
+		WriteJSON(w, http.StatusBadRequest, err)
 		return
 	}
 
 	var prf *Profile
 	if prf = prflist.ByID(arg.AID); prf == nil {
-		WriteError400(w, ErrNoAcc, EC_ishomenoacc)
+		WriteError400(w, ErrNoAcc, AECishomenoacc)
 		return
 	}
 	var auth *Profile
@@ -522,13 +672,8 @@ func ctgrApi(w http.ResponseWriter, r *http.Request) {
 	var ret = []Pather{}
 
 	// get arguments
-	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
-		if err = json.Unmarshal(jb, &arg); err != nil {
-			WriteError400(w, err, EC_ctgrbadreq)
-			return
-		}
-	} else {
-		WriteError400(w, ErrNoJSON, EC_ctgrnoreq)
+	if err = AjaxGetArg(r, &arg); err != nil {
+		WriteJSON(w, http.StatusBadRequest, err)
 		return
 	}
 
@@ -536,24 +681,24 @@ func ctgrApi(w http.ResponseWriter, r *http.Request) {
 	if len(arg.CID) > 0 {
 		var ok bool
 		if catpath, ok = CidCatPath[arg.CID]; !ok {
-			WriteError400(w, ErrArgNoPath, EC_ctgrnocid)
+			WriteError400(w, ErrArgNoPath, AECctgrnocid)
 			return
 		}
 		arg.PUID = pathcache.Cache(catpath)
 	} else if len(arg.PUID) > 0 {
 		var ok bool
 		if catpath, ok = pathcache.Path(arg.PUID); !ok {
-			WriteError(w, http.StatusNotFound, ErrNoPath, EC_ctgrnopath)
+			WriteError(w, http.StatusNotFound, ErrNoPath, AECctgrnopath)
 			return
 		}
 	} else {
-		WriteError400(w, ErrArgNoPath, EC_ctgrnodata)
+		WriteError400(w, ErrArgNoPath, AECctgrnodata)
 		return
 	}
 
 	var prf *Profile
 	if prf = prflist.ByID(arg.AID); prf == nil {
-		WriteError400(w, ErrNoAcc, EC_ctgrnoacc)
+		WriteError400(w, ErrNoAcc, AECctgrnoacc)
 		return
 	}
 	var auth *Profile
@@ -563,7 +708,7 @@ func ctgrApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if auth != prf && !prf.IsShared(catpath) {
-		WriteError(w, http.StatusForbidden, ErrNotShared, EC_ctgrnoshr)
+		WriteError(w, http.StatusForbidden, ErrNotShared, AECctgrnoshr)
 		return
 	}
 	var catprop = func(puids []string) {
@@ -604,7 +749,7 @@ func ctgrApi(w http.ResponseWriter, r *http.Request) {
 	case CP_texts:
 		catprop(dircache.Category(FG_texts, 0.5))
 	default:
-		WriteError(w, http.StatusMethodNotAllowed, ErrNotCat, EC_ctgrnotcat)
+		WriteError(w, http.StatusMethodNotAllowed, ErrNotCat, AECctgrnotcat)
 		return
 	}
 
@@ -629,23 +774,18 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get arguments
-	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
-		if err = json.Unmarshal(jb, &arg); err != nil {
-			WriteError400(w, err, EC_folderbadreq)
-			return
-		}
-		if len(arg.PUID) == 0 && len(arg.Path) == 0 {
-			WriteError400(w, ErrArgNoPath, EC_foldernodata)
-			return
-		}
-	} else {
-		WriteError400(w, ErrNoJSON, EC_foldernoreq)
+	if err = AjaxGetArg(r, &arg); err != nil {
+		WriteJSON(w, http.StatusBadRequest, err)
+		return
+	}
+	if len(arg.PUID) == 0 && len(arg.Path) == 0 {
+		WriteError400(w, ErrArgNoPath, AECfoldernodata)
 		return
 	}
 
 	var prf *Profile
 	if prf = prflist.ByID(arg.AID); prf == nil {
-		WriteError400(w, ErrNoAcc, EC_foldernoacc)
+		WriteError400(w, ErrNoAcc, AECfoldernoacc)
 		return
 	}
 	var auth *Profile
@@ -661,7 +801,7 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 	} else {
 		var ok bool
 		if syspath, ok = pathcache.Path(arg.PUID); !ok {
-			WriteError(w, http.StatusNotFound, ErrNoPath, EC_foldernopath)
+			WriteError(w, http.StatusNotFound, ErrNoPath, AECfoldernopath)
 			return
 		}
 		ret.PUID = arg.PUID
@@ -669,14 +809,14 @@ func folderApi(w http.ResponseWriter, r *http.Request) {
 
 	var shrpath, base, cg = prf.GetSharePath(syspath, auth == prf)
 	if cg.IsZero() {
-		WriteError(w, http.StatusForbidden, ErrNoAccess, EC_folderaccess)
+		WriteError(w, http.StatusForbidden, ErrNoAccess, AECfolderaccess)
 		return
 	}
 	ret.Path = shrpath
 	ret.Name = PathBase(base)
 
 	if ret.List, err = prf.Readdir(syspath, &cg); err != nil {
-		WriteError(w, http.StatusNotFound, err, EC_folderfail)
+		WriteError(w, http.StatusNotFound, err, AECfolderfail)
 		return
 	}
 	usermsg <- UsrMsg{r, "path", ret.PUID}
@@ -694,23 +834,18 @@ func ispathApi(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	}
 
 	// get arguments
-	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
-		if err = json.Unmarshal(jb, &arg); err != nil {
-			WriteError400(w, err, EC_ispathbadreq)
-			return
-		}
-	} else {
-		WriteError400(w, ErrNoJSON, EC_ispathnoreq)
+	if err = AjaxGetArg(r, &arg); err != nil {
+		WriteJSON(w, http.StatusBadRequest, err)
 		return
 	}
 
 	var prf *Profile
 	if prf = prflist.ByID(arg.AID); prf == nil {
-		WriteError400(w, ErrNoAcc, EC_ispathnoacc)
+		WriteError400(w, ErrNoAcc, AECispathnoacc)
 		return
 	}
 	if auth != prf {
-		WriteError(w, http.StatusForbidden, ErrDeny, EC_ispathdeny)
+		WriteError(w, http.StatusForbidden, ErrDeny, AECispathdeny)
 		return
 	}
 
@@ -727,19 +862,14 @@ func shrlstApi(w http.ResponseWriter, r *http.Request) {
 	var ret = []Pather{}
 
 	// get arguments
-	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
-		if err = json.Unmarshal(jb, &arg); err != nil {
-			WriteError400(w, err, EC_shrlstbadreq)
-			return
-		}
-	} else {
-		WriteError400(w, ErrNoJSON, EC_shrlstnoreq)
+	if err = AjaxGetArg(r, &arg); err != nil {
+		WriteJSON(w, http.StatusBadRequest, err)
 		return
 	}
 
 	var prf *Profile
 	if prf = prflist.ByID(arg.AID); prf == nil {
-		WriteError400(w, ErrNoAcc, EC_shrlstnoacc)
+		WriteError400(w, ErrNoAcc, AECshrlstnoacc)
 		return
 	}
 	var auth *Profile
@@ -749,7 +879,7 @@ func shrlstApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if auth != prf && !prf.IsShared(CP_shares) {
-		WriteError(w, http.StatusForbidden, ErrNotShared, EC_shrlstnoshr)
+		WriteError(w, http.StatusForbidden, ErrNotShared, AECshrlstnoshr)
 		return
 	}
 
@@ -766,36 +896,31 @@ func shraddApi(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	}
 
 	// get arguments
-	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
-		if err = json.Unmarshal(jb, &arg); err != nil {
-			WriteError400(w, err, EC_shraddbadreq)
-			return
-		}
-		if len(arg.PUID) == 0 {
-			WriteError400(w, ErrArgNoPath, EC_shraddnodata)
-			return
-		}
-	} else {
-		WriteError400(w, ErrNoJSON, EC_shraddnoreq)
+	if err = AjaxGetArg(r, &arg); err != nil {
+		WriteJSON(w, http.StatusBadRequest, err)
+		return
+	}
+	if len(arg.PUID) == 0 {
+		WriteError400(w, ErrArgNoPath, AECshraddnodata)
 		return
 	}
 
 	var prf *Profile
 	if prf = prflist.ByID(arg.AID); prf == nil {
-		WriteError400(w, ErrNoAcc, EC_shraddnoacc)
+		WriteError400(w, ErrNoAcc, AECshraddnoacc)
 		return
 	}
 	if auth != prf {
-		WriteError(w, http.StatusForbidden, ErrDeny, EC_shradddeny)
+		WriteError(w, http.StatusForbidden, ErrDeny, AECshradddeny)
 		return
 	}
 
 	var syspath, ok = pathcache.Path(arg.PUID)
 	if !ok {
-		WriteError(w, http.StatusNotFound, ErrNoPath, EC_shraddnopath)
+		WriteError(w, http.StatusNotFound, ErrNoPath, AECshraddnopath)
 	}
 	if !prf.PathAdmin(syspath) {
-		WriteError(w, http.StatusForbidden, ErrNoAccess, EC_shraddaccess)
+		WriteError(w, http.StatusForbidden, ErrNoAccess, AECshraddaccess)
 		return
 	}
 
@@ -815,27 +940,22 @@ func shrdelApi(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var ok bool
 
 	// get arguments
-	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
-		if err = json.Unmarshal(jb, &arg); err != nil {
-			WriteError400(w, err, EC_shrdelbadreq)
-			return
-		}
-		if len(arg.PUID) == 0 {
-			WriteError400(w, ErrArgNoPath, EC_shrdelnodata)
-			return
-		}
-	} else {
-		WriteError400(w, ErrNoJSON, EC_shrdelnoreq)
+	if err = AjaxGetArg(r, &arg); err != nil {
+		WriteJSON(w, http.StatusBadRequest, err)
+		return
+	}
+	if len(arg.PUID) == 0 {
+		WriteError400(w, ErrArgNoPath, AECshrdelnodata)
 		return
 	}
 
 	var prf *Profile
 	if prf = prflist.ByID(arg.AID); prf == nil {
-		WriteError400(w, ErrNoAcc, EC_shrdelnoacc)
+		WriteError400(w, ErrNoAcc, AECshrdelnoacc)
 		return
 	}
 	if auth != prf {
-		WriteError(w, http.StatusForbidden, ErrDeny, EC_shrdeldeny)
+		WriteError(w, http.StatusForbidden, ErrDeny, AECshrdeldeny)
 		return
 	}
 
@@ -855,19 +975,14 @@ func drvlstApi(w http.ResponseWriter, r *http.Request) {
 	var ret []Pather
 
 	// get arguments
-	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
-		if err = json.Unmarshal(jb, &arg); err != nil {
-			WriteError400(w, err, EC_drvlstbadreq)
-			return
-		}
-	} else {
-		WriteError400(w, ErrNoJSON, EC_drvlstnoreq)
+	if err = AjaxGetArg(r, &arg); err != nil {
+		WriteJSON(w, http.StatusBadRequest, err)
 		return
 	}
 
 	var prf *Profile
 	if prf = prflist.ByID(arg.AID); prf == nil {
-		WriteError400(w, ErrNoAcc, EC_drvlstnoacc)
+		WriteError400(w, ErrNoAcc, AECdrvlstnoacc)
 		return
 	}
 	var auth *Profile
@@ -877,7 +992,7 @@ func drvlstApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if auth != prf && !prf.IsShared(CP_drives) {
-		WriteError(w, http.StatusForbidden, ErrNotShared, EC_drvlstnoshr)
+		WriteError(w, http.StatusForbidden, ErrNotShared, AECdrvlstnoshr)
 		return
 	}
 
@@ -895,31 +1010,26 @@ func drvaddApi(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	}
 
 	// get arguments
-	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
-		if err = json.Unmarshal(jb, &arg); err != nil {
-			WriteError400(w, err, EC_drvaddbadreq)
-			return
-		}
-		if len(arg.Path) == 0 {
-			WriteError400(w, ErrArgNoPath, EC_drvaddnodata)
-			return
-		}
-		arg.Path = filepath.ToSlash(arg.Path)
-		if arg.Path[len(arg.Path)-1] != '/' {
-			arg.Path += "/"
-		}
-	} else {
-		WriteError400(w, ErrNoJSON, EC_drvaddnoreq)
+	if err = AjaxGetArg(r, &arg); err != nil {
+		WriteJSON(w, http.StatusBadRequest, err)
 		return
+	}
+	if len(arg.Path) == 0 {
+		WriteError400(w, ErrArgNoPath, AECdrvaddnodata)
+		return
+	}
+	arg.Path = filepath.ToSlash(arg.Path)
+	if arg.Path[len(arg.Path)-1] != '/' {
+		arg.Path += "/"
 	}
 
 	var prf *Profile
 	if prf = prflist.ByID(arg.AID); prf == nil {
-		WriteError400(w, ErrNoAcc, EC_drvaddnoacc)
+		WriteError400(w, ErrNoAcc, AECdrvaddnoacc)
 		return
 	}
 	if auth != prf {
-		WriteError(w, http.StatusForbidden, ErrDeny, EC_drvadddeny)
+		WriteError(w, http.StatusForbidden, ErrDeny, AECdrvadddeny)
 		return
 	}
 
@@ -931,7 +1041,7 @@ func drvaddApi(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var dk DriveKit
 	dk.Setup(arg.Path)
 	if err = dk.Scan(arg.Path); err == nil {
-		WriteError400(w, err, EC_drvaddfile)
+		WriteError400(w, err, AECdrvaddfile)
 		return
 	}
 
@@ -951,33 +1061,28 @@ func drvdelApi(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	}
 
 	// get arguments
-	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
-		if err = json.Unmarshal(jb, &arg); err != nil {
-			WriteError400(w, err, EC_drvdelbadreq)
-			return
-		}
-		if len(arg.PUID) == 0 {
-			WriteError400(w, ErrArgNoPath, EC_drvdelnodata)
-			return
-		}
-	} else {
-		WriteError400(w, ErrNoJSON, EC_drvdelnoreq)
+	if err = AjaxGetArg(r, &arg); err != nil {
+		WriteJSON(w, http.StatusBadRequest, err)
+		return
+	}
+	if len(arg.PUID) == 0 {
+		WriteError400(w, ErrArgNoPath, AECdrvdelnodata)
 		return
 	}
 
 	var prf *Profile
 	if prf = prflist.ByID(arg.AID); prf == nil {
-		WriteError400(w, ErrNoAcc, EC_drvdelnoacc)
+		WriteError400(w, ErrNoAcc, AECdrvdelnoacc)
 		return
 	}
 	if auth != prf {
-		WriteError(w, http.StatusForbidden, ErrDeny, EC_drvdeldeny)
+		WriteError(w, http.StatusForbidden, ErrDeny, AECdrvdeldeny)
 		return
 	}
 
 	var syspath, ok = pathcache.Path(arg.PUID)
 	if !ok {
-		WriteError(w, http.StatusNotFound, ErrNoPath, EC_drvdelnopath)
+		WriteError(w, http.StatusNotFound, ErrNoPath, AECdrvdelnopath)
 	}
 
 	var i int

@@ -1,8 +1,6 @@
 package hms
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"net/http"
 
 	uas "github.com/avct/uasurfer"
@@ -156,13 +154,8 @@ func usrlstApi(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get arguments
-	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
-		if err = json.Unmarshal(jb, &arg); err != nil {
-			WriteError400(w, err, EC_usrlstbadreq)
-			return
-		}
-	} else {
-		WriteError400(w, ErrNoJSON, EC_usrlstnoreq)
+	if err = AjaxGetArg(r, &arg); err != nil {
+		WriteJSON(w, http.StatusBadRequest, err)
 		return
 	}
 

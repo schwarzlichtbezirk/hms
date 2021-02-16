@@ -44,6 +44,7 @@ type CfgServ struct {
 	WriteTimeout      int      `json:"write-timeout" yaml:"write-timeout"`
 	IdleTimeout       int      `json:"idle-timeout" yaml:"idle-timeout"`
 	MaxHeaderBytes    int      `json:"max-header-bytes" yaml:"max-header-bytes"`
+	ShutdownTimeout   int      `json:"shutdown-timeout" yaml:"shutdown-timeout"`
 }
 
 type CfgSpec struct {
@@ -71,14 +72,14 @@ type CfgSpec struct {
 	MediaCacheMaxNum int `json:"media-cache-maxnum" yaml:"media-cache-maxnum"`
 }
 
-// Common server settings.
+// Config is common service settings.
 type Config struct {
 	CfgAuth `json:"authentication" yaml:"authentication"`
 	CfgServ `json:"webserver" yaml:"webserver"`
 	CfgSpec `json:"specification" yaml:"specification"`
 }
 
-// Instance of common server settings.
+// Instance of common service settings.
 var cfg = Config{ // inits default values:
 	CfgAuth: CfgAuth{
 		AccessTTL:  1 * 24 * 60 * 60,
@@ -95,6 +96,7 @@ var cfg = Config{ // inits default values:
 		WriteTimeout:      15,
 		IdleTimeout:       60,
 		MaxHeaderBytes:    1 << 20,
+		ShutdownTimeout:   15,
 	},
 	CfgSpec: CfgSpec{
 		WPKName:          "hms.wpk",
