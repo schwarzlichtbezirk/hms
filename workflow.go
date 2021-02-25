@@ -21,16 +21,19 @@ import (
 	"golang.org/x/crypto/acme/autocert"
 )
 
-// Log is global static ring logger object.
-var Log = NewLogger(os.Stderr, LstdFlags, 300)
-
 var (
-	httpsrv, tlssrv []*http.Server
+	// channel to indicate about server shutdown
+	exitchan chan struct{}
+	// wait group for all server goroutines
+	exitwg sync.WaitGroup
 )
 
 // Package root dir.
 var datapack *wpk.Package
 var packager wpk.Packager
+
+// Log is global static ring logger object.
+var Log = NewLogger(os.Stderr, LstdFlags, 300)
 
 ///////////////////////////////
 // Startup opening functions //
@@ -202,64 +205,103 @@ func Init() {
 
 // Run launches server listeners.
 func Run(gmux *Router) {
-	httpsrv = make([]*http.Server, len(cfg.AddrHTTP))
-	for i, addr := range cfg.AddrHTTP {
-		var i = i // make valid access in goroutine
-		Log.Println("starts http on " + addr)
-		var srv = &http.Server{
-			Addr:              addr,
-			Handler:           gmux,
-			ReadTimeout:       time.Duration(cfg.ReadTimeout) * time.Second,
-			ReadHeaderTimeout: time.Duration(cfg.ReadHeaderTimeout) * time.Second,
-			WriteTimeout:      time.Duration(cfg.WriteTimeout) * time.Second,
-			IdleTimeout:       time.Duration(cfg.IdleTimeout) * time.Second,
-			MaxHeaderBytes:    cfg.MaxHeaderBytes,
-		}
-		httpsrv[i] = srv
+	// inits exit channel
+	exitchan = make(chan struct{})
+
+	for _, addr := range cfg.PortHTTP {
+		var addr = addr // localize
+		exitwg.Add(1)
 		go func() {
-			if err := srv.ListenAndServe(); err != http.ErrServerClosed {
-				httpsrv[i] = nil
-				Log.Println(err)
-				return
+			defer exitwg.Done()
+
+			Log.Printf("start http on %s\n", addr)
+			var server = &http.Server{
+				Addr:              addr,
+				Handler:           gmux,
+				ReadTimeout:       time.Duration(cfg.ReadTimeout) * time.Second,
+				ReadHeaderTimeout: time.Duration(cfg.ReadHeaderTimeout) * time.Second,
+				WriteTimeout:      time.Duration(cfg.WriteTimeout) * time.Second,
+				IdleTimeout:       time.Duration(cfg.IdleTimeout) * time.Second,
+				MaxHeaderBytes:    cfg.MaxHeaderBytes,
+			}
+			go func() {
+				if err := server.ListenAndServe(); err != http.ErrServerClosed {
+					Log.Fatalf("failed to serve on %s: %v", addr, err)
+					return
+				}
+			}()
+
+			// wait for exit signal
+			<-exitchan
+
+			// create a deadline to wait for.
+			var ctx, cancel = context.WithTimeout(
+				context.Background(),
+				time.Duration(cfg.ShutdownTimeout)*time.Second)
+			defer cancel()
+
+			server.SetKeepAlivesEnabled(false)
+			if err := server.Shutdown(ctx); err != nil {
+				Log.Printf("shutdown http on %s: %v\n", addr, err)
+			} else {
+				Log.Printf("stop http on %s\n", addr)
 			}
 		}()
 	}
 
-	tlssrv = make([]*http.Server, len(cfg.AddrTLS))
-	for i, addr := range cfg.AddrTLS {
-		var i = i // make valid access in goroutine
-		Log.Println("starts tls on " + addr)
-		var config *tls.Config
-		if cfg.AutoCert { // get certificate from letsencrypt.org
-			var m = &autocert.Manager{
-				Prompt: autocert.AcceptTOS,
-				Cache:  autocert.DirCache(confpath + "cert/"),
-			}
-			config = &tls.Config{
-				PreferServerCipherSuites: true,
-				CurvePreferences: []tls.CurveID{
-					tls.CurveP256,
-					tls.X25519,
-				},
-				GetCertificate: m.GetCertificate,
-			}
-		}
-		var srv = &http.Server{
-			Addr:              addr,
-			Handler:           gmux,
-			TLSConfig:         config,
-			ReadTimeout:       time.Duration(cfg.ReadTimeout) * time.Second,
-			ReadHeaderTimeout: time.Duration(cfg.ReadHeaderTimeout) * time.Second,
-			WriteTimeout:      time.Duration(cfg.WriteTimeout) * time.Second,
-			IdleTimeout:       time.Duration(cfg.IdleTimeout) * time.Second,
-			MaxHeaderBytes:    cfg.MaxHeaderBytes,
-		}
-		tlssrv[i] = srv
+	for _, addr := range cfg.PortTLS {
+		var addr = addr // localize
+		exitwg.Add(1)
 		go func() {
-			if err := srv.ListenAndServeTLS(confpath+"serv.crt", confpath+"prvk.pem"); err != http.ErrServerClosed {
-				tlssrv[i] = nil
-				Log.Println(err)
-				return
+			defer exitwg.Done()
+
+			Log.Printf("start tls on %s\n", addr)
+			var config *tls.Config
+			if cfg.AutoCert { // get certificate from letsencrypt.org
+				var m = &autocert.Manager{
+					Prompt: autocert.AcceptTOS,
+					Cache:  autocert.DirCache(confpath + "cert/"),
+				}
+				config = &tls.Config{
+					PreferServerCipherSuites: true,
+					CurvePreferences: []tls.CurveID{
+						tls.CurveP256,
+						tls.X25519,
+					},
+					GetCertificate: m.GetCertificate,
+				}
+			}
+			var server = &http.Server{
+				Addr:              addr,
+				Handler:           gmux,
+				TLSConfig:         config,
+				ReadTimeout:       time.Duration(cfg.ReadTimeout) * time.Second,
+				ReadHeaderTimeout: time.Duration(cfg.ReadHeaderTimeout) * time.Second,
+				WriteTimeout:      time.Duration(cfg.WriteTimeout) * time.Second,
+				IdleTimeout:       time.Duration(cfg.IdleTimeout) * time.Second,
+				MaxHeaderBytes:    cfg.MaxHeaderBytes,
+			}
+			go func() {
+				if err := server.ListenAndServeTLS(confpath+"serv.crt", confpath+"prvk.pem"); err != http.ErrServerClosed {
+					Log.Fatalf("failed to serve on %s: %v", addr, err)
+					return
+				}
+			}()
+
+			// wait for exit signal
+			<-exitchan
+
+			// create a deadline to wait for.
+			var ctx, cancel = context.WithTimeout(
+				context.Background(),
+				time.Duration(cfg.ShutdownTimeout)*time.Second)
+			defer cancel()
+
+			server.SetKeepAlivesEnabled(false)
+			if err := server.Shutdown(ctx); err != nil {
+				Log.Printf("shutdown tls on %s: %v\n", addr, err)
+			} else {
+				Log.Printf("stop tls on %s\n", addr)
 			}
 		}()
 	}
@@ -279,84 +321,38 @@ func WaitBreak() {
 // Shutdown performs graceful network shutdown,
 // waits until all server threads will be stopped.
 func Shutdown() {
-	// Create a deadline to wait for.
-	var ctx, cancel = context.WithTimeout(
-		context.Background(),
-		time.Duration(cfg.ShutdownTimeout)*time.Second)
-	defer cancel()
+	close(exitchan)
+	exitwg.Wait()
 
-	var wg sync.WaitGroup // perform shutdown in several goroutines
-
-	// Doesn't block if no connections, but will otherwise wait
-	// until the timeout deadline.
-	for _, srv := range httpsrv {
-		var srv = srv // make valid access in goroutine
-		if srv == nil {
-			continue
-		}
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			srv.SetKeepAlivesEnabled(false)
-			if err := srv.Shutdown(ctx); err != nil {
-				Log.Printf("HTTP server Shutdown: %v", err)
-			}
-		}()
-	}
-	for _, srv := range tlssrv {
-		var srv = srv // make valid access in goroutine
-		if srv == nil {
-			continue
-		}
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			srv.SetKeepAlivesEnabled(false)
-			if err := srv.Shutdown(ctx); err != nil {
-				Log.Printf("TLS server Shutdown: %v", err)
-			}
-		}()
-	}
-
-	wg.Wait()
-	Log.Println("web server stopped")
-
-	// Stop users scanner
-	wg.Add(1)
+	exitwg.Add(1)
 	go func() {
-		defer wg.Done()
-		close(userquit)
-	}()
-
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
+		defer exitwg.Done()
 		if err := pathcache.Save(confpath + "pathcache.yaml"); err != nil {
 			Log.Println("error on path cache file: " + err.Error())
 			Log.Println("saving of directories cache and users list were missed for a reason path cache saving failure")
 			return
 		}
 
-		wg.Add(1)
+		exitwg.Add(1)
 		go func() {
-			defer wg.Done()
+			defer exitwg.Done()
 			if err := dircache.Save(confpath + "dircache.yaml"); err != nil {
 				Log.Println("error on directories cache file: " + err.Error())
 			}
 		}()
 
-		wg.Add(1)
+		exitwg.Add(1)
 		go func() {
-			defer wg.Done()
+			defer exitwg.Done()
 			if err := usercache.Save(confpath + "userlist.yaml"); err != nil {
 				Log.Println("error on users list file: " + err.Error())
 			}
 		}()
 	}()
 
-	wg.Add(1)
+	exitwg.Add(1)
 	go func() {
-		defer wg.Done()
+		defer exitwg.Done()
 		if err := prflist.Save(confpath + "profiles.yaml"); err != nil {
 			Log.Println("error on profiles list file: " + err.Error())
 		}
@@ -364,7 +360,7 @@ func Shutdown() {
 
 	packager.Close()
 
-	wg.Wait()
+	exitwg.Wait()
 }
 
 // The End.

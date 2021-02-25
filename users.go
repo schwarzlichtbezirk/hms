@@ -93,7 +93,6 @@ type UsrMsg struct {
 var (
 	usermsg  = make(chan UsrMsg)        // message with some data of user-change
 	userajax = make(chan *http.Request) // sends on any ajax-call
-	userquit = make(chan int)           // breaks user scanner
 )
 
 // UserScanner - users scanner goroutine. Receives data from
@@ -126,7 +125,7 @@ func UserScanner() {
 			var user = usercache.Get(r)
 			user.LastAjax = UnixJSNow()
 
-		case <-userquit:
+		case <-exitchan:
 			return
 		}
 	}

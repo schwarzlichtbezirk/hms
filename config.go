@@ -37,8 +37,8 @@ type CfgAuth struct {
 // CfgServ is web server settings.
 type CfgServ struct {
 	AutoCert          bool     `json:"auto-cert" yaml:"auto-cert"`
-	AddrHTTP          []string `json:"addr-http" yaml:"addr-http"`
-	AddrTLS           []string `json:"addr-tls" yaml:"addr-tls"`
+	PortHTTP          []string `json:"port-http" yaml:"port-http"`
+	PortTLS           []string `json:"port-tls" yaml:"port-tls"`
 	ReadTimeout       int      `json:"read-timeout" yaml:"read-timeout"`
 	ReadHeaderTimeout int      `json:"read-header-timeout" yaml:"read-header-timeout"`
 	WriteTimeout      int      `json:"write-timeout" yaml:"write-timeout"`
@@ -90,8 +90,8 @@ var cfg = Config{ // inits default values:
 	},
 	CfgServ: CfgServ{
 		AutoCert:          false,
-		AddrHTTP:          []string{},
-		AddrTLS:           []string{},
+		PortHTTP:          []string{},
+		PortTLS:           []string{},
 		ReadTimeout:       15,
 		ReadHeaderTimeout: 15,
 		WriteTimeout:      15,

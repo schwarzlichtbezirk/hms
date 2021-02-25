@@ -4,6 +4,22 @@ body {
 	font-family: Verdana, Geneva, sans-serif;
 }
 
+::-webkit-scrollbar {
+	width: 0.5rem;
+}
+
+::-webkit-scrollbar-track {
+	background: #445573;
+}
+
+::-webkit-scrollbar-thumb {
+	background: #63789e;
+}
+
+	::-webkit-scrollbar-thumb:hover {
+		background: #7c8dad;
+	}
+
 .bg-tool {
 	background-color: #4d6082;
 }

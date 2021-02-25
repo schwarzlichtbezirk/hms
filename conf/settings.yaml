@@ -16,11 +16,13 @@ webserver: # See https://golang.org/pkg/net/http/#Server for details.
     # if this value is true. Uses local TLS-certificate otherwise.
     auto-cert: false
     # List of address:port values for non-encrypted connections.
-    addr-http:
+    # Address is skipped in most common cases, port only remains.
+    port-http:
         - :80
         - :8080
     # List of address:port values for encrypted connections.
-    addr-tls:
+    # Address is skipped in most common cases, port only remains.
+    port-tls:
         - :443
         - :4804
     # Maximum duration for reading the entire request, including the body,

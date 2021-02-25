@@ -46,7 +46,7 @@ Vue.component('mp3-player-tag', {
 					}
 				}
 			};
-			return prevpos(this.selfilepos, -1) || this.repeatmode === 2 && prevpos(this.list.length, this.selfilepos);
+			return prevpos(this.selfilepos, -1) || this.repeatmode === 2 && prevpos(this.list.length, this.selfilepos - 1);
 		},
 		// returns next file in list
 		getnext() {
@@ -58,7 +58,7 @@ Vue.component('mp3-player-tag', {
 					}
 				}
 			};
-			return nextpos(this.selfilepos, this.list.length) || this.repeatmode === 2 && nextpos(-1, this.selfilepos);
+			return nextpos(this.selfilepos, this.list.length) || this.repeatmode === 2 && nextpos(-1, this.selfilepos + 1);
 		},
 
 		volumelabel() {

@@ -37,7 +37,7 @@
 					<ul class="navbar-nav flex-row">
 						<li class="btn-group">
 							<button class="btn toolbtn dropdown-toggle" data-toggle="dropdown" title="choose skin"><i class="material-icons">color_lens</i></button>
-							<div class="dropdown-menu bg-tool dropdown-menu-right">
+							<div class="dropdown-menu bg-tool dropdown-menu-right pre-scrollable">
 								<h6 class="dropdown-header">Skins:</h6>
 								<template v-for="item in resmodel.skinlist">
 									<button class="dropdown-item" v-on:click="setskin(item.id)" v-bind:class="{active:skinid===item.id}">{{item.name}}</button>

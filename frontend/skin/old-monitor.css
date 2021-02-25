@@ -5,6 +5,22 @@ body {
 	font-size: 1.25rem;
 }
 
+::-webkit-scrollbar {
+	width: 0.5rem;
+}
+
+::-webkit-scrollbar-track {
+	background: #184018;
+}
+
+::-webkit-scrollbar-thumb {
+	background: #205420;
+}
+
+	::-webkit-scrollbar-thumb:hover {
+		background: #006400;
+	}
+
 a, .btn-link {
 	color: LightGreen;
 	text-decoration: none;
