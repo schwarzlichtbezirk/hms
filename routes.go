@@ -3,7 +3,7 @@ package hms
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"runtime"
 
@@ -91,9 +91,10 @@ func RegisterRoutes(gmux *Router) {
 	}
 
 	// wpk-files sharing
-	gmux.PathPrefix("/data/").Handler(http.StripPrefix("/data/", http.FileServer(packager)))
+	gmux.PathPrefix("/data/").Handler(http.StripPrefix("/data/", http.FileServer(http.FS(packager))))
 	for alias, prefix := range routealias {
-		gmux.PathPrefix(alias).Handler(http.StripPrefix(alias, http.FileServer(packager.SubDir(prefix))))
+		var sub, _ = packager.Sub(prefix)
+		gmux.PathPrefix(alias).Handler(http.StripPrefix(alias, http.FileServer(http.FS(sub))))
 	}
 
 	// file system sharing
@@ -166,7 +167,7 @@ func MakeServerLabel(label, version string) {
 
 // AjaxGetArg fetch and unmarshal request argument.
 func AjaxGetArg(r *http.Request, arg interface{}) error {
-	if jb, _ := ioutil.ReadAll(r.Body); len(jb) > 0 {
+	if jb, _ := io.ReadAll(r.Body); len(jb) > 0 {
 		if err := json.Unmarshal(jb, arg); err != nil {
 			return &ErrAjax{err, AECbadjson}
 		}

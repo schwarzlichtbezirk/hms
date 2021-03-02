@@ -1,7 +1,6 @@
 package hms
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -40,7 +39,7 @@ func WriteYaml(fpath, intro string, data interface{}) (err error) {
 // ReadYaml reads "data" object from YAML-file with given file path.
 func ReadYaml(fpath string, data interface{}) (err error) {
 	var body []byte
-	if body, err = ioutil.ReadFile(fpath); err != nil {
+	if body, err = os.ReadFile(fpath); err != nil {
 		return
 	}
 	if err = yaml.Unmarshal(body, data); err != nil {

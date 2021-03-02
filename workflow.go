@@ -58,17 +58,20 @@ var dict = func(values ...interface{}) (map[string]interface{}, error) {
 func loadtemplates() (err error) {
 	var ts, tc *template.Template
 	var load = func(tb *template.Template, pattern string) {
-		err = datapack.Glob(pattern, func(key string) (err error) {
+		var tpl []string
+		if tpl, err = datapack.Glob(pattern); err != nil {
+			return
+		}
+		for _, key := range tpl {
 			var bcnt []byte
-			if bcnt, err = packager.Extract(key); err != nil {
+			if bcnt, err = packager.ReadFile(key); err != nil {
 				return
 			}
 			var content = strings.TrimPrefix(string(bcnt), utf8bom) // remove UTF-8 format BOM header
 			if _, err = tb.New(key).Parse(content); err != nil {
 				return
 			}
-			return
-		})
+		}
 	}
 
 	ts = template.New("storage").Delims("[=[", "]=]")

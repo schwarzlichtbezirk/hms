@@ -3,7 +3,7 @@ package hms
 import (
 	"bytes"
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"path/filepath"
 	"runtime"
@@ -449,7 +449,7 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) {
 
 // APIHANDLER
 func pingAPI(w http.ResponseWriter, r *http.Request) {
-	var body, _ = ioutil.ReadAll(r.Body)
+	var body, _ = io.ReadAll(r.Body)
 	w.WriteHeader(http.StatusOK)
 	WriteJSONHeader(w)
 	w.Write(body)
