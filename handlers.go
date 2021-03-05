@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -192,7 +193,7 @@ var (
 func pageHandler(pref, name string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var alias = pagealias[name]
-		var content, ok = pagecache[pref+alias]
+		var content, ok = pagecache[pref+"/"+alias]
 		if !ok {
 			WriteError(w, http.StatusNotFound, ErrNotFound, AECpageabsent)
 		}
@@ -473,7 +474,7 @@ func purgeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 func reloadAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var err error
 
-	if err = packager.OpenWPK(destpath + "hms.wpk"); err != nil {
+	if err = packager.OpenWPK(path.Join(destpath, "hms.wpk")); err != nil {
 		WriteError500(w, err, AECreloadload)
 		return
 	}
@@ -644,12 +645,12 @@ func ishomeAPI(w http.ResponseWriter, r *http.Request) {
 	if auth == prf {
 		ret = true
 	} else if prf.IsShared(CPhome) {
-		for _, path := range CatPath {
-			if path == CPhome {
+		for _, fpath := range CatPath {
+			if fpath == CPhome {
 				continue
 			}
-			if prf.IsShared(path) {
-				if _, err := propcache.Get(path); err == nil {
+			if prf.IsShared(fpath) {
+				if _, err := propcache.Get(fpath); err == nil {
 					ret = true
 					break
 				}
@@ -713,8 +714,8 @@ func ctgrAPI(w http.ResponseWriter, r *http.Request) {
 	}
 	var catprop = func(puids []string) {
 		for _, puid := range puids {
-			if path, ok := pathcache.Path(puid); ok {
-				if prop, err := propcache.Get(path); err == nil {
+			if fpath, ok := pathcache.Path(puid); ok {
+				if prop, err := propcache.Get(fpath); err == nil {
 					ret = append(ret, prop.(Pather))
 				}
 			}
@@ -722,12 +723,12 @@ func ctgrAPI(w http.ResponseWriter, r *http.Request) {
 	}
 	switch catpath {
 	case CPhome:
-		for _, path := range CatPath {
-			if path == CPhome {
+		for _, fpath := range CatPath {
+			if fpath == CPhome {
 				continue
 			}
-			if auth == prf || prf.IsShared(path) {
-				if prop, err := propcache.Get(path); err == nil {
+			if auth == prf || prf.IsShared(fpath) {
+				if prop, err := propcache.Get(fpath); err == nil {
 					ret = append(ret, prop.(Pather))
 				}
 			}

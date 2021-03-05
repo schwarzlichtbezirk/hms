@@ -3,7 +3,7 @@ package hms
 import (
 	"bytes"
 	"os"
-	"path/filepath"
+	"path"
 	"strings"
 	"time"
 
@@ -447,13 +447,13 @@ type CatKit struct {
 }
 
 // Setup fills fields with given path. Do not looks for share.
-func (ck *CatKit) Setup(path string) {
-	var pos = strings.IndexByte(path, '/')
-	ck.NameVal = path[pos+1 : len(path)-1]
+func (ck *CatKit) Setup(fpath string) {
+	var pos = strings.IndexByte(fpath, '/')
+	ck.NameVal = fpath[pos+1 : len(fpath)-1]
 	ck.TypeVal = FTctgr
-	ck.PUIDVal = pathcache.Cache(path)
+	ck.PUIDVal = pathcache.Cache(fpath)
 	ck.NTmbVal = TMBreject
-	ck.CID = path[1:pos]
+	ck.CID = fpath[1:pos]
 }
 
 // TagEnum is descriptor for discs and tracks.
@@ -577,7 +577,7 @@ func MakeProp(syspath string, fi os.FileInfo) interface{} {
 		dk.Setup(syspath)
 		return &dk
 	}
-	var ft = extset[strings.ToLower(filepath.Ext(syspath))]
+	var ft = extset[strings.ToLower(path.Ext(syspath))]
 	if ft == FTflac || ft == FTmus || ft == FTmp4 {
 		var tk TagKit
 		tk.TypeVal = ft

@@ -26,4 +26,4 @@ logdir = false
 iconwebp = true
 iconpng = false
 
-dofile(scrdir.."pack.lua")
+dofile(path.join(scrdir, "pack.lua"))

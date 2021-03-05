@@ -93,7 +93,10 @@ func RegisterRoutes(gmux *Router) {
 	// wpk-files sharing
 	gmux.PathPrefix("/data/").Handler(http.StripPrefix("/data/", http.FileServer(http.FS(packager))))
 	for alias, prefix := range routealias {
-		var sub, _ = packager.Sub(prefix)
+		var sub, err = packager.Sub(prefix)
+		if err != nil {
+			Log.Fatal(err)
+		}
 		gmux.PathPrefix(alias).Handler(http.StripPrefix(alias, http.FileServer(http.FS(sub))))
 	}
 

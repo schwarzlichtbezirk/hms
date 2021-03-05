@@ -55,13 +55,13 @@ func (pc *PathCache) Load(fpath string) (err error) {
 	}
 
 	pc.pathkey = make(map[string]string, len(pc.keypath))
-	for key, path := range pc.keypath {
-		pc.pathkey[path] = key
+	for key, fpath := range pc.keypath {
+		pc.pathkey[fpath] = key
 	}
 
 	// cache categories paths
-	for _, path := range CatPath {
-		pc.Cache(path)
+	for _, fpath := range CatPath {
+		pc.Cache(fpath)
 	}
 	return
 }
@@ -135,17 +135,17 @@ func (pl *Profiles) Load(fpath string) (err error) {
 		for _, prf := range pl.list {
 			Log.Printf("loaded profile id%d, login='%s'", prf.ID, prf.Login)
 			// cache roots
-			for _, path := range prf.Roots {
-				pathcache.Cache(path)
+			for _, fpath := range prf.Roots {
+				pathcache.Cache(fpath)
 			}
 			// cache shares
-			for _, path := range prf.Shares {
-				pathcache.Cache(path)
+			for _, fpath := range prf.Shares {
+				pathcache.Cache(fpath)
 			}
 
 			// bring all hidden to lowercase
-			for i, path := range prf.Hidden {
-				prf.Hidden[i] = strings.ToLower(filepath.ToSlash(path))
+			for i, fpath := range prf.Hidden {
+				prf.Hidden[i] = strings.ToLower(filepath.ToSlash(fpath))
 			}
 
 			// build shares tables

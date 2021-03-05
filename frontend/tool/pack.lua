@@ -38,7 +38,7 @@ local function logfmt(...)
 end
 -- format path with environment variables
 local function envfmt(p)
-	return path.toslash(string.gsub(p, "%$%((%w+)%)", function(varname)
+	return path.toslash(string.gsub(p, "%${(%w+)}", function(varname)
 		return os.getenv(varname)
 	end))
 end
@@ -51,7 +51,7 @@ pkg.crc32 = true -- generate CRC32 Castagnoli code for each file
 pkg.sha256 = true -- generate SHA256 hash for each file
 
 -- open wpk-file for write
-pkg:begin(envfmt("$(GOPATH)/bin/"..wpkconf.fname))
+pkg:begin(envfmt("${GOPATH}/bin/"..wpkconf.fname))
 
 -- write record log
 local function logfile(kpath)
@@ -123,7 +123,7 @@ end
 
 if logdir then logfmt("writes %s package", pkg.path) end
 
-local rootdir = path.toslash(path.clean(scrdir.."..")).."/"
+local rootdir = path.join(scrdir, "..").."/"
 -- put some directories as is
 packdir("assets/", rootdir.."assets/", commonput)
 packdir("build/", rootdir.."build/", commonput)
@@ -199,11 +199,11 @@ end
 
 -- replace wpk-name in settings
 do
-	local f = assert(io.open(envfmt("$(GOPATH)/bin/hms/settings.yaml"), "rb"))
+	local f = assert(io.open(envfmt("${GOPATH}/bin/hms/settings.yaml"), "rb"))
 	local content = f:read("*all")
 	f:close()
 	content = string.gsub(content, "wpk%-name:(%s+)[%w%-]+%.wpk", "wpk-name:%1"..wpkconf.fname)
-	local f = assert(io.open(envfmt("$(GOPATH)/bin/hms/settings.yaml"), "wb+"))
+	local f = assert(io.open(envfmt("${GOPATH}/bin/hms/settings.yaml"), "wb+"))
 	f:write(content)
 	f:close()
 end

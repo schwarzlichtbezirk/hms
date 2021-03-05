@@ -144,8 +144,8 @@ func UnfoldPath(shrpath string) string {
 		return shrpath
 	}
 
-	if path, ok := pathcache.Path(pref); ok {
-		return path + suff
+	if fpath, ok := pathcache.Path(pref); ok {
+		return fpath + suff
 	}
 	return shrpath
 }
@@ -229,10 +229,10 @@ func initcaches() {
 			var syspath = key.(string)
 			var fi os.FileInfo
 			if fi, err = os.Stat(syspath); err != nil {
-				for _, path := range CatPath {
-					if path == syspath {
+				for _, fpath := range CatPath {
+					if fpath == syspath {
 						var ck CatKit
-						ck.Setup(path)
+						ck.Setup(fpath)
 						ret, err = &ck, nil
 						return
 					}

@@ -5,14 +5,14 @@ import (
 )
 
 const (
-	rootsuff = "hms/"
-	asstsuff = "assets/"  // relative path to assets folder
-	devmsuff = "devmode/" // relative path to folder with development mode code files
-	relmsuff = "build/"   // relative path to folder with compiled code files
-	plugsuff = "plugin/"  // relative path to third party code
-	confsuff = "conf/"    // relative path to configuration files folder
-	tmplsuff = "tmpl/"    // relative path to html templates folder
-	csrcsuff = "src/github.com/schwarzlichtbezirk/hms/"
+	rootsuff = "hms"
+	asstsuff = "assets"  // relative path to assets folder
+	devmsuff = "devmode" // relative path to folder with development mode code files
+	relmsuff = "build"   // relative path to folder with compiled code files
+	plugsuff = "plugin"  // relative path to third party code
+	confsuff = "conf"    // relative path to configuration files folder
+	tmplsuff = "tmpl"    // relative path to html templates folder
+	csrcsuff = "src/github.com/schwarzlichtbezirk/hms"
 )
 
 var starttime = time.Now() // save server start time

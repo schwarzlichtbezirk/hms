@@ -172,12 +172,12 @@ func (prf *Profile) IsHidden(fpath string) bool {
 }
 
 // RootIndex returns index of given path in roots list or -1 if not found.
-func (prf *Profile) RootIndex(path string) int {
+func (prf *Profile) RootIndex(fpath string) int {
 	prf.mux.RLock()
 	defer prf.mux.RUnlock()
 
 	for i, root := range prf.Roots {
-		if root == path {
+		if root == fpath {
 			return i
 		}
 	}
@@ -205,10 +205,10 @@ func (prf *Profile) ScanRoots() []Pather {
 	defer prf.mux.RUnlock()
 
 	var lst = make([]Pather, len(prf.Roots))
-	for i, path := range prf.Roots {
+	for i, fpath := range prf.Roots {
 		var dk DriveKit
-		dk.Setup(path)
-		dk.Scan(path)
+		dk.Setup(fpath)
+		dk.Scan(fpath)
 		lst[i] = &dk
 	}
 	return lst
@@ -220,8 +220,8 @@ func (prf *Profile) ScanShares() []Pather {
 	defer prf.mux.RUnlock()
 
 	var lst []Pather
-	for _, path := range prf.Shares {
-		if prop, err := propcache.Get(path); err == nil {
+	for _, fpath := range prf.Shares {
+		if prop, err := propcache.Get(fpath); err == nil {
 			lst = append(lst, prop.(Pather))
 		}
 	}
@@ -230,8 +230,8 @@ func (prf *Profile) ScanShares() []Pather {
 
 // Private function to update profile shares private data.
 func (prf *Profile) updateGrp() {
-	var is = func(path string) bool {
-		var _, ok = prf.sharepuid[path]
+	var is = func(fpath string) bool {
+		var _, ok = prf.sharepuid[fpath]
 		return ok
 	}
 
@@ -274,8 +274,8 @@ func (prf *Profile) UpdateShares() {
 func (prf *Profile) IsShared(syspath string) bool {
 	prf.mux.RLock()
 	defer prf.mux.RUnlock()
-	for _, path := range prf.Shares {
-		if path == syspath {
+	for _, fpath := range prf.Shares {
+		if fpath == syspath {
 			return true
 		}
 	}
@@ -286,8 +286,8 @@ func (prf *Profile) IsShared(syspath string) bool {
 func (prf *Profile) IsRooted(syspath string) bool {
 	prf.mux.RLock()
 	defer prf.mux.RUnlock()
-	for _, path := range prf.Roots {
-		if path == syspath {
+	for _, fpath := range prf.Roots {
+		if fpath == syspath {
 			return true
 		}
 	}
@@ -343,10 +343,10 @@ func (prf *Profile) GetSharePath(syspath string, isadmin bool) (shrpath string, 
 	prf.mux.RLock()
 	defer prf.mux.RUnlock()
 
-	for _, path := range prf.Shares {
-		if strings.HasPrefix(syspath, path) {
-			if len(path) > len(base) {
-				base = path
+	for _, fpath := range prf.Shares {
+		if strings.HasPrefix(syspath, fpath) {
+			if len(fpath) > len(base) {
+				base = fpath
 			}
 		}
 	}
@@ -356,10 +356,10 @@ func (prf *Profile) GetSharePath(syspath string, isadmin bool) (shrpath string, 
 		return
 	}
 
-	for _, path := range prf.Roots {
-		if strings.HasPrefix(syspath, path) {
-			if len(path) > len(base) {
-				base = path
+	for _, fpath := range prf.Roots {
+		if strings.HasPrefix(syspath, fpath) {
+			if len(fpath) > len(base) {
+				base = fpath
 			}
 		}
 	}
@@ -382,14 +382,14 @@ func (prf *Profile) PathAccess(syspath string, isadmin bool) (cg CatGrp) {
 	prf.mux.RLock()
 	defer prf.mux.RUnlock()
 
-	for _, path := range prf.Shares {
-		if strings.HasPrefix(syspath, path) {
+	for _, fpath := range prf.Shares {
+		if strings.HasPrefix(syspath, fpath) {
 			cg.SetAll(true)
 			return
 		}
 	}
-	for _, path := range prf.Roots {
-		if strings.HasPrefix(syspath, path) {
+	for _, fpath := range prf.Roots {
+		if strings.HasPrefix(syspath, fpath) {
 			if isadmin {
 				cg.SetAll(true)
 			} else {
@@ -406,18 +406,18 @@ func (prf *Profile) PathAdmin(syspath string) bool {
 	prf.mux.RLock()
 	defer prf.mux.RUnlock()
 
-	for _, path := range prf.Shares {
-		if strings.HasPrefix(syspath, path) {
+	for _, fpath := range prf.Shares {
+		if strings.HasPrefix(syspath, fpath) {
 			return true
 		}
 	}
-	for _, path := range prf.Roots {
-		if strings.HasPrefix(syspath, path) {
+	for _, fpath := range prf.Roots {
+		if strings.HasPrefix(syspath, fpath) {
 			return true
 		}
 	}
-	for _, path := range CatPath {
-		if path == syspath {
+	for _, fpath := range CatPath {
+		if fpath == syspath {
 			return true
 		}
 	}

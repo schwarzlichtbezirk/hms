@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -75,36 +76,38 @@ func loadtemplates() (err error) {
 	}
 
 	ts = template.New("storage").Delims("[=[", "]=]")
-	if load(ts, tmplsuff+"*.html"); err != nil {
+	if load(ts, path.Join(tmplsuff, "*.html")); err != nil {
 		return
 	}
 
 	if tc, err = ts.Clone(); err != nil {
 		return
 	}
-	if load(tc, devmsuff+"*.html"); err != nil {
+	if load(tc, path.Join(devmsuff, "*.html")); err != nil {
 		return
 	}
 	for _, fname := range pagealias {
 		var buf bytes.Buffer
-		if err = tc.ExecuteTemplate(&buf, devmsuff+fname, nil); err != nil {
+		var fpath = path.Join(devmsuff, fname)
+		if err = tc.ExecuteTemplate(&buf, fpath, nil); err != nil {
 			return
 		}
-		pagecache[devmsuff+fname] = buf.Bytes()
+		pagecache[fpath] = buf.Bytes()
 	}
 
 	if tc, err = ts.Clone(); err != nil {
 		return
 	}
-	if load(tc, relmsuff+"*.html"); err != nil {
+	if load(tc, path.Join(relmsuff, "*.html")); err != nil {
 		return
 	}
 	for _, fname := range pagealias {
 		var buf bytes.Buffer
-		if err = tc.ExecuteTemplate(&buf, relmsuff+fname, nil); err != nil {
+		var fpath = path.Join(relmsuff, fname)
+		if err = tc.ExecuteTemplate(&buf, fpath, nil); err != nil {
 			return
 		}
-		pagecache[relmsuff+fname] = buf.Bytes()
+		pagecache[fpath] = buf.Bytes()
 	}
 	return
 }
@@ -113,9 +116,9 @@ func loadtemplates() (err error) {
 // Start web server //
 //////////////////////
 
-func pathexists(path string) (bool, error) {
+func pathexists(fpath string) (bool, error) {
 	var err error
-	if _, err = os.Stat(path); err == nil {
+	if _, err = os.Stat(fpath); err == nil {
 		return true, nil
 	}
 	if os.IsNotExist(err) {
@@ -127,29 +130,29 @@ func pathexists(path string) (bool, error) {
 // Init performs global data initialisation. Loads configuration files, initializes file cache.
 func Init() {
 	var err error
-	var path string
+	var fpath string
 	var gopath = filepath.ToSlash(os.Getenv("GOPATH"))
 	if !strings.HasSuffix(gopath, "/") {
 		gopath += "/"
 	}
 
 	// fetch program path
-	destpath = filepath.ToSlash(filepath.Dir(os.Args[0]) + "/")
+	destpath = path.Dir(filepath.ToSlash(os.Args[0]))
 
 	// fetch configuration path
-	if path = os.Getenv("APPCONFIGPATH"); path == "" {
-		path = destpath + rootsuff
-		if ok, _ := pathexists(path); !ok {
-			path = gopath + csrcsuff + confsuff
-			if ok, _ := pathexists(path); !ok {
+	if fpath = os.Getenv("APPCONFIGPATH"); fpath == "" {
+		fpath = path.Join(destpath, rootsuff)
+		if ok, _ := pathexists(fpath); !ok {
+			fpath = path.Join(gopath, csrcsuff, confsuff)
+			if ok, _ := pathexists(fpath); !ok {
 				Log.Fatalf("config folder does not found")
 			}
 		}
 	}
-	confpath = path
+	confpath = fpath
 
 	// load settings files
-	if err = cfg.Load(confpath + "settings.yaml"); err != nil {
+	if err = cfg.Load(path.Join(confpath, "settings.yaml")); err != nil {
 		Log.Println("error on settings file: " + err.Error())
 	}
 
@@ -163,7 +166,7 @@ func Init() {
 		datapack = pack.Package
 		packager = &pack
 	}
-	if err = packager.OpenWPK(destpath + cfg.WPKName); err != nil {
+	if err = packager.OpenWPK(path.Join(destpath, cfg.WPKName)); err != nil {
 		Log.Fatal("can not load wpk-package: " + err.Error())
 	}
 	Log.Printf("cached %d package files to %d aliases on %d bytes", datapack.RecNumber, datapack.TagNumber, datapack.TagOffset)
@@ -176,26 +179,26 @@ func Init() {
 	// build caches with given sizes from settings
 	initcaches()
 
-	if err = pathcache.Load(confpath + "pathcache.yaml"); err != nil {
+	if err = pathcache.Load(path.Join(confpath, "pathcache.yaml")); err != nil {
 		Log.Println("error on path cache file: " + err.Error())
 		Log.Println("loading of directories cache and users list were missed for a reason path cache loading failure")
 	} else {
 		// load directories file groups
 		Log.Printf("loaded %d items into path cache", len(pathcache.keypath))
-		if err = dircache.Load(confpath + "dircache.yaml"); err != nil {
+		if err = dircache.Load(path.Join(confpath, "dircache.yaml")); err != nil {
 			Log.Println("error on directories cache file: " + err.Error())
 		}
 		Log.Printf("loaded %d items into directories cache", len(dircache.keydir))
 
 		// load previous users states
-		if err = usercache.Load(confpath + "userlist.yaml"); err != nil {
+		if err = usercache.Load(path.Join(confpath, "userlist.yaml")); err != nil {
 			Log.Println("error on users list file: " + err.Error())
 		}
 		Log.Printf("loaded %d items into users list", len(usercache.list))
 	}
 
 	// load profiles with roots, hidden and shares lists
-	if err = prflist.Load(confpath + "profiles.yaml"); err != nil {
+	if err = prflist.Load(path.Join(confpath, "profiles.yaml")); err != nil {
 		Log.Fatal("error on profiles file: " + err.Error())
 	}
 
@@ -263,7 +266,7 @@ func Run(gmux *Router) {
 			if cfg.AutoCert { // get certificate from letsencrypt.org
 				var m = &autocert.Manager{
 					Prompt: autocert.AcceptTOS,
-					Cache:  autocert.DirCache(confpath + "cert/"),
+					Cache:  autocert.DirCache(path.Join(confpath, "cert")),
 				}
 				config = &tls.Config{
 					PreferServerCipherSuites: true,
@@ -285,7 +288,9 @@ func Run(gmux *Router) {
 				MaxHeaderBytes:    cfg.MaxHeaderBytes,
 			}
 			go func() {
-				if err := server.ListenAndServeTLS(confpath+"serv.crt", confpath+"prvk.pem"); err != http.ErrServerClosed {
+				if err := server.ListenAndServeTLS(
+					path.Join(confpath, "serv.crt"),
+					path.Join(confpath, "prvk.pem")); err != http.ErrServerClosed {
 					Log.Fatalf("failed to serve on %s: %v", addr, err)
 					return
 				}
@@ -330,7 +335,7 @@ func Shutdown() {
 	exitwg.Add(1)
 	go func() {
 		defer exitwg.Done()
-		if err := pathcache.Save(confpath + "pathcache.yaml"); err != nil {
+		if err := pathcache.Save(path.Join(confpath, "pathcache.yaml")); err != nil {
 			Log.Println("error on path cache file: " + err.Error())
 			Log.Println("saving of directories cache and users list were missed for a reason path cache saving failure")
 			return
@@ -339,7 +344,7 @@ func Shutdown() {
 		exitwg.Add(1)
 		go func() {
 			defer exitwg.Done()
-			if err := dircache.Save(confpath + "dircache.yaml"); err != nil {
+			if err := dircache.Save(path.Join(confpath, "dircache.yaml")); err != nil {
 				Log.Println("error on directories cache file: " + err.Error())
 			}
 		}()
@@ -347,7 +352,7 @@ func Shutdown() {
 		exitwg.Add(1)
 		go func() {
 			defer exitwg.Done()
-			if err := usercache.Save(confpath + "userlist.yaml"); err != nil {
+			if err := usercache.Save(path.Join(confpath, "userlist.yaml")); err != nil {
 				Log.Println("error on users list file: " + err.Error())
 			}
 		}()
@@ -356,7 +361,7 @@ func Shutdown() {
 	exitwg.Add(1)
 	go func() {
 		defer exitwg.Done()
-		if err := prflist.Save(confpath + "profiles.yaml"); err != nil {
+		if err := prflist.Save(path.Join(confpath, "profiles.yaml")); err != nil {
 			Log.Println("error on profiles list file: " + err.Error())
 		}
 	}()
