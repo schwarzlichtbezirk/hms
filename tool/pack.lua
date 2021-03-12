@@ -107,12 +107,12 @@ local function iconput(kpath, fpath)
 end
 local function packdir(prefix, dir, putfunc)
 	for i, name in ipairs(path.enum(dir)) do
-		local kpath = prefix..name
-		local fpath = dir..name
+		local kpath = path.join(prefix, name)
+		local fpath = path.join(dir, name)
 		local access, isdir = checkfile(fpath)
 		if access and checkname(name) then
 			if isdir then
-				packdir(kpath.."/", fpath.."/", putfunc)
+				packdir(kpath, fpath, putfunc)
 			else
 				putfunc(kpath, fpath)
 			end
@@ -123,14 +123,14 @@ end
 
 if logdir then logfmt("writes %s package", pkg.path) end
 
-local rootdir = path.join(scrdir, "..").."/"
+local rootdir = path.join(scrdir, "..", "frontend").."/"
 -- put some directories as is
-packdir("assets/", rootdir.."assets/", commonput)
-packdir("build/", rootdir.."build/", commonput)
-packdir("devmode/", rootdir.."devmode/", authput)
-packdir("plugin/", rootdir.."plugin/", commonput)
-packdir("tmpl/", rootdir.."tmpl/", commonput)
-packdir("tool/", rootdir.."tool/", commonput)
+packdir("assets", rootdir.."assets", commonput)
+packdir("build", rootdir.."build", commonput)
+packdir("devmode", rootdir.."devmode", authput)
+packdir("plugin", rootdir.."plugin", commonput)
+packdir("tmpl", rootdir.."tmpl", commonput)
+packdir("tool", scrdir, commonput)
 -- put skins
 for i, id in ipairs(wpkconf.skinset) do
 	for j, fname in ipairs(fullskinmap[id]) do
@@ -140,7 +140,7 @@ for i, id in ipairs(wpkconf.skinset) do
 end
 -- put icons
 for i, id in ipairs(wpkconf.iconset) do
-	local kpath = "icon/"..id.."/"
+	local kpath = "icon/"..id
 	packdir(kpath, rootdir..kpath, iconput)
 	local kpath = "icon/"..id..".json"
 	authput(kpath, rootdir..kpath)
@@ -149,10 +149,7 @@ end
 for i, fpath in ipairs{path.glob(rootdir.."../?*.?*")} do
 	local fname = string.match(fpath, "/([%w_]+%.%w+)$")
 	if fname then
-		local kpath = "src/"..fname
-		pkg:putfile(kpath, fpath)
-		pkg:settag(kpath, "author", "schwarzlichtbezirk")
-		if logrec then logfile(kpath) end
+		authput("src/"..fname, fpath)
 	end
 end
 

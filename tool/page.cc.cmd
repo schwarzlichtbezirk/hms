@@ -1,5 +1,5 @@
 @echo off
-cd /d %~dp0/..
+cd /d %GOPATH%/src/github.com/schwarzlichtbezirk/hms/frontend
 
 java -jar %~d0/tools/closure-compiler.jar^
  --js devmode/relmode.js^

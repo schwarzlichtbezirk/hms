@@ -474,7 +474,7 @@ func purgeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 func reloadAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var err error
 
-	if err = packager.OpenWPK(path.Join(destpath, "hms.wpk")); err != nil {
+	if err = packager.OpenWPK(path.Join(destpath, cfg.WPKName)); err != nil {
 		WriteError500(w, err, AECreloadload)
 		return
 	}

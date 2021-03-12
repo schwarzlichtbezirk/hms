@@ -324,14 +324,17 @@ func WaitBreak() {
 
 	// Block until we receive our signal.
 	<-sigint
+	// Make exit signal.
+	close(exitchan)
 }
 
-// Shutdown performs graceful network shutdown,
-// waits until all server threads will be stopped.
-func Shutdown() {
-	close(exitchan)
+// WaitExit waits until all server threads will be stopped.
+func WaitExit() {
 	exitwg.Wait()
+}
 
+// Shutdown performs graceful network shutdown.
+func Shutdown() {
 	exitwg.Add(1)
 	go func() {
 		defer exitwg.Done()
