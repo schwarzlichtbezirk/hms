@@ -5,7 +5,6 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"path"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -473,8 +472,12 @@ func purgeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 // APIHANDLER
 func reloadAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var err error
+	var ret struct {
+		RecNumber int   `json:"recnumber"`
+		DataSize  int64 `json:"datasize"`
+	}
 
-	if err = packager.OpenWPK(path.Join(destpath, cfg.WPKName)); err != nil {
+	if packager, err = openimage(); err != nil {
 		WriteError500(w, err, AECreloadload)
 		return
 	}
@@ -483,7 +486,9 @@ func reloadAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		return
 	}
 
-	WriteOK(w, &datapack.PackHdr)
+	ret.RecNumber = packager.RecNumber()
+	ret.DataSize = packager.DataSize()
+	WriteOK(w, &ret)
 }
 
 // APIHANDLER

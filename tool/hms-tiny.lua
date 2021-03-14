@@ -3,7 +3,7 @@
 
 wpkconf = {
 	-- result package name
-	fname = "hms-tiny.wpk",
+	label = "hms-tiny",
 	-- list of skins IDs, see 'id' tags of 'skinlist' in 'resmodel.json' file
 	skinset = {
 		"daylight", "blue", "dark",

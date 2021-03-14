@@ -23,7 +23,7 @@ local fulliconset = {
 
 -- let's set package configuration to default if it was not provided
 wpkconf = wpkconf or {}
-wpkconf.fname = wpkconf.fname or "hms-full.wpk"
+wpkconf.label = wpkconf.label or "hms-full"
 wpkconf.skinset = wpkconf.skinset or fullskinset
 wpkconf.iconset = wpkconf.iconset or fulliconset
 wpkconf.defskinid = wpkconf.defskinid or "neon"
@@ -45,13 +45,14 @@ end
 
 -- inits new package
 local pkg = wpk.new()
+pkg.label = wpkconf.label -- image label
 pkg.automime = true -- put MIME type for each file if it is not given explicit
 pkg.secret = "hms-package" -- private key to sign cryptographic hashes for each file
 pkg.crc32 = true -- generate CRC32 Castagnoli code for each file
 pkg.sha256 = true -- generate SHA256 hash for each file
 
 -- open wpk-file for write
-pkg:begin(envfmt("${GOPATH}/bin/"..wpkconf.fname))
+pkg:begin(envfmt("${GOPATH}/bin/"..wpkconf.label..".wpk"))
 
 -- write record log
 local function logfile(kpath)
@@ -199,7 +200,7 @@ do
 	local f = assert(io.open(envfmt("${GOPATH}/bin/hms/settings.yaml"), "rb"))
 	local content = f:read("*all")
 	f:close()
-	content = string.gsub(content, "wpk%-name:(%s+)[%w%-]+%.wpk", "wpk-name:%1"..wpkconf.fname)
+	content = string.gsub(content, "wpk%-name:(%s+)[%w%-]+%.wpk", "wpk-name:%1"..wpkconf.label)
 	local f = assert(io.open(envfmt("${GOPATH}/bin/hms/settings.yaml"), "wb+"))
 	f:write(content)
 	f:close()
@@ -212,4 +213,4 @@ else
 end
 
 -- write records table, tags table and finalize wpk-file
-pkg:complete()
+pkg:finalize()

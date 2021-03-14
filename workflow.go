@@ -30,7 +30,6 @@ var (
 )
 
 // Package root dir.
-var datapack *wpk.Package
 var packager wpk.Packager
 
 // Log is global static ring logger object.
@@ -55,12 +54,21 @@ var dict = func(values ...interface{}) (map[string]interface{}, error) {
 	return dict, nil
 }
 
+// openimage opens hms-package.
+func openimage() (pack wpk.Packager, err error) {
+	if cfg.AutoCert {
+		return mmap.OpenImage(path.Join(destpath, cfg.WPKName))
+	} else {
+		return bulk.OpenImage(path.Join(destpath, cfg.WPKName))
+	}
+}
+
 // hot templates reload, during server running
 func loadtemplates() (err error) {
 	var ts, tc *template.Template
 	var load = func(tb *template.Template, pattern string) {
 		var tpl []string
-		if tpl, err = datapack.Glob(pattern); err != nil {
+		if tpl, err = packager.Glob(pattern); err != nil {
 			return
 		}
 		for _, key := range tpl {
@@ -157,19 +165,10 @@ func Init() {
 	}
 
 	// load package with data files
-	if cfg.AutoCert {
-		var pack = mmap.PackDir{Package: &wpk.Package{}}
-		datapack = pack.Package
-		packager = &pack
-	} else {
-		var pack = bulk.PackDir{Package: &wpk.Package{}}
-		datapack = pack.Package
-		packager = &pack
-	}
-	if err = packager.OpenWPK(path.Join(destpath, cfg.WPKName)); err != nil {
+	if packager, err = openimage(); err != nil {
 		Log.Fatal("can not load wpk-package: " + err.Error())
 	}
-	Log.Printf("cached %d package files to %d aliases on %d bytes", datapack.RecNumber, datapack.TagNumber, datapack.TagOffset)
+	Log.Printf("cached %d package files to %d aliases on %d bytes", packager.RecNumber(), len(packager.Enum()), packager.DataSize())
 
 	// insert components templates into pages
 	if err = loadtemplates(); err != nil {

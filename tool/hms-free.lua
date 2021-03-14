@@ -4,7 +4,7 @@
 
 wpkconf = {
 	-- result package name
-	fname = "hms-free.wpk",
+	label = "hms-free",
 	-- list of skins IDs, see 'id' tags of 'skinlist' in 'resmodel.json' file
 	skinset = {
 		"daylight", "blue", "dark", "neon",

@@ -3,7 +3,7 @@
 
 wpkconf = {
 	-- result package name
-	fname = "hms-all.wpk",
+	label = "hms-all",
 	-- default skin ID if nothing was selected
 	defskinid = "neon",
 	-- default icons collection ID if nothing was selected
