@@ -360,16 +360,19 @@ a, .btn-link {
 /* leaflet popup */
 
 .leaflet-popup-content-wrapper, .leaflet-popup-tip,
-.leaflet-bar a, .leaflet-bar a:hover {
-	background-color: PaleGreen;
-	color: rgba(0, 0, 0, 0.75);
+.leaflet-bar a, .leaflet-bar a:hover,
+.leaflet-control-attribution {
+	background-color: PaleGreen !important;
+	color: rgba(0, 0, 0, 0.75) !important;
 }
 
-	.leaflet-popup-content-wrapper a {
+	.leaflet-popup-content-wrapper a,
+	.leaflet-control-attribution a {
 		color: DarkGreen;
 	}
 
-		.leaflet-popup-content-wrapper a:hover {
+		.leaflet-popup-content-wrapper a:hover,
+		.leaflet-control-attribution a:hover {
 			color: Green;
 		}
 

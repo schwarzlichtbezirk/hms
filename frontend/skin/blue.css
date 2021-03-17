@@ -350,16 +350,19 @@ body {
 /* leaflet popup */
 
 .leaflet-popup-content-wrapper, .leaflet-popup-tip,
-.leaflet-bar a, .leaflet-bar a:hover {
-	background-color: LightSteelBlue;
-	color: rgba(0, 0, 0, 0.75);
+.leaflet-bar a, .leaflet-bar a:hover,
+.leaflet-control-attribution {
+	background-color: LightSteelBlue !important;
+	color: rgba(0, 0, 0, 0.75) !important;
 }
 
-	.leaflet-popup-content-wrapper a {
+	.leaflet-popup-content-wrapper a,
+	.leaflet-control-attribution a {
 		color: SlateGray;
 	}
 
-		.leaflet-popup-content-wrapper a:hover {
+		.leaflet-popup-content-wrapper a:hover,
+		.leaflet-control-attribution a:hover {
 			color: LightSlateGray;
 		}
 

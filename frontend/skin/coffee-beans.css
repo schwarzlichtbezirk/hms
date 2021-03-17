@@ -364,16 +364,19 @@ a, .btn-link {
 /* leaflet popup */
 
 .leaflet-popup-content-wrapper, .leaflet-popup-tip,
-.leaflet-bar a, .leaflet-bar a:hover {
-	background-color: RebeccaPurple;
-	color: rgba(255, 255, 255, 0.60);
+.leaflet-bar a, .leaflet-bar a:hover,
+.leaflet-control-attribution {
+	background-color: RebeccaPurple !important;
+	color: rgba(255, 255, 255, 0.60) !important;
 }
 
-	.leaflet-popup-content-wrapper a {
+	.leaflet-popup-content-wrapper a,
+	.leaflet-control-attribution a {
 		color: SpringGreen;
 	}
 
-		.leaflet-popup-content-wrapper a:hover {
+		.leaflet-popup-content-wrapper a:hover,
+		.leaflet-control-attribution a:hover {
 			color: MediumSpringGreen;
 		}
 
