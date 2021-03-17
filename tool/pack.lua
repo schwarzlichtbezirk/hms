@@ -200,7 +200,7 @@ do
 	local f = assert(io.open(envfmt("${GOPATH}/bin/hms/settings.yaml"), "rb"))
 	local content = f:read("*all")
 	f:close()
-	content = string.gsub(content, "wpk%-name:(%s+)[%w%-]+%.wpk", "wpk-name:%1"..wpkconf.label)
+	content = string.gsub(content, "wpk%-name:(%s+)[%w%-]+%.wpk", "wpk-name:%1"..wpkconf.label..".wpk")
 	local f = assert(io.open(envfmt("${GOPATH}/bin/hms/settings.yaml"), "wb+"))
 	f:write(content)
 	f:close()

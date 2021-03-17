@@ -8,7 +8,11 @@ Screenshots:
 [![hms #1](http://images.sevstar.net/images/86980114770981357724_thumb.png)](http://images.sevstar.net/images/86980114770981357724.jpg)
 [![hms #1](http://images.sevstar.net/images/08282078015756047629_thumb.png)](http://images.sevstar.net/images/08282078015756047629.jpg)
 
-# How to build.
+# Download
+
+Compiled binaries can be downloaded in [Releases](https://github.com/schwarzlichtbezirk/hms/releases) section.
+
+# How to build
 
 At first, install [Golang](https://golang.org/) minimum 1.13 version, and run those commands in command prompt:
 
@@ -23,7 +27,7 @@ First command extracts program package with all dependencies. Second makes wpk-b
 
 If you want some other shorter package, you can replace Lua-script name in 4th command.
 
-# Packages variations.
+# Packages variations
 
 By default script `pack.lua` produces full package with all icons collections with both `png` and `webp` formats. `webp` icons are more than 5x times shorter than `png` and this format is supported by Android, Chrome, Opera, Edge, Firefox, but in some cases it's can be needed `png` yet.
 
@@ -33,7 +37,7 @@ To make full package with `webp` icons only, use `hms-all.lua` script:
 ```
 To make package with minimal size, use `hms-tiny.lua` script. Script `hms-free.lua` produces package with icons, which have allowed commercial usage by their license.
 
-# Configuration.
+# Configuration
 
 Before server start you can configure some options. Any configuration files lays at "hms" folder, and have `yaml` file format.
 
@@ -45,7 +49,7 @@ Server provides ability to make profiles each of which can have own set of drive
 
 If page is opened on localhost, there is no need for authorization. On localhost you have silent authorized access to default profile. ID of default profile is `1` and can be modified at field `default-profile-id` of settings.
 
-# Home page and sharing.
+# Home page and sharing
 
 Open home page in browser, `localhost` if it running on local computer, and there will be list of categories. Home page can be opened from any other location by "home" button at top left.
 

@@ -363,6 +363,27 @@ a, .btn-link {
 
 /* leaflet popup */
 
+.leaflet-popup-content-wrapper, .leaflet-popup-tip,
+.leaflet-bar a, .leaflet-bar a:hover {
+	background-color: RebeccaPurple;
+	color: rgba(255, 255, 255, 0.60);
+}
+
+	.leaflet-popup-content-wrapper a {
+		color: SpringGreen;
+	}
+
+		.leaflet-popup-content-wrapper a:hover {
+			color: MediumSpringGreen;
+		}
+
+	.leaflet-popup-content-wrapper .nav-tabs .nav-link.active,
+	.leaflet-popup-content-wrapper .nav-tabs .nav-item.show .nav-link {
+		color: PaleGreen;
+		background-color: #8040bf;
+		border-color: #dee2e6 #dee2e6 #fff;
+	}
+
 .photoinfo .thumb {
 	max-width: 256px;
 }

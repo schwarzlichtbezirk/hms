@@ -332,11 +332,32 @@ body {
 	left: 50%;
 	transform: translate(-50%,-50%);
 	width: 100%;
-	border: 3px solid azure;
+	border: 3px solid #c2adeb;
 	border-radius: 0.25rem;
 }
 
 /* leaflet popup */
+
+.leaflet-popup-content-wrapper, .leaflet-popup-tip,
+.leaflet-bar a, .leaflet-bar a:hover {
+	background-color: MediumPurple;
+	color: rgba(255, 255, 255, 0.75);
+}
+
+	.leaflet-popup-content-wrapper a {
+		color: SpringGreen;
+	}
+
+		.leaflet-popup-content-wrapper a:hover {
+			color: MediumSpringGreen;
+		}
+
+	.leaflet-popup-content-wrapper .nav-tabs .nav-link.active,
+	.leaflet-popup-content-wrapper .nav-tabs .nav-item.show .nav-link {
+		color: PaleGreen;
+		background-color: #855cd6;
+		border-color: #dee2e6 #dee2e6 #fff;
+	}
 
 .photoinfo .thumb {
 	max-width: 256px;

@@ -13,11 +13,11 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-	background: #7547a3;
+	background: #bd5dd5;
 }
 
 	::-webkit-scrollbar-thumb:hover {
-		background: #855cad;
+		background: #ad34cb;
 	}
 
 .bg-tool {
@@ -345,6 +345,27 @@ body {
 }
 
 /* leaflet popup */
+
+.leaflet-popup-content-wrapper, .leaflet-popup-tip,
+.leaflet-bar a, .leaflet-bar a:hover {
+	background-color: RosyBrown;
+	color: rgba(255, 255, 255, 0.80);
+}
+
+	.leaflet-popup-content-wrapper a {
+		color: NavajoWhite;
+	}
+
+		.leaflet-popup-content-wrapper a:hover {
+			color: Wheat;
+		}
+
+	.leaflet-popup-content-wrapper .nav-tabs .nav-link.active,
+	.leaflet-popup-content-wrapper .nav-tabs .nav-item.show .nav-link {
+		color: Cornsilk;
+		background-color: #b38080;
+		border-color: #dee2e6 #dee2e6 #fff;
+	}
 
 .photoinfo .thumb {
 	max-width: 256px;

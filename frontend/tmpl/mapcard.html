@@ -11,10 +11,14 @@
 						<i class="material-icons">map</i>
 					</button>
 					<div class="dropdown-menu bg-card dropdown-menu-right pre-scrollable">
-						<button class="dropdown-item" type="button" v-on:click="onhybrid" v-bind:class="clsmapboxhybrid">Mapbox hybrid</button>
-						<button class="dropdown-item" type="button" v-on:click="onsatellite" v-bind:class="clsmapboxsatellite">Mapbox satellite</button>
-						<button class="dropdown-item" type="button" v-on:click="onoutdoors" v-bind:class="clsmapboxoutdoors">Mapbox outdoors</button>
-						<button class="dropdown-item" type="button" v-on:click="onstreets" v-bind:class="clsmapboxstreets">Mapbox streets</button>
+						<button class="dropdown-item" type="button" v-on:click="onmapboxhybrid" v-bind:class="clsmapboxhybrid">Mapbox hybrid</button>
+						<button class="dropdown-item" type="button" v-on:click="onmapboxsatellite" v-bind:class="clsmapboxsatellite">Mapbox satellite</button>
+						<button class="dropdown-item" type="button" v-on:click="onmapboxoutdoors" v-bind:class="clsmapboxoutdoors">Mapbox outdoors</button>
+						<button class="dropdown-item" type="button" v-on:click="onmapboxstreets" v-bind:class="clsmapboxstreets">Mapbox streets</button>
+						<button class="dropdown-item" type="button" v-on:click="ongooglehybrid" v-bind:class="clsgooglehybrid">Google maps hybrid</button>
+						<button class="dropdown-item" type="button" v-on:click="ongooglesatellite" v-bind:class="clsgooglesatellite">Google maps satellite</button>
+						<button class="dropdown-item" type="button" v-on:click="ongoogleterrain" v-bind:class="clsgoogleterrain">Google maps terrain</button>
+						<button class="dropdown-item" type="button" v-on:click="ongooglestreets" v-bind:class="clsgooglestreets">Google maps streets</button>
 						<button class="dropdown-item" type="button" v-on:click="onosm" v-bind:class="clsosm">OSM</button>
 						<button class="dropdown-item" type="button" v-on:click="onopentopo" v-bind:class="clsopentopomap">Open topo map</button>
 						<button class="dropdown-item" type="button" v-on:click="onhikebike" v-bind:class="clshikebike">Hike Bike</button>

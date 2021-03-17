@@ -588,7 +588,7 @@ Vue.component('map-card-tag', {
 	template: '#map-card-tpl',
 	data: function () {
 		return {
-			styleid: 'hybrid',
+			styleid: 'mapbox-hybrid',
 			map: null, // set it on mounted event
 			tiles: null,
 			markers: null,
@@ -603,16 +603,28 @@ Vue.component('map-card-tag', {
 			return this.gpslist.length > 0;
 		},
 		clsmapboxhybrid() {
-			return { active: this.styleid === 'hybrid' };
+			return { active: this.styleid === 'mapbox-hybrid' };
 		},
 		clsmapboxsatellite() {
-			return { active: this.styleid === 'satellite' };
+			return { active: this.styleid === 'mapbox-satellite' };
 		},
 		clsmapboxoutdoors() {
-			return { active: this.styleid === 'outdoors' };
+			return { active: this.styleid === 'mapbox-outdoors' };
 		},
 		clsmapboxstreets() {
-			return { active: this.styleid === 'streets' };
+			return { active: this.styleid === 'mapbox-streets' };
+		},
+		clsgooglehybrid() {
+			return { active: this.styleid === 'google-hybrid' };
+		},
+		clsgooglesatellite() {
+			return { active: this.styleid === 'google-satellite' };
+		},
+		clsgoogleterrain() {
+			return { active: this.styleid === 'google-terrain' };
+		},
+		clsgooglestreets() {
+			return { active: this.styleid === 'google-streets' };
 		},
 		clsosm() {
 			return { active: this.styleid === 'osm' };
@@ -632,14 +644,22 @@ Vue.component('map-card-tag', {
 		},
 		hintlandscape() {
 			switch (this.styleid) {
-				case 'hybrid':
+				case 'mapbox-hybrid':
 					return "Mapbox satellite & streets map";
-				case 'satellite':
+				case 'mapbox-satellite':
 					return "Mapbox satellite map";
-				case 'outdoors':
+				case 'mapbox-outdoors':
 					return "Mapbox outdoors map";
-				case 'streets':
+				case 'mapbox-streets':
 					return "Mapbox streets map";
+				case 'google-hybrid':
+					return "Google maps hybrid";
+				case 'google-satellite':
+					return "Google maps satellite";
+				case 'google-terrain':
+					return "Google maps terrain";
+				case 'google-streets':
+					return "Google maps streets";
 				case 'osm':
 					return "Open Street Map";
 				case 'opentopo':
@@ -673,7 +693,7 @@ Vue.component('map-card-tag', {
 		// make tiles layer
 		maketiles(id) {
 			switch (id) {
-				case 'hybrid':
+				case 'mapbox-hybrid':
 					return L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
 						attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors, ' +
 							'Imagery &copy <a href="https://www.mapbox.com/" target="_blank">Mapbox</a>',
@@ -683,7 +703,7 @@ Vue.component('map-card-tag', {
 						id: 'mapbox/satellite-streets-v11',
 						accessToken: 'pk.eyJ1Ijoic2Nod2FyemxpY2h0YmV6aXJrIiwiYSI6ImNrazdseXRxZjBlemsycG8wZ3BodTR1aWUifQ.Mt99AhglX08nolRj_bsyog'
 					});
-				case 'satellite':
+				case 'mapbox-satellite':
 					return L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
 						attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors, ' +
 							'Imagery &copy <a href="https://www.mapbox.com/" target="_blank">Mapbox</a>',
@@ -693,7 +713,7 @@ Vue.component('map-card-tag', {
 						id: 'mapbox/satellite-v9',
 						accessToken: 'pk.eyJ1Ijoic2Nod2FyemxpY2h0YmV6aXJrIiwiYSI6ImNrazdseXRxZjBlemsycG8wZ3BodTR1aWUifQ.Mt99AhglX08nolRj_bsyog'
 					});
-				case 'outdoors':
+				case 'mapbox-outdoors':
 					return L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
 						attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors, ' +
 							'Imagery &copy <a href="https://www.mapbox.com/" target="_blank">Mapbox</a>',
@@ -703,7 +723,7 @@ Vue.component('map-card-tag', {
 						id: 'mapbox/outdoors-v11',
 						accessToken: 'pk.eyJ1Ijoic2Nod2FyemxpY2h0YmV6aXJrIiwiYSI6ImNrazdseXRxZjBlemsycG8wZ3BodTR1aWUifQ.Mt99AhglX08nolRj_bsyog'
 					});
-				case 'streets':
+				case 'mapbox-streets':
 					return L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
 						attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors, ' +
 							'Imagery &copy <a href="https://www.mapbox.com/" target="_blank">Mapbox</a>',
@@ -712,6 +732,34 @@ Vue.component('map-card-tag', {
 						zoomOffset: -1,
 						id: 'mapbox/streets-v11',
 						accessToken: 'pk.eyJ1Ijoic2Nod2FyemxpY2h0YmV6aXJrIiwiYSI6ImNrazdseXRxZjBlemsycG8wZ3BodTR1aWUifQ.Mt99AhglX08nolRj_bsyog'
+					});
+				case 'google-hybrid':
+					return L.tileLayer('http://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', {
+						subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+						attribution: 'Map data: &copy; <a href="https://developers.google.com/maps/documentation/javascript/overview" target="_blank">Google Maps Platform</a> contributors',
+						minZoom: 2,
+						maxZoom: 20
+					});
+				case 'google-satellite':
+					return L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+						subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+						attribution: 'Map data: &copy; <a href="https://developers.google.com/maps/documentation/javascript/overview" target="_blank">Google Maps Platform</a> contributors',
+						minZoom: 2,
+						maxZoom: 20
+					});
+				case 'google-terrain':
+					return L.tileLayer('http://{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', {
+						subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+						attribution: 'Map data: &copy; <a href="https://developers.google.com/maps/documentation/javascript/overview" target="_blank">Google Maps Platform</a> contributors',
+						minZoom: 2,
+						maxZoom: 20
+					});
+				case 'google-streets':
+					return L.tileLayer('http://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
+						subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
+						attribution: 'Map data: &copy; <a href="https://developers.google.com/maps/documentation/javascript/overview" target="_blank">Google Maps Platform</a> contributors',
+						minZoom: 2,
+						maxZoom: 20
 					});
 				case 'osm':
 					return L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -785,17 +833,29 @@ Vue.component('map-card-tag', {
 			this.gpslist.push(...gpslist);
 		},
 
-		onhybrid() {
-			this.changetiles('hybrid');
+		onmapboxhybrid() {
+			this.changetiles('mapbox-hybrid');
 		},
-		onsatellite() {
-			this.changetiles('satellite');
+		onmapboxsatellite() {
+			this.changetiles('mapbox-satellite');
 		},
-		onoutdoors() {
-			this.changetiles('outdoors');
+		onmapboxoutdoors() {
+			this.changetiles('mapbox-outdoors');
 		},
-		onstreets() {
-			this.changetiles('streets');
+		onmapboxstreets() {
+			this.changetiles('mapbox-streets');
+		},
+		ongooglehybrid() {
+			this.changetiles('google-hybrid');
+		},
+		ongooglesatellite() {
+			this.changetiles('google-satellite');
+		},
+		ongoogleterrain() {
+			this.changetiles('google-terrain');
+		},
+		ongooglestreets() {
+			this.changetiles('google-streets');
 		},
 		onosm() {
 			this.changetiles('osm');
@@ -826,7 +886,7 @@ Vue.component('map-card-tag', {
 		}
 	},
 	mounted() {
-		this.tiles = this.maketiles('hybrid');
+		this.tiles = this.maketiles('mapbox-hybrid');
 		this.map = L.map(this.$refs.map, {
 			center: [0, 0],
 			zoom: 8,
