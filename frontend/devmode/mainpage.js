@@ -261,13 +261,13 @@ const ajaxfail = e => {
 				return;
 			case 401: // Unauthorized
 				msgbox(
-					"Unauthorized",
+					"401 Unauthorized",
 					"Action can be done only after authorization."
 				);
 				return;
 			case 403: // Forbidden
 				msgbox(
-					"404 resource forbidden",
+					"403 resource forbidden",
 					"Resource referenced by application ajax-call is forbidden. It can be accessible after authorization, or for other authorization."
 				);
 				return;
@@ -485,7 +485,11 @@ const app = new Vue({
 			const lst = [];
 			let path = '';
 			for (const fn of arr) {
-				path += fn + '/';
+				if (path) {
+					path += '/' + fn;
+				} else {
+					path = fn;
+				}
 				lst.push({
 					name: fn,
 					path: path

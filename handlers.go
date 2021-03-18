@@ -5,7 +5,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"path/filepath"
+	"path"
 	"runtime"
 	"strconv"
 	"strings"
@@ -38,10 +38,11 @@ const (
 
 	AECfilebadaccid = 12
 	AECfilenoacc    = 13
-	AECfilehidden   = 14
-	AECfilenoprop   = 15
-	AECfilenofile   = 16
-	AECfileaccess   = 17
+	AECfilehroot    = 14
+	AECfilehidden   = 15
+	AECfilenoprop   = 16
+	AECfilenofile   = 17
+	AECfileaccess   = 18
 
 	// media
 
@@ -109,9 +110,10 @@ const (
 
 	AECfoldernodata = 70
 	AECfoldernoacc  = 71
-	AECfoldernopath = 72
-	AECfolderaccess = 73
-	AECfolderfail   = 74
+	AECfolderroot   = 72
+	AECfoldernopath = 73
+	AECfolderaccess = 74
+	AECfolderfail   = 75
 
 	// ispath
 
@@ -156,14 +158,15 @@ const (
 	AECdrvaddnodata = 102
 	AECdrvaddnoacc  = 103
 	AECdrvadddeny   = 104
-	AECdrvaddfile   = 105
+	AECdrvaddroot   = 105
+	AECdrvaddfile   = 106
 
 	// drive/del
 
-	AECdrvdelnodata = 106
-	AECdrvdelnoacc  = 107
-	AECdrvdeldeny   = 108
-	AECdrvdelnopath = 109
+	AECdrvdelnodata = 107
+	AECdrvdelnoacc  = 108
+	AECdrvdeldeny   = 109
+	AECdrvdelnopath = 110
 )
 
 // HTTP error messages
@@ -244,7 +247,12 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var syspath = UnfoldPath(strings.Join(chunks[3:], "/"))
+	var syspath = path.Clean(strings.Join(chunks[3:], "/"))
+	if syspath[0] == '.' {
+		WriteError(w, http.StatusForbidden, ErrNoAccess, AECfilehroot)
+		return
+	}
+	syspath = UnfoldPath(syspath)
 
 	if prf.IsHidden(syspath) {
 		WriteError(w, http.StatusForbidden, ErrHidden, AECfilehidden)
@@ -802,7 +810,12 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 
 	var syspath string
 	if len(arg.Path) > 0 {
-		syspath = UnfoldPath(arg.Path)
+		syspath = path.Clean(ToSlash(arg.Path))
+		if syspath[0] == '.' {
+			WriteError(w, http.StatusForbidden, ErrNoAccess, AECfolderroot)
+			return
+		}
+		syspath = UnfoldPath(syspath)
 		ret.PUID = pathcache.Cache(syspath)
 	} else {
 		var ok bool
@@ -855,7 +868,14 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		return
 	}
 
-	prop, err := propcache.Get(arg.Path)
+	var syspath = path.Clean(ToSlash(arg.Path))
+	if syspath[0] == '.' {
+		WriteError(w, http.StatusForbidden, ErrNoAccess, AECfolderroot)
+		return
+	}
+	syspath = UnfoldPath(syspath)
+
+	prop, err := propcache.Get(syspath)
 	WriteOK(w, prop)
 }
 
@@ -1024,10 +1044,6 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		WriteError400(w, ErrArgNoPath, AECdrvaddnodata)
 		return
 	}
-	arg.Path = filepath.ToSlash(arg.Path)
-	if arg.Path[len(arg.Path)-1] != '/' {
-		arg.Path += "/"
-	}
 
 	var prf *Profile
 	if prf = prflist.ByID(arg.AID); prf == nil {
@@ -1039,20 +1055,26 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		return
 	}
 
-	if prf.RootIndex(arg.Path) >= 0 {
+	var syspath = path.Clean(ToSlash(arg.Path))
+	if syspath[0] == '.' {
+		WriteError(w, http.StatusForbidden, ErrNoAccess, AECdrvaddroot)
+		return
+	}
+	syspath = UnfoldPath(syspath)
+	if prf.RootIndex(syspath) >= 0 {
 		WriteOK(w, nil)
 		return
 	}
 
 	var dk DriveKit
-	dk.Setup(arg.Path)
-	if err = dk.Scan(arg.Path); err == nil {
+	dk.Setup(syspath)
+	if err = dk.Scan(syspath); err == nil {
 		WriteError400(w, err, AECdrvaddfile)
 		return
 	}
 
 	prf.mux.Lock()
-	prf.Roots = append(prf.Roots, arg.Path)
+	prf.Roots = append(prf.Roots, syspath)
 	prf.mux.Unlock()
 
 	WriteOK(w, dk)

@@ -2,6 +2,7 @@ package hms
 
 import (
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -37,6 +38,8 @@ const (
 
 // CatGrp indicates access to each file group.
 type CatGrp [FGnum]bool
+
+var ToSlash = filepath.ToSlash
 
 // IsZero used to check whether an object is zero to determine whether
 // it should be omitted when marshaling to yaml.
@@ -158,13 +161,13 @@ func (prf *Profile) SetDefaultHidden() {
 // IsHidden do check up that file path is in hidden list.
 func (prf *Profile) IsHidden(fpath string) bool {
 	var matched bool
-	var kpath = strings.TrimSuffix(strings.ToLower(filepath.ToSlash(fpath)), "/")
+	var kpath = strings.TrimSuffix(strings.ToLower(ToSlash(fpath)), "/")
 
 	prf.mux.RLock()
 	defer prf.mux.RUnlock()
 
 	for _, pattern := range prf.Hidden {
-		if matched, _ = filepath.Match(pattern, kpath); matched {
+		if matched, _ = path.Match(pattern, kpath); matched {
 			break
 		}
 	}
@@ -331,15 +334,6 @@ func (prf *Profile) DelShare(puid string) bool {
 
 // GetSharePath brings system path to largest share path.
 func (prf *Profile) GetSharePath(syspath string, isadmin bool) (shrpath string, base string, cg CatGrp) {
-	var concat = func() {
-		var pref, suff = pathcache.Cache(base), syspath[len(base):]
-		if len(suff) > 0 && suff[0] != '/' {
-			shrpath = pref + "/" + suff
-		} else {
-			shrpath = pref + suff
-		}
-	}
-
 	prf.mux.RLock()
 	defer prf.mux.RUnlock()
 
@@ -351,7 +345,7 @@ func (prf *Profile) GetSharePath(syspath string, isadmin bool) (shrpath string, 
 		}
 	}
 	if len(base) > 0 {
-		concat()
+		shrpath = path.Join(pathcache.Cache(base), syspath[len(base):])
 		cg.SetAll(true)
 		return
 	}
@@ -364,7 +358,7 @@ func (prf *Profile) GetSharePath(syspath string, isadmin bool) (shrpath string, 
 		}
 	}
 	if len(base) > 0 {
-		concat()
+		shrpath = path.Join(pathcache.Cache(base), syspath[len(base):])
 		if isadmin {
 			cg.SetAll(true)
 		} else {
@@ -426,10 +420,6 @@ func (prf *Profile) PathAdmin(syspath string) bool {
 
 // Readdir reads directory with given system path and returns Pather for each entry.
 func (prf *Profile) Readdir(syspath string, cg *CatGrp) (ret []Pather, err error) {
-	if !strings.HasSuffix(syspath, "/") {
-		syspath += "/"
-	}
-
 	var di os.FileInfo
 	var fis []os.FileInfo
 	if func() {
@@ -453,12 +443,9 @@ func (prf *Profile) Readdir(syspath string, cg *CatGrp) (ret []Pather, err error
 
 	for _, fi := range fis {
 		if fi != nil {
-			var fpath = syspath + fi.Name()
-			if fi.IsDir() {
-				fpath += "/"
-			}
+			var fpath = path.Join(syspath, fi.Name())
 			if !prf.IsHidden(fpath) {
-				var prop = CacheProp(fpath, fi).(Pather)
+				var prop = CacheProp(fpath, fi)
 				var grp = typetogroup[prop.Type()]
 				if cg[grp] {
 					ret = append(ret, prop)

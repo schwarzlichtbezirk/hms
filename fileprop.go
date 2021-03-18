@@ -571,7 +571,7 @@ func GetTagTmb(syspath string) (md *MediaData, err error) {
 }
 
 // MakeProp is file properties factory.
-func MakeProp(syspath string, fi os.FileInfo) interface{} {
+func MakeProp(syspath string, fi os.FileInfo) Pather {
 	if fi.IsDir() {
 		var dk DirKit
 		dk.Setup(syspath)

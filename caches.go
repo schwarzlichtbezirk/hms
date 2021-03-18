@@ -8,6 +8,7 @@ import (
 	"image"
 	"image/jpeg"
 	"os"
+	"path"
 	"sync"
 	"time"
 
@@ -145,7 +146,7 @@ func UnfoldPath(shrpath string) string {
 	}
 
 	if fpath, ok := pathcache.Path(pref); ok {
-		return fpath + suff
+		return path.Join(fpath, suff)
 	}
 	return shrpath
 }
@@ -257,22 +258,22 @@ func initcaches() {
 				return // file path not found
 			}
 
-			var prop interface{}
-			if prop, err = propcache.Get(syspath); err != nil {
+			var pv interface{}
+			if pv, err = propcache.Get(syspath); err != nil {
 				return // can not get properties
 			}
-			var pp = prop.(Pather)
-			if pp.NTmb() == TMBreject {
+			var prop = pv.(Pather)
+			if prop.NTmb() == TMBreject {
 				err = ErrNotThumb
 				return // thumbnail rejected
 			}
 
 			var md *MediaData
-			if md, err = FindTmb(pp, syspath); md != nil {
-				pp.SetNTmb(TMBcached)
+			if md, err = FindTmb(prop, syspath); md != nil {
+				prop.SetNTmb(TMBcached)
 				ret = md
 			} else {
-				pp.SetNTmb(TMBreject)
+				prop.SetNTmb(TMBreject)
 			}
 			return // ok
 		}).
@@ -355,10 +356,10 @@ func initcaches() {
 }
 
 // CacheProp is file properties factory, prevents double os.Stat slow call.
-func CacheProp(syspath string, fi os.FileInfo) interface{} {
+func CacheProp(syspath string, fi os.FileInfo) Pather {
 	if propcache.Has(syspath) {
-		var prop, _ = propcache.Get(syspath)
-		return prop
+		var pv, _ = propcache.Get(syspath)
+		return pv.(Pather)
 	}
 	var prop = MakeProp(syspath, fi)
 	propcache.Set(syspath, prop)

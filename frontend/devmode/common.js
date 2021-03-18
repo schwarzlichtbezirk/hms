@@ -34,7 +34,7 @@ if (!String.prototype.printf) {
 				case 'x': val = parseInt(arr[i]).toString(base ? base : 16); break;
 				case 'd': val = parseFloat(parseInt(arr[i], base ? base : 10).toPrecision(exp)).toFixed(0); break;
 			}
-			val = typeof (val) === 'object' ? JSON.stringify(val) : val.toString(base);
+			val = typeof val === 'object' ? JSON.stringify(val) : val.toString(base);
 			var sz = parseInt(p1); /* padding size */
 			var ch = p1 && p1[0] === '0' ? '0' : ' '; /* isnull? */
 			while (val.length < sz) val = p0 !== undefined ? val + ch : ch + val; /* isminus? */
@@ -44,6 +44,16 @@ if (!String.prototype.printf) {
 		return this.replace(regex, callback);
 	};
 }
+
+const pathjoin = (...args) => {
+	return args.map((part, i) => {
+		if (i === 0) {
+			return part.trim().replace(/[\/]*$/g, '');
+		} else {
+			return part.trim().replace(/(^[\/]*|[\/]*$)/g, '');
+		}
+	}).filter(x => x.length).join('/');
+};
 
 const fmtfilesize = (size) => {
 	if (size < 1536) {

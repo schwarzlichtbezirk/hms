@@ -10,7 +10,6 @@ import (
 	"os"
 	"os/signal"
 	"path"
-	"path/filepath"
 	"strings"
 	"sync"
 	"syscall"
@@ -20,6 +19,9 @@ import (
 	"github.com/schwarzlichtbezirk/wpk/bulk"
 	"github.com/schwarzlichtbezirk/wpk/mmap"
 	"golang.org/x/crypto/acme/autocert"
+
+	diskfs "github.com/diskfs/go-diskfs"
+	"github.com/diskfs/go-diskfs/filesystem"
 )
 
 var (
@@ -38,6 +40,27 @@ var Log = NewLogger(os.Stderr, LstdFlags, 300)
 ///////////////////////////////
 // Startup opening functions //
 ///////////////////////////////
+
+func ReadISO() error {
+	var disk, err = diskfs.Open("")
+	if err != nil {
+		return err
+	}
+	var fs filesystem.FileSystem
+	fs, err = disk.GetFilesystem(0) // assuming it is the whole disk, so partition = 0
+	if err != nil {
+		return err
+	}
+	var files []os.FileInfo
+	files, err = fs.ReadDir("/") // this should list everything
+	if err != nil {
+		return err
+	}
+	for _, fi := range files {
+		Log.Println(fi.Name(), fi.Size())
+	}
+	return nil
+}
 
 var dict = func(values ...interface{}) (map[string]interface{}, error) {
 	if len(values)%2 != 0 {
@@ -139,13 +162,10 @@ func pathexists(fpath string) (bool, error) {
 func Init() {
 	var err error
 	var fpath string
-	var gopath = filepath.ToSlash(os.Getenv("GOPATH"))
-	if !strings.HasSuffix(gopath, "/") {
-		gopath += "/"
-	}
+	var gopath = ToSlash(os.Getenv("GOPATH"))
 
 	// fetch program path
-	destpath = path.Dir(filepath.ToSlash(os.Args[0]))
+	destpath = path.Dir(ToSlash(os.Args[0]))
 
 	// fetch configuration path
 	if fpath = os.Getenv("APPCONFIGPATH"); fpath == "" {
