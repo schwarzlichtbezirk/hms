@@ -2,6 +2,7 @@ package hms
 
 import (
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/rwcarlsen/goexif/exif"
@@ -144,7 +145,7 @@ type ExifKit struct {
 func (ek *ExifKit) Setup(syspath string, fi os.FileInfo) {
 	ek.FileProp.Setup(fi)
 
-	if file, err := os.Open(syspath); err == nil {
+	if file, err := OpenFile(syspath); err == nil {
 		defer file.Close()
 		var x *exif.Exif
 		if x, err = exif.Decode(file); err == nil {
@@ -166,8 +167,8 @@ func (ek *ExifKit) Setup(syspath string, fi os.FileInfo) {
 
 // GetExifTmb extracts JPEG thumbnail from the image file.
 func GetExifTmb(syspath string) (md *MediaData, err error) {
-	var file *os.File
-	if file, err = os.Open(syspath); err != nil {
+	var file io.ReadSeekCloser
+	if file, err = OpenFile(syspath); err != nil {
 		return // can not open file
 	}
 	defer file.Close()

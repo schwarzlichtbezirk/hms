@@ -834,7 +834,9 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 	ret.Path = shrpath
 	ret.Name = PathBase(base)
 
-	if ret.List, err = prf.Readdir(syspath, &cg); err != nil {
+	if ret.List, err = ScanDir(syspath, &cg, func(fpath string) bool {
+		return prf.IsHidden(fpath)
+	}); err != nil {
 		WriteError(w, http.StatusNotFound, err, AECfolderfail)
 		return
 	}

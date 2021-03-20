@@ -7,8 +7,10 @@ import (
 	"errors"
 	"image"
 	"image/jpeg"
+	"io"
 	"os"
 	"path"
+	"strings"
 	"sync"
 	"time"
 
@@ -31,6 +33,10 @@ var (
 	// Converted media files cache.
 	// Key - path unique ID, value - media file in MediaData.
 	mediacache gcache.Cache
+
+	// Opened disks cache.
+	// Key - ISO image system path, value - disk data.
+	diskcache gcache.Cache
 )
 
 // Produce base32 string representation of given random bytes slice.
@@ -40,6 +46,7 @@ var idenc = base32.HexEncoding.WithPadding(base32.NoPadding)
 var (
 	ErrNoPUID      = errors.New("file with given puid not found")
 	ErrUncacheable = errors.New("file format is uncacheable")
+	ErrNotDisk     = errors.New("file is not image of supported format")
 )
 
 // PathCache is unlimited cache with puid/syspath and syspath/puid values.
@@ -301,8 +308,8 @@ func initcaches() {
 
 			switch fp.Type() {
 			case FTtga, FTbmp, FTtiff:
-				var file *os.File
-				if file, err = os.Open(syspath); err != nil {
+				var file io.ReadSeekCloser
+				if file, err = OpenFile(syspath); err != nil {
 					return // can not open file
 				}
 				defer file.Close()
@@ -325,8 +332,8 @@ func initcaches() {
 				return
 
 			case FTdds, FTpsd:
-				var file *os.File
-				if file, err = os.Open(syspath); err != nil {
+				var file io.ReadSeekCloser
+				if file, err = OpenFile(syspath); err != nil {
 					return // can not open file
 				}
 				defer file.Close()
@@ -353,17 +360,25 @@ func initcaches() {
 			return // uncacheable type
 		}).
 		Build()
-}
 
-// CacheProp is file properties factory, prevents double os.Stat slow call.
-func CacheProp(syspath string, fi os.FileInfo) Pather {
-	if propcache.Has(syspath) {
-		var pv, _ = propcache.Get(syspath)
-		return pv.(Pather)
-	}
-	var prop = MakeProp(syspath, fi)
-	propcache.Set(syspath, prop)
-	return prop
+	diskcache = gcache.New(0).
+		Simple().
+		Expiration(15 * time.Second).
+		LoaderFunc(func(key interface{}) (ret interface{}, err error) {
+			var ext = strings.ToLower(path.Ext(key.(string)))
+			if ext == ".iso" {
+				return NewDiskISO(key.(string))
+			}
+			err = ErrNotDisk
+			return
+		}).
+		EvictedFunc(func(key, value interface{}) {
+			value.(io.Closer).Close()
+		}).
+		PurgeVisitorFunc(func(key, value interface{}) {
+			value.(io.Closer).Close()
+		}).
+		Build()
 }
 
 // The End.

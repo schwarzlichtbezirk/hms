@@ -162,7 +162,6 @@ func pathexists(fpath string) (bool, error) {
 func Init() {
 	var err error
 	var fpath string
-	var gopath = ToSlash(os.Getenv("GOPATH"))
 
 	// fetch program path
 	destpath = path.Dir(ToSlash(os.Args[0]))
@@ -171,7 +170,7 @@ func Init() {
 	if fpath = os.Getenv("APPCONFIGPATH"); fpath == "" {
 		fpath = path.Join(destpath, rootsuff)
 		if ok, _ := pathexists(fpath); !ok {
-			fpath = path.Join(gopath, csrcsuff, confsuff)
+			fpath = path.Join(ToSlash(os.Getenv("GOPATH")), csrcsuff, confsuff)
 			if ok, _ := pathexists(fpath); !ok {
 				Log.Fatalf("config folder does not found")
 			}
@@ -388,7 +387,17 @@ func Shutdown() {
 		}
 	}()
 
-	packager.Close()
+	exitwg.Add(1)
+	go func() {
+		defer exitwg.Done()
+		diskcache.Purge()
+	}()
+
+	exitwg.Add(1)
+	go func() {
+		defer exitwg.Done()
+		packager.Close()
+	}()
 
 	exitwg.Wait()
 }

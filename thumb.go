@@ -9,7 +9,6 @@ import (
 	"image/png"
 	"io"
 	"net/http"
-	"os"
 
 	"github.com/disintegration/gift"
 	_ "github.com/oov/psd"           // register PSD format
@@ -125,8 +124,8 @@ func FindTmb(prop Pather, syspath string) (md *MediaData, err error) {
 		return // file is not image
 	}
 
-	var file *os.File
-	if file, err = os.Open(syspath); err != nil {
+	var file io.ReadSeekCloser
+	if file, err = OpenFile(syspath); err != nil {
 		return // can not open file
 	}
 	defer file.Close()

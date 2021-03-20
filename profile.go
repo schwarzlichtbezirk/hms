@@ -161,7 +161,7 @@ func (prf *Profile) SetDefaultHidden() {
 // IsHidden do check up that file path is in hidden list.
 func (prf *Profile) IsHidden(fpath string) bool {
 	var matched bool
-	var kpath = strings.TrimSuffix(strings.ToLower(ToSlash(fpath)), "/")
+	var kpath = strings.ToLower(ToSlash(fpath))
 
 	prf.mux.RLock()
 	defer prf.mux.RUnlock()
@@ -191,7 +191,7 @@ func (prf *Profile) RootIndex(fpath string) int {
 func (prf *Profile) FindRoots() {
 	const windisks = "CDEFGHIJKLMNOPQRSTUVWXYZ"
 	for _, d := range windisks {
-		var root = string(d) + ":/"
+		var root = string(d) + ":"
 		if _, err := os.Stat(root); err == nil {
 			if prf.RootIndex(root) < 0 {
 				prf.mux.Lock()
@@ -416,52 +416,6 @@ func (prf *Profile) PathAdmin(syspath string) bool {
 		}
 	}
 	return false
-}
-
-// Readdir reads directory with given system path and returns Pather for each entry.
-func (prf *Profile) Readdir(syspath string, cg *CatGrp) (ret []Pather, err error) {
-	var di os.FileInfo
-	var fis []os.FileInfo
-	if func() {
-		var file *os.File
-		if file, err = os.Open(syspath); err != nil {
-			return
-		}
-		defer file.Close()
-
-		if di, err = file.Stat(); err != nil {
-			return
-		}
-		if fis, err = file.Readdir(-1); err != nil {
-			return
-		}
-	}(); err != nil {
-		return
-	}
-
-	var fgrp = FileGrp{}
-
-	for _, fi := range fis {
-		if fi != nil {
-			var fpath = path.Join(syspath, fi.Name())
-			if !prf.IsHidden(fpath) {
-				var prop = CacheProp(fpath, fi)
-				var grp = typetogroup[prop.Type()]
-				if cg[grp] {
-					ret = append(ret, prop)
-				}
-				fgrp[grp]++
-			}
-		}
-	}
-
-	if dk, ok := CacheProp(syspath, di).(*DirKit); ok {
-		dk.Scan = UnixJSNow()
-		dk.FGrp = fgrp
-		dircache.Set(dk.PUIDVal, dk.DirProp)
-	}
-
-	return
 }
 
 // The End.

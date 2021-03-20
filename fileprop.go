@@ -2,6 +2,7 @@ package hms
 
 import (
 	"bytes"
+	"io"
 	"os"
 	"path"
 	"strings"
@@ -278,6 +279,11 @@ var CidCatPath = map[string]string{
 	"texts":  CPtexts,
 }
 
+// GetFileType returns file type integer value for given file name by it's extension.
+func GetFileType(fpath string) int {
+	return extset[strings.ToLower(path.Ext(fpath))]
+}
+
 // Pather is path properties interface.
 type Pather interface {
 	Name() string // string identifier
@@ -509,7 +515,7 @@ func (tk *TagKit) Setup(syspath string, fi os.FileInfo) {
 	tk.FileProp.Setup(fi)
 
 	var md *MediaData
-	if file, err := os.Open(syspath); err == nil {
+	if file, err := OpenFile(syspath); err == nil {
 		defer file.Close()
 		if m, err := tag.ReadFrom(file); err == nil {
 			tk.TagProp.Setup(m)
@@ -541,8 +547,8 @@ func (tk *TagKit) Setup(syspath string, fi os.FileInfo) {
 
 // GetTagTmb extracts embedded thumbnail from image file.
 func GetTagTmb(syspath string) (md *MediaData, err error) {
-	var file *os.File
-	if file, err = os.Open(syspath); err != nil {
+	var file io.ReadSeekCloser
+	if file, err = OpenFile(syspath); err != nil {
 		return // can not open file
 	}
 	defer file.Close()
@@ -577,7 +583,7 @@ func MakeProp(syspath string, fi os.FileInfo) Pather {
 		dk.Setup(syspath)
 		return &dk
 	}
-	var ft = extset[strings.ToLower(path.Ext(syspath))]
+	var ft = GetFileType(syspath)
 	if ft == FTflac || ft == FTmus || ft == FTmp4 {
 		var tk TagKit
 		tk.TypeVal = ft
