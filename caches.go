@@ -363,7 +363,7 @@ func initcaches() {
 
 	diskcache = gcache.New(0).
 		Simple().
-		Expiration(15 * time.Second).
+		Expiration(cfg.DiskCacheExpire).
 		LoaderFunc(func(key interface{}) (ret interface{}, err error) {
 			var ext = strings.ToLower(path.Ext(key.(string)))
 			if ext == ".iso" {

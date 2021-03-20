@@ -2,6 +2,7 @@ package hms
 
 import (
 	"net/http"
+	"time"
 
 	uas "github.com/avct/uasurfer"
 	"github.com/cespare/xxhash"
@@ -162,7 +163,7 @@ func usrlstAPI(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ret.Total = len(usercache.list)
-	var ot = UnixJSNow() - cfg.OnlineTimeout
+	var ot = UnixJSNow() - int64(cfg.OnlineTimeout/time.Millisecond)
 	for i := arg.Pos; i < arg.Pos+arg.Num && i < len(usercache.list); i++ {
 		var user = usercache.list[i]
 		var ui item

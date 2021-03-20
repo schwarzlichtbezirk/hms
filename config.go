@@ -25,9 +25,9 @@ var (
 // CfgAuth is authentication settings.
 type CfgAuth struct {
 	// Access token time to live.
-	AccessTTL int `json:"access-ttl" yaml:"access-ttl"`
+	AccessTTL time.Duration `json:"access-ttl" yaml:"access-ttl"`
 	// Refresh token time to live.
-	RefreshTTL int `json:"refresh-ttl" yaml:"refresh-ttl"`
+	RefreshTTL time.Duration `json:"refresh-ttl" yaml:"refresh-ttl"`
 	// Key for access HS-256 JWT-tokens.
 	AccessKey string `json:"access-key" yaml:"access-key"`
 	// Key for refresh HS-256 JWT-tokens.
@@ -36,15 +36,16 @@ type CfgAuth struct {
 
 // CfgServ is web server settings.
 type CfgServ struct {
-	AutoCert          bool     `json:"auto-cert" yaml:"auto-cert"`
-	PortHTTP          []string `json:"port-http" yaml:"port-http"`
-	PortTLS           []string `json:"port-tls" yaml:"port-tls"`
-	ReadTimeout       int      `json:"read-timeout" yaml:"read-timeout"`
-	ReadHeaderTimeout int      `json:"read-header-timeout" yaml:"read-header-timeout"`
-	WriteTimeout      int      `json:"write-timeout" yaml:"write-timeout"`
-	IdleTimeout       int      `json:"idle-timeout" yaml:"idle-timeout"`
-	MaxHeaderBytes    int      `json:"max-header-bytes" yaml:"max-header-bytes"`
-	ShutdownTimeout   int      `json:"shutdown-timeout" yaml:"shutdown-timeout"`
+	AutoCert          bool          `json:"auto-cert" yaml:"auto-cert"`
+	PortHTTP          []string      `json:"port-http" yaml:"port-http"`
+	PortTLS           []string      `json:"port-tls" yaml:"port-tls"`
+	ReadTimeout       time.Duration `json:"read-timeout" yaml:"read-timeout"`
+	ReadHeaderTimeout time.Duration `json:"read-header-timeout" yaml:"read-header-timeout"`
+	WriteTimeout      time.Duration `json:"write-timeout" yaml:"write-timeout"`
+	IdleTimeout       time.Duration `json:"idle-timeout" yaml:"idle-timeout"`
+	MaxHeaderBytes    int           `json:"max-header-bytes" yaml:"max-header-bytes"`
+	// Maximum duration to wait for graceful shutdown.
+	ShutdownTimeout time.Duration `json:"shutdown-timeout" yaml:"shutdown-timeout"`
 }
 
 // CfgSpec is settings for application-specific logic.
@@ -53,8 +54,8 @@ type CfgSpec struct {
 	WPKName string `json:"wpk-name" yaml:"wpk-name"`
 	// Memory mapping technology for WPK, or load into one solid byte slice otherwise.
 	WPKmmap bool `json:"wpk-mmap" yaml:"wpk-mmap"`
-	// Maximum timeout in milliseconds between two ajax-calls to think client is online.
-	OnlineTimeout int64 `json:"online-timeout" yaml:"online-timeout"`
+	// Maximum duration between two ajax-calls to think client is online.
+	OnlineTimeout time.Duration `json:"online-timeout" yaml:"online-timeout"`
 	// Default profile for user on localhost.
 	DefAccID int `json:"default-profile-id" yaml:"default-profile-id"`
 	// Maximum size of image to make thumbnail.
@@ -71,6 +72,8 @@ type CfgSpec struct {
 	ThumbCacheMaxNum int `json:"thumb-cache-maxnum" yaml:"thumb-cache-maxnum"`
 	// Maximum items number in converted media files cache.
 	MediaCacheMaxNum int `json:"media-cache-maxnum" yaml:"media-cache-maxnum"`
+	// Expiration duration to keep opened iso-disk structures in cache from last access to it.
+	DiskCacheExpire time.Duration `json:"disk-cache-expire" yaml:"disk-cache-expire"`
 }
 
 // Config is common service settings.
@@ -83,8 +86,8 @@ type Config struct {
 // Instance of common service settings.
 var cfg = Config{ // inits default values:
 	CfgAuth: CfgAuth{
-		AccessTTL:  1 * 24 * 60 * 60,
-		RefreshTTL: 3 * 24 * 60 * 60,
+		AccessTTL:  time.Duration(1*24) * time.Hour,
+		RefreshTTL: time.Duration(3*24) * time.Hour,
 		AccessKey:  "skJgM4NsbP3fs4k7vh0gfdkgGl8dJTszdLxZ1sQ9ksFnxbgvw2RsGH8xxddUV479",
 		RefreshKey: "zxK4dUnuq3Lhd1Gzhpr3usI5lAzgvy2t3fmxld2spzz7a5nfv0hsksm9cheyutie",
 	},
@@ -92,23 +95,24 @@ var cfg = Config{ // inits default values:
 		AutoCert:          false,
 		PortHTTP:          []string{},
 		PortTLS:           []string{},
-		ReadTimeout:       15,
-		ReadHeaderTimeout: 15,
-		WriteTimeout:      15,
-		IdleTimeout:       60,
+		ReadTimeout:       time.Duration(15) * time.Second,
+		ReadHeaderTimeout: time.Duration(15) * time.Second,
+		WriteTimeout:      time.Duration(15) * time.Second,
+		IdleTimeout:       time.Duration(60) * time.Second,
 		MaxHeaderBytes:    1 << 20,
-		ShutdownTimeout:   15,
+		ShutdownTimeout:   time.Duration(15) * time.Second,
 	},
 	CfgSpec: CfgSpec{
 		WPKName:          "hms.wpk",
 		WPKmmap:          false,
-		OnlineTimeout:    3 * 60 * 1000,
+		OnlineTimeout:    time.Duration(3*60*1000) * time.Millisecond,
 		DefAccID:         1,
 		ThumbFileMaxSize: 4096*3072*4 + 65536,
 		PUIDsize:         3,
 		PropCacheMaxNum:  32 * 1024,
 		ThumbCacheMaxNum: 2 * 1024,
 		MediaCacheMaxNum: 64,
+		DiskCacheExpire:  time.Duration(15) * time.Second,
 	},
 }
 

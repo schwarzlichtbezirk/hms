@@ -13,7 +13,6 @@ import (
 	"strings"
 	"sync"
 	"syscall"
-	"time"
 
 	"github.com/schwarzlichtbezirk/wpk"
 	"github.com/schwarzlichtbezirk/wpk/bulk"
@@ -242,10 +241,10 @@ func Run(gmux *Router) {
 			var server = &http.Server{
 				Addr:              addr,
 				Handler:           gmux,
-				ReadTimeout:       time.Duration(cfg.ReadTimeout) * time.Second,
-				ReadHeaderTimeout: time.Duration(cfg.ReadHeaderTimeout) * time.Second,
-				WriteTimeout:      time.Duration(cfg.WriteTimeout) * time.Second,
-				IdleTimeout:       time.Duration(cfg.IdleTimeout) * time.Second,
+				ReadTimeout:       cfg.ReadTimeout,
+				ReadHeaderTimeout: cfg.ReadHeaderTimeout,
+				WriteTimeout:      cfg.WriteTimeout,
+				IdleTimeout:       cfg.IdleTimeout,
 				MaxHeaderBytes:    cfg.MaxHeaderBytes,
 			}
 			go func() {
@@ -259,9 +258,7 @@ func Run(gmux *Router) {
 			<-exitchan
 
 			// create a deadline to wait for.
-			var ctx, cancel = context.WithTimeout(
-				context.Background(),
-				time.Duration(cfg.ShutdownTimeout)*time.Second)
+			var ctx, cancel = context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
 			defer cancel()
 
 			server.SetKeepAlivesEnabled(false)
@@ -299,10 +296,10 @@ func Run(gmux *Router) {
 				Addr:              addr,
 				Handler:           gmux,
 				TLSConfig:         config,
-				ReadTimeout:       time.Duration(cfg.ReadTimeout) * time.Second,
-				ReadHeaderTimeout: time.Duration(cfg.ReadHeaderTimeout) * time.Second,
-				WriteTimeout:      time.Duration(cfg.WriteTimeout) * time.Second,
-				IdleTimeout:       time.Duration(cfg.IdleTimeout) * time.Second,
+				ReadTimeout:       cfg.ReadTimeout,
+				ReadHeaderTimeout: cfg.ReadHeaderTimeout,
+				WriteTimeout:      cfg.WriteTimeout,
+				IdleTimeout:       cfg.IdleTimeout,
 				MaxHeaderBytes:    cfg.MaxHeaderBytes,
 			}
 			go func() {
@@ -318,9 +315,7 @@ func Run(gmux *Router) {
 			<-exitchan
 
 			// create a deadline to wait for.
-			var ctx, cancel = context.WithTimeout(
-				context.Background(),
-				time.Duration(cfg.ShutdownTimeout)*time.Second)
+			var ctx, cancel = context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
 			defer cancel()
 
 			server.SetKeepAlivesEnabled(false)

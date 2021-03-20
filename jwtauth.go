@@ -54,7 +54,7 @@ func (t *Tokens) Make(aid int) {
 	t.Access, _ = jwt.NewWithClaims(jwt.SigningMethodHS256, &Claims{
 		StandardClaims: jwt.StandardClaims{
 			NotBefore: now.Unix(),
-			ExpiresAt: now.Add(time.Duration(cfg.AccessTTL) * time.Second).Unix(),
+			ExpiresAt: now.Add(cfg.AccessTTL).Unix(),
 			Subject:   jwtsubject,
 		},
 		AID: aid,
@@ -62,7 +62,7 @@ func (t *Tokens) Make(aid int) {
 	t.Refrsh, _ = jwt.NewWithClaims(jwt.SigningMethodHS256, &Claims{
 		StandardClaims: jwt.StandardClaims{
 			NotBefore: now.Unix(),
-			ExpiresAt: now.Add(time.Duration(cfg.RefreshTTL) * time.Second).Unix(),
+			ExpiresAt: now.Add(cfg.RefreshTTL).Unix(),
 			Subject:   jwtsubject,
 		},
 		AID: aid,

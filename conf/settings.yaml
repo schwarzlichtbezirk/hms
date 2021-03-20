@@ -3,10 +3,10 @@
 # "access-key" and "refresh-key" for tokens protection.
 
 authentication:
-    # Access token time to live, in seconds.
-    access-ttl: 86400 # 1*24*60*60 = 1 day
-    # Refresh token time to live, in seconds.
-    refresh-ttl: 259200 # 3*24*60*60 = 3 days
+    # Access token time to live.
+    access-ttl: 24h # 1 day
+    # Refresh token time to live.
+    refresh-ttl: 72h # 3 days
     # Key for access HS-256 JWT-tokens.
     access-key: skJgM4NsbP3fs4k7vh0gfdkgGl8dJTszdLxZ1sQ9ksFnxbgvw2RsGH8xxddUV479
     # Key for refresh HS-256 JWT-tokens.
@@ -27,27 +27,26 @@ webserver: # See https://golang.org/pkg/net/http/#Server for details.
         - :4804
     # Maximum duration for reading the entire request, including the body,
     # in seconds.
-    read-timeout: 15
-    # Amount of time allowed to read request headers, in seconds.
-    read-header-timeout: 15
-    # Maximum duration before timing out writes of the response, in seconds.
-    write-timeout: 15
-    # Maximum amount of time to wait for the next request when keep-alives
-    # are enabled, in seconds.
-    idle-timeout: 60
+    read-timeout: 15s
+    # Amount of time allowed to read request headers.
+    read-header-timeout: 15s
+    # Maximum duration before timing out writes of the response.
+    write-timeout: 15s
+    # Maximum amount of time to wait for the next request when keep-alives are enabled.
+    idle-timeout: 60s
     # Controls the maximum number of bytes the server will read parsing
     # the request header's keys and values, including the request line, in bytes.
     max-header-bytes: 1048576 # 1M
-    # Maximum duration to wait for graceful shutdown, in seconds.
-    shutdown-timeout: 15
+    # Maximum duration to wait for graceful shutdown.
+    shutdown-timeout: 15s
 specification:
     # Name of wpk-file with program resources.
     wpk-name: hms.wpk
     # On 'true' use memory mapping technology for access to wpk-package nested files.
     # On 'false' use wpk-package loaded into one solid byte slice.
     wpk-mmap: false
-    # Maximum timeout in milliseconds between two ajax-calls to think client is online.
-    online-timeout: 180000 # 3 minutes
+    # Maximum duration between two ajax-calls to think client is online.
+    online-timeout: 180s # 3 minutes
     # Default profile ID for user on localhost.
     default-profile-id: 1
     # Maximum size of image to make thumbnail.
@@ -62,3 +61,5 @@ specification:
     thumb-cache-maxnum: 2048
     # Maximum items number in converted media files cache.
     media-cache-maxnum: 64
+    # Expiration duration to keep opened iso-disk structures in cache from last access to it.
+    disk-cache-expire: 15s
