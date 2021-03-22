@@ -54,7 +54,8 @@ const (
 	AECmedianofile   = 25
 	AECmediaaccess   = 26
 	AECmediaabsent   = 27
-	AECmediabadcnt   = 28
+	AECmediaopen     = 28
+	AECmediabadcnt   = 29
 
 	// thumb
 
@@ -286,8 +287,16 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 			userajax <- r
 		}
 	}()
+
+	var content io.ReadSeekCloser
+	if content, err = OpenFile(syspath); err != nil {
+		WriteError500(w, err, AECmediaopen)
+		return
+	}
+	defer content.Close()
+
 	WriteStdHeader(w)
-	http.ServeFile(w, r, syspath)
+	http.ServeContent(w, r, syspath, TimeJS(fp.Time()), content)
 }
 
 // Hands out converted media files if them can be cached.
@@ -362,8 +371,16 @@ func mediaHandler(w http.ResponseWriter, r *http.Request) {
 				userajax <- r
 			}
 		}()
+
+		var content io.ReadSeekCloser
+		if content, err = OpenFile(syspath); err != nil {
+			WriteError500(w, err, AECmediaopen)
+			return
+		}
+		defer content.Close()
+
 		WriteStdHeader(w)
-		http.ServeFile(w, r, syspath)
+		http.ServeContent(w, r, syspath, TimeJS(fp.Time()), content)
 		return
 	}
 	var md *MediaData

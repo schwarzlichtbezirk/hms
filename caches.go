@@ -236,7 +236,7 @@ func initcaches() {
 		LoaderFunc(func(key interface{}) (ret interface{}, err error) {
 			var syspath = key.(string)
 			var fi os.FileInfo
-			if fi, err = os.Stat(syspath); err != nil {
+			if fi, err = StatFile(syspath); err != nil {
 				for _, fpath := range CatPath {
 					if fpath == syspath {
 						var ck CatKit

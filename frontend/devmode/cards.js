@@ -557,10 +557,15 @@ Vue.component('file-card-tag', {
 			}
 		},
 		onopen(file) {
-			switch (FTtoFV[file.type]) {
-				case FV.image:
+			switch (FTtoFG[file.type]) {
+				case FG.image:
 					this.closeviewer();
 					this.$refs.slider.popup(file);
+					break;
+				case FG.store:
+					if (file.type === FT.disk) {
+						this.$emit('open', file);
+					}
 					break;
 				default:
 					const url = mediaurl(file);

@@ -9,6 +9,7 @@ import (
 	diskfs "github.com/diskfs/go-diskfs"
 	"github.com/diskfs/go-diskfs/disk"
 	"github.com/diskfs/go-diskfs/filesystem"
+	"github.com/diskfs/go-diskfs/filesystem/iso9660"
 )
 
 // DiskISO is iso-disk structure representation for quick access to nested files.
@@ -96,6 +97,29 @@ func OpenFile(syspath string) (r io.ReadSeekCloser, err error) {
 		return disk.OpenFile(dpath)
 	}
 	panic("not released disk type present")
+}
+
+// StatFile returns os.FileInfo of file in file system, or file nested in disk image.
+func StatFile(syspath string) (fi os.FileInfo, err error) {
+	var r io.ReadSeekCloser
+	if r, err = OpenFile(syspath); err != nil {
+		return // can not open file
+	}
+	defer r.Close()
+
+	switch file := r.(type) {
+	case *os.File:
+		return file.Stat()
+	case *cfile:
+		switch df := file.ReadSeeker.(type) {
+		case *iso9660.File:
+			return df, nil
+		default:
+			panic("not released disk type present")
+		}
+	default:
+		panic("not released disk type present")
+	}
 }
 
 // OpenDir returns directory files os.FileInfo list. It scan file system path,
