@@ -55,6 +55,8 @@ const pathjoin = (...args) => {
 	}).filter(x => x.length).join('/');
 };
 
+const pathext = fname => fname.substr(fname.lastIndexOf('.')).toLowerCase();
+
 const fmtfilesize = (size) => {
 	if (size < 1536) {
 		return size + " bytes";

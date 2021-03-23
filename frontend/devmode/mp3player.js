@@ -15,7 +15,7 @@ Vue.component('mp3-player-tag', {
 			seeking: false,
 			media: null,
 			isplay: false, // this.media && !this.media.paused
-			isflowing: false,
+			autoplay: false,
 			ready: false,
 			timecur: 0,
 			timebuf: 0,
@@ -124,26 +124,26 @@ Vue.component('mp3-player-tag', {
 			this.media.volume = this.volval / 100;
 			this.media.playbackRate = this.ratevals[this.ratval];
 			this.media.loop = this.repeatmode === 1;
+			this.media.autoplay = this.autoplay;
 
 			// disable UI for not ready media
 			this.ready = false;
 
 			// media interface responders
 			this.media.addEventListener('loadedmetadata', () => {
+				this.timecur = this.media.currentTime;
+				this.timebuf = 0;
+				this.timeend = this.media.duration;
+
 				this.updateprogress();
 			});
 			this.media.addEventListener('canplay', () => {
-				const cur = this.media.currentTime;
-				const len = this.media.duration;
-				this.timecur = cur;
-				this.timebuf = 0;
-				this.timeend = len;
-
 				// enable UI
 				this.ready = true;
-
-				if (this.isflowing && this.media.paused) {
+				// load to player
+				if (!this.media.autoplay) {
 					this.media.play();
+					this.media.pause();
 				}
 			});
 			this.media.addEventListener('timeupdate', () => this.updateprogress());
@@ -152,17 +152,24 @@ Vue.component('mp3-player-tag', {
 			this.media.addEventListener('durationchange', () => this.updateprogress());
 			this.media.addEventListener('play', () => {
 				this.isplay = true;
+				this.autoplay = true;
 				this.$emit('playback', this.selfile);
 			});
 			this.media.addEventListener('pause', () => {
 				this.isplay = false;
+				this.autoplay = false;
 				this.$emit('playback', null);
 			});
 			this.media.addEventListener('ended', () => {
+				this.autoplay = true;
 				this.onnext();
 			});
 			this.media.addEventListener('error', e => {
-				console.error("Error " + e.code + "; details: " + e.message);
+				if (e.message) {
+					console.error("Error " + e.code + "; details: " + e.message);
+				} else {
+					console.error(e);
+				}
 			});
 			this.media.addEventListener('volumechange', () => {
 				this.volval = this.media.volume * 100;
@@ -194,10 +201,8 @@ Vue.component('mp3-player-tag', {
 			if (!this.media) return;
 			if (this.media.paused) {
 				this.media.play();
-				this.isflowing = true;
 			} else {
 				this.media.pause();
-				this.isflowing = false;
 			}
 		},
 

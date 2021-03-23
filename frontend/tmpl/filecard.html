@@ -21,7 +21,8 @@
 			<li><button class="btn" v-show="showphoto" v-bind:class="clsphoto" v-on:click="onphoto" title="show photos and images"><i class="material-icons">photo_library</i></button></li>
 			<li><button class="btn" v-show="showbooks" v-bind:class="clsbooks" v-on:click="onbooks" title="show books and PDF files"><i class="material-icons">picture_as_pdf</i></button></li>
 			<li><button class="btn" v-show="showtexts" v-bind:class="clstexts" v-on:click="ontexts" title="show plain text files"><i class="material-icons">library_books</i></button></li>
-			<li><button class="btn" v-show="showother" v-bind:class="clsother" v-on:click="onother" title="show other non-supported files"><i class="material-icons">library_add</i></button></li>
+			<li><button class="btn" v-show="showdisks" v-bind:class="clsdisks" v-on:click="ondisks" title="show disk images and archives"><i class="material-icons">queue</i></button></li>
+			<li><button class="btn" v-show="showother" v-bind:class="clsother" v-on:click="onother" title="show other non-supported files"><i class="material-icons">quiz</i></button></li>
 		</ul>
 	</div>
 	<div v-bind:id="'card'+iid" class="collapse show">

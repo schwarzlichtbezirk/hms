@@ -52,7 +52,7 @@ const (
 	FGimage = 3
 	FGbooks = 4
 	FGtexts = 5
-	FGstore = 6
+	FGdisks = 6
 	FGdir   = 7
 )
 
@@ -86,9 +86,9 @@ var typetogroup = map[int]int{
 	FTscr:  FGtexts,
 	FTcfg:  FGtexts,
 	FTlog:  FGtexts,
-	FTarch: FGstore,
-	FTdisk: FGstore,
-	FTpack: FGstore,
+	FTarch: FGdisks,
+	FTdisk: FGdisks,
+	FTpack: FGdisks,
 }
 
 var extset = map[string]int{

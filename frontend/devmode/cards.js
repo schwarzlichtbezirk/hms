@@ -276,7 +276,7 @@ Vue.component('file-card-tag', {
 			sortmode: sortmode.byalpha,
 			listmode: "smicon",
 			thumbmode: true,
-			audio: true, video: true, image: true, books: true, texts: true, other: false,
+			audio: true, video: true, image: true, books: true, texts: true, disks: true, other: false,
 			audioonly: false,
 			viewer: null, // file viewers
 
@@ -370,9 +370,12 @@ Vue.component('file-card-tag', {
 		showtexts() {
 			return !!this.list.find(file => FTtoFG[file.type] === FG.texts);
 		},
+		showdisks() {
+			return !!this.list.find(file => FTtoFG[file.type] === FG.disks);
+		},
 		showother() {
 			return !!this.list.find(file => !file.type
-				|| FTtoFG[file.type] === FG.store
+				|| FTtoFG[file.type] === FG.disks
 				|| FTtoFG[file.type] === FG.other);
 		},
 
@@ -396,6 +399,9 @@ Vue.component('file-card-tag', {
 		},
 		clstexts() {
 			return { active: this.texts };
+		},
+		clsdisks() {
+			return { active: this.disks };
 		},
 		clsother() {
 			return { active: this.other };
@@ -440,6 +446,8 @@ Vue.component('file-card-tag', {
 					return this.books;
 				case FG.texts:
 					return this.texts;
+				case FG.disks:
+					return this.disks;
 				default:
 					return this.other;
 			}
@@ -517,6 +525,9 @@ Vue.component('file-card-tag', {
 		ontexts() {
 			this.texts = !this.texts;
 		},
+		ondisks() {
+			this.disks = !this.disks;
+		},
 		onother() {
 			this.other = !this.other;
 		},
@@ -562,8 +573,8 @@ Vue.component('file-card-tag', {
 					this.closeviewer();
 					this.$refs.slider.popup(file);
 					break;
-				case FG.store:
-					if (file.type === FT.disk) {
+				case FG.disks:
+					if (pathext(file.name) === ".iso") {
 						this.$emit('open', file);
 					}
 					break;

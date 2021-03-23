@@ -3,6 +3,8 @@ Home Media Server. Browse files on your computer as in explorer, listen music wi
 
 Music: plays MP3, OGG and others formats supported by browser. Images: displays JPEG, PNG, GIF and others formats supported by browser. Also displays Adobe Photoshop PSD, TIFF, DDS, TGA images by converting to JPEG or PNG at server layer for browser representation. If any image have EXIF properties with geotags it will be placed at the map. Maps tiles provider can be changed, there is can be selected satellite view, streets view, topographic view, or hybrid.
 
+Files can be viewed by browsing file structure same as in Explorer. Disks ISO9660 images can be browsed same as file system folders.
+
 Screenshots:
 
 [![hms #1](http://images.sevstar.net/images/86980114770981357724_thumb.png)](http://images.sevstar.net/images/86980114770981357724.jpg)

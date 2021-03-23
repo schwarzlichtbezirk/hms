@@ -25,8 +25,7 @@ webserver: # See https://golang.org/pkg/net/http/#Server for details.
     port-tls:
         - :443
         - :4804
-    # Maximum duration for reading the entire request, including the body,
-    # in seconds.
+    # Maximum duration for reading the entire request, including the body.
     read-timeout: 15s
     # Amount of time allowed to read request headers.
     read-header-timeout: 15s

@@ -76,7 +76,7 @@ const FG = {
 	image: 3,
 	books: 4,
 	texts: 5,
-	store: 6,
+	disks: 6,
 	dir: 7
 };
 
@@ -107,9 +107,9 @@ const FTtoFG = {
 	[FT.scr]: FG.texts,
 	[FT.cfg]: FG.texts,
 	[FT.log]: FG.texts,
-	[FT.arch]: FG.store,
-	[FT.disk]: FG.store,
-	[FT.pack]: FG.store
+	[FT.arch]: FG.disks,
+	[FT.disk]: FG.disks,
+	[FT.pack]: FG.disks
 };
 
 // File viewers
@@ -200,8 +200,8 @@ const geticonpath = (file, im, shr) => {
 					return { org: org.folder.books, alt: alt.folder.books };
 				} else if (fg[FG.texts] / fnum > 0.5) {
 					return { org: org.folder.texts, alt: alt.folder.texts };
-				} else if (fg[FG.store] / fnum > 0.5) {
-					return { org: org.folder.store, alt: alt.folder.store };
+				} else if (fg[FG.disks] / fnum > 0.5) {
+					return { org: org.folder.disks, alt: alt.folder.disks };
 				} else if (fg[FG.dir] / fnum > 0.5) {
 					return { org: org.folder.dir, alt: alt.folder.dir };
 				} else if ((fg[FG.audio] + fg[FG.video] + fg[FG.image]) / fnum > 0.5) {
