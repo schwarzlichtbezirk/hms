@@ -32,6 +32,8 @@ const listmodenext = {
 	lgicon: 'smicon'
 };
 
+const noderadius = 15;
+
 const copyTextToClipboard = text => {
 	const elem = document.createElement("textarea");
 	elem.value = text;
@@ -609,6 +611,8 @@ Vue.component('map-card-tag', {
 			tiles: null,
 			markers: null,
 			markermode: "thumb",
+			phototrack: null,
+			showtrack: false,
 			gpslist: [],
 
 			iid: makestrid(10) // instance ID
@@ -650,6 +654,9 @@ Vue.component('map-card-tag', {
 		},
 		clshikebike() {
 			return { active: this.styleid === 'hikebike' };
+		},
+		clsphototrack() {
+			return { active: this.showtrack };
 		},
 
 		iconmarkermode() {
@@ -703,6 +710,12 @@ Vue.component('map-card-tag', {
 				this.markers = L.markerClusterGroup();
 				// add new set
 				this.map.addLayer(this.markers);
+				// remove previous track
+				if (this.phototrack) {
+					this.map.removeLayer(this.phototrack);
+					this.phototrack = null;
+				}
+				// new empty list
 				this.gpslist = [];
 			}
 		},
@@ -846,7 +859,38 @@ Vue.component('map-card-tag', {
 					padding: [20, 20]
 				});
 			});
+
 			this.gpslist.push(...gpslist);
+			if (this.showtrack) {
+				this.maketrack();
+			}
+		},
+		// produces reduced track polyline
+		maketrack() {
+			let last = L.latLng(this.gpslist[0].latitude, this.gpslist[0].longitude, this.gpslist[0].altitude);
+			let prev = last;
+			let route = 0, trk = 0, asc = 0;
+			const latlngs = [last];
+			for (const file of this.gpslist) {
+				const p = L.latLng(file.latitude, file.longitude, file.altitude);
+				const d = last.distanceTo(p);
+				if (d > noderadius) {
+					route += d;
+					if (p.alt > last.alt) {
+						asc += p.alt - last.alt;
+					}
+					latlngs.push(p);
+					last = p;
+				}
+				trk += prev.distanceTo(p);
+				prev = p;
+			}
+			if (this.phototrack) {
+				this.map.removeLayer(this.phototrack);
+			}
+			this.phototrack = L.polyline(latlngs, { color: '#3CB371' })
+				.bindPopup(`total <b>${latlngs.length}</b> waypoints<br>route <b>${route.toFixed()}</b> m<br>track <b>${trk.toFixed()}</b> m<br>ascent <b>${asc.toFixed()}</b> m`)
+				.addTo(this.map);
 		},
 
 		onmapboxhybrid() {
@@ -881,6 +925,15 @@ Vue.component('map-card-tag', {
 		},
 		onhikebike() {
 			this.changetiles('hikebike');
+		},
+		onphototrack() {
+			this.showtrack = !this.showtrack;
+			if (this.showtrack) {
+				this.maketrack();
+			} else {
+				this.map.removeLayer(this.phototrack);
+				this.phototrack = null;
+			}
 		},
 		onmarkermode() {
 			switch (this.markermode) {
