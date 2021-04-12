@@ -306,8 +306,9 @@ func initcaches() {
 				return
 			}
 
-			switch fp.Type() {
-			case FTtga, FTbmp, FTtiff:
+			var ext = GetFileExt(fp.Name())
+			switch {
+			case IsTypeNonalpha(ext):
 				var file io.ReadSeekCloser
 				if file, err = OpenFile(syspath); err != nil {
 					return // can not open file
@@ -331,7 +332,7 @@ func initcaches() {
 				}
 				return
 
-			case FTdds, FTpsd:
+			case IsTypeAlpha(ext):
 				var file io.ReadSeekCloser
 				if file, err = OpenFile(syspath); err != nil {
 					return // can not open file

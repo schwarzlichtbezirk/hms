@@ -83,7 +83,7 @@ const filehint = file => {
 	const lst = [];
 	lst.push(file.name);
 	// Std properties
-	if (FTtoFG[file.type] !== FG.dir) {
+	if (!file.type) {
 		lst.push('size: ' + fmtitemsize(file.size || 0));
 	}
 	if (file.time) {
@@ -328,7 +328,7 @@ Vue.component('file-icon-tag', {
 			return filehint(this.file).join('\n');
 		},
 		fmtalt() {
-			return FTN[this.file.type];
+			return pathext(this.file.name);
 		},
 
 		label() {
@@ -426,7 +426,7 @@ Vue.component('img-icon-tag', {
 			return filehint(this.file).join('\n');
 		},
 		fmtalt() {
-			return FTN[this.file.type];
+			return pathext(this.file.name);
 		},
 
 		label() {

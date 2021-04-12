@@ -358,27 +358,28 @@ Vue.component('file-card-tag', {
 		},
 
 		showmusic() {
-			return !!this.list.find(file => FTtoFG[file.type] === FG.audio);
+			return !!this.list.find(file => getFileGroup(file) === FG.audio);
 		},
 		showvideo() {
-			return !!this.list.find(file => FTtoFG[file.type] === FG.video);
+			return !!this.list.find(file => getFileGroup(file) === FG.video);
 		},
 		showphoto() {
-			return !!this.list.find(file => FTtoFG[file.type] === FG.image);
+			return !!this.list.find(file => getFileGroup(file) === FG.image);
 		},
 		showbooks() {
-			return !!this.list.find(file => FTtoFG[file.type] === FG.books);
+			return !!this.list.find(file => getFileGroup(file) === FG.books);
 		},
 		showtexts() {
-			return !!this.list.find(file => FTtoFG[file.type] === FG.texts);
+			return !!this.list.find(file => getFileGroup(file) === FG.texts);
 		},
 		showdisks() {
-			return !!this.list.find(file => FTtoFG[file.type] === FG.disks);
+			return !!this.list.find(file => getFileGroup(file) === FG.disks);
 		},
 		showother() {
-			return !!this.list.find(file => !file.type
-				|| FTtoFG[file.type] === FG.disks
-				|| FTtoFG[file.type] === FG.other);
+			return !!this.list.find(file => {
+				const fg = getFileGroup(file);
+				return !file.type || fg === FG.disks || fg === FG.other;
+			});
 		},
 
 		clsthumbmode() {
@@ -435,7 +436,7 @@ Vue.component('file-card-tag', {
 	methods: {
 		// show/hide functions
 		showitem(file) {
-			switch (FTtoFG[file.type]) {
+			switch (getFileGroup(file)) {
 				case FG.dir:
 					return true;
 				case FG.audio:
@@ -543,34 +544,27 @@ Vue.component('file-card-tag', {
 			}
 
 			// Run viewer/player
-			switch (FTtoFV[file.type]) {
-				case FV.none:
+			const ext = pathext(file.name);
+			if (isMainAudio(ext)) {
+				this.viewer = this.$refs.mp3player;
+				this.viewer.setup(file);
+				this.viewer.visible = true;
+			} else if (isMainVideo(ext)) {
+				if (this.audioonly) {
 					this.closeviewer();
-					break;
-				case FV.audio:
+				} else {
 					this.viewer = this.$refs.mp3player;
 					this.viewer.setup(file);
 					this.viewer.visible = true;
-					break;
-				case FV.video:
-					if (this.audioonly) {
-						this.closeviewer();
-					} else {
-						this.viewer = this.$refs.mp3player;
-						this.viewer.setup(file);
-						this.viewer.visible = true;
-					}
-					break;
-				case FV.image:
-					this.closeviewer();
-					break;
-				default:
-					this.closeviewer();
-					break;
+				}
+			} else if (isMainImage(ext)) {
+				this.closeviewer();
+			} else {
+				this.closeviewer();
 			}
 		},
 		onopen(file) {
-			switch (FTtoFG[file.type]) {
+			switch (getFileGroup(file)) {
 				case FG.image:
 					this.closeviewer();
 					this.$refs.slider.popup(file);

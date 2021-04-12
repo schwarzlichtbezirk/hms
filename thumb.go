@@ -119,7 +119,7 @@ func FindTmb(prop Pather, syspath string) (md *MediaData, err error) {
 	}
 
 	// check all others are images
-	if typetogroup[prop.Type()] != FGimage {
+	if GetFileGroup(prop.Name()) != FGimage {
 		err = ErrNotImg
 		return // file is not image
 	}

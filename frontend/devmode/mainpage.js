@@ -8,35 +8,10 @@ const iconev = extend({}, makeeventmodel());
 
 // File types
 const FT = {
-	ctgr: -3,
-	drv: -2,
-	dir: -1,
 	file: 0,
-	mp4: 1,
-	webm: 2,
-	mov: 3,
-	wave: 4,
-	flac: 5,
-	mus: 6,
-	tga: 7,
-	bmp: 8,
-	dds: 9,
-	tiff: 10,
-	jpeg: 11,
-	gif: 12,
-	png: 13,
-	webp: 14,
-	psd: 15,
-	img: 16,
-	pdf: 17,
-	html: 18,
-	text: 19,
-	scr: 20,
-	cfg: 21,
-	log: 22,
-	arch: 23,
-	disk: 24,
-	pack: 25
+	dir: 1,
+	drv: 2,
+	ctgr: 3
 };
 
 const FTN = [
@@ -80,82 +55,167 @@ const FG = {
 	dir: 7
 };
 
-const FTtoFG = {
-	[FT.ctgr]: FG.dir,
-	[FT.drv]: FG.dir,
-	[FT.dir]: FG.dir,
-	[FT.file]: FG.other,
-	[FT.mp4]: FG.video,
-	[FT.webm]: FG.video,
-	[FT.mov]: FG.video,
-	[FT.wave]: FG.audio,
-	[FT.flac]: FG.audio,
-	[FT.mus]: FG.audio,
-	[FT.tga]: FG.image,
-	[FT.bmp]: FG.image,
-	[FT.dds]: FG.image,
-	[FT.tiff]: FG.image,
-	[FT.jpeg]: FG.image,
-	[FT.gif]: FG.image,
-	[FT.png]: FG.image,
-	[FT.webp]: FG.image,
-	[FT.psd]: FG.image,
-	[FT.img]: FG.image,
-	[FT.pdf]: FG.books,
-	[FT.html]: FG.books,
-	[FT.text]: FG.texts,
-	[FT.scr]: FG.texts,
-	[FT.cfg]: FG.texts,
-	[FT.log]: FG.texts,
-	[FT.arch]: FG.disks,
-	[FT.disk]: FG.disks,
-	[FT.pack]: FG.disks
-};
-
-// File viewers
-const FV = {
-	none: 0,
-	video: 1,
-	audio: 2,
-	image: 3
-};
-
-const FTtoFV = {
-	[FT.ctgr]: FV.none,
-	[FT.drv]: FV.none,
-	[FT.dir]: FV.none,
-	[FT.file]: FV.none,
-	[FT.mp4]: FV.video,
-	[FT.webm]: FV.video,
-	[FT.mov]: FV.video,
-	[FT.wave]: FV.audio,
-	[FT.flac]: FV.audio,
-	[FT.mus]: FV.audio,
-	[FT.tga]: FV.image,
-	[FT.bmp]: FV.image,
-	[FT.dds]: FV.image,
-	[FT.tiff]: FV.image,
-	[FT.jpeg]: FV.image,
-	[FT.gif]: FV.image,
-	[FT.png]: FV.image,
-	[FT.webp]: FV.image,
-	[FT.psd]: FV.image,
-	[FT.img]: FV.image,
-	[FT.pdf]: FV.none,
-	[FT.html]: FV.none,
-	[FT.text]: FV.none,
-	[FT.scr]: FV.none,
-	[FT.cfg]: FV.none,
-	[FT.log]: FV.none,
-	[FT.arch]: FV.none,
-	[FT.disk]: FV.none,
-	[FT.pack]: FV.none
-};
-
 // Drive state
 const DS = {
 	yellow: 3000,
 	red: 10000
+};
+
+var extgrp = {
+	// Video
+	".mp4": FG.video,
+	".webm": FG.video,
+	".mov": FG.video,
+	".avi": FG.video,
+	".mkv": FG.video,
+
+	// Audio
+	".wav": FG.audio,
+	".flac": FG.audio,
+	".mp3": FG.audio,
+	".ogg": FG.audio,
+	".opus": FG.audio,
+	".acc": FG.audio,
+	".m4a": FG.audio,
+	".alac": FG.audio,
+	".wma": FG.audio,
+
+	// Images
+	".tga": FG.image,
+	".bmp": FG.image,
+	".dib": FG.image,
+	".rle": FG.image,
+	".dds": FG.image,
+	".tif": FG.image,
+	".tiff": FG.image,
+	".jpg": FG.image,
+	".jpe": FG.image,
+	".jpeg": FG.image,
+	".jfif": FG.image,
+	".gif": FG.image,
+	".png": FG.image,
+	".webp": FG.image,
+	".psd": FG.image,
+	".psb": FG.image,
+	".jp2": FG.image,
+	".jpg2": FG.image,
+	".jpx": FG.image,
+	".jxr": FG.image,
+
+	// Books
+	".pdf": FG.books,
+	".html": FG.books,
+	".htm": FG.books,
+	".shtml": FG.books,
+	".shtm": FG.books,
+	".xhtml": FG.books,
+	".phtml": FG.books,
+	".hta": FG.books,
+	".mht": FG.books,
+
+	// Texts
+	".txt": FG.texts,
+	".md": FG.texts,
+	".css": FG.texts,
+	".js": FG.texts,
+	".jsm": FG.texts,
+	".vb": FG.texts,
+	".vbs": FG.texts,
+	".bat": FG.texts,
+	".cmd": FG.texts,
+	".sh": FG.texts,
+	".mak": FG.texts,
+	".iss": FG.texts,
+	".nsi": FG.texts,
+	".nsh": FG.texts,
+	".bsh": FG.texts,
+	".sql": FG.texts,
+	".as": FG.texts,
+	".mx": FG.texts,
+	".php": FG.texts,
+	".phpt": FG.texts,
+	".java": FG.texts,
+	".jsp": FG.texts,
+	".asp": FG.texts,
+	".lua": FG.texts,
+	".tcl": FG.texts,
+	".asm": FG.texts,
+	".c": FG.texts,
+	".h": FG.texts,
+	".hpp": FG.texts,
+	".hxx": FG.texts,
+	".cpp": FG.texts,
+	".cxx": FG.texts,
+	".cc": FG.texts,
+	".cs": FG.texts,
+	".go": FG.texts,
+	".r": FG.texts,
+	".d": FG.texts,
+	".pas": FG.texts,
+	".inc": FG.texts,
+	".py": FG.texts,
+	".pyw": FG.texts,
+	".pl": FG.texts,
+	".pm": FG.texts,
+	".plx": FG.texts,
+	".rb": FG.texts,
+	".rbw": FG.texts,
+	".rc": FG.texts,
+	".ps": FG.texts,
+	".cfg": FG.texts,
+	".ini": FG.texts,
+	".inf": FG.texts,
+	".reg": FG.texts,
+	".url": FG.texts,
+	".xml": FG.texts,
+	".xsml": FG.texts,
+	".xsl": FG.texts,
+	".xsd": FG.texts,
+	".kml": FG.texts,
+	".wsdl": FG.texts,
+	".xlf": FG.texts,
+	".xliff": FG.texts,
+	".yml": FG.texts,
+	".yaml": FG.texts,
+	".cmake": FG.texts,
+	".json": FG.texts,
+	".log": FG.texts,
+
+	// storage
+	".cab": FG.disks,
+	".zip": FG.disks,
+	".7z": FG.disks,
+	".rar": FG.disks,
+	".rev": FG.disks,
+	".tar": FG.disks,
+	".tgz": FG.disks,
+	".gz": FG.disks,
+	".bz2": FG.disks,
+	".iso": FG.disks,
+	".isz": FG.disks,
+	".udf": FG.disks,
+	".nrg": FG.disks,
+	".mdf": FG.disks,
+	".mdx": FG.disks,
+	".img": FG.disks,
+	".ima": FG.disks,
+	".imz": FG.disks,
+	".ccd": FG.disks,
+	".vc4": FG.disks,
+	".dmg": FG.disks,
+	".daa": FG.disks,
+	".uif": FG.disks,
+	".vhd": FG.disks,
+	".vhdx": FG.disks,
+	".vmdk": FG.disks,
+	".wpk": FG.disks
+};
+
+const getFileGroup = file => {
+	if (file.type) {
+		return FG.dir;
+	}
+	return extgrp[pathext(file.name)];
 };
 
 const shareprefix = "/file/";
@@ -215,8 +275,8 @@ const geticonpath = (file, im, shr) => {
 		default: // file types
 			const ext = file.name.slice((file.name.lastIndexOf(".") - 1 >>> 0) + 2).toLowerCase();
 			return {
-				org: org.ext[ext] || org.file[FTN[file.type]] || org.file.file,
-				alt: alt.ext[ext] || alt.file[FTN[file.type]] || alt.file.file
+				org: org.ext[ext] || org.file[pathext(file.name).substr(1)] || org.file.file,
+				alt: alt.ext[ext] || alt.file[pathext(file.name).substr(1)] || alt.file.file
 			};
 	}
 };
@@ -615,7 +675,7 @@ const app = new Vue({
 			// update folder settings
 			for (const fp of response.data || []) {
 				if (fp.type !== FT.ctgr || hist.cid === "home") {
-					if (fp.type < 0) {
+					if (fp.type) {
 						this.pathlist.push(fp);
 					} else {
 						this.filelist.push(fp);
@@ -663,7 +723,7 @@ const app = new Vue({
 			// update folder settings
 			for (const fp of response.data.list || []) {
 				if (fp && fp.type !== FT.ctgr) {
-					if (fp.type < 0) {
+					if (fp.type) {
 						this.pathlist.push(fp);
 					} else {
 						this.filelist.push(fp);

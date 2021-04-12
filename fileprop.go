@@ -13,35 +13,10 @@ import (
 
 // File types
 const (
-	FTctgr = -3
-	FTdrv  = -2
-	FTdir  = -1
 	FTfile = 0
-	FTmp4  = 1
-	FTwebm = 2
-	FTmov  = 3
-	FTwave = 4
-	FTflac = 5
-	FTmus  = 6
-	FTtga  = 7
-	FTbmp  = 8
-	FTdds  = 9
-	FTtiff = 10
-	FTjpeg = 11
-	FTgif  = 12
-	FTpng  = 13
-	FTwebp = 14
-	FTpsd  = 15
-	FTimg  = 16
-	FTpdf  = 17
-	FThtml = 18
-	FTtext = 19
-	FTscr  = 20
-	FTcfg  = 21
-	FTlog  = 22
-	FTarch = 23
-	FTdisk = 24
-	FTpack = 25
+	FTdir  = 1
+	FTdrv  = 2
+	FTctgr = 3
 )
 
 // File groups
@@ -59,185 +34,154 @@ const (
 // FGnum is count of file groups
 const FGnum = 8
 
-var typetogroup = map[int]int{
-	FTctgr: FGdir,
-	FTdrv:  FGdir,
-	FTdir:  FGdir,
-	FTfile: FGother,
-	FTmp4:  FGvideo,
-	FTwebm: FGvideo,
-	FTmov:  FGvideo,
-	FTwave: FGaudio,
-	FTflac: FGaudio,
-	FTmus:  FGaudio,
-	FTtga:  FGimage,
-	FTbmp:  FGimage,
-	FTdds:  FGimage,
-	FTtiff: FGimage,
-	FTjpeg: FGimage,
-	FTgif:  FGimage,
-	FTpng:  FGimage,
-	FTwebp: FGimage,
-	FTpsd:  FGimage,
-	FTimg:  FGimage,
-	FTpdf:  FGbooks,
-	FThtml: FGbooks,
-	FTtext: FGtexts,
-	FTscr:  FGtexts,
-	FTcfg:  FGtexts,
-	FTlog:  FGtexts,
-	FTarch: FGdisks,
-	FTdisk: FGdisks,
-	FTpack: FGdisks,
-}
-
-var extset = map[string]int{
+var extgrp = map[string]int{
 	// Video
-	".mp4":  FTmp4,
-	".webm": FTwebm,
-	".mov":  FTmov,
-	".avi":  FTmov,
-	".mkv":  FTmov,
+	".mp4":  FGvideo,
+	".webm": FGvideo,
+	".mov":  FGvideo,
+	".avi":  FGvideo,
+	".mkv":  FGvideo,
 
 	// Audio
-	".wav":  FTwave,
-	".flac": FTflac,
-	".mp3":  FTmus,
-	".ogg":  FTmus,
-	".opus": FTmus,
-	".acc":  FTmus,
-	".m4a":  FTmus,
-	".wma":  FTmus,
+	".wav":  FGaudio,
+	".flac": FGaudio,
+	".mp3":  FGaudio,
+	".ogg":  FGaudio,
+	".opus": FGaudio,
+	".acc":  FGaudio,
+	".m4a":  FGaudio,
+	".alac": FGaudio,
+	".wma":  FGaudio,
 
 	// Images
-	".tga":  FTtga,
-	".bmp":  FTbmp,
-	".dib":  FTbmp,
-	".rle":  FTbmp,
-	".dds":  FTdds,
-	".tif":  FTtiff,
-	".tiff": FTtiff,
-	".jpg":  FTjpeg,
-	".jpe":  FTjpeg,
-	".jpeg": FTjpeg,
-	".jfif": FTjpeg,
-	".gif":  FTgif,
-	".png":  FTpng,
-	".webp": FTwebp,
-	".psd":  FTpsd,
-	".psb":  FTpsd,
-	".jp2":  FTimg,
-	".jpg2": FTimg,
-	".jpx":  FTimg,
-	".jxr":  FTimg,
+	".tga":  FGimage,
+	".bmp":  FGimage,
+	".dib":  FGimage,
+	".rle":  FGimage,
+	".dds":  FGimage,
+	".tif":  FGimage,
+	".tiff": FGimage,
+	".jpg":  FGimage,
+	".jpe":  FGimage,
+	".jpeg": FGimage,
+	".jfif": FGimage,
+	".gif":  FGimage,
+	".png":  FGimage,
+	".webp": FGimage,
+	".psd":  FGimage,
+	".psb":  FGimage,
+	".jp2":  FGimage,
+	".jpg2": FGimage,
+	".jpx":  FGimage,
+	".jxr":  FGimage,
 
 	// Books
-	".pdf":   FTpdf,
-	".html":  FThtml,
-	".htm":   FThtml,
-	".shtml": FThtml,
-	".shtm":  FThtml,
-	".xhtml": FThtml,
-	".phtml": FThtml,
-	".hta":   FThtml,
-	".mht":   FThtml,
+	".pdf":   FGbooks,
+	".html":  FGbooks,
+	".htm":   FGbooks,
+	".shtml": FGbooks,
+	".shtm":  FGbooks,
+	".xhtml": FGbooks,
+	".phtml": FGbooks,
+	".hta":   FGbooks,
+	".mht":   FGbooks,
 
 	// Texts
-	".txt":   FTtext,
-	".md":    FTtext,
-	".css":   FTscr,
-	".js":    FTscr,
-	".jsm":   FTscr,
-	".vb":    FTscr,
-	".vbs":   FTscr,
-	".bat":   FTscr,
-	".cmd":   FTscr,
-	".sh":    FTscr,
-	".mak":   FTscr,
-	".iss":   FTscr,
-	".nsi":   FTscr,
-	".nsh":   FTscr,
-	".bsh":   FTscr,
-	".sql":   FTscr,
-	".as":    FTscr,
-	".mx":    FTscr,
-	".php":   FTscr,
-	".phpt":  FTscr,
-	".java":  FTscr,
-	".jsp":   FTscr,
-	".asp":   FTscr,
-	".lua":   FTscr,
-	".tcl":   FTscr,
-	".asm":   FTscr,
-	".c":     FTscr,
-	".h":     FTscr,
-	".hpp":   FTscr,
-	".hxx":   FTscr,
-	".cpp":   FTscr,
-	".cxx":   FTscr,
-	".cc":    FTscr,
-	".cs":    FTscr,
-	".go":    FTscr,
-	".r":     FTscr,
-	".d":     FTscr,
-	".pas":   FTscr,
-	".inc":   FTscr,
-	".py":    FTscr,
-	".pyw":   FTscr,
-	".pl":    FTscr,
-	".pm":    FTscr,
-	".plx":   FTscr,
-	".rb":    FTscr,
-	".rbw":   FTscr,
-	".rc":    FTscr,
-	".ps":    FTscr,
-	".cfg":   FTcfg,
-	".ini":   FTcfg,
-	".inf":   FTcfg,
-	".reg":   FTcfg,
-	".url":   FTcfg,
-	".xml":   FTcfg,
-	".xsml":  FTcfg,
-	".xsl":   FTcfg,
-	".xsd":   FTcfg,
-	".kml":   FTcfg,
-	".wsdl":  FTcfg,
-	".xlf":   FTcfg,
-	".xliff": FTcfg,
-	".yml":   FTcfg,
-	".yaml":  FTcfg,
-	".cmake": FTcfg,
-	".json":  FTcfg,
-	".log":   FTlog,
+	".txt":   FGtexts,
+	".md":    FGtexts,
+	".css":   FGtexts,
+	".js":    FGtexts,
+	".jsm":   FGtexts,
+	".vb":    FGtexts,
+	".vbs":   FGtexts,
+	".bat":   FGtexts,
+	".cmd":   FGtexts,
+	".sh":    FGtexts,
+	".mak":   FGtexts,
+	".iss":   FGtexts,
+	".nsi":   FGtexts,
+	".nsh":   FGtexts,
+	".bsh":   FGtexts,
+	".sql":   FGtexts,
+	".as":    FGtexts,
+	".mx":    FGtexts,
+	".php":   FGtexts,
+	".phpt":  FGtexts,
+	".java":  FGtexts,
+	".jsp":   FGtexts,
+	".asp":   FGtexts,
+	".lua":   FGtexts,
+	".tcl":   FGtexts,
+	".asm":   FGtexts,
+	".c":     FGtexts,
+	".h":     FGtexts,
+	".hpp":   FGtexts,
+	".hxx":   FGtexts,
+	".cpp":   FGtexts,
+	".cxx":   FGtexts,
+	".cc":    FGtexts,
+	".cs":    FGtexts,
+	".go":    FGtexts,
+	".r":     FGtexts,
+	".d":     FGtexts,
+	".pas":   FGtexts,
+	".inc":   FGtexts,
+	".py":    FGtexts,
+	".pyw":   FGtexts,
+	".pl":    FGtexts,
+	".pm":    FGtexts,
+	".plx":   FGtexts,
+	".rb":    FGtexts,
+	".rbw":   FGtexts,
+	".rc":    FGtexts,
+	".ps":    FGtexts,
+	".cfg":   FGtexts,
+	".ini":   FGtexts,
+	".inf":   FGtexts,
+	".reg":   FGtexts,
+	".url":   FGtexts,
+	".xml":   FGtexts,
+	".xsml":  FGtexts,
+	".xsl":   FGtexts,
+	".xsd":   FGtexts,
+	".kml":   FGtexts,
+	".wsdl":  FGtexts,
+	".xlf":   FGtexts,
+	".xliff": FGtexts,
+	".yml":   FGtexts,
+	".yaml":  FGtexts,
+	".cmake": FGtexts,
+	".json":  FGtexts,
+	".log":   FGtexts,
 
 	// storage
-	".cab":  FTarch,
-	".zip":  FTarch,
-	".7z":   FTarch,
-	".rar":  FTarch,
-	".rev":  FTarch,
-	".tar":  FTarch,
-	".tgz":  FTarch,
-	".gz":   FTarch,
-	".bz2":  FTarch,
-	".iso":  FTdisk,
-	".isz":  FTdisk,
-	".udf":  FTdisk,
-	".nrg":  FTdisk,
-	".mdf":  FTdisk,
-	".mdx":  FTdisk,
-	".img":  FTdisk,
-	".ima":  FTdisk,
-	".imz":  FTdisk,
-	".ccd":  FTdisk,
-	".vc4":  FTdisk,
-	".dmg":  FTdisk,
-	".daa":  FTdisk,
-	".uif":  FTdisk,
-	".vhd":  FTdisk,
-	".vhdx": FTdisk,
-	".vmdk": FTdisk,
-	".wpk":  FTpack,
+	".cab":  FGdisks,
+	".zip":  FGdisks,
+	".7z":   FGdisks,
+	".rar":  FGdisks,
+	".rev":  FGdisks,
+	".tar":  FGdisks,
+	".tgz":  FGdisks,
+	".gz":   FGdisks,
+	".bz2":  FGdisks,
+	".iso":  FGdisks,
+	".isz":  FGdisks,
+	".udf":  FGdisks,
+	".nrg":  FGdisks,
+	".mdf":  FGdisks,
+	".mdx":  FGdisks,
+	".img":  FGdisks,
+	".ima":  FGdisks,
+	".imz":  FGdisks,
+	".ccd":  FGdisks,
+	".vc4":  FGdisks,
+	".dmg":  FGdisks,
+	".daa":  FGdisks,
+	".uif":  FGdisks,
+	".vhd":  FGdisks,
+	".vhdx": FGdisks,
+	".vmdk": FGdisks,
+	".wpk":  FGdisks,
 }
 
 // Categories properties constants.
@@ -279,9 +223,61 @@ var CidCatPath = map[string]string{
 	"texts":  CPtexts,
 }
 
-// GetFileType returns file type integer value for given file name by it's extension.
-func GetFileType(fpath string) int {
-	return extset[strings.ToLower(path.Ext(fpath))]
+// GetFileExt returns file extension converted to lowercase.
+func GetFileExt(fname string) string {
+	return strings.ToLower(path.Ext(fname))
+}
+
+// GetFileGroup returns file group integer value for given file name by it's extension.
+func GetFileGroup(fpath string) int {
+	return extgrp[GetFileExt(fpath)]
+}
+
+// IsTypeJPEG checks that file extension is in JPEG group.
+func IsTypeJPEG(ext string) bool {
+	switch ext {
+	case ".jpg", ".jpe", ".jpeg", ".jfif":
+		return true
+	}
+	return false
+}
+
+// IsTypeAlpha checks that file extension belongs to images with alpha channel.
+func IsTypeAlpha(ext string) bool {
+	switch ext {
+	case ".dds", ".psd", ".psb":
+		return true
+	}
+	return false
+}
+
+// IsTypeNonalpha checks that file extension belongs to images without alpha channel.
+func IsTypeNonalpha(ext string) bool {
+	switch ext {
+	case ".tga", ".bmp", ".dib", ".rle", ".tif", ".tiff":
+		return true
+	}
+	return false
+}
+
+// IsTypeID3 checks that file extension belongs to audio/video files with ID3 tags.
+func IsTypeID3(ext string) bool {
+	switch ext {
+	case ".mp3", ".flac", ".ogg", ".opus", ".wma", ".mp4", ".acc", ".m4a", ".alac":
+		return true
+	}
+	return false
+}
+
+// IsTypeEXIF checks that file extension belongs to images with EXIF tags.
+func IsTypeEXIF(ext string) bool {
+	switch ext {
+	case ".tif", ".tiff",
+		".jpg", ".jpe", ".jpeg", ".jfif",
+		".png", ".webp":
+		return true
+	}
+	return false
 }
 
 // Pather is path properties interface.
@@ -331,6 +327,7 @@ type FileProp struct {
 // Setup fills fields from os.FileInfo structure. Do not looks for share.
 func (fp *FileProp) Setup(fi os.FileInfo) {
 	fp.NameVal = fi.Name()
+	fp.TypeVal = FTfile
 	fp.SizeVal = fi.Size()
 	fp.TimeVal = UnixJS(fi.ModTime())
 }
@@ -583,20 +580,17 @@ func MakeProp(syspath string, fi os.FileInfo) Pather {
 		dk.Setup(syspath)
 		return &dk
 	}
-	var ft = GetFileType(syspath)
-	if ft == FTflac || ft == FTmus || ft == FTmp4 {
+	var ext = GetFileExt(syspath)
+	if IsTypeID3(ext) {
 		var tk TagKit
-		tk.TypeVal = ft
 		tk.Setup(syspath, fi)
 		return &tk
-	} else if ft == FTjpeg || ft == FTtiff || ft == FTpng || ft == FTwebp {
+	} else if IsTypeEXIF(ext) {
 		var ek ExifKit
-		ek.TypeVal = ft
 		ek.Setup(syspath, fi)
 		return &ek
 	} else {
 		var fk FileKit
-		fk.TypeVal = ft
 		fk.Setup(syspath, fi)
 		return &fk
 	}

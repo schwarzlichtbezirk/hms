@@ -1,6 +1,15 @@
 "use strict";
 
-const mp3filter = file => FTtoFV[file.type] === FV.audio || FTtoFV[file.type] === FV.video;
+const isMainAudio = ext => ({
+	".wav": true, ".flac": true, ".mp3": true, ".ogg": true, ".opus": true,
+	".acc": true, ".m4a": true, ".alac": true
+})[ext];
+
+const isMainVideo = ext => ({
+	".mp4": true, ".webm": true
+})[ext];
+
+const mp3filter = file => isMainAudio(pathext(file.name)) || isMainVideo(pathext(file.name));
 
 Vue.component('mp3-player-tag', {
 	template: '#mp3-player-tpl',

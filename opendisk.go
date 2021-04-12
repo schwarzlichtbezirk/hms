@@ -185,8 +185,7 @@ func ScanDir(syspath string, cg *CatGrp, skip func(string) bool) (ret []Pather, 
 		if fi != nil {
 			var fpath = path.Join(syspath, fi.Name())
 			if !skip(fpath) {
-				var ft = GetFileType(fpath)
-				var grp = typetogroup[ft]
+				var grp = GetFileGroup(fpath)
 				if cg[grp] {
 					var prop Pather
 					if propcache.Has(fpath) {

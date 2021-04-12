@@ -271,7 +271,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var cg = prf.PathAccess(syspath, auth == prf)
-	var grp = typetogroup[fp.Type()]
+	var grp = GetFileGroup(syspath)
 	if !cg[grp] {
 		WriteError(w, http.StatusForbidden, ErrNoAccess, AECfileaccess)
 		return
@@ -348,7 +348,7 @@ func mediaHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var cg = prf.PathAccess(syspath, auth == prf)
-	var grp = typetogroup[fp.Type()]
+	var grp = GetFileGroup(syspath)
 	if !cg[grp] {
 		WriteError(w, http.StatusForbidden, ErrNoAccess, AECmediaaccess)
 		return
@@ -452,7 +452,7 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var cg = prf.PathAccess(syspath, auth == prf)
-	var grp = typetogroup[fp.Type()]
+	var grp = GetFileGroup(syspath)
 	if !cg[grp] {
 		WriteError(w, http.StatusForbidden, ErrNoAccess, AECthumbaccess)
 		return

@@ -1,6 +1,16 @@
 "use strict";
 
-const photofilter = file => file.size && FTtoFV[file.type] === FV.image;
+const isTypeJPEG = ext => ({
+	".jpg": true, ".jpe": true, ".jpeg": true, ".jfif": true
+})[ext];
+
+const isMainImage = ext => ({
+	".tga": true, ".bmp": true, ".dib": true, ".rle": true, ".dds": true,
+	".tif": true, ".tiff": true, ".jpg": true, ".jpe": true, ".jpeg": true, ".jfif": true,
+	".gif": true, ".png": true, ".webp": true, ".psd": true, ".psb": true
+})[ext];
+
+const photofilter = file => file.size && isMainImage(pathext(file.name));
 
 Vue.component('thumbslider-tag', {
 	template: '#thumbslider-tpl',
