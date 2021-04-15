@@ -3,7 +3,7 @@
 // This file is included for release mode linkage
 
 const buildvers = "0.7.3";
-const builddate = "2021.04.10";
+const builddate = "2021.04.15";
 const devmode = false;
 
 const traceajax = () => undefined;

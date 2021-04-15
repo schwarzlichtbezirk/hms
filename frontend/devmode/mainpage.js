@@ -14,35 +14,6 @@ const FT = {
 	ctgr: 3
 };
 
-const FTN = [
-	"file", // 0
-	"mp4", // 1
-	"webm", // 2
-	"mov", // 3
-	"wave", // 4
-	"flac", // 5
-	"mus", // 6
-	"tga", // 7
-	"bmp", // 8
-	"dds", // 9
-	"tiff", // 10
-	"jpeg", // 11
-	"gif", // 12
-	"png", // 13
-	"webp", // 14
-	"psd", // 15
-	"img", // 16
-	"pdf", // 17
-	"html", // 18
-	"text", // 19
-	"scr", // 20
-	"cfg", // 21
-	"log", // 22
-	"arch", // 23
-	"disk", // 24
-	"pack" // 25
-];
-
 // File groups
 const FG = {
 	other: 0,
@@ -51,7 +22,7 @@ const FG = {
 	image: 3,
 	books: 4,
 	texts: 5,
-	disks: 6,
+	packs: 6,
 	dir: 7
 };
 
@@ -63,22 +34,40 @@ const DS = {
 
 var extgrp = {
 	// Video
+	".avi": FG.video,
+	".mpe": FG.video,
+	".mpg": FG.video,
 	".mp4": FG.video,
 	".webm": FG.video,
-	".mov": FG.video,
-	".avi": FG.video,
+	".wmv": FG.video,
+	".wmx": FG.video,
+	".flv": FG.video,
+	".3gp": FG.video,
+	".3g2": FG.video,
 	".mkv": FG.video,
+	".mov": FG.video,
+	".ogv": FG.video,
+	".ogx": FG.video,
 
 	// Audio
-	".wav": FG.audio,
-	".flac": FG.audio,
-	".mp3": FG.audio,
-	".ogg": FG.audio,
-	".opus": FG.audio,
-	".acc": FG.audio,
+	".aac": FG.audio,
 	".m4a": FG.audio,
 	".alac": FG.audio,
+	".aif": FG.audio,
+	".mpa": FG.audio,
+	".mp3": FG.audio,
+	".wav": FG.audio,
 	".wma": FG.audio,
+	".weba": FG.audio,
+	".oga": FG.audio,
+	".ogg": FG.audio,
+	".opus": FG.audio,
+	".flac": FG.audio,
+	".mka": FG.audio,
+	".ra": FG.audio,
+	".mid": FG.audio,
+	".midi": FG.audio,
+	".cda": FG.audio,
 
 	// Images
 	".tga": FG.image,
@@ -100,10 +89,13 @@ var extgrp = {
 	".jp2": FG.image,
 	".jpg2": FG.image,
 	".jpx": FG.image,
+	".jpm": FG.image,
 	".jxr": FG.image,
 
 	// Books
 	".pdf": FG.books,
+	".djvu": FG.books,
+	".djv": FG.books,
 	".html": FG.books,
 	".htm": FG.books,
 	".shtml": FG.books,
@@ -112,6 +104,19 @@ var extgrp = {
 	".phtml": FG.books,
 	".hta": FG.books,
 	".mht": FG.books,
+	// Office
+	".odt": FG.books,
+	".ods": FG.books,
+	".odp": FG.books,
+	".rtf": FG.books,
+	".abw": FG.books,
+	".doc": FG.books,
+	".docx": FG.books,
+	".xls": FG.books,
+	".xlsx": FG.books,
+	".ppt": FG.books,
+	".pptx": FG.books,
+	".vsd": FG.books,
 
 	// Texts
 	".txt": FG.texts,
@@ -132,13 +137,16 @@ var extgrp = {
 	".sql": FG.texts,
 	".as": FG.texts,
 	".mx": FG.texts,
+	".ps": FG.texts,
 	".php": FG.texts,
 	".phpt": FG.texts,
+	".lua": FG.texts,
+	".tcl": FG.texts,
+	".rc": FG.texts,
+	".cmake": FG.texts,
 	".java": FG.texts,
 	".jsp": FG.texts,
 	".asp": FG.texts,
-	".lua": FG.texts,
-	".tcl": FG.texts,
 	".asm": FG.texts,
 	".c": FG.texts,
 	".h": FG.texts,
@@ -160,8 +168,6 @@ var extgrp = {
 	".plx": FG.texts,
 	".rb": FG.texts,
 	".rbw": FG.texts,
-	".rc": FG.texts,
-	".ps": FG.texts,
 	".cfg": FG.texts,
 	".ini": FG.texts,
 	".inf": FG.texts,
@@ -172,44 +178,182 @@ var extgrp = {
 	".xsl": FG.texts,
 	".xsd": FG.texts,
 	".kml": FG.texts,
+	".gpx": FG.texts,
 	".wsdl": FG.texts,
 	".xlf": FG.texts,
 	".xliff": FG.texts,
 	".yml": FG.texts,
 	".yaml": FG.texts,
-	".cmake": FG.texts,
 	".json": FG.texts,
 	".log": FG.texts,
 
 	// storage
-	".cab": FG.disks,
-	".zip": FG.disks,
-	".7z": FG.disks,
-	".rar": FG.disks,
-	".rev": FG.disks,
-	".tar": FG.disks,
-	".tgz": FG.disks,
-	".gz": FG.disks,
-	".bz2": FG.disks,
-	".iso": FG.disks,
-	".isz": FG.disks,
-	".udf": FG.disks,
-	".nrg": FG.disks,
-	".mdf": FG.disks,
-	".mdx": FG.disks,
-	".img": FG.disks,
-	".ima": FG.disks,
-	".imz": FG.disks,
-	".ccd": FG.disks,
-	".vc4": FG.disks,
-	".dmg": FG.disks,
-	".daa": FG.disks,
-	".uif": FG.disks,
-	".vhd": FG.disks,
-	".vhdx": FG.disks,
-	".vmdk": FG.disks,
-	".wpk": FG.disks
+	".cab": FG.packs,
+	".zip": FG.packs,
+	".7z": FG.packs,
+	".rar": FG.packs,
+	".rev": FG.packs,
+	".jar": FG.packs,
+	".tar": FG.packs,
+	".tgz": FG.packs,
+	".gz": FG.packs,
+	".bz2": FG.packs,
+	".iso": FG.packs,
+	".isz": FG.packs,
+	".udf": FG.packs,
+	".nrg": FG.packs,
+	".mdf": FG.packs,
+	".mdx": FG.packs,
+	".img": FG.packs,
+	".ima": FG.packs,
+	".imz": FG.packs,
+	".ccd": FG.packs,
+	".vc4": FG.packs,
+	".dmg": FG.packs,
+	".daa": FG.packs,
+	".uif": FG.packs,
+	".vhd": FG.packs,
+	".vhdx": FG.packs,
+	".vmdk": FG.packs,
+	".wpk": FG.packs
 };
+
+const extfmt = {
+	"bitmap": {
+		".tga": 1, ".bmp": 1, ".dib": 1, ".rle": 1, ".dds": 1
+	},
+	"tiff": {
+		".tiff": 1, ".tif": 1
+	},
+	"jpeg": {
+		".jpg": 1, ".jpe": 1, ".jpeg": 1, ".jfif": 1
+	},
+	"jpeg2000": {
+		".jp2": 1, ".jpg2": 1, ".jpx": 1, ".jpm": 1
+	},
+	"psd": {
+		".psd": 1, ".psb": 1
+	},
+
+	"component": {
+		".dll": 1, ".ocx": 1
+	},
+
+	"exec": {
+		".exe": 1, ".dll": 1, ".ocx": 1, ".bat": 1, ".cmd": 1, ".sh": 1
+	},
+
+	"text": {
+		".txt": 1, ".md": 1
+	},
+	"html": {
+		".html": 1, ".htm": 1, ".shtml": 1, ".shtm": 1,
+		".xhtml": 1, ".phtml": 1, ".hta": 1, ".mht": 1
+	},
+	"config": {
+		".cfg": 1, ".ini": 1, ".inf": 1, ".reg": 1
+	},
+	"datafmt": {
+		".xml": 1, ".xsml": 1, ".xsl": 1, ".xsd": 1,
+		".kml": 1, ".gpx": 1,
+		".wsdl": 1, ".xlf": 1, ".xliff": 1,
+		".yml": 1, ".yaml": 1, ".json": 1
+	},
+	"script": {
+		".css": 1,
+		".js": 1, ".jsm": 1, ".vb": 1, ".vbs": 1, ".bat": 1, ".cmd": 1, ".sh": 1,
+		".mak": 1, ".iss": 1, ".nsi": 1, ".nsh": 1, ".bsh": 1, ".sql": 1,
+		".as": 1, ".mx": 1, ".ps": 1, ".php": 1, ".phpt": 1, ".lua": 1, ".tcl": 1, ".rc": 1, ".cmake": 1
+	},
+	"code": {
+		".css": 1,
+		".js": 1, ".jsm": 1, ".vb": 1, ".vbs": 1, ".bat": 1, ".cmd": 1, ".sh": 1,
+		".mak": 1, ".iss": 1, ".nsi": 1, ".nsh": 1, ".bsh": 1, ".sql": 1,
+		".as": 1, ".mx": 1, ".ps": 1, ".php": 1, ".phpt": 1, ".lua": 1, ".tcl": 1, ".rc": 1, ".cmake": 1,
+		".java": 1, ".jsp": 1, ".asp": 1,
+		".asm": 1, ".c": 1, ".h": 1, ".hpp": 1, ".hxx": 1, ".cpp": 1, ".cxx": 1, ".cc": 1, ".cs": 1,
+		".go": 1, ".r": 1, ".d": 1, ".pas": 1, ".inc": 1,
+		".py": 1, ".pyw": 1, ".pl": 1, ".pm": 1, ".plx": 1, ".rb": 1, ".rbw":1
+	},
+
+	"msoffice": {
+		".doc": 1, ".docx": 1, ".xls": 1, ".xlsx": 1, ".ppt": 1, ".pptx": 1, ".vsd": 1
+	},
+	"openoffice": {
+		".odt": 1, ".ods": 1, ".odp": 1, ".rtf": 1, ".abw": 1
+	},
+	"office": {
+		".odt": 1, ".ods": 1, ".odp": 1, ".rtf": 1, ".abw": 1,
+		".doc": 1, ".docx": 1, ".xls": 1, ".xlsx": 1, ".ppt": 1, ".pptx": 1, ".vsd": 1
+	},
+
+	"archive": {
+		".cab": 1, ".zip": 1, ".7z": 1, ".rar": 1, ".rev": 1,
+		".jar": 1, ".tar": 1, ".tgz": 1, ".gz": 1, ".bz2": 1
+	},
+	"package": {
+		".wpk": 1
+	},
+	"disk": {
+		".iso": 1, ".isz": 1, ".udf": 1, ".nrg": 1, ".mdf": 1, ".mdx": 1,
+		".img": 1, ".ima": 1, ".imz": 1, ".ccd": 1, ".vc4": 1, ".dmg": 1,
+		".daa": 1, ".uif": 1, ".vhd": 1, ".vhdx": 1, ".vmdk": 1
+	},
+
+	"image": {
+		".tga": 1, ".bmp": 1, ".dib": 1, ".rle": 1, ".dds": 1,
+		".tif": 1, ".tiff": 1, ".jpg": 1, ".jpe": 1, ".jpeg": 1, ".jfif": 1,
+		".gif": 1, ".png": 1, ".webp": 1, ".psd": 1, ".psb": 1,
+		".jp2": 1, ".jpg2": 1, ".jpx": 1, ".jpm": 1, ".jxr": 1
+	},
+	"music": {
+		".aac": 1, ".m4a": 1, ".alac": 1, ".aif": 1, ".mpa": 1, ".mp3": 1,
+		".wav": 1, ".wma": 1, ".weba": 1, ".oga": 1, ".ogg": 1, ".opus": 1,
+		".flac": 1, ".mka": 1, ".ra": 1, ".mid": 1, ".midi": 1, ".cda": 1
+	},
+	"video": {
+		".avi": 1, ".mpe": 1, ".mpg": 1, ".mp4": 1, ".webm": 1, ".wmv": 1, ".wmx": 1,
+		".flv": 1, ".3gp": 1, ".3g2": 1, ".mkv": 1, ".mov": 1, ".ogv": 1, ".ogx": 1
+	},
+	"books": {
+		".pdf": 1, ".djvu": 1, ".djv": 1,
+		".html": 1, ".htm": 1, ".shtml": 1, ".shtm": 1,
+		".xhtml": 1, ".phtml": 1, ".hta": 1, ".mht": 1
+	},
+	"texts": {
+		".txt": 1, ".md": 1,
+		".css": 1,
+		".js": 1, ".jsm": 1, ".vb": 1, ".vbs": 1, ".bat": 1, ".cmd": 1, ".sh": 1,
+		".mak": 1, ".iss": 1, ".nsi": 1, ".nsh": 1, ".bsh": 1, ".sql": 1,
+		".as": 1, ".mx": 1, ".ps": 1, ".php": 1, ".phpt": 1, ".lua": 1, ".tcl": 1, ".rc": 1, ".cmake": 1,
+		".java": 1, ".jsp": 1, ".asp": 1,
+		".asm": 1, ".c": 1, ".h": 1, ".hpp": 1, ".hxx": 1, ".cpp": 1, ".cxx": 1, ".cc": 1, ".cs": 1,
+		".go": 1, ".r": 1, ".d": 1, ".pas": 1, ".inc": 1,
+		".py": 1, ".pyw": 1, ".pl": 1, ".pm": 1, ".plx": 1, ".rb": 1, ".rbw": 1,
+		".cfg": 1, ".ini": 1, ".inf": 1, ".reg": 1,
+		".xml": 1, ".xsml": 1, ".xsl": 1, ".xsd": 1,
+		".kml": 1, ".gpx": 1,
+		".wsdl": 1, ".xlf": 1, ".xliff": 1,
+		".yml": 1, ".yaml": 1, ".json": 1
+	},
+	"packs": {
+		".cab": 1, ".zip": 1, ".7z": 1, ".rar": 1, ".rev": 1,
+		".jar": 1, ".tar": 1, ".tgz": 1, ".gz": 1, ".bz2": 1,
+		".wpk": 1,
+		".iso": 1, ".isz": 1, ".udf": 1, ".nrg": 1, ".mdf": 1, ".mdx": 1,
+		".img": 1, ".ima": 1, ".imz": 1, ".ccd": 1, ".vc4": 1, ".dmg": 1,
+		".daa": 1, ".uif": 1, ".vhd": 1, ".vhdx": 1, ".vmdk": 1
+	}
+};
+
+const extfmtorder = [
+	"bitmap", "tiff", "jpeg", "jpeg2000", "psd",
+	"component", "exec",
+	"text", "html", "config", "datafmt", "script", "code",
+	"msoffice", "openoffice", "office",
+	"archive", "package", "disk",
+	"image", "music", "video", "books", "texts", "packs"
+];
 
 const getFileGroup = file => {
 	if (file.type) {
@@ -217,8 +361,6 @@ const getFileGroup = file => {
 	}
 	return extgrp[pathext(file.name)];
 };
-
-const shareprefix = "/file/";
 
 const geticonpath = (file, im, shr) => {
 	const org = shr ? im.shared : im.private;
@@ -260,8 +402,8 @@ const geticonpath = (file, im, shr) => {
 					return { org: org.folder.books, alt: alt.folder.books };
 				} else if (fg[FG.texts] / fnum > 0.5) {
 					return { org: org.folder.texts, alt: alt.folder.texts };
-				} else if (fg[FG.disks] / fnum > 0.5) {
-					return { org: org.folder.disks, alt: alt.folder.disks };
+				} else if (fg[FG.packs] / fnum > 0.5) {
+					return { org: org.folder.packs, alt: alt.folder.packs };
 				} else if (fg[FG.dir] / fnum > 0.5) {
 					return { org: org.folder.dir, alt: alt.folder.dir };
 				} else if ((fg[FG.audio] + fg[FG.video] + fg[FG.image]) / fnum > 0.5) {
@@ -273,15 +415,23 @@ const geticonpath = (file, im, shr) => {
 				return { org: org.folder.close, alt: alt.folder.close };
 			}
 		default: // file types
-			const ext = file.name.slice((file.name.lastIndexOf(".") - 1 >>> 0) + 2).toLowerCase();
+			const ext = pathext(file.name);
+			const find = t => {
+				for (const k of extfmtorder) {
+					const icon = t[k];
+					if (icon && extfmt[k][ext]) {
+						return icon;
+					}
+				}
+			};
 			return {
-				org: org.ext[ext] || org.file[pathext(file.name).substr(1)] || org.file.file,
-				alt: alt.ext[ext] || alt.file[pathext(file.name).substr(1)] || alt.file.file
+				org: org.ext[ext] || find(org.grp) || org.blank,
+				alt: alt.ext[ext] || find(alt.grp) || alt.blank
 			};
 	}
 };
 
-const encode = (uri) => encodeURI(uri).replace('#', '%23').replace('&', '%26').replace('+', '%2B');
+const encode = uri => encodeURI(uri).replace('#', '%23').replace('&', '%26').replace('+', '%2B');
 
 const fileurl = file => `/id${app.aid}/file/${file.puid}`;
 const pathurl = file => `${(devmode ? "/dev" : "")}/id${app.aid}/path/${file.puid}`;

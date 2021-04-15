@@ -2,19 +2,21 @@
 
 const imempty = {
 	private: {
+		blank: "",
 		label: "",
 		cid: { cid: "" },
 		drive: {},
 		folder: {},
-		file: { file: "" },
+		grp: {},
 		ext: {}
 	},
 	shared: {
+		blank: "",
 		label: "",
 		cid: { cid: "" },
 		drive: {},
 		folder: {},
-		file: { file: "" },
+		grp: {},
 		ext: {}
 	}
 };
