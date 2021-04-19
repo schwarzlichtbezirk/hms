@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"net/http"
+	"os"
 	"path"
 	"runtime"
 	"strconv"
@@ -114,12 +115,13 @@ const (
 	AECfolderroot   = 72
 	AECfoldernopath = 73
 	AECfolderaccess = 74
-	AECfolderfail   = 75
+	AECfolderabsent = 75
+	AECfolderfail   = 76
 
 	// ispath
 
-	AECispathnoacc = 75
-	AECispathdeny  = 76
+	AECispathnoacc = 77
+	AECispathdeny  = 78
 
 	// tmb/chk
 
@@ -854,7 +856,11 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 	if ret.List, err = ScanDir(syspath, &cg, func(fpath string) bool {
 		return prf.IsHidden(fpath)
 	}); err != nil {
-		WriteError(w, http.StatusNotFound, err, AECfolderfail)
+		if os.IsNotExist(err) {
+			WriteError(w, http.StatusNotFound, err, AECfolderabsent)
+		} else {
+			WriteError500(w, err, AECfolderfail)
+		}
 		return
 	}
 	usermsg <- UsrMsg{r, "path", ret.PUID}

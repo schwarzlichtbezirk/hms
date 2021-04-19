@@ -10,6 +10,7 @@ import (
 	"github.com/diskfs/go-diskfs/disk"
 	"github.com/diskfs/go-diskfs/filesystem"
 	"github.com/diskfs/go-diskfs/filesystem/iso9660"
+	"golang.org/x/text/encoding/charmap"
 )
 
 // DiskISO is iso-disk structure representation for quick access to nested files.
@@ -54,6 +55,9 @@ func (f *cfile) Close() error {
 func (d *DiskISO) OpenFile(fpath string) (r io.ReadSeekCloser, err error) {
 	d.mux.Lock()
 	defer d.mux.Unlock()
+
+	var enc = charmap.Windows1251.NewEncoder()
+	fpath, _ = enc.String(fpath)
 
 	var file filesystem.File
 	if file, err = d.fs.OpenFile(fpath, os.O_RDONLY); err != nil {
@@ -164,6 +168,8 @@ func OpenDir(syspath string) (ret []os.FileInfo, err error) {
 	}
 	switch disk := dv.(type) {
 	case *DiskISO:
+		var enc = charmap.Windows1251.NewEncoder()
+		dpath, _ = enc.String(dpath)
 		return disk.fs.ReadDir(dpath)
 	}
 	panic("not released disk type present")
@@ -181,9 +187,11 @@ func ScanDir(syspath string, cg *CatGrp, skip func(string) bool) (ret []Pather, 
 	}
 
 	var fgrp = FileGrp{}
+	var dec = charmap.Windows1251.NewDecoder()
 	for _, fi := range files {
 		if fi != nil {
-			var fpath = path.Join(syspath, fi.Name())
+			var name, _ = dec.String(fi.Name())
+			var fpath = path.Join(syspath, name)
 			if !skip(fpath) {
 				var grp = GetFileGroup(fpath)
 				if cg[grp] {
