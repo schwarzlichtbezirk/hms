@@ -853,6 +853,9 @@ const app = new Vue({
 					if (fp.latitude && fp.longitude && fp.ntmb === 1) {
 						gpslist.push(fp);
 					}
+					if (pathext(fp.name) === ".gpx") {
+						this.$refs.mapcard.addgpx(fp);
+					}
 				}
 				this.$refs.mapcard.addmarkers(gpslist);
 			}
@@ -898,6 +901,9 @@ const app = new Vue({
 				for (const fp of this.filelist) {
 					if (fp.latitude && fp.longitude && fp.ntmb === 1) {
 						gpslist.push(fp);
+					}
+					if (pathext(fp.name) === ".gpx") {
+						this.$refs.mapcard.addgpx(fp);
 					}
 				}
 				this.$refs.mapcard.addmarkers(gpslist);

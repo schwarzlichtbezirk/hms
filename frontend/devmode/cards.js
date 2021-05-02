@@ -34,6 +34,24 @@ const listmodenext = {
 
 const noderadius = 15;
 
+const gpxcolors = [
+	'#6495ED', // CornflowerBlue
+	'#DA70D6', // Orchid
+	'#DAA520', // GoldenRod
+	'#9370DB', // MediumPurple
+	'#DB7093', // PaleVioletRed
+	'#8FBC8F', // DarkSeaGreen
+	'#FF7F50', // Coral
+	'#9ACD32', // YellowGreen
+	'#BC8F8F', // RosyBrown
+	'#5F9EA0', // CadetBlue
+	'#778899', // LightSlateGray
+	'#F4A460', // SandyBrown
+	'#FA8072', // Salmon
+	'#20B2AA', // LightSeaGreen
+	'#4169E1'  // RoyalBlue
+];
+
 const copyTextToClipboard = text => {
 	const elem = document.createElement("textarea");
 	elem.value = text;
@@ -608,13 +626,14 @@ Vue.component('map-card-tag', {
 			phototrack: null,
 			showtrack: false,
 			gpslist: [],
+			gpxlist: [],
 
 			iid: makestrid(10) // instance ID
 		};
 	},
 	computed: {
 		isvisible() {
-			return this.gpslist.length > 0;
+			return this.gpslist.length > 0 || this.gpxlist.length > 0;
 		},
 		clsmapboxhybrid() {
 			return { active: this.styleid === 'mapbox-hybrid' };
@@ -712,6 +731,13 @@ Vue.component('map-card-tag', {
 				// new empty list
 				this.gpslist = [];
 			}
+			// remove previous gpx-tracks
+			for (const gpx of this.gpxlist) {
+				if (gpx.layer) {
+					this.map.removeLayer(gpx.layer);
+				}
+			}
+			this.gpxlist = [];
 		},
 		// make tiles layer
 		maketiles(id) {
@@ -849,18 +875,16 @@ Vue.component('map-card-tag', {
 				if (mustsize) {
 					this.map.invalidateSize();
 				}
-				this.map.flyToBounds(this.markers.getBounds(), {
-					padding: [20, 20]
-				});
+				this.onfitbounds();
 			});
 
 			this.gpslist.push(...gpslist);
 			if (this.showtrack) {
-				this.maketrack();
+				this.makephototrack();
 			}
 		},
 		// produces reduced track polyline
-		maketrack() {
+		makephototrack() {
 			let last = L.latLng(this.gpslist[0].latitude, this.gpslist[0].longitude, this.gpslist[0].altitude);
 			let prev = last;
 			let route = 0, trk = 0, asc = 0;
@@ -882,9 +906,44 @@ Vue.component('map-card-tag', {
 			if (this.phototrack) {
 				this.map.removeLayer(this.phototrack);
 			}
-			this.phototrack = L.polyline(latlngs, { color: '#3CB371' })
+			this.phototrack = L.polyline(latlngs, { color: '#3CB371' }) // MediumSeaGreen
 				.bindPopup(`total <b>${latlngs.length}</b> waypoints<br>route <b>${route.toFixed()}</b> m<br>track <b>${trk.toFixed()}</b> m<br>ascent <b>${asc.toFixed()}</b> m`)
 				.addTo(this.map);
+		},
+		// add GPX track polyline
+		addgpx(fp) {
+			const gpx = {};
+			gpx.prop = fp;
+			gpx.trkpt = [];
+			const ci = this.gpxlist.length % gpxcolors.length;
+			this.gpxlist.push(gpx);
+
+			(async () => {
+				ajaxcc.emit('ajax', +1);
+				try {
+					const response = await fetch(fileurl(fp));
+					const body = await response.text();
+					const re = /lat="(\d+\.\d+)" lon="(\d+\.\d+)"/g;
+					const matches = body.matchAll(re);
+					let prev = null;
+					let route = 0;
+					for (const m of matches) {
+						const p = L.latLng(Number(m[1]), Number(m[2]));
+						if (prev) {
+							route += p.distanceTo(prev);
+						}
+						prev = p;
+						gpx.trkpt.push(p);
+					}
+					gpx.layer = L.polyline(gpx.trkpt, { color: gpxcolors[ci] })
+						.bindPopup(`points <b>${gpx.trkpt.length}</b><br>route <b>${route.toFixed()}</b> m`)
+						.addTo(this.map);
+				} catch (e) {
+					ajaxfail(e);
+				} finally {
+					ajaxcc.emit('ajax', -1);
+				}
+			})();
 		},
 
 		onmapboxhybrid() {
@@ -923,7 +982,7 @@ Vue.component('map-card-tag', {
 		onphototrack() {
 			this.showtrack = !this.showtrack;
 			if (this.showtrack) {
-				this.maketrack();
+				this.makephototrack();
 			} else {
 				this.map.removeLayer(this.phototrack);
 				this.phototrack = null;
@@ -943,7 +1002,13 @@ Vue.component('map-card-tag', {
 			this.addmarkers(gpslist);
 		},
 		onfitbounds() {
-			this.map.flyToBounds(this.markers.getBounds(), {
+			const bounds = this.markers.getBounds();
+			for (const gpx of this.gpxlist) {
+				if (gpx.layer) {
+					bounds.extend(gpx.layer.getBounds());
+				}
+			}
+			this.map.flyToBounds(bounds, {
 				padding: [20, 20]
 			});
 		}

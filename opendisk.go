@@ -187,11 +187,9 @@ func ScanDir(syspath string, cg *CatGrp, skip func(string) bool) (ret []Pather, 
 	}
 
 	var fgrp = FileGrp{}
-	var dec = charmap.Windows1251.NewDecoder()
 	for _, fi := range files {
 		if fi != nil {
-			var name, _ = dec.String(fi.Name())
-			var fpath = path.Join(syspath, name)
+			var fpath = path.Join(syspath, fi.Name())
 			if !skip(fpath) {
 				var grp = GetFileGroup(fpath)
 				if cg[grp] {
