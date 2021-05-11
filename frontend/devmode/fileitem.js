@@ -351,7 +351,7 @@ Vue.component('file-icon-tag', {
 		},
 		pngicon() {
 			if (this.file.ntmb === 1 && this.tm) {
-				return `/id${app.aid}/thumb/${this.file.puid}`;
+				return `/id${this.$root.aid}/thumb/${this.file.puid}`;
 			} else if (this.im.iconpng) {
 				const res = geticonpath(this.file, this.im, this.state.shared);
 				return (res.org || res.alt) + '.png';
@@ -449,7 +449,7 @@ Vue.component('img-icon-tag', {
 		},
 		pngicon() {
 			if (this.file.ntmb === 1 && this.tm) {
-				return `/id${app.aid}/thumb/${this.file.puid}`;
+				return `/id${this.$root.aid}/thumb/${this.file.puid}`;
 			} else if (this.im.iconpng) {
 				const res = geticonpath(this.file, this.im, this.state.shared);
 				return (res.org || res.alt) + '.png';

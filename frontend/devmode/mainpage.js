@@ -845,7 +845,7 @@ const app = new Vue({
 			this.shrname = "";
 
 			// init map card
-			this.$refs.mapcard.new();
+			this.$refs.mcard.new();
 			// update map card
 			if (this.filelist.length) {
 				const gpslist = [];
@@ -854,10 +854,10 @@ const app = new Vue({
 						gpslist.push(fp);
 					}
 					if (pathext(fp.name) === ".gpx") {
-						this.$refs.mapcard.addgpx(fp);
+						this.$refs.mcard.addgpx(fp);
 					}
 				}
-				this.$refs.mapcard.addmarkers(gpslist);
+				this.$refs.mcard.addmarkers(gpslist);
 			}
 		},
 
@@ -894,7 +894,7 @@ const app = new Vue({
 			this.shrname = response.data.shrname;
 
 			// init map card
-			this.$refs.mapcard.new();
+			this.$refs.mcard.new();
 			// update map card
 			if (this.filelist.length) {
 				const gpslist = [];
@@ -903,10 +903,10 @@ const app = new Vue({
 						gpslist.push(fp);
 					}
 					if (pathext(fp.name) === ".gpx") {
-						this.$refs.mapcard.addgpx(fp);
+						this.$refs.mcard.addgpx(fp);
 					}
 				}
-				this.$refs.mapcard.addmarkers(gpslist);
+				this.$refs.mcard.addmarkers(gpslist);
 			}
 		},
 
@@ -970,7 +970,7 @@ const app = new Vue({
 							}
 						}
 						// update map card
-						this.$refs.mapcard.addmarkers(gpslist);
+						this.$refs.mcard.addmarkers(gpslist);
 						// wait and run again
 						await new Promise(resolve => setTimeout(resolve, 1500));
 					}

@@ -60,15 +60,15 @@
 
 	<div id="accordion">
 		<template>
-			<dir-card-tag v-bind:list="pathlist" v-bind:shared="shared" v-on:open="onpathopen" v-on:share="onshare" />
+			<dir-card-tag ref="dcard" v-bind:list="pathlist" v-bind:shared="shared" v-on:open="onpathopen" v-on:share="onshare" />
 		</template>
 
 		<template>
-			<file-card-tag v-bind:list="filelist" v-bind:shared="shared" v-on:open="onpathopen" v-on:share="onshare" />
+			<file-card-tag ref="fcard" v-bind:list="filelist" v-bind:shared="shared" v-on:open="onpathopen" v-on:share="onshare" />
 		</template>
 
 		<template>
-			<map-card-tag ref="mapcard" />
+			<map-card-tag ref="mcard" />
 		</template>
 	</div>
 

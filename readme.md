@@ -16,7 +16,7 @@ Compiled binaries can be downloaded in [Releases](https://github.com/schwarzlich
 
 # How to build
 
-At first, install [Golang](https://golang.org/) minimum 1.13 version, and run those commands in command prompt:
+At first, install [Golang](https://golang.org/) minimum 1.16 version, and run those commands in command prompt:
 
 ```batch
 go get github.com/schwarzlichtbezirk/hms

@@ -14,12 +14,12 @@
 			<div class="progress position-relative">
 				<div class="current progress-bar" v-bind:style="stlbarcur" v-bind:aria-valuenow="timecur" aria-valuemin="0" v-bind:aria-valuemax="timeend"></div>
 				<div class="buffer progress-bar" v-bind:style="stlbarbuf" v-bind:aria-valuenow="timebuf" aria-valuemin="0" v-bind:aria-valuemax="timeend"></div>
-				<div class="timer justify-content-center align-self-center d-flex position-absolute w-100">{{fmttimecur}}&nbsp/&nbsp{{fmttimeend}}</div>
+				<div class="timer justify-content-center align-self-center position-absolute w-100">{{fmttimecur}}&nbsp/&nbsp{{fmttimeend}}</div>
 				<input class="seeker position-absolute w-100" min="0" type="range" v-bind:max="timeend" v-bind:value="timecur" v-bind:disabled="!ready" v-on:change="onseekerchange" v-on:input="onseekerinput">
 			</div>
-			<div>{{fmttrackinfo}}</div>
+			<div class="text-truncate d-inline-block">{{fmttrackinfo}}</div>
 		</div>
-		<ul class="navbar-nav flex-row flex-md-column">
+		<ul class="navbar-nav flex-row flex-md-column justify-content-around">
 			<li class="d-flex flex-nowrap align-items-baseline" title="volume">
 				<input type="range" class="mp3range" v-on:input="onvolinp" v-on:change="onvolval" min="0" max="100" value="100">
 				<output class="range-label">{{volumelabel}}%</output>

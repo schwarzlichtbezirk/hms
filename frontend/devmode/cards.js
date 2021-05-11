@@ -197,7 +197,7 @@ Vue.component('dir-card-tag', {
 				ajaxcc.emit('ajax', +1);
 				try {
 					const response = await fetchajaxauth("POST", "/api/drive/add", {
-						aid: app.aid,
+						aid: this.$root.aid,
 						path: this.diskpath
 					});
 					traceajax(response);
@@ -222,7 +222,7 @@ Vue.component('dir-card-tag', {
 				ajaxcc.emit('ajax', +1);
 				try {
 					const response = await fetchajaxauth("POST", "/api/drive/del", {
-						aid: app.aid,
+						aid: this.$root.aid,
 						puid: this.selfile.puid
 					});
 					traceajax(response);
@@ -247,7 +247,7 @@ Vue.component('dir-card-tag', {
 			(async () => {
 				try {
 					const response = await fetchajaxauth("POST", "/card/path/ispath", {
-						aid: app.aid,
+						aid: this.$root.aid,
 						path: this.diskpath
 					});
 					if (response.ok) {
@@ -296,7 +296,16 @@ Vue.component('file-card-tag', {
 			sortmode: sortmode.byalpha,
 			listmode: "smicon",
 			thumbmode: true,
-			audio: true, video: true, image: true, books: true, texts: true, packs: true, other: false,
+			fgshow: [
+				false, // other
+				true, // video
+				true, // audio
+				true, // image
+				true, // books
+				true, // texts
+				true, // packs
+				true // dir
+			],
 			audioonly: false,
 			viewer: null, // file viewers
 
@@ -322,7 +331,7 @@ Vue.component('file-card-tag', {
 		playlist() {
 			const res = [];
 			for (const file of this.list) {
-				if (this.showitem(file)) {
+				if (this.fgshow[getFileGroup(file)]) {
 					res.push(file);
 				}
 			}
@@ -390,14 +399,11 @@ Vue.component('file-card-tag', {
 		showtexts() {
 			return !!this.list.find(file => getFileGroup(file) === FG.texts);
 		},
-		showdisks() {
+		showpacks() {
 			return !!this.list.find(file => getFileGroup(file) === FG.packs);
 		},
 		showother() {
-			return !!this.list.find(file => {
-				const fg = getFileGroup(file);
-				return !file.type || fg === FG.packs || fg === FG.other;
-			});
+			return !!this.list.find(file => getFileGroup(file) === FG.other);
 		},
 
 		clsthumbmode() {
@@ -407,25 +413,25 @@ Vue.component('file-card-tag', {
 			return { active: this.audioonly };
 		},
 		clsaudio() {
-			return { active: this.audio };
+			return { active: this.fgshow[FG.audio] };
 		},
 		clsvideo() {
-			return { active: this.video };
+			return { active: this.fgshow[FG.video] };
 		},
 		clsphoto() {
-			return { active: this.image };
+			return { active: this.fgshow[FG.image] };
 		},
 		clsbooks() {
-			return { active: this.books };
+			return { active: this.fgshow[FG.books] };
 		},
 		clstexts() {
-			return { active: this.texts };
+			return { active: this.fgshow[FG.texts] };
 		},
-		clsdisks() {
-			return { active: this.packs };
+		clspacks() {
+			return { active: this.fgshow[FG.packs] };
 		},
 		clsother() {
-			return { active: this.other };
+			return { active: this.fgshow[FG.other] };
 		},
 
 		iconmodetag() {
@@ -452,27 +458,6 @@ Vue.component('file-card-tag', {
 		}
 	},
 	methods: {
-		// show/hide functions
-		showitem(file) {
-			switch (getFileGroup(file)) {
-				case FG.dir:
-					return true;
-				case FG.audio:
-					return this.audio;
-				case FG.video:
-					return this.video;
-				case FG.image:
-					return this.image;
-				case FG.books:
-					return this.books;
-				case FG.texts:
-					return this.texts;
-				case FG.packs:
-					return this.packs;
-				default:
-					return this.other;
-			}
-		},
 		isshared(file) {
 			for (const shr of this.shared) {
 				if (shr.puid === file.puid) {
@@ -532,25 +517,25 @@ Vue.component('file-card-tag', {
 			this.audioonly = !this.audioonly;
 		},
 		onaudio() {
-			this.audio = !this.audio;
+			this.fgshow[FG.audio] = !this.fgshow[FG.audio];
 		},
 		onvideo() {
-			this.video = !this.video;
+			this.fgshow[FG.video] = !this.fgshow[FG.video];
 		},
 		onphoto() {
-			this.image = !this.image;
+			this.fgshow[FG.image] = !this.fgshow[FG.image];
 		},
 		onbooks() {
-			this.books = !this.books;
+			this.fgshow[FG.books] = !this.fgshow[FG.books];
 		},
 		ontexts() {
-			this.texts = !this.texts;
+			this.fgshow[FG.texts] = !this.fgshow[FG.texts];
 		},
-		ondisks() {
-			this.packs = !this.packs;
+		onpacks() {
+			this.fgshow[FG.packs] = !this.fgshow[FG.packs];
 		},
 		onother() {
-			this.other = !this.other;
+			this.fgshow[FG.other] = !this.fgshow[FG.other];
 		},
 
 		onselect(file) {
