@@ -163,6 +163,9 @@ Vue.component('dir-card-tag', {
 		}
 	},
 	methods: {
+		authclosure(is) {
+			this.isauth = is;
+		},
 		isshared(file) {
 			for (const shr of this.shared) {
 				if (shr.puid === file.puid) {
@@ -194,7 +197,7 @@ Vue.component('dir-card-tag', {
 
 		ondiskadd() {
 			(async () => {
-				ajaxcc.emit('ajax', +1);
+				eventHub.$emit('ajax', +1);
 				try {
 					const response = await fetchajaxauth("POST", "/api/drive/add", {
 						aid: this.$root.aid,
@@ -213,13 +216,13 @@ Vue.component('dir-card-tag', {
 				} catch (e) {
 					ajaxfail(e);
 				} finally {
-					ajaxcc.emit('ajax', -1);
+					eventHub.$emit('ajax', -1);
 				}
 			})();
 		},
 		ondiskremove() {
 			(async () => {
-				ajaxcc.emit('ajax', +1);
+				eventHub.$emit('ajax', +1);
 				try {
 					const response = await fetchajaxauth("POST", "/api/drive/del", {
 						aid: this.$root.aid,
@@ -239,7 +242,7 @@ Vue.component('dir-card-tag', {
 				} catch (e) {
 					ajaxfail(e);
 				} finally {
-					ajaxcc.emit('ajax', -1);
+					eventHub.$emit('ajax', -1);
 				}
 			})();
 		},
@@ -271,15 +274,16 @@ Vue.component('dir-card-tag', {
 			this.onselect(null);
 		}
 	},
+	created() {
+		eventHub.$on('auth', this.authclosure);
+	},
 	mounted() {
-		this._authclosure = is => this.isauth = is;
-		auth.on('auth', this._authclosure);
 		$('#diskadd' + this.iid).on('shown.bs.modal', function () {
 			$(this).find('input').trigger('focus');
 		});
 	},
 	beforeDestroy() {
-		auth.off('auth', this._authclosure);
+		eventHub.$off('auth', this.authclosure);
 		$('#diskadd' + this.iid).off('shown.bs.modal');
 	}
 });
@@ -458,6 +462,9 @@ Vue.component('file-card-tag', {
 		}
 	},
 	methods: {
+		authclosure(is) {
+			this.isauth = is;
+		},
 		isshared(file) {
 			for (const shr of this.shared) {
 				if (shr.puid === file.puid) {
@@ -590,12 +597,11 @@ Vue.component('file-card-tag', {
 			this.playbackfile = file;
 		}
 	},
-	mounted() {
-		this._authclosure = is => this.isauth = is;
-		auth.on('auth', this._authclosure);
+	created() {
+		eventHub.$on('auth', this.authclosure);
 	},
 	beforeDestroy() {
-		auth.off('auth', this._authclosure);
+		eventHub.$off('auth', this.authclosure);
 	}
 });
 
@@ -904,7 +910,7 @@ Vue.component('map-card-tag', {
 			this.gpxlist.push(gpx);
 
 			(async () => {
-				ajaxcc.emit('ajax', +1);
+				eventHub.$emit('ajax', +1);
 				try {
 					const response = await fetch(fileurl(fp));
 					const body = await response.text();
@@ -926,7 +932,7 @@ Vue.component('map-card-tag', {
 				} catch (e) {
 					ajaxfail(e);
 				} finally {
-					ajaxcc.emit('ajax', -1);
+					eventHub.$emit('ajax', -1);
 				}
 			})();
 		},

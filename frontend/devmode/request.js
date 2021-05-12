@@ -1,7 +1,9 @@
 "use strict";
 // All what is need for ajax.
 
-const auth = extend({
+const eventHub = new Vue();
+
+const auth = {
 	token: {
 		access: null,
 		refrsh: null
@@ -27,14 +29,14 @@ const auth = extend({
 			sessionStorage.setItem('login', lgn);
 			this.login = lgn;
 		}
-		this.emit('auth', true);
+		eventHub.$emit('auth', true);
 	},
 	signout() {
 		sessionStorage.removeItem('token');
 		this.token.access = null;
 		this.token.refrsh = null;
 		// login remains unchanged
-		this.emit('auth', false);
+		eventHub.$emit('auth', false);
 	},
 	signload() {
 		try {
@@ -42,18 +44,15 @@ const auth = extend({
 			this.token.access = tok.access;
 			this.token.refrsh = tok.refrsh;
 			this.login = sessionStorage.getItem('login') || "";
-			this.emit('auth', true);
+			eventHub.$emit('auth', true);
 		} catch {
 			this.token.access = null;
 			this.token.refrsh = null;
 			this.login = "";
-			this.emit('auth', false);
+			eventHub.$emit('auth', false);
 		}
 	}
-}, makeeventmodel());
-
-// ajax calls counter
-const ajaxcc = extend({}, makeeventmodel());
+};
 
 // error on HTTP response with given status.
 class HttpError extends Error {

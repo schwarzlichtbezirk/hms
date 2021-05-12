@@ -528,13 +528,19 @@ Vue.component('auth-tag', {
 		}
 	},
 	methods: {
+		authclosure(is) {
+			this.isauth = is;
+			if (is) {
+				this.login = auth.login;
+			}
+		},
 		onauthchange() {
 			this.namestate = 0;
 			this.passstate = 0;
 		},
 		onlogin() {
 			(async () => {
-				ajaxcc.emit('ajax', +1);
+				eventHub.$emit('ajax', +1);
 				try {
 					const resp1 = await fetchjson("POST", "/api/auth/pubkey");
 					const data1 = await resp1.json();
@@ -581,7 +587,7 @@ Vue.component('auth-tag', {
 				} catch (e) {
 					ajaxfail(e);
 				} finally {
-					ajaxcc.emit('ajax', -1);
+					eventHub.$emit('ajax', -1);
 				}
 			})();
 		},
@@ -592,17 +598,11 @@ Vue.component('auth-tag', {
 			this.$emit('refresh');
 		}
 	},
-	mounted() {
-		this._authclosure = is => {
-			this.isauth = is;
-			if (is) {
-				this.login = auth.login;
-			}
-		};
-		auth.on('auth', this._authclosure);
+	created() {
+		eventHub.$on('auth', this.authclosure);
 	},
 	beforeDestroy() {
-		auth.off('auth', this._authclosure);
+		eventHub.$off('auth', this.authclosure);
 	}
 });
 
@@ -789,6 +789,20 @@ const app = new Vue({
 		}
 	},
 	methods: {
+		authclosure(is) {
+			this.isauth = is;
+			if (is) {
+				const claims = auth.claims();
+				if (claims && 'aid' in claims) {
+					this.authid = claims.aid;
+					this.aid = claims.aid;
+				}
+			}
+		},
+		incloadcount(count) {
+			this.loadcount += count;
+		},
+
 		async fetchicons(link) {
 			const response = await fetch(link);
 			if (!response.ok) {
@@ -1045,7 +1059,7 @@ const app = new Vue({
 
 		seticon(iconid) {
 			(async () => {
-				ajaxcc.emit('ajax', +1);
+				eventHub.$emit('ajax', +1);
 				try {
 					for (const v of this.resmodel.iconlist) {
 						if (v.id === iconid) {
@@ -1057,7 +1071,7 @@ const app = new Vue({
 				} catch (e) {
 					ajaxfail(e);
 				} finally {
-					ajaxcc.emit('ajax', -1);
+					eventHub.$emit('ajax', -1);
 				}
 			})();
 		},
@@ -1084,7 +1098,7 @@ const app = new Vue({
 
 		onhome() {
 			(async () => {
-				ajaxcc.emit('ajax', +1);
+				eventHub.$emit('ajax', +1);
 				try {
 					// open route and push history step
 					const hist = { cid: "home", aid: this.aid };
@@ -1093,14 +1107,14 @@ const app = new Vue({
 				} catch (e) {
 					ajaxfail(e);
 				} finally {
-					ajaxcc.emit('ajax', -1);
+					eventHub.$emit('ajax', -1);
 				}
 			})();
 		},
 
 		onback() {
 			(async () => {
-				ajaxcc.emit('ajax', +1);
+				eventHub.$emit('ajax', +1);
 				try {
 					this.histpos--;
 					const hist = this.histlist[this.histpos - 1];
@@ -1108,14 +1122,14 @@ const app = new Vue({
 				} catch (e) {
 					ajaxfail(e);
 				} finally {
-					ajaxcc.emit('ajax', -1);
+					eventHub.$emit('ajax', -1);
 				}
 			})();
 		},
 
 		onforward() {
 			(async () => {
-				ajaxcc.emit('ajax', +1);
+				eventHub.$emit('ajax', +1);
 				try {
 					this.histpos++;
 					const hist = this.histlist[this.histpos - 1];
@@ -1123,14 +1137,14 @@ const app = new Vue({
 				} catch (e) {
 					ajaxfail(e);
 				} finally {
-					ajaxcc.emit('ajax', -1);
+					eventHub.$emit('ajax', -1);
 				}
 			})();
 		},
 
 		onparent() {
 			(async () => {
-				ajaxcc.emit('ajax', +1);
+				eventHub.$emit('ajax', +1);
 				try {
 					// open route and push history step
 					const path = this.curpathway.length
@@ -1142,14 +1156,14 @@ const app = new Vue({
 				} catch (e) {
 					ajaxfail(e);
 				} finally {
-					ajaxcc.emit('ajax', -1);
+					eventHub.$emit('ajax', -1);
 				}
 			})();
 		},
 
 		onrefresh() {
 			(async () => {
-				ajaxcc.emit('ajax', +1);
+				eventHub.$emit('ajax', +1);
 				try {
 					await this.fetchopenroute({ cid: this.curcid, aid: this.aid, puid: this.curpuid, path: this.curpath });
 					if (this.isadmin && this.curcid !== "shares") {
@@ -1161,14 +1175,14 @@ const app = new Vue({
 				} catch (e) {
 					ajaxfail(e);
 				} finally {
-					ajaxcc.emit('ajax', -1);
+					eventHub.$emit('ajax', -1);
 				}
 			})();
 		},
 
 		onshare(file) {
 			(async () => {
-				ajaxcc.emit('ajax', +1);
+				eventHub.$emit('ajax', +1);
 				try {
 					if (this.isshared(file)) { // should remove share
 						await this.fetchsharedel(file);
@@ -1178,7 +1192,7 @@ const app = new Vue({
 				} catch (e) {
 					ajaxfail(e);
 				} finally {
-					ajaxcc.emit('ajax', -1);
+					eventHub.$emit('ajax', -1);
 				}
 			})();
 		},
@@ -1186,7 +1200,7 @@ const app = new Vue({
 		onpathopen(file) {
 			if (!file.latency || file.latency > 0) {
 				(async () => {
-					ajaxcc.emit('ajax', +1);
+					eventHub.$emit('ajax', +1);
 					try {
 						// open route and push history step
 						const hist = { aid: this.aid };
@@ -1204,7 +1218,7 @@ const app = new Vue({
 					} catch (e) {
 						ajaxfail(e);
 					} finally {
-						ajaxcc.emit('ajax', -1);
+						eventHub.$emit('ajax', -1);
 					}
 				})();
 			}
@@ -1213,18 +1227,9 @@ const app = new Vue({
 			this.showauth = !this.showauth;
 		}
 	},
-	mounted() {
-		auth.on('auth', is => {
-			this.isauth = is;
-			if (is) {
-				const claims = auth.claims();
-				if (claims && 'aid' in claims) {
-					this.authid = claims.aid;
-					this.aid = claims.aid;
-				}
-			}
-		});
-		ajaxcc.on('ajax', count => this.loadcount += count);
+	created() {
+		eventHub.$on('auth', this.authclosure);
+		eventHub.$on('ajax', this.incloadcount);
 
 		auth.signload();
 		this.login = auth.login;
@@ -1232,7 +1237,12 @@ const app = new Vue({
 			console.log("token:", auth.token);
 			console.log("login:", auth.login);
 		}
-
+	},
+	beforeDestroy() {
+		eventHub.$off('auth', this.authclosure);
+		eventHub.$off('ajax', this.incloadcount);
+	},
+	mounted() {
 		const chunks = decodeURI(window.location.pathname).split('/');
 		// remove first empty element
 		chunks.shift();
@@ -1271,7 +1281,7 @@ const app = new Vue({
 
 		// open route
 		(async () => {
-			ajaxcc.emit('ajax', +1);
+			eventHub.$emit('ajax', +1);
 			try {
 				// open route and push history step
 				await this.fetchopenroute(hist);
@@ -1285,13 +1295,13 @@ const app = new Vue({
 			} catch (e) {
 				ajaxfail(e);
 			} finally {
-				ajaxcc.emit('ajax', -1);
+				eventHub.$emit('ajax', -1);
 			}
 		})();
 
 		// load resources
 		(async () => {
-			ajaxcc.emit('ajax', +1);
+			eventHub.$emit('ajax', +1);
 			try {
 				// load model at first to give an opportunity switch to another skin/iconset on failure
 				const response = await fetch("/data/assets/resmodel.json");
@@ -1318,7 +1328,7 @@ const app = new Vue({
 			} catch (e) {
 				ajaxfail(e);
 			} finally {
-				ajaxcc.emit('ajax', -1);
+				eventHub.$emit('ajax', -1);
 			}
 		})();
 	}
