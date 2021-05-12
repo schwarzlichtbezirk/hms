@@ -276,6 +276,7 @@ Vue.component('dir-card-tag', {
 	},
 	created() {
 		eventHub.$on('auth', this.authclosure);
+		eventHub.$on('select', this.onselect);
 	},
 	mounted() {
 		$('#diskadd' + this.iid).on('shown.bs.modal', function () {
@@ -284,6 +285,7 @@ Vue.component('dir-card-tag', {
 	},
 	beforeDestroy() {
 		eventHub.$off('auth', this.authclosure);
+		eventHub.$off('select', this.onselect);
 		$('#diskadd' + this.iid).off('shown.bs.modal');
 	}
 });
@@ -577,7 +579,7 @@ Vue.component('file-card-tag', {
 			switch (getFileGroup(file)) {
 				case FG.image:
 					this.closeviewer();
-					this.$refs.slider.popup(file);
+					this.$root.$refs.slider.popup(file, this.playlist);
 					break;
 				case FG.packs:
 					if (pathext(file.name) === ".iso") {
@@ -599,9 +601,11 @@ Vue.component('file-card-tag', {
 	},
 	created() {
 		eventHub.$on('auth', this.authclosure);
+		eventHub.$on('select', this.onselect);
 	},
 	beforeDestroy() {
 		eventHub.$off('auth', this.authclosure);
+		eventHub.$off('select', this.onselect);
 	}
 });
 
@@ -853,7 +857,7 @@ Vue.component('map-card-tag', {
 				template.innerHTML = makemarkercontent(file).trim();
 				const popup = template.content.firstChild;
 				popup.querySelector(".photoinfo picture").addEventListener('click', () => {
-					this.$refs.slider.popup(file);
+					this.$root.$refs.slider.popup(file, this.gpslist);
 				});
 
 				L.marker([file.latitude, file.longitude], opt)

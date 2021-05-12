@@ -9,7 +9,7 @@ const isMainVideo = ext => ({
 	".mp4": true, ".webm": true
 })[ext];
 
-const mp3filter = file => isMainAudio(pathext(file.name)) || isMainVideo(pathext(file.name));
+const mp3filter = file => !file.type && file.size && (isMainAudio(pathext(file.name)) || isMainVideo(pathext(file.name)));
 
 Vue.component('mp3-player-tag', {
 	template: '#mp3-player-tpl',
@@ -239,7 +239,7 @@ Vue.component('mp3-player-tag', {
 
 		onprev() {
 			if (this.getprev) {
-				this.$emit('select', this.getprev);
+				eventHub.$emit('select', this.getprev);
 			}
 		},
 
@@ -249,7 +249,7 @@ Vue.component('mp3-player-tag', {
 
 		onnext() {
 			if (this.getnext) {
-				this.$emit('select', this.getnext);
+				eventHub.$emit('select', this.getnext);
 			}
 		},
 

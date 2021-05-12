@@ -446,8 +446,10 @@ body {
 		cursor: pointer;
 	}
 
-	.photoslider > .sliderbtn.disabled {
+	.photoslider > .sliderbtn.disabled, .photoslider > .sliderbtn:disabled {
 		color: rgba(255, 255, 255, 0.25);
+		pointer-events: none;
+		cursor: default;
 	}
 
 	.photoslider > .sliderbtn.active {

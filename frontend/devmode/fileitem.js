@@ -389,7 +389,7 @@ Vue.component('file-icon-tag', {
 	},
 	methods: {
 		onselect() {
-			this.$emit('select', this.file);
+			eventHub.$emit('select', this.file);
 		},
 
 		onopen() {
@@ -465,7 +465,7 @@ Vue.component('img-icon-tag', {
 	},
 	methods: {
 		onselect() {
-			this.$emit('select', this.file);
+			eventHub.$emit('select', this.file);
 		},
 
 		onopen() {

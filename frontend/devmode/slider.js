@@ -10,7 +10,7 @@ const isMainImage = ext => ({
 	".gif": true, ".png": true, ".webp": true, ".psd": true, ".psb": true
 })[ext];
 
-const photofilter = file => file.size && isMainImage(pathext(file.name));
+const photofilter = file => !file.type && file.size && isMainImage(pathext(file.name));
 
 Vue.component('thumbslider-tag', {
 	template: '#thumbslider-tpl',
@@ -38,16 +38,16 @@ Vue.component('thumbslider-tag', {
 			this.$refs.slide.scrollBy({ left: +120, behavior: 'smooth' });
 		},
 		onthumb(file) {
-			this.$emit('select', file);
+			eventHub.$emit('select', file);
 		}
 	}
 });
 
 Vue.component('photoslider-tag', {
 	template: '#photoslider-tpl',
-	props: ["list"],
 	data: function () {
 		return {
+			list: [],
 			selfile: null,
 			imgloading: false,
 			repeatmode: 0 // 0 - no any repeat, 1 - repeat single, 2 - repeat playlist
@@ -95,6 +95,9 @@ Vue.component('photoslider-tag', {
 		}
 	},
 	methods: {
+		isvisible() {
+			return this.$refs.modal.offsetWidth > 0 && this.$refs.modal.offsetHeight > 0;
+		},
 		load(file) {
 			if (this.selfile !== file) {
 				if (file) {
@@ -106,16 +109,12 @@ Vue.component('photoslider-tag', {
 				}
 			}
 		},
-		select(file) {
-			this.load(file);
-			this.$emit('select', file);
-		},
-		popup(file) {
+		popup(file, list) {
+			this.list = list || [file];
 			this.load(file);
 			$(this.$refs.modal).modal('show');
 		},
 		close() {
-			this.load(null);
 			$(this.$refs.modal).modal('hide');
 		},
 
@@ -136,32 +135,49 @@ Vue.component('photoslider-tag', {
 					break;
 				case 'Home':
 					if (this.list) {
-						this.select(this.list[0]);
+						eventHub.$emit('select', this.list[0]);
 					}
 					break;
 				case 'End':
 					if (this.list) {
-						this.select(this.list[this.list.length - 1]);
+						eventHub.$emit('select', this.list[this.list.length - 1]);
 					}
 					break;
 			}
 		},
 		onselect(file) {
-			this.select(file);
+			if (this.isvisible() && (!file || photofilter(file))) {
+				this.load(file);
+			}
 		},
 		onprev() {
 			if (this.getprev) {
-				this.select(this.getprev);
+				eventHub.$emit('select', this.getprev);
 			}
 		},
 		onnext() {
 			if (this.getnext) {
-				this.select(this.getnext);
+				eventHub.$emit('select', this.getnext);
 			}
 		},
 		onclose() {
 			this.close();
 		}
+	},
+	created() {
+		eventHub.$on('select', this.onselect);
+	},
+	mounted() {
+		$(this.$refs.modal).on('shown.bs.modal', e => {
+		});
+		$(this.$refs.modal).on('hidden.bs.modal', e => {
+			this.load(null);
+		});
+	},
+	beforeDestroy() {
+		eventHub.$off('select', this.onselect);
+		$(this.$refs.modal).off('shown.bs.modal');
+		$(this.$refs.modal).off('hidden.bs.modal');
 	}
 });
 

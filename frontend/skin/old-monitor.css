@@ -568,14 +568,7 @@ a, .btn-link {
 
 /* Photo slider section */
 
-.photoslider > img {
-	max-width: 100%;
-	max-height: 100%;
-	width: 100%;
-	height: 100%;
-}
-
-.photoslider > .sliderbtn {
+.sliderbtn {
 	font-size: 2rem;
 	color: rgba(255, 255, 255, 0.5);
 	border-radius: 0.5rem;
@@ -586,21 +579,53 @@ a, .btn-link {
 	transition: 0.3s;
 }
 
-	.photoslider > .sliderbtn:hover,
-	.photoslider > .sliderbtn:focus {
+	.sliderbtn:hover,
+	.sliderbtn:focus {
 		color: rgba(255, 255, 255, 0.75);
 		background-color: rgba(255, 255, 255, 0.3);
 		text-decoration: none;
 		cursor: pointer;
 	}
 
-	.photoslider > .sliderbtn.disabled {
+	.sliderbtn.disabled, .sliderbtn:disabled {
 		color: rgba(255, 255, 255, 0.25);
+		pointer-events: none;
+		cursor: default;
 	}
 
-	.photoslider > .sliderbtn.active {
+	.sliderbtn.active {
 		color: PaleGreen;
 	}
+
+	.sliderbtn.prev {
+		position: absolute;
+		top: 50%;
+		left: 8px;
+		transform: translate(0,-50%);
+		padding: 4rem 0.75rem;
+	}
+
+	.sliderbtn.next {
+		position: absolute;
+		top: 50%;
+		right: 8px;
+		transform: translate(0,-50%);
+		padding: 4rem 0.75rem;
+	}
+
+	.sliderbtn.shut {
+		position: absolute;
+		top: 8px;
+		right: 8px;
+		padding: 0.75rem;
+	}
+
+.photoslider > img {
+	max-width: 100%;
+	max-height: 100%;
+	width: 100%;
+	height: 100%;
+}
 
 .photoslider > .thumbs {
 	position: absolute;
@@ -617,29 +642,6 @@ a, .btn-link {
 	.photoslider > .thumbs:hover {
 		opacity: 1;
 	}
-
-.photoslider > .prev {
-	position: absolute;
-	top: 50%;
-	left: 8px;
-	transform: translate(0,-50%);
-	padding: 4rem 0.75rem;
-}
-
-.photoslider > .next {
-	position: absolute;
-	top: 50%;
-	right: 8px;
-	transform: translate(0,-50%);
-	padding: 4rem 0.75rem;
-}
-
-.photoslider > .close {
-	position: absolute;
-	top: 8px;
-	right: 8px;
-	padding: 0.5rem 0.75rem;
-}
 
 @media (max-width:768px) {
 	.photoslider > .thumbs {

@@ -5,12 +5,12 @@
 			<img v-bind:src="selfileurl" v-on:load="onimgload" v-on:error="onimgerror" />
 			<div class="thumbs p-2">
 				<template v-if="islist">
-					<thumbslider-tag v-bind:selfile="selfile" v-bind:list="list" v-on:select="onselect" />
+					<thumbslider-tag v-bind:selfile="selfile" v-bind:list="list" />
 				</template>
 			</div>
-			<div class="sliderbtn prev" v-show="islist" v-on:click="onprev" v-bind:disabled="!getprev"><i class="material-icons">arrow_back</i></div>
-			<div class="sliderbtn next" v-show="islist" v-on:click="onnext" v-bind:disabled="!getnext"><i class="material-icons">arrow_forward</i></div>
-			<div class="sliderbtn close" v-on:click="onclose">&times;</div>
+			<button class="sliderbtn prev" v-show="islist" v-on:click="onprev" v-bind:disabled="!getprev"><i class="material-icons">arrow_back</i></button>
+			<button class="sliderbtn next" v-show="islist" v-on:click="onnext" v-bind:disabled="!getnext"><i class="material-icons">arrow_forward</i></button>
+			<button class="sliderbtn shut" v-on:click="onclose"><i class="material-icons">close</i></button>
 			<div class="preloader-bar" v-show="imgloading">
 				<span></span>
 				<span></span>
