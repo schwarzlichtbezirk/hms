@@ -528,12 +528,6 @@ Vue.component('auth-tag', {
 		}
 	},
 	methods: {
-		authclosure(is) {
-			this.isauth = is;
-			if (is) {
-				this.login = auth.login;
-			}
-		},
 		onauthchange() {
 			this.namestate = 0;
 			this.passstate = 0;
@@ -596,6 +590,13 @@ Vue.component('auth-tag', {
 			this.namestate = 0;
 			this.passstate = 0;
 			this.$emit('refresh');
+		},
+
+		authclosure(is) {
+			this.isauth = is;
+			if (is) {
+				this.login = auth.login;
+			}
 		}
 	},
 	created() {
@@ -789,20 +790,6 @@ const app = new Vue({
 		}
 	},
 	methods: {
-		authclosure(is) {
-			this.isauth = is;
-			if (is) {
-				const claims = auth.claims();
-				if (claims && 'aid' in claims) {
-					this.authid = claims.aid;
-					this.aid = claims.aid;
-				}
-			}
-		},
-		incloadcount(count) {
-			this.loadcount += count;
-		},
-
 		async fetchicons(link) {
 			const response = await fetch(link);
 			if (!response.ok) {
@@ -858,6 +845,8 @@ const app = new Vue({
 			this.curpath = "";
 			this.shrname = "";
 
+			// clear current selected
+			eventHub.$emit('select', null);
 			// init map card
 			this.$refs.mcard.new();
 			// update map card
@@ -907,6 +896,8 @@ const app = new Vue({
 			this.curpath = hist.path;
 			this.shrname = response.data.shrname;
 
+			// clear current selected
+			eventHub.$emit('select', null);
 			// init map card
 			this.$refs.mcard.new();
 			// update map card
@@ -1196,40 +1187,68 @@ const app = new Vue({
 				}
 			})();
 		},
-
-		onpathopen(file) {
-			if (!file.latency || file.latency > 0) {
-				(async () => {
-					eventHub.$emit('ajax', +1);
-					try {
-						// open route and push history step
-						const hist = { aid: this.aid };
-						if (file.cid) {
-							hist.cid = file.cid;
-						}
-						if (file.puid) {
-							hist.puid = file.puid;
-						}
-						if (file.path) {
-							hist.path = file.path;
-						}
-						await this.fetchopenroute(hist);
-						this.pushhist(hist);
-					} catch (e) {
-						ajaxfail(e);
-					} finally {
-						eventHub.$emit('ajax', -1);
-					}
-				})();
-			}
-		},
 		onauthcaret() {
 			this.showauth = !this.showauth;
+		},
+
+		authclosure(is) {
+			this.isauth = is;
+			if (is) {
+				const claims = auth.claims();
+				if (claims && 'aid' in claims) {
+					this.authid = claims.aid;
+					this.aid = claims.aid;
+				}
+			}
+		},
+		incloadcount(count) {
+			this.loadcount += count;
+		},
+		onopen(file) {
+			switch (getFileGroup(file)) {
+				case FG.dir:
+				case FG.packs:
+					if (!file.type && pathext(file.name) !== ".iso") { // skip non-iso images
+						break;
+					}
+					if (!file.latency || file.latency > 0) {
+						(async () => {
+							eventHub.$emit('ajax', +1);
+							try {
+								// open route and push history step
+								const hist = { aid: this.aid };
+								if (file.cid) {
+									hist.cid = file.cid;
+								}
+								if (file.puid) {
+									hist.puid = file.puid;
+								}
+								if (file.path) {
+									hist.path = file.path;
+								}
+								await this.fetchopenroute(hist);
+								this.pushhist(hist);
+							} catch (e) {
+								ajaxfail(e);
+							} finally {
+								eventHub.$emit('ajax', -1);
+							}
+						})();
+					}
+					break;
+				case FG.image:
+					this.$refs.slider.popup(file, this.$refs.fcard.playlist);
+					break;
+				default:
+					const url = mediaurl(file);
+					window.open(url, file.name);
+			}
 		}
 	},
 	created() {
 		eventHub.$on('auth', this.authclosure);
 		eventHub.$on('ajax', this.incloadcount);
+		eventHub.$on('open', this.onopen);
 
 		auth.signload();
 		this.login = auth.login;
@@ -1241,6 +1260,7 @@ const app = new Vue({
 	beforeDestroy() {
 		eventHub.$off('auth', this.authclosure);
 		eventHub.$off('ajax', this.incloadcount);
+		eventHub.$off('open', this.onopen);
 	},
 	mounted() {
 		const chunks = decodeURI(window.location.pathname).split('/');

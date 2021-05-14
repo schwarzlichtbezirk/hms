@@ -393,10 +393,10 @@ Vue.component('file-icon-tag', {
 		},
 
 		onopen() {
-			this.$emit('open', this.file);
+			eventHub.$emit('open', this.file);
 		}
 	},
-	mounted() {
+	created() {
 		this.im = iconmapping;
 		this.tm = thumbmode;
 		this._plug = () => {
@@ -469,10 +469,10 @@ Vue.component('img-icon-tag', {
 		},
 
 		onopen() {
-			this.$emit('open', this.file);
+			eventHub.$emit('open', this.file);
 		}
 	},
-	mounted() {
+	created() {
 		this.im = iconmapping;
 		this.tm = thumbmode;
 		this._plug = () => {

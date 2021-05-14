@@ -5,15 +5,18 @@ body {
 }
 
 ::-webkit-scrollbar {
-	width: 0.5rem;
+	width: 0.80rem;
 }
 
 ::-webkit-scrollbar-track {
 	background: #510a86;
+	box-shadow: inset 0 0 0.40rem #343a40;
+	border-radius: 0.40rem;
 }
 
 ::-webkit-scrollbar-thumb {
 	background: #652991;
+	border-radius: 0.40rem;
 }
 
 	::-webkit-scrollbar-thumb:hover {

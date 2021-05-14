@@ -3,7 +3,7 @@
 	<div class="container-fluid folder-head">
 		<nav aria-label="breadcrumb">
 			<ol class="breadcrumb">
-				<li v-for="file in curpathway" class="breadcrumb-item align-self-center"><button v-on:click="onpathopen(file)" v-bind:title="`/id${aid}/path/${file.path}`" class="btn btn-link p-0">{{file.name}}</button></li>
+				<li v-for="file in curpathway" class="breadcrumb-item align-self-center"><button v-on:click="onopen(file)" v-bind:title="`/id${aid}/path/${file.path}`" class="btn btn-link p-0">{{file.name}}</button></li>
 				<li class="breadcrumb-item align-self-center active" aria-current="page">{{curbasename}}</li>
 			</ol>
 		</nav>
@@ -60,15 +60,21 @@
 
 	<div id="accordion">
 		<template>
-			<dir-card-tag ref="dcard" v-bind:list="pathlist" v-bind:shared="shared" v-on:open="onpathopen" v-on:share="onshare" />
+			<dir-card-tag ref="dcard" v-bind:list="pathlist" v-bind:shared="shared" v-on:share="onshare" />
 		</template>
 
 		<template>
-			<file-card-tag ref="fcard" v-bind:list="filelist" v-bind:shared="shared" v-on:open="onpathopen" v-on:share="onshare" />
+			<file-card-tag ref="fcard" v-bind:list="filelist" v-bind:shared="shared" v-on:share="onshare" />
 		</template>
 
 		<template>
 			<map-card-tag ref="mcard" />
+		</template>
+	</div>
+
+	<div class="fixed-bottom">
+		<template>
+			<mp3-player-tag ref="mp3player" />
 		</template>
 	</div>
 

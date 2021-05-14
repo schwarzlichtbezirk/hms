@@ -9,14 +9,17 @@ const isMainVideo = ext => ({
 	".mp4": true, ".webm": true
 })[ext];
 
-const mp3filter = file => !file.type && file.size && (isMainAudio(pathext(file.name)) || isMainVideo(pathext(file.name)));
+const mp3filter = file => {
+	const ext = pathext(file.name);
+	return !file.type && file.size && (isMainAudio(ext) || isMainVideo(ext));
+};
 
 Vue.component('mp3-player-tag', {
 	template: '#mp3-player-tpl',
-	props: ["list"],
 	data: function () {
 		return {
 			visible: false,
+			list: [],
 			selfile: {},
 			volval: 100,
 			ratval: 6,
@@ -122,11 +125,16 @@ Vue.component('mp3-player-tag', {
 		}
 	},
 	methods: {
+		isvisible() {
+			return this.visible;
+		},
 		setup(file) {
 			if (this.selfile.puid === file.puid) { // do not set again same file
 				return;
 			}
-			this.close();
+			if (this.media && !this.media.paused) {
+				this.media.pause();
+			}
 			this.selfile = file;
 
 			this.media = new Audio(mediaurl(file)); // API HTMLMediaElement, HTMLAudioElement
@@ -162,12 +170,12 @@ Vue.component('mp3-player-tag', {
 			this.media.addEventListener('play', () => {
 				this.isplay = true;
 				this.autoplay = true;
-				this.$emit('playback', this.selfile);
+				eventHub.$emit('playback', this.selfile);
 			});
 			this.media.addEventListener('pause', () => {
 				this.isplay = false;
 				this.autoplay = false;
-				this.$emit('playback', null);
+				eventHub.$emit('playback', null);
 			});
 			this.media.addEventListener('ended', () => {
 				this.autoplay = true;
@@ -198,7 +206,12 @@ Vue.component('mp3-player-tag', {
 				})();
 			});
 		},
+		popup(file) {
+			this.visible = true;
+			this.setup(file);
+		},
 		close() {
+			this.visible = false;
 			if (this.media && !this.media.paused) {
 				this.media.pause();
 				return true;
@@ -284,7 +297,35 @@ Vue.component('mp3-player-tag', {
 			if (this.media) {
 				this.media.playbackRate = this.ratevals[this.ratval];
 			}
+		},
+
+		onselect(file) {
+			if (this.isvisible()) {
+				if (file && mp3filter(file)) {
+					this.setup(file);
+				} else {
+					this.close();
+				}
+			} else {
+				if (file && !file.type && file.size) {
+					const ext = pathext(file.name);
+					if (isMainAudio(ext) || isMainVideo(ext) && !this.$root.$refs.fcard.audioonly) {
+						this.popup(file);
+					}
+				}
+			}
+		},
+		onplaylist(list) {
+			this.list = list;
 		}
+	},
+	created() {
+		eventHub.$on('select', this.onselect);
+		eventHub.$on('playlist', this.onplaylist);
+	},
+	beforeDestroy() {
+		eventHub.$off('select', this.onselect);
+		eventHub.$off('playlist', this.onplaylist);
 	}
 });
 

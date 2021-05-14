@@ -91,12 +91,6 @@ Vue.component('dir-card-tag', {
 			return this.isauth || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 		},
 		isvisible() {
-			(() => {
-				if (this.list.find(file => file === this.selfile)) {
-					return;
-				}
-				this.selfile = null;
-			})();
 			return this.list.length > 0;
 		},
 		sortable() {
@@ -174,7 +168,7 @@ Vue.component('dir-card-tag', {
 			}
 			return false;
 		},
-		// playlist files attributes
+		// files list attributes
 		getstate(file) {
 			return {
 				selected: this.selfile === file,
@@ -267,11 +261,8 @@ Vue.component('dir-card-tag', {
 		onselect(file) {
 			this.selfile = file;
 		},
-		onopen(file) {
-			this.$emit('open', file);
-		},
 		onunselect() {
-			this.onselect(null);
+			eventHub.$emit('select', null);
 		}
 	},
 	created() {
@@ -313,7 +304,6 @@ Vue.component('file-card-tag', {
 				true // dir
 			],
 			audioonly: false,
-			viewer: null, // file viewers
 
 			iid: makestrid(10) // instance ID
 		};
@@ -324,13 +314,6 @@ Vue.component('file-card-tag', {
 			return this.isauth || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 		},
 		isvisible() {
-			(() => {
-				if (this.list.find(file => file === this.selfile)) {
-					return;
-				}
-				this.selfile = null;
-				this.closeviewer();
-			})();
 			return this.list.length > 0;
 		},
 		// filtered sorted playlist
@@ -354,6 +337,7 @@ Vue.component('file-card-tag', {
 					}
 				});
 			}
+			eventHub.$emit('playlist', res);
 			return res;
 		},
 
@@ -483,14 +467,6 @@ Vue.component('file-card-tag', {
 				shared: this.isshared(file)
 			};
 		},
-		// close current single file viewer
-		closeviewer() {
-			if (this.viewer) {
-				this.viewer.close();
-				this.viewer.visible = false;
-				this.viewer = null;
-			}
-		},
 
 		onlink() {
 			copyTextToClipboard(window.location.origin + fileurl(this.selfile));
@@ -500,6 +476,7 @@ Vue.component('file-card-tag', {
 		},
 		onorder() {
 			this.sortorder = -this.sortorder;
+			this.playlist; // update playlist now
 		},
 		onsortmode() {
 			switch (this.sortmode) {
@@ -513,6 +490,7 @@ Vue.component('file-card-tag', {
 					this.sortmode = sortmode.byalpha;
 					break;
 			}
+			this.playlist; // update playlist now
 		},
 		onlistmode() {
 			this.listmode = listmodenext[this.listmode];
@@ -527,74 +505,39 @@ Vue.component('file-card-tag', {
 		},
 		onaudio() {
 			this.fgshow[FG.audio] = !this.fgshow[FG.audio];
+			this.playlist; // update playlist now
 		},
 		onvideo() {
 			this.fgshow[FG.video] = !this.fgshow[FG.video];
+			this.playlist; // update playlist now
 		},
 		onphoto() {
 			this.fgshow[FG.image] = !this.fgshow[FG.image];
+			this.playlist; // update playlist now
 		},
 		onbooks() {
 			this.fgshow[FG.books] = !this.fgshow[FG.books];
+			this.playlist; // update playlist now
 		},
 		ontexts() {
 			this.fgshow[FG.texts] = !this.fgshow[FG.texts];
+			this.playlist; // update playlist now
 		},
 		onpacks() {
 			this.fgshow[FG.packs] = !this.fgshow[FG.packs];
+			this.playlist; // update playlist now
 		},
 		onother() {
 			this.fgshow[FG.other] = !this.fgshow[FG.other];
+			this.playlist; // update playlist now
 		},
 
 		onselect(file) {
 			this.selfile = file;
-
-			if (!file) {
-				this.closeviewer();
-				return;
-			}
-
-			// Run viewer/player
-			const ext = pathext(file.name);
-			if (isMainAudio(ext)) {
-				this.viewer = this.$refs.mp3player;
-				this.viewer.setup(file);
-				this.viewer.visible = true;
-			} else if (isMainVideo(ext)) {
-				if (this.audioonly) {
-					this.closeviewer();
-				} else {
-					this.viewer = this.$refs.mp3player;
-					this.viewer.setup(file);
-					this.viewer.visible = true;
-				}
-			} else if (isMainImage(ext)) {
-				this.closeviewer();
-			} else {
-				this.closeviewer();
-			}
-		},
-		onopen(file) {
-			switch (getFileGroup(file)) {
-				case FG.image:
-					this.closeviewer();
-					this.$root.$refs.slider.popup(file, this.playlist);
-					break;
-				case FG.packs:
-					if (pathext(file.name) === ".iso") {
-						this.$emit('open', file);
-					}
-					break;
-				default:
-					const url = mediaurl(file);
-					window.open(url, file.name);
-			}
 		},
 		onunselect() {
-			this.onselect(null);
+			eventHub.$emit('select', null);
 		},
-
 		onplayback(file) {
 			this.playbackfile = file;
 		}
@@ -602,10 +545,12 @@ Vue.component('file-card-tag', {
 	created() {
 		eventHub.$on('auth', this.authclosure);
 		eventHub.$on('select', this.onselect);
+		eventHub.$on('playback', this.onplayback);
 	},
 	beforeDestroy() {
 		eventHub.$off('auth', this.authclosure);
 		eventHub.$off('select', this.onselect);
+		eventHub.$off('playback', this.onplayback);
 	}
 });
 

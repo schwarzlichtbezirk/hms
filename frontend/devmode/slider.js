@@ -100,13 +100,8 @@ Vue.component('photoslider-tag', {
 		},
 		load(file) {
 			if (this.selfile !== file) {
-				if (file) {
-					this.selfile = file;
-					this.imgloading = true;
-				} else {
-					this.selfile = null;
-					this.imgloading = false;
-				}
+				this.selfile = file;
+				this.imgloading = true;
 			}
 		},
 		popup(file, list) {
@@ -145,11 +140,6 @@ Vue.component('photoslider-tag', {
 					break;
 			}
 		},
-		onselect(file) {
-			if (this.isvisible() && (!file || photofilter(file))) {
-				this.load(file);
-			}
-		},
 		onprev() {
 			if (this.getprev) {
 				eventHub.$emit('select', this.getprev);
@@ -162,6 +152,16 @@ Vue.component('photoslider-tag', {
 		},
 		onclose() {
 			this.close();
+		},
+
+		onselect(file) {
+			if (this.isvisible()) {
+				if (file && photofilter(file)) {
+					this.load(file);
+				} else {
+					this.close();
+				}
+			}
 		}
 	},
 	created() {
@@ -171,7 +171,8 @@ Vue.component('photoslider-tag', {
 		$(this.$refs.modal).on('shown.bs.modal', e => {
 		});
 		$(this.$refs.modal).on('hidden.bs.modal', e => {
-			this.load(null);
+			this.selfile = null;
+			this.imgloading = false;
 		});
 	},
 	beforeDestroy() {
