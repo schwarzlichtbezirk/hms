@@ -504,31 +504,31 @@ Vue.component('file-card-tag', {
 			this.audioonly = !this.audioonly;
 		},
 		onaudio() {
-			this.fgshow[FG.audio] = !this.fgshow[FG.audio];
+			Vue.set(this.fgshow, FG.audio, !this.fgshow[FG.audio]);
 			this.playlist; // update playlist now
 		},
 		onvideo() {
-			this.fgshow[FG.video] = !this.fgshow[FG.video];
+			Vue.set(this.fgshow, FG.video, !this.fgshow[FG.video]);
 			this.playlist; // update playlist now
 		},
 		onphoto() {
-			this.fgshow[FG.image] = !this.fgshow[FG.image];
+			Vue.set(this.fgshow, FG.image, !this.fgshow[FG.image]);
 			this.playlist; // update playlist now
 		},
 		onbooks() {
-			this.fgshow[FG.books] = !this.fgshow[FG.books];
+			Vue.set(this.fgshow, FG.books, !this.fgshow[FG.books]);
 			this.playlist; // update playlist now
 		},
 		ontexts() {
-			this.fgshow[FG.texts] = !this.fgshow[FG.texts];
+			Vue.set(this.fgshow, FG.texts, !this.fgshow[FG.texts]);
 			this.playlist; // update playlist now
 		},
 		onpacks() {
-			this.fgshow[FG.packs] = !this.fgshow[FG.packs];
+			Vue.set(this.fgshow, FG.packs, !this.fgshow[FG.packs]);
 			this.playlist; // update playlist now
 		},
 		onother() {
-			this.fgshow[FG.other] = !this.fgshow[FG.other];
+			Vue.set(this.fgshow, FG.other, !this.fgshow[FG.other]);
 			this.playlist; // update playlist now
 		},
 

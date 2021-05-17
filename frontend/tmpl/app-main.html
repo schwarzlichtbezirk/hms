@@ -1,81 +1,85 @@
 
 <div>
-	<div class="container-fluid folder-head">
-		<nav aria-label="breadcrumb">
-			<ol class="breadcrumb">
-				<li v-for="file in curpathway" class="breadcrumb-item align-self-center"><button v-on:click="onopen(file)" v-bind:title="`/id${aid}/path/${file.path}`" class="btn btn-link p-0">{{file.name}}</button></li>
-				<li class="breadcrumb-item align-self-center active" aria-current="page">{{curbasename}}</li>
-			</ol>
-		</nav>
-		<template v-if="curpath">
-			<p v-if="shrname">
-				Shared at <span class="bg-stat">{{shrname}}</span> as
-				<span class="bg-stat"><a v-bind:href="curshorturl" target="_blank">{{curshorturl}}</a></span>
-			</p>
-			<p v-else>Folder does not shared</p>
-			<p class="small">
-				Total <span class="bg-stat">{{pathlist.length}}</span> subfolders,
-				<span class="bg-stat">{{filelist.length}}</span> files on <span class="bg-stat">{{sumsize}}</span>, scanning time <span class="bg-stat">{{curscan.toLocaleTimeString()}}</span>.
-			</p>
-		</template>
-	</div>
-
-	<div class="sticky-top">
-		<nav class="navbar navbar-expand-sm bg-tool w-100">
-			<ul class="navbar-nav flex-row">
-				<li v-show="isadmin||ishome"><button class="btn toolbtn bg-high" v-bind:disabled="dishome" v-on:click="onhome" title="go home"><i class="material-icons">home</i></button></li>
-				<li><button class="btn toolbtn" v-bind:disabled="disback" v-on:click="onback" v-bind:title="hintback"><i class="material-icons">arrow_back</i></button></li>
-				<li><button class="btn toolbtn" v-bind:disabled="disforward" v-on:click="onforward" v-bind:title="hintforward"><i class="material-icons">arrow_forward</i></button></li>
-				<li><button class="btn toolbtn" v-bind:disabled="disparent" v-on:click="onparent" v-bind:title="hintparent"><i class="material-icons">subdirectory_arrow_left</i></button></li>
-				<li><button class="btn toolbtn" v-on:click="onrefresh" title="refresh"><i class="material-icons">refresh</i></button></li>
-			</ul>
-			<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#menuaddon">
-				<span class="navbar-toggler-icon"></span>
-			</button>
-			<div class="collapse navbar-collapse" id="menuaddon">
-				<div class="navbar-nav flex-row ml-auto">
-					<ul class="navbar-nav flex-row">
-						<li class="btn-group">
-							<button class="btn toolbtn dropdown-toggle" data-toggle="dropdown" title="choose skin"><i class="material-icons">color_lens</i></button>
-							<div class="dropdown-menu bg-tool dropdown-menu-right pre-scrollable">
-								<h6 class="dropdown-header">Skins:</h6>
-								<template v-for="item in resmodel.skinlist">
-									<button class="dropdown-item" v-on:click="setskin(item.id)" v-bind:class="{active:skinid===item.id}">{{item.name}}</button>
-								</template>
-								<h6 class="dropdown-header">Icons:</h6>
-								<template v-for="item in resmodel.iconlist">
-									<button class="dropdown-item" v-on:click="seticon(item.id)" v-bind:class="{active:iconid===item.id}">{{item.name}}</button>
-								</template>
-							</div>
-						</li>
-					</ul>
-					<ul class="navbar-nav flex-row">
-						<li v-show="showauth"><auth-tag v-on:refresh="onrefresh" /></li>
-						<li><button class="btn toolbtn" v-on:click="onauthcaret" v-bind:title="hintauthcaret"><i class="material-icons">{{textauthcaret}}</i></button></li>
-					</ul>
-				</div>
+	<div class="d-flex flex-column vh-100">
+		<div class="flex-grow-1 overflow-auto">
+			<div class="container-fluid folder-head">
+				<nav aria-label="breadcrumb">
+					<ol class="breadcrumb">
+						<li v-for="file in curpathway" class="breadcrumb-item align-self-center"><button v-on:click="onopen(file)" v-bind:title="`/id${aid}/path/${file.path}`" class="btn btn-link p-0">{{file.name}}</button></li>
+						<li class="breadcrumb-item align-self-center active" aria-current="page">{{curbasename}}</li>
+					</ol>
+				</nav>
+				<template v-if="curpath">
+					<p v-if="shrname">
+						Shared at <span class="bg-stat">{{shrname}}</span> as
+						<span class="bg-stat"><a v-bind:href="curshorturl" target="_blank">{{curshorturl}}</a></span>
+					</p>
+					<p v-else>Folder does not shared</p>
+					<p class="small">
+						Total <span class="bg-stat">{{pathlist.length}}</span> subfolders,
+						<span class="bg-stat">{{filelist.length}}</span> files on <span class="bg-stat">{{sumsize}}</span>, scanning time <span class="bg-stat">{{curscan.toLocaleTimeString()}}</span>.
+					</p>
+				</template>
 			</div>
-		</nav>
-	</div>
 
-	<div id="accordion">
-		<template>
-			<dir-card-tag ref="dcard" v-bind:list="pathlist" v-bind:shared="shared" v-on:share="onshare" />
-		</template>
+			<div class="sticky-top">
+				<nav class="navbar navbar-expand-sm bg-tool w-100">
+					<ul class="navbar-nav flex-row">
+						<li v-show="isadmin||ishome"><button class="btn toolbtn bg-high" v-bind:disabled="dishome" v-on:click="onhome" title="go home"><i class="material-icons">home</i></button></li>
+						<li><button class="btn toolbtn" v-bind:disabled="disback" v-on:click="onback" v-bind:title="hintback"><i class="material-icons">arrow_back</i></button></li>
+						<li><button class="btn toolbtn" v-bind:disabled="disforward" v-on:click="onforward" v-bind:title="hintforward"><i class="material-icons">arrow_forward</i></button></li>
+						<li><button class="btn toolbtn" v-bind:disabled="disparent" v-on:click="onparent" v-bind:title="hintparent"><i class="material-icons">subdirectory_arrow_left</i></button></li>
+						<li><button class="btn toolbtn" v-on:click="onrefresh" title="refresh"><i class="material-icons">refresh</i></button></li>
+					</ul>
+					<button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#menuaddon">
+						<span class="navbar-toggler-icon"></span>
+					</button>
+					<div class="collapse navbar-collapse" id="menuaddon">
+						<div class="navbar-nav flex-row ml-auto">
+							<ul class="navbar-nav flex-row">
+								<li class="btn-group">
+									<button class="btn toolbtn dropdown-toggle" data-toggle="dropdown" title="choose skin"><i class="material-icons">color_lens</i></button>
+									<div class="dropdown-menu bg-tool dropdown-menu-right pre-scrollable">
+										<h6 class="dropdown-header">Skins:</h6>
+										<template v-for="item in resmodel.skinlist">
+											<button class="dropdown-item" v-on:click="setskin(item.id)" v-bind:class="{active:skinid===item.id}">{{item.name}}</button>
+										</template>
+										<h6 class="dropdown-header">Icons:</h6>
+										<template v-for="item in resmodel.iconlist">
+											<button class="dropdown-item" v-on:click="seticon(item.id)" v-bind:class="{active:iconid===item.id}">{{item.name}}</button>
+										</template>
+									</div>
+								</li>
+							</ul>
+							<ul class="navbar-nav flex-row">
+								<li v-show="showauth"><auth-tag v-on:refresh="onrefresh" /></li>
+								<li><button class="btn toolbtn" v-on:click="onauthcaret" v-bind:title="hintauthcaret"><i class="material-icons">{{textauthcaret}}</i></button></li>
+							</ul>
+						</div>
+					</div>
+				</nav>
+			</div>
 
-		<template>
-			<file-card-tag ref="fcard" v-bind:list="filelist" v-bind:shared="shared" v-on:share="onshare" />
-		</template>
+			<div id="accordion">
+				<template>
+					<dir-card-tag ref="dcard" v-bind:list="pathlist" v-bind:shared="shared" v-on:share="onshare" />
+				</template>
 
-		<template>
-			<map-card-tag ref="mcard" />
-		</template>
-	</div>
+				<template>
+					<file-card-tag ref="fcard" v-bind:list="filelist" v-bind:shared="shared" v-on:share="onshare" />
+				</template>
 
-	<div class="fixed-bottom">
-		<template>
-			<mp3-player-tag ref="mp3player" />
-		</template>
+				<template>
+					<map-card-tag ref="mcard" />
+				</template>
+			</div>
+		</div>
+
+		<div class="">
+			<template>
+				<mp3-player-tag ref="mp3player" />
+			</template>
+		</div>
 	</div>
 
 	<template>

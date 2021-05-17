@@ -359,7 +359,7 @@ const getFileGroup = file => {
 	if (file.type) {
 		return FG.dir;
 	}
-	return extgrp[pathext(file.name)];
+	return extgrp[pathext(file.name)] || FG.other;
 };
 
 const geticonpath = (file, im, shr) => {
