@@ -78,6 +78,7 @@ body {
 }
 
 .toolinp {
+	height: calc(1.5em + 0.50rem + 2px);
 	border: 1px solid rgba(255, 255, 255, 0.1);
 	border-radius: 0.25rem;
 }
@@ -238,7 +239,6 @@ body {
 		color: Black;
 		background: NavajoWhite;
 		max-height: 3.8rem;
-		overflow: hidden;
 	}
 
 .imgitem {
@@ -301,7 +301,6 @@ body {
 		background: rgba(255, 222, 173, 0.50); /*NavajoWhite*/
 		max-width: 112px;
 		max-height: 3.8rem;
-		overflow: hidden;
 	}
 
 	.imgitem:hover > .tag {
@@ -367,9 +366,7 @@ body {
 /* track progress bar */
 
 .timescale {
-	margin: 0 8px;
-	text-align: center;
-	white-space: nowrap;
+	margin: 0 0.5rem;
 }
 
 	.timescale > .progress {

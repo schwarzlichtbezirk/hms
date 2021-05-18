@@ -95,6 +95,7 @@ a, .btn-link {
 }
 
 .toolinp {
+	height: calc(1.5em + 0.50rem + 2px);
 	border: 1px solid rgba(255, 255, 255, 0.1);
 	border-radius: 0.75rem;
 }
@@ -262,7 +263,6 @@ a, .btn-link {
 		color: PaleGoldenRod;
 		background: rgba(102, 51, 153, 0.33); /* RebeccaPurple */
 		max-height: 3.8rem;
-		overflow: hidden;
 	}
 
 	.fileitem:hover > .tag {
@@ -329,7 +329,6 @@ a, .btn-link {
 		background: rgba(102, 51, 153, 0.33); /* RebeccaPurple */
 		max-width: 112px;
 		max-height: 3.8rem;
-		overflow: hidden;
 	}
 
 	.imgitem:hover > .tag {
@@ -420,9 +419,7 @@ a, .btn-link {
 /* track progress bar */
 
 .timescale {
-	margin: 0 8px;
-	text-align: center;
-	white-space: nowrap;
+	margin: 0 0.5rem;
 }
 
 	.timescale > .progress {

@@ -35,7 +35,7 @@
 						<span class="navbar-toggler-icon"></span>
 					</button>
 					<div class="collapse navbar-collapse" id="menuaddon">
-						<div class="navbar-nav flex-row ml-auto">
+						<div class="navbar-nav flex-row flex-wrap ml-auto">
 							<ul class="navbar-nav flex-row">
 								<li class="btn-group">
 									<button class="btn toolbtn dropdown-toggle" data-toggle="dropdown" title="choose skin"><i class="material-icons">color_lens</i></button>
@@ -51,7 +51,7 @@
 									</div>
 								</li>
 							</ul>
-							<ul class="navbar-nav flex-row">
+							<ul class="navbar-nav flex-row navbar-expand">
 								<li v-show="showauth"><auth-tag v-on:refresh="onrefresh" /></li>
 								<li><button class="btn toolbtn" v-on:click="onauthcaret" v-bind:title="hintauthcaret"><i class="material-icons">{{textauthcaret}}</i></button></li>
 							</ul>
