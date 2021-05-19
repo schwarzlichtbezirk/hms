@@ -1,16 +1,16 @@
 
-<div v-show="isvisible" class="card">
+<div v-show="isvisible" class="card m-sm-2">
 	<div class="card-header bg-card d-flex flex-wrap align-items-center">
 		<div class="navbar-text flex-grow-1 py-0">
-			<a class="card-link d-block" data-toggle="collapse" v-bind:href="'#card'+iid">map</a>
+			<a class="card-link d-block" data-bs-toggle="collapse" v-bind:href="'#card'+iid">map</a>
 		</div>
-		<ul class="navbar-nav flex-row ml-auto">
+		<ul class="navbar-nav flex-row ms-auto">
 			<li>
 				<div class="btn-group">
-					<button type="button" class="btn dropdown-toggle" v-bind:title="hintlandscape" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+					<button type="button" class="btn dropdown-toggle" v-bind:title="hintlandscape" data-bs-toggle="dropdown" aria-expanded="false">
 						<i class="material-icons">map</i>
 					</button>
-					<div class="dropdown-menu bg-card dropdown-menu-right pre-scrollable">
+					<div class="dropdown-menu dropdown-menu-end bg-card menu-scrollable">
 						<button class="dropdown-item" type="button" v-on:click="onmapboxhybrid" v-bind:class="clsmapboxhybrid">Mapbox hybrid</button>
 						<button class="dropdown-item" type="button" v-on:click="onmapboxsatellite" v-bind:class="clsmapboxsatellite">Mapbox satellite</button>
 						<button class="dropdown-item" type="button" v-on:click="onmapboxoutdoors" v-bind:class="clsmapboxoutdoors">Mapbox outdoors</button>

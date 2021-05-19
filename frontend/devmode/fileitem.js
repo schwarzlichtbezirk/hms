@@ -58,8 +58,8 @@ const filetmbimg = (file) => {
 const makemarkercontent = file => `
 <div class="photoinfo">
 	<ul class="nav nav-tabs" role="tablist">
-		<li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#pict">Thumbnail</a></li>
-		<li class="nav-item"><a class="nav-link" data-toggle="tab" href="#prop">Properties</a></li>
+		<li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#pict">Thumbnail</a></li>
+		<li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#prop">Properties</a></li>
 	</ul>
 	<div class="tab-content">
 		<div class="tab-pane active" id="pict">

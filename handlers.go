@@ -120,17 +120,18 @@ const (
 
 	// ispath
 
-	AECispathnoacc = 77
-	AECispathdeny  = 78
+	AECispathnoacc = 80
+	AECispathdeny  = 81
+	AECispathroot  = 82
 
 	// tmb/chk
 
-	AECtmbchknodata = 80
+	AECtmbchknodata = 83
 
 	// tmb/scn
 
-	AECtmbscnnodata = 81
-	AECtmbscnnoacc  = 82
+	AECtmbscnnodata = 84
+	AECtmbscnnoacc  = 85
 
 	// share/lst
 
@@ -895,12 +896,16 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 
 	var syspath = path.Clean(ToSlash(arg.Path))
 	if syspath[0] == '.' {
-		WriteError(w, http.StatusForbidden, ErrNoAccess, AECfolderroot)
+		WriteError(w, http.StatusForbidden, ErrNoAccess, AECispathroot)
 		return
 	}
 	syspath = UnfoldPath(syspath)
 
-	prop, err := propcache.Get(syspath)
+	var prop interface{}
+	if prop, err = propcache.Get(syspath); err != nil {
+		var ptr *FileProp
+		prop = ptr // write "null" as reply
+	}
 	WriteOK(w, prop)
 }
 

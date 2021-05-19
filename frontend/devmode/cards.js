@@ -243,7 +243,7 @@ Vue.component('dir-card-tag', {
 		ondiskpathchange(e) {
 			(async () => {
 				try {
-					const response = await fetchajaxauth("POST", "/card/path/ispath", {
+					const response = await fetchajaxauth("POST", "/api/card/ispath", {
 						aid: this.$root.aid,
 						path: this.diskpath
 					});

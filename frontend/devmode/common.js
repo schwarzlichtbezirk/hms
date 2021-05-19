@@ -1,8 +1,5 @@
 "use strict";
 
-if (typeof $.fn.popover === 'undefined') {
-	throw new Error("Bootstrap library required");
-}
 if (!String.prototype.format) {
 	String.prototype.format = function () {
 		var args = arguments;

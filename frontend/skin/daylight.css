@@ -84,15 +84,6 @@ body {
 }
 
 
-.folder-head {
-	margin: 8px 0px;
-}
-
-	.folder-head > p {
-		margin-top: 0px;
-		margin-bottom: 0px;
-	}
-
 .folder-list {
 	display: flex;
 	flex-wrap: wrap;
@@ -105,10 +96,6 @@ body {
 
 .breadcrumb-item.active {
 	font-size: 1.5rem;
-}
-
-#accordion {
-	margin: 8px;
 }
 
 .folder-head .breadcrumb, .card {

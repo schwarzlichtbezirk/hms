@@ -703,7 +703,8 @@ const app = new Vue({
 				}
 				lst.push({
 					name: fn,
-					path: path
+					path: path,
+					type: FT.dir
 				});
 			}
 			if (lst.length) {
