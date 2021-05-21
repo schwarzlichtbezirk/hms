@@ -31,11 +31,15 @@ Vue.component('thumbslider-tag', {
 			return filetmbimg(file);
 		},
 
+		onwheel(e) {
+			this.$refs.slide.scrollBy({ left: e.deltaX + e.deltaY, behavior: 'smooth' });
+		},
+
 		onprev() {
-			this.$refs.slide.scrollBy({ left: -120, behavior: 'smooth' });
+			this.$refs.slide.scrollBy({ left: -125, behavior: 'smooth' });
 		},
 		onnext() {
-			this.$refs.slide.scrollBy({ left: +120, behavior: 'smooth' });
+			this.$refs.slide.scrollBy({ left: +125, behavior: 'smooth' });
 		},
 		onthumb(file) {
 			eventHub.$emit('select', file);

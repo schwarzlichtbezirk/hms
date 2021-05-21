@@ -123,8 +123,8 @@ Vue.component('dir-card-tag', {
 		clsshared() {
 			return { active: this.selfile && this.isshared(this.selfile) };
 		},
-		disdiskadd() {
-			return !this.diskpath.length;
+		clsdiskadd() {
+			return { 'disabled': !this.diskpath.length };
 		},
 		disdiskremove() {
 			return !this.selfile || this.selfile.type !== FT.drv;

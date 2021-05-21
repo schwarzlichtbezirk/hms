@@ -3,7 +3,7 @@
 	<picture class="pict">
 		<source v-bind:srcset="webpicon" type="image/webp">
 		<source v-bind:srcset="pngicon" type="image/png">
-		<img v-bind:alt="fmtalt">
+		<img v-bind:alt="fmtalt" class="centerimg">
 	</picture>
 	<picture v-if="label" class="pref">
 		<source v-bind:srcset="label+'.webp'" type="image/webp">

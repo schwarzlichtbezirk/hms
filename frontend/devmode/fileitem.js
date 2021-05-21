@@ -360,25 +360,25 @@ Vue.component('file-icon-tag', {
 			}
 		},
 
-		clsoverlay() {
+		clsimgwdh() {
 			switch (this.size) {
 				case "smicon":
-					return "smoverlay";
+					return "smimgw";
 				case "mdicon":
-					return "mdoverlay";
+					return "mdimgw";
 				case "lgicon":
-					return "lgoverlay";
+					return "lgimgw";
 			}
 		},
 
 		clsimage() {
 			switch (this.size) {
 				case "smicon":
-					return "smimage";
+					return "smimgw smimgh";
 				case "mdicon":
-					return "mdimage";
+					return "mdimgw mdimgh";
 				case "lgicon":
-					return "lgimage";
+					return "lgimgw lgimgh";
 			}
 		},
 

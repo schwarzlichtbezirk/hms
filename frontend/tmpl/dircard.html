@@ -29,12 +29,11 @@
 			<div class="modal-content">
 				<div class="rounded py-2 bg-tool">
 					<div class="px-2 fg-tool">
-						<label v-bind:for="'inp'+iid" class="small navbar-text form-label">Type here valid full path to resource that will be accessed as the disk.</label>
-						<div class="input-group">
-							<input v-model.trim="diskpath" v-bind:class="clsdiskpathedt" v-bind:id="'inp'+iid" v-on:keyup.enter.prevent="ondiskadd" v-on:keyup="ondiskpathchange" class="form-control toolinp bg-tool" type="text" maxlength="256" placeholder="destination path" aria-label="destination path" required>
-							<div class="input-group-append">
-								<button class="btn toolbtn bg-high" v-on:click="ondiskadd" v-bind:disabled="disdiskadd">Add disk</button>
-							</div>
+						<label v-bind:for="'inp'+iid" class="small navbar-text form-label">Type here valid full path to resource that will be accessed as the disk. For example, <span class="bg-stat">C:/Music</span></label>
+						<div class="form-floating input-group">
+							<input v-model.trim="diskpath" v-bind:class="clsdiskpathedt" v-bind:id="'inp'+iid" v-on:keyup.enter.prevent="ondiskadd" v-on:keyup="ondiskpathchange" v-bind:aria-describedby="'but'+iid" class="form-control toolinp bg-tool" type="text" maxlength="256" placeholder="c:/music" required>
+							<label v-bind:for="'inp'+iid">destination path</label>
+							<button v-bind:id="'but'+iid" class="btn toolbtn bg-high" v-bind:class="clsdiskadd" v-on:click="ondiskadd">Add disk</button>
 						</div>
 					</div>
 				</div>

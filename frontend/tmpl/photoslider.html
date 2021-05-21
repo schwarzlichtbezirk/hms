@@ -1,8 +1,8 @@
 
 <div class="modal fade" ref="modal" tabindex="-1" role="dialog" aria-labelledby="photos" aria-hidden="true" v-on:keyup.stop="onkeyup">
-	<div class="modal-dialog modal-dialog-centered modal-xl" role="document">
+	<div class="modal-dialog modal-fullscreen" role="document">
 		<div class="modal-content photoslider">
-			<img v-bind:src="selfileurl" v-on:load="onimgload" v-on:error="onimgerror" />
+			<img class="centerimg" v-bind:src="selfileurl" v-on:load="onimgload" v-on:error="onimgerror" />
 			<div class="thumbs p-2">
 				<template v-if="islist">
 					<thumbslider-tag v-bind:selfile="selfile" v-bind:list="list" />

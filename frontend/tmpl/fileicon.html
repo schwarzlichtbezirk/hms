@@ -1,6 +1,6 @@
 
 <div class="fileitem" v-bind:class="itemview" v-on:click.stop="onselect" v-on:dblclick.stop="onopen" v-bind:title="fmttitle">
-	<div v-bind:class="clsoverlay">
+	<div v-bind:class="clsimage">
 		<picture>
 			<source v-bind:srcset="webpicon" type="image/webp">
 			<source v-bind:srcset="pngicon" type="image/png">
@@ -13,5 +13,5 @@
 		</picture>
 		<img v-if="state.playback" src="/asst/equalizer-bars.gif" v-bind:class="clsimage" alt="play">
 	</div>
-	<div v-bind:class="clsimage" class="tag overflow-hidden">{{file.name}}</div>
+	<div v-bind:class="clsimgwdh" class="tag overflow-hidden">{{file.name}}</div>
 </div>
