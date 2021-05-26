@@ -339,28 +339,50 @@ body {
 
 /* leaflet popup */
 
+.leaflet-control-scale-line {
+	background-color: rgba(188, 143, 143, 0.5); /* RosyBrown */
+	color: #ddd;
+}
+
 .leaflet-popup-content-wrapper, .leaflet-popup-tip,
-.leaflet-bar a, .leaflet-bar a:hover,
-.leaflet-control-attribution {
-	background-color: RosyBrown !important;
-	color: rgba(255, 255, 255, 0.80) !important;
+.leaflet-container .leaflet-control-attribution {
+	background-color: rgba(188, 143, 143, 0.75); /* RosyBrown */
+	color: #ddd;
 }
 
 	.leaflet-popup-content-wrapper a,
-	.leaflet-control-attribution a {
+	.leaflet-container .leaflet-control-attribution a {
 		color: NavajoWhite;
 	}
 
 		.leaflet-popup-content-wrapper a:hover,
-		.leaflet-control-attribution a:hover {
+		.leaflet-container .leaflet-control-attribution a:hover {
 			color: Wheat;
 		}
 
 	.leaflet-popup-content-wrapper .nav-tabs .nav-link.active,
 	.leaflet-popup-content-wrapper .nav-tabs .nav-item.show .nav-link {
 		color: Cornsilk;
-		background-color: #b38080;
+		background-color: rgba(179, 128, 128, 0.75);
 		border-color: #dee2e6 #dee2e6 #fff;
+	}
+
+.leaflet-bar a, .leaflet-bar button {
+	background-color: rgba(188, 143, 143, 0.5); /* RosyBrown */
+	color: #ddd;
+	font: bold 18px 'Lucida Console', Monaco, monospace; /* for vertical alignment as at zoom control */
+}
+
+	.leaflet-bar a:hover, .leaflet-bar button:hover {
+		background-color: rgba(188, 143, 143, 0.75);
+		color: #fff;
+	}
+
+	.leaflet-bar a.leaflet-disabled, .leaflet-bar button.leaflet-disabled {
+		cursor: default;
+		pointer-events: none;
+		background-color: rgba(188, 143, 143, 0.25);
+		color: #bbb;
 	}
 
 .photoinfo .thumb {

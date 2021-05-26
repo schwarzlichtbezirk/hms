@@ -109,6 +109,9 @@ Vue.component('photoslider-tag', {
 			}
 		},
 		popup(file, list) {
+			if (isFullscreen()) {
+				closeFullscreen();
+			}
 			this.list = list || [file];
 			this.load(file);
 			$(this.$refs.modal).modal('show');

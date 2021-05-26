@@ -32,7 +32,7 @@
 	</div>
 	<div v-bind:id="'card'+iid" class="collapse show">
 		<div class="card-body">
-			<div ref="map" class="photomap"></div>
+			<div ref="map" v-on:fullscreenchange="onfullscreenchange" class="photomap"></div>
 		</div>
 	</div>
 </div>

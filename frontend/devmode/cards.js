@@ -71,6 +71,39 @@ const copyTextToClipboard = text => {
 	}
 };
 
+///////////////////////////
+// Full screen functions //
+///////////////////////////
+
+const isFullscreen = () => document.fullscreenElement ||
+	document.webkitFullscreenElement ||
+	document.mozFullScreenElement ||
+	document.msFullscreenElement;
+
+const openFullscreen = e => {
+	if (e.requestFullscreen) {
+		e.requestFullscreen();
+	} else if (e.mozRequestFullScreen) {
+		e.mozRequestFullScreen();
+	} else if (e.webkitRequestFullscreen) {
+		e.webkitRequestFullscreen(Element.ALLOW_KEYBOARD_INPUT);
+	} else if (e.msRequestFullscreen) {
+		e.msRequestFullscreen();
+	}
+};
+
+const closeFullscreen = () => {
+	if (document.exitFullscreen) {
+		document.exitFullscreen();
+	} else if (document.mozCancelFullScreen) {
+		document.mozCancelFullScreen();
+	} else if (document.webkitExitFullscreen) {
+		document.webkitExitFullscreen();
+	} else if (document.msExitFullscreen) {
+		document.msExitFullscreen();
+	}
+};
+
 Vue.component('dir-card-tag', {
 	template: '#dir-card-tpl',
 	props: ["list", "shared"],
@@ -941,6 +974,17 @@ Vue.component('map-card-tag', {
 			this.new();
 			this.addmarkers(gpslist);
 		},
+		onfullscreenchange() {
+			const e = this.$refs.map.querySelector(".leaflet-control-fullscreen > span");
+			e.innerHTML = isFullscreen() ? 'fullscreen_exit' : 'fullscreen';
+		},
+		onfullscreen() {
+			if (isFullscreen()) {
+				closeFullscreen();
+			} else {
+				openFullscreen(this.$refs.map);
+			}
+		},
 		onfitbounds() {
 			const bounds = this.markers.getBounds();
 			for (const gpx of this.gpxlist) {
@@ -956,10 +1000,53 @@ Vue.component('map-card-tag', {
 	mounted() {
 		this.tiles = this.maketiles('mapbox-hybrid');
 		this.map = L.map(this.$refs.map, {
+			attributionControl: true,
+			zoomControl: false,
 			center: [0, 0],
 			zoom: 8,
 			layers: [this.tiles]
 		});
+		L.control.scale().addTo(this.map);
+		L.control.zoom({
+			zoomInText: '<span class="material-icons">add</span>',
+			zoomOutText: '<span class="material-icons">remove</span>'
+		}).addTo(this.map);
+		// create fullscreen button
+		L.Control.Fullscreen = L.Control.extend({
+			onAdd: map => {
+				const html = `
+<div class="leaflet-bar">
+	<a class="leaflet-control-fullscreen" role="button" title="Fullscreen mode">
+		<span class="material-icons">fullscreen</span>
+	</a>
+	<a class="leaflet-control-adjust" role="button" title="Fit to bounds">
+		<span class="material-icons">adjust</span>
+	</a>
+</div>
+`;
+				const template = document.createElement('template');
+				template.innerHTML = html.trim();
+				const tb = template.content.firstChild;
+
+				const butfs = tb.querySelector(".leaflet-control-fullscreen");
+				butfs.addEventListener('click', e => {
+					this.onfullscreen();
+				});
+
+				const butfb = tb.querySelector(".leaflet-control-adjust");
+				butfb.addEventListener('click', e => {
+					this.onfitbounds();
+				});
+
+				return tb;
+			},
+			onRemove: map => {
+			}
+		});
+		L.control.fullscreen = opts => {
+			return new L.Control.Fullscreen(opts);
+		};
+		L.control.fullscreen({ position: 'topright' }).addTo(this.map);
 	}
 });
 

@@ -338,28 +338,50 @@ body {
 
 /* leaflet popup */
 
+.leaflet-control-scale-line {
+	background-color: rgba(176, 196, 222, 0.5); /* LightSteelBlue */
+	color: #222;
+}
+
 .leaflet-popup-content-wrapper, .leaflet-popup-tip,
-.leaflet-bar a, .leaflet-bar a:hover,
-.leaflet-control-attribution {
-	background-color: LightSteelBlue !important;
-	color: rgba(0, 0, 0, 0.75) !important;
+.leaflet-container .leaflet-control-attribution {
+	background-color: LightSteelBlue;
+	color: #222;
 }
 
 	.leaflet-popup-content-wrapper a,
-	.leaflet-control-attribution a {
-		color: SlateGray;
+	.leaflet-container .leaflet-control-attribution a {
+		color: #41619a;
 	}
 
 		.leaflet-popup-content-wrapper a:hover,
-		.leaflet-control-attribution a:hover {
-			color: LightSlateGray;
+		.leaflet-container .leaflet-control-attribution a:hover {
+			color: #324a76;
 		}
 
 	.leaflet-popup-content-wrapper .nav-tabs .nav-link.active,
 	.leaflet-popup-content-wrapper .nav-tabs .nav-item.show .nav-link {
-		color: LightSteelBlue;
-		background-color: #93aed2;
+		color: #44677d;
+		background-color: LightBlue;
 		border-color: #dee2e6 #dee2e6 #fff;
+	}
+
+.leaflet-bar a, .leaflet-bar button {
+	background-color: LightSteelBlue;
+	color: #222;
+	font: bold 18px 'Lucida Console', Monaco, monospace; /* for vertical alignment as at zoom control */
+}
+
+	.leaflet-bar a:hover, .leaflet-bar button:hover {
+		background-color: #c0d0e5;
+		color: #000;
+	}
+
+	.leaflet-bar a.leaflet-disabled, .leaflet-bar button.leaflet-disabled {
+		cursor: default;
+		pointer-events: none;
+		background-color: #7b899b;
+		color: #444;
 	}
 
 .photoinfo .thumb {

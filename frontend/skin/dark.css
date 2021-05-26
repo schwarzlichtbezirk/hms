@@ -338,20 +338,24 @@ body {
 
 /* leaflet popup */
 
+.leaflet-control-scale-line {
+	background-color: rgba(51, 51, 51, 0.5);
+	color: #bbb;
+}
+
 .leaflet-popup-content-wrapper, .leaflet-popup-tip,
-.leaflet-bar a, .leaflet-bar a:hover,
-.leaflet-control-attribution {
-	background-color: #333333 !important;
-	color: rgba(255, 255, 255, 0.60) !important;
+.leaflet-container .leaflet-control-attribution {
+	background-color: #333333;
+	color: #bbb;
 }
 
 	.leaflet-popup-content-wrapper a,
-	.leaflet-control-attribution a {
+	.leaflet-container .leaflet-control-attribution a {
 		color: SlateGray;
 	}
 
 		.leaflet-popup-content-wrapper a:hover,
-		.leaflet-control-attribution a:hover {
+		.leaflet-container .leaflet-control-attribution a:hover {
 			color: LightSlateGray;
 		}
 
@@ -360,6 +364,24 @@ body {
 		color: LightSteelBlue;
 		background-color: #444444;
 		border-color: #dee2e6 #dee2e6 #fff;
+	}
+
+.leaflet-bar a, .leaflet-bar button {
+	background-color: #333333;
+	color: #bbb;
+	font: bold 18px 'Lucida Console', Monaco, monospace; /* for vertical alignment as at zoom control */
+}
+
+	.leaflet-bar a:hover, .leaflet-bar button:hover {
+		background-color: #444444;
+		color: #eee;
+	}
+
+	.leaflet-bar a.leaflet-disabled, .leaflet-bar button.leaflet-disabled {
+		cursor: default;
+		pointer-events: none;
+		background-color: #242424;
+		color: #888;
 	}
 
 .photoinfo .thumb {
