@@ -115,6 +115,7 @@ Vue.component('dir-card-tag', {
 			listmode: "smicon",
 			diskpath: "", // path to disk to add
 			diskpathstate: 0,
+			diskadd: null,
 			iid: makestrid(10) // instance ID
 		};
 	},
@@ -236,7 +237,7 @@ Vue.component('dir-card-tag', {
 						if (file) {
 							this.list.push(file);
 						}
-						$("#diskadd" + this.iid).modal('hide');
+						this.diskadd.hide();
 					} else {
 						this.diskpathstate = -1;
 					}
@@ -303,14 +304,16 @@ Vue.component('dir-card-tag', {
 		eventHub.$on('select', this.onselect);
 	},
 	mounted() {
-		$('#diskadd' + this.iid).on('shown.bs.modal', function () {
-			$(this).find('input').trigger('focus');
+		const el = document.getElementById('diskadd' + this.iid);
+		this.diskadd = new bootstrap.Modal(el);
+		el.addEventListener('shown.bs.modal', e => {
+			el.querySelector('input').focus();
 		});
 	},
 	beforeDestroy() {
 		eventHub.$off('auth', this.authclosure);
 		eventHub.$off('select', this.onselect);
-		$('#diskadd' + this.iid).off('shown.bs.modal');
+		this.diskadd = null;
 	}
 });
 
@@ -1014,16 +1017,7 @@ Vue.component('map-card-tag', {
 		// create fullscreen button
 		L.Control.Fullscreen = L.Control.extend({
 			onAdd: map => {
-				const html = `
-<div class="leaflet-bar">
-	<a class="leaflet-control-fullscreen" role="button" title="Fullscreen mode">
-		<span class="material-icons">fullscreen</span>
-	</a>
-	<a class="leaflet-control-adjust" role="button" title="Fit to bounds">
-		<span class="material-icons">adjust</span>
-	</a>
-</div>
-`;
+				const html = document.getElementById("leaflet-toolbar").innerHTML;
 				const template = document.createElement('template');
 				template.innerHTML = html.trim();
 				const tb = template.content.firstChild;

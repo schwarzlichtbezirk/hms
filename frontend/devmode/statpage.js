@@ -335,6 +335,9 @@ const app = new Vue({
 			this.usrlstpage = page;
 		}
 	},
+	created() {
+		eventHub.$on('ajax', viewpreloader);
+	},
 	mounted() {
 		(async () => {
 			try {
@@ -347,83 +350,84 @@ const app = new Vue({
 			} catch (e) { console.error(e); }
 		})();
 
-		$("#collapse-memory").on('show.bs.collapse', () => {
-			let expanded = true;
-			(async () => {
-				try {
-					while (expanded) {
-						const response = await fetch("/api/stat/memusg");
-						if (response.ok) {
-							this.memgc = await response.json();
+		{
+			const el = document.getElementById('collapse-memory');
+			let expanded = false;
+			el.addEventListener('show.bs.collapse', e => {
+				expanded = true;
+				(async () => {
+					try {
+						while (expanded) {
+							const response = await fetch("/api/stat/memusg");
+							if (response.ok) {
+								this.memgc = await response.json();
+							}
+							await new Promise(resolve => setTimeout(resolve, scanfreq));
 						}
-						await new Promise(resolve => setTimeout(resolve, scanfreq));
-					}
-				} catch (e) { console.error(e); }
-			})();
-
-			$("#collapse-memory").one('hide.bs.collapse', () => {
+					} catch (e) { console.error(e); }
+				})();
+			});
+			el.addEventListener('hide.bs.collapse', e => {
 				expanded = false;
 			});
-		});
+		}
 
-		$("#collapse-cache").on('show.bs.collapse', () => {
-			let expanded = true;
-			(async () => {
-				try {
-					while (expanded) {
-						const response = await fetch("/api/stat/cchinf");
-						if (response.ok) {
-							this.cchinf = await response.json();
+		{
+			const el = document.getElementById('collapse-cache');
+			let expanded = false;
+			el.addEventListener('show.bs.collapse', e => {
+				expanded = true;
+				(async () => {
+					try {
+						while (expanded) {
+							const response = await fetch("/api/stat/cchinf");
+							if (response.ok) {
+								this.cchinf = await response.json();
+							}
+							await new Promise(resolve => setTimeout(resolve, scanfreq));
 						}
-						await new Promise(resolve => setTimeout(resolve, scanfreq));
-					}
-				} catch (e) { console.error(e); }
-			})();
-
-			$("#collapse-cache").one('hide.bs.collapse', () => {
+					} catch (e) { console.error(e); }
+				})();
+			});
+			el.addEventListener('hide.bs.collapse', e => {
 				expanded = false;
 			});
-		});
+		}
 
-		$("#collapse-console").on('show.bs.collapse', () => {
+		document.getElementById('collapse-console').addEventListener('show.bs.collapse', e => {
 			this.ongetlog();
 		});
 
-		$("#collapse-users").on('show.bs.collapse', () => {
-			let expanded = true;
-			(async () => {
-				try {
-					while (expanded) {
-						const response = await fetchjson("POST", "/api/stat/usrlst", {
-							pos: this.usrlstpage * this.usrlstsize, num: this.usrlstsize
-						});
-						if (response.ok) {
-							this.usrlst = await response.json();
+		{
+			const el = document.getElementById('collapse-users');
+			let expanded = false;
+			el.addEventListener('show.bs.collapse', e => {
+				expanded = true;
+				(async () => {
+					try {
+						while (expanded) {
+							const response = await fetchjson("POST", "/api/stat/usrlst", {
+								pos: this.usrlstpage * this.usrlstsize, num: this.usrlstsize
+							});
+							if (response.ok) {
+								this.usrlst = await response.json();
+							}
+							await new Promise(resolve => setTimeout(resolve, scanfreq));
 						}
-						await new Promise(resolve => setTimeout(resolve, scanfreq));
-					}
-				} catch (e) { console.error(e); }
-			})();
-
-			$("#collapse-users").one('hide.bs.collapse', () => {
+					} catch (e) { console.error(e); }
+				})();
+			});
+			el.addEventListener('hide.bs.collapse', e => {
 				expanded = false;
 			});
-		});
+		}
+
+		// hide start-up preloader
+		eventHub.$emit('ajax', -1);
 	},
 	beforeDestroy() {
-		$("#collapse-memory").off('show.bs.collapse');
-		$("#collapse-memory").off('hide.bs.collapse');
-		$("#collapse-cache").off('show.bs.collapse');
-		$("#collapse-cache").off('hide.bs.collapse');
-		$("#collapse-console").off('show.bs.collapse');
-		$("#collapse-users").off('show.bs.collapse');
-		$("#collapse-users").off('hide.bs.collapse');
+		eventHub.$off('ajax', viewpreloader);
 	}
 }); // end of vue application
-
-$(document).ready(() => {
-	$('.preloader-lock').hide("fast");
-	$('#app').show("fast");
-});
 
 // The End.

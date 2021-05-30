@@ -54,7 +54,8 @@ Vue.component('photoslider-tag', {
 			list: [],
 			selfile: null,
 			imgloading: false,
-			repeatmode: 0 // 0 - no any repeat, 1 - repeat single, 2 - repeat playlist
+			repeatmode: 0, // 0 - no any repeat, 1 - repeat single, 2 - repeat playlist
+			dlg: null
 		};
 	},
 	computed: {
@@ -100,7 +101,7 @@ Vue.component('photoslider-tag', {
 	},
 	methods: {
 		isvisible() {
-			return this.$refs.modal.offsetWidth > 0 && this.$refs.modal.offsetHeight > 0;
+			return this.$el.offsetWidth > 0 && this.$el.offsetHeight > 0;
 		},
 		load(file) {
 			if (this.selfile !== file) {
@@ -114,10 +115,10 @@ Vue.component('photoslider-tag', {
 			}
 			this.list = list || [file];
 			this.load(file);
-			$(this.$refs.modal).modal('show');
+			this.dlg.show();
 		},
 		close() {
-			$(this.$refs.modal).modal('hide');
+			this.dlg.hide();
 		},
 
 		onimgload(e) {
@@ -175,17 +176,19 @@ Vue.component('photoslider-tag', {
 		eventHub.$on('select', this.onselect);
 	},
 	mounted() {
-		$(this.$refs.modal).on('shown.bs.modal', e => {
+		this.dlg = new bootstrap.Modal(this.$el);
+		this.$el.addEventListener('shown.bs.modal', e => {
+			console.log("shown");
 		});
-		$(this.$refs.modal).on('hidden.bs.modal', e => {
+		this.$el.addEventListener('hidden.bs.modal', e => {
 			this.selfile = null;
 			this.imgloading = false;
+			console.log("hidden");
 		});
 	},
 	beforeDestroy() {
 		eventHub.$off('select', this.onselect);
-		$(this.$refs.modal).off('shown.bs.modal');
-		$(this.$refs.modal).off('hidden.bs.modal');
+		this.dlg = null;
 	}
 });
 

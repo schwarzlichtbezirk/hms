@@ -2,7 +2,6 @@
 cd /d %GOPATH%/src/github.com/schwarzlichtbezirk/hms/frontend
 
 java -jar %~d0/tools/closure-compiler.jar^
- --js plugin/jquery.slim.min.js^
  --js plugin/popper.min.js^
  --js plugin/bootstrap.min.js^
  --strict_mode_input^

@@ -438,11 +438,12 @@ const pathurl = file => `${(devmode ? "/dev" : "")}/id${app.aid}/path/${file.pui
 const mediaurl = file => `/id${app.aid}/media/${file.puid}`;
 
 const showmsgbox = (title, message, details) => {
-	const dlg = $("#msgbox");
-	dlg.find(".modal-title").text(title);
-	dlg.find(".message").text(message);
-	dlg.find(".details").text(details || "");
-	dlg.modal("show");
+	const el = document.getElementById('msgbox');
+	const dlg = new bootstrap.Modal(el);
+	el.querySelector(".modal-title").innerText = title;
+	el.querySelector(".message").innerText = message;
+	el.querySelector(".details").innerText = details || "";
+	dlg.show();
 };
 
 const ajaxfail = e => {
@@ -455,12 +456,13 @@ const ajaxfail = e => {
 		return;
 	} else if (e instanceof HttpError) {
 		const msgbox = (title, message) => {
-			const dlg = $("#msgbox");
-			dlg.find(".modal-title").text(title);
-			dlg.find(".message").text(message);
-			dlg.find(".errcode").text(e.code);
-			dlg.find(".errmsg").text(e.what);
-			dlg.modal("show");
+			const el = document.getElementById('msgbox');
+			const dlg = new bootstrap.Modal(el);
+			el.querySelector(".modal-title").innerText = title;
+			el.querySelector(".message").innerText = message;
+			el.querySelector(".errcode").innerText = e.code;
+			el.querySelector(".errmsg").innerText = e.what;
+			dlg.show();
 		};
 		switch (e.status) {
 			case 400: // Bad Request
@@ -620,7 +622,6 @@ const app = new Vue({
 		aid: 0, // profile ID
 		ishome: false, // able to go home
 
-		loadcount: 0, // ajax working request count
 		shared: [], // list of shared folders
 
 		// history
@@ -1042,7 +1043,7 @@ const app = new Vue({
 		setskin(skinid) {
 			for (const v of this.resmodel.skinlist) {
 				if (v.id === skinid) {
-					$("#skinmodel").attr("href", v.link);
+					document.getElementById('skinmodel').setAttribute('href', v.link);
 					sessionStorage.setItem('skinid', skinid);
 					this.skinid = skinid;
 				}
@@ -1202,9 +1203,6 @@ const app = new Vue({
 				}
 			}
 		},
-		incloadcount(count) {
-			this.loadcount += count;
-		},
 		onopen(file) {
 			switch (getFileGroup(file)) {
 				case FG.dir:
@@ -1248,7 +1246,7 @@ const app = new Vue({
 	},
 	created() {
 		eventHub.$on('auth', this.authclosure);
-		eventHub.$on('ajax', this.incloadcount);
+		eventHub.$on('ajax', viewpreloader);
 		eventHub.$on('open', this.onopen);
 
 		auth.signload();
@@ -1260,7 +1258,7 @@ const app = new Vue({
 	},
 	beforeDestroy() {
 		eventHub.$off('auth', this.authclosure);
-		eventHub.$off('ajax', this.incloadcount);
+		eventHub.$off('ajax', viewpreloader);
 		eventHub.$off('open', this.onopen);
 	},
 	mounted() {
@@ -1334,7 +1332,7 @@ const app = new Vue({
 				const skinid = sessionStorage.getItem('skinid') || this.resmodel.defskinid;
 				for (const v of this.resmodel.skinlist) {
 					if (v.id === skinid) {
-						$("#skinmodel").attr("href", v.link);
+						document.getElementById('skinmodel').setAttribute('href', v.link);
 						this.skinid = skinid;
 					}
 				}
@@ -1352,12 +1350,10 @@ const app = new Vue({
 				eventHub.$emit('ajax', -1);
 			}
 		})();
-	}
-});
 
-$(document).ready(() => {
-	$('.preloader-lock').hide("fast");
-	$('#app').show("fast");
+		// hide start-up preloader
+		eventHub.$emit('ajax', -1);
+	}
 });
 
 // The End.

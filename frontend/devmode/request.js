@@ -129,4 +129,16 @@ const fetchajaxauth = async (method, url, body) => {
 	return response;
 };
 
+// show / hide global preloader.
+let loadcount = 1; // ajax working request count
+const viewpreloader = count => {
+	loadcount += count;
+	const prl = document.querySelector(".preloader-lock");
+	if (loadcount > 0) {
+		prl.style.display = "";
+	} else {
+		prl.style.display = "none";
+	}
+};
+
 // The End.
