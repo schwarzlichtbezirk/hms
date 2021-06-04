@@ -11,13 +11,6 @@
 			<button class="sliderbtn prev" v-show="islist" v-on:click="onprev" v-bind:disabled="!getprev"><i class="material-icons">arrow_back</i></button>
 			<button class="sliderbtn next" v-show="islist" v-on:click="onnext" v-bind:disabled="!getnext"><i class="material-icons">arrow_forward</i></button>
 			<button class="sliderbtn shut" v-on:click="onclose"><i class="material-icons">close</i></button>
-			<div class="preloader-bar" v-show="imgloading">
-				<span></span>
-				<span></span>
-				<span></span>
-				<span></span>
-				<span></span>
-			</div>
 		</div>
 	</div>
 </div>

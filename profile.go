@@ -10,20 +10,22 @@ import (
 
 // DefHidden is default hidden path templates.
 var DefHidden = []string{
-	"?:/system volume information",
-	"*.sys",
-	"*.tmp",
-	"*.bak",
-	"*/.*",
-	"?:/windows",
-	"?:/windowsapps",
-	"?:/$recycle.bin",
-	"?:/program files",
-	"?:/program files (x86)",
-	"?:/programdata",
-	"?:/recovery",
-	"?:/config.msi",
-	"*/thumbs.db",
+	"**/*.sys",
+	"**/*.tmp",
+	"**/*.bak",
+	"**/.*",
+	"**/Thumbs.db",
+	"**/AlbumArt*.jpg",
+	"**/Folder.jpg",
+	"?:/System Volume Information",
+	"?:/Windows",
+	"?:/WindowsApps",
+	"?:/$Recycle.Bin",
+	"?:/Program Files",
+	"?:/Program Files (x86)",
+	"?:/ProgramData",
+	"?:/Recovery",
+	"?:/Config.Msi",
 }
 
 // File path access.
@@ -161,14 +163,21 @@ func (prf *Profile) SetDefaultHidden() {
 // IsHidden do check up that file path is in hidden list.
 func (prf *Profile) IsHidden(fpath string) bool {
 	var matched bool
-	var kpath = strings.ToLower(ToSlash(fpath))
+	var kpath = ToSlash(fpath)
 
 	prf.mux.RLock()
 	defer prf.mux.RUnlock()
 
+	var name = filepath.Base(kpath)
 	for _, pattern := range prf.Hidden {
-		if matched, _ = path.Match(pattern, kpath); matched {
-			break
+		if strings.HasPrefix(pattern, "**/") {
+			if matched, _ = path.Match(pattern[3:], name); matched {
+				break
+			}
+		} else {
+			if matched, _ = path.Match(pattern, kpath); matched {
+				break
+			}
 		}
 	}
 	return matched

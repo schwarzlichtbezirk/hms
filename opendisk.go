@@ -13,6 +13,8 @@ import (
 	"golang.org/x/text/encoding/charmap"
 )
 
+type VFile = io.ReadSeekCloser // virtual file interface
+
 // DiskISO is iso-disk structure representation for quick access to nested files.
 // This structures can be cached and closed on cache expiration.
 type DiskISO struct {
@@ -52,7 +54,7 @@ func (f *cfile) Close() error {
 }
 
 // OpenFile opens nested into iso-disk file with given local path from iso-disk root.
-func (d *DiskISO) OpenFile(fpath string) (r io.ReadSeekCloser, err error) {
+func (d *DiskISO) OpenFile(fpath string) (r VFile, err error) {
 	d.mux.Lock()
 	defer d.mux.Unlock()
 
@@ -69,7 +71,7 @@ func (d *DiskISO) OpenFile(fpath string) (r io.ReadSeekCloser, err error) {
 
 // OpenFile opens file from file system, or looking for iso-disk in the given path,
 // opens it, and opens nested into iso-disk file.
-func OpenFile(syspath string) (r io.ReadSeekCloser, err error) {
+func OpenFile(syspath string) (r VFile, err error) {
 	var fpath = syspath
 	var file *os.File
 	for len(fpath) > 0 {
@@ -105,7 +107,7 @@ func OpenFile(syspath string) (r io.ReadSeekCloser, err error) {
 
 // StatFile returns os.FileInfo of file in file system, or file nested in disk image.
 func StatFile(syspath string) (fi os.FileInfo, err error) {
-	var r io.ReadSeekCloser
+	var r VFile
 	if r, err = OpenFile(syspath); err != nil {
 		return // can not open file
 	}

@@ -196,7 +196,7 @@ Vue.component('dir-card-tag', {
 		},
 		isshared(file) {
 			for (const shr of this.shared) {
-				if (shr.puid === file.puid) {
+				if (shr.puid === file.puid) { // shared all files with same puid
 					return true;
 				}
 			}
@@ -489,7 +489,7 @@ Vue.component('file-card-tag', {
 		},
 		isshared(file) {
 			for (const shr of this.shared) {
-				if (shr.puid === file.puid) {
+				if (shr.puid === file.puid) { // shared all files with same puid
 					return true;
 				}
 			}
@@ -499,7 +499,7 @@ Vue.component('file-card-tag', {
 		getstate(file) {
 			return {
 				selected: this.selfile === file,
-				playback: this.playbackfile && this.playbackfile.name === file.name,
+				playback: this.playbackfile && this.playbackfile === file,
 				shared: this.isshared(file)
 			};
 		},

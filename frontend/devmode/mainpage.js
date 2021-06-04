@@ -728,7 +728,7 @@ const app = new Vue({
 		// files sum size
 		sumsize() {
 			let ss = 0;
-			for (let file of this.filelist) {
+			for (const file of this.filelist) {
 				ss += file.size || 0;
 			}
 			return fmtitemsize(ss);
@@ -1022,10 +1022,11 @@ const app = new Vue({
 
 			// update folder settings
 			if (response.data) { // on ok
-				for (let i in this.shared) {
+				for (let i = 0; i < this.shared.length;) {
 					if (this.shared[i].puid === file.puid) {
 						this.shared.splice(i, 1);
-						break;
+					} else {
+						i++;
 					}
 				}
 			}
@@ -1033,7 +1034,7 @@ const app = new Vue({
 
 		isshared(file) {
 			for (const shr of this.shared) {
-				if (shr.puid === file.puid) {
+				if (shr.puid === file.puid) { // shared all files with same puid
 					return true;
 				}
 			}

@@ -2,7 +2,6 @@ package hms
 
 import (
 	"fmt"
-	"io"
 	"os"
 
 	"github.com/rwcarlsen/goexif/exif"
@@ -167,7 +166,7 @@ func (ek *ExifKit) Setup(syspath string, fi os.FileInfo) {
 
 // GetExifTmb extracts JPEG thumbnail from the image file.
 func GetExifTmb(syspath string) (md *MediaData, err error) {
-	var file io.ReadSeekCloser
+	var file VFile
 	if file, err = OpenFile(syspath); err != nil {
 		return // can not open file
 	}

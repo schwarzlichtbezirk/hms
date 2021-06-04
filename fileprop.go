@@ -548,7 +548,7 @@ func (tk *TagKit) Setup(syspath string, fi os.FileInfo) {
 	tk.FileProp.Setup(fi)
 
 	var md *MediaData
-	if file, err := OpenFile(syspath); err == nil {
+	if file, err := OpenFile(syspath); err == nil { // VFile
 		defer file.Close()
 		if m, err := tag.ReadFrom(file); err == nil {
 			tk.TagProp.Setup(m)
@@ -580,7 +580,7 @@ func (tk *TagKit) Setup(syspath string, fi os.FileInfo) {
 
 // GetTagTmb extracts embedded thumbnail from image file.
 func GetTagTmb(syspath string) (md *MediaData, err error) {
-	var file io.ReadSeekCloser
+	var file io.ReadSeekCloser // VFile
 	if file, err = OpenFile(syspath); err != nil {
 		return // can not open file
 	}

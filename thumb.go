@@ -124,7 +124,7 @@ func FindTmb(prop Pather, syspath string) (md *MediaData, err error) {
 		return // file is not image
 	}
 
-	var file io.ReadSeekCloser
+	var file VFile
 	if file, err = OpenFile(syspath); err != nil {
 		return // can not open file
 	}

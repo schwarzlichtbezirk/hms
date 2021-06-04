@@ -53,7 +53,6 @@ Vue.component('photoslider-tag', {
 		return {
 			list: [],
 			selfile: null,
-			imgloading: false,
 			repeatmode: 0, // 0 - no any repeat, 1 - repeat single, 2 - repeat playlist
 			dlg: null
 		};
@@ -66,7 +65,7 @@ Vue.component('photoslider-tag', {
 		// index of selected file
 		selfilepos() {
 			for (const i in this.list) {
-				if (this.selfile.puid === this.list[i].puid) {
+				if (this.selfile === this.list[i]) {
 					return Number(i);
 				}
 			}
@@ -106,7 +105,7 @@ Vue.component('photoslider-tag', {
 		load(file) {
 			if (this.selfile !== file) {
 				this.selfile = file;
-				this.imgloading = true;
+				eventHub.$emit('ajax', +1);
 			}
 		},
 		popup(file, list) {
@@ -122,10 +121,10 @@ Vue.component('photoslider-tag', {
 		},
 
 		onimgload(e) {
-			this.imgloading = false;
+			eventHub.$emit('ajax', -1);
 		},
 		onimgerror(e) {
-			this.imgloading = false;
+			eventHub.$emit('ajax', -1);
 		},
 		onkeyup(e) {
 			switch (e.code) {
@@ -178,12 +177,9 @@ Vue.component('photoslider-tag', {
 	mounted() {
 		this.dlg = new bootstrap.Modal(this.$el);
 		this.$el.addEventListener('shown.bs.modal', e => {
-			console.log("shown");
 		});
 		this.$el.addEventListener('hidden.bs.modal', e => {
 			this.selfile = null;
-			this.imgloading = false;
-			console.log("hidden");
 		});
 	},
 	beforeDestroy() {

@@ -258,6 +258,11 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	syspath = UnfoldPath(syspath)
 
+	if strings.HasPrefix(syspath, "http://") || strings.HasPrefix(syspath, "https://") {
+		http.Redirect(w, r, syspath, http.StatusMovedPermanently)
+		return
+	}
+
 	if prf.IsHidden(syspath) {
 		WriteError(w, http.StatusForbidden, ErrHidden, AECfilehidden)
 		return
@@ -291,7 +296,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	var content io.ReadSeekCloser
+	var content io.ReadSeekCloser // VFile
 	if content, err = OpenFile(syspath); err != nil {
 		WriteError500(w, err, AECmediaopen)
 		return
@@ -335,6 +340,11 @@ func mediaHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if strings.HasPrefix(syspath, "http://") || strings.HasPrefix(syspath, "https://") {
+		http.Redirect(w, r, syspath, http.StatusMovedPermanently)
+		return
+	}
+
 	if prf.IsHidden(syspath) {
 		WriteError(w, http.StatusForbidden, ErrHidden, AECmediahidden)
 		return
@@ -375,7 +385,7 @@ func mediaHandler(w http.ResponseWriter, r *http.Request) {
 			}
 		}()
 
-		var content io.ReadSeekCloser
+		var content io.ReadSeekCloser // VFile
 		if content, err = OpenFile(syspath); err != nil {
 			WriteError500(w, err, AECmediaopen)
 			return

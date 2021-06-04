@@ -309,7 +309,7 @@ func initcaches() {
 			var ext = GetFileExt(fp.Name())
 			switch {
 			case IsTypeNonalpha(ext):
-				var file io.ReadSeekCloser
+				var file VFile
 				if file, err = OpenFile(syspath); err != nil {
 					return // can not open file
 				}
@@ -333,7 +333,7 @@ func initcaches() {
 				return
 
 			case IsTypeAlpha(ext):
-				var file io.ReadSeekCloser
+				var file VFile
 				if file, err = OpenFile(syspath); err != nil {
 					return // can not open file
 				}

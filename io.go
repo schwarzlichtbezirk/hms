@@ -2,7 +2,6 @@ package hms
 
 import (
 	"os"
-	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -144,7 +143,7 @@ func (pl *Profiles) Load(fpath string) (err error) {
 
 			// bring all hidden to lowercase
 			for i, fpath := range prf.Hidden {
-				prf.Hidden[i] = strings.ToLower(ToSlash(fpath))
+				prf.Hidden[i] = ToSlash(fpath)
 			}
 
 			// build shares tables

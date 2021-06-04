@@ -7,7 +7,7 @@
 /* preloader */
 
 .preloader-lock {
-	z-index: 1040; /* above sticked and fixed navbar */
+	z-index: 1070; /* above sticked and fixed navbar and popover */
 	position: fixed;
 	top: 0;
 	left: 0;
