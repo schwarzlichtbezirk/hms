@@ -215,7 +215,11 @@ var extgrp = {
 	".vhd": FG.packs,
 	".vhdx": FG.packs,
 	".vmdk": FG.packs,
-	".wpk": FG.packs
+	".wpk": FG.packs,
+	".m3u": FG.packs,
+	".m3u8": FG.packs,
+	".pls": FG.packs,
+	".wpl": FG.packs
 };
 
 const extfmt = {
@@ -291,13 +295,16 @@ const extfmt = {
 		".cab": 1, ".zip": 1, ".7z": 1, ".rar": 1, ".rev": 1,
 		".jar": 1, ".tar": 1, ".tgz": 1, ".gz": 1, ".bz2": 1
 	},
-	"package": {
-		".wpk": 1
-	},
 	"disk": {
 		".iso": 1, ".isz": 1, ".udf": 1, ".nrg": 1, ".mdf": 1, ".mdx": 1,
 		".img": 1, ".ima": 1, ".imz": 1, ".ccd": 1, ".vc4": 1, ".dmg": 1,
 		".daa": 1, ".uif": 1, ".vhd": 1, ".vhdx": 1, ".vmdk": 1
+	},
+	"package": {
+		".wpk": 1
+	},
+	"playlist": {
+		".m3u": 1, ".m3u8": 1, ".pls": 1, ".wpl": 1
 	},
 
 	"image": {
@@ -339,10 +346,11 @@ const extfmt = {
 	"packs": {
 		".cab": 1, ".zip": 1, ".7z": 1, ".rar": 1, ".rev": 1,
 		".jar": 1, ".tar": 1, ".tgz": 1, ".gz": 1, ".bz2": 1,
-		".wpk": 1,
 		".iso": 1, ".isz": 1, ".udf": 1, ".nrg": 1, ".mdf": 1, ".mdx": 1,
 		".img": 1, ".ima": 1, ".imz": 1, ".ccd": 1, ".vc4": 1, ".dmg": 1,
-		".daa": 1, ".uif": 1, ".vhd": 1, ".vhdx": 1, ".vmdk": 1
+		".daa": 1, ".uif": 1, ".vhd": 1, ".vhdx": 1, ".vmdk": 1,
+		".wpk": 1,
+		".m3u": 1, ".m3u8": 1, ".pls": 1, ".wpl": 1
 	}
 };
 
@@ -351,7 +359,7 @@ const extfmtorder = [
 	"component", "exec",
 	"text", "html", "config", "datafmt", "script", "code",
 	"msoffice", "openoffice", "office",
-	"archive", "package", "disk",
+	"archive", "package", "disk", "playlist",
 	"image", "music", "video", "books", "texts", "packs"
 ];
 
@@ -823,18 +831,6 @@ const app = new Vue({
 				throw new HttpError(response.status, response.data);
 			}
 
-			this.pathlist = [];
-			this.filelist = [];
-			// update folder settings
-			for (const fp of response.data || []) {
-				if (fp.type !== FT.ctgr || hist.cid === "home") {
-					if (fp.type) {
-						this.pathlist.push(fp);
-					} else {
-						this.filelist.push(fp);
-					}
-				}
-			}
 			// update shared
 			if (hist.cid === "shares" && this.isadmin) {
 				this.shared = response.data || [];
@@ -847,23 +843,7 @@ const app = new Vue({
 			this.curpath = "";
 			this.shrname = "";
 
-			// clear current selected
-			eventHub.$emit('select', null);
-			// init map card
-			this.$refs.mcard.new();
-			// update map card
-			if (this.filelist.length) {
-				const gpslist = [];
-				for (const fp of this.filelist) {
-					if (fp.latitude && fp.longitude && fp.ntmb === 1) {
-						gpslist.push(fp);
-					}
-					if (pathext(fp.name) === ".gpx") {
-						this.$refs.mcard.addgpx(fp);
-					}
-				}
-				this.$refs.mcard.addmarkers(gpslist);
-			}
+			this.newfolder(response.data, hist.cid === "home");
 		},
 
 		// opens given folder cleary
@@ -876,19 +856,6 @@ const app = new Vue({
 				throw new HttpError(response.status, response.data);
 			}
 
-			this.pathlist = [];
-			this.filelist = [];
-			// update folder settings
-			for (const fp of response.data.list || []) {
-				if (fp && fp.type !== FT.ctgr) {
-					if (fp.type) {
-						this.pathlist.push(fp);
-					} else {
-						this.filelist.push(fp);
-					}
-				}
-			}
-
 			hist.puid = response.data.puid;
 			hist.path = response.data.path;
 			// current path & state
@@ -898,23 +865,28 @@ const app = new Vue({
 			this.curpath = hist.path;
 			this.shrname = response.data.shrname;
 
-			// clear current selected
-			eventHub.$emit('select', null);
-			// init map card
-			this.$refs.mcard.new();
-			// update map card
-			if (this.filelist.length) {
-				const gpslist = [];
-				for (const fp of this.filelist) {
-					if (fp.latitude && fp.longitude && fp.ntmb === 1) {
-						gpslist.push(fp);
-					}
-					if (pathext(fp.name) === ".gpx") {
-						this.$refs.mcard.addgpx(fp);
-					}
-				}
-				this.$refs.mcard.addmarkers(gpslist);
+			this.newfolder(response.data.list);
+		},
+
+		// opens given folder cleary
+		async fetchplaylist(hist) {
+			const response = await fetchajaxauth("POST", "/api/card/playlist", {
+				aid: hist.aid, puid: hist.puid
+			});
+			traceajax(response);
+			if (!response.ok) {
+				throw new HttpError(response.status, response.data);
 			}
+
+			hist.path = response.data.path;
+			// current path & state
+			this.curscan = new Date(Date.now());
+			this.curcid = "";
+			this.curpuid = hist.puid;
+			this.curpath = response.data.path;
+			this.shrname = response.data.shrname;
+
+			this.newfolder(response.data.list);
 		},
 
 		async fetchopenroute(hist) {
@@ -1090,6 +1062,39 @@ const app = new Vue({
 			this.histpos = this.histlist.length;
 		},
 
+		newfolder(list, ishome) {
+			this.pathlist = [];
+			this.filelist = [];
+			// update folder settings
+			for (const fp of list || []) {
+				if (fp && (fp.type !== FT.ctgr || ishome)) {
+					if (fp.type) {
+						this.pathlist.push(fp);
+					} else {
+						this.filelist.push(fp);
+					}
+				}
+			}
+
+			// clear current selected
+			eventHub.$emit('select', null);
+			// init map card
+			this.$refs.mcard.new();
+			// update map card
+			if (this.filelist.length) {
+				const gpslist = [];
+				for (const fp of this.filelist) {
+					if (fp.latitude && fp.longitude && fp.ntmb === 1) {
+						gpslist.push(fp);
+					}
+					if (pathext(fp.name) === ".gpx") {
+						this.$refs.mcard.addgpx(fp);
+					}
+				}
+				this.$refs.mcard.addmarkers(gpslist);
+			}
+		},
+
 		onhome() {
 			(async () => {
 				eventHub.$emit('ajax', +1);
@@ -1205,43 +1210,57 @@ const app = new Vue({
 			}
 		},
 		onopen(file) {
-			switch (getFileGroup(file)) {
-				case FG.dir:
-				case FG.packs:
-					if (!file.type && pathext(file.name) !== ".iso") { // skip non-iso images
-						break;
-					}
-					if (!file.latency || file.latency > 0) {
-						(async () => {
-							eventHub.$emit('ajax', +1);
-							try {
-								// open route and push history step
-								const hist = { aid: this.aid };
-								if (file.cid) {
-									hist.cid = file.cid;
-								}
-								if (file.puid) {
-									hist.puid = file.puid;
-								}
-								if (file.path) {
-									hist.path = file.path;
-								}
-								await this.fetchopenroute(hist);
-								this.pushhist(hist);
-							} catch (e) {
-								ajaxfail(e);
-							} finally {
-								eventHub.$emit('ajax', -1);
+			if (!file.type && !file.size) {
+				return;
+			}
+			const ext = pathext(file.name);
+			if (file.type || ext === ".iso") {
+				if (!file.latency || file.latency > 0) {
+					(async () => {
+						eventHub.$emit('ajax', +1);
+						try {
+							// open route and push history step
+							const hist = { aid: this.aid };
+							if (file.cid) {
+								hist.cid = file.cid;
 							}
-						})();
+							if (file.puid) {
+								hist.puid = file.puid;
+							}
+							if (file.path) {
+								hist.path = file.path;
+							}
+							await this.fetchopenroute(hist);
+							this.pushhist(hist);
+						} catch (e) {
+							ajaxfail(e);
+						} finally {
+							eventHub.$emit('ajax', -1);
+						}
+					})();
+				}
+			} else if (extfmt.playlist[ext]) {
+				// open route
+				(async () => {
+					eventHub.$emit('ajax', +1);
+					try {
+						// open route and push history step
+						const hist = { cid: this.curcid, aid: this.aid, puid: file.puid };
+						await this.fetchplaylist(hist);
+						await this.fetchscanthumbs();
+						this.seturl();
+						this.pushhist(hist);
+					} catch (e) {
+						ajaxfail(e);
+					} finally {
+						eventHub.$emit('ajax', -1);
 					}
-					break;
-				case FG.image:
-					this.$refs.slider.popup(file, this.$refs.fcard.playlist);
-					break;
-				default:
-					const url = mediaurl(file);
-					window.open(url, file.name);
+				})();
+			} else if (extfmt.image[ext]) {
+				this.$refs.slider.popup(file, this.$refs.fcard.playlist);
+			} else {
+				const url = mediaurl(file);
+				window.open(url, file.name);
 			}
 		}
 	},

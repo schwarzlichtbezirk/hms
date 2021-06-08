@@ -218,6 +218,10 @@ var extgrp = map[string]int{
 	".vhdx": FGpacks,
 	".vmdk": FGpacks,
 	".wpk":  FGpacks,
+	".m3u":  FGpacks,
+	".m3u8": FGpacks,
+	".pls":  FGpacks,
+	".wpl":  FGpacks,
 }
 
 // Categories properties constants.

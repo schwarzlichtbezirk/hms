@@ -114,63 +114,76 @@ const (
 	AECfoldernoacc  = 71
 	AECfolderroot   = 72
 	AECfoldernopath = 73
-	AECfolderaccess = 74
-	AECfolderabsent = 75
-	AECfolderfail   = 76
+	AECfolderhidden = 74
+	AECfolderaccess = 75
+	AECfolderabsent = 76
+	AECfolderfail   = 77
+
+	// playlist
+
+	AECplaylistnodata = 80
+	AECplaylistnoacc  = 81
+	AECplaylistnopath = 82
+	AECplaylisthidden = 83
+	AECplaylistaccess = 84
+	AECplaylistopen   = 85
+	AECplaylistread   = 86
+	AECplaylistformat = 87
 
 	// ispath
 
-	AECispathnoacc = 80
-	AECispathdeny  = 81
-	AECispathroot  = 82
+	AECispathnoacc  = 90
+	AECispathdeny   = 91
+	AECispathroot   = 92
+	AECispathhidden = 93
 
 	// tmb/chk
 
-	AECtmbchknodata = 83
+	AECtmbchknodata = 94
 
 	// tmb/scn
 
-	AECtmbscnnodata = 84
-	AECtmbscnnoacc  = 85
+	AECtmbscnnodata = 95
+	AECtmbscnnoacc  = 96
 
 	// share/lst
 
-	AECshrlstnoacc = 90
-	AECshrlstnoshr = 91
+	AECshrlstnoacc = 100
+	AECshrlstnoshr = 101
 
 	// share/add
 
-	AECshraddnodata = 92
-	AECshraddnoacc  = 93
-	AECshradddeny   = 94
-	AECshraddnopath = 95
-	AECshraddaccess = 96
+	AECshraddnodata = 102
+	AECshraddnoacc  = 103
+	AECshradddeny   = 104
+	AECshraddnopath = 105
+	AECshraddaccess = 106
 
 	// share/del
 
-	AECshrdelnodata = 97
-	AECshrdelnoacc  = 98
-	AECshrdeldeny   = 99
+	AECshrdelnodata = 107
+	AECshrdelnoacc  = 108
+	AECshrdeldeny   = 109
 
 	// drive/lst
 
-	AECdrvlstnoacc = 100
-	AECdrvlstnoshr = 101
+	AECdrvlstnoacc = 110
+	AECdrvlstnoshr = 111
 
 	// drive/add
 
-	AECdrvaddnodata = 102
-	AECdrvaddnoacc  = 103
-	AECdrvadddeny   = 104
-	AECdrvaddroot   = 105
-	AECdrvaddfile   = 106
+	AECdrvaddnodata = 112
+	AECdrvaddnoacc  = 113
+	AECdrvadddeny   = 114
+	AECdrvaddroot   = 115
+	AECdrvaddfile   = 116
 
 	// drive/del
 
-	AECdrvdelnodata = 107
-	AECdrvdelnoacc  = 108
-	AECdrvdeldeny   = 109
-	AECdrvdelnopath = 110
+	AECdrvdelnodata = 117
+	AECdrvdelnoacc  = 118
+	AECdrvdeldeny   = 119
+	AECdrvdelnopath = 120
 )
 
 // HTTP error messages
@@ -274,7 +287,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var fp = prop.(Pather)
-	if fp.Type() < 0 {
+	if fp.Type() != FTfile {
 		WriteError(w, http.StatusUnsupportedMediaType, ErrNotFile, AECfilenofile)
 		return
 	}
@@ -356,7 +369,7 @@ func mediaHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var fp = prop.(Pather)
-	if fp.Type() < 0 {
+	if fp.Type() != FTfile {
 		WriteError(w, http.StatusUnsupportedMediaType, ErrNotFile, AECmedianofile)
 		return
 	}
@@ -460,7 +473,7 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var fp = prop.(Pather)
-	if fp.Type() < 0 {
+	if fp.Type() != FTfile {
 		WriteError(w, http.StatusUnsupportedMediaType, ErrNotFile, AECthumbnofile)
 		return
 	}
@@ -856,6 +869,11 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 		ret.PUID = arg.PUID
 	}
 
+	if prf.IsHidden(syspath) {
+		WriteError(w, http.StatusForbidden, ErrHidden, AECfolderhidden)
+		return
+	}
+
 	var shrpath, base, cg = prf.GetSharePath(syspath, auth == prf)
 	if cg.IsZero() {
 		WriteError(w, http.StatusForbidden, ErrNoAccess, AECfolderaccess)
@@ -876,6 +894,101 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 	}
 	usermsg <- UsrMsg{r, "path", ret.PUID}
 	Log.Printf("id%d: navigate to %s", prf.ID, syspath)
+
+	WriteOK(w, ret)
+}
+
+// APIHANDLER
+func playlistAPI(w http.ResponseWriter, r *http.Request) {
+	var err error
+	var arg struct {
+		AID  int    `json:"aid"`
+		PUID string `json:"puid,omitempty"`
+		Ext  string `json:"ext,omitempty"`
+	}
+	var ret struct {
+		List []Pather `json:"list"`
+		Skip int      `json:"skip"`
+		Path string   `json:"path"`
+		Name string   `json:"shrname"`
+	}
+
+	// get arguments
+	if err = AjaxGetArg(r, &arg); err != nil {
+		WriteJSON(w, http.StatusBadRequest, err)
+		return
+	}
+	if len(arg.PUID) == 0 {
+		WriteError400(w, ErrArgNoPath, AECplaylistnodata)
+		return
+	}
+
+	var prf *Profile
+	if prf = prflist.ByID(arg.AID); prf == nil {
+		WriteError400(w, ErrNoAcc, AECplaylistnoacc)
+		return
+	}
+	var auth *Profile
+	if auth, err = GetAuth(r); err != nil {
+		WriteJSON(w, http.StatusUnauthorized, err)
+		return
+	}
+
+	var syspath string
+	var ok bool
+	if syspath, ok = pathcache.Path(arg.PUID); !ok {
+		WriteError(w, http.StatusNotFound, ErrNoPath, AECplaylistnopath)
+		return
+	}
+
+	if prf.IsHidden(syspath) {
+		WriteError(w, http.StatusForbidden, ErrHidden, AECplaylisthidden)
+		return
+	}
+
+	var shrpath, base, cg = prf.GetSharePath(syspath, auth == prf)
+	var grp = GetFileGroup(syspath)
+	if !cg[grp] {
+		WriteError(w, http.StatusForbidden, ErrNoAccess, AECplaylistaccess)
+		return
+	}
+	ret.Path = shrpath
+	ret.Name = PathBase(base)
+
+	var file VFile
+	if file, err = OpenFile(syspath); err != nil {
+		WriteError500(w, err, AECplaylistopen)
+		return
+	}
+	var pl Playlist
+	pl.Dest = path.Dir(syspath)
+	var ext = arg.Ext
+	if ext == "" {
+		ext = GetFileExt(syspath)
+	}
+	switch ext {
+	case ".m3u", ".m3u8":
+		if _, err = pl.ReadM3U(file); err != nil {
+			WriteError(w, http.StatusUnsupportedMediaType, err, AECplaylistread)
+			return
+		}
+	default:
+		WriteError(w, http.StatusUnsupportedMediaType, ErrNotFile, AECplaylistformat)
+		return
+	}
+
+	var prop interface{}
+	for _, track := range pl.Tracks {
+		var cg = prf.PathAccess(track.Path, auth == prf)
+		var grp = GetFileGroup(track.Path)
+		if cg[grp] {
+			if prop, err = propcache.Get(track.Path); err == nil {
+				ret.List = append(ret.List, prop.(Pather))
+				continue
+			}
+		}
+		ret.Skip++
+	}
 
 	WriteOK(w, ret)
 }
@@ -910,6 +1023,11 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		return
 	}
 	syspath = UnfoldPath(syspath)
+
+	if prf.IsHidden(syspath) {
+		WriteError(w, http.StatusForbidden, ErrHidden, AECispathhidden)
+		return
+	}
 
 	var prop interface{}
 	if prop, err = propcache.Get(syspath); err != nil {
