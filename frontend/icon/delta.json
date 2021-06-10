@@ -42,10 +42,11 @@
 			"config": "/data/icon/delta/file-ini",
 			"code": "/data/icon/delta/file-script",
 			"archive": "/data/icon/delta/file-pack",
-			"package": "/data/icon/delta/file-pack",
 			"disk": "/data/icon/delta/file-disk",
+			"package": "/data/icon/delta/file-pack",
+			"playlist": "/data/icon/delta/file-pack",
 			"image": "/data/icon/delta/file-image",
-			"music": "/data/icon/delta/file-music",
+			"audio": "/data/icon/delta/file-music",
 			"video": "/data/icon/delta/file-video"
 		},
 		"ext": {

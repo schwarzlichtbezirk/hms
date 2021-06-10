@@ -42,8 +42,9 @@
 			"config": "/data/icon/chakram/file-code",
 			"code": "/data/icon/chakram/file-code",
 			"disk": "/data/icon/chakram/file-disk",
+			"playlist": "/data/icon/chakram/file-playlist",
 			"image": "/data/icon/chakram/file-image",
-			"music": "/data/icon/chakram/file-music",
+			"audio": "/data/icon/chakram/file-music",
 			"video": "/data/icon/chakram/file-movie"
 		},
 		"ext": {

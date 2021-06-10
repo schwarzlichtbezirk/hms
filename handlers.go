@@ -127,8 +127,9 @@ const (
 	AECplaylisthidden = 83
 	AECplaylistaccess = 84
 	AECplaylistopen   = 85
-	AECplaylistread   = 86
-	AECplaylistformat = 87
+	AECplaylistm3u    = 86
+	AECplaylistwpl    = 87
+	AECplaylistformat = 88
 
 	// ispath
 
@@ -202,6 +203,7 @@ var (
 	ErrHidden    = errors.New("access to specified file path is disabled")
 	ErrNoAccess  = errors.New("profile has no access to specified file path")
 	ErrNotCat    = errors.New("only categories can be accepted")
+	ErrNotPlay   = errors.New("file can not be read as playlist")
 )
 
 //////////////////////////
@@ -969,11 +971,16 @@ func playlistAPI(w http.ResponseWriter, r *http.Request) {
 	switch ext {
 	case ".m3u", ".m3u8":
 		if _, err = pl.ReadM3U(file); err != nil {
-			WriteError(w, http.StatusUnsupportedMediaType, err, AECplaylistread)
+			WriteError(w, http.StatusUnsupportedMediaType, err, AECplaylistm3u)
+			return
+		}
+	case ".wpl":
+		if _, err = pl.ReadWPL(file); err != nil {
+			WriteError(w, http.StatusUnsupportedMediaType, err, AECplaylistwpl)
 			return
 		}
 	default:
-		WriteError(w, http.StatusUnsupportedMediaType, ErrNotFile, AECplaylistformat)
+		WriteError(w, http.StatusUnsupportedMediaType, ErrNotPlay, AECplaylistformat)
 		return
 	}
 

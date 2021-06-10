@@ -41,10 +41,11 @@
 			"config": "/data/icon/xrabbit/file-log",
 			"code": "/data/icon/xrabbit/file-text",
 			"archive": "/data/icon/xrabbit/file-arch",
-			"package": "/data/icon/xrabbit/file-disk",
 			"disk": "/data/icon/xrabbit/file-disk",
+			"package": "/data/icon/xrabbit/file-disk",
+			"playlist": "/data/icon/xrabbit/file-doc",
 			"image": "/data/icon/xrabbit/file-image",
-			"music": "/data/icon/xrabbit/file-audio",
+			"audio": "/data/icon/xrabbit/file-audio",
 			"video": "/data/icon/xrabbit/file-doc",
 			"books": "/data/icon/xrabbit/file-book"
 		},

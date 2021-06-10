@@ -2,11 +2,14 @@ package hms
 
 import (
 	"bufio"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"io"
 	"path/filepath"
 	"strings"
+
+	"github.com/beevik/guid"
 )
 
 type Track struct {
@@ -18,6 +21,36 @@ type Track struct {
 type Playlist struct {
 	Tracks []Track
 	Dest   string // playlist file destination
+	Title  string
+}
+
+type WPLMeta struct {
+	Text    string `xml:",chardata"`
+	Name    string `xml:"name,attr"`
+	Content string `xml:"content,attr"`
+}
+
+type WPLMedia struct {
+	Text string `xml:",chardata"`
+	Src  string `xml:"src,attr"`
+	Tid  string `xml:"tid,attr,omitempty"`
+}
+
+type WPL struct {
+	XMLName xml.Name `xml:"smil"`
+	Text    string   `xml:",chardata"`
+	Head    struct {
+		Text  string    `xml:",chardata"`
+		Meta  []WPLMeta `xml:"meta"`
+		Title string    `xml:"title"`
+	} `xml:"head"`
+	Body struct {
+		Text string `xml:",chardata"`
+		Seq  struct {
+			Text  string     `xml:",chardata"`
+			Media []WPLMedia `xml:"media"`
+		} `xml:"seq"`
+	} `xml:"body"`
 }
 
 var (
@@ -136,6 +169,70 @@ func (pl *Playlist) WriteM3U8(w io.Writer) (num int64, err error) {
 	}
 	n64, err = pl.WriteM3U(w)
 	num += n64
+	return
+}
+
+func (pl *Playlist) ReadWPL(r io.Reader) (num int64, err error) {
+	var body []byte
+	if body, err = io.ReadAll(r); err != nil {
+		return
+	}
+	num = int64(len(body))
+
+	var wpl WPL
+	if err = xml.Unmarshal(body, &wpl); err != nil {
+		return
+	}
+
+	for _, m := range wpl.Body.Seq.Media {
+		var track Track
+		if filepath.IsAbs(m.Src) || isURL(m.Src) {
+			track.Path = m.Src
+		} else if m.Src[0] == filepath.Separator {
+			track.Path = filepath.Join(filepath.VolumeName(pl.Dest), m.Src)
+		} else {
+			track.Path = filepath.Join(pl.Dest, m.Src)
+		}
+		pl.Tracks = append(pl.Tracks, track)
+	}
+	return
+}
+
+func (pl *Playlist) WriteWPL(w io.Writer) (num int64, err error) {
+	var n int
+	n, err = fmt.Fprintln(w, `<?wpl version="1.0"?>`)
+	num += int64(n)
+	if err != nil {
+		return
+	}
+
+	var wpl WPL
+	wpl.Head.Title = pl.Title
+	wpl.Head.Meta = append(wpl.Head.Meta, WPLMeta{Name: "Generator", Content: "Home Media Server"})
+	wpl.Head.Meta = append(wpl.Head.Meta, WPLMeta{Name: "ItemCount", Content: fmt.Sprintf("%d", len(pl.Tracks))})
+
+	const sep = string(filepath.Separator)
+	var dir0 = filepath.Clean(pl.Dest)
+	var dir1 = filepath.Dir(dir0)
+	dir0 += sep
+	dir1 += sep
+	for _, track := range pl.Tracks {
+		var fpath = track.Path
+		if strings.HasPrefix(fpath, dir0) || strings.HasPrefix(fpath, dir1) {
+			if fpath, err = filepath.Rel(dir0, fpath); err != nil {
+				return
+			}
+		}
+		var guid = guid.New()
+		wpl.Body.Seq.Media = append(wpl.Body.Seq.Media, WPLMedia{Src: fpath, Tid: "{" + guid.StringUpper() + "}"})
+	}
+
+	var body []byte
+	if body, err = xml.MarshalIndent(&wpl, "", "    "); err != nil {
+		return
+	}
+	n, err = w.Write(body)
+	num = int64(n)
 	return
 }
 

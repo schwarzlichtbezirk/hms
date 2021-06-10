@@ -41,10 +41,11 @@
 			"config": "/data/icon/tulliana/file-log",
 			"code": "/data/icon/tulliana/file-source",
 			"archive": "/data/icon/tulliana/file-arch",
-			"package": "/data/icon/tulliana/file-res",
 			"disk": "/data/icon/tulliana/file-mdf",
+			"package": "/data/icon/tulliana/file-res",
+			"playlist": "/data/icon/tulliana/file-taskbar",
 			"image": "/data/icon/tulliana/file-image",
-			"music": "/data/icon/tulliana/file-midi",
+			"audio": "/data/icon/tulliana/file-midi",
 			"video": "/data/icon/tulliana/file-video"
 		},
 		"ext": {

@@ -411,22 +411,22 @@ Vue.component('file-card-tag', {
 		},
 
 		showmusic() {
-			return !!this.list.find(file => getFileGroup(file) === FG.audio);
+			return !!this.list.find(file => extfmt.audio[pathext(file.name)]);
 		},
 		showvideo() {
-			return !!this.list.find(file => getFileGroup(file) === FG.video);
+			return !!this.list.find(file => extfmt.video[pathext(file.name)]);
 		},
 		showphoto() {
-			return !!this.list.find(file => getFileGroup(file) === FG.image);
+			return !!this.list.find(file => extfmt.image[pathext(file.name)]);
 		},
 		showbooks() {
-			return !!this.list.find(file => getFileGroup(file) === FG.books);
+			return !!this.list.find(file => extfmt.books[pathext(file.name)]);
 		},
 		showtexts() {
-			return !!this.list.find(file => getFileGroup(file) === FG.texts);
+			return !!this.list.find(file => extfmt.texts[pathext(file.name)]);
 		},
 		showpacks() {
-			return !!this.list.find(file => getFileGroup(file) === FG.packs);
+			return !!this.list.find(file => extfmt.packs[pathext(file.name)]);
 		},
 		showother() {
 			return !!this.list.find(file => getFileGroup(file) === FG.other);

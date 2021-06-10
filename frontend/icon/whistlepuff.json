@@ -42,10 +42,11 @@
 			"config": "/data/icon/whistlepuff/file-textfile",
 			"code": "/data/icon/whistlepuff/file-textfile",
 			"archive": "/data/icon/whistlepuff/file-textfile",
-			"package": "/data/icon/whistlepuff/file-disk",
 			"disk": "/data/icon/whistlepuff/file-disk",
+			"package": "/data/icon/whistlepuff/file-disk",
+			"playlist": "/data/icon/whistlepuff/file-textfile",
 			"image": "/data/icon/whistlepuff/file-image",
-			"music": "/data/icon/whistlepuff/file-audio",
+			"audio": "/data/icon/whistlepuff/file-audio",
 			"video": "/data/icon/whistlepuff/file-video"
 		},
 		"ext": {

@@ -42,10 +42,10 @@
 			"config": "/data/icon/ubuntu/file-ini",
 			"code": "/data/icon/ubuntu/file-javascript",
 			"archive": "/data/icon/ubuntu/file-tgz",
-			"package": "/data/icon/ubuntu/file-tgz",
 			"disk": "/data/icon/ubuntu/file-disk",
+			"package": "/data/icon/ubuntu/file-tgz",
 			"image": "/data/icon/ubuntu/file-image",
-			"music": "/data/icon/ubuntu/file-audio",
+			"audio": "/data/icon/ubuntu/file-audio",
 			"video": "/data/icon/ubuntu/file-video"
 		},
 		"ext": {

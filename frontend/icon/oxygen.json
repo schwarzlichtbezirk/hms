@@ -42,10 +42,10 @@
 			"config": "/data/icon/oxygen/file-config",
 			"code": "/data/icon/oxygen/file-script",
 			"archive": "/data/icon/oxygen/file-store",
-			"package": "/data/icon/oxygen/file-package",
 			"disk": "/data/icon/oxygen/file-disk",
+			"package": "/data/icon/oxygen/file-package",
 			"image": "/data/icon/oxygen/file-image",
-			"music": "/data/icon/oxygen/file-audio",
+			"audio": "/data/icon/oxygen/file-audio",
 			"video": "/data/icon/oxygen/file-video"
 		},
 		"ext": {

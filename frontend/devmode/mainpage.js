@@ -32,196 +32,6 @@ const DS = {
 	red: 10000
 };
 
-var extgrp = {
-	// Video
-	".avi": FG.video,
-	".mpe": FG.video,
-	".mpg": FG.video,
-	".mp4": FG.video,
-	".webm": FG.video,
-	".wmv": FG.video,
-	".wmx": FG.video,
-	".flv": FG.video,
-	".3gp": FG.video,
-	".3g2": FG.video,
-	".mkv": FG.video,
-	".mov": FG.video,
-	".ogv": FG.video,
-	".ogx": FG.video,
-
-	// Audio
-	".aac": FG.audio,
-	".m4a": FG.audio,
-	".alac": FG.audio,
-	".aif": FG.audio,
-	".mpa": FG.audio,
-	".mp3": FG.audio,
-	".wav": FG.audio,
-	".wma": FG.audio,
-	".weba": FG.audio,
-	".oga": FG.audio,
-	".ogg": FG.audio,
-	".opus": FG.audio,
-	".flac": FG.audio,
-	".mka": FG.audio,
-	".ra": FG.audio,
-	".mid": FG.audio,
-	".midi": FG.audio,
-	".cda": FG.audio,
-
-	// Images
-	".tga": FG.image,
-	".bmp": FG.image,
-	".dib": FG.image,
-	".rle": FG.image,
-	".dds": FG.image,
-	".tif": FG.image,
-	".tiff": FG.image,
-	".jpg": FG.image,
-	".jpe": FG.image,
-	".jpeg": FG.image,
-	".jfif": FG.image,
-	".gif": FG.image,
-	".png": FG.image,
-	".webp": FG.image,
-	".psd": FG.image,
-	".psb": FG.image,
-	".jp2": FG.image,
-	".jpg2": FG.image,
-	".jpx": FG.image,
-	".jpm": FG.image,
-	".jxr": FG.image,
-
-	// Books
-	".pdf": FG.books,
-	".djvu": FG.books,
-	".djv": FG.books,
-	".html": FG.books,
-	".htm": FG.books,
-	".shtml": FG.books,
-	".shtm": FG.books,
-	".xhtml": FG.books,
-	".phtml": FG.books,
-	".hta": FG.books,
-	".mht": FG.books,
-	// Office
-	".odt": FG.books,
-	".ods": FG.books,
-	".odp": FG.books,
-	".rtf": FG.books,
-	".abw": FG.books,
-	".doc": FG.books,
-	".docx": FG.books,
-	".xls": FG.books,
-	".xlsx": FG.books,
-	".ppt": FG.books,
-	".pptx": FG.books,
-	".vsd": FG.books,
-
-	// Texts
-	".txt": FG.texts,
-	".md": FG.texts,
-	".css": FG.texts,
-	".js": FG.texts,
-	".jsm": FG.texts,
-	".vb": FG.texts,
-	".vbs": FG.texts,
-	".bat": FG.texts,
-	".cmd": FG.texts,
-	".sh": FG.texts,
-	".mak": FG.texts,
-	".iss": FG.texts,
-	".nsi": FG.texts,
-	".nsh": FG.texts,
-	".bsh": FG.texts,
-	".sql": FG.texts,
-	".as": FG.texts,
-	".mx": FG.texts,
-	".ps": FG.texts,
-	".php": FG.texts,
-	".phpt": FG.texts,
-	".lua": FG.texts,
-	".tcl": FG.texts,
-	".rc": FG.texts,
-	".cmake": FG.texts,
-	".java": FG.texts,
-	".jsp": FG.texts,
-	".asp": FG.texts,
-	".asm": FG.texts,
-	".c": FG.texts,
-	".h": FG.texts,
-	".hpp": FG.texts,
-	".hxx": FG.texts,
-	".cpp": FG.texts,
-	".cxx": FG.texts,
-	".cc": FG.texts,
-	".cs": FG.texts,
-	".go": FG.texts,
-	".r": FG.texts,
-	".d": FG.texts,
-	".pas": FG.texts,
-	".inc": FG.texts,
-	".py": FG.texts,
-	".pyw": FG.texts,
-	".pl": FG.texts,
-	".pm": FG.texts,
-	".plx": FG.texts,
-	".rb": FG.texts,
-	".rbw": FG.texts,
-	".cfg": FG.texts,
-	".ini": FG.texts,
-	".inf": FG.texts,
-	".reg": FG.texts,
-	".url": FG.texts,
-	".xml": FG.texts,
-	".xsml": FG.texts,
-	".xsl": FG.texts,
-	".xsd": FG.texts,
-	".kml": FG.texts,
-	".gpx": FG.texts,
-	".wsdl": FG.texts,
-	".xlf": FG.texts,
-	".xliff": FG.texts,
-	".yml": FG.texts,
-	".yaml": FG.texts,
-	".json": FG.texts,
-	".log": FG.texts,
-
-	// storage
-	".cab": FG.packs,
-	".zip": FG.packs,
-	".7z": FG.packs,
-	".rar": FG.packs,
-	".rev": FG.packs,
-	".jar": FG.packs,
-	".tar": FG.packs,
-	".tgz": FG.packs,
-	".gz": FG.packs,
-	".bz2": FG.packs,
-	".iso": FG.packs,
-	".isz": FG.packs,
-	".udf": FG.packs,
-	".nrg": FG.packs,
-	".mdf": FG.packs,
-	".mdx": FG.packs,
-	".img": FG.packs,
-	".ima": FG.packs,
-	".imz": FG.packs,
-	".ccd": FG.packs,
-	".vc4": FG.packs,
-	".dmg": FG.packs,
-	".daa": FG.packs,
-	".uif": FG.packs,
-	".vhd": FG.packs,
-	".vhdx": FG.packs,
-	".vmdk": FG.packs,
-	".wpk": FG.packs,
-	".m3u": FG.packs,
-	".m3u8": FG.packs,
-	".pls": FG.packs,
-	".wpl": FG.packs
-};
-
 const extfmt = {
 	"bitmap": {
 		".tga": 1, ".bmp": 1, ".dib": 1, ".rle": 1, ".dds": 1
@@ -313,7 +123,7 @@ const extfmt = {
 		".gif": 1, ".png": 1, ".webp": 1, ".psd": 1, ".psb": 1,
 		".jp2": 1, ".jpg2": 1, ".jpx": 1, ".jpm": 1, ".jxr": 1
 	},
-	"music": {
+	"audio": {
 		".aac": 1, ".m4a": 1, ".alac": 1, ".aif": 1, ".mpa": 1, ".mp3": 1,
 		".wav": 1, ".wma": 1, ".weba": 1, ".oga": 1, ".ogg": 1, ".opus": 1,
 		".flac": 1, ".mka": 1, ".ra": 1, ".mid": 1, ".midi": 1, ".cda": 1
@@ -359,15 +169,22 @@ const extfmtorder = [
 	"component", "exec",
 	"text", "html", "config", "datafmt", "script", "code",
 	"msoffice", "openoffice", "office",
-	"archive", "package", "disk", "playlist",
-	"image", "music", "video", "books", "texts", "packs"
+	"archive", "disk", "package", "playlist",
+	"image", "audio", "video", "books", "texts", "packs"
 ];
 
 const getFileGroup = file => {
 	if (file.type) {
 		return FG.dir;
 	}
-	return extgrp[pathext(file.name)] || FG.other;
+	const ext = pathext(file.name);
+	if (extfmt.image[ext]) return FG.image;
+	else if (extfmt.audio[ext]) return FG.audio;
+	else if (extfmt.video[ext]) return FG.video;
+	else if (extfmt.books[ext]) return FG.books;
+	else if (extfmt.texts[ext]) return FG.texts;
+	else if (extfmt.packs[ext]) return FG.packs;
+	else return FG.other;
 };
 
 const geticonpath = (file, im, shr) => {

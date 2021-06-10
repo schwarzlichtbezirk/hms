@@ -43,10 +43,11 @@
 			"datafmt": "/data/icon/junior/file-datafmt",
 			"code": "/data/icon/junior/file-script",
 			"archive": "/data/icon/junior/file-zip",
-			"package": "/data/icon/junior/file-cab",
 			"disk": "/data/icon/junior/file-disk",
+			"package": "/data/icon/junior/file-cab",
+			"playlist": "/data/icon/junior/file-datafmt",
 			"image": "/data/icon/junior/file-bitmap",
-			"music": "/data/icon/junior/file-music",
+			"audio": "/data/icon/junior/file-music",
 			"video": "/data/icon/junior/file-movie2"
 		},
 		"ext": {
