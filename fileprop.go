@@ -220,8 +220,9 @@ var extgrp = map[string]int{
 	".wpk":  FGpacks,
 	".m3u":  FGpacks,
 	".m3u8": FGpacks,
-	".pls":  FGpacks,
 	".wpl":  FGpacks,
+	".pls":  FGpacks,
+	".asx":  FGpacks,
 }
 
 // Categories properties constants.

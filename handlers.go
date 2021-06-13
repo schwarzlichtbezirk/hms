@@ -129,14 +129,16 @@ const (
 	AECplaylistopen   = 85
 	AECplaylistm3u    = 86
 	AECplaylistwpl    = 87
-	AECplaylistformat = 88
+	AECplaylistpls    = 88
+	AECplaylistasx    = 89
+	AECplaylistformat = 90
 
 	// ispath
 
-	AECispathnoacc  = 90
-	AECispathdeny   = 91
-	AECispathroot   = 92
-	AECispathhidden = 93
+	AECispathnoacc  = 91
+	AECispathdeny   = 92
+	AECispathroot   = 93
+	AECispathhidden = 94
 
 	// tmb/chk
 
@@ -977,6 +979,16 @@ func playlistAPI(w http.ResponseWriter, r *http.Request) {
 	case ".wpl":
 		if _, err = pl.ReadWPL(file); err != nil {
 			WriteError(w, http.StatusUnsupportedMediaType, err, AECplaylistwpl)
+			return
+		}
+	case ".pls":
+		if _, err = pl.ReadPLS(file); err != nil {
+			WriteError(w, http.StatusUnsupportedMediaType, err, AECplaylistpls)
+			return
+		}
+	case ".asx":
+		if _, err = pl.ReadASX(file); err != nil {
+			WriteError(w, http.StatusUnsupportedMediaType, err, AECplaylistasx)
 			return
 		}
 	default:
