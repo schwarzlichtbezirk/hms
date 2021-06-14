@@ -131,23 +131,24 @@ const (
 	AECplaylistwpl    = 87
 	AECplaylistpls    = 88
 	AECplaylistasx    = 89
-	AECplaylistformat = 90
+	AECplaylistxspf   = 90
+	AECplaylistformat = 91
 
 	// ispath
 
-	AECispathnoacc  = 91
-	AECispathdeny   = 92
-	AECispathroot   = 93
-	AECispathhidden = 94
+	AECispathnoacc  = 92
+	AECispathdeny   = 93
+	AECispathroot   = 94
+	AECispathhidden = 95
 
 	// tmb/chk
 
-	AECtmbchknodata = 94
+	AECtmbchknodata = 96
 
 	// tmb/scn
 
-	AECtmbscnnodata = 95
-	AECtmbscnnoacc  = 96
+	AECtmbscnnodata = 97
+	AECtmbscnnoacc  = 98
 
 	// share/lst
 
@@ -991,6 +992,11 @@ func playlistAPI(w http.ResponseWriter, r *http.Request) {
 			WriteError(w, http.StatusUnsupportedMediaType, err, AECplaylistasx)
 			return
 		}
+	case ".xspf":
+		if _, err = pl.ReadXSPF(file); err != nil {
+			WriteError(w, http.StatusUnsupportedMediaType, err, AECplaylistxspf)
+			return
+		}
 	default:
 		WriteError(w, http.StatusUnsupportedMediaType, ErrNotPlay, AECplaylistformat)
 		return
@@ -998,10 +1004,10 @@ func playlistAPI(w http.ResponseWriter, r *http.Request) {
 
 	var prop interface{}
 	for _, track := range pl.Tracks {
-		var cg = prf.PathAccess(track.Path, auth == prf)
-		var grp = GetFileGroup(track.Path)
+		var cg = prf.PathAccess(track.Location, auth == prf)
+		var grp = GetFileGroup(track.Location)
 		if cg[grp] {
-			if prop, err = propcache.Get(track.Path); err == nil {
+			if prop, err = propcache.Get(track.Location); err == nil {
 				ret.List = append(ret.List, prop.(Pather))
 				continue
 			}

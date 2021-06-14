@@ -114,7 +114,7 @@ const extfmt = {
 		".wpk": 1
 	},
 	"playlist": {
-		".m3u": 1, ".m3u8": 1, ".pls": 1, ".wpl": 1, ".asx": 1
+		".m3u": 1, ".m3u8": 1, ".pls": 1, ".wpl": 1, ".asx": 1, ".xspf": 1
 	},
 
 	"image": {
@@ -160,7 +160,7 @@ const extfmt = {
 		".img": 1, ".ima": 1, ".imz": 1, ".ccd": 1, ".vc4": 1, ".dmg": 1,
 		".daa": 1, ".uif": 1, ".vhd": 1, ".vhdx": 1, ".vmdk": 1,
 		".wpk": 1,
-		".m3u": 1, ".m3u8": 1, ".pls": 1, ".wpl": 1, ".asx": 1
+		".m3u": 1, ".m3u8": 1, ".pls": 1, ".wpl": 1, ".asx": 1, ".xspf": 1
 	}
 };
 
