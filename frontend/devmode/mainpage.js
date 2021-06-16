@@ -448,6 +448,11 @@ const app = new Vue({
 		aid: 0, // profile ID
 		ishome: false, // able to go home
 
+		selfile: null, // current selected item
+		diskpath: "", // path to disk to add
+		diskpathstate: 0,
+		diskadd: null,
+
 		shared: [], // list of shared folders
 
 		// history
@@ -461,7 +466,9 @@ const app = new Vue({
 		curcid: "", // current category ID
 		curpuid: "", // current folder PUID
 		curpath: "", // current folder path and path state
-		shrname: "" // current folder path share name
+		shrname: "", // current folder path share name
+
+		iid: makestrid(10) // instance ID
 	},
 	computed: {
 		// is it authorized or running on localhost
@@ -562,17 +569,43 @@ const app = new Vue({
 
 		// common buttons enablers
 
-		dishome() {
-			return this.curcid === "home" || !(this.isadmin || this.ishome);
+		clshome() {
+			return { 'disabled': this.curcid === "home" || !(this.isadmin || this.ishome) };
 		},
-		disback() {
-			return this.histpos < 2;
+		clsback() {
+			return { 'disabled': this.histpos < 2 };
 		},
-		disforward() {
-			return this.histpos >= this.histlist.length;
+		clsforward() {
+			return { 'disabled': this.histpos >= this.histlist.length };
 		},
-		disparent() {
-			return !this.curpathway.length;
+		clsparent() {
+			return { 'disabled': !this.curpathway.length };
+		},
+
+		clslink() {
+			return { 'disabled': !this.selfile || this.selfile.type === FT.ctgr };
+		},
+		clsshared() {
+			return {
+				'active': this.selfile && this.isshared(this.selfile),
+				'disabled': !this.selfile
+			};
+		},
+
+		showdiskadd() {
+			return this.isadmin && this.curcid === 'drives';
+		},
+		clsdiskpathedt() {
+			return {
+				'is-invalid': this.diskpathstate && this.passstate === -1,
+				'is-valid': this.diskpathstate && this.passstate !== -1
+			};
+		},
+		clsdiskadd() {
+			return { 'disabled': !this.diskpath.length };
+		},
+		clsdiskremove() {
+			return { 'disabled': !this.selfile || this.selfile.type !== FT.drv };
 		},
 
 		textauthcaret() {
@@ -997,6 +1030,9 @@ const app = new Vue({
 			})();
 		},
 
+		onlink() {
+			copyTextToClipboard(window.location.origin + fileurl(this.selfile));
+		},
 		onshare(file) {
 			(async () => {
 				eventHub.$emit('ajax', +1);
@@ -1015,6 +1051,75 @@ const app = new Vue({
 		},
 		onauthcaret() {
 			this.showauth = !this.showauth;
+		},
+
+		ondiskadd() {
+			(async () => {
+				eventHub.$emit('ajax', +1);
+				try {
+					const response = await fetchajaxauth("POST", "/api/drive/add", {
+						aid: this.$root.aid,
+						path: this.diskpath
+					});
+					traceajax(response);
+					if (response.ok) {
+						const file = response.data;
+						if (file) {
+							this.pathlist.push(file);
+						}
+						this.diskadd.hide();
+					} else {
+						this.diskpathstate = -1;
+					}
+				} catch (e) {
+					ajaxfail(e);
+				} finally {
+					eventHub.$emit('ajax', -1);
+				}
+			})();
+		},
+		ondiskremove() {
+			(async () => {
+				eventHub.$emit('ajax', +1);
+				try {
+					const response = await fetchajaxauth("POST", "/api/drive/del", {
+						aid: this.$root.aid,
+						puid: this.selfile.puid
+					});
+					traceajax(response);
+					if (!response.ok) {
+						throw new HttpError(response.status, response.data);
+					}
+
+					if (response.data) {
+						this.pathlist.splice(this.pathlist.findIndex(elem => elem === this.selfile), 1);
+						if (this.isshared(this.selfile)) {
+							await this.fetchsharedel(this.selfile);
+						}
+					}
+				} catch (e) {
+					ajaxfail(e);
+				} finally {
+					eventHub.$emit('ajax', -1);
+				}
+			})();
+		},
+		ondiskpathchange(e) {
+			(async () => {
+				try {
+					const response = await fetchajaxauth("POST", "/api/card/ispath", {
+						aid: this.$root.aid,
+						path: this.diskpath
+					});
+					if (response.ok) {
+						this.diskpathstate = response.data ? 1 : 0;
+					} else {
+						this.diskpathstate = -1;
+					}
+				} catch (e) {
+					ajaxfail(e);
+				}
+			})();
 		},
 
 		authclosure(is) {
@@ -1080,12 +1185,16 @@ const app = new Vue({
 				const url = mediaurl(file);
 				window.open(url, file.name);
 			}
+		},
+		onselect(file) {
+			this.selfile = file;
 		}
 	},
 	created() {
 		eventHub.$on('auth', this.authclosure);
 		eventHub.$on('ajax', viewpreloader);
 		eventHub.$on('open', this.onopen);
+		eventHub.$on('select', this.onselect);
 
 		auth.signload();
 		this.login = auth.login;
@@ -1093,11 +1202,6 @@ const app = new Vue({
 			console.log("token:", auth.token);
 			console.log("login:", auth.login);
 		}
-	},
-	beforeDestroy() {
-		eventHub.$off('auth', this.authclosure);
-		eventHub.$off('ajax', viewpreloader);
-		eventHub.$off('open', this.onopen);
 	},
 	mounted() {
 		const chunks = decodeURI(window.location.pathname).split('/');
@@ -1119,6 +1223,13 @@ const app = new Vue({
 		} else {
 			this.aid = 1;
 		}
+
+		// init diskadd dialog
+		const el = document.getElementById('diskadd' + this.iid);
+		this.diskadd = new bootstrap.Modal(el);
+		el.addEventListener('shown.bs.modal', e => {
+			el.querySelector('input').focus();
+		});
 
 		const hist = { aid: this.aid };
 		// get route
@@ -1191,6 +1302,15 @@ const app = new Vue({
 
 		// hide start-up preloader
 		eventHub.$emit('ajax', -1);
+	},
+	beforeDestroy() {
+		eventHub.$off('auth', this.authclosure);
+		eventHub.$off('ajax', viewpreloader);
+		eventHub.$off('open', this.onopen);
+		eventHub.$off('select', this.onselect);
+
+		// erase diskadd dialog
+		this.diskadd = null;
 	}
 });
 

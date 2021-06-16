@@ -113,9 +113,6 @@ Vue.component('dir-card-tag', {
 			selfile: null, // current selected item
 			sortorder: 1,
 			listmode: "smicon",
-			diskpath: "", // path to disk to add
-			diskpathstate: 0,
-			diskadd: null,
 			iid: makestrid(10) // instance ID
 		};
 	},
@@ -148,22 +145,6 @@ Vue.component('dir-card-tag', {
 			return listmoderow[this.listmode];
 		},
 
-		dislink() {
-			return !this.selfile || this.selfile.type === FT.ctgr;
-		},
-		disshared() {
-			return !this.selfile;
-		},
-		clsshared() {
-			return { active: this.selfile && this.isshared(this.selfile) };
-		},
-		clsdiskadd() {
-			return { 'disabled': !this.diskpath.length };
-		},
-		disdiskremove() {
-			return !this.selfile || this.selfile.type !== FT.drv;
-		},
-
 		clsorder() {
 			return this.sortorder > 0
 				? 'arrow_downward'
@@ -171,10 +152,6 @@ Vue.component('dir-card-tag', {
 		},
 		clslistmode() {
 			return listmodeicon[this.listmode];
-		},
-		clsdiskpathedt() {
-			return !this.diskpathstate ? ''
-				: this.passstate === -1 ? 'is-invalid' : 'is-valid';
 		},
 
 		iconmodetag() {
@@ -210,86 +187,11 @@ Vue.component('dir-card-tag', {
 				shared: this.isshared(file)
 			};
 		},
-		onlink() {
-			copyTextToClipboard(window.location.origin + pathurl(this.selfile));
-		},
-		onshare() {
-			this.$emit('share', this.selfile);
-		},
 		onorder() {
 			this.sortorder = -this.sortorder;
 		},
 		onlistmode() {
 			this.listmode = listmodenext[this.listmode];
-		},
-
-		ondiskadd() {
-			(async () => {
-				eventHub.$emit('ajax', +1);
-				try {
-					const response = await fetchajaxauth("POST", "/api/drive/add", {
-						aid: this.$root.aid,
-						path: this.diskpath
-					});
-					traceajax(response);
-					if (response.ok) {
-						const file = response.data;
-						if (file) {
-							this.list.push(file);
-						}
-						this.diskadd.hide();
-					} else {
-						this.diskpathstate = -1;
-					}
-				} catch (e) {
-					ajaxfail(e);
-				} finally {
-					eventHub.$emit('ajax', -1);
-				}
-			})();
-		},
-		ondiskremove() {
-			(async () => {
-				eventHub.$emit('ajax', +1);
-				try {
-					const response = await fetchajaxauth("POST", "/api/drive/del", {
-						aid: this.$root.aid,
-						puid: this.selfile.puid
-					});
-					traceajax(response);
-					if (!response.ok) {
-						throw new HttpError(response.status, response.data);
-					}
-
-					if (response.data) {
-						this.list.splice(this.list.findIndex(elem => elem === this.selfile), 1);
-						if (this.isshared(this.selfile)) {
-							await this.fetchsharedel(this.selfile);
-						}
-					}
-				} catch (e) {
-					ajaxfail(e);
-				} finally {
-					eventHub.$emit('ajax', -1);
-				}
-			})();
-		},
-		ondiskpathchange(e) {
-			(async () => {
-				try {
-					const response = await fetchajaxauth("POST", "/api/card/ispath", {
-						aid: this.$root.aid,
-						path: this.diskpath
-					});
-					if (response.ok) {
-						this.diskpathstate = response.data ? 1 : 0;
-					} else {
-						this.diskpathstate = -1;
-					}
-				} catch (e) {
-					ajaxfail(e);
-				}
-			})();
 		},
 
 		onselect(file) {
@@ -303,17 +205,9 @@ Vue.component('dir-card-tag', {
 		eventHub.$on('auth', this.authclosure);
 		eventHub.$on('select', this.onselect);
 	},
-	mounted() {
-		const el = document.getElementById('diskadd' + this.iid);
-		this.diskadd = new bootstrap.Modal(el);
-		el.addEventListener('shown.bs.modal', e => {
-			el.querySelector('input').focus();
-		});
-	},
 	beforeDestroy() {
 		eventHub.$off('auth', this.authclosure);
 		eventHub.$off('select', this.onselect);
-		this.diskadd = null;
 	}
 });
 
@@ -379,16 +273,6 @@ Vue.component('file-card-tag', {
 
 		clsfilelist() {
 			return listmoderow[this.listmode];
-		},
-
-		dislink() {
-			return !this.selfile || this.selfile.type === FT.ctgr;
-		},
-		disshared() {
-			return !this.selfile;
-		},
-		clsshared() {
-			return { active: this.selfile && this.isshared(this.selfile) };
 		},
 
 		clsorder() {
@@ -504,12 +388,6 @@ Vue.component('file-card-tag', {
 			};
 		},
 
-		onlink() {
-			copyTextToClipboard(window.location.origin + fileurl(this.selfile));
-		},
-		onshare() {
-			this.$emit('share', this.selfile);
-		},
 		onorder() {
 			this.sortorder = -this.sortorder;
 			this.playlist; // update playlist now

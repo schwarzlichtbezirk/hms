@@ -5,10 +5,6 @@
 			<a class="card-link d-block" data-bs-toggle="collapse" v-bind:href="'#card'+iid">files</a>
 		</div>
 		<ul class="navbar-nav flex-row ms-auto">
-			<li><button class="btn" v-on:click="onlink" v-bind:disabled="dislink" title="copy direct link to file"><i class="material-icons">link</i></button></li>
-			<li v-show="isadmin"><button class="btn" v-on:click="onshare" v-bind:disabled="disshared" v-bind:class="clsshared" title="share file to get access from internet"><i class="material-icons">share</i></button></li>
-		</ul>
-		<ul class="navbar-nav flex-row ms-auto">
 			<li><button class="btn" v-on:click="onorder" v-bind:title="hintorder"><i class="material-icons">{{clsorder}}</i></button></li>
 			<li><button class="btn" v-on:click="onsortmode" v-bind:title="hintsortmode"><i class="material-icons">{{clssortmode}}</i></button></li>
 			<li><button class="btn" v-on:click="onlistmode" v-bind:title="hintlist"><i class="material-icons">{{clslistmode}}</i></button></li>

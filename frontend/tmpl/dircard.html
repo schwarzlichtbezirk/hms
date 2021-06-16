@@ -4,14 +4,6 @@
 		<div class="navbar-text flex-grow-1 py-0">
 			<a class="card-link d-block" data-bs-toggle="collapse" v-bind:href="'#card'+iid">folders</a>
 		</div>
-		<ul v-show="isadmin" class="navbar-nav flex-row ms-auto">
-			<li><button class="btn" title="add disk" data-bs-toggle="modal" v-bind:data-bs-target="'#diskadd'+iid"><i class="material-icons">add_circle_outline</i></button></li>
-			<li><button class="btn" v-bind:disabled="disdiskremove" v-on:click="ondiskremove" title="remove disk"><i class="material-icons">remove_circle_outline</i></button></li>
-		</ul>
-		<ul class="navbar-nav flex-row ms-auto">
-			<li><button class="btn" v-on:click="onlink" v-bind:disabled="dislink" title="copy link to folder"><i class="material-icons">link</i></button></li>
-			<li v-show="isadmin"><button class="btn" v-on:click="onshare" v-bind:disabled="disshared" v-bind:class="clsshared" title="share folder to get access from internet"><i class="material-icons">share</i></button></li>
-		</ul>
 		<ul class="navbar-nav flex-row ms-auto">
 			<li v-show="sortable"><button class="btn" v-on:click="onorder" v-bind:title="hintorder"><i class="material-icons">{{clsorder}}</i></button></li>
 			<li><button class="btn" v-on:click="onlistmode" v-bind:title="hintlist"><i class="material-icons">{{clslistmode}}</i></button></li>
@@ -22,22 +14,6 @@
 			<template v-for="file in sortedlist">
 				<component v-bind:is="iconmodetag" v-bind:file="file" v-bind:state="getstate(file)" v-bind:size="listmode" />
 			</template>
-		</div>
-	</div>
-	<div class="modal fade" v-bind:id="'diskadd'+iid" tabindex="-1" role="dialog" aria-labelledby="disk add" aria-hidden="true">
-		<div class="modal-dialog modal-dialog-centered" role="document">
-			<div class="modal-content">
-				<div class="rounded py-2 bg-tool">
-					<div class="px-2 fg-tool">
-						<label v-bind:for="'inp'+iid" class="small navbar-text form-label">Type here valid full path to resource that will be accessed as the disk. For example, <span class="bg-stat">C:/Music</span></label>
-						<div class="form-floating input-group">
-							<input v-model.trim="diskpath" v-bind:class="clsdiskpathedt" v-bind:id="'inp'+iid" v-on:keyup.enter.prevent="ondiskadd" v-on:keyup="ondiskpathchange" v-bind:aria-describedby="'but'+iid" class="form-control toolinp bg-tool" type="text" maxlength="256" placeholder="c:/music" required>
-							<label v-bind:for="'inp'+iid">destination path</label>
-							<button v-bind:id="'but'+iid" class="btn toolbtn bg-high" v-bind:class="clsdiskadd" v-on:click="ondiskadd">Add disk</button>
-						</div>
-					</div>
-				</div>
-			</div>
 		</div>
 	</div>
 </div>

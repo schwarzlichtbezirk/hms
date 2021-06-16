@@ -1015,6 +1015,9 @@ func playlistAPI(w http.ResponseWriter, r *http.Request) {
 		ret.Skip++
 	}
 
+	usermsg <- UsrMsg{r, "path", arg.PUID}
+	Log.Printf("id%d: navigate to %s", prf.ID, syspath)
+
 	WriteOK(w, ret)
 }
 
@@ -1251,7 +1254,7 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 
 	var dk DriveKit
 	dk.Setup(syspath)
-	if err = dk.Scan(syspath); err == nil {
+	if err = dk.Scan(syspath); err != nil {
 		WriteError400(w, err, AECdrvaddfile)
 		return
 	}

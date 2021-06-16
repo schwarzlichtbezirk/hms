@@ -71,6 +71,9 @@ type AsxEntry struct {
 	Ref   struct {
 		Href string `xml:"href,attr"`
 	} `xml:"ref"`
+	Duration struct {
+		Value string `xml:"value,attr"`
+	} `xml:"duration"`
 	Param     []AsxParam `xml:"param"`
 	Author    string     `xml:"author,omitempty"`
 	Copyright string     `xml:"copyright,omitempty"`
@@ -94,15 +97,12 @@ type XspfTrack struct {
 
 // https://www.xspf.org/
 type Xspf struct {
-	XMLName   xml.Name `xml:"playlist"`
-	Text      string   `xml:",chardata"`
-	Version   string   `xml:"version,attr"`
-	Xmlns     string   `xml:"xmlns,attr"`
-	Title     string   `xml:"title,omitempty"`
-	TrackList struct {
-		Text  string      `xml:",chardata"`
-		Track []XspfTrack `xml:"track"`
-	} `xml:"trackList"`
+	XMLName xml.Name    `xml:"playlist"`
+	Text    string      `xml:",chardata"`
+	Version string      `xml:"version,attr"`
+	Xmlns   string      `xml:"xmlns,attr"`
+	Title   string      `xml:"title,omitempty"`
+	Track   []XspfTrack `xml:"trackList>track"`
 }
 
 var (
@@ -111,6 +111,51 @@ var (
 
 func isURL(fpath string) bool {
 	return strings.HasPrefix(fpath, "http://") || strings.HasPrefix(fpath, "https://")
+}
+
+func ToHHMMSS(dur int64) string {
+	var ms = dur % 1000
+	var ss = (dur / 1000) % 60
+	var mm = (dur / 60000) % 60
+	var hh = dur / 3600000
+	var s string
+	if hh > 0 {
+		s = fmt.Sprintf("%02d:%02d:%02d", hh, mm, ss)
+	} else if mm > 0 {
+		s = fmt.Sprintf("%02d:%02d", mm, ss)
+	} else {
+		s = fmt.Sprintf("%d", ss)
+	}
+	if ms > 0 {
+		s += fmt.Sprintf(".%03d", ms)
+	}
+	return s
+}
+
+func FromHHMMSS(dur string) int64 {
+	var a = strings.Split(dur, ".")
+	var ms int
+	if len(a) > 1 {
+		ms, _ = strconv.Atoi(a[1])
+		for i := len(a[1]); i < 3; i++ {
+			ms *= 10
+		}
+	}
+	a = strings.Split(a[0], ":")
+	if len(a) > 2 {
+		var hh, _ = strconv.Atoi(a[0])
+		var mm, _ = strconv.Atoi(a[1])
+		var ss, _ = strconv.Atoi(a[2])
+		ms += hh*3600000 + mm*60000 + ss*1000
+	} else if len(a) > 1 {
+		var mm, _ = strconv.Atoi(a[0])
+		var ss, _ = strconv.Atoi(a[1])
+		ms += mm*60000 + ss*1000
+	} else {
+		var ss, _ = strconv.Atoi(a[0])
+		ms += ss * 1000
+	}
+	return int64(ms)
 }
 
 func (pl *Playlist) AbsPath(fpath string) string {
@@ -454,6 +499,13 @@ func (pl *Playlist) ReadASX(r io.Reader) (num int64, err error) {
 		var track Track
 		track.Title = v.Title
 		track.Location = pl.AbsPath(v.Ref.Href)
+		if len(v.Duration.Value) > 0 {
+			if v.Duration.Value == "-1" {
+				track.Duration = -1
+			} else {
+				track.Duration = FromHHMMSS(v.Duration.Value)
+			}
+		}
 		pl.Tracks = append(pl.Tracks, track)
 	}
 	return
@@ -478,7 +530,14 @@ func (pl *Playlist) WriteASX(w io.Writer) (num int64, err error) {
 		}
 		var v AsxEntry
 		v.Title = track.Title
-		v.Ref.Href = track.Location
+		v.Ref.Href = fpath
+		if track.Duration != 0 {
+			if track.Duration > 0 {
+				v.Duration.Value = ToHHMMSS(track.Duration)
+			} else {
+				v.Duration.Value = "-1"
+			}
+		}
 		asx.Entry = append(asx.Entry, v)
 	}
 
@@ -506,7 +565,7 @@ func (pl *Playlist) ReadXSPF(r io.Reader) (num int64, err error) {
 
 	pl.Title = xspf.Title
 
-	for _, v := range xspf.TrackList.Track {
+	for _, v := range xspf.Track {
 		var track Track
 		track.Title = v.Title
 		track.Duration = v.Duration
@@ -533,12 +592,14 @@ func (pl *Playlist) WriteXSPF(w io.Writer) (num int64, err error) {
 			if fpath, err = filepath.Rel(dir0, fpath); err != nil {
 				return
 			}
+		} else if !isURL(fpath) {
+			fpath = "file:///" + fpath
 		}
 		var v XspfTrack
 		v.Title = track.Title
-		v.Location = track.Location
+		v.Location = fpath
 		v.Duration = track.Duration
-		xspf.TrackList.Track = append(xspf.TrackList.Track, v)
+		xspf.Track = append(xspf.Track, v)
 	}
 
 	var body []byte
