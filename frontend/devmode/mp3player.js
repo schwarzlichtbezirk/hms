@@ -26,7 +26,6 @@ Vue.component('mp3-player-tag', {
 			repeatmode: 0, // 0 - no any repeat, 1 - repeat single, 2 - repeat playlist
 			seeking: false,
 			media: null,
-			isplay: false, // this.media && !this.media.paused
 			autoplay: false,
 			ready: false,
 			timecur: 0,
@@ -82,10 +81,10 @@ Vue.component('mp3-player-tag', {
 
 		// audio buttons
 		iconplay() {
-			return this.isplay ? 'pause' : 'play_arrow';
+			return this.selfile.playback ? 'pause' : 'play_arrow';
 		},
 		hintplay() {
-			return this.isplay ? 'pause' : 'play';
+			return this.selfile.playback ? 'pause' : 'play';
 		},
 		iconrepeat() {
 			return this.repeatmode === 1 ? 'repeat_one' : 'repeat';
@@ -132,68 +131,91 @@ Vue.component('mp3-player-tag', {
 			if (this.selfile.puid === file.puid) { // do not set again same file
 				return;
 			}
+			this.selfile = file;
+
+			const media = new Audio(mediaurl(file)); // API HTMLMediaElement, HTMLAudioElement
+			media.volume = this.volval / 100;
+			media.playbackRate = this.ratevals[this.ratval];
+			media.loop = this.repeatmode === 1;
+			media.autoplay = this.autoplay;
+
+			// reassign media current content
 			if (this.media && !this.media.paused) {
 				this.media.pause();
 			}
-			this.selfile = file;
-
-			this.media = new Audio(mediaurl(file)); // API HTMLMediaElement, HTMLAudioElement
-			this.media.volume = this.volval / 100;
-			this.media.playbackRate = this.ratevals[this.ratval];
-			this.media.loop = this.repeatmode === 1;
-			this.media.autoplay = this.autoplay;
+			this.media = media;
 
 			// disable UI for not ready media
 			this.ready = false;
 
-			// media interface responders
-			this.media.addEventListener('loadedmetadata', () => {
-				this.timecur = this.media.currentTime;
-				this.timebuf = 0;
-				this.timeend = this.media.duration;
+			const updateprogress = () => {
+				const cur = media.currentTime;
 
-				this.updateprogress();
+				if (!this.seeking) {
+					this.timecur = cur;
+				}
+
+				if (media.buffered.length > 0) {
+					const pos1 = media.buffered.start(0);
+					const pos2 = media.buffered.end(0);
+					if (pos1 <= cur && pos2 > cur) { // buffered in current pos
+						this.timebuf = pos2 - cur;
+					} else { // not buffered or buffered outside
+						this.timebuf = 0;
+					}
+				} else {
+					this.timebuf = 0;
+				}
+			};
+
+			// media interface responders
+			media.addEventListener('loadedmetadata', () => {
+				this.timecur = media.currentTime;
+				this.timebuf = 0;
+				this.timeend = media.duration;
+
+				updateprogress();
 			});
-			this.media.addEventListener('canplay', () => {
+			media.addEventListener('canplay', () => {
 				// enable UI
 				this.ready = true;
 				// load to player
-				if (!this.media.autoplay) {
-					this.media.play();
-					this.media.pause();
+				if (!media.autoplay) {
+					media.play();
+					media.pause();
 				}
 			});
-			this.media.addEventListener('timeupdate', () => this.updateprogress());
-			this.media.addEventListener('seeked', () => this.updateprogress());
-			this.media.addEventListener('progress', () => this.updateprogress());
-			this.media.addEventListener('durationchange', () => this.updateprogress());
-			this.media.addEventListener('play', () => {
-				this.isplay = true;
+			media.addEventListener('timeupdate', updateprogress);
+			media.addEventListener('seeked', updateprogress);
+			media.addEventListener('progress', updateprogress);
+			media.addEventListener('durationchange', updateprogress);
+			media.addEventListener('play', () => {
 				this.autoplay = true;
-				eventHub.$emit('playback', this.selfile);
+				media.autoplay = true;
+				eventHub.$emit('playback', file, true);
 			});
-			this.media.addEventListener('pause', () => {
-				this.isplay = false;
+			media.addEventListener('pause', () => {
 				this.autoplay = false;
-				eventHub.$emit('playback', null);
+				media.autoplay = false;
+				eventHub.$emit('playback', file, false);
 			});
-			this.media.addEventListener('ended', () => {
+			media.addEventListener('ended', () => {
 				this.autoplay = true;
 				this.onnext();
 			});
-			this.media.addEventListener('error', e => {
+			media.addEventListener('error', e => {
 				if (e.message) {
 					console.error("Error " + e.code + "; details: " + e.message);
 				} else {
 					console.error(e);
 				}
 			});
-			this.media.addEventListener('volumechange', () => {
-				this.volval = this.media.volume * 100;
+			media.addEventListener('volumechange', () => {
+				this.volval = media.volume * 100;
 			});
-			this.media.addEventListener('ratechange', () => {
+			media.addEventListener('ratechange', () => {
 				this.ratval = (() => {
-					const r = this.media.playbackRate;
+					const r = media.playbackRate;
 					let pp = 1 / 3.0, pi = this.ratevals[0];
 					for (let i = 0; i < this.ratevals.length - 1; i++) {
 						let pn = this.ratevals[i + 1];
@@ -225,26 +247,6 @@ Vue.component('mp3-player-tag', {
 				this.media.play();
 			} else {
 				this.media.pause();
-			}
-		},
-
-		updateprogress() {
-			const cur = this.media.currentTime;
-
-			if (!this.seeking) {
-				this.timecur = cur;
-			}
-
-			if (this.media.buffered.length > 0) {
-				const pos1 = this.media.buffered.start(0);
-				const pos2 = this.media.buffered.end(0);
-				if (pos1 <= cur && pos2 > cur) { // buffered in current pos
-					this.timebuf = pos2 - cur;
-				} else { // not buffered or buffered outside
-					this.timebuf = 0;
-				}
-			} else {
-				this.timebuf = 0;
 			}
 		},
 

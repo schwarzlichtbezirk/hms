@@ -453,7 +453,7 @@ const app = new Vue({
 		diskpathstate: 0,
 		diskadd: null,
 
-		shared: [], // list of shared folders
+		shared: [], // list of shared items
 
 		// history
 		histpos: 0, // position in history stack
@@ -587,7 +587,7 @@ const app = new Vue({
 		},
 		clsshared() {
 			return {
-				'active': this.selfile && this.isshared(this.selfile),
+				'active': this.selfile && this.selfile.shared,
 				'disabled': !this.selfile
 			};
 		},
@@ -819,6 +819,7 @@ const app = new Vue({
 				throw new HttpError(response.status, response.data);
 			}
 			this.shared = response.data || [];
+			this.updateshared();
 		},
 
 		async fetchshareadd(file) {
@@ -830,6 +831,7 @@ const app = new Vue({
 			if (!response.ok) {
 				throw new HttpError(response.status, response.data);
 			}
+			Vue.set(file, 'shared', true);
 			this.shared.push(file);
 		},
 
@@ -845,6 +847,7 @@ const app = new Vue({
 
 			// update folder settings
 			if (response.data) { // on ok
+				Vue.set(file, 'shared', false);
 				for (let i = 0; i < this.shared.length;) {
 					if (this.shared[i].puid === file.puid) {
 						this.shared.splice(i, 1);
@@ -855,13 +858,27 @@ const app = new Vue({
 			}
 		},
 
-		isshared(file) {
-			for (const shr of this.shared) {
-				if (shr.puid === file.puid) { // shared all files with same puid
-					return true;
+		updateshared() {
+			for (const fp of this.pathlist) {
+				let sf = false;
+				for (const shr of this.shared) {
+					if (shr.puid === fp.puid) {
+						sf = true;
+						break;
+					}
 				}
+				Vue.set(fp, 'shared', sf);
 			}
-			return false;
+			for (const fp of this.filelist) {
+				let sf = false;
+				for (const shr of this.shared) {
+					if (shr.puid === fp.puid) {
+						sf = true;
+						break;
+					}
+				}
+				Vue.set(fp, 'shared', sf);
+			}
 		},
 
 		setskin(skinid) {
@@ -926,6 +943,7 @@ const app = new Vue({
 					}
 				}
 			}
+			this.updateshared();
 
 			// clear current selected
 			eventHub.$emit('select', null);
@@ -1037,7 +1055,7 @@ const app = new Vue({
 			(async () => {
 				eventHub.$emit('ajax', +1);
 				try {
-					if (this.isshared(file)) { // should remove share
+					if (file.shared) { // should remove share
 						await this.fetchsharedel(file);
 					} else { // should add share
 						await this.fetchshareadd(file);
@@ -1093,7 +1111,7 @@ const app = new Vue({
 
 					if (response.data) {
 						this.pathlist.splice(this.pathlist.findIndex(elem => elem === this.selfile), 1);
-						if (this.isshared(this.selfile)) {
+						if (this.selfile.shared) {
 							await this.fetchsharedel(this.selfile);
 						}
 					}
@@ -1187,7 +1205,18 @@ const app = new Vue({
 			}
 		},
 		onselect(file) {
+			// deselect previous
+			if (this.selfile) {
+				Vue.set(this.selfile, 'selected', false);
+			}
+			// select current
 			this.selfile = file;
+			if (file) {
+				Vue.set(file, 'selected', true);
+			}
+		},
+		onplayback(file, isplay) {
+			Vue.set(file, 'playback', isplay);
 		}
 	},
 	created() {
@@ -1195,6 +1224,7 @@ const app = new Vue({
 		eventHub.$on('ajax', viewpreloader);
 		eventHub.$on('open', this.onopen);
 		eventHub.$on('select', this.onselect);
+		eventHub.$on('playback', this.onplayback);
 
 		auth.signload();
 		this.login = auth.login;
@@ -1308,6 +1338,7 @@ const app = new Vue({
 		eventHub.$off('ajax', viewpreloader);
 		eventHub.$off('open', this.onopen);
 		eventHub.$off('select', this.onselect);
+		eventHub.$off('playback', this.onplayback);
 
 		// erase diskadd dialog
 		this.diskadd = null;

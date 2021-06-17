@@ -318,7 +318,7 @@ const filehint = file => {
 
 Vue.component('file-icon-tag', {
 	template: '#file-icon-tpl',
-	props: ["file", "state", "size"],
+	props: ["file", "size"],
 	data: function () {
 		return {
 			im: imempty,
@@ -335,8 +335,8 @@ Vue.component('file-icon-tag', {
 
 		label() {
 			if (this.file.ntmb === 1 && this.tm
-				|| !geticonpath(this.file, this.im, this.state.shared).org) {
-				return this.state.shared
+				|| !geticonpath(this.file, this.im, this.file.shared).org) {
+				return this.file.shared
 					? this.im.shared.label
 					: this.im.private.label;
 			}
@@ -345,7 +345,7 @@ Vue.component('file-icon-tag', {
 			if (this.file.ntmb === 1 && this.tm || !this.im.iconwebp) {
 				return '';
 			} else {
-				const res = geticonpath(this.file, this.im, this.state.shared);
+				const res = geticonpath(this.file, this.im, this.file.shared);
 				return (res.org || res.alt) + '.webp';
 			}
 		},
@@ -353,7 +353,7 @@ Vue.component('file-icon-tag', {
 			if (this.file.ntmb === 1 && this.tm) {
 				return `/id${this.$root.aid}/thumb/${this.file.puid}`;
 			} else if (this.im.iconpng) {
-				const res = geticonpath(this.file, this.im, this.state.shared);
+				const res = geticonpath(this.file, this.im, this.file.shared);
 				return (res.org || res.alt) + '.png';
 			} else {
 				return '';
@@ -384,7 +384,7 @@ Vue.component('file-icon-tag', {
 
 		// manage items classes
 		itemview() {
-			return { selected: this.state.selected };
+			return { 'selected': this.file.selected };
 		}
 	},
 	methods: {
@@ -416,7 +416,7 @@ Vue.component('file-icon-tag', {
 
 Vue.component('img-icon-tag', {
 	template: '#img-icon-tpl',
-	props: ["file", "state"],
+	props: ["file"],
 	data: function () {
 		return {
 			im: imempty,
@@ -433,8 +433,8 @@ Vue.component('img-icon-tag', {
 
 		label() {
 			if (this.file.ntmb === 1 && this.tm
-				|| !geticonpath(this.file, this.im, this.state.shared).org) {
-				return this.state.shared
+				|| !geticonpath(this.file, this.im, this.file.shared).org) {
+				return this.file.shared
 					? this.im.shared.label
 					: this.im.private.label;
 			}
@@ -443,7 +443,7 @@ Vue.component('img-icon-tag', {
 			if (this.file.ntmb === 1 && this.tm || !this.im.iconwebp) {
 				return '';
 			} else {
-				const res = geticonpath(this.file, this.im, this.state.shared);
+				const res = geticonpath(this.file, this.im, this.file.shared);
 				return (res.org || res.alt) + '.webp';
 			}
 		},
@@ -451,7 +451,7 @@ Vue.component('img-icon-tag', {
 			if (this.file.ntmb === 1 && this.tm) {
 				return `/id${this.$root.aid}/thumb/${this.file.puid}`;
 			} else if (this.im.iconpng) {
-				const res = geticonpath(this.file, this.im, this.state.shared);
+				const res = geticonpath(this.file, this.im, this.file.shared);
 				return (res.org || res.alt) + '.png';
 			} else {
 				return '';
@@ -460,7 +460,7 @@ Vue.component('img-icon-tag', {
 
 		// manage items classes
 		itemview() {
-			return { selected: this.state.selected };
+			return { 'selected': this.file.selected };
 		}
 	},
 	methods: {

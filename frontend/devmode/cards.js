@@ -106,11 +106,10 @@ const closeFullscreen = () => {
 
 Vue.component('dir-card-tag', {
 	template: '#dir-card-tpl',
-	props: ["list", "shared"],
+	props: ["list"],
 	data: function () {
 		return {
 			isauth: false, // is authorized
-			selfile: null, // current selected item
 			sortorder: 1,
 			listmode: "smicon",
 			iid: makestrid(10) // instance ID
@@ -171,22 +170,6 @@ Vue.component('dir-card-tag', {
 		authclosure(is) {
 			this.isauth = is;
 		},
-		isshared(file) {
-			for (const shr of this.shared) {
-				if (shr.puid === file.puid) { // shared all files with same puid
-					return true;
-				}
-			}
-			return false;
-		},
-		// files list attributes
-		getstate(file) {
-			return {
-				selected: this.selfile === file,
-				playback: false,
-				shared: this.isshared(file)
-			};
-		},
 		onorder() {
 			this.sortorder = -this.sortorder;
 		},
@@ -194,31 +177,24 @@ Vue.component('dir-card-tag', {
 			this.listmode = listmodenext[this.listmode];
 		},
 
-		onselect(file) {
-			this.selfile = file;
-		},
 		onunselect() {
 			eventHub.$emit('select', null);
 		}
 	},
 	created() {
 		eventHub.$on('auth', this.authclosure);
-		eventHub.$on('select', this.onselect);
 	},
 	beforeDestroy() {
 		eventHub.$off('auth', this.authclosure);
-		eventHub.$off('select', this.onselect);
 	}
 });
 
 Vue.component('file-card-tag', {
 	template: '#file-card-tpl',
-	props: ["list", "shared"],
+	props: ["list"],
 	data: function () {
 		return {
 			isauth: false, // is authorized
-			selfile: null, // current selected item
-			playbackfile: null,
 			sortorder: 1,
 			sortmode: sortmode.byalpha,
 			listmode: "smicon",
@@ -371,22 +347,6 @@ Vue.component('file-card-tag', {
 		authclosure(is) {
 			this.isauth = is;
 		},
-		isshared(file) {
-			for (const shr of this.shared) {
-				if (shr.puid === file.puid) { // shared all files with same puid
-					return true;
-				}
-			}
-			return false;
-		},
-		// playlist files attributes
-		getstate(file) {
-			return {
-				selected: this.selfile === file,
-				playback: this.playbackfile && this.playbackfile === file,
-				shared: this.isshared(file)
-			};
-		},
 
 		onorder() {
 			this.sortorder = -this.sortorder;
@@ -446,25 +406,15 @@ Vue.component('file-card-tag', {
 			this.playlist; // update playlist now
 		},
 
-		onselect(file) {
-			this.selfile = file;
-		},
 		onunselect() {
 			eventHub.$emit('select', null);
-		},
-		onplayback(file) {
-			this.playbackfile = file;
 		}
 	},
 	created() {
 		eventHub.$on('auth', this.authclosure);
-		eventHub.$on('select', this.onselect);
-		eventHub.$on('playback', this.onplayback);
 	},
 	beforeDestroy() {
 		eventHub.$off('auth', this.authclosure);
-		eventHub.$off('select', this.onselect);
-		eventHub.$off('playback', this.onplayback);
 	}
 });
 

@@ -24,7 +24,7 @@
 	<div v-bind:id="'card'+iid" class="collapse show">
 		<div class="card-body p-1 p-sm-3 folder-list" v-bind:class="clsfilelist" v-on:click="onunselect">
 			<template v-for="file in playlist">
-				<component v-bind:is="iconmodetag" v-bind:file="file" v-bind:state="getstate(file)" v-bind:size="listmode" />
+				<component v-bind:is="iconmodetag" v-bind:file="file" v-bind:size="listmode" />
 			</template>
 		</div>
 	</div>
