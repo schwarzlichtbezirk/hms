@@ -350,7 +350,7 @@ Vue.component('file-card-tag', {
 
 		onorder() {
 			this.sortorder = -this.sortorder;
-			this.playlist; // update playlist now
+			const pl = this.playlist; // update playlist now
 		},
 		onsortmode() {
 			switch (this.sortmode) {
@@ -364,7 +364,7 @@ Vue.component('file-card-tag', {
 					this.sortmode = sortmode.byalpha;
 					break;
 			}
-			this.playlist; // update playlist now
+			const pl = this.playlist; // update playlist now
 		},
 		onlistmode() {
 			this.listmode = listmodenext[this.listmode];
@@ -379,31 +379,31 @@ Vue.component('file-card-tag', {
 		},
 		onaudio() {
 			Vue.set(this.fgshow, FG.audio, !this.fgshow[FG.audio]);
-			this.playlist; // update playlist now
+			const pl = this.playlist; // update playlist now
 		},
 		onvideo() {
 			Vue.set(this.fgshow, FG.video, !this.fgshow[FG.video]);
-			this.playlist; // update playlist now
+			const pl = this.playlist; // update playlist now
 		},
 		onphoto() {
 			Vue.set(this.fgshow, FG.image, !this.fgshow[FG.image]);
-			this.playlist; // update playlist now
+			const pl = this.playlist; // update playlist now
 		},
 		onbooks() {
 			Vue.set(this.fgshow, FG.books, !this.fgshow[FG.books]);
-			this.playlist; // update playlist now
+			const pl = this.playlist; // update playlist now
 		},
 		ontexts() {
 			Vue.set(this.fgshow, FG.texts, !this.fgshow[FG.texts]);
-			this.playlist; // update playlist now
+			const pl = this.playlist; // update playlist now
 		},
 		onpacks() {
 			Vue.set(this.fgshow, FG.packs, !this.fgshow[FG.packs]);
-			this.playlist; // update playlist now
+			const pl = this.playlist; // update playlist now
 		},
 		onother() {
 			Vue.set(this.fgshow, FG.other, !this.fgshow[FG.other]);
-			this.playlist; // update playlist now
+			const pl = this.playlist; // update playlist now
 		},
 
 		onunselect() {

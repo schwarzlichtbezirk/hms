@@ -529,7 +529,7 @@ func purgeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 func reloadAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var err error
 	var ret struct {
-		RecNumber int   `json:"recnumber"`
+		RecNumber int64 `json:"recnumber"`
 		DataSize  int64 `json:"datasize"`
 	}
 
@@ -542,7 +542,7 @@ func reloadAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		return
 	}
 
-	ret.RecNumber = packager.RecNumber()
+	ret.RecNumber = int64(len(packager.NFTO()))
 	ret.DataSize = packager.DataSize()
 	WriteOK(w, &ret)
 }

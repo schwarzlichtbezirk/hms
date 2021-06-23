@@ -186,7 +186,7 @@ func Init() {
 	if packager, err = openimage(); err != nil {
 		Log.Fatal("can not load wpk-package: " + err.Error())
 	}
-	Log.Printf("cached %d package files to %d aliases on %d bytes", packager.RecNumber(), len(packager.NFTO()), packager.DataSize())
+	Log.Printf("package '%s': cached %d files on %d bytes", cfg.WPKName, len(packager.NFTO()), packager.DataSize())
 
 	// insert components templates into pages
 	if err = loadtemplates(); err != nil {

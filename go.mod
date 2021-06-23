@@ -14,19 +14,15 @@ require (
 	github.com/frankban/quicktest v1.13.0 // indirect
 	github.com/ftrvxmtrx/tga v0.0.0-20150524081124-bd8e8d5be13a
 	github.com/go-ini/ini v1.62.0
-	github.com/google/uuid v1.2.0 // indirect
-	github.com/gopherjs/gopherjs v0.0.0-20210603182125-eeedf4a0e899 // indirect
+	github.com/gopherjs/gopherjs v0.0.0-20210621113107-84c6004145de // indirect
 	github.com/gorilla/mux v1.8.0
-	github.com/oov/psd v0.0.0-20210610080222-2b36475937df
+	github.com/oov/psd v0.0.0-20210618170533-9fb823ddb631
 	github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd
-	github.com/schwarzlichtbezirk/mmap-go v1.0.2 // indirect
-	github.com/schwarzlichtbezirk/wpk v1.0.0
-	github.com/sirupsen/logrus v1.8.1 // indirect
+	github.com/schwarzlichtbezirk/wpk v1.2.0
 	github.com/spate/glimage v0.0.0-20200505055513-fbdcc60a65e5
-	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a
-	golang.org/x/image v0.0.0-20210607152325-775e3b0c77b9
-	golang.org/x/net v0.0.0-20210610132358-84b48f89b13b // indirect
-	golang.org/x/sys v0.0.0-20210611083646-a4fc73990273 // indirect
+	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e
+	golang.org/x/image v0.0.0-20210622092929-e6eecd499c2c
 	golang.org/x/text v0.3.6
+	gopkg.in/ini.v1 v1.62.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
