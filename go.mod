@@ -21,7 +21,7 @@ require (
 	github.com/schwarzlichtbezirk/wpk v1.2.0
 	github.com/spate/glimage v0.0.0-20200505055513-fbdcc60a65e5
 	golang.org/x/crypto v0.0.0-20210616213533-5ff15b29337e
-	golang.org/x/image v0.0.0-20210622092929-e6eecd499c2c
+	golang.org/x/image v0.0.0-20210628002857-a66eb6448b8d
 	golang.org/x/text v0.3.6
 	gopkg.in/ini.v1 v1.62.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
