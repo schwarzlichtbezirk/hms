@@ -6,8 +6,30 @@
 		</div>
 		<ul class="navbar-nav flex-row ms-auto">
 			<li><button class="btn" v-on:click="onorder" v-bind:title="hintorder"><i class="material-icons">{{clsorder}}</i></button></li>
-			<li><button class="btn" v-on:click="onsortmode" v-bind:title="hintsortmode"><i class="material-icons">{{clssortmode}}</i></button></li>
-			<li><button class="btn" v-on:click="onlistmode" v-bind:title="hintlist"><i class="material-icons">{{clslistmode}}</i></button></li>
+			<li>
+				<div class="btn-group">
+					<button type="button" class="btn dropdown-toggle" v-bind:title="hintsortmode" data-bs-toggle="dropdown" aria-expanded="false">
+						<i class="material-icons">{{clssortmode}}</i>
+					</button>
+					<div class="dropdown-menu dropdown-menu-end bg-card">
+						<button class="dropdown-item" type="button" v-on:click="onsortalpha"><i class="material-icons pe-2">sort_by_alpha</i>sort by alpha</button>
+						<button class="dropdown-item" type="button" v-on:click="onsortsize"><i class="material-icons pe-2">sort</i>sort by size</button>
+						<button class="dropdown-item" type="button" v-on:click="onsortunsorted"><i class="material-icons pe-2">reorder</i>as is unsorted</button>
+					</div>
+				</div>
+			</li>
+			<li>
+				<div class="btn-group">
+					<button type="button" class="btn dropdown-toggle" v-bind:title="hintlist" data-bs-toggle="dropdown" aria-expanded="false">
+						<i class="material-icons">{{clslistmode}}</i>
+					</button>
+					<div class="dropdown-menu dropdown-menu-end bg-card">
+						<button class="dropdown-item" type="button" v-on:click="onlistmodesm"><i class="material-icons pe-2">format_align_justify</i>small tiles</button>
+						<button class="dropdown-item" type="button" v-on:click="onlistmodemd"><i class="material-icons pe-2">view_comfy</i>middle tiles</button>
+						<button class="dropdown-item" type="button" v-on:click="onlistmodelg"><i class="material-icons pe-2">view_module</i>large tiles</button>
+					</div>
+				</div>
+			</li>
 			<li><button class="btn" v-bind:class="clsthumbmode" v-on:click="onthumbmode" title="thumbnails mode"><i class="material-icons">burst_mode</i></button></li>
 		</ul>
 		<ul class="navbar-nav flex-row ms-auto">

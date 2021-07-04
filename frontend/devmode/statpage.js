@@ -48,7 +48,7 @@ Vue.component('catitem-tag', {
 	template: `
 <div class="d-inline-flex mx-md-1 catitem">
 	<div v-bind:title="!widen&&text" v-on:click="onexpand"><i class="material-icons">{{icon}}</i></div>
-	<div v-show="widen" class="ml-md-1">{{text}}</div>
+	<div v-show="widen" class="ms-md-1">{{text}}</div>
 </div>
 `,
 	props: ["icon", "text", "wide"],

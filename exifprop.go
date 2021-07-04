@@ -52,10 +52,10 @@ func (ep *ExifProp) Setup(x *exif.Exif) {
 	var err error
 	var t *tiff.Tag
 
-	if t, err = x.Get(exif.ImageWidth); err == nil {
+	if t, err = x.Get(exif.PixelXDimension); err == nil {
 		ep.Width, _ = t.Int(0)
 	}
-	if t, err = x.Get(exif.ImageLength); err == nil {
+	if t, err = x.Get(exif.PixelYDimension); err == nil {
 		ep.Height, _ = t.Int(0)
 	}
 	if t, err = x.Get(exif.Model); err == nil {

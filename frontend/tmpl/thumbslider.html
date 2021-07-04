@@ -1,6 +1,6 @@
 
 <div class="thumbslider pagination">
-	<div class="page-item mr-1">
+	<div class="page-item me-1">
 		<button v-on:click="onprev" class="page-link h-100" aria-label="previous">
 			<span aria-hidden="true" class="material-icons">arrow_back</span>
 		</button>
@@ -10,7 +10,7 @@
 			<img v-bind:srcset="imgicon(file)" v-on:click="onthumb(file)" v-bind:class="{active:file===selfile}" class="centerimg thumb">
 		</template>
 	</div>
-	<div class="page-item ml-1">
+	<div class="page-item ms-1">
 		<button v-on:click="onnext" class="page-link h-100" aria-label="next">
 			<span aria-hidden="true" class="material-icons">arrow_forward</span>
 		</button>

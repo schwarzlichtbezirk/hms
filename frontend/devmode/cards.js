@@ -1,9 +1,14 @@
 "use strict";
 
-const sortmode = {
-	byalpha: "name",
-	bysize: "size",
-	unsorted: ""
+const sortmodeicon = {
+	byalpha: 'sort_by_alpha',
+	bysize: 'sort',
+	unsorted: 'reorder'
+};
+const sortmodehint = {
+	byalpha: "sort by alpha",
+	bysize: "sort by size",
+	unsorted: "as is unsorted"
 };
 
 const listmodetag = {
@@ -25,11 +30,6 @@ const listmodehint = {
 	smicon: "small icons",
 	mdicon: "middle icons",
 	lgicon: "large icons"
-};
-const listmodenext = {
-	smicon: 'mdicon',
-	mdicon: 'lgicon',
-	lgicon: 'smicon'
 };
 
 const noderadius = 15;
@@ -173,8 +173,14 @@ Vue.component('dir-card-tag', {
 		onorder() {
 			this.sortorder = -this.sortorder;
 		},
-		onlistmode() {
-			this.listmode = listmodenext[this.listmode];
+		onlistmodesm() {
+			this.listmode = 'smicon';
+		},
+		onlistmodemd() {
+			this.listmode = 'mdicon';
+		},
+		onlistmodelg() {
+			this.listmode = 'lgicon';
 		},
 
 		onunselect() {
@@ -196,8 +202,8 @@ Vue.component('file-card-tag', {
 		return {
 			isauth: false, // is authorized
 			sortorder: 1,
-			sortmode: sortmode.byalpha,
-			listmode: "smicon",
+			sortmode: 'byalpha',
+			listmode: 'smicon',
 			thumbmode: true,
 			fgshow: [
 				false, // other
@@ -230,11 +236,11 @@ Vue.component('file-card-tag', {
 					res.push(file);
 				}
 			}
-			if (this.sortmode === sortmode.byalpha) {
+			if (this.sortmode === 'byalpha') {
 				res.sort((v1, v2) => {
 					return this.sortorder * (v1.name.toLowerCase() > v2.name.toLowerCase() ? 1 : -1);
 				});
-			} else if (this.sortmode === sortmode.bysize) {
+			} else if (this.sortmode === 'bysize') {
 				res.sort((v1, v2) => {
 					if (v1.size === v2.size) {
 						return this.sortorder * (v1.name.toLowerCase() > v2.name.toLowerCase() ? 1 : -1);
@@ -257,14 +263,7 @@ Vue.component('file-card-tag', {
 				: 'arrow_upward';
 		},
 		clssortmode() {
-			switch (this.sortmode) {
-				case sortmode.byalpha:
-					return "sort_by_alpha";
-				case sortmode.bysize:
-					return "sort";
-				case sortmode.unsorted:
-					return "reorder";
-			}
+			return sortmodeicon[this.sortmode];
 		},
 		clslistmode() {
 			return listmodeicon[this.listmode];
@@ -330,14 +329,7 @@ Vue.component('file-card-tag', {
 				: "reverse order";
 		},
 		hintsortmode() {
-			switch (this.sortmode) {
-				case sortmode.byalpha:
-					return "sort by alpha";
-				case sortmode.bysize:
-					return "sort by size";
-				case sortmode.unsorted:
-					return "as is unsorted";
-			}
+			return sortmodehint[this.sortmode];
 		},
 		hintlist() {
 			return listmodehint[this.listmode];
@@ -352,22 +344,26 @@ Vue.component('file-card-tag', {
 			this.sortorder = -this.sortorder;
 			const pl = this.playlist; // update playlist now
 		},
-		onsortmode() {
-			switch (this.sortmode) {
-				case sortmode.byalpha:
-					this.sortmode = sortmode.bysize;
-					break;
-				case sortmode.bysize:
-					this.sortmode = sortmode.unsorted;
-					break;
-				case sortmode.unsorted:
-					this.sortmode = sortmode.byalpha;
-					break;
-			}
+		onsortalpha() {
+			this.sortmode = 'byalpha';
 			const pl = this.playlist; // update playlist now
 		},
-		onlistmode() {
-			this.listmode = listmodenext[this.listmode];
+		onsortsize() {
+			this.sortmode = 'bysize';
+			const pl = this.playlist; // update playlist now
+		},
+		onsortunsorted() {
+			this.sortmode = 'unsorted';
+			const pl = this.playlist; // update playlist now
+		},
+		onlistmodesm() {
+			this.listmode = 'smicon';
+		},
+		onlistmodemd() {
+			this.listmode = 'mdicon';
+		},
+		onlistmodelg() {
+			this.listmode = 'lgicon';
 		},
 		onthumbmode() {
 			thumbmode = this.thumbmode = !this.thumbmode;
