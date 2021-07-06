@@ -34,6 +34,10 @@ var (
 	// Key - path unique ID, value - media file in MediaData.
 	mediacache gcache.Cache
 
+	// Photos compressed to HD resolution.
+	// Key - path unique ID, value - media file in MediaData.
+	hdcache gcache.Cache
+
 	// Opened disks cache.
 	// Key - ISO image system path, value - disk data.
 	diskcache gcache.Cache
@@ -46,6 +50,7 @@ var idenc = base32.HexEncoding.WithPadding(base32.NoPadding)
 var (
 	ErrNoPUID      = errors.New("file with given puid not found")
 	ErrUncacheable = errors.New("file format is uncacheable")
+	ErrNotHD       = errors.New("image resolution does not fit to full HD")
 	ErrNotDisk     = errors.New("file is not image of supported format")
 )
 
@@ -287,7 +292,7 @@ func initcaches() {
 		Build()
 
 	// init converted media files cache
-	mediacache = gcache.New(cfg.ThumbCacheMaxNum).
+	mediacache = gcache.New(cfg.MediaCacheMaxNum).
 		LRU().
 		LoaderFunc(func(key interface{}) (ret interface{}, err error) {
 			var syspath, ok = pathcache.Path(key.(string))
@@ -359,6 +364,64 @@ func initcaches() {
 
 			err = ErrUncacheable
 			return // uncacheable type
+		}).
+		Build()
+
+	// init converted media files cache
+	hdcache = gcache.New(cfg.MediaCacheMaxNum).
+		LRU().
+		LoaderFunc(func(key interface{}) (ret interface{}, err error) {
+			var syspath, ok = pathcache.Path(key.(string))
+			if !ok {
+				err = ErrNoPUID
+				return // file path not found
+			}
+
+			var prop interface{}
+			if prop, err = propcache.Get(syspath); err != nil {
+				return // can not get properties
+			}
+			var fp = prop.(Pather)
+			if fp.Type() < 0 {
+				err = ErrNotFile
+				return
+			}
+
+			if ek, ok := prop.(ExifKit); ok {
+				if (ek.Width <= 1920 && ek.Height <= 1080) ||
+					(ek.Width <= 1080 && ek.Height <= 1920) {
+					err = ErrNotHD
+					return // does not fit to HD
+				}
+			}
+
+			var file VFile
+			if file, err = OpenFile(syspath); err != nil {
+				return // can not open file
+			}
+			defer file.Close()
+
+			var ftype string
+			var src, dst image.Image
+			if src, ftype, err = image.Decode(file); err != nil {
+				if src == nil { // skip "short Huffman data" or others errors with partial results
+					return // can not decode file by any codec
+				}
+			}
+			if src.Bounds().In(hdhrect) || src.Bounds().In(hdvrect) {
+				err = ErrNotHD
+				return // does not fit to HD
+			} else if src.Bounds().Dx() > src.Bounds().Dy() {
+				var img = image.NewRGBA(hdhfilter.Bounds(src.Bounds()))
+				hdhfilter.Draw(img, src)
+				dst = img
+			} else {
+				var img = image.NewRGBA(hdvfilter.Bounds(src.Bounds()))
+				hdvfilter.Draw(img, src)
+				dst = img
+			}
+
+			return ToNativeImg(dst, ftype)
 		}).
 		Build()
 

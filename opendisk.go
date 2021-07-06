@@ -1,6 +1,7 @@
 package hms
 
 import (
+	"errors"
 	"io"
 	"os"
 	"path"
@@ -73,24 +74,29 @@ func (d *DiskISO) OpenFile(fpath string) (r VFile, err error) {
 // opens it, and opens nested into iso-disk file.
 func OpenFile(syspath string) (r VFile, err error) {
 	var fpath = syspath
-	var file *os.File
-	for len(fpath) > 0 {
-		if file, err = os.Open(fpath); err == nil {
-			break
-		}
-		if !os.IsNotExist(err) {
-			return
-		}
-		fpath = path.Dir(fpath)
-	}
-	if fpath == syspath { // primary filesystem file
-		r = file
+	if r, err = os.Open(fpath); err == nil { // primary filesystem file
 		return
 	}
-	file.Close()
+	if !os.IsNotExist(err) {
+		return
+	}
+
+	// looking for nested file
+	var operr = err
+	for operr != nil && fpath != "." && fpath != "/" {
+		fpath = path.Dir(fpath)
+		r, operr = os.Open(fpath)
+	}
+	if operr == nil {
+		r.Close()
+		r = nil
+	}
 
 	var dv interface{}
-	if dv, err = diskcache.Get(fpath); err != nil {
+	if dv, operr = diskcache.Get(fpath); operr != nil {
+		if !errors.Is(operr, ErrNotDisk) {
+			err = operr
+		}
 		return
 	}
 	if err = diskcache.Set(fpath, dv); err != nil { // update expiration time

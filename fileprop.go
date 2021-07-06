@@ -274,6 +274,16 @@ func GetFileGroup(fpath string) int {
 	return extgrp[GetFileExt(fpath)]
 }
 
+// IsTypeNativeImg checks that image file is supported by any browser without format conversion.
+func IsTypeNativeImg(ext string) bool {
+	switch ext {
+	case ".jpg", ".jpe", ".jpeg", ".jfif",
+		".png", ".webp", ".gif":
+		return true
+	}
+	return false
+}
+
 // IsTypeJPEG checks that file extension is in JPEG group.
 func IsTypeJPEG(ext string) bool {
 	switch ext {

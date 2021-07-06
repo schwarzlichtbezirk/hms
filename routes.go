@@ -100,10 +100,8 @@ func RegisterRoutes(gmux *Router) {
 		gmux.PathPrefix(alias).Handler(http.StripPrefix(alias, http.FileServer(http.FS(sub))))
 	}
 
-	// file system sharing
+	// file system sharing & converted media files
 	gacc.PathPrefix("/file/").HandlerFunc(AjaxWrap(fileHandler))
-	// converted media files
-	gacc.PathPrefix("/media/").HandlerFunc(mediaHandler)
 	// cached thumbs
 	gacc.PathPrefix("/thumb/").HandlerFunc(thumbHandler)
 

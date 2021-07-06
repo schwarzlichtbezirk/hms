@@ -52,6 +52,7 @@ Vue.component('photoslider-tag', {
 	data: function () {
 		return {
 			list: [],
+			hd: 1,
 			selfile: null,
 			repeatmode: 0, // 0 - no any repeat, 1 - repeat single, 2 - repeat playlist
 			dlg: null
@@ -60,7 +61,7 @@ Vue.component('photoslider-tag', {
 	computed: {
 		// image url
 		selfileurl() {
-			return this.selfile && mediaurl(this.selfile);
+			return this.selfile && mediaurl(this.selfile, 1, this.hd);
 		},
 		// index of selected file
 		selfilepos() {

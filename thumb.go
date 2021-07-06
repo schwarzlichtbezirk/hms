@@ -32,6 +32,10 @@ const (
 // Allow images a bit larger than standard icon stay as is.
 var thumbmaxrect = image.Rect(0, 0, 320, 320)
 
+// HD horizontal and HD vertical rectangles.
+var hdhrect = image.Rect(0, 0, 1920, 1080)
+var hdvrect = image.Rect(0, 0, 1080, 1920)
+
 // Resize big images to fit into standard icon size.
 var thumbfilter = gift.New(
 	gift.ResizeToFit(256, 256, gift.LinearResampling),
@@ -40,6 +44,16 @@ var thumbfilter = gift.New(
 var thumbpngenc = png.Encoder{
 	CompressionLevel: png.BestCompression,
 }
+
+// Resize big images to fit into full HD size with horizontal aspect ratio.
+var hdhfilter = gift.New(
+	gift.ResizeToFit(1920, 1080, gift.LinearResampling),
+)
+
+// Resize big images to fit into full HD size with vertical aspect ratio.
+var hdvfilter = gift.New(
+	gift.ResizeToFit(1080, 1920, gift.LinearResampling),
+)
 
 // Error messages
 var (
@@ -151,21 +165,25 @@ func MakeTmb(r io.Reader) (md *MediaData, err error) {
 		dst = img
 	}
 
+	return ToNativeImg(dst, ftype) // set valid thumbnail
+}
+
+func ToNativeImg(m image.Image, ftype string) (md *MediaData, err error) {
 	var buf bytes.Buffer
 	var mime string
 	switch ftype {
 	case "gif":
-		if err = gif.Encode(&buf, dst, nil); err != nil {
+		if err = gif.Encode(&buf, m, nil); err != nil {
 			return // can not write gif
 		}
 		mime = "image/gif"
 	case "png", "dds", "webp", "psd":
-		if err = thumbpngenc.Encode(&buf, dst); err != nil {
+		if err = thumbpngenc.Encode(&buf, m); err != nil {
 			return // can not write png
 		}
 		mime = "image/png"
 	default:
-		if err = jpeg.Encode(&buf, dst, &jpeg.Options{Quality: 80}); err != nil {
+		if err = jpeg.Encode(&buf, m, &jpeg.Options{Quality: 80}); err != nil {
 			return // can not write jpeg
 		}
 		mime = "image/jpeg"
@@ -174,7 +192,7 @@ func MakeTmb(r io.Reader) (md *MediaData, err error) {
 		Data: buf.Bytes(),
 		Mime: mime,
 	}
-	return // set valid thumbnail
+	return
 }
 
 // APIHANDLER

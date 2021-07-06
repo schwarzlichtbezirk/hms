@@ -260,7 +260,7 @@ const encode = uri => encodeURI(uri).replace('#', '%23').replace('&', '%26').rep
 
 const fileurl = file => `/id${app.aid}/file/${file.puid}`;
 const pathurl = file => `${(devmode ? "/dev" : "")}/id${app.aid}/path/${file.puid}`;
-const mediaurl = file => `/id${app.aid}/media/${file.puid}`;
+const mediaurl = (file, media, hd) => `/id${app.aid}/file/${file.puid}?media=${media}&hd=${hd}`;
 
 const showmsgbox = (title, message, details) => {
 	const el = document.getElementById('msgbox');
@@ -1200,7 +1200,7 @@ const app = new Vue({
 			} else if (extfmt.image[ext]) {
 				this.$refs.slider.popup(file, this.$refs.fcard.playlist);
 			} else {
-				const url = mediaurl(file);
+				const url = mediaurl(file, 1, 0);
 				window.open(url, file.name);
 			}
 		},

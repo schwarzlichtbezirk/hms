@@ -44,31 +44,40 @@ const (
 	AECfilenoprop   = 16
 	AECfilenofile   = 17
 	AECfileaccess   = 18
+	AECfileopen     = 19
 
 	// media
 
+	AECmediabadmedia = 19
+	AECmediabadhd    = 19
 	AECmediabadaccid = 20
 	AECmedianoacc    = 21
+	AECmediaroot     = 21
 	AECmedianopath   = 22
 	AECmediahidden   = 23
 	AECmedianoprop   = 24
 	AECmedianofile   = 25
 	AECmediaaccess   = 26
-	AECmediaabsent   = 27
-	AECmediaopen     = 28
-	AECmediabadcnt   = 29
+	AECmediahdgone   = 27
+	AECmediahdfail   = 27
+	AECmediahdnocnt  = 28
+	AECmediamedgone  = 29
+	AECmediamedfail  = 30
+	AECmediamednocnt = 29
+	AECmediafilegone = 31
+	AECmediafileopen = 31
 
 	// thumb
 
-	AECthumbbadaccid = 30
-	AECthumbnoacc    = 31
-	AECthumbnopath   = 32
-	AECthumbhidden   = 33
-	AECthumbnoprop   = 34
-	AECthumbnofile   = 35
-	AECthumbaccess   = 36
-	AECthumbabsent   = 37
-	AECthumbbadcnt   = 38
+	AECthumbbadaccid = 31
+	AECthumbnoacc    = 32
+	AECthumbnopath   = 33
+	AECthumbhidden   = 34
+	AECthumbnoprop   = 35
+	AECthumbnofile   = 36
+	AECthumbaccess   = 37
+	AECthumbabsent   = 38
+	AECthumbbadcnt   = 39
 
 	// pubkey
 
@@ -197,6 +206,7 @@ var (
 
 	ErrNotFound  = errors.New("404 page not found")
 	ErrArgNoNum  = errors.New("'num' parameter not recognized")
+	ErrArgNoHD   = errors.New("'hd' parameter not recognized")
 	ErrArgNoPath = errors.New("'path' argument required")
 	ErrArgNoHash = errors.New("'puid' or 'path' argument required")
 	ErrNotDir    = errors.New("path is not directory")
@@ -243,91 +253,25 @@ func pageHandler(pref, name string) http.HandlerFunc {
 	}
 }
 
-// APIHANDLER
+// Hands out converted media files if them can be cached.
 func fileHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
 
-	var chunks = strings.Split(r.URL.Path, "/")
-	if len(chunks) < 4 {
-		panic("bad route for URL " + r.URL.Path)
-	}
-
-	var aid uint64
-	if aid, err = strconv.ParseUint(chunks[1][2:], 10, 32); err != nil {
-		WriteError400(w, err, AECfilebadaccid)
-		return
-	}
-
-	var prf *Profile
-	if prf = prflist.ByID(int(aid)); prf == nil {
-		WriteError400(w, ErrNoAcc, AECfilenoacc)
-		return
-	}
-	var auth *Profile
-	if auth, err = GetAuth(r); err != nil {
-		WriteJSON(w, http.StatusUnauthorized, err)
-		return
-	}
-
-	var syspath = path.Clean(strings.Join(chunks[3:], "/"))
-	if syspath[0] == '.' {
-		WriteError(w, http.StatusForbidden, ErrNoAccess, AECfilehroot)
-		return
-	}
-	syspath = UnfoldPath(syspath)
-
-	if strings.HasPrefix(syspath, "http://") || strings.HasPrefix(syspath, "https://") {
-		http.Redirect(w, r, syspath, http.StatusMovedPermanently)
-		return
-	}
-
-	if prf.IsHidden(syspath) {
-		WriteError(w, http.StatusForbidden, ErrHidden, AECfilehidden)
-		return
-	}
-
-	var prop interface{}
-	if prop, err = propcache.Get(syspath); err != nil {
-		WriteError(w, http.StatusNotFound, err, AECfilenoprop)
-		return
-	}
-	var fp = prop.(Pather)
-	if fp.Type() != FTfile {
-		WriteError(w, http.StatusUnsupportedMediaType, ErrNotFile, AECfilenofile)
-		return
-	}
-	var cg = prf.PathAccess(syspath, auth == prf)
-	var grp = GetFileGroup(syspath)
-	if !cg[grp] {
-		WriteError(w, http.StatusForbidden, ErrNoAccess, AECfileaccess)
-		return
-	}
-
-	go func() {
-		if _, ok := r.Header["If-Range"]; !ok {
-			// not partial content
-			usermsg <- UsrMsg{r, "file", fp.PUID()}
-			Log.Printf("id%d: serve %s", prf.ID, PathBase(syspath))
-		} else {
-			// update statistics for partial content
-			userajax <- r
+	// get arguments
+	var media bool
+	if s := r.FormValue("media"); len(s) > 0 {
+		if media, err = strconv.ParseBool(s); err != nil {
+			WriteError400(w, ErrArgNoHD, AECmediabadmedia)
+			return
 		}
-	}()
-
-	var content io.ReadSeekCloser // VFile
-	if content, err = OpenFile(syspath); err != nil {
-		WriteError500(w, err, AECmediaopen)
-		return
 	}
-	defer content.Close()
-
-	WriteStdHeader(w)
-	http.ServeContent(w, r, syspath, TimeJS(fp.Time()), content)
-}
-
-// Hands out converted media files if them can be cached.
-func mediaHandler(w http.ResponseWriter, r *http.Request) {
-	var err error
+	var hd bool
+	if s := r.FormValue("hd"); len(s) > 0 {
+		if hd, err = strconv.ParseBool(s); err != nil {
+			WriteError400(w, ErrArgNoHD, AECmediabadhd)
+			return
+		}
+	}
 
 	var chunks = strings.Split(r.URL.Path, "/")
 	if len(chunks) < 4 {
@@ -351,8 +295,14 @@ func mediaHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var puid = chunks[3]
-	var syspath, ok = pathcache.Path(puid)
+	var syspath = path.Clean(strings.Join(chunks[3:], "/"))
+	if syspath[0] == '.' {
+		WriteError(w, http.StatusForbidden, ErrNoAccess, AECmediaroot)
+		return
+	}
+	syspath = UnfoldPath(syspath)
+
+	var puid, ok = pathcache.PUID(syspath)
 	if !ok {
 		WriteError(w, http.StatusNotFound, ErrNoPath, AECmedianopath)
 		return
@@ -386,52 +336,97 @@ func mediaHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var val interface{}
-	if val, err = mediacache.Get(puid); err != nil {
-		if !errors.Is(err, ErrUncacheable) {
-			WriteError(w, http.StatusNotFound, err, AECmediaabsent)
-			return
-		}
 
-		go func() {
-			if _, ok := r.Header["If-Range"]; !ok {
-				// not partial content
-				usermsg <- UsrMsg{r, "file", puid}
-				Log.Printf("id%d: serve %s", prf.ID, PathBase(syspath))
-			} else {
-				// update statistics for partial content
-				userajax <- r
+	if hd {
+		if val, err = hdcache.Get(puid); err != nil {
+			if os.IsNotExist(err) {
+				WriteError(w, http.StatusGone, err, AECmediahdgone)
+				return
 			}
-		}()
+			if !errors.Is(err, ErrNotHD) {
+				WriteError500(w, err, AECmediahdfail)
+				return
+			}
+		} else {
+			var md *MediaData
+			if md, ok = val.(*MediaData); !ok || md == nil {
+				WriteError500(w, ErrBadMedia, AECmediahdnocnt)
+				return
+			}
 
-		var content io.ReadSeekCloser // VFile
-		if content, err = OpenFile(syspath); err != nil {
-			WriteError500(w, err, AECmediaopen)
+			go func() {
+				if _, ok := r.Header["If-Range"]; !ok {
+					// not partial content
+					usermsg <- UsrMsg{r, "file", puid}
+					Log.Printf("id%d: media %s", prf.ID, PathBase(syspath))
+				} else {
+					// update statistics for partial content
+					userajax <- r
+				}
+			}()
+			w.Header().Set("Content-Type", md.Mime)
+			http.ServeContent(w, r, puid, starttime, bytes.NewReader(md.Data))
 			return
 		}
-		defer content.Close()
-
-		WriteStdHeader(w)
-		http.ServeContent(w, r, syspath, TimeJS(fp.Time()), content)
-		return
 	}
-	var md *MediaData
-	if md, ok = val.(*MediaData); !ok || md == nil {
-		WriteError500(w, ErrBadMedia, AECmediabadcnt)
-		return
+
+	if media {
+		if val, err = mediacache.Get(puid); err != nil {
+			if os.IsNotExist(err) {
+				WriteError(w, http.StatusGone, err, AECmediamedgone)
+				return
+			}
+			if !errors.Is(err, ErrUncacheable) {
+				WriteError(w, http.StatusNotFound, err, AECmediamedfail)
+				return
+			}
+		} else {
+			var md *MediaData
+			if md, ok = val.(*MediaData); !ok || md == nil {
+				WriteError500(w, ErrBadMedia, AECmediamednocnt)
+				return
+			}
+
+			go func() {
+				if _, ok := r.Header["If-Range"]; !ok {
+					// not partial content
+					usermsg <- UsrMsg{r, "file", puid}
+					Log.Printf("id%d: media %s", prf.ID, PathBase(syspath))
+				} else {
+					// update statistics for partial content
+					userajax <- r
+				}
+			}()
+			w.Header().Set("Content-Type", md.Mime)
+			http.ServeContent(w, r, puid, starttime, bytes.NewReader(md.Data))
+			return
+		}
 	}
 
 	go func() {
 		if _, ok := r.Header["If-Range"]; !ok {
 			// not partial content
 			usermsg <- UsrMsg{r, "file", puid}
-			Log.Printf("id%d: media %s", prf.ID, PathBase(syspath))
+			Log.Printf("id%d: serve %s", prf.ID, PathBase(syspath))
 		} else {
 			// update statistics for partial content
 			userajax <- r
 		}
 	}()
-	w.Header().Set("Content-Type", md.Mime)
-	http.ServeContent(w, r, puid, starttime, bytes.NewReader(md.Data))
+
+	var content VFile
+	if content, err = OpenFile(syspath); err != nil {
+		if os.IsNotExist(err) {
+			WriteError(w, http.StatusGone, err, AECmediafilegone)
+			return
+		}
+		WriteError500(w, err, AECmediafileopen)
+		return
+	}
+	defer content.Close()
+
+	WriteStdHeader(w)
+	http.ServeContent(w, r, syspath, TimeJS(fp.Time()), content)
 }
 
 // Hands out thumbnails for given files if them cached.
