@@ -273,10 +273,6 @@ body {
 		}
 
 	.imgitem > img.bars {
-		position: absolute;
-		top: 50%;
-		left: 50%;
-		transform: translate(-50%,-50%);
 		width: 100%;
 		max-width: 176px;
 	}
@@ -312,11 +308,6 @@ body {
 /* leaflet photo thumbnail marker */
 
 .photomarker > img {
-	position: absolute;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%,-50%);
-	width: 100%;
 	border: 3px solid PaleGoldenRod;
 	border-radius: 0.25rem;
 }
@@ -407,13 +398,7 @@ body {
 
 /* Photo slider section */
 
-.photoslider > img {
-	width: 100vw;
-	height: 100vh;
-}
-
-.photoslider > .sliderbtn {
-	font-size: 2rem;
+.imgbut {
 	color: rgba(255, 255, 255, 0.5);
 	border-radius: 0.5rem;
 	background-color: transparent;
@@ -423,65 +408,55 @@ body {
 	transition: 0.3s;
 }
 
-	.photoslider > .sliderbtn:hover,
-	.photoslider > .sliderbtn:focus {
+	.imgbut:hover,
+	.imgbut:focus {
 		color: rgba(255, 255, 255, 0.75);
 		background-color: rgba(255, 255, 255, 0.3);
 		text-decoration: none;
 		cursor: pointer;
 	}
 
-	.photoslider > .sliderbtn.disabled, .photoslider > .sliderbtn:disabled {
+	.imgbut.disabled, .imgbut:disabled {
 		color: rgba(255, 255, 255, 0.25);
 		pointer-events: none;
 		cursor: default;
 	}
 
-	.photoslider > .sliderbtn.active {
+	.imgbut.active {
 		color: #fff;
 	}
 
-.photoslider > .thumbs {
-	position: absolute;
-	bottom: 40px;
-	left: 50%;
-	transform: translate(-50%,0);
-	max-width: 100%;
-	background-color: Tan;
+	.imgbut.arrow {
+		padding: 4rem 0.75rem;
+	}
+
+	.imgbut.tool {
+		padding: 0.75rem;
+	}
+
+.btn-check + .imgbut.btn-outline-light {
+	border: 1px solid;
+}
+
+.btn-check:checked + .imgbut.btn-outline-light, .btn-check:active + .imgbut.btn-outline-light, .imgbut.btn-outline-light:active, .btn-outline-light.active, .imgbut.btn-outline-light.dropdown-toggle.show {
+	color: #000;
+	background-color: rgba(248, 249, 250, 0.67);
+	border-color: #f8f9fa;
+}
+
+.photothumbs {
+	background-color: silver;
 	border-radius: 0.25rem;
 	opacity: 0;
 	transition: 0.3s;
 }
 
-	.photoslider > .thumbs:hover {
+	.photothumbs:hover {
 		opacity: 1;
 	}
 
-.photoslider > .prev {
-	position: absolute;
-	top: 50%;
-	left: 8px;
-	transform: translate(0,-50%);
-	padding: 4rem 0.75rem;
-}
-
-.photoslider > .next {
-	position: absolute;
-	top: 50%;
-	right: 8px;
-	transform: translate(0,-50%);
-	padding: 4rem 0.75rem;
-}
-
-.photoslider > .close {
-	position: absolute;
-	top: 8px;
-	right: 8px;
-	padding: 0.5rem 0.75rem;
-}
-
 @media (max-width:768px) {
-	.photoslider > .thumbs {
+	.photothumbs {
 		opacity: 0.50;
 	}
 }

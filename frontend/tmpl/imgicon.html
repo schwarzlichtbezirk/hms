@@ -10,6 +10,6 @@
 		<source v-bind:srcset="label+'.png'" type="image/png">
 		<img alt="shared">
 	</picture>
-	<img v-if="file.playback" class="bars" src="/asst/equalizer-bars.gif" alt="play">
+	<img v-if="file.playback" class="bars position-absolute top-50 start-50 translate-middle" src="/asst/equalizer-bars.gif" alt="play">
 	<div class="tag overflow-hidden">{{file.name}}</div>
 </div>
