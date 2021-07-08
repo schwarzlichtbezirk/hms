@@ -113,6 +113,11 @@ body {
 	background-size: cover;
 }
 
+.bg-stat {
+	background: rgba(75, 0, 130, 0.5); /* Indigo */
+	padding: 0px 4px;
+}
+
 .bg-card {
 	background: rgba(75, 0, 130, 0.5); /* Indigo */
 }
@@ -220,17 +225,6 @@ body {
 			border: 1px solid DarkTurquoise;
 		}
 
-	.fileitem > div:first-child {
-		display: block;
-		position: relative;
-	}
-
-		.fileitem > div:first-child > * {
-			position: absolute;
-			top: 0;
-			left: 0;
-		}
-
 	.fileitem > .tag {
 		text-align: center;
 		color: Aquamarine;
@@ -238,13 +232,7 @@ body {
 		max-height: 3.8rem;
 	}
 
-	.fileitem img {
-		object-position: center center;
-		object-fit: contain;
-	}
-
 .imgitem {
-	position: relative;
 	line-height: 1.25;
 	font-size: 0.72rem;
 }
@@ -268,23 +256,17 @@ body {
 			box-shadow: 0px 0px 12px Azure;
 		}
 
-	.imgitem > .pict > img {
+	.imgitem .pict {
 		max-width: 256px;
 		max-height: 256px;
 	}
 
-	.imgitem > .pref {
-		position: absolute;
-		left: 0;
-		bottom: 0;
+	.imgitem .label {
+		width: 100%;
+		max-width: 96px;
 	}
 
-		.imgitem > .pref > img {
-			width: 100%;
-			max-width: 96px;
-		}
-
-	.imgitem > img.bars {
+	.imgitem .bars {
 		width: 100%;
 		max-width: 176px;
 	}
@@ -305,11 +287,6 @@ body {
 		color: Azure;
 	}
 
-.bg-stat {
-	background: rgba(75, 0, 130, 0.5); /* Indigo */
-	padding: 0px 4px;
-}
-
 /* leaflet container */
 
 .photomap {
@@ -319,7 +296,11 @@ body {
 
 /* leaflet photo thumbnail marker */
 
-.photomarker > img {
+.photomarker {
+	position: relative;
+}
+
+.photomarker img {
 	border: 3px solid #c2adeb;
 	border-radius: 0.25rem;
 }

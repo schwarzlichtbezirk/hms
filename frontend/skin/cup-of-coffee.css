@@ -110,6 +110,11 @@ body {
 	background-size: cover;
 }
 
+.bg-stat {
+	background: rgba(102, 51, 153, 0.25); /* RebeccaPurple */
+	padding: 0px 4px;
+}
+
 .bg-card {
 	background: rgba(75, 0, 130, 0.5); /* Indigo */
 }
@@ -219,17 +224,6 @@ body {
 			box-shadow: 0px 0px 12px rgba(255, 255, 255, 0.5);
 		}
 
-	.fileitem > div:first-child {
-		display: block;
-		position: relative;
-	}
-
-		.fileitem > div:first-child > * {
-			position: absolute;
-			top: 0;
-			left: 0;
-		}
-
 	.fileitem > .tag {
 		text-align: center;
 		color: PaleGoldenRod;
@@ -241,13 +235,7 @@ body {
 		background: rgba(102, 51, 153, 0.67); /* RebeccaPurple */
 	}
 
-	.fileitem img {
-		object-position: center center;
-		object-fit: contain;
-	}
-
 .imgitem {
-	position: relative;
 	line-height: 1.25;
 	font-size: 0.72rem;
 }
@@ -271,23 +259,17 @@ body {
 			box-shadow: 0px 0px 12px Tomato;
 		}
 
-	.imgitem > .pict > img {
+	.imgitem .pict {
 		max-width: 256px;
 		max-height: 256px;
 	}
 
-	.imgitem > .pref {
-		position: absolute;
-		left: 0;
-		bottom: 0;
+	.imgitem .label {
+		width: 100%;
+		max-width: 96px;
 	}
 
-		.imgitem > .pref > img {
-			width: 100%;
-			max-width: 96px;
-		}
-
-	.imgitem > img.bars {
+	.imgitem .bars {
 		width: 100%;
 		max-width: 176px;
 	}
@@ -309,11 +291,6 @@ body {
 		background: rgba(102, 51, 153, 0.67); /* RebeccaPurple */
 	}
 
-.bg-stat {
-	background: rgba(102, 51, 153, 0.25); /* RebeccaPurple */
-	padding: 0px 4px;
-}
-
 /* leaflet container */
 
 .photomap {
@@ -323,7 +300,11 @@ body {
 
 /* leaflet photo thumbnail marker */
 
-.photomarker > img {
+.photomarker {
+	position: relative;
+}
+
+.photomarker img {
 	border: 3px solid Thistle;
 	border-radius: 0.25rem;
 }

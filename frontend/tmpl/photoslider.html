@@ -1,7 +1,7 @@
 
 <div class="modal fade" tabindex="-1" role="dialog" aria-labelledby="photos" aria-hidden="true" v-on:keyup.stop="onkeyup">
 	<div class="modal-dialog modal-fullscreen" role="document">
-		<div class="modal-content">
+		<div class="modal-content position-relative">
 			<img class="centerimg vw-100 vh-100" v-bind:src="selfileurl" v-on:load="onimgload" v-on:error="onimgerror" />
 			<div class="photothumbs position-absolute bottom-0 start-50 translate-middle-x mw-100 mb-md-4 p-2">
 				<template v-if="islist">

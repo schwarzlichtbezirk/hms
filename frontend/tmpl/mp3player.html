@@ -14,8 +14,8 @@
 			<div class="progress position-relative">
 				<div class="current progress-bar" v-bind:style="stlbarcur" v-bind:aria-valuenow="timecur" aria-valuemin="0" v-bind:aria-valuemax="timeend"></div>
 				<div class="buffer progress-bar" v-bind:style="stlbarbuf" v-bind:aria-valuenow="timebuf" aria-valuemin="0" v-bind:aria-valuemax="timeend"></div>
-				<div class="timer d-inline-block align-self-center position-absolute w-100">{{fmttimecur}}&nbsp/&nbsp{{fmttimeend}}</div>
-				<input class="seeker position-absolute w-100" min="0" type="range" v-bind:max="timeend" v-bind:value="timecur" v-bind:disabled="!ready" v-on:change="onseekerchange" v-on:input="onseekerinput">
+				<div class="timer d-inline-block align-self-center position-absolute top-0 start-0 w-100">{{fmttimecur}}&nbsp/&nbsp{{fmttimeend}}</div>
+				<input class="seeker position-absolute top-0 start-0 w-100" min="0" type="range" v-bind:max="timeend" v-bind:value="timecur" v-bind:disabled="!ready" v-on:change="onseekerchange" v-on:input="onseekerinput">
 			</div>
 			<div class="d-inline-block">{{fmttrackinfo}}</div>
 		</div>

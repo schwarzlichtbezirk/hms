@@ -104,6 +104,44 @@ const closeFullscreen = () => {
 	}
 };
 
+// leaflet html addons
+
+const makemarkericon = file => `
+<picture>
+	${resmodel.iconfmt.webp && file.ntmb !== 1 ? `<source srcset="${iconwebp(file)}" type="image/webp">` : ``}
+	${resmodel.iconfmt.png && file.ntmb !== 1 ? `<source srcset="${iconpng(file)}" type="image/png">` : ``}
+	${file.ntmb === 1 ? `<source srcset="/id${app.aid}/thumb/${file.puid}" type="image/jpeg">` : ``}
+	<img class="position-absolute top-50 start-50 translate-middle w-100">
+</picture>
+`;
+
+const makemarkerpopup = file => `
+<div class="photoinfo">
+	<ul class="nav nav-tabs" role="tablist">
+		<li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#pict">Thumbnail</a></li>
+		<li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#prop">Properties</a></li>
+	</ul>
+	<div class="tab-content">
+		<div class="tab-pane active" id="pict">
+			<picture>
+				${resmodel.iconfmt.webp && file.ntmb !== 1 ? `<source srcset="${iconwebp(file)}" type="image/webp">` : ``}
+				${resmodel.iconfmt.png && file.ntmb !== 1 ? `<source srcset="${iconpng(file)}" type="image/png">` : ``}
+				${file.ntmb === 1 ? `<source srcset="/id${app.aid}/thumb/${file.puid}" type="image/jpeg">` : ``}
+				<img class="rounded thumb" alt="${file.name}">
+			</picture>
+			<div class="d-flex flex-wrap latlng">
+				<div><div class="name">lat:</div> <div class="value">${file.latitude.toFixed(6)}</div></div>
+				<div><div class="name">lng:</div> <div class="value">${file.longitude.toFixed(6)}</div></div>
+				<div><div class="name">alt:</div> <div class="value">${file.altitude || "N/A"}</div></div>
+			</div>
+		</div>
+		<div class="tab-pane fade" id="prop">
+			<ul class="prop p-0 m-0"><li>${filehint(file).join("</li><li>")}</li></ul>
+		</div>
+	</div>
+</div>
+`;
+
 Vue.component('dir-card-tag', {
 	template: '#dir-card-tpl',
 	props: ["list"],
@@ -366,8 +404,8 @@ Vue.component('file-card-tag', {
 			this.listmode = 'lgicon';
 		},
 		onthumbmode() {
-			thumbmode = this.thumbmode = !this.thumbmode;
-			iconev.emit('thumb');
+			this.thumbmode = thumbmode = !this.thumbmode;
+			eventHub.$emit('thumbmode', thumbmode);
 		},
 
 		onaudioonly() {
@@ -650,7 +688,7 @@ Vue.component('map-card-tag', {
 				};
 				if (this.markermode === 'thumb' && file.puid) {
 					opt.icon = L.divIcon({
-						html: `<img src="${filetmbimg(file)}" class="position-absolute top-50 start-50 translate-middle w-100">`,
+						html: makemarkericon(file),
 						className: "photomarker",
 						iconSize: [size, size],
 						iconAnchor: [size / 2, size / 2],
@@ -659,7 +697,7 @@ Vue.component('map-card-tag', {
 				}
 
 				const template = document.createElement('template');
-				template.innerHTML = makemarkercontent(file).trim();
+				template.innerHTML = makemarkerpopup(file).trim();
 				const popup = template.content.firstChild;
 				popup.querySelector(".photoinfo picture").addEventListener('click', () => {
 					this.$root.$refs.slider.popup(file, this.gpslist);

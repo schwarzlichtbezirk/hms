@@ -102,6 +102,11 @@ body {
 	background-color: LemonChiffon;
 }
 
+.bg-stat {
+	background: Khaki;
+	padding: 0px 4px;
+}
+
 .bg-card {
 	background: #f3eec3;
 }
@@ -208,17 +213,6 @@ body {
 			border: 1px solid DarkKhaki;
 		}
 
-	.fileitem > div:first-child {
-		display: block;
-		position: relative;
-	}
-
-		.fileitem > div:first-child > * {
-			position: absolute;
-			top: 0;
-			left: 0;
-		}
-
 	.fileitem > .tag {
 		text-align: center;
 		color: Black;
@@ -226,13 +220,7 @@ body {
 		max-height: 3.8rem;
 	}
 
-	.fileitem img {
-		object-position: center center;
-		object-fit: contain;
-	}
-
 .imgitem {
-	position: relative;
 	line-height: 1.25;
 	font-size: 0.72rem;
 }
@@ -256,23 +244,17 @@ body {
 			box-shadow: 0px 0px 12px DarkKhaki;
 		}
 
-	.imgitem > .pict > img {
+	.imgitem .pict {
 		max-width: 256px;
 		max-height: 256px;
 	}
 
-	.imgitem > .pref {
-		position: absolute;
-		left: 0;
-		bottom: 0;
+	.imgitem .label {
+		width: 100%;
+		max-width: 96px;
 	}
 
-		.imgitem > .pref > img {
-			width: 100%;
-			max-width: 96px;
-		}
-
-	.imgitem > img.bars {
+	.imgitem .bars {
 		width: 100%;
 		max-width: 176px;
 	}
@@ -293,11 +275,6 @@ body {
 		color: SaddleBrown;
 	}
 
-.bg-stat {
-	background: Khaki;
-	padding: 0px 4px;
-}
-
 /* leaflet container */
 
 .photomap {
@@ -307,7 +284,11 @@ body {
 
 /* leaflet photo thumbnail marker */
 
-.photomarker > img {
+.photomarker {
+	position: relative;
+}
+
+.photomarker img {
 	border: 3px solid PaleGoldenRod;
 	border-radius: 0.25rem;
 }

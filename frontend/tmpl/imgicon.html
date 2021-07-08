@@ -1,14 +1,12 @@
 
-<div class="imgitem" v-bind:class="itemview" v-on:click.stop="onselect" v-on:dblclick.stop="onopen" v-bind:title="fmttitle">
-	<picture class="pict">
-		<source v-bind:srcset="webpicon" type="image/webp">
-		<source v-bind:srcset="pngicon" type="image/png">
-		<img v-bind:alt="fmtalt" class="centerimg">
-	</picture>
-	<picture v-if="label" class="pref">
-		<source v-bind:srcset="label+'.webp'" type="image/webp">
-		<source v-bind:srcset="label+'.png'" type="image/png">
-		<img alt="shared">
+<div class="imgitem position-relative" v-bind:class="itemview" v-on:click.stop="onselect" v-on:dblclick.stop="onopen" v-bind:title="fmttitle">
+	<template>
+		<icon-tag v-bind:file="file" clsimg="pict" />
+	</template>
+	<picture v-if="label">
+		<source v-if="iconfmt.webp" v-bind:srcset="label+'.webp'" type="image/webp">
+		<source v-if="iconfmt.png" v-bind:srcset="label+'.png'" type="image/png">
+		<img class="label position-absolute bottom-0 start-0" alt="shared">
 	</picture>
 	<img v-if="file.playback" class="bars position-absolute top-50 start-50 translate-middle" src="/asst/equalizer-bars.gif" alt="play">
 	<div class="tag overflow-hidden">{{file.name}}</div>

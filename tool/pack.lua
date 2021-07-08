@@ -29,8 +29,10 @@ wpkconf.iconset = wpkconf.iconset or fulliconset
 wpkconf.defskinid = wpkconf.defskinid or "neon"
 wpkconf.deficonid = wpkconf.deficonid or "junior"
 -- correct icons format
-iconwebp = type(iconwebp) ~= "boolean" or iconwebp
-iconpng = type(iconpng) ~= "boolean" or iconpng
+iconfmt = iconfmt or {
+	webp = true,
+	png = true,
+}
 
 -- write to log formatted string
 local function logfmt(...)
@@ -101,8 +103,8 @@ local function authput(kpath, fpath)
 	if logrec then logfile(kpath) end
 end
 local function iconput(kpath, fpath)
-	if string.sub(kpath, -5) == ".webp" and not iconwebp then return end
-	if string.sub(kpath, -4) == ".png" and not iconpng then return end
+	if string.sub(kpath, -5) == ".webp" and not iconfmt.webp then return end
+	if string.sub(kpath, -4) == ".png" and not iconfmt.png then return end
 	pkg:putfile(kpath, fpath)
 	if logrec then logfile(kpath) end
 end
@@ -183,13 +185,13 @@ do
 	content = string.gsub(content, "\"defskinid\": \"[%w%-]+\"", "\"defskinid\": \""..wpkconf.defskinid.."\"")
 	-- replace deficonid
 	content = string.gsub(content, "\"deficonid\": \"[%w%-]+\"", "\"deficonid\": \""..wpkconf.deficonid.."\"")
-	-- replace iconwebp
-	if not iconwebp then
-		content = string.gsub(content, "\"iconwebp\": [%w%-]+", "\"iconwebp\": false")
+	-- replace iconfmt.webp
+	if not iconfmt.webp then
+		content = string.gsub(content, "\"webp\": %w+", "\"webp\": false")
 	end
-	-- replace iconpng
-	if not iconpng then
-		content = string.gsub(content, "\"iconpng\": [%w%-]+", "\"iconpng\": false")
+	-- replace iconfmt.png
+	if not iconfmt.png then
+		content = string.gsub(content, "\"png\": %w+", "\"png\": false")
 	end
 	content = string.gsub(content, "%[,", "[")
 	pkg:putdata("assets/resmodel.json", content)

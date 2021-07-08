@@ -1,0 +1,7 @@
+
+<picture>
+	<source v-if="iswebp" v-bind:srcset="iconwebp" type="image/webp">
+	<source v-if="ispng" v-bind:srcset="iconpng" type="image/png">
+	<source v-if="isthumb" v-bind:srcset="iconthumb" type="image/jpeg">
+	<img v-bind:class="clsimg" class="centerimg" v-bind:alt="fmtalt">
+</picture>

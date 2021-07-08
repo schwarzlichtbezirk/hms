@@ -27,10 +27,9 @@ Vue.component('thumbslider-tag', {
 		}
 	},
 	methods: {
-		imgicon(file) {
-			return filetmbimg(file);
+		onselect(file) {
+			eventHub.$emit('select', file);
 		},
-
 		onwheel(e) {
 			this.$refs.slide.scrollBy({ left: e.deltaX + e.deltaY, behavior: 'smooth' });
 		},
@@ -40,9 +39,6 @@ Vue.component('thumbslider-tag', {
 		},
 		onnext() {
 			this.$refs.slide.scrollBy({ left: +125, behavior: 'smooth' });
-		},
-		onthumb(file) {
-			eventHub.$emit('select', file);
 		}
 	}
 });

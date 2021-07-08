@@ -1,10 +1,27 @@
 ﻿"use strict";
 
-let iconmapping = imempty;
+let resmodel = { skinlist: [], iconlist: [], iconfmt: {} };
+let iconmapping = {
+	private: {
+		blank: "",
+		label: "",
+		cid: { cid: "" },
+		drive: {},
+		folder: {},
+		grp: {},
+		ext: {}
+	},
+	shared: {
+		blank: "",
+		label: "",
+		cid: { cid: "" },
+		drive: {},
+		folder: {},
+		grp: {},
+		ext: {}
+	}
+};
 let thumbmode = true;
-
-// icon mapping event model
-const iconev = extend({}, makeeventmodel());
 
 // File types
 const FT = {
@@ -187,9 +204,9 @@ const getFileGroup = file => {
 	else return FG.other;
 };
 
-const geticonpath = (file, im, shr) => {
-	const org = shr ? im.shared : im.private;
-	const alt = shr ? im.private : im.shared;
+const geticonpath = file => {
+	const org = file.shared ? iconmapping.shared : iconmapping.private;
+	const alt = file.shared ? iconmapping.private : iconmapping.shared;
 	switch (file.type) {
 		case FT.ctgr:
 			return {
@@ -441,7 +458,7 @@ const app = new Vue({
 	data: {
 		skinid: "", // ID of skin CSS
 		iconid: "", // ID of icons mapping json
-		resmodel: { skinlist: [], iconlist: [] },
+		resmodel: resmodel,
 		showauth: false, // display authorization form
 		isauth: false, // is authorized
 		authid: 0, // authorized ID
@@ -657,9 +674,7 @@ const app = new Vue({
 				throw new HttpError(response.status, { what: "can not load icons mapping file", when: Date.now(), code: 0 });
 			}
 			iconmapping = await response.json();
-			iconmapping.iconwebp = this.resmodel.iconwebp;
-			iconmapping.iconpng = this.resmodel.iconpng;
-			iconev.emit('plug');
+			eventHub.$emit('iconset', iconmapping);
 		},
 
 		async fetchishome() {
@@ -882,32 +897,36 @@ const app = new Vue({
 		},
 
 		setskin(skinid) {
-			for (const v of this.resmodel.skinlist) {
-				if (v.id === skinid) {
-					document.getElementById('skinmodel').setAttribute('href', v.link);
-					sessionStorage.setItem('skinid', skinid);
-					this.skinid = skinid;
+			if (skinid !== this.skinid) {
+				for (const v of this.resmodel.skinlist) {
+					if (v.id === skinid) {
+						document.getElementById('skinmodel').setAttribute('href', v.link);
+						sessionStorage.setItem('skinid', skinid);
+						this.skinid = skinid;
+					}
 				}
 			}
 		},
 
 		seticon(iconid) {
-			(async () => {
-				eventHub.$emit('ajax', +1);
-				try {
-					for (const v of this.resmodel.iconlist) {
-						if (v.id === iconid) {
-							await this.fetchicons(v.link);
-							sessionStorage.setItem('iconid', iconid);
-							this.iconid = iconid;
-						}
+			if (iconid !== this.iconid) {
+				for (const v of this.resmodel.iconlist) {
+					if (v.id === iconid) {
+						(async () => {
+							eventHub.$emit('ajax', +1);
+							try {
+								await this.fetchicons(v.link);
+							} catch (e) {
+								ajaxfail(e);
+							} finally {
+								eventHub.$emit('ajax', -1);
+							}
+						})();
+						sessionStorage.setItem('iconid', iconid);
+						this.iconid = iconid;
 					}
-				} catch (e) {
-					ajaxfail(e);
-				} finally {
-					eventHub.$emit('ajax', -1);
 				}
-			})();
+			}
 		},
 
 		seturl() {
@@ -1277,10 +1296,35 @@ const app = new Vue({
 			hist.cid = "home";
 		}
 
-		// open route
+		// load resources and open route
 		(async () => {
 			eventHub.$emit('ajax', +1);
 			try {
+				// load resources model at first
+				const response = await fetch("/data/assets/resmodel.json");
+				if (!response.ok) {
+					throw new HttpError(response.status, { what: "can not load resources model file", when: Date.now(), code: 0 });
+				}
+				this.resmodel = resmodel = await response.json();
+
+				// set skin
+				const skinid = sessionStorage.getItem('skinid') || this.resmodel.defskinid;
+				for (const v of this.resmodel.skinlist) {
+					if (v.id === skinid) {
+						document.getElementById('skinmodel').setAttribute('href', v.link);
+						this.skinid = skinid;
+					}
+				}
+
+				// load icons
+				const iconid = sessionStorage.getItem('iconid') || this.resmodel.deficonid;
+				for (const v of this.resmodel.iconlist) {
+					if (v.id === iconid) {
+						await this.fetchicons(v.link);
+						this.iconid = iconid;
+					}
+				}
+
 				// open route and push history step
 				await this.fetchopenroute(hist);
 				if (this.isadmin && hist.cid !== "share") {
@@ -1290,39 +1334,6 @@ const app = new Vue({
 					await this.fetchishome();
 				}
 				this.pushhist(hist);
-			} catch (e) {
-				ajaxfail(e);
-			} finally {
-				eventHub.$emit('ajax', -1);
-			}
-		})();
-
-		// load resources
-		(async () => {
-			eventHub.$emit('ajax', +1);
-			try {
-				// load model at first to give an opportunity switch to another skin/iconset on failure
-				const response = await fetch("/data/assets/resmodel.json");
-				if (!response.ok) {
-					throw new HttpError(response.status, { what: "can not load resources model file", when: Date.now(), code: 0 });
-				}
-				this.resmodel = await response.json();
-
-				const skinid = sessionStorage.getItem('skinid') || this.resmodel.defskinid;
-				for (const v of this.resmodel.skinlist) {
-					if (v.id === skinid) {
-						document.getElementById('skinmodel').setAttribute('href', v.link);
-						this.skinid = skinid;
-					}
-				}
-
-				const iconid = sessionStorage.getItem('iconid') || this.resmodel.deficonid;
-				for (const v of this.resmodel.iconlist) {
-					if (v.id === iconid) {
-						await this.fetchicons(v.link);
-						this.iconid = iconid;
-					}
-				}
 			} catch (e) {
 				ajaxfail(e);
 			} finally {

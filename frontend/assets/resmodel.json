@@ -100,6 +100,8 @@
 	],
 	"defskinid": "neon",
 	"deficonid": "junior",
-	"iconwebp": true,
-	"iconpng": true
+	"iconfmt": {
+		"webp": true,
+		"png": true
+	}
 }

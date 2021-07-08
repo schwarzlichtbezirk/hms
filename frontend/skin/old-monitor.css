@@ -120,6 +120,11 @@ a, .btn-link {
 	background-color: #001800;
 }
 
+.bg-stat {
+	background: rgba(255, 255, 255, 0.15);
+	padding: 0px 4px;
+}
+
 .bg-card {
 	background: #003c00;
 }
@@ -232,17 +237,6 @@ a, .btn-link {
 			box-shadow: 0px 0px 12px rgba(255, 255, 255, 0.5);
 		}
 
-	.fileitem > div:first-child {
-		display: block;
-		position: relative;
-	}
-
-		.fileitem > div:first-child > * {
-			position: absolute;
-			top: 0;
-			left: 0;
-		}
-
 	.fileitem > .tag {
 		text-align: center;
 		color: Lime;
@@ -254,13 +248,7 @@ a, .btn-link {
 		background: #004800;
 	}
 
-	.fileitem img {
-		object-position: center center;
-		object-fit: contain;
-	}
-
 .imgitem {
-	position: relative;
 	line-height: 1.25;
 	font-size: 0.72rem;
 }
@@ -281,23 +269,17 @@ a, .btn-link {
 			box-shadow: 0px 0px 12px White;
 		}
 
-	.imgitem > .pict > img {
+	.imgitem .pict {
 		max-width: 256px;
 		max-height: 256px;
 	}
 
-	.imgitem > .pref {
-		position: absolute;
-		left: 0;
-		bottom: 0;
+	.imgitem .label {
+		width: 100%;
+		max-width: 96px;
 	}
 
-		.imgitem > .pref > img {
-			width: 100%;
-			max-width: 96px;
-		}
-
-	.imgitem > img.bars {
+	.imgitem .bars {
 		width: 100%;
 		max-width: 176px;
 	}
@@ -318,11 +300,6 @@ a, .btn-link {
 		background: rgba(0, 48, 0, 0.67);
 	}
 
-.bg-stat {
-	background: rgba(255, 255, 255, 0.15);
-	padding: 0px 4px;
-}
-
 /* leaflet container */
 
 .photomap {
@@ -332,7 +309,11 @@ a, .btn-link {
 
 /* leaflet photo thumbnail marker */
 
-.photomarker > img {
+.photomarker {
+	position: relative;
+}
+
+.photomarker img {
 	border: 3px solid PaleGreen;
 	border-radius: 0.25rem;
 }

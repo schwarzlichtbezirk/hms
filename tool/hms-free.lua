@@ -25,7 +25,9 @@ logrec = false
 logdir = false
 
 -- icons format
-iconwebp = true
-iconpng = false
+iconfmt = {
+	webp = true,
+	png = false,
+}
 
 dofile(path.join(scrdir, "pack.lua"))

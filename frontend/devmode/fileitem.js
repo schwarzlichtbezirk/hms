@@ -1,85 +1,13 @@
 "use strict";
 
-const imempty = {
-	private: {
-		blank: "",
-		label: "",
-		cid: { cid: "" },
-		drive: {},
-		folder: {},
-		grp: {},
-		ext: {}
-	},
-	shared: {
-		blank: "",
-		label: "",
-		cid: { cid: "" },
-		drive: {},
-		folder: {},
-		grp: {},
-		ext: {}
-	}
+const iconwebp = file => {
+	const res = geticonpath(file);
+	return (res.org || res.alt) + '.webp';
 };
-
-const filetmbwebp = (file, im) => {
-	if (file.ntmb === 1 || !im.iconwebp) {
-		return '';
-	} else {
-		const res = geticonpath(file, im, false);
-		return (res.org || res.alt) + '.webp';
-	}
+const iconpng = file => {
+	const res = geticonpath(file);
+	return (res.org || res.alt) + '.png';
 };
-const filetmbpng = (file, im) => {
-	if (file.ntmb === 1) {
-		return `/id${app.aid}/thumb/${file.puid}`;
-	} else if (im.iconpng) {
-		const res = geticonpath(file, im, false);
-		return (res.org || res.alt) + '.png';
-	} else {
-		return '';
-	}
-};
-const filetmbimg = (file) => {
-	if (file.ntmb === 1) {
-		return `/id${app.aid}/thumb/${file.puid}`;
-	} else {
-		if (iconmapping.iconpng) {
-			const res = geticonpath(file, iconmapping, false);
-			return (res.org || res.alt) + '.png';
-		}
-		if (iconmapping.iconwebp) {
-			const res = geticonpath(file, iconmapping, false);
-			return (res.org || res.alt) + '.webp';
-		}
-		return '';
-	}
-};
-
-const makemarkercontent = file => `
-<div class="photoinfo">
-	<ul class="nav nav-tabs" role="tablist">
-		<li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#pict">Thumbnail</a></li>
-		<li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#prop">Properties</a></li>
-	</ul>
-	<div class="tab-content">
-		<div class="tab-pane active" id="pict">
-			<picture>
-				<source srcset="${filetmbwebp(file, iconmapping)}" type="image/webp">
-				<source srcset="${filetmbpng(file, iconmapping)}" type="image/png">
-				<img class="rounded thumb" alt="${file.name}">
-			</picture>
-			<div class="d-flex flex-wrap latlng">
-				<div><div class="name">lat:</div> <div class="value">${file.latitude.toFixed(6)}</div></div>
-				<div><div class="name">lng:</div> <div class="value">${file.longitude.toFixed(6)}</div></div>
-				<div><div class="name">alt:</div> <div class="value">${file.altitude || "N/A"}</div></div>
-			</div>
-		</div>
-		<div class="tab-pane fade" id="prop">
-			<ul class="prop p-0 m-0"><li>${filehint(file).join("</li><li>")}</li></ul>
-		</div>
-	</div>
-</div>
-`;
 
 const filehint = file => {
 	const lst = [];
@@ -316,12 +244,79 @@ const filehint = file => {
 	return lst;
 };
 
+Vue.component('icon-tag', {
+	template: '#icon-tpl',
+	props: ["file", "clsimg"],
+	data: function () {
+		return {
+			iconfmt: {},
+			im: 0,
+			tm: true
+		};
+	},
+	computed: {
+		fmtalt() {
+			return pathext(this.file.name);
+		},
+		iswebp() {
+			const _ = this.im; // update field on iconset
+			return this.iconfmt.webp && !(this.file.ntmb === 1 && this.tm);
+		},
+		iconwebp() {
+			const _ = this.im; // update field on iconset
+			const res = geticonpath(this.file);
+			return (res.org || res.alt) + '.webp';
+		},
+		ispng() {
+			const _ = this.im; // update field on iconset
+			return this.iconfmt.png && !(this.file.ntmb === 1 && this.tm);
+		},
+		iconpng() {
+			const _ = this.im; // update field on iconset
+			const res = geticonpath(this.file);
+			return (res.org || res.alt) + '.png';
+		},
+		isthumb() {
+			const _ = this.im; // update field on iconset
+			return this.file.ntmb === 1 && this.tm;
+		},
+		iconthumb() {
+			return `/id${this.$root.aid}/thumb/${this.file.puid}`;
+		}
+	},
+	methods: {
+		onselect() {
+			eventHub.$emit('select', this.file);
+		},
+		onopen() {
+			eventHub.$emit('open', this.file);
+		},
+		_iconset(im) {
+			this.im++;
+		},
+		_thumbmode(tm) {
+			this.tm = tm;
+		}
+	},
+	created() {
+		this.iconfmt = resmodel.iconfmt;
+		this.tm = thumbmode;
+		eventHub.$on('iconset', this._iconset);
+		eventHub.$on('thumbmode', this._thumbmode);
+	},
+	beforeDestroy() {
+		eventHub.$off('iconset', this._iconset);
+		eventHub.$off('thumbmode', this._thumbmode);
+	}
+});
+
 Vue.component('file-icon-tag', {
 	template: '#file-icon-tpl',
 	props: ["file", "size"],
 	data: function () {
 		return {
-			im: imempty,
+			iconfmt: {},
+			im: 0,
 			tm: true
 		};
 	},
@@ -329,37 +324,15 @@ Vue.component('file-icon-tag', {
 		fmttitle() {
 			return filehint(this.file).join('\n');
 		},
-		fmtalt() {
-			return pathext(this.file.name);
-		},
-
 		label() {
+			const _ = this.im; // update field on iconset
 			if (this.file.ntmb === 1 && this.tm
-				|| !geticonpath(this.file, this.im, this.file.shared).org) {
+				|| !geticonpath(this.file).org) {
 				return this.file.shared
-					? this.im.shared.label
-					: this.im.private.label;
+					? iconmapping.shared.label
+					: iconmapping.private.label;
 			}
 		},
-		webpicon() {
-			if (this.file.ntmb === 1 && this.tm || !this.im.iconwebp) {
-				return '';
-			} else {
-				const res = geticonpath(this.file, this.im, this.file.shared);
-				return (res.org || res.alt) + '.webp';
-			}
-		},
-		pngicon() {
-			if (this.file.ntmb === 1 && this.tm) {
-				return `/id${this.$root.aid}/thumb/${this.file.puid}`;
-			} else if (this.im.iconpng) {
-				const res = geticonpath(this.file, this.im, this.file.shared);
-				return (res.org || res.alt) + '.png';
-			} else {
-				return '';
-			}
-		},
-
 		clsimgwdh() {
 			switch (this.size) {
 				case "smicon":
@@ -370,7 +343,6 @@ Vue.component('file-icon-tag', {
 					return "lgimgw";
 			}
 		},
-
 		clsimage() {
 			switch (this.size) {
 				case "smicon":
@@ -391,26 +363,9 @@ Vue.component('file-icon-tag', {
 		onselect() {
 			eventHub.$emit('select', this.file);
 		},
-
 		onopen() {
 			eventHub.$emit('open', this.file);
 		}
-	},
-	created() {
-		this.im = iconmapping;
-		this.tm = thumbmode;
-		this._plug = () => {
-			this.im = iconmapping;
-		};
-		this._thumb = () => {
-			this.tm = thumbmode;
-		};
-		iconev.on('plug', this._plug);
-		iconev.on('thumb', this._thumb);
-	},
-	beforeDestroy() {
-		iconev.off('plug', this._plug);
-		iconev.off('thumb', this._thumb);
 	}
 });
 
@@ -419,7 +374,7 @@ Vue.component('img-icon-tag', {
 	props: ["file"],
 	data: function () {
 		return {
-			im: imempty,
+			im: 0,
 			tm: true
 		};
 	},
@@ -427,34 +382,13 @@ Vue.component('img-icon-tag', {
 		fmttitle() {
 			return filehint(this.file).join('\n');
 		},
-		fmtalt() {
-			return pathext(this.file.name);
-		},
-
 		label() {
+			const _ = this.im; // update field on iconset
 			if (this.file.ntmb === 1 && this.tm
-				|| !geticonpath(this.file, this.im, this.file.shared).org) {
+				|| !geticonpath(this.file).org) {
 				return this.file.shared
-					? this.im.shared.label
-					: this.im.private.label;
-			}
-		},
-		webpicon() {
-			if (this.file.ntmb === 1 && this.tm || !this.im.iconwebp) {
-				return '';
-			} else {
-				const res = geticonpath(this.file, this.im, this.file.shared);
-				return (res.org || res.alt) + '.webp';
-			}
-		},
-		pngicon() {
-			if (this.file.ntmb === 1 && this.tm) {
-				return `/id${this.$root.aid}/thumb/${this.file.puid}`;
-			} else if (this.im.iconpng) {
-				const res = geticonpath(this.file, this.im, this.file.shared);
-				return (res.org || res.alt) + '.png';
-			} else {
-				return '';
+					? iconmapping.shared.label
+					: iconmapping.private.label;
 			}
 		},
 
@@ -470,23 +404,24 @@ Vue.component('img-icon-tag', {
 
 		onopen() {
 			eventHub.$emit('open', this.file);
+		},
+
+		_iconset(im) {
+			this.im++;
+		},
+		_thumbmode(tm) {
+			this.tm = tm;
 		}
 	},
 	created() {
-		this.im = iconmapping;
+		this.iconfmt = resmodel.iconfmt;
 		this.tm = thumbmode;
-		this._plug = () => {
-			this.im = iconmapping;
-		};
-		this._thumb = () => {
-			this.tm = thumbmode;
-		};
-		iconev.on('plug', this._plug);
-		iconev.on('thumb', this._thumb);
+		eventHub.$on('iconset', this._iconset);
+		eventHub.$on('thumbmode', this._thumbmode);
 	},
 	beforeDestroy() {
-		iconev.off('plug', this._plug);
-		iconev.off('thumb', this._thumb);
+		eventHub.$off('iconset', this._iconset);
+		eventHub.$off('thumbmode', this._thumbmode);
 	}
 });
 
