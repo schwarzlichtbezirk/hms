@@ -339,7 +339,8 @@ type Pather interface {
 	Time() int64  // UNIX time in milliseconds
 	PUID() string // path unique ID encoded to hex-base32
 	NTmb() int    // -1 - can not make thumbnail; 0 - not cached; 1 - cached
-	SetNTmb(int)
+	MTmb() string // thumbnail MIME type
+	SetTmb(int, string)
 }
 
 // PathProp is any path base properties.
@@ -457,7 +458,7 @@ func (dk *DirKit) Setup(syspath string) {
 	dk.NameVal = PathBase(syspath)
 	dk.TypeVal = FTdir
 	dk.PUIDVal = pathcache.Cache(syspath)
-	dk.NTmbVal = TMBreject
+	dk.SetTmb(TMBreject, "")
 	if dp, ok := dircache.Get(dk.PUIDVal); ok {
 		dk.DirProp = dp
 	}
@@ -475,7 +476,7 @@ func (dk *DriveKit) Setup(syspath string) {
 	dk.NameVal = PathBase(syspath)
 	dk.TypeVal = FTdrv
 	dk.PUIDVal = pathcache.Cache(syspath)
-	dk.NTmbVal = TMBreject
+	dk.SetTmb(TMBreject, "")
 }
 
 // Scan drive to check its latency.
@@ -506,7 +507,7 @@ func (ck *CatKit) Setup(fpath string) {
 	ck.NameVal = fpath[pos+1 : len(fpath)-1]
 	ck.TypeVal = FTctgr
 	ck.PUIDVal = pathcache.Cache(fpath)
-	ck.NTmbVal = TMBreject
+	ck.SetTmb(TMBreject, "")
 	ck.CID = fpath[1:pos]
 }
 
@@ -586,10 +587,10 @@ func (tk *TagKit) Setup(syspath string, fi os.FileInfo) {
 	}
 	tk.PUIDVal = pathcache.Cache(syspath)
 	if md != nil {
-		tk.NTmbVal = TMBcached
+		tk.SetTmb(TMBcached, md.Mime)
 		thumbcache.Set(tk.PUIDVal, md)
 	} else {
-		tk.NTmbVal = TMBreject
+		tk.SetTmb(TMBreject, "")
 	}
 }
 

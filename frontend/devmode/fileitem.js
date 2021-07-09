@@ -282,6 +282,9 @@ Vue.component('icon-tag', {
 		},
 		iconthumb() {
 			return `/id${this.$root.aid}/thumb/${this.file.puid}`;
+		},
+		mimethumb() {
+			return this.file.mtmb;
 		}
 	},
 	methods: {

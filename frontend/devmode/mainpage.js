@@ -805,6 +805,7 @@ const app = new Vue({
 								for (const fp of this.filelist) {
 									if (fp.puid === tp.puid) {
 										Vue.set(fp, 'ntmb', tp.ntmb);
+										Vue.set(fp, 'mtmb', tp.mtmb);
 										// add gps-item
 										if (fp.latitude && fp.longitude && fp.ntmb === 1) {
 											gpslist.push(fp);

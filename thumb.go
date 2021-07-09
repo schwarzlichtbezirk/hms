@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 
+	"github.com/bluele/gcache"
 	"github.com/disintegration/gift"
 	_ "github.com/oov/psd"           // register PSD format
 	_ "github.com/spate/glimage/dds" // register DDS format
@@ -74,21 +75,32 @@ type MediaData struct {
 type TmbProp struct {
 	PUIDVal string `json:"puid,omitempty" yaml:"puid,omitempty"`
 	NTmbVal int    `json:"ntmb,omitempty" yaml:"ntmb,omitempty"`
+	MTmbVal string `json:"mtmb,omitempty" yaml:"mtmb,omitempty"`
 }
 
 // Setup generates PUID (path unique identifier) and updates cached state.
 func (tp *TmbProp) Setup(syspath string) {
 	tp.PUIDVal = pathcache.Cache(syspath)
-	tp.NTmbCached()
+	tp.UpdateTmb()
 }
 
-// NTmbCached updates cached state for this cache key.
-func (tp *TmbProp) NTmbCached() {
-	if thumbcache.Has(tp.PUIDVal) {
-		tp.NTmbVal = TMBcached
-	} else {
-		tp.NTmbVal = TMBnone
+// UpdateTmb updates cached state for this cache key.
+func (tp *TmbProp) UpdateTmb() {
+	var v, err = thumbcache.GetIFPresent(tp.PUIDVal)
+	if err == gcache.KeyNotFoundError {
+		tp.SetTmb(TMBnone, "")
+		return
 	}
+	if err != nil {
+		tp.SetTmb(TMBreject, "")
+		return
+	}
+	var md, ok = v.(*MediaData)
+	if !ok {
+		tp.SetTmb(TMBreject, "")
+		return
+	}
+	tp.SetTmb(TMBcached, md.Mime)
 }
 
 // PUID returns thumbnail key, it's full system path unique ID.
@@ -101,9 +113,15 @@ func (tp *TmbProp) NTmb() int {
 	return tp.NTmbVal
 }
 
-// SetNTmb updates thumbnail state to given value.
-func (tp *TmbProp) SetNTmb(v int) {
-	tp.NTmbVal = v
+// MTmb returns thumbnail MIME type, if thumbnail is present and NTmb is 1.
+func (tp *TmbProp) MTmb() string {
+	return tp.MTmbVal
+}
+
+// SetTmb updates thumbnail state to given value.
+func (tp *TmbProp) SetTmb(tmb int, mime string) {
+	tp.NTmbVal = tmb
+	tp.MTmbVal = mime
 }
 
 // FindTmb finds thumbnail in embedded file tags, or build it if it possible.
@@ -215,7 +233,7 @@ func tmbchkAPI(w http.ResponseWriter, r *http.Request) {
 	for _, tp := range arg.Tmbs {
 		if syspath, ok := pathcache.Path(tp.PUID()); ok {
 			if prop, err := propcache.Get(syspath); err == nil {
-				tp.NTmbVal = prop.(Pather).NTmb()
+				tp.SetTmb(prop.(Pather).NTmb(), prop.(Pather).MTmb())
 			}
 		}
 	}

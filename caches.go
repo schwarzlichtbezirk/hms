@@ -282,10 +282,10 @@ func initcaches() {
 
 			var md *MediaData
 			if md, err = FindTmb(prop, syspath); md != nil {
-				prop.SetNTmb(TMBcached)
+				prop.SetTmb(TMBcached, md.Mime)
 				ret = md
 			} else {
-				prop.SetNTmb(TMBreject)
+				prop.SetTmb(TMBreject, "")
 			}
 			return // ok
 		}).

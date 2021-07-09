@@ -152,10 +152,10 @@ func (ek *ExifKit) Setup(syspath string, fi os.FileInfo) {
 			var pic []byte
 			if pic, err = x.JpegThumbnail(); err == nil {
 				ek.PUIDVal = pathcache.Cache(syspath)
-				ek.NTmbVal = TMBcached
+				ek.SetTmb(TMBcached, "image/jpeg")
 				thumbcache.Set(ek.PUIDVal, &MediaData{
 					Data: pic,
-					Mime: "image/jpeg",
+					Mime: ek.MTmbVal,
 				})
 				return
 			}
