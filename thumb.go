@@ -221,8 +221,7 @@ func tmbchkAPI(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get arguments
-	if err = AjaxGetArg(r, &arg); err != nil {
-		WriteJSON(w, http.StatusBadRequest, err)
+	if err = AjaxGetArg(w, r, &arg); err != nil {
 		return
 	}
 	if len(arg.Tmbs) == 0 {
@@ -250,8 +249,7 @@ func tmbscnAPI(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get arguments
-	if err = AjaxGetArg(r, &arg); err != nil {
-		WriteJSON(w, http.StatusBadRequest, err)
+	if err = AjaxGetArg(w, r, &arg); err != nil {
 		return
 	}
 	if len(arg.PUIDs) == 0 {

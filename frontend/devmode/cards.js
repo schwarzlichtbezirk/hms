@@ -108,8 +108,8 @@ const closeFullscreen = () => {
 
 const makemarkericon = file => `
 <picture>
-	${resmodel.iconfmt.webp && file.ntmb !== 1 ? `<source srcset="${iconwebp(file)}" type="image/webp">` : ``}
-	${resmodel.iconfmt.png && file.ntmb !== 1 ? `<source srcset="${iconpng(file)}" type="image/png">` : ``}
+	${resmodel.packfmt.webp && file.ntmb !== 1 ? `<source srcset="${iconwebp(file)}" type="image/webp">` : ``}
+	${resmodel.packfmt.png && file.ntmb !== 1 ? `<source srcset="${iconpng(file)}" type="image/png">` : ``}
 	${file.ntmb === 1 ? `<source srcset="/id${app.aid}/thumb/${file.puid}" type="image/jpeg">` : ``}
 	<img class="position-absolute top-50 start-50 translate-middle w-100">
 </picture>
@@ -124,8 +124,8 @@ const makemarkerpopup = file => `
 	<div class="tab-content">
 		<div class="tab-pane active" id="pict">
 			<picture>
-				${resmodel.iconfmt.webp && file.ntmb !== 1 ? `<source srcset="${iconwebp(file)}" type="image/webp">` : ``}
-				${resmodel.iconfmt.png && file.ntmb !== 1 ? `<source srcset="${iconpng(file)}" type="image/png">` : ``}
+				${resmodel.packfmt.webp && file.ntmb !== 1 ? `<source srcset="${iconwebp(file)}" type="image/webp">` : ``}
+				${resmodel.packfmt.png && file.ntmb !== 1 ? `<source srcset="${iconpng(file)}" type="image/png">` : ``}
 				${file.ntmb === 1 ? `<source srcset="/id${app.aid}/thumb/${file.puid}" type="image/jpeg">` : ``}
 				<img class="rounded thumb" alt="${file.name}">
 			</picture>

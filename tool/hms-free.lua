@@ -24,8 +24,8 @@ wpkconf = {
 logrec = false
 logdir = false
 
--- icons format
-iconfmt = {
+-- icons formats provided in package
+packfmt = {
 	webp = true,
 	png = false,
 }

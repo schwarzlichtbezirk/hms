@@ -17,186 +17,186 @@ import (
 // Each error code have unique source code point,
 // so this error code at service reply exactly points to error place.
 const (
-	AECnull    = 0
-	AECbadbody = 1
-	AECnoreq   = 2
-	AECbadjson = 3
+	AECnull = iota
+	AECbadbody
+	AECnoreq
+	AECbadjson
 
 	// auth
 
-	AECnoauth     = 4
-	AECtokenless  = 5
-	AECtokenerror = 6
-	AECtokenbad   = 7
-	AECtokennoacc = 8
+	AECnoauth
+	AECtokenless
+	AECtokenerror
+	AECtokenbad
+	AECtokennoacc
 
 	// page
 
-	AECpageabsent = 10
-	AECfileabsent = 11
+	AECpageabsent
+	AECfileabsent
 
 	// file
 
-	AECfilebadaccid = 12
-	AECfilenoacc    = 13
-	AECfilehroot    = 14
-	AECfilehidden   = 15
-	AECfilenoprop   = 16
-	AECfilenofile   = 17
-	AECfileaccess   = 18
-	AECfileopen     = 19
+	AECfilebadaccid
+	AECfilenoacc
+	AECfilehroot
+	AECfilehidden
+	AECfilenoprop
+	AECfilenofile
+	AECfileaccess
+	AECfileopen
 
 	// media
 
-	AECmediabadmedia = 19
-	AECmediabadhd    = 19
-	AECmediabadaccid = 20
-	AECmedianoacc    = 21
-	AECmediaroot     = 21
-	AECmedianopath   = 22
-	AECmediahidden   = 23
-	AECmedianoprop   = 24
-	AECmedianofile   = 25
-	AECmediaaccess   = 26
-	AECmediahdgone   = 27
-	AECmediahdfail   = 27
-	AECmediahdnocnt  = 28
-	AECmediamedgone  = 29
-	AECmediamedfail  = 30
-	AECmediamednocnt = 29
-	AECmediafilegone = 31
-	AECmediafileopen = 31
+	AECmediabadmedia
+	AECmediabadhd
+	AECmediabadaccid
+	AECmedianoacc
+	AECmediaroot
+	AECmedianopath
+	AECmediahidden
+	AECmedianoprop
+	AECmedianofile
+	AECmediaaccess
+	AECmediahdgone
+	AECmediahdfail
+	AECmediahdnocnt
+	AECmediamedgone
+	AECmediamedfail
+	AECmediamednocnt
+	AECmediafilegone
+	AECmediafileopen
 
 	// thumb
 
-	AECthumbbadaccid = 31
-	AECthumbnoacc    = 32
-	AECthumbnopath   = 33
-	AECthumbhidden   = 34
-	AECthumbnoprop   = 35
-	AECthumbnofile   = 36
-	AECthumbaccess   = 37
-	AECthumbabsent   = 38
-	AECthumbbadcnt   = 39
+	AECthumbbadaccid
+	AECthumbnoacc
+	AECthumbnopath
+	AECthumbhidden
+	AECthumbnoprop
+	AECthumbnofile
+	AECthumbaccess
+	AECthumbabsent
+	AECthumbbadcnt
 
 	// pubkey
 
-	AECpubkeyrand = 40
+	AECpubkeyrand
 
 	// signin
 
-	AECsigninnodata = 41
-	AECsigninnoacc  = 42
-	AECsigninpkey   = 43
-	AECsignindeny   = 44
+	AECsigninnodata
+	AECsigninnoacc
+	AECsigninpkey
+	AECsignindeny
 
 	// refrsh
 
-	AECrefrshnodata = 45
-	AECrefrshparse  = 46
+	AECrefrshnodata
+	AECrefrshparse
 
 	// reload
 
-	AECreloadload = 50
-	AECreloadtmpl = 51
+	AECreloadload
+	AECreloadtmpl
 
 	// getlog
 
-	AECgetlogbadnum = 52
+	AECgetlogbadnum
 
 	// ishome
 
-	AECishomenoacc = 53
+	AECishomenoacc
 
 	// ctgr
 
-	AECctgrnodata = 60
-	AECctgrnopath = 61
-	AECctgrnocid  = 62
-	AECctgrnoacc  = 63
-	AECctgrnoshr  = 64
-	AECctgrnotcat = 65
+	AECctgrnodata
+	AECctgrnopath
+	AECctgrnocid
+	AECctgrnoacc
+	AECctgrnoshr
+	AECctgrnotcat
 
 	// folder
 
-	AECfoldernodata = 70
-	AECfoldernoacc  = 71
-	AECfolderroot   = 72
-	AECfoldernopath = 73
-	AECfolderhidden = 74
-	AECfolderaccess = 75
-	AECfolderabsent = 76
-	AECfolderfail   = 77
+	AECfoldernodata
+	AECfoldernoacc
+	AECfolderroot
+	AECfoldernopath
+	AECfolderhidden
+	AECfolderaccess
+	AECfolderabsent
+	AECfolderfail
 
 	// playlist
 
-	AECplaylistnodata = 80
-	AECplaylistnoacc  = 81
-	AECplaylistnopath = 82
-	AECplaylisthidden = 83
-	AECplaylistaccess = 84
-	AECplaylistopen   = 85
-	AECplaylistm3u    = 86
-	AECplaylistwpl    = 87
-	AECplaylistpls    = 88
-	AECplaylistasx    = 89
-	AECplaylistxspf   = 90
-	AECplaylistformat = 91
+	AECplaylistnodata
+	AECplaylistnoacc
+	AECplaylistnopath
+	AECplaylisthidden
+	AECplaylistaccess
+	AECplaylistopen
+	AECplaylistm3u
+	AECplaylistwpl
+	AECplaylistpls
+	AECplaylistasx
+	AECplaylistxspf
+	AECplaylistformat
 
 	// ispath
 
-	AECispathnoacc  = 92
-	AECispathdeny   = 93
-	AECispathroot   = 94
-	AECispathhidden = 95
+	AECispathnoacc
+	AECispathdeny
+	AECispathroot
+	AECispathhidden
 
 	// tmb/chk
 
-	AECtmbchknodata = 96
+	AECtmbchknodata
 
 	// tmb/scn
 
-	AECtmbscnnodata = 97
-	AECtmbscnnoacc  = 98
+	AECtmbscnnodata
+	AECtmbscnnoacc
 
 	// share/lst
 
-	AECshrlstnoacc = 100
-	AECshrlstnoshr = 101
+	AECshrlstnoacc
+	AECshrlstnoshr
 
 	// share/add
 
-	AECshraddnodata = 102
-	AECshraddnoacc  = 103
-	AECshradddeny   = 104
-	AECshraddnopath = 105
-	AECshraddaccess = 106
+	AECshraddnodata
+	AECshraddnoacc
+	AECshradddeny
+	AECshraddnopath
+	AECshraddaccess
 
 	// share/del
 
-	AECshrdelnodata = 107
-	AECshrdelnoacc  = 108
-	AECshrdeldeny   = 109
+	AECshrdelnodata
+	AECshrdelnoacc
+	AECshrdeldeny
 
 	// drive/lst
 
-	AECdrvlstnoacc = 110
-	AECdrvlstnoshr = 111
+	AECdrvlstnoacc
+	AECdrvlstnoshr
 
 	// drive/add
 
-	AECdrvaddnodata = 112
-	AECdrvaddnoacc  = 113
-	AECdrvadddeny   = 114
-	AECdrvaddroot   = 115
-	AECdrvaddfile   = 116
+	AECdrvaddnodata
+	AECdrvaddnoacc
+	AECdrvadddeny
+	AECdrvaddroot
+	AECdrvaddfile
 
 	// drive/del
 
-	AECdrvdelnodata = 117
-	AECdrvdelnoacc  = 118
-	AECdrvdeldeny   = 119
-	AECdrvdelnopath = 120
+	AECdrvdelnodata
+	AECdrvdelnoacc
+	AECdrvdeldeny
+	AECdrvdelnopath
 )
 
 // HTTP error messages
@@ -682,8 +682,7 @@ func ishomeAPI(w http.ResponseWriter, r *http.Request) {
 	var ret bool
 
 	// get arguments
-	if err = AjaxGetArg(r, &arg); err != nil {
-		WriteJSON(w, http.StatusBadRequest, err)
+	if err = AjaxGetArg(w, r, &arg); err != nil {
 		return
 	}
 
@@ -729,8 +728,7 @@ func ctgrAPI(w http.ResponseWriter, r *http.Request) {
 	var ret = []Pather{}
 
 	// get arguments
-	if err = AjaxGetArg(r, &arg); err != nil {
-		WriteJSON(w, http.StatusBadRequest, err)
+	if err = AjaxGetArg(w, r, &arg); err != nil {
 		return
 	}
 
@@ -831,8 +829,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get arguments
-	if err = AjaxGetArg(r, &arg); err != nil {
-		WriteJSON(w, http.StatusBadRequest, err)
+	if err = AjaxGetArg(w, r, &arg); err != nil {
 		return
 	}
 	if len(arg.PUID) == 0 && len(arg.Path) == 0 {
@@ -914,8 +911,7 @@ func playlistAPI(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get arguments
-	if err = AjaxGetArg(r, &arg); err != nil {
-		WriteJSON(w, http.StatusBadRequest, err)
+	if err = AjaxGetArg(w, r, &arg); err != nil {
 		return
 	}
 	if len(arg.PUID) == 0 {
@@ -1025,8 +1021,7 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	}
 
 	// get arguments
-	if err = AjaxGetArg(r, &arg); err != nil {
-		WriteJSON(w, http.StatusBadRequest, err)
+	if err = AjaxGetArg(w, r, &arg); err != nil {
 		return
 	}
 
@@ -1069,8 +1064,7 @@ func shrlstAPI(w http.ResponseWriter, r *http.Request) {
 	var ret = []Pather{}
 
 	// get arguments
-	if err = AjaxGetArg(r, &arg); err != nil {
-		WriteJSON(w, http.StatusBadRequest, err)
+	if err = AjaxGetArg(w, r, &arg); err != nil {
 		return
 	}
 
@@ -1103,8 +1097,7 @@ func shraddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	}
 
 	// get arguments
-	if err = AjaxGetArg(r, &arg); err != nil {
-		WriteJSON(w, http.StatusBadRequest, err)
+	if err = AjaxGetArg(w, r, &arg); err != nil {
 		return
 	}
 	if len(arg.PUID) == 0 {
@@ -1147,8 +1140,7 @@ func shrdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var ok bool
 
 	// get arguments
-	if err = AjaxGetArg(r, &arg); err != nil {
-		WriteJSON(w, http.StatusBadRequest, err)
+	if err = AjaxGetArg(w, r, &arg); err != nil {
 		return
 	}
 	if len(arg.PUID) == 0 {
@@ -1182,8 +1174,7 @@ func drvlstAPI(w http.ResponseWriter, r *http.Request) {
 	var ret []Pather
 
 	// get arguments
-	if err = AjaxGetArg(r, &arg); err != nil {
-		WriteJSON(w, http.StatusBadRequest, err)
+	if err = AjaxGetArg(w, r, &arg); err != nil {
 		return
 	}
 
@@ -1217,8 +1208,7 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	}
 
 	// get arguments
-	if err = AjaxGetArg(r, &arg); err != nil {
-		WriteJSON(w, http.StatusBadRequest, err)
+	if err = AjaxGetArg(w, r, &arg); err != nil {
 		return
 	}
 	if len(arg.Path) == 0 {
@@ -1270,8 +1260,7 @@ func drvdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	}
 
 	// get arguments
-	if err = AjaxGetArg(r, &arg); err != nil {
-		WriteJSON(w, http.StatusBadRequest, err)
+	if err = AjaxGetArg(w, r, &arg); err != nil {
 		return
 	}
 	if len(arg.PUID) == 0 {

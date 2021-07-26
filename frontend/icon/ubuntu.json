@@ -138,5 +138,17 @@
 		},
 		"grp": {},
 		"ext": {}
-	}
+	},
+	"iconfmt": [
+		{
+			"name": "webp",
+			"ext": ".webp",
+			"mime": "image/webp"
+		},
+		{
+			"name": "png",
+			"ext": ".png",
+			"mime": "image/png"
+		}
+	]
 }

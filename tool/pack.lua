@@ -28,8 +28,8 @@ wpkconf.skinset = wpkconf.skinset or fullskinset
 wpkconf.iconset = wpkconf.iconset or fulliconset
 wpkconf.defskinid = wpkconf.defskinid or "neon"
 wpkconf.deficonid = wpkconf.deficonid or "junior"
--- correct icons format
-iconfmt = iconfmt or {
+-- correct icons format provided in package
+packfmt = packfmt or {
 	webp = true,
 	png = true,
 }
@@ -103,8 +103,8 @@ local function authput(kpath, fpath)
 	if logrec then logfile(kpath) end
 end
 local function iconput(kpath, fpath)
-	if string.sub(kpath, -5) == ".webp" and not iconfmt.webp then return end
-	if string.sub(kpath, -4) == ".png" and not iconfmt.png then return end
+	if string.sub(kpath, -5) == ".webp" and not packfmt.webp then return end
+	if string.sub(kpath, -4) == ".png" and not packfmt.png then return end
 	pkg:putfile(kpath, fpath)
 	if logrec then logfile(kpath) end
 end
@@ -185,12 +185,12 @@ do
 	content = string.gsub(content, "\"defskinid\": \"[%w%-]+\"", "\"defskinid\": \""..wpkconf.defskinid.."\"")
 	-- replace deficonid
 	content = string.gsub(content, "\"deficonid\": \"[%w%-]+\"", "\"deficonid\": \""..wpkconf.deficonid.."\"")
-	-- replace iconfmt.webp
-	if not iconfmt.webp then
+	-- replace packfmt.webp
+	if not packfmt.webp then
 		content = string.gsub(content, "\"webp\": %w+", "\"webp\": false")
 	end
-	-- replace iconfmt.png
-	if not iconfmt.png then
+	-- replace packfmt.png
+	if not packfmt.png then
 		content = string.gsub(content, "\"png\": %w+", "\"png\": false")
 	end
 	content = string.gsub(content, "%[,", "[")

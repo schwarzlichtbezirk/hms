@@ -168,15 +168,18 @@ func MakeServerLabel(label, version string) {
 }
 
 // AjaxGetArg fetch and unmarshal request argument.
-func AjaxGetArg(r *http.Request, arg interface{}) error {
+func AjaxGetArg(w http.ResponseWriter, r *http.Request, arg interface{}) (err error) {
 	if jb, _ := io.ReadAll(r.Body); len(jb) > 0 {
-		if err := json.Unmarshal(jb, arg); err != nil {
-			return &ErrAjax{err, AECbadjson}
+		if err = json.Unmarshal(jb, arg); err != nil {
+			WriteError400(w, err, AECbadjson)
+			return
 		}
 	} else {
-		return &ErrAjax{ErrNoJSON, AECnoreq}
+		err = ErrNoJSON
+		WriteError400(w, err, AECnoreq)
+		return
 	}
-	return nil
+	return
 }
 
 // WriteStdHeader setup common response headers.

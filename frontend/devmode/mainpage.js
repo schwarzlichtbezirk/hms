@@ -1,6 +1,6 @@
 ﻿"use strict";
 
-let resmodel = { skinlist: [], iconlist: [], iconfmt: {} };
+let resmodel = { skinlist: [], iconlist: [], packfmt: {} };
 let iconmapping = {
 	private: {
 		blank: "",
@@ -19,7 +19,8 @@ let iconmapping = {
 		folder: {},
 		grp: {},
 		ext: {}
-	}
+	},
+	iconfmt: []
 };
 let thumbmode = true;
 

@@ -1,7 +1,8 @@
 
 <picture>
-	<source v-if="iswebp" v-bind:srcset="iconwebp" type="image/webp">
-	<source v-if="ispng" v-bind:srcset="iconpng" type="image/png">
-	<source v-if="isthumb" v-bind:srcset="iconthumb" v-bind:type="mimethumb">
+	<template v-for="fmt in iconfmt">
+		<source v-if="issrc(fmt)" v-bind:srcset="iconsrc(fmt)" v-bind:type="fmt.mime">
+	</template>
+	<source v-if="isthumb" v-bind:srcset="iconthumb" v-bind:type="file.mtmb">
 	<img v-bind:class="clsimg" class="centerimg" v-bind:alt="fmtalt">
 </picture>

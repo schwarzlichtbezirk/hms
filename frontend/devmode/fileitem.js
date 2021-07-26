@@ -249,8 +249,8 @@ Vue.component('icon-tag', {
 	props: ["file", "clsimg"],
 	data: function () {
 		return {
-			iconfmt: {},
-			im: 0,
+			packfmt: {},
+			iconfmt: [],
 			tm: true
 		};
 	},
@@ -258,36 +258,22 @@ Vue.component('icon-tag', {
 		fmtalt() {
 			return pathext(this.file.name);
 		},
-		iswebp() {
-			const _ = this.im; // update field on iconset
-			return this.iconfmt.webp && !(this.file.ntmb === 1 && this.tm);
-		},
-		iconwebp() {
-			const _ = this.im; // update field on iconset
-			const res = geticonpath(this.file);
-			return (res.org || res.alt) + '.webp';
-		},
-		ispng() {
-			const _ = this.im; // update field on iconset
-			return this.iconfmt.png && !(this.file.ntmb === 1 && this.tm);
-		},
-		iconpng() {
-			const _ = this.im; // update field on iconset
-			const res = geticonpath(this.file);
-			return (res.org || res.alt) + '.png';
-		},
 		isthumb() {
-			const _ = this.im; // update field on iconset
 			return this.file.ntmb === 1 && this.tm;
 		},
 		iconthumb() {
 			return `/id${this.$root.aid}/thumb/${this.file.puid}`;
-		},
-		mimethumb() {
-			return this.file.mtmb;
 		}
 	},
 	methods: {
+		issrc(fmt) {
+			return this.packfmt[fmt.name] && !(this.file.ntmb === 1 && this.tm);
+		},
+		iconsrc(fmt) {
+			const res = geticonpath(this.file);
+			return (res.org || res.alt) + fmt.ext;
+		},
+
 		onselect() {
 			eventHub.$emit('select', this.file);
 		},
@@ -295,14 +281,15 @@ Vue.component('icon-tag', {
 			eventHub.$emit('open', this.file);
 		},
 		_iconset(im) {
-			this.im++;
+			this.iconfmt = im.iconfmt;
 		},
 		_thumbmode(tm) {
 			this.tm = tm;
 		}
 	},
 	created() {
-		this.iconfmt = resmodel.iconfmt;
+		this.packfmt = resmodel.packfmt;
+		this.iconfmt = iconmapping.iconfmt;
 		this.tm = thumbmode;
 		eventHub.$on('iconset', this._iconset);
 		eventHub.$on('thumbmode', this._thumbmode);
@@ -318,7 +305,7 @@ Vue.component('file-icon-tag', {
 	props: ["file", "size"],
 	data: function () {
 		return {
-			iconfmt: {},
+			packfmt: {},
 			im: 0,
 			tm: true
 		};
@@ -417,7 +404,7 @@ Vue.component('img-icon-tag', {
 		}
 	},
 	created() {
-		this.iconfmt = resmodel.iconfmt;
+		this.packfmt = resmodel.packfmt;
 		this.tm = thumbmode;
 		eventHub.$on('iconset', this._iconset);
 		eventHub.$on('thumbmode', this._thumbmode);

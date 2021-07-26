@@ -100,7 +100,7 @@
 	],
 	"defskinid": "neon",
 	"deficonid": "junior",
-	"iconfmt": {
+	"packfmt": {
 		"webp": true,
 		"png": true
 	}

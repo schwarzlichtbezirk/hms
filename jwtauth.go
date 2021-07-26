@@ -193,8 +193,7 @@ func signinAPI(w http.ResponseWriter, r *http.Request) {
 	var res Tokens
 
 	// get arguments
-	if err = AjaxGetArg(r, &arg); err != nil {
-		WriteJSON(w, http.StatusBadRequest, err)
+	if err = AjaxGetArg(w, r, &arg); err != nil {
 		return
 	}
 	if arg.Name == "" || bytes.Equal(arg.PubK[:], zero32[:]) || bytes.Equal(arg.Hash[:], zero32[:]) {
@@ -232,8 +231,7 @@ func refrshAPI(w http.ResponseWriter, r *http.Request) {
 	var res Tokens
 
 	// get arguments
-	if err = AjaxGetArg(r, &arg); err != nil {
-		WriteJSON(w, http.StatusBadRequest, err)
+	if err = AjaxGetArg(w, r, &arg); err != nil {
 		return
 	}
 	if len(arg.Refrsh) == 0 {
