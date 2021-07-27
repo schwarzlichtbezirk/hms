@@ -1,6 +1,6 @@
 ﻿"use strict";
 
-let resmodel = { skinlist: [], iconlist: [], packfmt: {} };
+let resmodel = { skinlist: [], iconlist: [] };
 let iconmapping = {
 	private: {
 		blank: "",

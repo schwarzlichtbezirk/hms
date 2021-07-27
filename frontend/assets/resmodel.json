@@ -99,9 +99,5 @@
 		}
 	],
 	"defskinid": "neon",
-	"deficonid": "junior",
-	"packfmt": {
-		"webp": true,
-		"png": true
-	}
+	"deficonid": "junior"
 }

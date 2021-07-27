@@ -15,10 +15,31 @@ local fullskinset = {
 }
 -- full list of icons identifiers
 local fulliconset = {
-	"junior", "oxygen", "tulliana",
-	"ubuntu", "chakram",
-	"senary", "senary2", "delta",
-	"whistlepuff", "xrabbit",
+	junior = {"webp", "png"},
+	oxygen = {"webp", "png"},
+	tulliana = {"webp", "png"},
+	ubuntu = {"webp", "png"},
+	chakram = {"webp", "png"},
+	senary = {"webp", "png"},
+	senary2 = {"webp", "png"},
+	delta = {"webp", "png"},
+	whistlepuff = {"webp", "png"},
+	xrabbit = {"webp", "png"},
+}
+-- iconfmt json bodies
+local iconfmtjson = {
+	webp = [[
+
+		{
+			"ext": ".webp",
+			"mime": "image/webp"
+		}]],
+	png = [[
+
+		{
+			"ext": ".png",
+			"mime": "image/png"
+		}]],
 }
 
 -- let's set package configuration to default if it was not provided
@@ -28,11 +49,6 @@ wpkconf.skinset = wpkconf.skinset or fullskinset
 wpkconf.iconset = wpkconf.iconset or fulliconset
 wpkconf.defskinid = wpkconf.defskinid or "neon"
 wpkconf.deficonid = wpkconf.deficonid or "junior"
--- correct icons format provided in package
-packfmt = packfmt or {
-	webp = true,
-	png = true,
-}
 
 -- write to log formatted string
 local function logfmt(...)
@@ -102,12 +118,6 @@ local function authput(kpath, fpath)
 	pkg:settag(kpath, "author", "schwarzlichtbezirk")
 	if logrec then logfile(kpath) end
 end
-local function iconput(kpath, fpath)
-	if string.sub(kpath, -5) == ".webp" and not packfmt.webp then return end
-	if string.sub(kpath, -4) == ".png" and not packfmt.png then return end
-	pkg:putfile(kpath, fpath)
-	if logrec then logfile(kpath) end
-end
 local function packdir(prefix, dir, putfunc)
 	for i, name in ipairs(path.enum(dir)) do
 		local kpath = path.join(prefix, name)
@@ -142,11 +152,39 @@ for i, id in ipairs(wpkconf.skinset) do
 	end
 end
 -- put icons
-for i, id in ipairs(wpkconf.iconset) do
+for id, fmtlst in pairs(wpkconf.iconset) do
+	local function iconput(kpath, fpath)
+		local is = false
+		for i, name in ipairs(fmtlst) do
+			if string.lower(string.sub(kpath, -string.len(name)-1)) == "."..name then
+				is = true
+				break
+			end
+		end
+		if is then
+			pkg:putfile(kpath, fpath)
+			if logrec then logfile(kpath) end
+		end
+	end
+	-- put icons with specified formats
 	local kpath = "icon/"..id
 	packdir(kpath, rootdir..kpath, iconput)
+	-- read iconset json file
 	local kpath = "icon/"..id..".json"
-	authput(kpath, rootdir..kpath)
+	local f = assert(io.open(rootdir..kpath, "rb"))
+	local content = f:read("*all")
+	f:close()
+	-- make iconset content
+	local fmts = {}
+	for i, name in ipairs(fmtlst) do
+		table.insert(fmts, iconfmtjson[name])
+	end
+	-- modify file content to put available formats
+	content = string.gsub(content, '\t"iconfmt": %[%]', '\t"iconfmt": ['..table.concat(fmts, ",")..'\n\t]')
+	-- write modified iconset json file to package
+	pkg:putdata(kpath, content)
+	pkg:settag(kpath, "author", "schwarzlichtbezirk")
+	if logrec then logfile(kpath) end
 end
 -- put sources
 for i, fpath in ipairs{path.glob(rootdir.."../?*.?*")} do
@@ -161,9 +199,10 @@ do
 	local f = assert(io.open(rootdir.."assets/resmodel.json", "rb"))
 	local content = f:read("*all")
 	f:close()
-	local function cut(id1, list)
+	-- cut extra items from skinlist
+	for i, id1 in ipairs(fullskinset) do
 		local found = false
-		for i, id2 in ipairs(list) do
+		for i, id2 in ipairs(wpkconf.skinset) do
 			if id1 == id2 then
 				found = true
 				break
@@ -173,27 +212,26 @@ do
 			content = string.gsub(content, ",?%s*{%s-\"id\": \""..string.gsub(id1, "%-", "%%-").."\".-}", "")
 		end
 	end
-	-- cut extra items from skinlist
-	for i, id in pairs(fullskinset) do
-		cut(id, wpkconf.skinset)
-	end
 	-- cut extra items from iconlist
-	for i, id in ipairs(fulliconset) do
-		cut(id, wpkconf.iconset)
+	for id1, fmtlst in pairs(fulliconset) do
+		local found = false
+		for id2 in pairs(wpkconf.iconset) do
+			if id1 == id2 then
+				found = true
+				break
+			end
+		end
+		if not found then
+			content = string.gsub(content, ",?%s*{%s-\"id\": \""..string.gsub(id1, "%-", "%%-").."\".-}", "")
+		end
 	end
 	-- replace defskinid
 	content = string.gsub(content, "\"defskinid\": \"[%w%-]+\"", "\"defskinid\": \""..wpkconf.defskinid.."\"")
 	-- replace deficonid
 	content = string.gsub(content, "\"deficonid\": \"[%w%-]+\"", "\"deficonid\": \""..wpkconf.deficonid.."\"")
-	-- replace packfmt.webp
-	if not packfmt.webp then
-		content = string.gsub(content, "\"webp\": %w+", "\"webp\": false")
-	end
-	-- replace packfmt.png
-	if not packfmt.png then
-		content = string.gsub(content, "\"png\": %w+", "\"png\": false")
-	end
+	-- correct arrays
 	content = string.gsub(content, "%[,", "[")
+	-- put modified file
 	pkg:putdata("assets/resmodel.json", content)
 end
 

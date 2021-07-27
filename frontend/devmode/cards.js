@@ -106,16 +106,39 @@ const closeFullscreen = () => {
 
 // leaflet html addons
 
-const makemarkericon = file => `
-<picture>
-	${resmodel.packfmt.webp && file.ntmb !== 1 ? `<source srcset="${iconwebp(file)}" type="image/webp">` : ``}
-	${resmodel.packfmt.png && file.ntmb !== 1 ? `<source srcset="${iconpng(file)}" type="image/png">` : ``}
-	${file.ntmb === 1 ? `<source srcset="/id${app.aid}/thumb/${file.puid}" type="image/jpeg">` : ``}
-	<img class="position-absolute top-50 start-50 translate-middle w-100">
-</picture>
-`;
+const makemarkericon = file => {
+	const res = geticonpath(file);
+	const icp = res.org || res.alt;
+	let src = ""
+	if (file.ntmb === 1 && thumbmode) {
+		src = `<source srcset="/id${app.aid}/thumb/${file.puid}" type="${file.mtmb}">`
+	} else {
+		for (fmt of iconmapping.iconfmt) {
+			src += `<source srcset="${icp + fmt.ext}" type="${fmt.mime}">`
+		}
+	}
+	return `
+<div class="position-relative">
+	<picture>
+		${src}
+		<img class="position-absolute top-50 start-50 translate-middle w-100">
+	</picture>
+</div>
+`
+};
 
-const makemarkerpopup = file => `
+const makemarkerpopup = file => {
+	const res = geticonpath(file);
+	const icp = res.org || res.alt;
+	let src = ""
+	if (file.ntmb === 1 && thumbmode) {
+		src = `<source srcset="/id${app.aid}/thumb/${file.puid}" type="${file.mtmb}">`
+	} else {
+		for (fmt of iconmapping.iconfmt) {
+			src += `<source srcset="${icp + fmt.ext}" type="${fmt.mime}">`
+		}
+	}
+	return `
 <div class="photoinfo">
 	<ul class="nav nav-tabs" role="tablist">
 		<li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#pict">Thumbnail</a></li>
@@ -124,9 +147,7 @@ const makemarkerpopup = file => `
 	<div class="tab-content">
 		<div class="tab-pane active" id="pict">
 			<picture>
-				${resmodel.packfmt.webp && file.ntmb !== 1 ? `<source srcset="${iconwebp(file)}" type="image/webp">` : ``}
-				${resmodel.packfmt.png && file.ntmb !== 1 ? `<source srcset="${iconpng(file)}" type="image/png">` : ``}
-				${file.ntmb === 1 ? `<source srcset="/id${app.aid}/thumb/${file.puid}" type="image/jpeg">` : ``}
+				${src}
 				<img class="rounded thumb" alt="${file.name}">
 			</picture>
 			<div class="d-flex flex-wrap latlng">
@@ -140,7 +161,8 @@ const makemarkerpopup = file => `
 		</div>
 	</div>
 </div>
-`;
+`
+};
 
 Vue.component('dir-card-tag', {
 	template: '#dir-card-tpl',

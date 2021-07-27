@@ -313,10 +313,6 @@ a, .btn-link {
 
 /* leaflet photo thumbnail marker */
 
-.photomarker {
-	position: relative;
-}
-
 .photomarker img {
 	border: 3px solid MediumPurple;
 	border-radius: 0.25rem;

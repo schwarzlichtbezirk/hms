@@ -1,8 +1,12 @@
 
 <picture>
-	<template v-for="fmt in iconfmt">
-		<source v-if="issrc(fmt)" v-bind:srcset="iconsrc(fmt)" v-bind:type="fmt.mime">
+	<template v-if="isthumb">
+		<source v-bind:srcset="iconthumb" v-bind:type="file.mtmb">
 	</template>
-	<source v-if="isthumb" v-bind:srcset="iconthumb" v-bind:type="file.mtmb">
+	<template v-else>
+		<template v-for="fmt in iconfmt">
+			<source v-bind:srcset="iconsrc+fmt.ext" v-bind:type="fmt.mime">
+		</template>
+	</template>
 	<img v-bind:class="clsimg" class="centerimg" v-bind:alt="fmtalt">
 </picture>

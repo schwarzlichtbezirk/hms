@@ -14,10 +14,4 @@ wpkconf = {
 logrec = false
 logdir = false
 
--- icons formats provided in package
-packfmt = {
-	webp = true,
-	png = false,
-}
-
 dofile(path.join(scrdir, "pack.lua"))

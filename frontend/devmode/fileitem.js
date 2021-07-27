@@ -249,7 +249,6 @@ Vue.component('icon-tag', {
 	props: ["file", "clsimg"],
 	data: function () {
 		return {
-			packfmt: {},
 			iconfmt: [],
 			tm: true
 		};
@@ -261,19 +260,15 @@ Vue.component('icon-tag', {
 		isthumb() {
 			return this.file.ntmb === 1 && this.tm;
 		},
+		iconsrc() {
+			const res = geticonpath(this.file);
+			return res.org || res.alt;
+		},
 		iconthumb() {
 			return `/id${this.$root.aid}/thumb/${this.file.puid}`;
 		}
 	},
 	methods: {
-		issrc(fmt) {
-			return this.packfmt[fmt.name] && !(this.file.ntmb === 1 && this.tm);
-		},
-		iconsrc(fmt) {
-			const res = geticonpath(this.file);
-			return (res.org || res.alt) + fmt.ext;
-		},
-
 		onselect() {
 			eventHub.$emit('select', this.file);
 		},
@@ -288,7 +283,6 @@ Vue.component('icon-tag', {
 		}
 	},
 	created() {
-		this.packfmt = resmodel.packfmt;
 		this.iconfmt = iconmapping.iconfmt;
 		this.tm = thumbmode;
 		eventHub.$on('iconset', this._iconset);
@@ -305,8 +299,7 @@ Vue.component('file-icon-tag', {
 	props: ["file", "size"],
 	data: function () {
 		return {
-			packfmt: {},
-			im: 0,
+			iconfmt: [],
 			tm: true
 		};
 	},
@@ -315,7 +308,7 @@ Vue.component('file-icon-tag', {
 			return filehint(this.file).join('\n');
 		},
 		label() {
-			const _ = this.im; // update field on iconset
+			const _ = this.iconfmt; // update field on iconset
 			if (this.file.ntmb === 1 && this.tm
 				|| !geticonpath(this.file).org) {
 				return this.file.shared
@@ -355,7 +348,23 @@ Vue.component('file-icon-tag', {
 		},
 		onopen() {
 			eventHub.$emit('open', this.file);
+		},
+		_iconset(im) {
+			this.iconfmt = im.iconfmt;
+		},
+		_thumbmode(tm) {
+			this.tm = tm;
 		}
+	},
+	created() {
+		this.iconfmt = iconmapping.iconfmt;
+		this.tm = thumbmode;
+		eventHub.$on('iconset', this._iconset);
+		eventHub.$on('thumbmode', this._thumbmode);
+	},
+	beforeDestroy() {
+		eventHub.$off('iconset', this._iconset);
+		eventHub.$off('thumbmode', this._thumbmode);
 	}
 });
 
@@ -364,7 +373,7 @@ Vue.component('img-icon-tag', {
 	props: ["file"],
 	data: function () {
 		return {
-			im: 0,
+			iconfmt: [],
 			tm: true
 		};
 	},
@@ -373,7 +382,7 @@ Vue.component('img-icon-tag', {
 			return filehint(this.file).join('\n');
 		},
 		label() {
-			const _ = this.im; // update field on iconset
+			const _ = this.iconfmt; // update field on iconset
 			if (this.file.ntmb === 1 && this.tm
 				|| !geticonpath(this.file).org) {
 				return this.file.shared
@@ -395,16 +404,15 @@ Vue.component('img-icon-tag', {
 		onopen() {
 			eventHub.$emit('open', this.file);
 		},
-
 		_iconset(im) {
-			this.im++;
+			this.iconfmt = im.iconfmt;
 		},
 		_thumbmode(tm) {
 			this.tm = tm;
 		}
 	},
 	created() {
-		this.packfmt = resmodel.packfmt;
+		this.iconfmt = iconmapping.iconfmt;
 		this.tm = thumbmode;
 		eventHub.$on('iconset', this._iconset);
 		eventHub.$on('thumbmode', this._thumbmode);

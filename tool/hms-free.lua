@@ -7,8 +7,13 @@ wpkconf = {
 	label = "hms-free",
 	-- list of skins IDs, see 'id' tags of 'skinlist' in 'resmodel.json' file
 	skinset = {
-		"daylight", "blue", "dark", "neon",
-		"cup-of-coffee", "coffee-beans", "old-monitor",
+		daylight = {"webp"},
+		blue = {"webp"},
+		dark = {"webp"},
+		neon = {"webp"},
+		cup-of-coffee = {"webp"},
+		coffee-beans = {"webp"},
+		old-monitor = {"webp"},
 	},
 	-- list of icons collections IDs, see 'id' tags of 'iconlist' in 'resmodel.json' file
 	iconset = {
@@ -23,11 +28,5 @@ wpkconf = {
 -- enable/disable progress log
 logrec = false
 logdir = false
-
--- icons formats provided in package
-packfmt = {
-	webp = true,
-	png = false,
-}
 
 dofile(path.join(scrdir, "pack.lua"))

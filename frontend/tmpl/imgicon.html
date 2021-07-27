@@ -4,8 +4,9 @@
 		<icon-tag v-bind:file="file" clsimg="pict" />
 	</template>
 	<picture v-if="label">
-		<source v-if="packfmt.webp" v-bind:srcset="label+'.webp'" type="image/webp">
-		<source v-if="packfmt.png" v-bind:srcset="label+'.png'" type="image/png">
+		<template v-for="fmt in iconfmt">
+			<source v-bind:srcset="label+fmt.ext" v-bind:type="fmt.mime">
+		</template>
 		<img class="label position-absolute bottom-0 start-0" alt="shared">
 	</picture>
 	<img v-if="file.playback" class="bars position-absolute top-50 start-50 translate-middle" src="/asst/equalizer-bars.gif" alt="play">

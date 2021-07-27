@@ -10,7 +10,7 @@ wpkconf = {
 	},
 	-- list of icons collections IDs, see 'id' tags of 'iconlist' in 'resmodel.json' file
 	iconset = {
-		"tulliana",
+		tulliana = {"webp"},
 	},
 	-- default skin ID if nothing was selected
 	defskinid = "blue",
@@ -21,11 +21,5 @@ wpkconf = {
 -- enable/disable progress log
 logrec = false
 logdir = false
-
--- icons formats provided in package
-packfmt = {
-	webp = true,
-	png = false,
-}
 
 dofile(path.join(scrdir, "pack.lua"))
