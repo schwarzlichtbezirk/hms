@@ -7,17 +7,14 @@ wpkconf = {
 	label = "hms-free",
 	-- list of skins IDs, see 'id' tags of 'skinlist' in 'resmodel.json' file
 	skinset = {
-		daylight = {"webp"},
-		blue = {"webp"},
-		dark = {"webp"},
-		neon = {"webp"},
-		cup-of-coffee = {"webp"},
-		coffee-beans = {"webp"},
-		old-monitor = {"webp"},
+		"daylight", "blue", "dark", "neon",
+		"cup-of-coffee", "coffee-beans", "old-monitor",
 	},
 	-- list of icons collections IDs, see 'id' tags of 'iconlist' in 'resmodel.json' file
 	iconset = {
-		"oxygen", "ubuntu", "tulliana",
+		"oxygen" = {"webp", "png"},
+		"ubuntu" = {"webp", "png"},
+		"tulliana" = {"webp", "png"},
 	},
 	-- default skin ID if nothing was selected
 	defskinid = "neon",

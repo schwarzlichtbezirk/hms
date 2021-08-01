@@ -261,6 +261,7 @@ Vue.component('icon-tag', {
 			return this.file.ntmb === 1 && this.tm;
 		},
 		iconsrc() {
+			const _ = this.iconfmt; // force update field
 			const res = geticonpath(this.file);
 			return res.org || res.alt;
 		},
@@ -308,7 +309,7 @@ Vue.component('file-icon-tag', {
 			return filehint(this.file).join('\n');
 		},
 		label() {
-			const _ = this.iconfmt; // update field on iconset
+			const _ = this.iconfmt; // force update field
 			if (this.file.ntmb === 1 && this.tm
 				|| !geticonpath(this.file).org) {
 				return this.file.shared
@@ -382,7 +383,7 @@ Vue.component('img-icon-tag', {
 			return filehint(this.file).join('\n');
 		},
 		label() {
-			const _ = this.iconfmt; // update field on iconset
+			const _ = this.iconfmt; // force update field
 			if (this.file.ntmb === 1 && this.tm
 				|| !geticonpath(this.file).org) {
 				return this.file.shared

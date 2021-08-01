@@ -23,7 +23,7 @@ local fulliconset = {
 	senary = {"webp", "png"},
 	senary2 = {"webp", "png"},
 	delta = {"webp", "png"},
-	whistlepuff = {"webp", "png"},
+	whistlepuff = {"webp", "gif"},
 	xrabbit = {"webp", "png"},
 }
 -- iconfmt json bodies
@@ -39,6 +39,12 @@ local iconfmtjson = {
 		{
 			"ext": ".png",
 			"mime": "image/png"
+		}]],
+	gif = [[
+
+		{
+			"ext": ".gif",
+			"mime": "image/gif"
 		}]],
 }
 
