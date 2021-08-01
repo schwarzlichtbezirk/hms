@@ -22,7 +22,7 @@ local fulliconset = {
 	chakram = {"webp", "png"},
 	senary = {"webp", "png"},
 	senary2 = {"webp", "png"},
-	delta = {"webp", "png"},
+	delta = {"webp", "jp2"},
 	whistlepuff = {"webp", "gif"},
 	xrabbit = {"webp", "png"},
 }
@@ -33,6 +33,12 @@ local iconfmtjson = {
 		{
 			"ext": ".webp",
 			"mime": "image/webp"
+		}]],
+	jp2 = [[
+
+		{
+			"ext": ".jp2",
+			"mime": "image/jp2"
 		}]],
 	png = [[
 
