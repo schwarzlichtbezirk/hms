@@ -19,15 +19,21 @@ local fulliconset = {
 	oxygen = {"webp", "png"},
 	tulliana = {"webp", "png"},
 	ubuntu = {"webp", "png"},
-	chakram = {"webp", "png"},
+	chakram = {"avif", "webp", "jp2"},
 	senary = {"webp", "png"},
 	senary2 = {"webp", "png"},
 	delta = {"webp", "jp2"},
-	whistlepuff = {"webp", "gif"},
-	xrabbit = {"webp", "png"},
+	whistlepuff = {"avif", "webp", "gif"},
+	xrabbit = {"avif", "webp", "jp2"},
 }
 -- iconfmt json bodies
 local iconfmtjson = {
+	avif = [[
+
+		{
+			"ext": ".avif",
+			"mime": "image/avif"
+		}]],
 	webp = [[
 
 		{
