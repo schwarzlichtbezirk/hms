@@ -22,7 +22,7 @@ local fulliconset = {
 	chakram = {"avif", "webp", "jp2"},
 	senary = {"webp", "png"},
 	senary2 = {"webp", "png"},
-	delta = {"webp", "jp2"},
+	delta = {"avif", "webp", "jp2"},
 	whistlepuff = {"avif", "webp", "gif"},
 	xrabbit = {"avif", "webp", "jp2"},
 }
