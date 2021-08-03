@@ -12,7 +12,7 @@ wpkconf = {
 	},
 	-- list of icons collections IDs, see 'id' tags of 'iconlist' in 'resmodel.json' file
 	iconset = {
-		"oxygen" = {"webp", "png"},
+		"oxygen" = {"avif", "webp", "png"},
 		"ubuntu" = {"webp", "png"},
 		"tulliana" = {"webp", "png"},
 	},
