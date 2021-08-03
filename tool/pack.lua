@@ -15,7 +15,7 @@ local fullskinset = {
 }
 -- full list of icons identifiers
 local fulliconset = {
-	junior = {"webp", "png"},
+	junior = {"avif", "webp", "jp2"},
 	oxygen = {"webp", "png"},
 	tulliana = {"webp", "png"},
 	ubuntu = {"webp", "png"},
