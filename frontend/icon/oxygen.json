@@ -147,6 +147,7 @@
 			".xslt": "/data/icon/oxygen/file-xslt",
 			".xsl": "/data/icon/oxygen/file-xslt",
 			".zip": "/data/icon/oxygen/file-zip",
+			".apk": "/data/icon/oxygen/file-zip",
 			".midi": "/data/icon/oxygen/file-midi",
 			".mid": "/data/icon/oxygen/file-midi",
 			".ogg": "/data/icon/oxygen/file-ogg",

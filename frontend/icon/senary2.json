@@ -72,6 +72,7 @@
 			".rar": "/data/icon/senary/file-rar",
 			".rev": "/data/icon/senary/file-rar",
 			".zip": "/data/icon/senary/file-zip",
+			".apk": "/data/icon/senary/file-zip",
 			".css": "/data/icon/senary/file-css",
 			".html": "/data/icon/senary/file-html",
 			".php": "/data/icon/senary/file-php",

@@ -14,7 +14,7 @@ require (
 	github.com/frankban/quicktest v1.13.0 // indirect
 	github.com/ftrvxmtrx/tga v0.0.0-20150524081124-bd8e8d5be13a
 	github.com/go-ini/ini v1.62.0
-	github.com/gopherjs/gopherjs v0.0.0-20210722203344-69c5ea87048d // indirect
+	github.com/gopherjs/gopherjs v0.0.0-20210803090616-8f023c250c89 // indirect
 	github.com/gorilla/mux v1.8.0
 	github.com/oov/psd v0.0.0-20210618170533-9fb823ddb631
 	github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd

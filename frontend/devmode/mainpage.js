@@ -121,7 +121,8 @@ const extfmt = {
 
 	"archive": {
 		".cab": 1, ".zip": 1, ".7z": 1, ".rar": 1, ".rev": 1,
-		".jar": 1, ".tar": 1, ".tgz": 1, ".gz": 1, ".bz2": 1
+		".jar": 1, ".apk": 1,
+		".tar": 1, ".tgz": 1, ".gz": 1, ".bz2": 1
 	},
 	"disk": {
 		".iso": 1, ".isz": 1, ".udf": 1, ".nrg": 1, ".mdf": 1, ".mdx": 1,
@@ -173,7 +174,8 @@ const extfmt = {
 	},
 	"packs": {
 		".cab": 1, ".zip": 1, ".7z": 1, ".rar": 1, ".rev": 1,
-		".jar": 1, ".tar": 1, ".tgz": 1, ".gz": 1, ".bz2": 1,
+		".jar": 1, ".apk": 1,
+		".tar": 1, ".tgz": 1, ".gz": 1, ".bz2": 1,
 		".iso": 1, ".isz": 1, ".udf": 1, ".nrg": 1, ".mdf": 1, ".mdx": 1,
 		".img": 1, ".ima": 1, ".imz": 1, ".ccd": 1, ".vc4": 1, ".dmg": 1,
 		".daa": 1, ".uif": 1, ".vhd": 1, ".vhdx": 1, ".vmdk": 1,
@@ -1072,14 +1074,14 @@ const app = new Vue({
 		onlink() {
 			copyTextToClipboard(window.location.origin + fileurl(this.selfile));
 		},
-		onshare(file) {
+		onshare() {
 			(async () => {
 				eventHub.$emit('ajax', +1);
 				try {
-					if (file.shared) { // should remove share
-						await this.fetchsharedel(file);
+					if (this.selfile.shared) { // should remove share
+						await this.fetchsharedel(this.selfile);
 					} else { // should add share
-						await this.fetchshareadd(file);
+						await this.fetchshareadd(this.selfile);
 					}
 				} catch (e) {
 					ajaxfail(e);

@@ -196,6 +196,7 @@ var extgrp = map[string]int{
 	".rar":  FGpacks,
 	".rev":  FGpacks,
 	".jar":  FGpacks,
+	".apk":  FGpacks,
 	".tar":  FGpacks,
 	".tgz":  FGpacks,
 	".gz":   FGpacks,

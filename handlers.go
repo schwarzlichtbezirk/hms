@@ -207,8 +207,8 @@ var (
 	ErrNotFound  = errors.New("404 page not found")
 	ErrArgNoNum  = errors.New("'num' parameter not recognized")
 	ErrArgNoHD   = errors.New("'hd' parameter not recognized")
-	ErrArgNoPath = errors.New("'path' argument required")
-	ErrArgNoHash = errors.New("'puid' or 'path' argument required")
+	ErrArgNoCid  = errors.New("'cid' parameter not recognized")
+	ErrArgNoPuid = errors.New("'puid' argument required")
 	ErrNotDir    = errors.New("path is not directory")
 	ErrNoPath    = errors.New("path is not found")
 	ErrDeny      = errors.New("access denied for specified authorization")
@@ -736,7 +736,7 @@ func ctgrAPI(w http.ResponseWriter, r *http.Request) {
 	if len(arg.CID) > 0 {
 		var ok bool
 		if catpath, ok = CidCatPath[arg.CID]; !ok {
-			WriteError400(w, ErrArgNoPath, AECctgrnocid)
+			WriteError400(w, ErrArgNoCid, AECctgrnocid)
 			return
 		}
 		arg.PUID = pathcache.Cache(catpath)
@@ -747,7 +747,7 @@ func ctgrAPI(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		WriteError400(w, ErrArgNoPath, AECctgrnodata)
+		WriteError400(w, ErrArgNoPuid, AECctgrnodata)
 		return
 	}
 
@@ -833,7 +833,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if len(arg.PUID) == 0 && len(arg.Path) == 0 {
-		WriteError400(w, ErrArgNoPath, AECfoldernodata)
+		WriteError400(w, ErrArgNoPuid, AECfoldernodata)
 		return
 	}
 
@@ -915,7 +915,7 @@ func playlistAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if len(arg.PUID) == 0 {
-		WriteError400(w, ErrArgNoPath, AECplaylistnodata)
+		WriteError400(w, ErrArgNoPuid, AECplaylistnodata)
 		return
 	}
 
@@ -1101,7 +1101,7 @@ func shraddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		return
 	}
 	if len(arg.PUID) == 0 {
-		WriteError400(w, ErrArgNoPath, AECshraddnodata)
+		WriteError400(w, ErrArgNoPuid, AECshraddnodata)
 		return
 	}
 
@@ -1144,7 +1144,7 @@ func shrdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		return
 	}
 	if len(arg.PUID) == 0 {
-		WriteError400(w, ErrArgNoPath, AECshrdelnodata)
+		WriteError400(w, ErrArgNoPuid, AECshrdelnodata)
 		return
 	}
 
@@ -1212,7 +1212,7 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		return
 	}
 	if len(arg.Path) == 0 {
-		WriteError400(w, ErrArgNoPath, AECdrvaddnodata)
+		WriteError400(w, ErrArgNoPuid, AECdrvaddnodata)
 		return
 	}
 
@@ -1264,7 +1264,7 @@ func drvdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		return
 	}
 	if len(arg.PUID) == 0 {
-		WriteError400(w, ErrArgNoPath, AECdrvdelnodata)
+		WriteError400(w, ErrArgNoPuid, AECdrvdelnodata)
 		return
 	}
 
