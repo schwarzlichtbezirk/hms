@@ -24,8 +24,9 @@ import (
 )
 
 var (
-	// channel to indicate about server shutdown
-	exitchan chan struct{}
+	// context to indicate about server shutdown
+	exitctx context.Context
+	exitfn  context.CancelFunc
 	// wait group for all server goroutines
 	exitwg sync.WaitGroup
 )
@@ -157,10 +158,31 @@ func pathexists(fpath string) (bool, error) {
 	return true, err
 }
 
+// WaitBreakContext returns context that closes context's Done channel on SIGINT or SIGTERM signal catched.
+func WaitBreakContext() (ctx context.Context, cancel context.CancelFunc) {
+	// Inits context
+	ctx, cancel = context.WithCancel(context.Background())
+	go func() {
+		// Make exit signal on function exit.
+		defer cancel()
+
+		var sigint = make(chan os.Signal, 1)
+		// We'll accept graceful shutdowns when quit via SIGINT (Ctrl+C) or SIGTERM (Ctrl+/)
+		// SIGKILL, SIGQUIT will not be caught.
+		signal.Notify(sigint, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+		// Block until we receive our signal.
+		<-sigint
+	}()
+	return
+}
+
 // Init performs global data initialisation. Loads configuration files, initializes file cache.
 func Init() {
 	var err error
 	var fpath string
+
+	// create wait break context
+	exitctx, exitfn = WaitBreakContext()
 
 	// fetch program path
 	destpath = path.Dir(ToSlash(os.Args[0]))
@@ -228,9 +250,6 @@ func Init() {
 
 // Run launches server listeners.
 func Run(gmux *Router) {
-	// inits exit channel
-	exitchan = make(chan struct{})
-
 	for _, addr := range cfg.PortHTTP {
 		var addr = addr // localize
 		exitwg.Add(1)
@@ -255,7 +274,7 @@ func Run(gmux *Router) {
 			}()
 
 			// wait for exit signal
-			<-exitchan
+			<-exitctx.Done()
 
 			// create a deadline to wait for.
 			var ctx, cancel = context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
@@ -312,7 +331,7 @@ func Run(gmux *Router) {
 			}()
 
 			// wait for exit signal
-			<-exitchan
+			<-exitctx.Done()
 
 			// create a deadline to wait for.
 			var ctx, cancel = context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
@@ -328,22 +347,19 @@ func Run(gmux *Router) {
 	}
 }
 
-// WaitBreak blocks goroutine until Ctrl+C will be pressed.
-func WaitBreak() {
-	var sigint = make(chan os.Signal, 1)
-	// We'll accept graceful shutdowns when quit via SIGINT (Ctrl+C) or SIGTERM (Ctrl+/)
-	// SIGKILL, SIGQUIT will not be caught.
-	signal.Notify(sigint, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
-
-	// Block until we receive our signal.
-	<-sigint
-	// Make exit signal.
-	close(exitchan)
-}
-
-// WaitExit waits until all server threads will be stopped.
+// WaitExit waits until all server threads will be stopped and all transactions will be done.
 func WaitExit() {
+	// wait for exit signal
+	<-exitctx.Done()
+	Log.Println("shutting down begin")
+
+	// wait until all server threads will be stopped.
 	exitwg.Wait()
+	Log.Println("server threads completed")
+
+	// wait until all transactions will be done.
+	handwg.Wait()
+	Log.Println("transactions completed")
 }
 
 // Shutdown performs graceful network shutdown.

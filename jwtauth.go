@@ -166,6 +166,17 @@ func AuthWrap(fn AuthHandlerFunc) http.HandlerFunc {
 			return
 		}
 
+		// lock before exit check
+		handwg.Add(1)
+		defer handwg.Done()
+
+		// check on exit during handler is called
+		select {
+		case <-exitctx.Done():
+			return
+		default:
+		}
+
 		fn(w, r, auth)
 	}
 }

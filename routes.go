@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"runtime"
+	"sync"
 
 	"github.com/gorilla/mux"
 )
@@ -45,113 +46,9 @@ type Router = mux.Router
 // NewRouter is local alias for router creation function.
 var NewRouter = mux.NewRouter
 
-//////////////////
-// Routes table //
-//////////////////
-
-// HTTP distribution cache
-var pagecache = map[string][]byte{}
-
-// Pages aliases.
-var pagealias = map[string]string{
-	"main": "main.html",
-	"stat": "stat.html",
-}
-
-// Main page routes.
-var routemain = []string{
-	"/home/", "/ctgr/", "/path/",
-}
-
-// Routes aliases.
-var routealias = map[string]string{
-	"/devm/": devmsuff,
-	"/relm/": relmsuff,
-	"/plug/": plugsuff,
-	"/asst/": asstsuff,
-}
-
-// RegisterRoutes puts application routes to given router.
-func RegisterRoutes(gmux *Router) {
-	// main page
-	var devm = gmux.PathPrefix("/dev").Subrouter()
-	devm.Path("/").HandlerFunc(pageHandler(devmsuff, "main"))
-	gmux.Path("/").HandlerFunc(pageHandler(relmsuff, "main"))
-	for name := range pagealias {
-		devm.Path("/" + name).HandlerFunc(pageHandler(devmsuff, name)) // development mode
-		gmux.Path("/" + name).HandlerFunc(pageHandler(relmsuff, name)) // release mode
-	}
-
-	// UI routes
-	var dacc = devm.PathPrefix("/id{id}/").Subrouter()
-	var gacc = gmux.PathPrefix("/id{id}/").Subrouter()
-	for _, pref := range routemain {
-		dacc.PathPrefix(pref).HandlerFunc(pageHandler(devmsuff, "main"))
-		gacc.PathPrefix(pref).HandlerFunc(pageHandler(relmsuff, "main"))
-	}
-
-	// wpk-files sharing
-	gmux.PathPrefix("/data/").Handler(http.StripPrefix("/data/", http.FileServer(http.FS(packager))))
-	for alias, prefix := range routealias {
-		var sub, err = packager.Sub(prefix)
-		if err != nil {
-			Log.Fatal(err)
-		}
-		gmux.PathPrefix(alias).Handler(http.StripPrefix(alias, http.FileServer(http.FS(sub))))
-	}
-
-	// file system sharing & converted media files
-	gacc.PathPrefix("/file/").HandlerFunc(AjaxWrap(fileHandler))
-	// cached thumbs
-	gacc.PathPrefix("/thumb/").HandlerFunc(thumbHandler)
-
-	// API routes
-	var api = gmux.PathPrefix("/api").Subrouter()
-	api.Path("/ping").HandlerFunc(AjaxWrap(pingAPI))
-	api.Path("/purge").HandlerFunc(AuthWrap(purgeAPI))
-	api.Path("/reload").HandlerFunc(AuthWrap(reloadAPI))
-	var stc = api.PathPrefix("/stat").Subrouter()
-	stc.Path("/srvinf").HandlerFunc(AjaxWrap(srvinfAPI))
-	stc.Path("/memusg").HandlerFunc(AjaxWrap(memusgAPI))
-	stc.Path("/cchinf").HandlerFunc(AjaxWrap(cchinfAPI))
-	stc.Path("/getlog").HandlerFunc(AjaxWrap(getlogAPI))
-	stc.Path("/usrlst").HandlerFunc(AjaxWrap(usrlstAPI))
-	var reg = api.PathPrefix("/auth").Subrouter()
-	reg.Path("/pubkey").HandlerFunc(AjaxWrap(pubkeyAPI))
-	reg.Path("/signin").HandlerFunc(AjaxWrap(signinAPI))
-	reg.Path("/refrsh").HandlerFunc(AjaxWrap(refrshAPI))
-	var crd = api.PathPrefix("/card").Subrouter()
-	crd.Path("/ishome").HandlerFunc(AjaxWrap(ishomeAPI))
-	crd.Path("/ctgr").HandlerFunc(AjaxWrap(ctgrAPI))
-	crd.Path("/folder").HandlerFunc(AjaxWrap(folderAPI))
-	crd.Path("/playlist").HandlerFunc(AjaxWrap(playlistAPI))
-	crd.Path("/ispath").HandlerFunc(AuthWrap(ispathAPI))
-	var tmb = api.PathPrefix("/tmb").Subrouter()
-	tmb.Path("/chk").HandlerFunc(AjaxWrap(tmbchkAPI))
-	tmb.Path("/scn").HandlerFunc(AjaxWrap(tmbscnAPI))
-	var shr = api.PathPrefix("/share").Subrouter()
-	shr.Path("/lst").HandlerFunc(AjaxWrap(shrlstAPI))
-	shr.Path("/add").HandlerFunc(AuthWrap(shraddAPI))
-	shr.Path("/del").HandlerFunc(AuthWrap(shrdelAPI))
-	var drv = api.PathPrefix("/drive").Subrouter()
-	drv.Path("/lst").HandlerFunc(AjaxWrap(drvlstAPI))
-	drv.Path("/add").HandlerFunc(AuthWrap(drvaddAPI))
-	drv.Path("/del").HandlerFunc(AuthWrap(drvdelAPI))
-}
-
 ////////////////
 // Routes API //
 ////////////////
-
-// AjaxWrap is handler wrapper for AJAX API calls without authorization.
-func AjaxWrap(fn http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		go func() {
-			userajax <- r
-		}()
-		fn(w, r)
-	}
-}
 
 const (
 	jsoncontent = "application/json;charset=utf-8"
@@ -246,6 +143,125 @@ func WriteError400(w http.ResponseWriter, err error, code int) {
 // WriteError500 puts to response 500 status code and ErrAjax formed by given error object.
 func WriteError500(w http.ResponseWriter, err error, code int) {
 	WriteJSON(w, http.StatusInternalServerError, &ErrAjax{err, code})
+}
+
+//////////////////
+// Routes table //
+//////////////////
+
+// HTTP distribution cache
+var pagecache = map[string][]byte{}
+
+// Pages aliases.
+var pagealias = map[string]string{
+	"main": "main.html",
+	"stat": "stat.html",
+}
+
+// Main page routes.
+var routemain = []string{
+	"/home/", "/ctgr/", "/path/",
+}
+
+// Routes aliases.
+var routealias = map[string]string{
+	"/devm/": devmsuff,
+	"/relm/": relmsuff,
+	"/plug/": plugsuff,
+	"/asst/": asstsuff,
+}
+
+// Transaction locker, locks until handler will be done.
+var handwg sync.WaitGroup
+
+// AjaxWrap is handler wrapper for AJAX API calls without authorization.
+func AjaxWrap(fn http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		go func() {
+			userajax <- r
+		}()
+
+		// lock before exit check
+		handwg.Add(1)
+		defer handwg.Done()
+
+		// check on exit during handler is called
+		select {
+		case <-exitctx.Done():
+			return
+		default:
+		}
+
+		fn(w, r)
+	}
+}
+
+// RegisterRoutes puts application routes to given router.
+func RegisterRoutes(gmux *Router) {
+	// main page
+	var devm = gmux.PathPrefix("/dev").Subrouter()
+	devm.Path("/").HandlerFunc(pageHandler(devmsuff, "main"))
+	gmux.Path("/").HandlerFunc(pageHandler(relmsuff, "main"))
+	for name := range pagealias {
+		devm.Path("/" + name).HandlerFunc(pageHandler(devmsuff, name)) // development mode
+		gmux.Path("/" + name).HandlerFunc(pageHandler(relmsuff, name)) // release mode
+	}
+
+	// UI routes
+	var dacc = devm.PathPrefix("/id{id}/").Subrouter()
+	var gacc = gmux.PathPrefix("/id{id}/").Subrouter()
+	for _, pref := range routemain {
+		dacc.PathPrefix(pref).HandlerFunc(pageHandler(devmsuff, "main"))
+		gacc.PathPrefix(pref).HandlerFunc(pageHandler(relmsuff, "main"))
+	}
+
+	// wpk-files sharing
+	gmux.PathPrefix("/data/").Handler(http.StripPrefix("/data/", http.FileServer(http.FS(packager))))
+	for alias, prefix := range routealias {
+		var sub, err = packager.Sub(prefix)
+		if err != nil {
+			Log.Fatal(err)
+		}
+		gmux.PathPrefix(alias).Handler(http.StripPrefix(alias, http.FileServer(http.FS(sub))))
+	}
+
+	// file system sharing & converted media files
+	gacc.PathPrefix("/file/").HandlerFunc(AjaxWrap(fileHandler))
+	// cached thumbs
+	gacc.PathPrefix("/thumb/").HandlerFunc(thumbHandler)
+
+	// API routes
+	var api = gmux.PathPrefix("/api").Subrouter()
+	api.Path("/ping").HandlerFunc(AjaxWrap(pingAPI))
+	api.Path("/purge").HandlerFunc(AuthWrap(purgeAPI))
+	api.Path("/reload").HandlerFunc(AuthWrap(reloadAPI))
+	var stc = api.PathPrefix("/stat").Subrouter()
+	stc.Path("/srvinf").HandlerFunc(AjaxWrap(srvinfAPI))
+	stc.Path("/memusg").HandlerFunc(AjaxWrap(memusgAPI))
+	stc.Path("/cchinf").HandlerFunc(AjaxWrap(cchinfAPI))
+	stc.Path("/getlog").HandlerFunc(AjaxWrap(getlogAPI))
+	stc.Path("/usrlst").HandlerFunc(AjaxWrap(usrlstAPI))
+	var reg = api.PathPrefix("/auth").Subrouter()
+	reg.Path("/pubkey").HandlerFunc(AjaxWrap(pubkeyAPI))
+	reg.Path("/signin").HandlerFunc(AjaxWrap(signinAPI))
+	reg.Path("/refrsh").HandlerFunc(AjaxWrap(refrshAPI))
+	var crd = api.PathPrefix("/card").Subrouter()
+	crd.Path("/ishome").HandlerFunc(AjaxWrap(ishomeAPI))
+	crd.Path("/ctgr").HandlerFunc(AjaxWrap(ctgrAPI))
+	crd.Path("/folder").HandlerFunc(AjaxWrap(folderAPI))
+	crd.Path("/playlist").HandlerFunc(AjaxWrap(playlistAPI))
+	crd.Path("/ispath").HandlerFunc(AuthWrap(ispathAPI))
+	var tmb = api.PathPrefix("/tmb").Subrouter()
+	tmb.Path("/chk").HandlerFunc(AjaxWrap(tmbchkAPI))
+	tmb.Path("/scn").HandlerFunc(AjaxWrap(tmbscnAPI))
+	var shr = api.PathPrefix("/share").Subrouter()
+	shr.Path("/lst").HandlerFunc(AjaxWrap(shrlstAPI))
+	shr.Path("/add").HandlerFunc(AuthWrap(shraddAPI))
+	shr.Path("/del").HandlerFunc(AuthWrap(shrdelAPI))
+	var drv = api.PathPrefix("/drive").Subrouter()
+	drv.Path("/lst").HandlerFunc(AjaxWrap(drvlstAPI))
+	drv.Path("/add").HandlerFunc(AuthWrap(drvaddAPI))
+	drv.Path("/del").HandlerFunc(AuthWrap(drvdelAPI))
 }
 
 // The End.

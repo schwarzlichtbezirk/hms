@@ -126,7 +126,7 @@ func UserScanner() {
 			var user = usercache.Get(r)
 			user.LastAjax = UnixJSNow()
 
-		case <-exitchan:
+		case <-exitctx.Done():
 			return
 		}
 	}

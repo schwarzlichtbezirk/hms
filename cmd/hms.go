@@ -10,19 +10,15 @@ const builddate = "2021.08.08"
 var log = hms.Log
 
 func main() {
-	log.Printf("version: %s, builton: %s", buildvers, builddate)
+	log.Printf("version: %s, builton: %s\n", buildvers, builddate)
 	hms.MakeServerLabel("hms", buildvers)
 	log.Println("starts")
 	hms.Init()
 	var gmux = hms.NewRouter()
 	hms.RegisterRoutes(gmux)
 	hms.Run(gmux)
-	log.Printf("ready")
-	log.Printf("hint: Open localhost page in browser to view the player. If you want to stop the server, press 'Ctrl+C' for graceful network shutdown. Use localhost/stat for server state monitoring.")
-	go func() {
-		hms.WaitBreak()
-		log.Println("shutting down by break begin")
-	}()
+	log.Println("ready")
+	log.Println("hint: Open localhost page in browser to view the player. If you want to stop the server, press 'Ctrl+C' for graceful network shutdown. Use localhost/stat for server state monitoring.")
 	hms.WaitExit()
 	hms.Shutdown()
 	log.Println("shutting down complete.")

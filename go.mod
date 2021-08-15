@@ -20,9 +20,9 @@ require (
 	github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd
 	github.com/schwarzlichtbezirk/wpk v1.2.0
 	github.com/spate/glimage v0.0.0-20200505055513-fbdcc60a65e5
-	golang.org/x/crypto v0.0.0-20210711020723-a769d52b0f97
+	golang.org/x/crypto v0.0.0-20210813211128-0a44fdfbc16e
 	golang.org/x/image v0.0.0-20210628002857-a66eb6448b8d
-	golang.org/x/text v0.3.6
+	golang.org/x/text v0.3.7
 	gopkg.in/ini.v1 v1.62.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
