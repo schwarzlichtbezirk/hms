@@ -563,6 +563,18 @@ a, .btn-link {
 		cursor: pointer;
 	}
 
+	.imgbut.btn-outline-light:hover,
+	.imgbut.btn-outline-light:focus {
+		color: rgba(255, 255, 255, 0.75);
+		background-color: rgba(248, 249, 250, 0.3);
+	}
+
+	.imgbut.btn-outline-danger:hover,
+	.imgbut.btn-outline-danger:focus {
+		color: rgba(255, 255, 255, 0.75);
+		background-color: rgba(220, 53, 69, 0.3);
+	}
+
 	.imgbut.disabled, .imgbut:disabled {
 		color: rgba(255, 255, 255, 0.25);
 		pointer-events: none;
@@ -594,18 +606,6 @@ a, .btn-link {
 .photothumbs {
 	background-color: silver;
 	border-radius: 0.25rem;
-	opacity: 0;
-	transition: 0.3s;
-}
-
-	.photothumbs:hover {
-		opacity: 1;
-	}
-
-@media (max-width:768px) {
-	.photothumbs {
-		opacity: 0.50;
-	}
 }
 
 /* Thumbnail slider section */

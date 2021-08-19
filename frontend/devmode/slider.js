@@ -12,6 +12,8 @@ const isMainImage = ext => ({
 
 const photofilter = file => !file.type && file.size && isMainImage(pathext(file.name));
 
+const controlstimeout = 3000; // timeout in milliseconds
+
 Vue.component('thumbslider-tag', {
 	template: '#thumbslider-tpl',
 	props: ["selfile", "list"],
@@ -51,48 +53,47 @@ Vue.component('photoslider-tag', {
 			hd: 1,
 			selfile: null,
 			repeatmode: 0, // 0 - no any repeat, 1 - repeat single, 2 - repeat playlist
+			ctrlhnd: 0,
 			dlg: null
 		};
 	},
 	computed: {
+		// list of visible by this viewer files
+		viewlist() {
+			const l = [];
+			for (const file of this.list) {
+				if (photofilter(file)) {
+					l.push(file);
+				}
+			}
+			return l;
+		},
 		// image url
 		selfileurl() {
 			return this.selfile && mediaurl(this.selfile, 1, this.hd);
 		},
 		// index of selected file
 		selfilepos() {
-			for (const i in this.list) {
-				if (this.selfile === this.list[i]) {
+			for (const i in this.viewlist) {
+				if (this.selfile === this.viewlist[i]) {
 					return Number(i);
 				}
 			}
 		},
 		// returns previous file in list
 		getprev() {
-			const prevpos = (from, to) => {
-				for (let i = from - 1; i > to; i--) {
-					const file = this.list[i];
-					if (photofilter(file)) {
-						return file;
-					}
-				}
-			};
-			return this.selfile && (prevpos(this.selfilepos, -1) || this.repeatmode === 2 && prevpos(this.list.length, this.selfilepos));
+			return this.selfile && this.selfilepos > 0
+				? this.viewlist[this.selfilepos - 1]
+				: this.repeatmode === 2 && this.viewlist[this.viewlist.length - 1];
 		},
 		// returns next file in list
 		getnext() {
-			const nextpos = (from, to) => {
-				for (let i = from + 1; i < to; i++) {
-					const file = this.list[i];
-					if (photofilter(file)) {
-						return file;
-					}
-				}
-			};
-			return this.selfile && (nextpos(this.selfilepos, this.list.length) || this.repeatmode === 2 && nextpos(-1, this.selfilepos));
+			return this.selfile && this.selfilepos < this.viewlist.length - 1
+				? this.viewlist[this.selfilepos + 1]
+				: this.repeatmode === 2 && this.viewlist[0];
 		},
 		islist() {
-			return this.list && this.list.length > 1;
+			return this.viewlist.length > 1;
 		}
 	},
 	methods: {
@@ -104,6 +105,7 @@ Vue.component('photoslider-tag', {
 				this.selfile = file;
 				eventHub.$emit('ajax', +1);
 			}
+			this.showcontrols();
 		},
 		popup(file, list) {
 			if (isFullscreen()) {
@@ -116,12 +118,31 @@ Vue.component('photoslider-tag', {
 		close() {
 			this.dlg.hide();
 		},
+		showcontrols() {
+			// remove previous timer
+			if (this.ctrlhnd) {
+				clearTimeout(this.ctrlhnd);
+			}
+			// set new timer to hide
+			this.ctrlhnd = setTimeout(() => {
+				this.ctrlhnd = 0;
+			}, controlstimeout);
+		},
+		hidecontrols() {
+			if (this.ctrlhnd) {
+				clearTimeout(this.ctrlhnd);
+				this.ctrlhnd = 0;
+			}
+		},
 
 		onimgload(e) {
 			eventHub.$emit('ajax', -1);
 		},
 		onimgerror(e) {
 			eventHub.$emit('ajax', -1);
+		},
+		onmove(e) {
+			this.showcontrols();
 		},
 		onkeyup(e) {
 			switch (e.code) {
@@ -133,15 +154,17 @@ Vue.component('photoslider-tag', {
 					this.onnext();
 					break;
 				case 'Home':
-					if (this.list) {
-						eventHub.$emit('select', this.list[0]);
+					if (this.viewlist.length) {
+						eventHub.$emit('select', this.viewlist[0]);
 					}
 					break;
 				case 'End':
-					if (this.list) {
-						eventHub.$emit('select', this.list[this.list.length - 1]);
+					if (this.viewlist.length) {
+						eventHub.$emit('select', this.viewlist[this.viewlist.length - 1]);
 					}
 					break;
+				default:
+					this.showcontrols();
 			}
 		},
 		onprev() {

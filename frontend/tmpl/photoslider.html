@@ -1,22 +1,24 @@
 
 <div class="modal fade" tabindex="-1" role="dialog" aria-labelledby="photos" aria-hidden="true" v-on:keyup.stop="onkeyup">
 	<div class="modal-dialog modal-fullscreen" role="document">
-		<div class="modal-content position-relative">
+		<div class="modal-content position-relative" v-on:click="onmove" v-on:mousemove="onmove">
 			<img class="centerimg vw-100 vh-100" v-bind:src="selfileurl" v-on:load="onimgload" v-on:error="onimgerror" />
-			<div class="photothumbs position-absolute bottom-0 start-50 translate-middle-x mw-100 mb-md-4 p-2">
-				<template v-if="islist">
+			<template v-if="ctrlhnd>0 && islist">
+				<div class="photothumbs position-absolute bottom-0 start-50 translate-middle-x mw-100 mb-md-4 p-2">
 					<thumbslider-tag v-bind:selfile="selfile" v-bind:list="list" />
-				</template>
-			</div>
-			<button class="imgbut arrow position-absolute top-50 start-0 translate-middle-y ms-md-2" v-show="islist" v-on:click="onprev" v-bind:disabled="!getprev" title="previous image"><i class="material-icons">arrow_back</i></button>
-			<button class="imgbut arrow position-absolute top-50 end-0 translate-middle-y me-md-2" v-show="islist" v-on:click="onnext" v-bind:disabled="!getnext" title="next image"><i class="material-icons">arrow_forward</i></button>
-			<div class="d-flex position-absolute top-0 end-0 m-md-2">
-				<div>
-					<input v-model="hd" type="checkbox" class="btn-check" id="hdcheck" autocomplete="off">
-					<label class="imgbut tool btn-outline-light" for="hdcheck" title="squeeze big images to HD resolution"><i class="material-icons">hd</i></label>
 				</div>
-				<button class="imgbut tool" v-on:click="onclose" title="close slider"><i class="material-icons">close</i></button>
-			</div>
+				<button class="imgbut arrow position-absolute top-50 start-0 translate-middle-y ms-md-2" v-on:click="onprev" v-bind:disabled="!getprev" title="previous image"><i class="material-icons">arrow_back</i></button>
+				<button class="imgbut arrow position-absolute top-50 end-0 translate-middle-y me-md-2" v-on:click="onnext" v-bind:disabled="!getnext" title="next image"><i class="material-icons">arrow_forward</i></button>
+			</template>
+			<template v-if="ctrlhnd>0">
+				<div class="d-flex position-absolute top-0 end-0 m-md-2">
+					<div>
+						<input v-model="hd" type="checkbox" class="btn-check" id="hdcheck" autocomplete="off">
+						<label class="imgbut tool btn-outline-light" for="hdcheck" title="squeeze big images to HD resolution"><i class="material-icons">hd</i></label>
+					</div>
+					<button class="imgbut tool btn-outline-danger" v-on:click="onclose" title="close slider"><i class="material-icons">close</i></button>
+				</div>
+			</template>
 		</div>
 	</div>
 </div>
