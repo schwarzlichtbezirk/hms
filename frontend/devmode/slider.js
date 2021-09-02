@@ -16,22 +16,13 @@ const controlstimeout = 3000; // timeout in milliseconds
 
 Vue.component('thumbslider-tag', {
 	template: '#thumbslider-tpl',
-	props: ["selfile", "list"],
-	computed: {
-		slide() {
-			const lst = [];
-			for (const file of this.list) {
-				if (photofilter(file)) {
-					lst.push(file);
-				}
-			}
-			return lst;
-		}
+	props: ["list"],
+	data: function () {
+		return {
+			selfile: null
+		};
 	},
 	methods: {
-		onselect(file) {
-			eventHub.$emit('select', file);
-		},
 		onwheel(e) {
 			this.$refs.slide.scrollBy({ left: e.deltaX + e.deltaY, behavior: 'smooth' });
 		},
@@ -41,7 +32,20 @@ Vue.component('thumbslider-tag', {
 		},
 		onnext() {
 			this.$refs.slide.scrollBy({ left: +125, behavior: 'smooth' });
+		},
+
+		onselect(file) {
+			this.selfile = file;
+		},
+		oniconclick(file) {
+			eventHub.$emit('select', file);
 		}
+	},
+	created() {
+		eventHub.$on('select', this.onselect);
+	},
+	beforeDestroy() {
+		eventHub.$off('select', this.onselect);
 	}
 });
 
@@ -105,7 +109,6 @@ Vue.component('photoslider-tag', {
 				this.selfile = file;
 				eventHub.$emit('ajax', +1);
 			}
-			this.showcontrols();
 		},
 		popup(file, list) {
 			if (isFullscreen()) {
@@ -114,6 +117,7 @@ Vue.component('photoslider-tag', {
 			this.list = list || [file];
 			this.load(file);
 			this.dlg.show();
+			this.showcontrols();
 		},
 		close() {
 			this.dlg.hide();
@@ -141,6 +145,18 @@ Vue.component('photoslider-tag', {
 		onimgerror(e) {
 			eventHub.$emit('ajax', -1);
 		},
+		onclick(e) {
+			if (this.ctrlhnd) {
+				// remove previous timer
+				clearTimeout(this.ctrlhnd);
+				this.ctrlhnd = 0;
+			} else {
+				// set new timer to hide
+				this.ctrlhnd = setTimeout(() => {
+					this.ctrlhnd = 0;
+				}, controlstimeout);
+			}
+		},
 		onmove(e) {
 			this.showcontrols();
 		},
@@ -150,8 +166,10 @@ Vue.component('photoslider-tag', {
 					this.onprev();
 					break;
 				case 'ArrowRight':
-				case 'Space':
 					this.onnext();
+					break;
+				case 'Space':
+					this.onclick(e)
 					break;
 				case 'Home':
 					if (this.viewlist.length) {
@@ -185,6 +203,13 @@ Vue.component('photoslider-tag', {
 			if (this.isvisible()) {
 				if (file && photofilter(file)) {
 					this.load(file);
+					// update timer if it set
+					if (this.ctrlhnd) {
+						clearTimeout(this.ctrlhnd);
+						this.ctrlhnd = setTimeout(() => {
+							this.ctrlhnd = 0;
+						}, controlstimeout);
+					}
 				} else {
 					this.close();
 				}
