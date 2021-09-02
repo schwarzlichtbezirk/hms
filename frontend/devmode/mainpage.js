@@ -1220,7 +1220,7 @@ const app = new Vue({
 						eventHub.$emit('ajax', -1);
 					}
 				})();
-			} else if (extfmt.image[ext]) {
+			} else if (imagefilter(file) || videofilter(file)) {
 				this.$refs.slider.popup(file, this.$refs.fcard.playlist);
 			} else {
 				const url = mediaurl(file, 1, 0);

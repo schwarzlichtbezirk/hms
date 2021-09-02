@@ -337,7 +337,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 
 	var val interface{}
 
-	if hd {
+	if hd && grp == FGimage {
 		if val, err = hdcache.Get(puid); err != nil {
 			if os.IsNotExist(err) {
 				WriteError(w, http.StatusGone, err, AECmediahdgone)
@@ -370,7 +370,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if media {
+	if media && grp == FGimage {
 		if val, err = mediacache.Get(puid); err != nil {
 			if os.IsNotExist(err) {
 				WriteError(w, http.StatusGone, err, AECmediamedgone)

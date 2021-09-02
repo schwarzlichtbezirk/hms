@@ -1,19 +1,5 @@
 "use strict";
 
-const isMainAudio = ext => ({
-	".wav": true, ".flac": true, ".mp3": true, ".ogg": true, ".opus": true,
-	".acc": true, ".m4a": true, ".alac": true
-})[ext];
-
-const isMainVideo = ext => ({
-	".mp4": true, ".webm": true
-})[ext];
-
-const mp3filter = file => {
-	const ext = pathext(file.name);
-	return !file.type && file.size && (isMainAudio(ext) || isMainVideo(ext));
-};
-
 Vue.component('mp3-player-tag', {
 	template: '#mp3-player-tpl',
 	data: function () {
@@ -52,7 +38,7 @@ Vue.component('mp3-player-tag', {
 			const prevpos = (from, to) => {
 				for (let i = from - 1; i > to; i--) {
 					const file = this.list[i];
-					if (mp3filter(file)) {
+					if (audiofilter(file)) {
 						return file;
 					}
 				}
@@ -64,7 +50,7 @@ Vue.component('mp3-player-tag', {
 			const nextpos = (from, to) => {
 				for (let i = from + 1; i < to; i++) {
 					const file = this.list[i];
-					if (mp3filter(file)) {
+					if (audiofilter(file)) {
 						return file;
 					}
 				}
@@ -302,19 +288,15 @@ Vue.component('mp3-player-tag', {
 		},
 
 		onselect(file) {
+			const is = file => file && (audiofilter(file) || (!this.$root.$refs.fcard.audioonly && videofilter(file)));
 			if (this.isvisible()) {
-				if (file && mp3filter(file)) {
+				if (is(file)) {
 					this.setup(file);
 				} else {
 					this.close();
 				}
-			} else {
-				if (file && !file.type && file.size) {
-					const ext = pathext(file.name);
-					if (isMainAudio(ext) || isMainVideo(ext) && !this.$root.$refs.fcard.audioonly) {
-						this.popup(file);
-					}
-				}
+			} else if (is(file)) {
+				this.popup(file);
 			}
 		},
 		onplaylist(list) {

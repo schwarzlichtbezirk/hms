@@ -1,18 +1,7 @@
 "use strict";
 
-const isTypeJPEG = ext => ({
-	".jpg": true, ".jpe": true, ".jpeg": true, ".jfif": true
-})[ext];
-
-const isMainImage = ext => ({
-	".tga": true, ".bmp": true, ".dib": true, ".rle": true, ".dds": true,
-	".tif": true, ".tiff": true, ".jpg": true, ".jpe": true, ".jpeg": true, ".jfif": true,
-	".gif": true, ".png": true, ".webp": true, ".psd": true, ".psb": true
-})[ext];
-
-const photofilter = file => !file.type && file.size && isMainImage(pathext(file.name));
-
 const controlstimeout = 3000; // timeout in milliseconds
+const playlisttimeout = 8000; // timeout in milliseconds
 
 Vue.component('thumbslider-tag', {
 	template: '#thumbslider-tpl',
@@ -54,19 +43,27 @@ Vue.component('photoslider-tag', {
 	data: function () {
 		return {
 			list: [],
-			hd: 1,
+			playlist: true,
+			hd: true,
 			selfile: null,
 			repeatmode: 0, // 0 - no any repeat, 1 - repeat single, 2 - repeat playlist
 			ctrlhnd: 0,
+			plhnd: 0,
 			dlg: null
 		};
 	},
 	computed: {
+		isimage() {
+			return this.selfile && imagefilter(this.selfile);
+		},
+		isvideo() {
+			return this.selfile && videofilter(this.selfile);
+		},
 		// list of visible by this viewer files
 		viewlist() {
 			const l = [];
 			for (const file of this.list) {
-				if (photofilter(file)) {
+				if (imagefilter(file) || videofilter(file)) {
 					l.push(file);
 				}
 			}
@@ -106,8 +103,30 @@ Vue.component('photoslider-tag', {
 		},
 		load(file) {
 			if (this.selfile !== file) {
-				this.selfile = file;
 				eventHub.$emit('ajax', +1);
+
+				// remove previous playlist timer
+				if (this.plhnd) {
+					clearTimeout(this.plhnd);
+				}
+
+				if (this.isvideo && !this.$refs.video.paused) {
+					this.$refs.video.pause();
+				}
+				this.selfile = file;
+				if (this.isvideo) {
+					this.$refs.video.src = this.selfileurl
+				}
+
+				// set new playlist timer
+				if (this.isimage) {
+					this.plhnd = setTimeout(() => {
+						this.plhnd = 0;
+						if (this.playlist) {
+							this.onnext();
+						}
+					}, playlisttimeout);
+				}
 			}
 		},
 		popup(file, list) {
@@ -123,11 +142,11 @@ Vue.component('photoslider-tag', {
 			this.dlg.hide();
 		},
 		showcontrols() {
-			// remove previous timer
+			// remove previous controls timer
 			if (this.ctrlhnd) {
 				clearTimeout(this.ctrlhnd);
 			}
-			// set new timer to hide
+			// set new timer to hide controls
 			this.ctrlhnd = setTimeout(() => {
 				this.ctrlhnd = 0;
 			}, controlstimeout);
@@ -145,13 +164,23 @@ Vue.component('photoslider-tag', {
 		onimgerror(e) {
 			eventHub.$emit('ajax', -1);
 		},
+		onended(e) {
+			if (this.playlist) {
+				this.onnext();
+			}
+		},
 		onclick(e) {
+			// remove playlist timer
+			if (this.plhnd) {
+				clearTimeout(this.plhnd);
+				this.plhnd = 0;
+			}
 			if (this.ctrlhnd) {
-				// remove previous timer
+				// remove previous controls timer
 				clearTimeout(this.ctrlhnd);
 				this.ctrlhnd = 0;
 			} else {
-				// set new timer to hide
+				// set new timer to hide controls
 				this.ctrlhnd = setTimeout(() => {
 					this.ctrlhnd = 0;
 				}, controlstimeout);
@@ -201,9 +230,9 @@ Vue.component('photoslider-tag', {
 
 		onselect(file) {
 			if (this.isvisible()) {
-				if (file && photofilter(file)) {
+				if (file && (imagefilter(file) || videofilter(file))) {
 					this.load(file);
-					// update timer if it set
+					// update controls timer if it set
 					if (this.ctrlhnd) {
 						clearTimeout(this.ctrlhnd);
 						this.ctrlhnd = setTimeout(() => {
@@ -224,6 +253,9 @@ Vue.component('photoslider-tag', {
 		this.$el.addEventListener('shown.bs.modal', e => {
 		});
 		this.$el.addEventListener('hidden.bs.modal', e => {
+			if (this.isvideo && !this.$refs.video.paused) {
+				this.$refs.video.pause();
+			}
 			this.selfile = null;
 		});
 	},

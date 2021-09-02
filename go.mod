@@ -11,16 +11,16 @@ require (
 	github.com/dhowden/tag v0.0.0-20201120070457-d52dcb253c63
 	github.com/disintegration/gift v1.2.1
 	github.com/diskfs/go-diskfs v1.2.0
-	github.com/frankban/quicktest v1.13.0 // indirect
+	github.com/frankban/quicktest v1.13.1 // indirect
 	github.com/ftrvxmtrx/tga v0.0.0-20150524081124-bd8e8d5be13a
 	github.com/go-ini/ini v1.62.0
-	github.com/gopherjs/gopherjs v0.0.0-20210803090616-8f023c250c89 // indirect
+	github.com/gopherjs/gopherjs v0.0.0-20210901121439-eee08aaf2717 // indirect
 	github.com/gorilla/mux v1.8.0
 	github.com/oov/psd v0.0.0-20210618170533-9fb823ddb631
 	github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd
 	github.com/schwarzlichtbezirk/wpk v1.2.0
 	github.com/spate/glimage v0.0.0-20200505055513-fbdcc60a65e5
-	golang.org/x/crypto v0.0.0-20210813211128-0a44fdfbc16e
+	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
 	golang.org/x/image v0.0.0-20210628002857-a66eb6448b8d
 	golang.org/x/text v0.3.7
 	gopkg.in/ini.v1 v1.62.0 // indirect

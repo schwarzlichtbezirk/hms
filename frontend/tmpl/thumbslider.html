@@ -7,7 +7,7 @@
 	</div>
 	<div ref="slide" class="d-flex flex-nowrap overflow-hidden" v-on:wheel="onwheel">
 		<template v-for="file in list">
-			<div v-on:click="oniconclick(file)">
+			<div v-on:click="oniconclick(file)" v-bind:title="file.name">
 				<icon-tag v-bind:file="file" v-bind:clsimg="{active:file===selfile,'thumb':true}" />
 			</div>
 		</template>

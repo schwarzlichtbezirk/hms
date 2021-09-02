@@ -2,23 +2,31 @@
 <div class="modal fade" tabindex="-1" role="dialog" aria-labelledby="photos" aria-hidden="true" v-on:keyup.stop="onkeyup">
 	<div class="modal-dialog modal-fullscreen" role="document">
 		<div class="modal-content position-relative" v-on:click="onclick" v-on:mousemove="onmove">
-			<img class="centerimg vw-100 vh-100" v-bind:src="selfileurl" v-on:load="onimgload" v-on:error="onimgerror" />
-			<template v-if="ctrlhnd>0 && islist">
-				<div class="photothumbs position-absolute bottom-0 start-50 translate-middle-x mw-100 mb-md-4 p-2">
+			<img v-show="isimage" class="centerimg vw-100 vh-100" v-bind:src="selfileurl" v-on:load="onimgload" v-on:error="onimgerror" />
+			<video ref="video" v-show="isvideo" class="position-absolute top-50 start-50 translate-middle mw-100 mh-100"
+				v-on:load="onimgload" v-on:error="onimgerror" v-on:ended="onended"
+				autoplay controls disablepictureinpicture>
+			</video>
+			<div v-show="ctrlhnd>0 && islist" v-on:click.stop>
+				<div v-show="isimage" class="photothumbs position-absolute bottom-0 start-50 translate-middle-x mw-100 mb-md-4 p-2">
 					<thumbslider-tag v-bind:list="viewlist" />
 				</div>
 				<button class="imgbut arrow position-absolute top-50 start-0 translate-middle-y ms-md-2" v-on:click="onprev" v-bind:disabled="!getprev" title="previous image"><i class="material-icons">arrow_back</i></button>
 				<button class="imgbut arrow position-absolute top-50 end-0 translate-middle-y me-md-2" v-on:click="onnext" v-bind:disabled="!getnext" title="next image"><i class="material-icons">arrow_forward</i></button>
-			</template>
-			<template v-if="ctrlhnd>0">
+			</div>
+			<div v-show="ctrlhnd>0" v-on:click.stop>
 				<div class="d-flex position-absolute top-0 end-0 m-md-2">
+					<div>
+						<input v-model="playlist" type="checkbox" class="btn-check" id="playlistcheck" autocomplete="off">
+						<label class="imgbut tool btn-outline-light" for="playlistcheck" title="auto go to next image, or play next video when ended"><i class="material-icons">playlist_play</i></label>
+					</div>
 					<div>
 						<input v-model="hd" type="checkbox" class="btn-check" id="hdcheck" autocomplete="off">
 						<label class="imgbut tool btn-outline-light" for="hdcheck" title="squeeze big images to HD resolution"><i class="material-icons">hd</i></label>
 					</div>
 					<button class="imgbut tool btn-outline-danger" v-on:click="onclose" title="close slider"><i class="material-icons">close</i></button>
 				</div>
-			</template>
+			</div>
 		</div>
 	</div>
 </div>

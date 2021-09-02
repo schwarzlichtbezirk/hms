@@ -1,5 +1,24 @@
 "use strict";
 
+const isMainImage = ext => ({
+	".tga": true, ".bmp": true, ".dib": true, ".rle": true, ".dds": true,
+	".tif": true, ".tiff": true, ".jpg": true, ".jpe": true, ".jpeg": true, ".jfif": true,
+	".gif": true, ".png": true, ".webp": true, ".psd": true, ".psb": true
+})[ext];
+
+const isMainAudio = ext => ({
+	".wav": true, ".flac": true, ".mp3": true, ".ogg": true, ".opus": true,
+	".acc": true, ".m4a": true, ".alac": true
+})[ext];
+
+const isMainVideo = ext => ({
+	".mp4": true, ".webm": true
+})[ext];
+
+const imagefilter = file => !file.type && file.size && isMainImage(pathext(file.name));
+const audiofilter = file => !file.type && file.size && isMainAudio(pathext(file.name));
+const videofilter = file => !file.type && file.size && isMainVideo(pathext(file.name));
+
 const iconwebp = file => {
 	const res = geticonpath(file);
 	return (res.org || res.alt) + '.webp';
