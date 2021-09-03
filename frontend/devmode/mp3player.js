@@ -2,7 +2,7 @@
 
 Vue.component('mp3-player-tag', {
 	template: '#mp3-player-tpl',
-	data: function () {
+	data() {
 		return {
 			visible: false,
 			list: [],
@@ -178,12 +178,12 @@ Vue.component('mp3-player-tag', {
 			media.addEventListener('play', () => {
 				this.autoplay = true;
 				media.autoplay = true;
-				eventHub.$emit('playback', file, true);
+				eventHub.emit('playback', file, true);
 			});
 			media.addEventListener('pause', () => {
 				this.autoplay = false;
 				media.autoplay = false;
-				eventHub.$emit('playback', file, false);
+				eventHub.emit('playback', file, false);
 			});
 			media.addEventListener('ended', () => {
 				this.autoplay = true;
@@ -240,7 +240,7 @@ Vue.component('mp3-player-tag', {
 
 		onprev() {
 			if (this.getprev) {
-				eventHub.$emit('select', this.getprev);
+				eventHub.emit('select', this.getprev);
 			}
 		},
 
@@ -250,7 +250,7 @@ Vue.component('mp3-player-tag', {
 
 		onnext() {
 			if (this.getnext) {
-				eventHub.$emit('select', this.getnext);
+				eventHub.emit('select', this.getnext);
 			}
 		},
 
@@ -304,12 +304,12 @@ Vue.component('mp3-player-tag', {
 		}
 	},
 	created() {
-		eventHub.$on('select', this.onselect);
-		eventHub.$on('playlist', this.onplaylist);
+		eventHub.on('select', this.onselect);
+		eventHub.on('playlist', this.onplaylist);
 	},
 	beforeDestroy() {
-		eventHub.$off('select', this.onselect);
-		eventHub.$off('playlist', this.onplaylist);
+		eventHub.off('select', this.onselect);
+		eventHub.off('playlist', this.onplaylist);
 	}
 });
 

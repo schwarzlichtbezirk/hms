@@ -106,31 +106,25 @@ const makestrid = length => {
 	return result;
 };
 
-////////////////////////
-// Event handle model //
-////////////////////////
+///////////////////////
+// Events handle hub //
+///////////////////////
 
-const makeeventmodel = () => {
+const makeeventhub = () => {
 	const listeners = [];
 
 	const t = {
 		// dispatch event to listeners
 		emit: (name, ...args) => {
-			let i = 0;
-			while (i < listeners.length) {
-				const [ln, lf, lo] = listeners[i];
+			let i = listeners.length;
+			while (i > 0) {
+				const [ln, lf, lo] = listeners[--i];
 				if (ln === name) {
 					if (lo) { // check "once" before call to prevent loop
 						listeners.splice(i, 1);
-						i--;
 					}
-					try {
-						lf(...args);
-					} catch (e) {
-						console.error(e);
-					}
+					lf(...args);
 				}
-				i++;
 			}
 		},
 
@@ -140,15 +134,13 @@ const makeeventmodel = () => {
 		// insert new events listener for one call
 		once: (name, f) => listeners.push([name, f, true]),
 
-		// remove registered events listener
+		// remove registered events listeners
 		off: (name, f) => {
-			let i = 0;
-			while (i < listeners.length) {
-				const [ln, lf] = listeners[i];
+			let i = listeners.length;
+			while (i > 0) {
+				const [ln, lf] = listeners[--i];
 				if ((ln === name || !name) && (lf === f || !f)) {
 					listeners.splice(i, 1);
-				} else {
-					i++;
 				}
 			}
 		},
@@ -156,37 +148,38 @@ const makeeventmodel = () => {
 		// insert map of new events listeners,
 		// each entry must have valid name and associated closure
 		onmap: evmap => {
-			for (const name in evmap) {
-				listeners.push([name, evmap[name], false]);
+			for (const [n, f] of Object.entries(evmap)) {
+				listeners.push([n, f, false]);
 			}
 		},
 
 		// remove map of registered events listeners,
 		// each entry must have valid name and associated closure
 		offmap: evmap => {
-			for (const name in evmap) {
-				const f = evmap[name];
-				for (const i in listeners.length) {
-					const [ln, lf] = listeners[i];
-					if (ln === name && lf === f) {
+			for (const [n, f] of Object.entries(evmap)) {
+				let i = listeners.length;
+				while (i > 0) {
+					const [ln, lf] = listeners[--i];
+					if (ln === n && lf === f) {
 						listeners.splice(i, 1);
 						break;
 					}
 				}
-			}
+			};
 		},
 
 		listens: (name, f) => {
-			let i = 0;
-			for (const [ln, lf] of listeners) {
+			let c = 0;
+			for (const e of listeners) {
+				const [ln, lf] = e;
 				if ((ln === name || !name) && (lf === f || !f)) {
-					i++;
+					c++;
 				}
-			}
-			return i;
+			};
+			return c;
 		},
 
-		listenlen: () => listeners.length
+		len: () => listeners.length
 	};
 
 	return t;

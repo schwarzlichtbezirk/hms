@@ -1,12 +1,12 @@
 "use strict";
 
-const controlstimeout = 3000; // timeout in milliseconds
+const controlstimeout = 2500; // timeout in milliseconds
 const playlisttimeout = 8000; // timeout in milliseconds
 
 Vue.component('thumbslider-tag', {
 	template: '#thumbslider-tpl',
 	props: ["list"],
-	data: function () {
+	data() {
 		return {
 			selfile: null
 		};
@@ -27,20 +27,20 @@ Vue.component('thumbslider-tag', {
 			this.selfile = file;
 		},
 		oniconclick(file) {
-			eventHub.$emit('select', file);
+			eventHub.emit('select', file);
 		}
 	},
 	created() {
-		eventHub.$on('select', this.onselect);
+		eventHub.on('select', this.onselect);
 	},
 	beforeDestroy() {
-		eventHub.$off('select', this.onselect);
+		eventHub.off('select', this.onselect);
 	}
 });
 
 Vue.component('photoslider-tag', {
 	template: '#photoslider-tpl',
-	data: function () {
+	data() {
 		return {
 			list: [],
 			playlist: true,
@@ -103,7 +103,7 @@ Vue.component('photoslider-tag', {
 		},
 		load(file) {
 			if (this.selfile !== file) {
-				eventHub.$emit('ajax', +1);
+				eventHub.emit('ajax', +1);
 
 				// remove previous playlist timer
 				if (this.plhnd) {
@@ -159,10 +159,10 @@ Vue.component('photoslider-tag', {
 		},
 
 		onimgload(e) {
-			eventHub.$emit('ajax', -1);
+			eventHub.emit('ajax', -1);
 		},
 		onimgerror(e) {
-			eventHub.$emit('ajax', -1);
+			eventHub.emit('ajax', -1);
 		},
 		onended(e) {
 			if (this.playlist) {
@@ -202,12 +202,12 @@ Vue.component('photoslider-tag', {
 					break;
 				case 'Home':
 					if (this.viewlist.length) {
-						eventHub.$emit('select', this.viewlist[0]);
+						eventHub.emit('select', this.viewlist[0]);
 					}
 					break;
 				case 'End':
 					if (this.viewlist.length) {
-						eventHub.$emit('select', this.viewlist[this.viewlist.length - 1]);
+						eventHub.emit('select', this.viewlist[this.viewlist.length - 1]);
 					}
 					break;
 				default:
@@ -216,12 +216,12 @@ Vue.component('photoslider-tag', {
 		},
 		onprev() {
 			if (this.getprev) {
-				eventHub.$emit('select', this.getprev);
+				eventHub.emit('select', this.getprev);
 			}
 		},
 		onnext() {
 			if (this.getnext) {
-				eventHub.$emit('select', this.getnext);
+				eventHub.emit('select', this.getnext);
 			}
 		},
 		onclose() {
@@ -246,7 +246,7 @@ Vue.component('photoslider-tag', {
 		}
 	},
 	created() {
-		eventHub.$on('select', this.onselect);
+		eventHub.on('select', this.onselect);
 	},
 	mounted() {
 		this.dlg = new bootstrap.Modal(this.$el);
@@ -260,7 +260,7 @@ Vue.component('photoslider-tag', {
 		});
 	},
 	beforeDestroy() {
-		eventHub.$off('select', this.onselect);
+		eventHub.off('select', this.onselect);
 		this.dlg = null;
 	}
 });

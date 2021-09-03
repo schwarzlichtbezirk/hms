@@ -266,7 +266,7 @@ const filehint = file => {
 Vue.component('icon-tag', {
 	template: '#icon-tpl',
 	props: ["file", "clsimg"],
-	data: function () {
+	data() {
 		return {
 			iconfmt: [],
 			tm: true
@@ -290,10 +290,10 @@ Vue.component('icon-tag', {
 	},
 	methods: {
 		onselect() {
-			eventHub.$emit('select', this.file);
+			eventHub.emit('select', this.file);
 		},
 		onopen() {
-			eventHub.$emit('open', this.file);
+			eventHub.emit('open', this.file);
 		},
 		_iconset(im) {
 			this.iconfmt = im.iconfmt;
@@ -305,19 +305,19 @@ Vue.component('icon-tag', {
 	created() {
 		this.iconfmt = iconmapping.iconfmt;
 		this.tm = thumbmode;
-		eventHub.$on('iconset', this._iconset);
-		eventHub.$on('thumbmode', this._thumbmode);
+		eventHub.on('iconset', this._iconset);
+		eventHub.on('thumbmode', this._thumbmode);
 	},
 	beforeDestroy() {
-		eventHub.$off('iconset', this._iconset);
-		eventHub.$off('thumbmode', this._thumbmode);
+		eventHub.off('iconset', this._iconset);
+		eventHub.off('thumbmode', this._thumbmode);
 	}
 });
 
 Vue.component('file-icon-tag', {
 	template: '#file-icon-tpl',
 	props: ["file", "size"],
-	data: function () {
+	data() {
 		return {
 			iconfmt: [],
 			tm: true
@@ -364,10 +364,10 @@ Vue.component('file-icon-tag', {
 	},
 	methods: {
 		onselect() {
-			eventHub.$emit('select', this.file);
+			eventHub.emit('select', this.file);
 		},
 		onopen() {
-			eventHub.$emit('open', this.file);
+			eventHub.emit('open', this.file);
 		},
 		_iconset(im) {
 			this.iconfmt = im.iconfmt;
@@ -379,19 +379,19 @@ Vue.component('file-icon-tag', {
 	created() {
 		this.iconfmt = iconmapping.iconfmt;
 		this.tm = thumbmode;
-		eventHub.$on('iconset', this._iconset);
-		eventHub.$on('thumbmode', this._thumbmode);
+		eventHub.on('iconset', this._iconset);
+		eventHub.on('thumbmode', this._thumbmode);
 	},
 	beforeDestroy() {
-		eventHub.$off('iconset', this._iconset);
-		eventHub.$off('thumbmode', this._thumbmode);
+		eventHub.off('iconset', this._iconset);
+		eventHub.off('thumbmode', this._thumbmode);
 	}
 });
 
 Vue.component('img-icon-tag', {
 	template: '#img-icon-tpl',
 	props: ["file"],
-	data: function () {
+	data() {
 		return {
 			iconfmt: [],
 			tm: true
@@ -418,11 +418,11 @@ Vue.component('img-icon-tag', {
 	},
 	methods: {
 		onselect() {
-			eventHub.$emit('select', this.file);
+			eventHub.emit('select', this.file);
 		},
 
 		onopen() {
-			eventHub.$emit('open', this.file);
+			eventHub.emit('open', this.file);
 		},
 		_iconset(im) {
 			this.iconfmt = im.iconfmt;
@@ -434,12 +434,12 @@ Vue.component('img-icon-tag', {
 	created() {
 		this.iconfmt = iconmapping.iconfmt;
 		this.tm = thumbmode;
-		eventHub.$on('iconset', this._iconset);
-		eventHub.$on('thumbmode', this._thumbmode);
+		eventHub.on('iconset', this._iconset);
+		eventHub.on('thumbmode', this._thumbmode);
 	},
 	beforeDestroy() {
-		eventHub.$off('iconset', this._iconset);
-		eventHub.$off('thumbmode', this._thumbmode);
+		eventHub.off('iconset', this._iconset);
+		eventHub.off('thumbmode', this._thumbmode);
 	}
 });
 

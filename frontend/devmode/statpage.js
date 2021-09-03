@@ -52,7 +52,7 @@ Vue.component('catitem-tag', {
 </div>
 `,
 	props: ["icon", "text", "wide"],
-	data: function () {
+	data() {
 		return {
 			widen: true
 		};
@@ -74,7 +74,7 @@ const maxpageitem = 5;
 Vue.component('pagination-tag', {
 	template: '#pagination-tpl',
 	props: ["num"],
-	data: function () {
+	data() {
 		return {
 			view: maxpageitem,
 			left: 0,
@@ -138,7 +138,7 @@ Vue.component('pagination-tag', {
 Vue.component('user-tag', {
 	template: '#user-tpl',
 	props: ["user"],
-	data: function () {
+	data() {
 		return {
 		};
 	},
@@ -336,7 +336,7 @@ const app = new Vue({
 		}
 	},
 	created() {
-		eventHub.$on('ajax', viewpreloader);
+		eventHub.on('ajax', viewpreloader);
 	},
 	mounted() {
 		(async () => {
@@ -423,10 +423,10 @@ const app = new Vue({
 		}
 
 		// hide start-up preloader
-		eventHub.$emit('ajax', -1);
+		eventHub.emit('ajax', -1);
 	},
 	beforeDestroy() {
-		eventHub.$off('ajax', viewpreloader);
+		eventHub.off('ajax', viewpreloader);
 	}
 }); // end of vue application
 

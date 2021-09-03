@@ -356,7 +356,7 @@ const ajaxfail = e => {
 
 Vue.component('auth-tag', {
 	template: '#auth-tpl',
-	data: function () {
+	data() {
 		return {
 			isauth: false, // is authorized
 			login: "", // authorization login
@@ -382,7 +382,7 @@ Vue.component('auth-tag', {
 		},
 		onlogin() {
 			(async () => {
-				eventHub.$emit('ajax', +1);
+				eventHub.emit('ajax', +1);
 				try {
 					const resp1 = await fetchjson("POST", "/api/auth/pubkey");
 					const data1 = await resp1.json();
@@ -429,7 +429,7 @@ Vue.component('auth-tag', {
 				} catch (e) {
 					ajaxfail(e);
 				} finally {
-					eventHub.$emit('ajax', -1);
+					eventHub.emit('ajax', -1);
 				}
 			})();
 		},
@@ -448,47 +448,49 @@ Vue.component('auth-tag', {
 		}
 	},
 	created() {
-		eventHub.$on('auth', this.authclosure);
+		eventHub.on('auth', this.authclosure);
 	},
 	beforeDestroy() {
-		eventHub.$off('auth', this.authclosure);
+		eventHub.off('auth', this.authclosure);
 	}
 });
 
 const app = new Vue({
 	el: '#app',
 	template: '#app-tpl',
-	data: {
-		skinid: "", // ID of skin CSS
-		iconid: "", // ID of icons mapping json
-		resmodel: resmodel,
-		showauth: false, // display authorization form
-		isauth: false, // is authorized
-		authid: 0, // authorized ID
-		aid: 0, // profile ID
-		ishome: false, // able to go home
+	data() {
+		return {
+			skinid: "", // ID of skin CSS
+			iconid: "", // ID of icons mapping json
+			resmodel: resmodel,
+			showauth: false, // display authorization form
+			isauth: false, // is authorized
+			authid: 0, // authorized ID
+			aid: 0, // profile ID
+			ishome: false, // able to go home
 
-		selfile: null, // current selected item
-		diskpath: "", // path to disk to add
-		diskpathstate: 0,
-		diskadd: null,
+			selfile: null, // current selected item
+			diskpath: "", // path to disk to add
+			diskpathstate: 0,
+			diskadd: null,
 
-		shared: [], // list of shared items
+			shared: [], // list of shared items
 
-		// history
-		histpos: 0, // position in history stack
-		histlist: [], // history stack
+			// history
+			histpos: 0, // position in history stack
+			histlist: [], // history stack
 
-		// current opened folder data
-		pathlist: [], // list of subfolders properties in current folder
-		filelist: [], // list of files properties in current folder
-		curscan: new Date(), // time of last scanning of current folder
-		curcid: "", // current category ID
-		curpuid: "", // current folder PUID
-		curpath: "", // current folder path and path state
-		shrname: "", // current folder path share name
+			// current opened folder data
+			pathlist: [], // list of subfolders properties in current folder
+			filelist: [], // list of files properties in current folder
+			curscan: new Date(), // time of last scanning of current folder
+			curcid: "", // current category ID
+			curpuid: "", // current folder PUID
+			curpath: "", // current folder path and path state
+			shrname: "", // current folder path share name
 
-		iid: makestrid(10) // instance ID
+			iid: makestrid(10) // instance ID
+		};
 	},
 	computed: {
 		// is it authorized or running on localhost
@@ -677,7 +679,7 @@ const app = new Vue({
 				throw new HttpError(response.status, { what: "can not load icons mapping file", when: Date.now(), code: 0 });
 			}
 			iconmapping = await response.json();
-			eventHub.$emit('iconset', iconmapping);
+			eventHub.emit('iconset', iconmapping);
 		},
 
 		async fetchishome() {
@@ -917,13 +919,13 @@ const app = new Vue({
 				for (const v of this.resmodel.iconlist) {
 					if (v.id === iconid) {
 						(async () => {
-							eventHub.$emit('ajax', +1);
+							eventHub.emit('ajax', +1);
 							try {
 								await this.fetchicons(v.link);
 							} catch (e) {
 								ajaxfail(e);
 							} finally {
-								eventHub.$emit('ajax', -1);
+								eventHub.emit('ajax', -1);
 							}
 						})();
 						sessionStorage.setItem('iconid', iconid);
@@ -969,7 +971,7 @@ const app = new Vue({
 			this.updateshared();
 
 			// clear current selected
-			eventHub.$emit('select', null);
+			eventHub.emit('select', null);
 			// init map card
 			this.$refs.mcard.new();
 			// update map card
@@ -989,7 +991,7 @@ const app = new Vue({
 
 		onhome() {
 			(async () => {
-				eventHub.$emit('ajax', +1);
+				eventHub.emit('ajax', +1);
 				try {
 					// open route and push history step
 					const hist = { cid: "home", aid: this.aid };
@@ -998,14 +1000,14 @@ const app = new Vue({
 				} catch (e) {
 					ajaxfail(e);
 				} finally {
-					eventHub.$emit('ajax', -1);
+					eventHub.emit('ajax', -1);
 				}
 			})();
 		},
 
 		onback() {
 			(async () => {
-				eventHub.$emit('ajax', +1);
+				eventHub.emit('ajax', +1);
 				try {
 					this.histpos--;
 					const hist = this.histlist[this.histpos - 1];
@@ -1013,14 +1015,14 @@ const app = new Vue({
 				} catch (e) {
 					ajaxfail(e);
 				} finally {
-					eventHub.$emit('ajax', -1);
+					eventHub.emit('ajax', -1);
 				}
 			})();
 		},
 
 		onforward() {
 			(async () => {
-				eventHub.$emit('ajax', +1);
+				eventHub.emit('ajax', +1);
 				try {
 					this.histpos++;
 					const hist = this.histlist[this.histpos - 1];
@@ -1028,14 +1030,14 @@ const app = new Vue({
 				} catch (e) {
 					ajaxfail(e);
 				} finally {
-					eventHub.$emit('ajax', -1);
+					eventHub.emit('ajax', -1);
 				}
 			})();
 		},
 
 		onparent() {
 			(async () => {
-				eventHub.$emit('ajax', +1);
+				eventHub.emit('ajax', +1);
 				try {
 					// open route and push history step
 					const path = this.curpathway.length
@@ -1047,14 +1049,14 @@ const app = new Vue({
 				} catch (e) {
 					ajaxfail(e);
 				} finally {
-					eventHub.$emit('ajax', -1);
+					eventHub.emit('ajax', -1);
 				}
 			})();
 		},
 
 		onrefresh() {
 			(async () => {
-				eventHub.$emit('ajax', +1);
+				eventHub.emit('ajax', +1);
 				try {
 					await this.fetchopenroute({ cid: this.curcid, aid: this.aid, puid: this.curpuid, path: this.curpath });
 					if (this.isadmin && this.curcid !== "shares") {
@@ -1066,7 +1068,7 @@ const app = new Vue({
 				} catch (e) {
 					ajaxfail(e);
 				} finally {
-					eventHub.$emit('ajax', -1);
+					eventHub.emit('ajax', -1);
 				}
 			})();
 		},
@@ -1076,7 +1078,7 @@ const app = new Vue({
 		},
 		onshare() {
 			(async () => {
-				eventHub.$emit('ajax', +1);
+				eventHub.emit('ajax', +1);
 				try {
 					if (this.selfile.shared) { // should remove share
 						await this.fetchsharedel(this.selfile);
@@ -1086,7 +1088,7 @@ const app = new Vue({
 				} catch (e) {
 					ajaxfail(e);
 				} finally {
-					eventHub.$emit('ajax', -1);
+					eventHub.emit('ajax', -1);
 				}
 			})();
 		},
@@ -1096,7 +1098,7 @@ const app = new Vue({
 
 		ondiskadd() {
 			(async () => {
-				eventHub.$emit('ajax', +1);
+				eventHub.emit('ajax', +1);
 				try {
 					const response = await fetchajaxauth("POST", "/api/drive/add", {
 						aid: this.$root.aid,
@@ -1115,13 +1117,13 @@ const app = new Vue({
 				} catch (e) {
 					ajaxfail(e);
 				} finally {
-					eventHub.$emit('ajax', -1);
+					eventHub.emit('ajax', -1);
 				}
 			})();
 		},
 		ondiskremove() {
 			(async () => {
-				eventHub.$emit('ajax', +1);
+				eventHub.emit('ajax', +1);
 				try {
 					const response = await fetchajaxauth("POST", "/api/drive/del", {
 						aid: this.$root.aid,
@@ -1141,7 +1143,7 @@ const app = new Vue({
 				} catch (e) {
 					ajaxfail(e);
 				} finally {
-					eventHub.$emit('ajax', -1);
+					eventHub.emit('ajax', -1);
 				}
 			})();
 		},
@@ -1181,7 +1183,7 @@ const app = new Vue({
 			if (file.type || ext === ".iso") {
 				if (!file.latency || file.latency > 0) {
 					(async () => {
-						eventHub.$emit('ajax', +1);
+						eventHub.emit('ajax', +1);
 						try {
 							// open route and push history step
 							const hist = { aid: this.aid };
@@ -1199,14 +1201,14 @@ const app = new Vue({
 						} catch (e) {
 							ajaxfail(e);
 						} finally {
-							eventHub.$emit('ajax', -1);
+							eventHub.emit('ajax', -1);
 						}
 					})();
 				}
 			} else if (extfmt.playlist[ext]) {
 				// open route
 				(async () => {
-					eventHub.$emit('ajax', +1);
+					eventHub.emit('ajax', +1);
 					try {
 						// open route and push history step
 						const hist = { cid: this.curcid, aid: this.aid, puid: file.puid };
@@ -1217,7 +1219,7 @@ const app = new Vue({
 					} catch (e) {
 						ajaxfail(e);
 					} finally {
-						eventHub.$emit('ajax', -1);
+						eventHub.emit('ajax', -1);
 					}
 				})();
 			} else if (imagefilter(file) || videofilter(file)) {
@@ -1243,11 +1245,11 @@ const app = new Vue({
 		}
 	},
 	created() {
-		eventHub.$on('auth', this.authclosure);
-		eventHub.$on('ajax', viewpreloader);
-		eventHub.$on('open', this.onopen);
-		eventHub.$on('select', this.onselect);
-		eventHub.$on('playback', this.onplayback);
+		eventHub.on('auth', this.authclosure);
+		eventHub.on('ajax', viewpreloader);
+		eventHub.on('open', this.onopen);
+		eventHub.on('select', this.onselect);
+		eventHub.on('playback', this.onplayback);
 
 		auth.signload();
 		this.login = auth.login;
@@ -1302,7 +1304,7 @@ const app = new Vue({
 
 		// load resources and open route
 		(async () => {
-			eventHub.$emit('ajax', +1);
+			eventHub.emit('ajax', +1);
 			try {
 				// load resources model at first
 				const response = await fetch("/data/assets/resmodel.json");
@@ -1341,19 +1343,19 @@ const app = new Vue({
 			} catch (e) {
 				ajaxfail(e);
 			} finally {
-				eventHub.$emit('ajax', -1);
+				eventHub.emit('ajax', -1);
 			}
 		})();
 
 		// hide start-up preloader
-		eventHub.$emit('ajax', -1);
+		eventHub.emit('ajax', -1);
 	},
 	beforeDestroy() {
-		eventHub.$off('auth', this.authclosure);
-		eventHub.$off('ajax', viewpreloader);
-		eventHub.$off('open', this.onopen);
-		eventHub.$off('select', this.onselect);
-		eventHub.$off('playback', this.onplayback);
+		eventHub.off('auth', this.authclosure);
+		eventHub.off('ajax', viewpreloader);
+		eventHub.off('open', this.onopen);
+		eventHub.off('select', this.onselect);
+		eventHub.off('playback', this.onplayback);
 
 		// erase diskadd dialog
 		this.diskadd = null;

@@ -167,7 +167,7 @@ const makemarkerpopup = file => {
 Vue.component('dir-card-tag', {
 	template: '#dir-card-tpl',
 	props: ["list"],
-	data: function () {
+	data() {
 		return {
 			isauth: false, // is authorized
 			sortorder: 1,
@@ -244,21 +244,21 @@ Vue.component('dir-card-tag', {
 		},
 
 		onunselect() {
-			eventHub.$emit('select', null);
+			eventHub.emit('select', null);
 		}
 	},
 	created() {
-		eventHub.$on('auth', this.authclosure);
+		eventHub.on('auth', this.authclosure);
 	},
 	beforeDestroy() {
-		eventHub.$off('auth', this.authclosure);
+		eventHub.off('auth', this.authclosure);
 	}
 });
 
 Vue.component('file-card-tag', {
 	template: '#file-card-tpl',
 	props: ["list"],
-	data: function () {
+	data() {
 		return {
 			isauth: false, // is authorized
 			sortorder: 1,
@@ -309,7 +309,7 @@ Vue.component('file-card-tag', {
 					}
 				});
 			}
-			eventHub.$emit('playlist', res);
+			eventHub.emit('playlist', res);
 			return res;
 		},
 
@@ -427,7 +427,7 @@ Vue.component('file-card-tag', {
 		},
 		onthumbmode() {
 			this.thumbmode = thumbmode = !this.thumbmode;
-			eventHub.$emit('thumbmode', thumbmode);
+			eventHub.emit('thumbmode', thumbmode);
 		},
 
 		onaudioonly() {
@@ -463,20 +463,20 @@ Vue.component('file-card-tag', {
 		},
 
 		onunselect() {
-			eventHub.$emit('select', null);
+			eventHub.emit('select', null);
 		}
 	},
 	created() {
-		eventHub.$on('auth', this.authclosure);
+		eventHub.on('auth', this.authclosure);
 	},
 	beforeDestroy() {
-		eventHub.$off('auth', this.authclosure);
+		eventHub.off('auth', this.authclosure);
 	}
 });
 
 Vue.component('map-card-tag', {
 	template: '#map-card-tpl',
-	data: function () {
+	data() {
 		return {
 			styleid: 'mapbox-hybrid',
 			map: null, // set it on mounted event
@@ -779,7 +779,7 @@ Vue.component('map-card-tag', {
 			this.gpxlist.push(gpx);
 
 			(async () => {
-				eventHub.$emit('ajax', +1);
+				eventHub.emit('ajax', +1);
 				try {
 					const response = await fetch(fileurl(fp));
 					const body = await response.text();
@@ -801,7 +801,7 @@ Vue.component('map-card-tag', {
 				} catch (e) {
 					ajaxfail(e);
 				} finally {
-					eventHub.$emit('ajax', -1);
+					eventHub.emit('ajax', -1);
 				}
 			})();
 		},

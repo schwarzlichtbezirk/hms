@@ -1,7 +1,7 @@
 "use strict";
 // All what is need for ajax.
 
-const eventHub = new Vue();
+const eventHub = makeeventhub();
 
 const auth = {
 	token: {
@@ -29,14 +29,14 @@ const auth = {
 			sessionStorage.setItem('login', lgn);
 			this.login = lgn;
 		}
-		eventHub.$emit('auth', true);
+		eventHub.emit('auth', true);
 	},
 	signout() {
 		sessionStorage.removeItem('token');
 		this.token.access = null;
 		this.token.refrsh = null;
 		// login remains unchanged
-		eventHub.$emit('auth', false);
+		eventHub.emit('auth', false);
 	},
 	signload() {
 		try {
@@ -44,12 +44,12 @@ const auth = {
 			this.token.access = tok.access;
 			this.token.refrsh = tok.refrsh;
 			this.login = sessionStorage.getItem('login') || "";
-			eventHub.$emit('auth', true);
+			eventHub.emit('auth', true);
 		} catch {
 			this.token.access = null;
 			this.token.refrsh = null;
 			this.login = "";
-			eventHub.$emit('auth', false);
+			eventHub.emit('auth', false);
 		}
 	}
 };
