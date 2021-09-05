@@ -5,7 +5,7 @@ const playlisttimeout = 8000; // timeout in milliseconds
 
 Vue.component('thumbslider-tag', {
 	template: '#thumbslider-tpl',
-	props: ["list"],
+	props: ['list'],
 	data() {
 		return {
 			selfile: null

@@ -82,7 +82,9 @@ const fmttime = (tval, tmax) => {
 		const r = n - vs.length;
 		return r > 0 ? "0".repeat(r) + vs : vs;
 	};
-	if (tmax < 60) {
+	if (!Number.isFinite(tval)) {
+		return "unknown"
+	} else if (tmax < 60) {
 		return lead0(tval, 2);
 	} else if (tmax < 3600) {
 		const ss = tval % 60;

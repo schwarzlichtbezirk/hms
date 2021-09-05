@@ -284,11 +284,13 @@ const mediaurl = (file, media, hd) => `/id${app.aid}/file/${file.puid}?media=${m
 
 const showmsgbox = (title, message, details) => {
 	const el = document.getElementById('msgbox');
-	const dlg = new bootstrap.Modal(el);
-	el.querySelector(".modal-title").innerText = title;
-	el.querySelector(".message").innerText = message;
-	el.querySelector(".details").innerText = details || "";
-	dlg.show();
+	if (el) {
+		const dlg = new bootstrap.Modal(el);
+		el.querySelector(".modal-title").innerText = title;
+		el.querySelector(".message").innerText = message;
+		el.querySelector(".details").innerText = details || "";
+		dlg.show();
+	}
 };
 
 const ajaxfail = e => {
@@ -302,12 +304,14 @@ const ajaxfail = e => {
 	} else if (e instanceof HttpError) {
 		const msgbox = (title, message) => {
 			const el = document.getElementById('msgbox');
-			const dlg = new bootstrap.Modal(el);
-			el.querySelector(".modal-title").innerText = title;
-			el.querySelector(".message").innerText = message;
-			el.querySelector(".errcode").innerText = e.code;
-			el.querySelector(".errmsg").innerText = e.what;
-			dlg.show();
+			if (el) {
+				const dlg = new bootstrap.Modal(el);
+				el.querySelector(".modal-title").innerText = title;
+				el.querySelector(".message").innerText = message;
+				el.querySelector(".errcode").innerText = e.code;
+				el.querySelector(".errmsg").innerText = e.what;
+				dlg.show();
+			}
 		};
 		switch (e.status) {
 			case 400: // Bad Request
@@ -407,7 +411,6 @@ Vue.component('auth-tag', {
 						auth.signin(data2, this.login);
 						this.namestate = 1;
 						this.passstate = 1;
-						this.$emit('refresh');
 					} else if (resp2.status === 403) { // Forbidden
 						auth.signout();
 						switch (data2.code) {
@@ -437,7 +440,6 @@ Vue.component('auth-tag', {
 			auth.signout();
 			this.namestate = 0;
 			this.passstate = 0;
-			this.$emit('refresh');
 		},
 
 		authclosure(is) {
@@ -906,7 +908,7 @@ const app = new Vue({
 			if (skinid !== this.skinid) {
 				for (const v of this.resmodel.skinlist) {
 					if (v.id === skinid) {
-						document.getElementById('skinmodel').setAttribute('href', v.link);
+						document.getElementById('skinmodel')?.setAttribute('href', v.link);
 						sessionStorage.setItem('skinid', skinid);
 						this.skinid = skinid;
 					}
@@ -1110,7 +1112,7 @@ const app = new Vue({
 						if (file) {
 							this.pathlist.push(file);
 						}
-						this.diskadd.hide();
+						this.diskadd?.hide();
 					} else {
 						this.diskpathstate = -1;
 					}
@@ -1224,6 +1226,9 @@ const app = new Vue({
 				})();
 			} else if (imagefilter(file) || videofilter(file)) {
 				this.$refs.slider.popup(file, this.$refs.fcard.playlist);
+				if (!this.$refs.mp3player.media?.paused) {
+					this.$refs.mp3player.media.pause();
+				}
 			} else {
 				const url = mediaurl(file, 1, 0);
 				window.open(url, file.name);
@@ -1281,10 +1286,12 @@ const app = new Vue({
 
 		// init diskadd dialog
 		const el = document.getElementById('diskadd' + this.iid);
-		this.diskadd = new bootstrap.Modal(el);
-		el.addEventListener('shown.bs.modal', e => {
-			el.querySelector('input').focus();
-		});
+		if (el) {
+			this.diskadd = new bootstrap.Modal(el);
+			el.addEventListener('shown.bs.modal', e => {
+				el.querySelector('input').focus();
+			});
+		}
 
 		const hist = { aid: this.aid };
 		// get route
@@ -1317,7 +1324,7 @@ const app = new Vue({
 				const skinid = sessionStorage.getItem('skinid') || this.resmodel.defskinid;
 				for (const v of this.resmodel.skinlist) {
 					if (v.id === skinid) {
-						document.getElementById('skinmodel').setAttribute('href', v.link);
+						document.getElementById('skinmodel')?.setAttribute('href', v.link);
 						this.skinid = skinid;
 					}
 				}

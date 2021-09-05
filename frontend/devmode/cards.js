@@ -721,7 +721,7 @@ Vue.component('map-card-tag', {
 				const template = document.createElement('template');
 				template.innerHTML = makemarkerpopup(file).trim();
 				const popup = template.content.firstChild;
-				popup.querySelector(".photoinfo picture").addEventListener('click', () => {
+				popup.querySelector(".photoinfo picture")?.addEventListener('click', () => {
 					this.$root.$refs.slider.popup(file, this.gpslist);
 				});
 
@@ -863,7 +863,9 @@ Vue.component('map-card-tag', {
 		},
 		onfullscreenchange() {
 			const e = this.$refs.map.querySelector(".leaflet-control-fullscreen > span");
-			e.innerHTML = isFullscreen() ? 'fullscreen_exit' : 'fullscreen';
+			if (e) {
+				e.innerHTML = isFullscreen() ? 'fullscreen_exit' : 'fullscreen';
+			}
 		},
 		onfullscreen() {
 			if (isFullscreen()) {
@@ -903,16 +905,13 @@ Vue.component('map-card-tag', {
 			onAdd: map => {
 				const html = document.getElementById("leaflet-toolbar").innerHTML;
 				const template = document.createElement('template');
-				template.innerHTML = html.trim();
+				template.innerHTML = html?.trim();
 				const tb = template.content.firstChild;
 
-				const butfs = tb.querySelector(".leaflet-control-fullscreen");
-				butfs.addEventListener('click', e => {
+				tb?.querySelector(".leaflet-control-fullscreen")?.addEventListener('click', e => {
 					this.onfullscreen();
 				});
-
-				const butfb = tb.querySelector(".leaflet-control-adjust");
-				butfb.addEventListener('click', e => {
+				tb?.querySelector(".leaflet-control-adjust")?.addEventListener('click', e => {
 					this.onfitbounds();
 				});
 

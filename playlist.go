@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/beevik/guid"
-	"github.com/go-ini/ini"
+	"gopkg.in/ini.v1"
 )
 
 type Track struct {

@@ -98,14 +98,13 @@ Vue.component('mp3-player-tag', {
 		},
 		stlbarcur() {
 			const percent = this.timeend === Infinity ? 95 : // streamed
-				!this.timeend || isNaN(this.timeend) ? 5 : // unknown length
+				!this.timeend || Number.isNaN(this.timeend) ? 5 : // unknown length
 					this.timecur / this.timeend * 100;
 			return { width: percent + "%" };
 		},
 		stlbarbuf() {
-			const percent = this.timeend === Infinity ? 0 : // streamed
-				!this.timeend || isNaN(this.timeend) ? 0 : // unknown length
-					this.timebuf / this.timeend * 100;
+			const percent = Number.isFinite(this.timeend)
+				? this.timebuf / this.timeend * 100 : 0;
 			return { width: percent + "%" };
 		}
 	},
