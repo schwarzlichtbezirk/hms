@@ -1,4 +1,8 @@
 
+[v-cloak] {
+	display: none;
+}
+
 /* preloader */
 
 .preloader-lock {

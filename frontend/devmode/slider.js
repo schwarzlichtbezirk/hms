@@ -3,7 +3,7 @@
 const controlstimeout = 2500; // timeout in milliseconds
 const playlisttimeout = 8000; // timeout in milliseconds
 
-Vue.component('thumbslider-tag', {
+const VueThumbSlider = {
 	template: '#thumbslider-tpl',
 	props: ['list'],
 	data() {
@@ -33,12 +33,12 @@ Vue.component('thumbslider-tag', {
 	created() {
 		eventHub.on('select', this.onselect);
 	},
-	beforeDestroy() {
+	unmounted() {
 		eventHub.off('select', this.onselect);
 	}
-});
+};
 
-Vue.component('photoslider-tag', {
+const VuePhotoSlider = {
 	template: '#photoslider-tpl',
 	data() {
 		return {
@@ -259,10 +259,10 @@ Vue.component('photoslider-tag', {
 			this.selfile = null;
 		});
 	},
-	beforeDestroy() {
+	unmounted() {
 		eventHub.off('select', this.onselect);
 		this.dlg = null;
 	}
-});
+};
 
 // The End.

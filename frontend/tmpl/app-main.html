@@ -1,5 +1,5 @@
 
-<div>
+<div v-cloak>
 	<div class="d-flex flex-column vh-100">
 		<div class="flex-grow-1 overflow-auto">
 			<div class="container-fluid folder-head p-1 p-sm-2">
@@ -65,28 +65,16 @@
 			</nav>
 
 			<div id="accordion">
-				<template>
-					<dir-card-tag ref="dcard" v-bind:list="pathlist" />
-				</template>
-
-				<template>
-					<file-card-tag ref="fcard" v-bind:list="filelist" />
-				</template>
-
-				<template>
-					<map-card-tag ref="mcard" />
-				</template>
+				<dir-card-tag ref="dcard" v-bind:list="pathlist" />
+				<file-card-tag ref="fcard" v-bind:list="filelist" />
+				<map-card-tag ref="mcard" />
 			</div>
 		</div>
 
-		<template>
-			<mp3-player-tag ref="mp3player" />
-		</template>
+		<mp3-player-tag ref="mp3player" />
 	</div>
 
-	<template>
-		<photoslider-tag ref="slider" />
-	</template>
+	<photoslider-tag ref="slider" />
 
 	<!-- Dialog managed by jQuery calls -->
 

@@ -358,107 +358,7 @@ const ajaxfail = e => {
 	}
 };
 
-Vue.component('auth-tag', {
-	template: '#auth-tpl',
-	data() {
-		return {
-			isauth: false, // is authorized
-			login: "", // authorization login
-			password: "", // authorization password
-			namestate: 0, // -1 invalid login, 0 ambiguous, 1 valid login
-			passstate: 0 // -1 invalid password, 0 ambiguous, 1 valid password
-		};
-	},
-	computed: {
-		clsname() {
-			return !this.namestate ? ''
-				: this.namestate === -1 ? 'is-invalid' : 'is-valid';
-		},
-		clspass() {
-			return !this.passstate ? ''
-				: this.passstate === -1 ? 'is-invalid' : 'is-valid';
-		}
-	},
-	methods: {
-		onauthchange() {
-			this.namestate = 0;
-			this.passstate = 0;
-		},
-		onlogin() {
-			(async () => {
-				eventHub.emit('ajax', +1);
-				try {
-					const resp1 = await fetchjson("POST", "/api/auth/pubkey");
-					const data1 = await resp1.json();
-					traceajax(resp1, data1);
-					if (!resp1.ok) {
-						throw new HttpError(resp1.status, data1);
-					}
-
-					// github.com/emn178/js-sha256
-					const hash = sha256.hmac.create(data1);
-					hash.update(this.password);
-
-					const resp2 = await fetchjson("POST", "/api/auth/signin", {
-						name: this.login,
-						pubk: data1,
-						hash: hash.digest()
-					});
-					const data2 = await resp2.json();
-					traceajax(resp2, data2);
-
-					if (resp2.status === 200) {
-						auth.signin(data2, this.login);
-						this.namestate = 1;
-						this.passstate = 1;
-					} else if (resp2.status === 403) { // Forbidden
-						auth.signout();
-						switch (data2.code) {
-							case 13:
-								this.namestate = -1;
-								this.passstate = 0;
-								break;
-							case 15:
-								this.namestate = 1;
-								this.passstate = -1;
-								break;
-							default:
-								this.namestate = -1;
-								this.passstate = -1;
-						}
-					} else {
-						throw new HttpError(resp2.status, data2);
-					}
-				} catch (e) {
-					ajaxfail(e);
-				} finally {
-					eventHub.emit('ajax', -1);
-				}
-			})();
-		},
-		onlogout() {
-			auth.signout();
-			this.namestate = 0;
-			this.passstate = 0;
-		},
-
-		authclosure(is) {
-			this.isauth = is;
-			if (is) {
-				this.login = auth.login;
-			}
-		}
-	},
-	created() {
-		eventHub.on('auth', this.authclosure);
-	},
-	beforeDestroy() {
-		eventHub.off('auth', this.authclosure);
-	}
-});
-
-const app = new Vue({
-	el: '#app',
+const VueMainApp = {
 	template: '#app-tpl',
 	data() {
 		return {
@@ -811,8 +711,8 @@ const app = new Vue({
 							if (tp.ntmb) {
 								for (const fp of this.filelist) {
 									if (fp.puid === tp.puid) {
-										Vue.set(fp, 'ntmb', tp.ntmb);
-										Vue.set(fp, 'mtmb', tp.mtmb);
+										fp.ntmb = tp.ntmb; // Vue.set
+										fp.mtmb = tp.mtmb; // Vue.set
 										// add gps-item
 										if (fp.latitude && fp.longitude && fp.ntmb === 1) {
 											gpslist.push(fp);
@@ -854,7 +754,7 @@ const app = new Vue({
 			if (!response.ok) {
 				throw new HttpError(response.status, response.data);
 			}
-			Vue.set(file, 'shared', true);
+			file.shared = true; // Vue.set
 			this.shared.push(file);
 		},
 
@@ -870,7 +770,7 @@ const app = new Vue({
 
 			// update folder settings
 			if (response.data) { // on ok
-				Vue.set(file, 'shared', false);
+				file.shared = false; // Vue.set
 				for (let i = 0; i < this.shared.length;) {
 					if (this.shared[i].puid === file.puid) {
 						this.shared.splice(i, 1);
@@ -890,7 +790,7 @@ const app = new Vue({
 						break;
 					}
 				}
-				Vue.set(fp, 'shared', sf);
+				fp.shared = sf; // Vue.set
 			}
 			for (const fp of this.filelist) {
 				let sf = false;
@@ -900,7 +800,7 @@ const app = new Vue({
 						break;
 					}
 				}
-				Vue.set(fp, 'shared', sf);
+				fp.shared = sf; // Vue.set
 			}
 		},
 
@@ -1237,16 +1137,16 @@ const app = new Vue({
 		onselect(file) {
 			// deselect previous
 			if (this.selfile) {
-				Vue.set(this.selfile, 'selected', false);
+				this.selfile.selected = false; // Vue.set
 			}
 			// select current
 			this.selfile = file;
 			if (file) {
-				Vue.set(file, 'selected', true);
+				file.selected = true; // Vue.set
 			}
 		},
 		onplayback(file, isplay) {
-			Vue.set(file, 'playback', isplay);
+			file.playback = isplay; // Vue.set
 		}
 	},
 	created() {
@@ -1357,7 +1257,7 @@ const app = new Vue({
 		// hide start-up preloader
 		eventHub.emit('ajax', -1);
 	},
-	beforeDestroy() {
+	unmounted() {
 		eventHub.off('auth', this.authclosure);
 		eventHub.off('ajax', viewpreloader);
 		eventHub.off('open', this.onopen);
@@ -1367,6 +1267,119 @@ const app = new Vue({
 		// erase diskadd dialog
 		this.diskadd = null;
 	}
-});
+};
+
+const VueAuth = {
+	template: '#auth-tpl',
+	data() {
+		return {
+			isauth: false, // is authorized
+			login: "", // authorization login
+			password: "", // authorization password
+			namestate: 0, // -1 invalid login, 0 ambiguous, 1 valid login
+			passstate: 0 // -1 invalid password, 0 ambiguous, 1 valid password
+		};
+	},
+	computed: {
+		clsname() {
+			return !this.namestate ? ''
+				: this.namestate === -1 ? 'is-invalid' : 'is-valid';
+		},
+		clspass() {
+			return !this.passstate ? ''
+				: this.passstate === -1 ? 'is-invalid' : 'is-valid';
+		}
+	},
+	methods: {
+		onauthchange() {
+			this.namestate = 0;
+			this.passstate = 0;
+		},
+		onlogin() {
+			(async () => {
+				eventHub.emit('ajax', +1);
+				try {
+					const resp1 = await fetchjson("POST", "/api/auth/pubkey");
+					const data1 = await resp1.json();
+					traceajax(resp1, data1);
+					if (!resp1.ok) {
+						throw new HttpError(resp1.status, data1);
+					}
+
+					// github.com/emn178/js-sha256
+					const hash = sha256.hmac.create(data1);
+					hash.update(this.password);
+
+					const resp2 = await fetchjson("POST", "/api/auth/signin", {
+						name: this.login,
+						pubk: data1,
+						hash: hash.digest()
+					});
+					const data2 = await resp2.json();
+					traceajax(resp2, data2);
+
+					if (resp2.status === 200) {
+						auth.signin(data2, this.login);
+						this.namestate = 1;
+						this.passstate = 1;
+					} else if (resp2.status === 403) { // Forbidden
+						auth.signout();
+						switch (data2.code) {
+							case 13:
+								this.namestate = -1;
+								this.passstate = 0;
+								break;
+							case 15:
+								this.namestate = 1;
+								this.passstate = -1;
+								break;
+							default:
+								this.namestate = -1;
+								this.passstate = -1;
+						}
+					} else {
+						throw new HttpError(resp2.status, data2);
+					}
+				} catch (e) {
+					ajaxfail(e);
+				} finally {
+					eventHub.emit('ajax', -1);
+				}
+			})();
+		},
+		onlogout() {
+			auth.signout();
+			this.namestate = 0;
+			this.passstate = 0;
+		},
+
+		authclosure(is) {
+			this.isauth = is;
+			if (is) {
+				this.login = auth.login;
+			}
+		}
+	},
+	created() {
+		eventHub.on('auth', this.authclosure);
+	},
+	unmounted() {
+		eventHub.off('auth', this.authclosure);
+	}
+};
+
+// Create application view model
+const appws = Vue.createApp(VueMainApp)
+	.component('auth-tag', VueAuth)
+	.component('thumbslider-tag', VueThumbSlider)
+	.component('photoslider-tag', VuePhotoSlider)
+	.component('mp3-player-tag', VuePlayer)
+	.component('dir-card-tag', VueDirCard)
+	.component('file-card-tag', VueFileCard)
+	.component('map-card-tag', VueMapCard)
+	.component('icon-tag', VueIcon)
+	.component('file-icon-tag', VueFileIcon)
+	.component('img-icon-tag', VueImgIcon);
+const app = appws.mount('#app');
 
 // The End.

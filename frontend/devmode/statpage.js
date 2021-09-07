@@ -276,7 +276,7 @@ const VueStatApp = {
 		// hide start-up preloader
 		eventHub.emit('ajax', -1);
 	},
-	beforeDestroy() {
+	unmounted() {
 		eventHub.off('ajax', viewpreloader);
 	}
 }; // end of vue application
@@ -301,7 +301,7 @@ const VueCatItem = {
 			this.widen = !this.widen;
 		}
 	},
-	mounted() {
+	created() {
 		this.widen = this.wide;
 	}
 };
@@ -438,11 +438,11 @@ const VueUser = {
 	}
 };
 
-// Application workspace
-const appws = Vue.createApp(VueStatApp);
-appws.component('catitem-tag', VueCatItem);
-appws.component('pagination-tag', VuePagination);
-appws.component('user-tag', VueUser);
-const app = appws.mount('#app');
+// Create application view model
+const app = Vue.createApp(VueStatApp)
+	.component('catitem-tag', VueCatItem)
+	.component('pagination-tag', VuePagination)
+	.component('user-tag', VueUser);
+const vm = app.mount('#app');
 
 // The End.

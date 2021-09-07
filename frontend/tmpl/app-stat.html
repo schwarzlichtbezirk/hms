@@ -1,5 +1,5 @@
 
-<div>
+<div v-cloak>
 	<h2>home media server monitor</h2>
 
 	<div id="accordion">
@@ -187,9 +187,7 @@
 					<template v-for="user in usrlst.list">
 						<user-tag v-bind:user="user" />
 					</template>
-					<template>
-						<pagination-tag v-bind:num="usrlstnum" v-on:page="onusrlstpage" />
-					</template>
+					<pagination-tag v-bind:num="usrlstnum" v-on:page="onusrlstpage" />
 				</div>
 			</div>
 		</div>

@@ -164,7 +164,7 @@ const makemarkerpopup = file => {
 `
 };
 
-Vue.component('dir-card-tag', {
+const VueDirCard = {
 	template: '#dir-card-tpl',
 	props: ["list"],
 	data() {
@@ -250,12 +250,12 @@ Vue.component('dir-card-tag', {
 	created() {
 		eventHub.on('auth', this.authclosure);
 	},
-	beforeDestroy() {
+	unmounted() {
 		eventHub.off('auth', this.authclosure);
 	}
-});
+};
 
-Vue.component('file-card-tag', {
+const VueFileCard = {
 	template: '#file-card-tpl',
 	props: ["list"],
 	data() {
@@ -279,6 +279,14 @@ Vue.component('file-card-tag', {
 
 			iid: makestrid(10) // instance ID
 		};
+	},
+	watch: {
+		fgshow: {
+			handler(val, oldVal) {
+				console.log('fgshow changed');
+			},
+			deep: true
+		}
 	},
 	computed: {
 		// is it authorized or running on localhost
@@ -434,31 +442,31 @@ Vue.component('file-card-tag', {
 			this.audioonly = !this.audioonly;
 		},
 		onaudio() {
-			Vue.set(this.fgshow, FG.audio, !this.fgshow[FG.audio]);
+			this.fgshow[FG.audio] = !this.fgshow[FG.audio];
 			const pl = this.playlist; // update playlist now
 		},
 		onvideo() {
-			Vue.set(this.fgshow, FG.video, !this.fgshow[FG.video]);
+			this.fgshow[FG.video] = !this.fgshow[FG.video];
 			const pl = this.playlist; // update playlist now
 		},
 		onphoto() {
-			Vue.set(this.fgshow, FG.image, !this.fgshow[FG.image]);
+			this.fgshow[FG.image] = !this.fgshow[FG.image];
 			const pl = this.playlist; // update playlist now
 		},
 		onbooks() {
-			Vue.set(this.fgshow, FG.books, !this.fgshow[FG.books]);
+			this.fgshow[FG.books] = !this.fgshow[FG.books];
 			const pl = this.playlist; // update playlist now
 		},
 		ontexts() {
-			Vue.set(this.fgshow, FG.texts, !this.fgshow[FG.texts]);
+			this.fgshow[FG.texts] = !this.fgshow[FG.texts];
 			const pl = this.playlist; // update playlist now
 		},
 		onpacks() {
-			Vue.set(this.fgshow, FG.packs, !this.fgshow[FG.packs]);
+			this.fgshow[FG.packs] = !this.fgshow[FG.packs];
 			const pl = this.playlist; // update playlist now
 		},
 		onother() {
-			Vue.set(this.fgshow, FG.other, !this.fgshow[FG.other]);
+			this.fgshow[FG.other] = !this.fgshow[FG.other];
 			const pl = this.playlist; // update playlist now
 		},
 
@@ -469,12 +477,12 @@ Vue.component('file-card-tag', {
 	created() {
 		eventHub.on('auth', this.authclosure);
 	},
-	beforeDestroy() {
+	unmounted() {
 		eventHub.off('auth', this.authclosure);
 	}
-});
+};
 
-Vue.component('map-card-tag', {
+const VueMapCard = {
 	template: '#map-card-tpl',
 	data() {
 		return {
@@ -925,6 +933,6 @@ Vue.component('map-card-tag', {
 		};
 		L.control.fullscreen({ position: 'topright' }).addTo(this.map);
 	}
-});
+};
 
 // The End.

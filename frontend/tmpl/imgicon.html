@@ -1,8 +1,6 @@
 
 <div class="imgitem position-relative" v-bind:class="itemview" v-on:click.stop="onselect" v-on:dblclick.stop="onopen" v-bind:title="fmttitle">
-	<template>
-		<icon-tag v-bind:file="file" clsimg="pict" />
-	</template>
+	<icon-tag v-bind:file="file" clsimg="pict" />
 	<picture v-if="label">
 		<template v-for="fmt in iconfmt">
 			<source v-bind:srcset="label+fmt.ext" v-bind:type="fmt.mime">

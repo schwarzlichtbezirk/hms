@@ -263,7 +263,7 @@ const filehint = file => {
 	return lst;
 };
 
-Vue.component('icon-tag', {
+const VueIcon = {
 	template: '#icon-tpl',
 	props: ["file", "clsimg"],
 	data() {
@@ -308,13 +308,13 @@ Vue.component('icon-tag', {
 		eventHub.on('iconset', this._iconset);
 		eventHub.on('thumbmode', this._thumbmode);
 	},
-	beforeDestroy() {
+	unmounted() {
 		eventHub.off('iconset', this._iconset);
 		eventHub.off('thumbmode', this._thumbmode);
 	}
-});
+};
 
-Vue.component('file-icon-tag', {
+const VueFileIcon = {
 	template: '#file-icon-tpl',
 	props: ["file", "size"],
 	data() {
@@ -382,13 +382,13 @@ Vue.component('file-icon-tag', {
 		eventHub.on('iconset', this._iconset);
 		eventHub.on('thumbmode', this._thumbmode);
 	},
-	beforeDestroy() {
+	unmounted() {
 		eventHub.off('iconset', this._iconset);
 		eventHub.off('thumbmode', this._thumbmode);
 	}
-});
+};
 
-Vue.component('img-icon-tag', {
+const VueImgIcon = {
 	template: '#img-icon-tpl',
 	props: ["file"],
 	data() {
@@ -437,10 +437,10 @@ Vue.component('img-icon-tag', {
 		eventHub.on('iconset', this._iconset);
 		eventHub.on('thumbmode', this._thumbmode);
 	},
-	beforeDestroy() {
+	unmounted() {
 		eventHub.off('iconset', this._iconset);
 		eventHub.off('thumbmode', this._thumbmode);
 	}
-});
+};
 
 // The End.

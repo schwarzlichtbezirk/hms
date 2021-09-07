@@ -1,6 +1,6 @@
 "use strict";
 
-Vue.component('mp3-player-tag', {
+const VuePlayer = {
 	template: '#mp3-player-tpl',
 	data() {
 		return {
@@ -306,10 +306,10 @@ Vue.component('mp3-player-tag', {
 		eventHub.on('select', this.onselect);
 		eventHub.on('playlist', this.onplaylist);
 	},
-	beforeDestroy() {
+	unmounted() {
 		eventHub.off('select', this.onselect);
 		eventHub.off('playlist', this.onplaylist);
 	}
-});
+};
 
 // The End.
