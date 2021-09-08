@@ -133,7 +133,7 @@ const VuePhotoSlider = {
 			if (isFullscreen()) {
 				closeFullscreen();
 			}
-			this.list = list || [file];
+			this.list = list ?? [file];
 			this.load(file);
 			this.dlg.show();
 			this.showcontrols();
@@ -228,6 +228,14 @@ const VuePhotoSlider = {
 			this.close();
 		},
 
+		onopen(file, list) {
+			if (file.type || !file.size) {
+				return;
+			}
+			if (imagefilter(file) || videofilter(file)) {
+				this.popup(file, list ?? this.$root.$refs.fcard.playlist);
+			}
+		},
 		onselect(file) {
 			if (this.isvisible()) {
 				if (file && (imagefilter(file) || videofilter(file))) {
@@ -246,6 +254,7 @@ const VuePhotoSlider = {
 		}
 	},
 	created() {
+		eventHub.on('open', this.onopen);
 		eventHub.on('select', this.onselect);
 	},
 	mounted() {
@@ -260,6 +269,7 @@ const VuePhotoSlider = {
 		});
 	},
 	unmounted() {
+		eventHub.off('open', this.onopen);
 		eventHub.off('select', this.onselect);
 		this.dlg = null;
 	}

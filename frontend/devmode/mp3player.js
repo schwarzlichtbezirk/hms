@@ -91,7 +91,7 @@ const VuePlayer = {
 		},
 		fmttrackinfo() {
 			if (this.selfile.title) {
-				return `${this.selfile.artist || this.selfile.album || this.selfile.genre || ''} - ${this.selfile.title}`;
+				return `${this.selfile.artist ?? this.selfile.album ?? this.selfile.genre ?? ''} - ${this.selfile.title}`;
 			} else {
 				return this.selfile.name;
 			}
@@ -109,9 +109,6 @@ const VuePlayer = {
 		}
 	},
 	methods: {
-		isvisible() {
-			return this.visible;
-		},
 		setup(file) {
 			if (this.selfile.puid === file.puid) { // do not set again same file
 				return;
@@ -227,11 +224,12 @@ const VuePlayer = {
 		},
 
 		play() {
-			if (!this.media) return;
-			if (this.media.paused) {
-				this.media.play();
-			} else {
-				this.media.pause();
+			if (this.media) {
+				if (this.media.paused) {
+					this.media.play();
+				} else {
+					this.media.pause();
+				}
 			}
 		},
 
@@ -286,9 +284,19 @@ const VuePlayer = {
 			}
 		},
 
+		onopen(file) {
+			if (file.type || !file.size) {
+				return;
+			}
+			if (audiofilter(file) || videofilter(file)) {
+				if (this.media && !this.media.paused) {
+					this.media.pause();
+				}
+			}
+		},
 		onselect(file) {
-			const is = file => file && (audiofilter(file) || (!this.$root.$refs.fcard.audioonly && videofilter(file)));
-			if (this.isvisible()) {
+			const is = file => file && (audiofilter(file) || !this.$root.$refs.fcard.audioonly && videofilter(file));
+			if (this.visible) {
 				if (is(file)) {
 					this.setup(file);
 				} else {
@@ -303,10 +311,12 @@ const VuePlayer = {
 		}
 	},
 	created() {
+		eventHub.on('open', this.onopen);
 		eventHub.on('select', this.onselect);
 		eventHub.on('playlist', this.onplaylist);
 	},
 	unmounted() {
+		eventHub.off('open', this.onopen);
 		eventHub.off('select', this.onselect);
 		eventHub.off('playlist', this.onplaylist);
 	}

@@ -13,8 +13,8 @@ const traceajax = (response, data) => {
 	if (response.ok) {
 		console.log(response.status, response.url);
 	}
-	if (response.data || data) {
-		console.log(response.data || data);
+	if (response.data ?? data) {
+		console.log(response.data ?? data);
 	}
 };
 

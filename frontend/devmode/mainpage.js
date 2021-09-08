@@ -278,9 +278,9 @@ const geticonpath = file => {
 
 const encode = uri => encodeURI(uri).replace('#', '%23').replace('&', '%26').replace('+', '%2B');
 
-const fileurl = file => `/id${app.aid}/file/${file.puid}`;
-const pathurl = file => `${(devmode ? "/dev" : "")}/id${app.aid}/path/${file.puid}`;
-const mediaurl = (file, media, hd) => `/id${app.aid}/file/${file.puid}?media=${media}&hd=${hd}`;
+const fileurl = file => `/id${appvm.aid}/file/${file.puid}`;
+const pathurl = file => `${(devmode ? "/dev" : "")}/id${appvm.aid}/path/${file.puid}`;
+const mediaurl = (file, media, hd) => `/id${appvm.aid}/file/${file.puid}?media=${media}&hd=${hd}`;
 
 const showmsgbox = (title, message, details) => {
 	const el = document.getElementById('msgbox');
@@ -288,7 +288,7 @@ const showmsgbox = (title, message, details) => {
 		const dlg = new bootstrap.Modal(el);
 		el.querySelector(".modal-title").innerText = title;
 		el.querySelector(".message").innerText = message;
-		el.querySelector(".details").innerText = details || "";
+		el.querySelector(".details").innerText = details ?? "";
 		dlg.show();
 	}
 };
@@ -486,7 +486,7 @@ const VueMainApp = {
 		sumsize() {
 			let ss = 0;
 			for (const file of this.filelist) {
-				ss += file.size || 0;
+				ss += file.size ?? 0;
 			}
 			return fmtitemsize(ss);
 		},
@@ -606,7 +606,7 @@ const VueMainApp = {
 
 			// update shared
 			if (hist.cid === "shares" && this.isadmin) {
-				this.shared = response.data || [];
+				this.shared = response.data ?? [];
 			}
 
 			// current path & state
@@ -741,7 +741,7 @@ const VueMainApp = {
 			if (!response.ok) {
 				throw new HttpError(response.status, response.data);
 			}
-			this.shared = response.data || [];
+			this.shared = response.data ?? [];
 			this.updateshared();
 		},
 
@@ -861,7 +861,7 @@ const VueMainApp = {
 			this.pathlist = [];
 			this.filelist = [];
 			// update folder settings
-			for (const fp of list || []) {
+			for (const fp of list ?? []) {
 				if (fp && (fp.type !== FT.ctgr || ishome)) {
 					if (fp.type) {
 						this.pathlist.push(fp);
@@ -1124,12 +1124,7 @@ const VueMainApp = {
 						eventHub.emit('ajax', -1);
 					}
 				})();
-			} else if (imagefilter(file) || videofilter(file)) {
-				this.$refs.slider.popup(file, this.$refs.fcard.playlist);
-				if (!this.$refs.mp3player.media?.paused) {
-					this.$refs.mp3player.media.pause();
-				}
-			} else {
+			} else if (extfmt.books[ext] || extfmt.texts[ext]) {
 				const url = mediaurl(file, 1, 0);
 				window.open(url, file.name);
 			}
@@ -1221,7 +1216,7 @@ const VueMainApp = {
 				this.resmodel = resmodel = await response.json();
 
 				// set skin
-				const skinid = sessionStorage.getItem('skinid') || this.resmodel.defskinid;
+				const skinid = sessionStorage.getItem('skinid') ?? this.resmodel.defskinid;
 				for (const v of this.resmodel.skinlist) {
 					if (v.id === skinid) {
 						document.getElementById('skinmodel')?.setAttribute('href', v.link);
@@ -1230,7 +1225,7 @@ const VueMainApp = {
 				}
 
 				// load icons
-				const iconid = sessionStorage.getItem('iconid') || this.resmodel.deficonid;
+				const iconid = sessionStorage.getItem('iconid') ?? this.resmodel.deficonid;
 				for (const v of this.resmodel.iconlist) {
 					if (v.id === iconid) {
 						await this.fetchicons(v.link);
@@ -1380,6 +1375,6 @@ const appws = Vue.createApp(VueMainApp)
 	.component('icon-tag', VueIcon)
 	.component('file-icon-tag', VueFileIcon)
 	.component('img-icon-tag', VueImgIcon);
-const app = appws.mount('#app');
+const appvm = appws.mount('#app');
 
 // The End.

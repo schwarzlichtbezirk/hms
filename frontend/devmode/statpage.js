@@ -439,10 +439,10 @@ const VueUser = {
 };
 
 // Create application view model
-const app = Vue.createApp(VueStatApp)
+const appws = Vue.createApp(VueStatApp)
 	.component('catitem-tag', VueCatItem)
 	.component('pagination-tag', VuePagination)
 	.component('user-tag', VueUser);
-const vm = app.mount('#app');
+const appvm = appws.mount('#app');
 
 // The End.

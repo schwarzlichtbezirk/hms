@@ -109,12 +109,12 @@ const closeFullscreen = () => {
 const makemarkericon = file => {
 	const res = geticonpath(file);
 	const icp = res.org || res.alt;
-	let src = ""
+	let src = "";
 	if (file.ntmb === 1 && thumbmode) {
-		src = `<source srcset="/id${app.aid}/thumb/${file.puid}" type="${file.mtmb}">`
+		src = `<source srcset="/id${appvm.aid}/thumb/${file.puid}" type="${file.mtmb}">`;
 	} else {
 		for (fmt of iconmapping.iconfmt) {
-			src += `<source srcset="${icp + fmt.ext}" type="${fmt.mime}">`
+			src += `<source srcset="${icp + fmt.ext}" type="${fmt.mime}">`;
 		}
 	}
 	return `
@@ -124,18 +124,18 @@ const makemarkericon = file => {
 		<img class="position-absolute top-50 start-50 translate-middle w-100">
 	</picture>
 </div>
-`
+`;
 };
 
 const makemarkerpopup = file => {
 	const res = geticonpath(file);
 	const icp = res.org || res.alt;
-	let src = ""
+	let src = "";
 	if (file.ntmb === 1 && thumbmode) {
-		src = `<source srcset="/id${app.aid}/thumb/${file.puid}" type="${file.mtmb}">`
+		src = `<source srcset="/id${appvm.aid}/thumb/${file.puid}" type="${file.mtmb}">`;
 	} else {
 		for (fmt of iconmapping.iconfmt) {
-			src += `<source srcset="${icp + fmt.ext}" type="${fmt.mime}">`
+			src += `<source srcset="${icp + fmt.ext}" type="${fmt.mime}">`;
 		}
 	}
 	return `
@@ -153,7 +153,7 @@ const makemarkerpopup = file => {
 			<div class="d-flex flex-wrap latlng">
 				<div><div class="name">lat:</div> <div class="value">${file.latitude.toFixed(6)}</div></div>
 				<div><div class="name">lng:</div> <div class="value">${file.longitude.toFixed(6)}</div></div>
-				<div><div class="name">alt:</div> <div class="value">${file.altitude || "N/A"}</div></div>
+				<div><div class="name">alt:</div> <div class="value">${file.altitude ?? "N/A"}</div></div>
 			</div>
 		</div>
 		<div class="tab-pane fade" id="prop">
@@ -161,7 +161,7 @@ const makemarkerpopup = file => {
 		</div>
 	</div>
 </div>
-`
+`;
 };
 
 const VueDirCard = {
@@ -730,7 +730,7 @@ const VueMapCard = {
 				template.innerHTML = makemarkerpopup(file).trim();
 				const popup = template.content.firstChild;
 				popup.querySelector(".photoinfo picture")?.addEventListener('click', () => {
-					this.$root.$refs.slider.popup(file, this.gpslist);
+					eventHub.emit('open', file, this.gpslist);
 				});
 
 				L.marker([file.latitude, file.longitude], opt)

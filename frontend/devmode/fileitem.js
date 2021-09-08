@@ -33,7 +33,7 @@ const filehint = file => {
 	lst.push(file.name);
 	// Std properties
 	if (!file.type) {
-		lst.push('size: ' + fmtitemsize(file.size || 0));
+		lst.push('size: ' + fmtitemsize(file.size ?? 0));
 	}
 	if (file.time) {
 		lst.push('time: ' + (new Date(file.time)).toLocaleString());
@@ -57,11 +57,11 @@ const filehint = file => {
 	if (file.year) {
 		lst.push('year: ' + file.year);
 	}
-	if (file.track && (file.track.number || file.track.total)) {
-		lst.push(`track: ${file.track.number || ''}/${file.track.total || ''}`);
+	if (file.track && (file.track.number ?? file.track.total)) {
+		lst.push(`track: ${file.track.number ?? ''}/${file.track.total ?? ''}`);
 	}
-	if (file.disc && (file.disc.number || file.disc.total)) {
-		lst.push(`disc: ${file.disc.number || ''}/${file.disc.total || ''}`);
+	if (file.disc && (file.disc.number ?? file.disc.total)) {
+		lst.push(`disc: ${file.disc.number ?? ''}/${file.disc.total ?? ''}`);
 	}
 	if (file.comment) {
 		lst.push('comment: ' + file.comment.substring(0, 80));
