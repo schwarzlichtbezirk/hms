@@ -33,7 +33,7 @@
 			<li><button class="btn" v-bind:class="clsthumbmode" v-on:click="onthumbmode" title="thumbnails mode"><i class="material-icons">burst_mode</i></button></li>
 		</ul>
 		<ul class="navbar-nav flex-row ms-auto">
-			<li><button class="btn" v-show="showvideo" v-bind:class="clsaudioonly" v-on:click="onaudioonly" title="play audio only"><i class="material-icons">headset</i></button></li>
+			<li><button class="btn" v-show="showvideo" v-bind:class="clsheadset" v-on:click="onheadset" title="play audio only"><i class="material-icons">headset</i></button></li>
 			<li><button class="btn" v-show="showmusic" v-bind:class="clsaudio" v-on:click="onaudio" title="show audio files"><i class="material-icons">library_music</i></button></li>
 			<li><button class="btn" v-show="showvideo" v-bind:class="clsvideo" v-on:click="onvideo" title="show video files"><i class="material-icons">video_library</i></button></li>
 			<li><button class="btn" v-show="showphoto" v-bind:class="clsphoto" v-on:click="onphoto" title="show photos and images"><i class="material-icons">photo_library</i></button></li>
@@ -45,7 +45,7 @@
 	</div>
 	<div v-bind:id="'card'+iid" class="collapse show">
 		<div class="card-body p-1 p-sm-3 folder-list" v-bind:class="clsfilelist" v-on:click="onunselect">
-			<template v-for="file in playlist">
+			<template v-for="file in filelist">
 				<component v-bind:is="iconmodetag" v-bind:file="file" v-bind:size="listmode" />
 			</template>
 		</div>

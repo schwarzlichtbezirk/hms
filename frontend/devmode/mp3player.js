@@ -10,6 +10,7 @@ const VuePlayer = {
 			volval: 100,
 			ratval: 6,
 			repeatmode: 0, // 0 - no any repeat, 1 - repeat single, 2 - repeat playlist
+			audioonly: false,
 			seeking: false,
 			media: null,
 			autoplay: false,
@@ -25,37 +26,35 @@ const VuePlayer = {
 		};
 	},
 	computed: {
+		// list of files that can be played
+		playlist() {
+			const l = [];
+			for (const file of this.list) {
+				if (audiofilter(file) || !this.audioonly && videofilter(file)) {
+					l.push(file);
+				}
+			}
+			return l;
+		},
 		// index of selected file
 		selfilepos() {
-			for (const i in this.list) {
-				if (this.selfile.puid === this.list[i].puid) {
+			for (const i in this.playlist) {
+				if (this.selfile === this.playlist[i]) {
 					return Number(i);
 				}
 			}
 		},
 		// returns previous file in list
 		getprev() {
-			const prevpos = (from, to) => {
-				for (let i = from - 1; i > to; i--) {
-					const file = this.list[i];
-					if (audiofilter(file)) {
-						return file;
-					}
-				}
-			};
-			return prevpos(this.selfilepos, -1) || this.repeatmode === 2 && prevpos(this.list.length, this.selfilepos - 1);
+			return this.selfile && this.selfilepos > 0
+				? this.playlist[this.selfilepos - 1]
+				: this.repeatmode === 2 && this.playlist[this.playlist.length - 1];
 		},
 		// returns next file in list
 		getnext() {
-			const nextpos = (from, to) => {
-				for (let i = from + 1; i < to; i++) {
-					const file = this.list[i];
-					if (audiofilter(file)) {
-						return file;
-					}
-				}
-			};
-			return nextpos(this.selfilepos, this.list.length) || this.repeatmode === 2 && nextpos(-1, this.selfilepos + 1);
+			return this.selfile && this.selfilepos < this.playlist.length - 1
+				? this.playlist[this.selfilepos + 1]
+				: this.repeatmode === 2 && this.playlist[0];
 		},
 
 		volumelabel() {
@@ -131,13 +130,12 @@ const VuePlayer = {
 			this.ready = false;
 
 			const updateprogress = () => {
-				const cur = media.currentTime;
-
 				if (!this.seeking) {
-					this.timecur = cur;
+					this.timecur = media.currentTime;
 				}
 
 				if (media.buffered.length > 0) {
+					const cur = this.timecur;
 					const pos1 = media.buffered.start(0);
 					const pos2 = media.buffered.end(0);
 					if (pos1 <= cur && pos2 > cur) { // buffered in current pos
@@ -240,17 +238,14 @@ const VuePlayer = {
 				eventHub.emit('select', this.getprev);
 			}
 		},
-
 		onplay() {
 			this.play();
 		},
-
 		onnext() {
 			if (this.getnext) {
 				eventHub.emit('select', this.getnext);
 			}
 		},
-
 		onrepeat() {
 			this.repeatmode = (this.repeatmode + 1) % (this.list ? 3 : 2);
 			if (this.media) {
@@ -295,7 +290,7 @@ const VuePlayer = {
 			}
 		},
 		onselect(file) {
-			const is = file => file && (audiofilter(file) || !this.$root.$refs.fcard.audioonly && videofilter(file));
+			const is = file => file && (audiofilter(file) || !this.audioonly && videofilter(file));
 			if (this.visible) {
 				if (is(file)) {
 					this.setup(file);
@@ -308,17 +303,22 @@ const VuePlayer = {
 		},
 		onplaylist(list) {
 			this.list = list;
+		},
+		onaudioonly(val) {
+			this.audioonly = val;
 		}
 	},
 	created() {
 		eventHub.on('open', this.onopen);
 		eventHub.on('select', this.onselect);
 		eventHub.on('playlist', this.onplaylist);
+		eventHub.on('audioonly', this.onaudioonly);
 	},
 	unmounted() {
 		eventHub.off('open', this.onopen);
 		eventHub.off('select', this.onselect);
 		eventHub.off('playlist', this.onplaylist);
+		eventHub.off('audioonly', this.onaudioonly);
 	}
 };
 

@@ -296,8 +296,8 @@ const VueFileCard = {
 		isvisible() {
 			return this.list.length > 0;
 		},
-		// filtered sorted playlist
-		playlist() {
+		// filtered sorted list of files
+		filelist() {
 			const res = [];
 			for (const file of this.list) {
 				if (this.fgshow[getFileGroup(file)]) {
@@ -362,7 +362,7 @@ const VueFileCard = {
 		clsthumbmode() {
 			return { active: this.thumbmode };
 		},
-		clsaudioonly() {
+		clsheadset() {
 			return { active: this.audioonly };
 		},
 		clsaudio() {
@@ -410,19 +410,19 @@ const VueFileCard = {
 
 		onorder() {
 			this.sortorder = -this.sortorder;
-			const pl = this.playlist; // update playlist now
+			const fl = this.filelist; // update filelist now
 		},
 		onsortalpha() {
 			this.sortmode = 'byalpha';
-			const pl = this.playlist; // update playlist now
+			const fl = this.filelist; // update filelist now
 		},
 		onsortsize() {
 			this.sortmode = 'bysize';
-			const pl = this.playlist; // update playlist now
+			const fl = this.filelist; // update filelist now
 		},
 		onsortunsorted() {
 			this.sortmode = 'unsorted';
-			const pl = this.playlist; // update playlist now
+			const fl = this.filelist; // update filelist now
 		},
 		onlistmodesm() {
 			this.listmode = 'smicon';
@@ -438,47 +438,52 @@ const VueFileCard = {
 			eventHub.emit('thumbmode', thumbmode);
 		},
 
-		onaudioonly() {
-			this.audioonly = !this.audioonly;
+		onheadset() {
+			eventHub.emit('audioonly', !this.audioonly);
 		},
 		onaudio() {
 			this.fgshow[FG.audio] = !this.fgshow[FG.audio];
-			const pl = this.playlist; // update playlist now
+			const fl = this.filelist; // update filelist now
 		},
 		onvideo() {
 			this.fgshow[FG.video] = !this.fgshow[FG.video];
-			const pl = this.playlist; // update playlist now
+			const fl = this.filelist; // update filelist now
 		},
 		onphoto() {
 			this.fgshow[FG.image] = !this.fgshow[FG.image];
-			const pl = this.playlist; // update playlist now
+			const fl = this.filelist; // update filelist now
 		},
 		onbooks() {
 			this.fgshow[FG.books] = !this.fgshow[FG.books];
-			const pl = this.playlist; // update playlist now
+			const fl = this.filelist; // update filelist now
 		},
 		ontexts() {
 			this.fgshow[FG.texts] = !this.fgshow[FG.texts];
-			const pl = this.playlist; // update playlist now
+			const fl = this.filelist; // update filelist now
 		},
 		onpacks() {
 			this.fgshow[FG.packs] = !this.fgshow[FG.packs];
-			const pl = this.playlist; // update playlist now
+			const fl = this.filelist; // update filelist now
 		},
 		onother() {
 			this.fgshow[FG.other] = !this.fgshow[FG.other];
-			const pl = this.playlist; // update playlist now
+			const fl = this.filelist; // update filelist now
 		},
 
 		onunselect() {
 			eventHub.emit('select', null);
+		},
+		onaudioonly(val) {
+			this.audioonly = val;
 		}
 	},
 	created() {
 		eventHub.on('auth', this.authclosure);
+		eventHub.on('audioonly', this.onaudioonly);
 	},
 	unmounted() {
 		eventHub.off('auth', this.authclosure);
+		eventHub.off('audioonly', this.onaudioonly);
 	}
 };
 

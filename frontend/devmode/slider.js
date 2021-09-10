@@ -43,12 +43,12 @@ const VuePhotoSlider = {
 	data() {
 		return {
 			list: [],
-			playlist: true,
+			autolist: true,
 			hd: true,
 			selfile: null,
 			repeatmode: 0, // 0 - no any repeat, 1 - repeat single, 2 - repeat playlist
 			ctrlhnd: 0,
-			plhnd: 0,
+			alhnd: 0,
 			dlg: null
 		};
 	},
@@ -105,9 +105,9 @@ const VuePhotoSlider = {
 			if (this.selfile !== file) {
 				eventHub.emit('ajax', +1);
 
-				// remove previous playlist timer
-				if (this.plhnd) {
-					clearTimeout(this.plhnd);
+				// remove previous autolist timer
+				if (this.alhnd) {
+					clearTimeout(this.alhnd);
 				}
 
 				if (this.isvideo && !this.$refs.video.paused) {
@@ -118,11 +118,11 @@ const VuePhotoSlider = {
 					this.$refs.video.src = this.selfileurl
 				}
 
-				// set new playlist timer
+				// set new autolist timer
 				if (this.isimage) {
-					this.plhnd = setTimeout(() => {
-						this.plhnd = 0;
-						if (this.playlist) {
+					this.alhnd = setTimeout(() => {
+						this.alhnd = 0;
+						if (this.autolist) {
 							this.onnext();
 						}
 					}, playlisttimeout);
@@ -165,15 +165,15 @@ const VuePhotoSlider = {
 			eventHub.emit('ajax', -1);
 		},
 		onended(e) {
-			if (this.playlist) {
+			if (this.autolist) {
 				this.onnext();
 			}
 		},
 		onclick(e) {
-			// remove playlist timer
-			if (this.plhnd) {
-				clearTimeout(this.plhnd);
-				this.plhnd = 0;
+			// remove autolist timer
+			if (this.alhnd) {
+				clearTimeout(this.alhnd);
+				this.alhnd = 0;
 			}
 			if (this.ctrlhnd) {
 				// remove previous controls timer
@@ -233,7 +233,7 @@ const VuePhotoSlider = {
 				return;
 			}
 			if (imagefilter(file) || videofilter(file)) {
-				this.popup(file, list ?? this.$root.$refs.fcard.playlist);
+				this.popup(file, list ?? this.$root.$refs.fcard.filelist);
 			}
 		},
 		onselect(file) {
