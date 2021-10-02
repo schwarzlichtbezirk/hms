@@ -3,6 +3,9 @@
 const controlstimeout = 2500; // timeout in milliseconds
 const playlisttimeout = 8000; // timeout in milliseconds
 
+// set to true after touch
+let touched = false;
+
 const VueThumbSlider = {
 	template: '#thumbslider-tpl',
 	props: ['list'],
@@ -42,6 +45,7 @@ const VuePhotoSlider = {
 	template: '#photoslider-tpl',
 	data() {
 		return {
+			loadbar: false,
 			list: [],
 			autolist: true,
 			hd: true,
@@ -103,7 +107,10 @@ const VuePhotoSlider = {
 		},
 		load(file) {
 			if (this.selfile !== file) {
-				eventHub.emit('ajax', +1);
+				if (!this.loadbar) { // check for new image loading during previous not loaded
+					eventHub.emit('ajax', +1);
+					this.loadbar = true;
+				}
 
 				// remove previous autolist timer
 				if (this.alhnd) {
@@ -116,16 +123,6 @@ const VuePhotoSlider = {
 				this.selfile = file;
 				if (this.isvideo) {
 					this.$refs.video.src = this.selfileurl
-				}
-
-				// set new autolist timer
-				if (this.isimage) {
-					this.alhnd = setTimeout(() => {
-						this.alhnd = 0;
-						if (this.autolist) {
-							this.onnext();
-						}
-					}, playlisttimeout);
 				}
 			}
 		},
@@ -160,16 +157,32 @@ const VuePhotoSlider = {
 
 		onimgload(e) {
 			eventHub.emit('ajax', -1);
+			this.loadbar = false;
+
+			// set new autolist timer
+			if (this.isimage) {
+				this.alhnd = setTimeout(() => {
+					this.alhnd = 0;
+					if (this.autolist) {
+						this.onnext();
+					}
+				}, playlisttimeout);
+			}
 		},
 		onimgerror(e) {
 			eventHub.emit('ajax', -1);
+			this.loadbar = false;
 		},
 		onended(e) {
 			if (this.autolist) {
 				this.onnext();
 			}
 		},
+		ontouchstart(e) {
+			touched = true;
+		},
 		onclick(e) {
+			touched = false;
 			// remove autolist timer
 			if (this.alhnd) {
 				clearTimeout(this.alhnd);
@@ -187,7 +200,9 @@ const VuePhotoSlider = {
 			}
 		},
 		onmove(e) {
-			this.showcontrols();
+			if (!touched) {
+				this.showcontrols();
+			}
 		},
 		onkeyup(e) {
 			switch (e.code) {
@@ -213,6 +228,9 @@ const VuePhotoSlider = {
 				default:
 					this.showcontrols();
 			}
+		},
+		onshowcontrols() {
+			this.showcontrols();
 		},
 		onprev() {
 			if (this.getprev) {
