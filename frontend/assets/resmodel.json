@@ -62,6 +62,12 @@
 			"source": "https://iconarchive.com/show/fs-icons-by-franksouza183.html"
 		},
 		{
+			"id": "papirus",
+			"name": "papirus icons",
+			"link": "/data/icon/papirus.json",
+			"source": "https://iconarchive.com/show/papirus-mimetypes-icons-by-papirus-team.html"
+		},
+		{
 			"id": "chakram",
 			"name": "chakram 2 icons",
 			"link": "/data/icon/chakram.json",

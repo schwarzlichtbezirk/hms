@@ -14,6 +14,7 @@ wpkconf = {
 	iconset = {
 		"oxygen" = {"avif", "webp", "png"},
 		"ubuntu" = {"webp", "png"},
+		"papirus" = {"svg"},
 		"tulliana" = {"webp", "png"},
 	},
 	-- default skin ID if nothing was selected

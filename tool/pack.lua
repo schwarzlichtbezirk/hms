@@ -19,6 +19,7 @@ local fulliconset = {
 	oxygen = {"avif", "webp", "png"},
 	tulliana = {"webp", "png"},
 	ubuntu = {"webp", "png"},
+	papirus = {"svg"},
 	chakram = {"avif", "webp", "jp2"},
 	senary = {"avif", "webp", "jp2"},
 	senary2 = {"avif", "webp", "jp2"},
@@ -28,6 +29,12 @@ local fulliconset = {
 }
 -- iconfmt json bodies
 local iconfmtjson = {
+	svg = [[
+
+		{
+			"ext": ".svg",
+			"mime": "image/svg+xml"
+		}]],
 	avif = [[
 
 		{
