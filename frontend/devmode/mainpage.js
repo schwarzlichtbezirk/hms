@@ -675,7 +675,6 @@ const VueMainApp = {
 				await this.fetchfolder(hist);
 				await this.fetchscanthumbs();
 			}
-			this.seturl();
 		},
 
 		async fetchscanthumbs() {
@@ -855,6 +854,7 @@ const VueMainApp = {
 			this.histlist.splice(this.histpos);
 			this.histlist.push(hist);
 			this.histpos = this.histlist.length;
+			this.seturl();
 		},
 
 		newfolder(list, ishome) {
@@ -1116,7 +1116,6 @@ const VueMainApp = {
 						const hist = { cid: this.curcid, aid: this.aid, puid: file.puid };
 						await this.fetchplaylist(hist);
 						await this.fetchscanthumbs();
-						this.seturl();
 						this.pushhist(hist);
 					} catch (e) {
 						ajaxfail(e);

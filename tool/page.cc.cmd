@@ -1,7 +1,7 @@
 @echo off
 cd /d %GOPATH%/src/github.com/schwarzlichtbezirk/hms/frontend
 
-java -jar %~d0/tools/closure-compiler.jar^
+java -jar %~d0/tools/closure-compiler-v20210907.jar^
  --js devmode/relmode.js^
  --js devmode/common.js^
  --js devmode/request.js^
@@ -14,7 +14,7 @@ java -jar %~d0/tools/closure-compiler.jar^
  --js_output_file build/main.bundle.js^
  --create_source_map build/main.bundle.js.map
 
-java -jar %~d0/tools/closure-compiler.jar^
+java -jar %~d0/tools/closure-compiler-v20210907.jar^
  --js devmode/relmode.js^
  --js devmode/common.js^
  --js devmode/request.js^

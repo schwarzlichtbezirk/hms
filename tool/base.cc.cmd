@@ -1,7 +1,7 @@
 @echo off
 cd /d %GOPATH%/src/github.com/schwarzlichtbezirk/hms/frontend
 
-java -jar %~d0/tools/closure-compiler.jar^
+java -jar %~d0/tools/closure-compiler-v20210907.jar^
  --js plugin/leaflet.js^
  --js plugin/leaflet.markercluster.js^
  --js plugin/sha256.min.js^
