@@ -200,7 +200,7 @@ func (prf *Profile) RootIndex(fpath string) int {
 func (prf *Profile) FindRoots() {
 	const windisks = "CDEFGHIJKLMNOPQRSTUVWXYZ"
 	for _, d := range windisks {
-		var root = string(d) + ":"
+		var root = string(d) + ":/" // let's disk roots will be slash-terminated always
 		if _, err := os.Stat(root); err == nil {
 			if prf.RootIndex(root) < 0 {
 				prf.mux.Lock()

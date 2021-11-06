@@ -158,7 +158,10 @@ func UnfoldPath(shrpath string) string {
 	}
 
 	if fpath, ok := pathcache.Path(pref); ok {
-		return path.Join(fpath, suff)
+		if suff != "" { // prevent modify original path if suffix is absent
+			fpath = path.Join(fpath, suff)
+		}
+		return fpath
 	}
 	return shrpath
 }

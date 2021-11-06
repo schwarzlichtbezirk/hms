@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path"
+	"strings"
 	"sync"
 
 	diskfs "github.com/diskfs/go-diskfs"
@@ -74,6 +75,11 @@ func (d *DiskISO) OpenFile(fpath string) (r VFile, err error) {
 // opens it, and opens nested into iso-disk file.
 func OpenFile(syspath string) (r VFile, err error) {
 	var fpath = syspath
+	// append slash to disk root to prevent open current dir on this disk
+	if strings.HasSuffix(fpath, ":") {
+		fpath += "/"
+	}
+
 	if r, err = os.Open(fpath); err == nil { // primary filesystem file
 		return
 	}
