@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
@@ -550,8 +551,8 @@ func srvinfAPI(w http.ResponseWriter, r *http.Request) {
 		"os":       runtime.GOOS,
 		"numcpu":   runtime.NumCPU(),
 		"maxprocs": runtime.GOMAXPROCS(0),
-		"destpath": destpath,
-		"confpath": confpath,
+		"exepath":  filepath.Dir(os.Args[0]),
+		"cfgpath":  ConfigPath,
 	}
 
 	WriteOK(w, ret)

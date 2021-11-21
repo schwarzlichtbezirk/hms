@@ -4,12 +4,13 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
-	"errors"
 	"html/template"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"path"
+	"path/filepath"
 	"strings"
 	"sync"
 	"syscall"
@@ -18,16 +19,13 @@ import (
 	"github.com/schwarzlichtbezirk/wpk/bulk"
 	"github.com/schwarzlichtbezirk/wpk/mmap"
 	"golang.org/x/crypto/acme/autocert"
-
-	diskfs "github.com/diskfs/go-diskfs"
-	"github.com/diskfs/go-diskfs/filesystem"
 )
 
 var (
-	// context to indicate about server shutdown
+	// context to indicate about service shutdown
 	exitctx context.Context
 	exitfn  context.CancelFunc
-	// wait group for all server goroutines
+	// wait group for all service goroutines
 	exitwg sync.WaitGroup
 )
 
@@ -41,48 +39,13 @@ var Log = NewLogger(os.Stderr, LstdFlags, 300)
 // Startup opening functions //
 ///////////////////////////////
 
-func ReadISO() error {
-	var disk, err = diskfs.Open("")
-	if err != nil {
-		return err
-	}
-	var fs filesystem.FileSystem
-	fs, err = disk.GetFilesystem(0) // assuming it is the whole disk, so partition = 0
-	if err != nil {
-		return err
-	}
-	var files []os.FileInfo
-	files, err = fs.ReadDir("/") // this should list everything
-	if err != nil {
-		return err
-	}
-	for _, fi := range files {
-		Log.Println(fi.Name(), fi.Size())
-	}
-	return nil
-}
-
-var dict = func(values ...interface{}) (map[string]interface{}, error) {
-	if len(values)%2 != 0 {
-		return nil, errors.New("invalid dict call")
-	}
-	var dict = make(map[string]interface{}, len(values)/2)
-	for i := 0; i < len(values); i += 2 {
-		var key, ok = values[i].(string)
-		if !ok {
-			return nil, errors.New("dict keys must be strings")
-		}
-		dict[key] = values[i+1]
-	}
-	return dict, nil
-}
-
 // openimage opens hms-package.
 func openimage() (pack wpk.Packager, err error) {
+	var exepath = filepath.Dir(os.Args[0])
 	if cfg.AutoCert {
-		return mmap.OpenImage(path.Join(destpath, cfg.WPKName))
+		return mmap.OpenImage(path.Join(exepath, cfg.WPKName))
 	} else {
-		return bulk.OpenImage(path.Join(destpath, cfg.WPKName))
+		return bulk.OpenImage(path.Join(exepath, cfg.WPKName))
 	}
 }
 
@@ -147,60 +110,36 @@ func loadtemplates() (err error) {
 // Start web server //
 //////////////////////
 
-func pathexists(fpath string) (bool, error) {
-	var err error
-	if _, err = os.Stat(fpath); err == nil {
-		return true, nil
-	}
-	if os.IsNotExist(err) {
-		return false, nil
-	}
-	return true, err
-}
+// WaitInterrupt returns shutdown signal was recivied and cancels some context.
+func WaitInterrupt(cancel context.CancelFunc) {
+	// Make exit signal on function exit.
+	defer cancel()
 
-// WaitBreakContext returns context that closes context's Done channel on SIGINT or SIGTERM signal catched.
-func WaitBreakContext() (ctx context.Context, cancel context.CancelFunc) {
-	// Inits context
-	ctx, cancel = context.WithCancel(context.Background())
-	go func() {
-		// Make exit signal on function exit.
-		defer cancel()
-
-		var sigint = make(chan os.Signal, 1)
-		// We'll accept graceful shutdowns when quit via SIGINT (Ctrl+C) or SIGTERM (Ctrl+/)
-		// SIGKILL, SIGQUIT will not be caught.
-		signal.Notify(sigint, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
-		// Block until we receive our signal.
-		<-sigint
-	}()
-	return
+	var sigint = make(chan os.Signal, 1)
+	// We'll accept graceful shutdowns when quit via SIGINT (Ctrl+C) or SIGTERM (Ctrl+/)
+	// SIGKILL, SIGQUIT will not be caught.
+	signal.Notify(sigint, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	// Block until we receive our signal.
+	<-sigint
+	Log.Println("shutting down by break")
 }
 
 // Init performs global data initialisation. Loads configuration files, initializes file cache.
 func Init() {
 	var err error
-	var fpath string
 
-	// create wait break context
-	exitctx, exitfn = WaitBreakContext()
+	// create context and wait the break
+	exitctx, exitfn = context.WithCancel(context.Background())
+	go WaitInterrupt(exitfn)
 
-	// fetch program path
-	destpath = path.Dir(ToSlash(os.Args[0]))
-
-	// fetch configuration path
-	if fpath = os.Getenv("APPCONFIGPATH"); fpath == "" {
-		fpath = path.Join(destpath, rootsuff)
-		if ok, _ := pathexists(fpath); !ok {
-			fpath = path.Join(ToSlash(os.Getenv("GOPATH")), csrcsuff, confsuff)
-			if ok, _ := pathexists(fpath); !ok {
-				Log.Fatalf("config folder does not found")
-			}
-		}
+	// get confiruration path
+	if ConfigPath, err = DetectConfigPath(); err != nil {
+		log.Fatal(err)
 	}
-	confpath = fpath
+	log.Printf("config path: %s\n", ConfigPath)
 
 	// load settings files
-	if err = cfg.Load(path.Join(confpath, "settings.yaml")); err != nil {
+	if err = cfg.Load(path.Join(ConfigPath, "settings.yaml")); err != nil {
 		Log.Println("error on settings file: " + err.Error())
 	}
 
@@ -218,26 +157,26 @@ func Init() {
 	// build caches with given sizes from settings
 	initcaches()
 
-	if err = pathcache.Load(path.Join(confpath, "pathcache.yaml")); err != nil {
+	if err = pathcache.Load(path.Join(ConfigPath, "pathcache.yaml")); err != nil {
 		Log.Println("error on path cache file: " + err.Error())
 		Log.Println("loading of directories cache and users list were missed for a reason path cache loading failure")
 	} else {
 		// load directories file groups
 		Log.Printf("loaded %d items into path cache", len(pathcache.keypath))
-		if err = dircache.Load(path.Join(confpath, "dircache.yaml")); err != nil {
+		if err = dircache.Load(path.Join(ConfigPath, "dircache.yaml")); err != nil {
 			Log.Println("error on directories cache file: " + err.Error())
 		}
 		Log.Printf("loaded %d items into directories cache", len(dircache.keydir))
 
 		// load previous users states
-		if err = usercache.Load(path.Join(confpath, "userlist.yaml")); err != nil {
+		if err = usercache.Load(path.Join(ConfigPath, "userlist.yaml")); err != nil {
 			Log.Println("error on users list file: " + err.Error())
 		}
 		Log.Printf("loaded %d items into users list", len(usercache.list))
 	}
 
 	// load profiles with roots, hidden and shares lists
-	if err = prflist.Load(path.Join(confpath, "profiles.yaml")); err != nil {
+	if err = prflist.Load(path.Join(ConfigPath, "profiles.yaml")); err != nil {
 		Log.Fatal("error on profiles file: " + err.Error())
 	}
 
@@ -300,7 +239,7 @@ func Run(gmux *Router) {
 			if cfg.AutoCert { // get certificate from letsencrypt.org
 				var m = &autocert.Manager{
 					Prompt: autocert.AcceptTOS,
-					Cache:  autocert.DirCache(path.Join(confpath, "cert")),
+					Cache:  autocert.DirCache(path.Join(ConfigPath, "cert")),
 				}
 				config = &tls.Config{
 					PreferServerCipherSuites: true,
@@ -323,8 +262,8 @@ func Run(gmux *Router) {
 			}
 			go func() {
 				if err := server.ListenAndServeTLS(
-					path.Join(confpath, "serv.crt"),
-					path.Join(confpath, "prvk.pem")); err != http.ErrServerClosed {
+					path.Join(ConfigPath, "serv.crt"),
+					path.Join(ConfigPath, "prvk.pem")); err != http.ErrServerClosed {
 					Log.Fatalf("failed to serve on %s: %v", addr, err)
 					return
 				}
@@ -367,7 +306,7 @@ func Shutdown() {
 	exitwg.Add(1)
 	go func() {
 		defer exitwg.Done()
-		if err := pathcache.Save(path.Join(confpath, "pathcache.yaml")); err != nil {
+		if err := pathcache.Save(path.Join(ConfigPath, "pathcache.yaml")); err != nil {
 			Log.Println("error on path cache file: " + err.Error())
 			Log.Println("saving of directories cache and users list were missed for a reason path cache saving failure")
 			return
@@ -376,7 +315,7 @@ func Shutdown() {
 		exitwg.Add(1)
 		go func() {
 			defer exitwg.Done()
-			if err := dircache.Save(path.Join(confpath, "dircache.yaml")); err != nil {
+			if err := dircache.Save(path.Join(ConfigPath, "dircache.yaml")); err != nil {
 				Log.Println("error on directories cache file: " + err.Error())
 			}
 		}()
@@ -384,7 +323,7 @@ func Shutdown() {
 		exitwg.Add(1)
 		go func() {
 			defer exitwg.Done()
-			if err := usercache.Save(path.Join(confpath, "userlist.yaml")); err != nil {
+			if err := usercache.Save(path.Join(ConfigPath, "userlist.yaml")); err != nil {
 				Log.Println("error on users list file: " + err.Error())
 			}
 		}()
@@ -393,7 +332,7 @@ func Shutdown() {
 	exitwg.Add(1)
 	go func() {
 		defer exitwg.Done()
-		if err := prflist.Save(path.Join(confpath, "profiles.yaml")); err != nil {
+		if err := prflist.Save(path.Join(ConfigPath, "profiles.yaml")); err != nil {
 			Log.Println("error on profiles list file: " + err.Error())
 		}
 	}()

@@ -1,16 +1,19 @@
 package main
 
 import (
+	"flag"
+
 	"github.com/schwarzlichtbezirk/hms"
 )
 
 const buildvers = "0.7.7"
-const builddate = "2021.11.06"
+const builddate = "2021.11.22"
 
 var log = hms.Log
 
 func main() {
 	log.Printf("version: %s, builton: %s\n", buildvers, builddate)
+	flag.Parse()
 	hms.MakeServerLabel("hms", buildvers)
 	log.Println("starts")
 	hms.Init()

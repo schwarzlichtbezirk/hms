@@ -1,6 +1,11 @@
 package hms
 
 import (
+	"errors"
+	"flag"
+	"log"
+	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -10,17 +15,12 @@ const (
 	devmsuff = "devmode" // relative path to folder with development mode code files
 	relmsuff = "build"   // relative path to folder with compiled code files
 	plugsuff = "plugin"  // relative path to third party code
-	confsuff = "conf"    // relative path to configuration files folder
+	confsuff = "config"  // relative path to configuration files folder
 	tmplsuff = "tmpl"    // relative path to html templates folder
 	csrcsuff = "src/github.com/schwarzlichtbezirk/hms"
 )
 
 var starttime = time.Now() // save server start time
-
-var (
-	destpath string // contains program destination path
-	confpath string // configuration folder path
-)
 
 // CfgAuth is authentication settings.
 type CfgAuth struct {
@@ -114,6 +114,102 @@ var cfg = Config{ // inits default values:
 		MediaCacheMaxNum: 64,
 		DiskCacheExpire:  time.Duration(15) * time.Second,
 	},
+}
+
+const (
+	cfgenv  = "HMSCONFIGPATH"
+	cfgfile = "settings.yaml"
+	cfgbase = "hms"
+	srcpath = "src/github.com/schwarzlichtbezirk/hms/config"
+)
+
+// Path given from command line parameter.
+var cmdpath = flag.String("d", "", "configuration path")
+
+// ConfigPath determines configuration path, depended on what directory is exist.
+var ConfigPath string
+
+// ErrNoCongig is "no configuration path was found" error message.
+var ErrNoCongig = errors.New("no configuration path was found")
+
+// DetectConfigPath finds configuration path with existing configuration file at least.
+func DetectConfigPath() (cfgpath string, err error) {
+	var path string
+	var exepath = filepath.Dir(os.Args[0])
+
+	// try to get from environment setting
+	if path = envfmt(os.Getenv(cfgenv)); path != "" {
+		// try to get access to full path
+		if ok, _ := pathexists(filepath.Join(path, cfgfile)); ok {
+			cfgpath = path
+			return
+		}
+		// try to find relative from executable path
+		path = filepath.Join(exepath, path)
+		if ok, _ := pathexists(filepath.Join(path, cfgfile)); ok {
+			cfgpath = exepath
+			return
+		}
+		log.Printf("no access to pointed configuration path '%s'\n", path)
+	}
+
+	// try to get from command path arguments
+	if path = *cmdpath; path != "" {
+		// try to get access to full path
+		if ok, _ := pathexists(filepath.Join(path, cfgfile)); ok {
+			cfgpath = path
+			return
+		}
+		// try to find relative from executable path
+		path = filepath.Join(exepath, path)
+		if ok, _ := pathexists(filepath.Join(path, cfgfile)); ok {
+			cfgpath = exepath
+			return
+		}
+	}
+
+	// try to get from config subdirectory on executable path
+	path = filepath.Join(exepath, cfgbase)
+	if ok, _ := pathexists(filepath.Join(path, cfgfile)); ok {
+		cfgpath = path
+		return
+	}
+	// try to find in executable path
+	if ok, _ := pathexists(filepath.Join(exepath, cfgfile)); ok {
+		cfgpath = exepath
+		return
+	}
+	// try to find in current path
+	if ok, _ := pathexists(cfgfile); ok {
+		cfgpath = "."
+		return
+	}
+
+	// if GOPATH is present
+	if gopath := os.Getenv("GOPATH"); gopath != "" {
+		// try to get from go bin config
+		path = filepath.Join(gopath, "bin", cfgbase)
+		if ok, _ := pathexists(filepath.Join(path, cfgfile)); ok {
+			cfgpath = path
+			return
+		}
+		// try to get from go bin root
+		path = filepath.Join(gopath, "bin")
+		if ok, _ := pathexists(filepath.Join(path, cfgfile)); ok {
+			cfgpath = path
+			return
+		}
+		// try to get from source code
+		path = filepath.Join(gopath, srcpath)
+		if ok, _ := pathexists(filepath.Join(path, cfgfile)); ok {
+			cfgpath = path
+			return
+		}
+	}
+
+	// no config was found
+	err = ErrNoCongig
+	return
 }
 
 // The End.
