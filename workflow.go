@@ -4,16 +4,17 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"errors"
+	"flag"
 	"html/template"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"path"
-	"path/filepath"
 	"strings"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/schwarzlichtbezirk/wpk"
 	"github.com/schwarzlichtbezirk/wpk/bulk"
@@ -29,6 +30,8 @@ var (
 	exitwg sync.WaitGroup
 )
 
+var starttime = time.Now() // save server start time
+
 // Package root dir.
 var packager wpk.Packager
 
@@ -41,11 +44,10 @@ var Log = NewLogger(os.Stderr, LstdFlags, 300)
 
 // openimage opens hms-package.
 func openimage() (pack wpk.Packager, err error) {
-	var exepath = filepath.Dir(os.Args[0])
 	if cfg.AutoCert {
-		return mmap.OpenImage(path.Join(exepath, cfg.WPKName))
+		return mmap.OpenImage(path.Join(PackPath, cfg.WPKName))
 	} else {
-		return bulk.OpenImage(path.Join(exepath, cfg.WPKName))
+		return bulk.OpenImage(path.Join(PackPath, cfg.WPKName))
 	}
 }
 
@@ -110,38 +112,61 @@ func loadtemplates() (err error) {
 // Start web server //
 //////////////////////
 
-// WaitInterrupt returns shutdown signal was recivied and cancels some context.
-func WaitInterrupt(cancel context.CancelFunc) {
-	// Make exit signal on function exit.
-	defer cancel()
-
-	var sigint = make(chan os.Signal, 1)
-	// We'll accept graceful shutdowns when quit via SIGINT (Ctrl+C) or SIGTERM (Ctrl+/)
-	// SIGKILL, SIGQUIT will not be caught.
-	signal.Notify(sigint, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
-	// Block until we receive our signal.
-	<-sigint
-	Log.Println("shutting down by break")
-}
-
-// Init performs global data initialisation. Loads configuration files, initializes file cache.
+// Init performs global data initialization. Loads configuration files, initializes file cache.
 func Init() {
+	Log.Println("starts")
+
+	flag.Parse()
+
 	var err error
 
 	// create context and wait the break
 	exitctx, exitfn = context.WithCancel(context.Background())
-	go WaitInterrupt(exitfn)
+	go func() {
+		// Make exit signal on function exit.
+		defer exitfn()
+
+		var sigint = make(chan os.Signal, 1)
+		var sigterm = make(chan os.Signal, 1)
+		// We'll accept graceful shutdowns when quit via SIGINT (Ctrl+C) or SIGTERM (Ctrl+/)
+		// SIGKILL, SIGQUIT will not be caught.
+		signal.Notify(sigint, syscall.SIGINT)
+		signal.Notify(sigterm, syscall.SIGTERM)
+		// Block until we receive our signal.
+		select {
+		case <-exitctx.Done():
+			if errors.Is(exitctx.Err(), context.DeadlineExceeded) {
+				Log.Println("shutting down by timeout")
+			} else if errors.Is(exitctx.Err(), context.Canceled) {
+				Log.Println("shutting down by cancel")
+			} else {
+				Log.Printf("shutting down by %s", exitctx.Err().Error())
+			}
+		case <-sigint:
+			Log.Println("shutting down by break")
+		case <-sigterm:
+			Log.Println("shutting down by process termination")
+		}
+		signal.Stop(sigint)
+		signal.Stop(sigterm)
+	}()
 
 	// get confiruration path
 	if ConfigPath, err = DetectConfigPath(); err != nil {
-		log.Fatal(err)
+		Log.Fatal(err)
 	}
-	log.Printf("config path: %s\n", ConfigPath)
+	Log.Printf("config path: %s\n", ConfigPath)
 
 	// load settings files
-	if err = cfg.Load(path.Join(ConfigPath, "settings.yaml")); err != nil {
+	if err = cfg.Load(path.Join(ConfigPath, cfgfile)); err != nil {
 		Log.Println("error on settings file: " + err.Error())
 	}
+
+	// get package path
+	if PackPath, err = DetectPackPath(); err != nil {
+		Log.Fatal(err)
+	}
+	Log.Printf("package path: %s\n", PackPath)
 
 	// load package with data files
 	if packager, err = openimage(); err != nil {
@@ -157,26 +182,26 @@ func Init() {
 	// build caches with given sizes from settings
 	initcaches()
 
-	if err = pathcache.Load(path.Join(ConfigPath, "pathcache.yaml")); err != nil {
+	if err = pathcache.Load(path.Join(ConfigPath, pcfile)); err != nil {
 		Log.Println("error on path cache file: " + err.Error())
 		Log.Println("loading of directories cache and users list were missed for a reason path cache loading failure")
 	} else {
 		// load directories file groups
 		Log.Printf("loaded %d items into path cache", len(pathcache.keypath))
-		if err = dircache.Load(path.Join(ConfigPath, "dircache.yaml")); err != nil {
+		if err = dircache.Load(path.Join(ConfigPath, dcfile)); err != nil {
 			Log.Println("error on directories cache file: " + err.Error())
 		}
 		Log.Printf("loaded %d items into directories cache", len(dircache.keydir))
 
 		// load previous users states
-		if err = usercache.Load(path.Join(ConfigPath, "userlist.yaml")); err != nil {
+		if err = usercache.Load(path.Join(ConfigPath, ulfile)); err != nil {
 			Log.Println("error on users list file: " + err.Error())
 		}
 		Log.Printf("loaded %d items into users list", len(usercache.list))
 	}
 
 	// load profiles with roots, hidden and shares lists
-	if err = prflist.Load(path.Join(ConfigPath, "profiles.yaml")); err != nil {
+	if err = prflist.Load(path.Join(ConfigPath, pffile)); err != nil {
 		Log.Fatal("error on profiles file: " + err.Error())
 	}
 
@@ -189,6 +214,7 @@ func Init() {
 
 // Run launches server listeners.
 func Run(gmux *Router) {
+	// starts HTTP servers
 	for _, addr := range cfg.PortHTTP {
 		var addr = addr // localize
 		exitwg.Add(1)
@@ -228,6 +254,7 @@ func Run(gmux *Router) {
 		}()
 	}
 
+	// starts HTTPS servers
 	for _, addr := range cfg.PortTLS {
 		var addr = addr // localize
 		exitwg.Add(1)
@@ -284,6 +311,8 @@ func Run(gmux *Router) {
 			}
 		}()
 	}
+
+	Log.Println("ready")
 }
 
 // WaitExit waits until all server threads will be stopped and all transactions will be done.
@@ -306,7 +335,7 @@ func Shutdown() {
 	exitwg.Add(1)
 	go func() {
 		defer exitwg.Done()
-		if err := pathcache.Save(path.Join(ConfigPath, "pathcache.yaml")); err != nil {
+		if err := pathcache.Save(path.Join(ConfigPath, pcfile)); err != nil {
 			Log.Println("error on path cache file: " + err.Error())
 			Log.Println("saving of directories cache and users list were missed for a reason path cache saving failure")
 			return
@@ -315,7 +344,7 @@ func Shutdown() {
 		exitwg.Add(1)
 		go func() {
 			defer exitwg.Done()
-			if err := dircache.Save(path.Join(ConfigPath, "dircache.yaml")); err != nil {
+			if err := dircache.Save(path.Join(ConfigPath, dcfile)); err != nil {
 				Log.Println("error on directories cache file: " + err.Error())
 			}
 		}()
@@ -323,7 +352,7 @@ func Shutdown() {
 		exitwg.Add(1)
 		go func() {
 			defer exitwg.Done()
-			if err := usercache.Save(path.Join(ConfigPath, "userlist.yaml")); err != nil {
+			if err := usercache.Save(path.Join(ConfigPath, ulfile)); err != nil {
 				Log.Println("error on users list file: " + err.Error())
 			}
 		}()
@@ -332,7 +361,7 @@ func Shutdown() {
 	exitwg.Add(1)
 	go func() {
 		defer exitwg.Done()
-		if err := prflist.Save(path.Join(ConfigPath, "profiles.yaml")); err != nil {
+		if err := prflist.Save(path.Join(ConfigPath, pffile)); err != nil {
 			Log.Println("error on profiles list file: " + err.Error())
 		}
 	}()
@@ -350,6 +379,7 @@ func Shutdown() {
 	}()
 
 	exitwg.Wait()
+	Log.Println("shutting down complete.")
 }
 
 // The End.

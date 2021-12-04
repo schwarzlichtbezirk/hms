@@ -508,7 +508,7 @@ func pingAPI(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
-func purgeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
+func purgeAPI(w http.ResponseWriter, _ *http.Request, _ *Profile) {
 	propcache.Purge()
 	thumbcache.Purge()
 
@@ -522,7 +522,7 @@ func purgeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 }
 
 // APIHANDLER
-func reloadAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
+func reloadAPI(w http.ResponseWriter, _ *http.Request, _ *Profile) {
 	var err error
 	var ret struct {
 		RecNumber int64 `json:"recnumber"`
@@ -544,7 +544,7 @@ func reloadAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 }
 
 // APIHANDLER
-func srvinfAPI(w http.ResponseWriter, r *http.Request) {
+func srvinfAPI(w http.ResponseWriter, _ *http.Request) {
 	var ret = map[string]interface{}{
 		"started":  UnixJS(starttime),
 		"govers":   runtime.Version(),
@@ -553,13 +553,14 @@ func srvinfAPI(w http.ResponseWriter, r *http.Request) {
 		"maxprocs": runtime.GOMAXPROCS(0),
 		"exepath":  filepath.Dir(os.Args[0]),
 		"cfgpath":  ConfigPath,
+		"wpkpath":  PackPath,
 	}
 
 	WriteOK(w, ret)
 }
 
 // APIHANDLER
-func memusgAPI(w http.ResponseWriter, r *http.Request) {
+func memusgAPI(w http.ResponseWriter, _ *http.Request) {
 	var mem runtime.MemStats
 	runtime.ReadMemStats(&mem)
 
@@ -578,7 +579,7 @@ func memusgAPI(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
-func cchinfAPI(w http.ResponseWriter, r *http.Request) {
+func cchinfAPI(w http.ResponseWriter, _ *http.Request) {
 	pathcache.mux.RLock()
 	var pathnum = len(pathcache.keypath)
 	pathcache.mux.RUnlock()

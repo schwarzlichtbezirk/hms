@@ -439,10 +439,10 @@ func initcaches() {
 			err = ErrNotDisk
 			return
 		}).
-		EvictedFunc(func(key, value interface{}) {
+		EvictedFunc(func(_, value interface{}) {
 			value.(io.Closer).Close()
 		}).
-		PurgeVisitorFunc(func(key, value interface{}) {
+		PurgeVisitorFunc(func(_, value interface{}) {
 			value.(io.Closer).Close()
 		}).
 		Build()

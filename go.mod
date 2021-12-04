@@ -17,10 +17,10 @@ require (
 	github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd
 	github.com/schwarzlichtbezirk/wpk v1.2.0
 	github.com/spate/glimage v0.0.0-20200505055513-fbdcc60a65e5
-	golang.org/x/crypto v0.0.0-20211117183948-ae814b36b871
+	golang.org/x/crypto v0.0.0-20211202192323-5770296d904e
 	golang.org/x/image v0.0.0-20211028202545-6944b10bf410
 	golang.org/x/text v0.3.7
-	gopkg.in/ini.v1 v1.64.0
+	gopkg.in/ini.v1 v1.66.2
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
 )
 
@@ -34,7 +34,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/ulikunitz/xz v0.5.10 // indirect
-	golang.org/x/net v0.0.0-20211118161319-6a13c67c3ce4 // indirect
-	golang.org/x/sys v0.0.0-20211117180635-dee7805ff2e1 // indirect
+	golang.org/x/net v0.0.0-20211203184738-4852103109b8 // indirect
+	golang.org/x/sys v0.0.0-20211204120058-94396e421777 // indirect
 	gopkg.in/djherbis/times.v1 v1.3.0 // indirect
 )

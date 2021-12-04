@@ -181,7 +181,7 @@ func AuthWrap(fn AuthHandlerFunc) http.HandlerFunc {
 	}
 }
 
-func pubkeyAPI(w http.ResponseWriter, r *http.Request) {
+func pubkeyAPI(w http.ResponseWriter, _ *http.Request) {
 	var err error
 	var buf [32]byte
 	if _, err = rand.Read(buf[:]); err != nil {
