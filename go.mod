@@ -13,6 +13,7 @@ require (
 	github.com/diskfs/go-diskfs v1.2.0
 	github.com/ftrvxmtrx/tga v0.0.0-20150524081124-bd8e8d5be13a
 	github.com/gorilla/mux v1.8.0
+	github.com/jessevdk/go-flags v1.5.0
 	github.com/oov/psd v0.0.0-20210618170533-9fb823ddb631
 	github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd
 	github.com/schwarzlichtbezirk/wpk v1.2.0
@@ -34,7 +35,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/ulikunitz/xz v0.5.10 // indirect
-	golang.org/x/net v0.0.0-20211203184738-4852103109b8 // indirect
-	golang.org/x/sys v0.0.0-20211204120058-94396e421777 // indirect
+	golang.org/x/net v0.0.0-20211209124913-491a49abca63 // indirect
+	golang.org/x/sys v0.0.0-20211209171907-798191bca915 // indirect
 	gopkg.in/djherbis/times.v1 v1.3.0 // indirect
 )

@@ -5,7 +5,6 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
-	"flag"
 	"html/template"
 	"net/http"
 	"os"
@@ -16,6 +15,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/jessevdk/go-flags"
 	"github.com/schwarzlichtbezirk/wpk"
 	"github.com/schwarzlichtbezirk/wpk/bulk"
 	"github.com/schwarzlichtbezirk/wpk/mmap"
@@ -116,10 +116,6 @@ func loadtemplates() (err error) {
 func Init() {
 	Log.Println("starts")
 
-	flag.Parse()
-
-	var err error
-
 	// create context and wait the break
 	exitctx, exitfn = context.WithCancel(context.Background())
 	go func() {
@@ -151,15 +147,23 @@ func Init() {
 		signal.Stop(sigterm)
 	}()
 
+	var err error
+
 	// get confiruration path
 	if ConfigPath, err = DetectConfigPath(); err != nil {
 		Log.Fatal(err)
 	}
 	Log.Printf("config path: %s\n", ConfigPath)
 
-	// load settings files
-	if err = cfg.Load(path.Join(ConfigPath, cfgfile)); err != nil {
-		Log.Println("error on settings file: " + err.Error())
+	// load content of Config structure from YAML-file.
+	if !cfg.NoConfig {
+		if err = cfg.Load(cfgfile); err != nil {
+			Log.Println("error on settings file: " + err.Error())
+		}
+		// second iteration, rewrite settings from config file
+		if _, err = flags.NewParser(&cfg, flags.PassDoubleDash).Parse(); err != nil {
+			panic("no way to here")
+		}
 	}
 
 	// get package path
@@ -182,26 +186,26 @@ func Init() {
 	// build caches with given sizes from settings
 	initcaches()
 
-	if err = pathcache.Load(path.Join(ConfigPath, pcfile)); err != nil {
+	if err = pathcache.Load(pcfile); err != nil {
 		Log.Println("error on path cache file: " + err.Error())
 		Log.Println("loading of directories cache and users list were missed for a reason path cache loading failure")
 	} else {
 		// load directories file groups
 		Log.Printf("loaded %d items into path cache", len(pathcache.keypath))
-		if err = dircache.Load(path.Join(ConfigPath, dcfile)); err != nil {
+		if err = dircache.Load(dcfile); err != nil {
 			Log.Println("error on directories cache file: " + err.Error())
 		}
 		Log.Printf("loaded %d items into directories cache", len(dircache.keydir))
 
 		// load previous users states
-		if err = usercache.Load(path.Join(ConfigPath, ulfile)); err != nil {
+		if err = usercache.Load(ulfile); err != nil {
 			Log.Println("error on users list file: " + err.Error())
 		}
 		Log.Printf("loaded %d items into users list", len(usercache.list))
 	}
 
 	// load profiles with roots, hidden and shares lists
-	if err = prflist.Load(path.Join(ConfigPath, pffile)); err != nil {
+	if err = prflist.Load(pffile); err != nil {
 		Log.Fatal("error on profiles file: " + err.Error())
 	}
 
@@ -335,7 +339,7 @@ func Shutdown() {
 	exitwg.Add(1)
 	go func() {
 		defer exitwg.Done()
-		if err := pathcache.Save(path.Join(ConfigPath, pcfile)); err != nil {
+		if err := pathcache.Save(pcfile); err != nil {
 			Log.Println("error on path cache file: " + err.Error())
 			Log.Println("saving of directories cache and users list were missed for a reason path cache saving failure")
 			return
@@ -344,7 +348,7 @@ func Shutdown() {
 		exitwg.Add(1)
 		go func() {
 			defer exitwg.Done()
-			if err := dircache.Save(path.Join(ConfigPath, dcfile)); err != nil {
+			if err := dircache.Save(dcfile); err != nil {
 				Log.Println("error on directories cache file: " + err.Error())
 			}
 		}()
@@ -352,7 +356,7 @@ func Shutdown() {
 		exitwg.Add(1)
 		go func() {
 			defer exitwg.Done()
-			if err := usercache.Save(path.Join(ConfigPath, ulfile)); err != nil {
+			if err := usercache.Save(ulfile); err != nil {
 				Log.Println("error on users list file: " + err.Error())
 			}
 		}()
@@ -361,7 +365,7 @@ func Shutdown() {
 	exitwg.Add(1)
 	go func() {
 		defer exitwg.Done()
-		if err := prflist.Save(path.Join(ConfigPath, pffile)); err != nil {
+		if err := prflist.Save(pffile); err != nil {
 			Log.Println("error on profiles list file: " + err.Error())
 		}
 	}()

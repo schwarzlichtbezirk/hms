@@ -46,7 +46,7 @@ specification:
     wpk-mmap: false
     # Maximum duration between two ajax-calls to think client is online.
     online-timeout: 180s # 3 minutes
-    # Default profile ID for user on localhost.
+    # Default profile identifier for user on localhost.
     default-profile-id: 1
     # Maximum size of image to make thumbnail.
     thumb-file-maxsize: 50397184 # 4096*3072*4 + 65536, 48M, max 4K image + 64K exif metadata

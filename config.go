@@ -2,10 +2,12 @@ package hms
 
 import (
 	"errors"
-	"flag"
+	"log"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/jessevdk/go-flags"
 )
 
 const (
@@ -16,11 +18,17 @@ const (
 	plugsuff = "plugin"  // relative path to third party code
 	confsuff = "config"  // relative path to configuration files folder
 	tmplsuff = "tmpl"    // relative path to html templates folder
-	csrcsuff = "src/github.com/schwarzlichtbezirk/hms"
 )
 
-// CfgAuth is authentication settings.
-type CfgAuth struct {
+// CfgCmdLine is command line arguments representation for YAML settings.
+type CfgCmdLine struct {
+	ConfigPath string `json:"-" yaml:"-" env:"HMSCONFIGPATH" short:"c" long:"cfgpath" description:"Configuration path. Can be full path to config folder, or relative from executable destination."`
+	NoConfig   bool   `json:"-" yaml:"-" long:"nocfg" description:"Specifies do not load settings from YAML-settings file, keeps default."`
+	PackPath   string `json:"-" yaml:"-" env:"HMSPACKPATH" long:"wpkpath" description:"Determines package path. Can be full path to folder with package, or relative from executable destination."`
+}
+
+// CfgJWTAuth is authentication settings.
+type CfgJWTAuth struct {
 	// Access token time to live.
 	AccessTTL time.Duration `json:"access-ttl" yaml:"access-ttl"`
 	// Refresh token time to live.
@@ -31,66 +39,67 @@ type CfgAuth struct {
 	RefreshKey string `json:"refresh-key" yaml:"refresh-key"`
 }
 
-// CfgServ is web server settings.
-type CfgServ struct {
-	AutoCert          bool          `json:"auto-cert" yaml:"auto-cert"`
-	PortHTTP          []string      `json:"port-http" yaml:"port-http"`
-	PortTLS           []string      `json:"port-tls" yaml:"port-tls"`
-	ReadTimeout       time.Duration `json:"read-timeout" yaml:"read-timeout"`
-	ReadHeaderTimeout time.Duration `json:"read-header-timeout" yaml:"read-header-timeout"`
-	WriteTimeout      time.Duration `json:"write-timeout" yaml:"write-timeout"`
-	IdleTimeout       time.Duration `json:"idle-timeout" yaml:"idle-timeout"`
-	MaxHeaderBytes    int           `json:"max-header-bytes" yaml:"max-header-bytes"`
+// CfgWebServ is web server settings.
+type CfgWebServ struct {
+	AutoCert          bool          `json:"auto-cert" yaml:"auto-cert" long:"autocert" description:"Indicates to get TLS-certificate from letsencrypt.org service if this value is true. Uses local TLS-certificate otherwise."`
+	PortHTTP          []string      `json:"port-http" yaml:"port-http" short:"w" long:"porthttp" description:"List of address:port values for non-encrypted connections. Address is skipped in most common cases, port only remains."`
+	PortTLS           []string      `json:"port-tls" yaml:"port-tls" short:"s" long:"porttls" description:"List of address:port values for encrypted connections. Address is skipped in most common cases, port only remains."`
+	ReadTimeout       time.Duration `json:"read-timeout" yaml:"read-timeout" long:"rt" description:"Maximum duration for reading the entire request, including the body."`
+	ReadHeaderTimeout time.Duration `json:"read-header-timeout" yaml:"read-header-timeout" long:"rht" description:"Amount of time allowed to read request headers."`
+	WriteTimeout      time.Duration `json:"write-timeout" yaml:"write-timeout" long:"wt" description:"Maximum duration before timing out writes of the response."`
+	IdleTimeout       time.Duration `json:"idle-timeout" yaml:"idle-timeout" long:"it" description:"Maximum amount of time to wait for the next request when keep-alives are enabled."`
+	MaxHeaderBytes    int           `json:"max-header-bytes" yaml:"max-header-bytes" long:"mhb" description:"Controls the maximum number of bytes the server will read parsing the request header's keys and values, including the request line, in bytes."`
 	// Maximum duration to wait for graceful shutdown.
-	ShutdownTimeout time.Duration `json:"shutdown-timeout" yaml:"shutdown-timeout"`
+	ShutdownTimeout time.Duration `json:"shutdown-timeout" yaml:"shutdown-timeout" long:"st" description:"Maximum duration to wait for graceful shutdown."`
 }
 
-// CfgSpec is settings for application-specific logic.
-type CfgSpec struct {
+// CfgAppConf is settings for application-specific logic.
+type CfgAppConf struct {
 	// Name of wpk-file with program resources.
-	WPKName string `json:"wpk-name" yaml:"wpk-name"`
+	WPKName string `json:"wpk-name" yaml:"wpk-name" long:"wpk" description:"Name of wpk-file with program resources."`
 	// Memory mapping technology for WPK, or load into one solid byte slice otherwise.
-	WPKmmap bool `json:"wpk-mmap" yaml:"wpk-mmap"`
+	WPKmmap bool `json:"wpk-mmap" yaml:"wpk-mmap" long:"mmap" description:"Memory mapping technology for WPK, or load into one solid byte slice otherwise."`
 	// Maximum duration between two ajax-calls to think client is online.
-	OnlineTimeout time.Duration `json:"online-timeout" yaml:"online-timeout"`
-	// Default profile for user on localhost.
-	DefAccID int `json:"default-profile-id" yaml:"default-profile-id"`
+	OnlineTimeout time.Duration `json:"online-timeout" yaml:"online-timeout" long:"ot" description:"Maximum duration between two ajax-calls to think client is online."`
+	// Default profile identifier for user on localhost.
+	DefAccID int `json:"default-profile-id" yaml:"default-profile-id" long:"defaid" description:"Default profile identifier for user on localhost."`
 	// Maximum size of image to make thumbnail.
-	ThumbFileMaxSize int64 `json:"thumb-file-maxsize" yaml:"thumb-file-maxsize"`
+	ThumbFileMaxSize int64 `json:"thumb-file-maxsize" yaml:"thumb-file-maxsize" long:"tfms" description:"Maximum size of image to make thumbnail."`
 	// Stretch big image embedded into mp3-file to fit into standard icon size.
-	FitEmbeddedTmb bool `json:"fit-embedded-tmb" yaml:"fit-embedded-tmb"`
+	FitEmbeddedTmb bool `json:"fit-embedded-tmb" yaml:"fit-embedded-tmb" long:"fet" description:"Stretch big image embedded into mp3-file to fit into standard icon size."`
 	// Initial size of path unique identifiers in bytes, maximum is 10
 	// (x1.6 for length of string representation).
 	// When the bottom pool arrives to 90%, size increases to next available value.
-	PUIDsize int `json:"puid-size" yaml:"puid-size"`
+	PUIDsize int `json:"puid-size" yaml:"puid-size" long:"puidsize" description:"Initial size of path unique identifiers in bytes, maximum is 10 (x1.6 for length of string representation). When the bottom pool arrives to 90%, size increases to next available value."`
 	// Maximum items number in files properties cache.
-	PropCacheMaxNum int `json:"prop-cache-maxnum" yaml:"prop-cache-maxnum"`
+	PropCacheMaxNum int `json:"prop-cache-maxnum" yaml:"prop-cache-maxnum" long:"pcmn" description:"Maximum items number in files properties cache."`
 	// Maximum items number in thumbnails cache.
-	ThumbCacheMaxNum int `json:"thumb-cache-maxnum" yaml:"thumb-cache-maxnum"`
+	ThumbCacheMaxNum int `json:"thumb-cache-maxnum" yaml:"thumb-cache-maxnum" long:"tcmn" description:"Maximum items number in thumbnails cache."`
 	// Maximum items number in converted media files cache.
-	MediaCacheMaxNum int `json:"media-cache-maxnum" yaml:"media-cache-maxnum"`
+	MediaCacheMaxNum int `json:"media-cache-maxnum" yaml:"media-cache-maxnum" long:"mcmn" description:"Maximum items number in converted media files cache."`
 	// Expiration duration to keep opened iso-disk structures in cache from last access to it.
-	DiskCacheExpire time.Duration `json:"disk-cache-expire" yaml:"disk-cache-expire"`
+	DiskCacheExpire time.Duration `json:"disk-cache-expire" yaml:"disk-cache-expire" long:"dce" description:"Expiration duration to keep opened iso-disk structures in cache from last access to it."`
 }
 
 // Config is common service settings.
 type Config struct {
-	CfgAuth `json:"authentication" yaml:"authentication"`
-	CfgServ `json:"webserver" yaml:"webserver"`
-	CfgSpec `json:"specification" yaml:"specification"`
+	CfgCmdLine `json:"command-line" yaml:"command-line" group:"Data Parameters"`
+	CfgJWTAuth `json:"authentication" yaml:"authentication" group:"Authentication"`
+	CfgWebServ `json:"webserver" yaml:"webserver" group:"Web Server"`
+	CfgAppConf `json:"specification" yaml:"specification" group:"Application settings"`
 }
 
 // Instance of common service settings.
 var cfg = Config{ // inits default values:
-	CfgAuth: CfgAuth{
+	CfgJWTAuth: CfgJWTAuth{
 		AccessTTL:  time.Duration(1*24) * time.Hour,
 		RefreshTTL: time.Duration(3*24) * time.Hour,
 		AccessKey:  "skJgM4NsbP3fs4k7vh0gfdkgGl8dJTszdLxZ1sQ9ksFnxbgvw2RsGH8xxddUV479",
 		RefreshKey: "zxK4dUnuq3Lhd1Gzhpr3usI5lAzgvy2t3fmxld2spzz7a5nfv0hsksm9cheyutie",
 	},
-	CfgServ: CfgServ{
+	CfgWebServ: CfgWebServ{
 		AutoCert:          false,
-		PortHTTP:          []string{},
+		PortHTTP:          []string{":80"},
 		PortTLS:           []string{},
 		ReadTimeout:       time.Duration(15) * time.Second,
 		ReadHeaderTimeout: time.Duration(15) * time.Second,
@@ -99,7 +108,7 @@ var cfg = Config{ // inits default values:
 		MaxHeaderBytes:    1 << 20,
 		ShutdownTimeout:   time.Duration(15) * time.Second,
 	},
-	CfgSpec: CfgSpec{
+	CfgAppConf: CfgAppConf{
 		WPKName:          "hms.wpk",
 		WPKmmap:          false,
 		OnlineTimeout:    time.Duration(3*60*1000) * time.Millisecond,
@@ -113,20 +122,23 @@ var cfg = Config{ // inits default values:
 	},
 }
 
+func init() {
+	if _, err := flags.Parse(&cfg); err != nil {
+		os.Exit(1)
+	}
+}
+
 const (
-	cfgenv  = "HMSCONFIGPATH"
+	gitname = "hms"
+	gitpath = "github.com/schwarzlichtbezirk/" + gitname
+	cfgbase = gitname
 	cfgfile = "settings.yaml"
-	cfgbase = "hms"
-	srcpath = "src/github.com/schwarzlichtbezirk/hms/config"
 
 	pcfile = "pathcache.yaml"
 	dcfile = "dircache.yaml"
 	pffile = "profiles.yaml"
 	ulfile = "userlist.yaml"
 )
-
-// Configuration path given from command line parameter.
-var cfgpath = flag.String("c", "", "configuration path")
 
 // ConfigPath determines configuration path, depended on what directory is exist.
 var ConfigPath string
@@ -141,24 +153,8 @@ func DetectConfigPath() (retpath string, err error) {
 	var exepath = filepath.Dir(os.Args[0])
 
 	// try to get from environment setting
-	if path, ok = os.LookupEnv(cfgenv); ok {
-		path = envfmt(path)
-		// try to get access to full path
-		if ok, _ = pathexists(filepath.Join(path, cfgfile)); ok {
-			retpath = path
-			return
-		}
-		// try to find relative from executable path
-		path = filepath.Join(exepath, path)
-		if ok, _ = pathexists(filepath.Join(path, cfgfile)); ok {
-			retpath = exepath
-			return
-		}
-		Log.Printf("no access to pointed configuration path '%s'\n", path)
-	}
-
-	// try to get from command path arguments
-	if path = *cfgpath; path != "" {
+	if cfg.ConfigPath != "" {
+		path = envfmt(cfg.ConfigPath)
 		// try to get access to full path
 		if ok, _ = pathexists(filepath.Join(path, cfgfile)); ok {
 			retpath = path
@@ -170,6 +166,7 @@ func DetectConfigPath() (retpath string, err error) {
 			retpath = path
 			return
 		}
+		log.Printf("no access to pointed configuration path '%s'\n", cfg.ConfigPath)
 	}
 
 	// try to get from config subdirectory on executable path
@@ -183,44 +180,55 @@ func DetectConfigPath() (retpath string, err error) {
 		retpath = exepath
 		return
 	}
+	// try to find in config subdirectory of current path
+	if ok, _ = pathexists(filepath.Join(cfgbase, cfgfile)); ok {
+		retpath = cfgbase
+		return
+	}
 	// try to find in current path
 	if ok, _ = pathexists(cfgfile); ok {
 		retpath = "."
 		return
 	}
+	// check up current path is the git root path
+	if ok, _ = pathexists(filepath.Join("config", cfgfile)); ok {
+		retpath = "config"
+		return
+	}
 
-	// if GOBIN is present
-	if gobin, ok := os.LookupEnv("GOBIN"); ok {
-		// try to get from go bin config
-		path = filepath.Join(gobin, cfgbase)
+	// check up running in devcontainer workspace
+	path = filepath.Join("/workspaces", gitname, "config")
+	if ok, _ = pathexists(filepath.Join(path, cfgfile)); ok {
+		retpath = path
+		return
+	}
+
+	// check up git source path
+	var prefix string
+	if prefix, ok = os.LookupEnv("GOPATH"); ok {
+		path = filepath.Join(prefix, "src", gitpath, "config")
 		if ok, _ = pathexists(filepath.Join(path, cfgfile)); ok {
-			return
-		}
-		// try to get from go bin root
-		if ok, _ = pathexists(filepath.Join(gobin, cfgfile)); ok {
-			retpath = gobin
+			retpath = path
 			return
 		}
 	}
 
-	// if GOPATH is present
-	if gopath, ok := os.LookupEnv("GOPATH"); ok {
+	// if GOBIN or GOPATH is present
+	if prefix, ok = os.LookupEnv("GOBIN"); !ok {
+		if prefix, ok = os.LookupEnv("GOPATH"); ok {
+			prefix = filepath.Join(prefix, "bin")
+		}
+	}
+	if ok {
 		// try to get from go bin config
-		path = filepath.Join(gopath, "bin", cfgbase)
+		path = filepath.Join(prefix, cfgbase)
 		if ok, _ = pathexists(filepath.Join(path, cfgfile)); ok {
 			retpath = path
 			return
 		}
 		// try to get from go bin root
-		path = filepath.Join(gopath, "bin")
-		if ok, _ = pathexists(filepath.Join(path, cfgfile)); ok {
-			retpath = path
-			return
-		}
-		// try to get from source code
-		path = filepath.Join(gopath, srcpath)
-		if ok, _ = pathexists(filepath.Join(path, cfgfile)); ok {
-			retpath = path
+		if ok, _ = pathexists(filepath.Join(prefix, cfgfile)); ok {
+			retpath = prefix
 			return
 		}
 	}
@@ -229,9 +237,6 @@ func DetectConfigPath() (retpath string, err error) {
 	err = ErrNoCongig
 	return
 }
-
-// Package path given from command line parameter.
-var wpkpath = flag.String("w", "", "package path")
 
 // PackPath determines package path, depended on what directory is exist.
 var PackPath string
@@ -245,8 +250,9 @@ func DetectPackPath() (retpath string, err error) {
 	var path string
 	var exepath = filepath.Dir(os.Args[0])
 
-	// try to get from command path arguments
-	if path = *wpkpath; path != "" {
+	// try to get from environment setting
+	if cfg.PackPath != "" {
+		path = envfmt(cfg.PackPath)
 		// try to get access to full path
 		if ok, _ = pathexists(filepath.Join(path, cfg.WPKName)); ok {
 			retpath = path
@@ -258,6 +264,7 @@ func DetectPackPath() (retpath string, err error) {
 			retpath = path
 			return
 		}
+		log.Printf("no access to pointed package path '%s'\n", cfg.PackPath)
 	}
 
 	// try to find in executable path
@@ -278,17 +285,18 @@ func DetectPackPath() (retpath string, err error) {
 	}
 
 	// if GOBIN is present
-	if gobin, ok := os.LookupEnv("GOBIN"); ok {
-		if ok, _ = pathexists(filepath.Join(gobin, cfg.WPKName)); ok {
-			retpath = gobin
+	var prefix string
+	if prefix, ok = os.LookupEnv("GOBIN"); ok {
+		if ok, _ = pathexists(filepath.Join(prefix, cfg.WPKName)); ok {
+			retpath = prefix
 			return
 		}
 	}
 
 	// if GOPATH is present
-	if gopath, ok := os.LookupEnv("GOPATH"); ok {
+	if prefix, ok = os.LookupEnv("GOPATH"); ok {
 		// try to get from go bin root
-		path = filepath.Join(gopath, "bin")
+		path = filepath.Join(prefix, "bin")
 		if ok, _ = pathexists(filepath.Join(path, cfg.WPKName)); ok {
 			retpath = path
 			return
