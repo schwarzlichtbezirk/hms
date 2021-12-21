@@ -143,7 +143,7 @@ func SplitPrefSuff(shrpath string) (string, string) {
 	for i, c := range shrpath {
 		if c == '/' || c == '\\' {
 			return shrpath[:i], shrpath[i+1:]
-		} else if !puidsym[c] {
+		} else if int(c) >= len(puidsym) || !puidsym[c] {
 			return "", shrpath
 		}
 	}

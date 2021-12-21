@@ -24,6 +24,19 @@ let iconmapping = {
 };
 let thumbmode = true;
 
+// Category properties
+const CP = {
+	home: "Home",
+	drives: "Drives list",
+	shares: "Shared resources",
+	media: "Multimedia files",
+	video: "Movie and video files",
+	audio: "Music and audio files",
+	image: "Photos and images",
+	books: "Books",
+	texts: "Text files"
+};
+
 // File types
 const FT = {
 	file: 0,
@@ -410,32 +423,13 @@ const VueMainApp = {
 		// current path base name
 		curbasename() {
 			if (this.curcid) {
-				switch (this.curcid) {
-					case "drives":
-						return 'Drives list';
-					case "shares":
-						return 'Shared resources';
-					case "media":
-						return "Multimedia files";
-					case "video":
-						return "Movie and video files";
-					case "audio":
-						return "Music and audio files";
-					case "image":
-						return "Photos and images";
-					case "books":
-						return "Books";
-					case "texts":
-						return "Text files";
-					default:
-						return this.curcid;
-				}
+				return CP[this.curcid] || this.curcid;
 			} else if (this.curpath) {
 				const arr = this.curpath.split('/');
 				const base = arr.pop() || arr.pop();
 				return !arr.length && this.shrname || base;
 			} else {
-				return 'home page';
+				return "unknown";
 			}
 		},
 		// array of paths to current folder
@@ -521,8 +515,8 @@ const VueMainApp = {
 		},
 		clsdiskpathedt() {
 			return {
-				'is-invalid': this.diskpathstate && this.passstate === -1,
-				'is-valid': this.diskpathstate && this.passstate !== -1
+				'is-invalid': this.diskpathstate === -1,
+				'is-valid': this.diskpathstate == 1
 			};
 		},
 		clsdiskadd() {
@@ -615,6 +609,7 @@ const VueMainApp = {
 			this.curpuid = hist.puid;
 			this.curpath = "";
 			this.shrname = "";
+			document.title = `file browser - ${this.curbasename}`;
 
 			this.newfolder(response.data, hist.cid === "home");
 		},
@@ -637,6 +632,7 @@ const VueMainApp = {
 			this.curpuid = hist.puid;
 			this.curpath = hist.path;
 			this.shrname = response.data.shrname;
+			document.title = `file browser - ${this.curbasename}`;
 
 			this.newfolder(response.data.list);
 		},
@@ -658,6 +654,7 @@ const VueMainApp = {
 			this.curpuid = hist.puid;
 			this.curpath = response.data.path;
 			this.shrname = response.data.shrname;
+			document.title = `file browser - ${this.curbasename}`;
 
 			this.newfolder(response.data.list);
 		},

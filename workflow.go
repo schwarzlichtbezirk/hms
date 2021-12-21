@@ -218,105 +218,125 @@ func Init() {
 
 // Run launches server listeners.
 func Run(gmux *Router) {
-	// starts HTTP servers
-	for _, addr := range cfg.PortHTTP {
-		var addr = addr // localize
-		exitwg.Add(1)
-		go func() {
-			defer exitwg.Done()
+	// helpers for graceful startup to prevent call to uninitialized data
+	var httpctx, httpcancel = context.WithCancel(context.Background())
 
-			Log.Printf("start http on %s\n", addr)
-			var server = &http.Server{
-				Addr:              addr,
-				Handler:           gmux,
-				ReadTimeout:       cfg.ReadTimeout,
-				ReadHeaderTimeout: cfg.ReadHeaderTimeout,
-				WriteTimeout:      cfg.WriteTimeout,
-				IdleTimeout:       cfg.IdleTimeout,
-				MaxHeaderBytes:    cfg.MaxHeaderBytes,
-			}
+	// webserver start
+	go func() {
+		defer httpcancel()
+		var httpwg sync.WaitGroup
+
+		// starts HTTP listeners
+		for _, addr := range cfg.PortHTTP {
+			var addr = addr // localize
+			httpwg.Add(1)
+			exitwg.Add(1)
 			go func() {
-				if err := server.ListenAndServe(); err != http.ErrServerClosed {
-					Log.Fatalf("failed to serve on %s: %v", addr, err)
-					return
+				defer exitwg.Done()
+
+				Log.Printf("start http on %s\n", addr)
+				var server = &http.Server{
+					Addr:              addr,
+					Handler:           gmux,
+					ReadTimeout:       cfg.ReadTimeout,
+					ReadHeaderTimeout: cfg.ReadHeaderTimeout,
+					WriteTimeout:      cfg.WriteTimeout,
+					IdleTimeout:       cfg.IdleTimeout,
+					MaxHeaderBytes:    cfg.MaxHeaderBytes,
+				}
+				go func() {
+					httpwg.Done()
+					if err := server.ListenAndServe(); err != http.ErrServerClosed {
+						Log.Fatalf("failed to serve on %s: %v", addr, err)
+						return
+					}
+				}()
+
+				// wait for exit signal
+				<-exitctx.Done()
+
+				// create a deadline to wait for.
+				var ctx, cancel = context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
+				defer cancel()
+
+				server.SetKeepAlivesEnabled(false)
+				if err := server.Shutdown(ctx); err != nil {
+					Log.Printf("shutdown http on %s: %v\n", addr, err)
+				} else {
+					Log.Printf("stop http on %s\n", addr)
 				}
 			}()
+		}
 
-			// wait for exit signal
-			<-exitctx.Done()
-
-			// create a deadline to wait for.
-			var ctx, cancel = context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
-			defer cancel()
-
-			server.SetKeepAlivesEnabled(false)
-			if err := server.Shutdown(ctx); err != nil {
-				Log.Printf("shutdown http on %s: %v\n", addr, err)
-			} else {
-				Log.Printf("stop http on %s\n", addr)
-			}
-		}()
-	}
-
-	// starts HTTPS servers
-	for _, addr := range cfg.PortTLS {
-		var addr = addr // localize
-		exitwg.Add(1)
-		go func() {
-			defer exitwg.Done()
-
-			Log.Printf("start tls on %s\n", addr)
-			var config *tls.Config
-			if cfg.AutoCert { // get certificate from letsencrypt.org
-				var m = &autocert.Manager{
-					Prompt: autocert.AcceptTOS,
-					Cache:  autocert.DirCache(path.Join(ConfigPath, "cert")),
-				}
-				config = &tls.Config{
-					PreferServerCipherSuites: true,
-					CurvePreferences: []tls.CurveID{
-						tls.CurveP256,
-						tls.X25519,
-					},
-					GetCertificate: m.GetCertificate,
-				}
-			}
-			var server = &http.Server{
-				Addr:              addr,
-				Handler:           gmux,
-				TLSConfig:         config,
-				ReadTimeout:       cfg.ReadTimeout,
-				ReadHeaderTimeout: cfg.ReadHeaderTimeout,
-				WriteTimeout:      cfg.WriteTimeout,
-				IdleTimeout:       cfg.IdleTimeout,
-				MaxHeaderBytes:    cfg.MaxHeaderBytes,
-			}
+		// starts HTTPS listeners
+		for _, addr := range cfg.PortTLS {
+			var addr = addr // localize
+			httpwg.Add(1)
+			exitwg.Add(1)
 			go func() {
-				if err := server.ListenAndServeTLS(
-					path.Join(ConfigPath, "serv.crt"),
-					path.Join(ConfigPath, "prvk.pem")); err != http.ErrServerClosed {
-					Log.Fatalf("failed to serve on %s: %v", addr, err)
-					return
+				defer exitwg.Done()
+
+				Log.Printf("start tls on %s\n", addr)
+				var config *tls.Config
+				if cfg.AutoCert { // get certificate from letsencrypt.org
+					var m = &autocert.Manager{
+						Prompt: autocert.AcceptTOS,
+						Cache:  autocert.DirCache(path.Join(ConfigPath, "cert")),
+					}
+					config = &tls.Config{
+						PreferServerCipherSuites: true,
+						CurvePreferences: []tls.CurveID{
+							tls.CurveP256,
+							tls.X25519,
+						},
+						GetCertificate: m.GetCertificate,
+					}
+				}
+				var server = &http.Server{
+					Addr:              addr,
+					Handler:           gmux,
+					TLSConfig:         config,
+					ReadTimeout:       cfg.ReadTimeout,
+					ReadHeaderTimeout: cfg.ReadHeaderTimeout,
+					WriteTimeout:      cfg.WriteTimeout,
+					IdleTimeout:       cfg.IdleTimeout,
+					MaxHeaderBytes:    cfg.MaxHeaderBytes,
+				}
+				go func() {
+					httpwg.Done()
+					if err := server.ListenAndServeTLS(
+						path.Join(ConfigPath, "serv.crt"),
+						path.Join(ConfigPath, "prvk.pem")); err != http.ErrServerClosed {
+						Log.Fatalf("failed to serve on %s: %v", addr, err)
+						return
+					}
+				}()
+
+				// wait for exit signal
+				<-exitctx.Done()
+
+				// create a deadline to wait for.
+				var ctx, cancel = context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
+				defer cancel()
+
+				server.SetKeepAlivesEnabled(false)
+				if err := server.Shutdown(ctx); err != nil {
+					Log.Printf("shutdown tls on %s: %v\n", addr, err)
+				} else {
+					Log.Printf("stop tls on %s\n", addr)
 				}
 			}()
+		}
 
-			// wait for exit signal
-			<-exitctx.Done()
+		httpwg.Wait()
+	}()
 
-			// create a deadline to wait for.
-			var ctx, cancel = context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
-			defer cancel()
-
-			server.SetKeepAlivesEnabled(false)
-			if err := server.Shutdown(ctx); err != nil {
-				Log.Printf("shutdown tls on %s: %v\n", addr, err)
-			} else {
-				Log.Printf("stop tls on %s\n", addr)
-			}
-		}()
+	select {
+	case <-httpctx.Done():
+		Log.Printf("webserver ready")
+	case <-exitctx.Done():
+		return
 	}
-
-	Log.Println("ready")
 }
 
 // WaitExit waits until all server threads will be stopped and all transactions will be done.

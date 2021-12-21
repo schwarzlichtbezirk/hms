@@ -1233,6 +1233,10 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		WriteError(w, http.StatusForbidden, ErrNoAccess, AECdrvaddroot)
 		return
 	}
+	// append slash to disk root to prevent open current dir on this disk
+	if strings.HasSuffix(syspath, ":") {
+		syspath += "/"
+	}
 	syspath = UnfoldPath(syspath)
 	if prf.RootIndex(syspath) >= 0 {
 		WriteOK(w, nil)
