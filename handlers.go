@@ -3,7 +3,9 @@ package hms
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"os"
 	"path"
@@ -198,6 +200,38 @@ const (
 	AECdrvdelnoacc
 	AECdrvdeldeny
 	AECdrvdelnopath
+
+	// edit/copy
+	AECedtcopynodata
+	AECedtcopynoacc
+	AECedtcopydeny
+	AECedtcopynopath
+	AECedtcopynodest
+	AECedtcopyover
+	AECedtcopyopsrc
+	AECedtcopystatsrc
+	AECedtcopymkdir
+	AECedtcopyrd
+	AECedtcopyopdst
+	AECedtcopycopy
+	AECedtcopystatfile
+
+	// edit/rename
+	AECedtrennodata
+	AECedtrennoacc
+	AECedtrendeny
+	AECedtrennopath
+	AECedtrennodest
+	AECedtrenover
+	AECedtrenmove
+	AECedtrenstat
+
+	// edit/del
+	AECedtdelnodata
+	AECedtdelnoacc
+	AECedtdeldeny
+	AECedtdelnopath
+	AECedtdelremove
 )
 
 // HTTP error messages
@@ -218,6 +252,7 @@ var (
 	ErrNoAccess  = errors.New("profile has no access to specified file path")
 	ErrNotCat    = errors.New("only categories can be accepted")
 	ErrNotPlay   = errors.New("file can not be read as playlist")
+	ErrFileOver  = errors.New("to many files with same names contains")
 )
 
 //////////////////////////
@@ -242,7 +277,7 @@ func pageHandler(pref, name string) http.HandlerFunc {
 				var aid = cfg.DefAccID
 				if len(chunks) > pos && len(chunks[pos]) > 2 && chunks[pos][:2] == "id" {
 					if u64, err := strconv.ParseUint(chunks[pos][2:], 10, 32); err == nil {
-						aid = int(u64)
+						aid = u64
 					}
 				}
 				usermsg <- UsrMsg{r, "page", aid}
@@ -286,7 +321,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var prf *Profile
-	if prf = prflist.ByID(int(aid)); prf == nil {
+	if prf = prflist.ByID(aid); prf == nil {
 		WriteError400(w, ErrNoAcc, AECmedianoacc)
 		return
 	}
@@ -340,7 +375,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 
 	if hd && grp == FGimage {
 		if val, err = hdcache.Get(puid); err != nil {
-			if os.IsNotExist(err) {
+			if errors.Is(err, fs.ErrNotExist) {
 				WriteError(w, http.StatusGone, err, AECmediahdgone)
 				return
 			}
@@ -373,7 +408,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 
 	if media && grp == FGimage {
 		if val, err = mediacache.Get(puid); err != nil {
-			if os.IsNotExist(err) {
+			if errors.Is(err, fs.ErrNotExist) {
 				WriteError(w, http.StatusGone, err, AECmediamedgone)
 				return
 			}
@@ -417,7 +452,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 
 	var content VFile
 	if content, err = OpenFile(syspath); err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			WriteError(w, http.StatusGone, err, AECmediafilegone)
 			return
 		}
@@ -446,7 +481,7 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var prf *Profile
-	if prf = prflist.ByID(int(aid)); prf == nil {
+	if prf = prflist.ByID(aid); prf == nil {
 		WriteError400(w, ErrNoAcc, AECthumbnoacc)
 		return
 	}
@@ -679,7 +714,7 @@ func getlogAPI(w http.ResponseWriter, r *http.Request) {
 func ishomeAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
-		AID int `json:"aid"`
+		AID uint64 `json:"aid"`
 	}
 	var ret bool
 
@@ -723,7 +758,7 @@ func ishomeAPI(w http.ResponseWriter, r *http.Request) {
 func ctgrAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
-		AID  int    `json:"aid"`
+		AID  uint64 `json:"aid"`
 		PUID string `json:"puid"`
 		CID  string `json:"cid"`
 	}
@@ -819,7 +854,7 @@ func ctgrAPI(w http.ResponseWriter, r *http.Request) {
 func folderAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
-		AID  int    `json:"aid"`
+		AID  uint64 `json:"aid"`
 		PUID string `json:"puid,omitempty"`
 		Path string `json:"path,omitempty"`
 	}
@@ -884,7 +919,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 	if ret.List, err = ScanDir(syspath, &cg, func(fpath string) bool {
 		return prf.IsHidden(fpath)
 	}); err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, fs.ErrNotExist) {
 			WriteError(w, http.StatusNotFound, err, AECfolderabsent)
 		} else {
 			WriteError500(w, err, AECfolderfail)
@@ -901,7 +936,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 func playlistAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
-		AID  int    `json:"aid"`
+		AID  uint64 `json:"aid"`
 		PUID string `json:"puid,omitempty"`
 		Ext  string `json:"ext,omitempty"`
 	}
@@ -1018,7 +1053,7 @@ func playlistAPI(w http.ResponseWriter, r *http.Request) {
 func ispathAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var err error
 	var arg struct {
-		AID  int    `json:"aid"`
+		AID  uint64 `json:"aid"`
 		Path string `json:"path"`
 	}
 
@@ -1061,7 +1096,7 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 func shrlstAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
-		AID int `json:"aid"`
+		AID uint64 `json:"aid"`
 	}
 	var ret = []Pather{}
 
@@ -1094,7 +1129,7 @@ func shrlstAPI(w http.ResponseWriter, r *http.Request) {
 func shraddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var err error
 	var arg struct {
-		AID  int    `json:"aid"`
+		AID  uint64 `json:"aid"`
 		PUID string `json:"puid"`
 	}
 
@@ -1136,7 +1171,7 @@ func shraddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 func shrdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var err error
 	var arg struct {
-		AID  int    `json:"aid"`
+		AID  uint64 `json:"aid"`
 		PUID string `json:"puid"`
 	}
 	var ok bool
@@ -1171,7 +1206,7 @@ func shrdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 func drvlstAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
-		AID int `json:"aid"`
+		AID uint64 `json:"aid"`
 	}
 	var ret []Pather
 
@@ -1205,7 +1240,7 @@ func drvlstAPI(w http.ResponseWriter, r *http.Request) {
 func drvaddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var err error
 	var arg struct {
-		AID  int    `json:"aid"`
+		AID  uint64 `json:"aid"`
 		Path string `json:"path"`
 	}
 
@@ -1261,7 +1296,7 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 func drvdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var err error
 	var arg struct {
-		AID  int    `json:"aid"`
+		AID  uint64 `json:"aid"`
 		PUID string `json:"puid"`
 	}
 
@@ -1297,6 +1332,264 @@ func drvdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	}
 
 	WriteOK(w, i >= 0)
+}
+
+// APIHANDLER
+func edtcopyAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
+	var err error
+	var arg struct {
+		AID uint64 `json:"aid"`
+		Src string `json:"src"`
+		Dst string `json:"dst"`
+		Ovw bool   `json:"overwrite,omitempty"`
+	}
+
+	// get arguments
+	if err = AjaxGetArg(w, r, &arg); err != nil {
+		return
+	}
+	if len(arg.Src) == 0 || len(arg.Dst) == 0 {
+		WriteError400(w, ErrArgNoPuid, AECedtcopynodata)
+		return
+	}
+
+	var prf *Profile
+	if prf = prflist.ByID(arg.AID); prf == nil {
+		WriteError400(w, ErrNoAcc, AECedtcopynoacc)
+		return
+	}
+	if auth != prf {
+		WriteError(w, http.StatusForbidden, ErrDeny, AECedtcopydeny)
+		return
+	}
+
+	// get source and destination filenames
+	var srcpath, dstpath string
+	var ok bool
+	if srcpath, ok = pathcache.Path(arg.Src); !ok {
+		WriteError(w, http.StatusNotFound, ErrNoPath, AECedtcopynopath)
+		return
+	}
+	if dstpath, ok = pathcache.Path(arg.Dst); !ok {
+		WriteError(w, http.StatusNotFound, ErrNoPath, AECedtcopynodest)
+		return
+	}
+	dstpath = path.Join(dstpath, path.Base(srcpath))
+
+	var prop Pather
+	// copies file or dir from source to destination
+	var filecopy func(srcpath, dstpath string) (err error)
+	filecopy = func(srcpath, dstpath string) (err error) {
+		// generate unique destination filename
+		if !arg.Ovw {
+			var ext = path.Ext(dstpath)
+			var org = dstpath[:len(dstpath)-len(ext)]
+			var i = 1
+			for {
+				if _, err = os.Stat(dstpath); errors.Is(err, fs.ErrNotExist) {
+					break
+				}
+				i++
+				dstpath = fmt.Sprintf("%s (%d)%s", org, i, ext)
+				if i > 100 {
+					err = ErrFileOver
+					WriteError500(w, err, AECedtcopyover)
+					return
+				}
+			}
+		}
+
+		var src, dst *os.File
+		var fi os.FileInfo
+		// open source file
+		if src, err = os.Open(srcpath); err != nil {
+			WriteError500(w, err, AECedtcopyopsrc)
+			return
+		}
+		defer func() {
+			src.Close()
+			if fi != nil {
+				os.Chtimes(dstpath, fi.ModTime(), fi.ModTime())
+			}
+		}()
+
+		if fi, err = src.Stat(); err != nil {
+			WriteError500(w, err, AECedtcopystatsrc)
+			return
+		}
+		if fi.IsDir() {
+			// create destination dir
+			if err = os.Mkdir(dstpath, 0644); err != nil && !errors.Is(err, fs.ErrExist) {
+				WriteError500(w, err, AECedtcopymkdir)
+				return
+			}
+
+			// get returned dir properties now
+			if prop == nil {
+				prop = MakeProp(dstpath, fi)
+			}
+
+			// copy dir content
+			var files []fs.DirEntry
+			if files, err = src.ReadDir(-1); err != nil {
+				WriteError500(w, err, AECedtcopyrd)
+				return
+			}
+			for _, file := range files {
+				var name = file.Name()
+				if err = filecopy(path.Join(srcpath, name), path.Join(dstpath, name)); err != nil {
+					return // error already written
+				}
+			}
+		} else {
+			// create destination file
+			if dst, err = os.Create(dstpath); err != nil {
+				WriteError500(w, err, AECedtcopyopdst)
+				return
+			}
+			defer dst.Close()
+
+			// copy file content
+			if _, err = io.Copy(dst, src); err != nil {
+				WriteError500(w, err, AECedtcopycopy)
+				return
+			}
+
+			// get returned file properties at last
+			if prop == nil {
+				var fi os.FileInfo
+				if fi, err = dst.Stat(); err != nil {
+					WriteError500(w, err, AECedtcopystatfile)
+					return
+				}
+				prop = MakeProp(dstpath, fi)
+			}
+		}
+		return
+	}
+	if err = filecopy(srcpath, dstpath); err != nil {
+		return // error already written
+	}
+
+	WriteOK(w, prop)
+}
+
+// APIHANDLER
+func edtrenameAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
+	var err error
+	var arg struct {
+		AID uint64 `json:"aid"`
+		Src string `json:"src"`
+		Dst string `json:"dst"`
+		Ovw bool   `json:"overwrite,omitempty"`
+	}
+
+	// get arguments
+	if err = AjaxGetArg(w, r, &arg); err != nil {
+		return
+	}
+	if len(arg.Src) == 0 || len(arg.Dst) == 0 {
+		WriteError400(w, ErrArgNoPuid, AECedtrennodata)
+		return
+	}
+
+	var prf *Profile
+	if prf = prflist.ByID(arg.AID); prf == nil {
+		WriteError400(w, ErrNoAcc, AECedtrennoacc)
+		return
+	}
+	if auth != prf {
+		WriteError(w, http.StatusForbidden, ErrDeny, AECedtrendeny)
+		return
+	}
+
+	// get source and destination filenames
+	var srcpath, dstpath string
+	var ok bool
+	if srcpath, ok = pathcache.Path(arg.Src); !ok {
+		WriteError(w, http.StatusNotFound, ErrNoPath, AECedtrennopath)
+		return
+	}
+	if dstpath, ok = pathcache.Path(arg.Dst); !ok {
+		WriteError(w, http.StatusNotFound, ErrNoPath, AECedtrennodest)
+		return
+	}
+	dstpath = path.Join(dstpath, path.Base(srcpath))
+
+	// generate unique destination filename
+	if !arg.Ovw {
+		var ext = path.Ext(dstpath)
+		var org = dstpath[:len(dstpath)-len(ext)]
+		var i = 1
+		for {
+			if _, err = os.Stat(dstpath); errors.Is(err, fs.ErrNotExist) {
+				break
+			}
+			i++
+			dstpath = fmt.Sprintf("%s (%d)%s", org, i, ext)
+			if i > 100 {
+				err = ErrFileOver
+				WriteError500(w, err, AECedtrenover)
+				return
+			}
+		}
+	}
+
+	// rename destination file
+	if err = os.Rename(srcpath, dstpath); err != nil && !errors.Is(err, fs.ErrExist) {
+		WriteError500(w, err, AECedtrenmove)
+		return
+	}
+
+	// get returned file properties at last
+	var fi os.FileInfo
+	if fi, err = os.Stat(dstpath); err != nil {
+		WriteError500(w, err, AECedtrenstat)
+		return
+	}
+	var prop = MakeProp(dstpath, fi)
+
+	WriteOK(w, prop)
+}
+
+// APIHANDLER
+func edtdeleteAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
+	var err error
+	var arg struct {
+		AID  uint64 `json:"aid"`
+		PUID string `json:"puid"`
+	}
+
+	// get arguments
+	if err = AjaxGetArg(w, r, &arg); err != nil {
+		return
+	}
+	if len(arg.PUID) == 0 {
+		WriteError400(w, ErrArgNoPuid, AECedtdelnodata)
+		return
+	}
+
+	var prf *Profile
+	if prf = prflist.ByID(arg.AID); prf == nil {
+		WriteError400(w, ErrNoAcc, AECedtdelnoacc)
+		return
+	}
+	if auth != prf {
+		WriteError(w, http.StatusForbidden, ErrDeny, AECedtdeldeny)
+		return
+	}
+
+	var syspath, ok = pathcache.Path(arg.PUID)
+	if !ok {
+		WriteError(w, http.StatusNotFound, ErrNoPath, AECedtdelnopath)
+	}
+
+	if err = os.RemoveAll(syspath); err != nil {
+		WriteError500(w, err, AECedtdelremove)
+		return
+	}
+
+	WriteOK(w, nil)
 }
 
 // The End.

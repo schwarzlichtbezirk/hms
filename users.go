@@ -24,8 +24,8 @@ type User struct {
 	LastAjax  int64      `json:"lastajax" yaml:"last-ajax"`   // last ajax-call UNIX-time in milliseconds
 	LastPage  int64      `json:"lastpage" yaml:"last-page"`   // last page load UNIX-time in milliseconds
 	IsAuth    bool       `json:"isauth" yaml:"is-auth"`       // is user authorized
-	AuthID    int        `json:"authid" yaml:"auth-id"`       // authorized ID
-	PrfID     int        `json:"prfid" yaml:"prf-id"`         // page profile ID
+	AuthID    uint64     `json:"authid" yaml:"auth-id"`       // authorized ID
+	PrfID     uint64     `json:"prfid" yaml:"prf-id"`         // page profile ID
 	Paths     []HistItem `json:"paths" yaml:"paths"`          // list of opened system paths
 	Files     []HistItem `json:"files" yaml:"files"`          // list of served files
 
@@ -106,7 +106,7 @@ func UserScanner() {
 			user.LastAjax = UnixJSNow()
 			switch um.msg {
 			case "auth":
-				var aid = (um.val).(int)
+				var aid = (um.val).(uint64)
 				if aid > 0 {
 					user.IsAuth = true
 					user.AuthID = aid
@@ -115,7 +115,7 @@ func UserScanner() {
 				}
 			case "page":
 				user.LastPage = user.LastAjax
-				user.PrfID = (um.val).(int)
+				user.PrfID = (um.val).(uint64)
 			case "path":
 				user.Paths = append(user.Paths, HistItem{(um.val).(string), user.LastAjax})
 			case "file":
@@ -142,8 +142,8 @@ func usrlstAPI(w http.ResponseWriter, r *http.Request) {
 		File   string        `json:"file"`
 		Online bool          `json:"online"`
 		IsAuth bool          `json:"isauth"`
-		AuthID int           `json:"authid"`
-		PrfID  int           `json:"prfid"`
+		AuthID uint64        `json:"authid"`
+		PrfID  uint64        `json:"prfid"`
 	}
 
 	var err error

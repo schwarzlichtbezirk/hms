@@ -262,6 +262,10 @@ func RegisterRoutes(gmux *Router) {
 	drv.Path("/lst").HandlerFunc(AjaxWrap(drvlstAPI))
 	drv.Path("/add").HandlerFunc(AuthWrap(drvaddAPI))
 	drv.Path("/del").HandlerFunc(AuthWrap(drvdelAPI))
+	var edt = api.PathPrefix("/edit").Subrouter()
+	edt.Path("/copy").HandlerFunc(AuthWrap(edtcopyAPI))
+	edt.Path("/rename").HandlerFunc(AuthWrap(edtrenameAPI))
+	edt.Path("/delete").HandlerFunc(AuthWrap(edtdeleteAPI))
 }
 
 // The End.

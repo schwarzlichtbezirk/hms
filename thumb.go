@@ -244,7 +244,7 @@ func tmbchkAPI(w http.ResponseWriter, r *http.Request) {
 func tmbscnAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
-		AID   int      `json:"aid"`
+		AID   uint64   `json:"aid"`
 		PUIDs []string `json:"puids"`
 	}
 
@@ -258,7 +258,7 @@ func tmbscnAPI(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var prf *Profile
-	if prf = prflist.ByID(int(arg.AID)); prf == nil {
+	if prf = prflist.ByID(arg.AID); prf == nil {
 		WriteError400(w, ErrNoAcc, AECtmbscnnoacc)
 		return
 	}

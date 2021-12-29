@@ -1,6 +1,8 @@
 package hms
 
 import (
+	"errors"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -42,7 +44,7 @@ func pathexists(path string) (bool, error) {
 	if _, err = os.Stat(path); err == nil {
 		return true, nil
 	}
-	if os.IsNotExist(err) {
+	if errors.Is(err, fs.ErrNotExist) {
 		return false, nil
 	}
 	return true, err

@@ -403,6 +403,8 @@ const VueMainApp = {
 			curpuid: "", // current folder PUID
 			curpath: "", // current folder path and path state
 			shrname: "", // current folder path share name
+			copied: null, // copied item
+			cuted: null, // cuted item
 
 			iid: makestrid(10) // instance ID
 		};
@@ -528,6 +530,69 @@ const VueMainApp = {
 
 		textauthcaret() {
 			return this.showauth ? 'arrow_right' : 'arrow_left';
+		},
+
+		showcopypaste() {
+			return !!this.curpath && this.isadmin;
+		},
+		showpastego() {
+		},
+		clscopy() {
+			return { 'disabled': !this.selfile };
+		},
+		clspaste() {
+			const sel = this.copied ?? this.cuted;
+			return {
+				'disabled': !sel || (() => {
+					if (sel.type) {
+						for (const fp of this.pathlist) {
+							if (fp.puid === sel.puid) {
+								return true;
+							}
+						}
+					} else {
+						for (const fp of this.filelist) {
+							if (fp.puid === sel.puid) {
+								return true;
+							}
+						}
+					}
+					return false;
+				})()
+			};
+		},
+		clspastego() {
+			const sel = this.copied ?? this.cuted;
+			return {
+				'disabled': !sel || !(() => {
+					if (sel.type) {
+						for (const fp of this.pathlist) {
+							if (fp.name === sel.name) {
+								return true;
+							}
+						}
+					} else {
+						for (const fp of this.filelist) {
+							if (fp.name === sel.name) {
+								return true;
+							}
+						}
+					}
+					return false;
+				})()
+			};
+		},
+		clscut() {
+			return { 'disabled': !this.selfile };
+		},
+		clsdelete() {
+			return { 'disabled': !this.selfile };
+		},
+		hintpaste() {
+			return `paste: ${this.copied?.name ?? this.cuted?.name}`;
+		},
+		hintpastego() {
+			return `paste new: ${this.copied?.name ?? this.cuted?.name}`;
 		},
 
 		// buttons hints
@@ -672,6 +737,7 @@ const VueMainApp = {
 				await this.fetchfolder(hist);
 				await this.fetchscanthumbs();
 			}
+			this.seturl();
 		},
 
 		async fetchscanthumbs() {
@@ -690,43 +756,37 @@ const VueMainApp = {
 
 			// cache folder thumnails
 			const curpuid = this.puid;
-			(async () => {
-				try {
-					while (curpuid === this.puid && this.uncached.length) {
-						// check cached state loop
-						const response = await fetchajaxauth("POST", "/api/tmb/chk", {
-							tmbs: this.uncached.map(fp => ({ puid: fp.puid }))
-						});
-						traceajax(response);
-						if (!response.ok) {
-							throw new HttpError(response.status, response.data);
-						}
+			while (curpuid === this.puid && this.uncached.length) {
+				// check cached state loop
+				const response = await fetchajaxauth("POST", "/api/tmb/chk", {
+					tmbs: this.uncached.map(fp => ({ puid: fp.puid }))
+				});
+				traceajax(response);
+				if (!response.ok) {
+					throw new HttpError(response.status, response.data);
+				}
 
-						const gpslist = [];
-						for (const tp of response.data.tmbs) {
-							if (tp.ntmb) {
-								for (const fp of this.filelist) {
-									if (fp.puid === tp.puid) {
-										fp.ntmb = tp.ntmb; // Vue.set
-										fp.mtmb = tp.mtmb; // Vue.set
-										// add gps-item
-										if (fp.latitude && fp.longitude && fp.ntmb === 1) {
-											gpslist.push(fp);
-										}
-										break;
-									}
+				const gpslist = [];
+				for (const tp of response.data.tmbs) {
+					if (tp.ntmb) {
+						for (const fp of this.filelist) {
+							if (fp.puid === tp.puid) {
+								fp.ntmb = tp.ntmb; // Vue.set
+								fp.mtmb = tp.mtmb; // Vue.set
+								// add gps-item
+								if (fp.latitude && fp.longitude && fp.ntmb === 1) {
+									gpslist.push(fp);
 								}
+								break;
 							}
 						}
-						// update map card
-						this.$refs.mcard.addmarkers(gpslist);
-						// wait and run again
-						await new Promise(resolve => setTimeout(resolve, 1500));
 					}
-				} catch (e) {
-					ajaxfail(e);
 				}
-			})();
+				// update map card
+				this.$refs.mcard.addmarkers(gpslist);
+				// wait and run again
+				await new Promise(resolve => setTimeout(resolve, 1500));
+			}
 		},
 
 		async fetchshared() {
@@ -851,7 +911,6 @@ const VueMainApp = {
 			this.histlist.splice(this.histpos);
 			this.histlist.push(hist);
 			this.histpos = this.histlist.length;
-			this.seturl();
 		},
 
 		newfolder(list, ishome) {
@@ -1061,6 +1120,117 @@ const VueMainApp = {
 				} catch (e) {
 					ajaxfail(e);
 				}
+			})();
+		},
+		oncopy() {
+			this.copied = this.selfile;
+			this.cuted = null;
+		},
+		paste(ovw) {
+			(async () => {
+				try {
+					if (this.copied) {
+						const fp = this.copied;
+						const response = await fetchajaxauth("POST", "/api/edit/copy", {
+							aid: this.$root.aid,
+							src: fp.puid,
+							dst: this.curpuid,
+							overwrite: ovw
+						});
+						traceajax(response);
+						if (response.ok) {
+							// update folder settings
+							if (fp.type) {
+								this.pathlist.push(response.data);
+							} else {
+								this.filelist.push(response.data);
+							}
+							await this.fetchscanthumbs();
+						} else {
+							throw new HttpError(response.status, response.data);
+						}
+					} else {
+						const fp = this.cuted;
+						const response = await fetchajaxauth("POST", "/api/edit/rename", {
+							aid: this.$root.aid,
+							src: fp.puid,
+							dst: this.curpuid,
+							overwrite: false
+						});
+						traceajax(response);
+						if (response.ok) {
+							// update folder settings
+							if (fp.type) {
+								for (let i = 0; i < this.pathlist.length; i++) {
+									if (this.pathlist[i].puid === fp.puid) {
+										this.pathlist.splice(i, 1);
+										break;
+									}
+								}
+								this.pathlist.push(response.data);
+							} else {
+								for (let i = 0; i < this.filelist.length; i++) {
+									if (this.filelist[i].puid === fp.puid) {
+										this.filelist.splice(i, 1);
+										break;
+									}
+								}
+								this.filelist.push(response.data);
+							}
+							await this.fetchscanthumbs();
+						} else {
+							throw new HttpError(response.status, response.data);
+						}
+					}
+				} catch (e) {
+					ajaxfail(e);
+				}
+			})();
+		},
+		onpaste() {
+			this.paste(true);
+		},
+		onpastego() {
+			this.paste(false);
+		},
+		oncut() {
+			this.cuted = this.selfile;
+			this.copied = null;
+		},
+		ondelete() {
+			(async () => {
+				const fp = this.selfile;
+				try {
+					const response = await fetchjsonauth("POST", "/api/edit/delete", {
+						aid: this.$root.aid,
+						puid: fp.puid
+					});
+					traceajax(response);
+					if (response.ok) {
+						// update folder settings
+						if (fp.type) {
+							for (let i = 0; i < this.pathlist.length; i++) {
+								if (this.pathlist[i].puid === fp.puid) {
+									this.pathlist.splice(i, 1);
+									break;
+								}
+							}
+						} else {
+							for (let i = 0; i < this.filelist.length; i++) {
+								if (this.filelist[i].puid === fp.puid) {
+									this.filelist.splice(i, 1);
+									break;
+								}
+							}
+						}
+					} else {
+						const data = await response.json();
+						throw new HttpError(response.status, data);
+					}
+				} catch (e) {
+					ajaxfail(e);
+				}
+				eventHub.emit('select', null);
 			})();
 		},
 

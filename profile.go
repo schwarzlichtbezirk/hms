@@ -63,7 +63,7 @@ func (cg *CatGrp) SetAll(v bool) {
 
 // Profile contains access configuration to resources.
 type Profile struct {
-	ID       int    `json:"id"`
+	ID       uint64 `json:"id"`
 	Login    string `json:"login"`
 	Password string `json:"password"`
 
@@ -105,7 +105,7 @@ func (pl *Profiles) NewProfile(login, password string) *Profile {
 }
 
 // ByID finds profile with given identifier.
-func (pl *Profiles) ByID(prfid int) *Profile {
+func (pl *Profiles) ByID(prfid uint64) *Profile {
 	pl.mux.RLock()
 	defer pl.mux.RUnlock()
 	for _, prf := range pl.list {
@@ -136,7 +136,7 @@ func (pl *Profiles) Insert(prf *Profile) {
 }
 
 // Delete profile with "prfid" identifier from the list.
-func (pl *Profiles) Delete(prfid int) bool {
+func (pl *Profiles) Delete(prfid uint64) bool {
 	pl.mux.RLock()
 	defer pl.mux.RUnlock()
 	for i, prf := range pl.list {
