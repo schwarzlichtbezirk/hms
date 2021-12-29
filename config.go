@@ -62,7 +62,7 @@ type CfgAppConf struct {
 	// Maximum duration between two ajax-calls to think client is online.
 	OnlineTimeout time.Duration `json:"online-timeout" yaml:"online-timeout" long:"ot" description:"Maximum duration between two ajax-calls to think client is online."`
 	// Default profile identifier for user on localhost.
-	DefAccID uint64 `json:"default-profile-id" yaml:"default-profile-id" long:"defaid" description:"Default profile identifier for user on localhost."`
+	DefAccID IdType `json:"default-profile-id" yaml:"default-profile-id" long:"defaid" description:"Default profile identifier for user on localhost."`
 	// Maximum size of image to make thumbnail.
 	ThumbFileMaxSize int64 `json:"thumb-file-maxsize" yaml:"thumb-file-maxsize" long:"tfms" description:"Maximum size of image to make thumbnail."`
 	// Stretch big image embedded into mp3-file to fit into standard icon size.

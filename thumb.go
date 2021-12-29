@@ -244,7 +244,7 @@ func tmbchkAPI(w http.ResponseWriter, r *http.Request) {
 func tmbscnAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
-		AID   uint64   `json:"aid"`
+		AID   IdType   `json:"aid"`
 		PUIDs []string `json:"puids"`
 	}
 

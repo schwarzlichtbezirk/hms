@@ -38,6 +38,9 @@ const (
 	FPAshare = 2
 )
 
+// IdType is the type of any users identifiers
+type IdType uint64
+
 // CatGrp indicates access to each file group.
 type CatGrp [FGnum]bool
 
@@ -63,7 +66,7 @@ func (cg *CatGrp) SetAll(v bool) {
 
 // Profile contains access configuration to resources.
 type Profile struct {
-	ID       uint64 `json:"id"`
+	ID       IdType `json:"id"`
 	Login    string `json:"login"`
 	Password string `json:"password"`
 
@@ -105,7 +108,7 @@ func (pl *Profiles) NewProfile(login, password string) *Profile {
 }
 
 // ByID finds profile with given identifier.
-func (pl *Profiles) ByID(prfid uint64) *Profile {
+func (pl *Profiles) ByID(prfid IdType) *Profile {
 	pl.mux.RLock()
 	defer pl.mux.RUnlock()
 	for _, prf := range pl.list {
@@ -136,7 +139,7 @@ func (pl *Profiles) Insert(prf *Profile) {
 }
 
 // Delete profile with "prfid" identifier from the list.
-func (pl *Profiles) Delete(prfid uint64) bool {
+func (pl *Profiles) Delete(prfid IdType) bool {
 	pl.mux.RLock()
 	defer pl.mux.RUnlock()
 	for i, prf := range pl.list {
@@ -163,7 +166,7 @@ func (prf *Profile) SetDefaultHidden() {
 // IsHidden do check up that file path is in hidden list.
 func (prf *Profile) IsHidden(fpath string) bool {
 	var matched bool
-	var kpath = ToSlash(fpath)
+	var kpath = strings.ToLower(ToSlash(fpath))
 
 	prf.mux.RLock()
 	defer prf.mux.RUnlock()

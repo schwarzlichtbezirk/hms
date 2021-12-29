@@ -277,7 +277,7 @@ func pageHandler(pref, name string) http.HandlerFunc {
 				var aid = cfg.DefAccID
 				if len(chunks) > pos && len(chunks[pos]) > 2 && chunks[pos][:2] == "id" {
 					if u64, err := strconv.ParseUint(chunks[pos][2:], 10, 32); err == nil {
-						aid = u64
+						aid = IdType(u64)
 					}
 				}
 				usermsg <- UsrMsg{r, "page", aid}
@@ -315,13 +315,13 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var aid uint64
-	if aid, err = strconv.ParseUint(chunks[1][2:], 10, 32); err != nil {
+	if aid, err = strconv.ParseUint(chunks[1][2:], 10, 64); err != nil {
 		WriteError400(w, err, AECmediabadaccid)
 		return
 	}
 
 	var prf *Profile
-	if prf = prflist.ByID(aid); prf == nil {
+	if prf = prflist.ByID(IdType(aid)); prf == nil {
 		WriteError400(w, ErrNoAcc, AECmedianoacc)
 		return
 	}
@@ -481,7 +481,7 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var prf *Profile
-	if prf = prflist.ByID(aid); prf == nil {
+	if prf = prflist.ByID(IdType(aid)); prf == nil {
 		WriteError400(w, ErrNoAcc, AECthumbnoacc)
 		return
 	}
@@ -714,7 +714,7 @@ func getlogAPI(w http.ResponseWriter, r *http.Request) {
 func ishomeAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
-		AID uint64 `json:"aid"`
+		AID IdType `json:"aid"`
 	}
 	var ret bool
 
@@ -758,7 +758,7 @@ func ishomeAPI(w http.ResponseWriter, r *http.Request) {
 func ctgrAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
-		AID  uint64 `json:"aid"`
+		AID  IdType `json:"aid"`
 		PUID string `json:"puid"`
 		CID  string `json:"cid"`
 	}
@@ -854,7 +854,7 @@ func ctgrAPI(w http.ResponseWriter, r *http.Request) {
 func folderAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
-		AID  uint64 `json:"aid"`
+		AID  IdType `json:"aid"`
 		PUID string `json:"puid,omitempty"`
 		Path string `json:"path,omitempty"`
 	}
@@ -936,7 +936,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 func playlistAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
-		AID  uint64 `json:"aid"`
+		AID  IdType `json:"aid"`
 		PUID string `json:"puid,omitempty"`
 		Ext  string `json:"ext,omitempty"`
 	}
@@ -1053,7 +1053,7 @@ func playlistAPI(w http.ResponseWriter, r *http.Request) {
 func ispathAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var err error
 	var arg struct {
-		AID  uint64 `json:"aid"`
+		AID  IdType `json:"aid"`
 		Path string `json:"path"`
 	}
 
@@ -1096,7 +1096,7 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 func shrlstAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
-		AID uint64 `json:"aid"`
+		AID IdType `json:"aid"`
 	}
 	var ret = []Pather{}
 
@@ -1129,7 +1129,7 @@ func shrlstAPI(w http.ResponseWriter, r *http.Request) {
 func shraddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var err error
 	var arg struct {
-		AID  uint64 `json:"aid"`
+		AID  IdType `json:"aid"`
 		PUID string `json:"puid"`
 	}
 
@@ -1171,7 +1171,7 @@ func shraddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 func shrdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var err error
 	var arg struct {
-		AID  uint64 `json:"aid"`
+		AID  IdType `json:"aid"`
 		PUID string `json:"puid"`
 	}
 	var ok bool
@@ -1206,7 +1206,7 @@ func shrdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 func drvlstAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
-		AID uint64 `json:"aid"`
+		AID IdType `json:"aid"`
 	}
 	var ret []Pather
 
@@ -1240,7 +1240,7 @@ func drvlstAPI(w http.ResponseWriter, r *http.Request) {
 func drvaddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var err error
 	var arg struct {
-		AID  uint64 `json:"aid"`
+		AID  IdType `json:"aid"`
 		Path string `json:"path"`
 	}
 
@@ -1296,7 +1296,7 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 func drvdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var err error
 	var arg struct {
-		AID  uint64 `json:"aid"`
+		AID  IdType `json:"aid"`
 		PUID string `json:"puid"`
 	}
 
@@ -1338,7 +1338,7 @@ func drvdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 func edtcopyAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var err error
 	var arg struct {
-		AID uint64 `json:"aid"`
+		AID IdType `json:"aid"`
 		Src string `json:"src"`
 		Dst string `json:"dst"`
 		Ovw bool   `json:"overwrite,omitempty"`
@@ -1478,7 +1478,7 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 func edtrenameAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var err error
 	var arg struct {
-		AID uint64 `json:"aid"`
+		AID IdType `json:"aid"`
 		Src string `json:"src"`
 		Dst string `json:"dst"`
 		Ovw bool   `json:"overwrite,omitempty"`
@@ -1556,7 +1556,7 @@ func edtrenameAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 func edtdeleteAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var err error
 	var arg struct {
-		AID  uint64 `json:"aid"`
+		AID  IdType `json:"aid"`
 		PUID string `json:"puid"`
 	}
 

@@ -24,8 +24,8 @@ type User struct {
 	LastAjax  int64      `json:"lastajax" yaml:"last-ajax"`   // last ajax-call UNIX-time in milliseconds
 	LastPage  int64      `json:"lastpage" yaml:"last-page"`   // last page load UNIX-time in milliseconds
 	IsAuth    bool       `json:"isauth" yaml:"is-auth"`       // is user authorized
-	AuthID    uint64     `json:"authid" yaml:"auth-id"`       // authorized ID
-	PrfID     uint64     `json:"prfid" yaml:"prf-id"`         // page profile ID
+	AuthID    IdType     `json:"authid" yaml:"auth-id"`       // authorized ID
+	PrfID     IdType     `json:"prfid" yaml:"prf-id"`         // page profile ID
 	Paths     []HistItem `json:"paths" yaml:"paths"`          // list of opened system paths
 	Files     []HistItem `json:"files" yaml:"files"`          // list of served files
 
@@ -38,8 +38,8 @@ func (user *User) ParseUserAgent() {
 	uas.ParseUserAgent(user.UserAgent, &user.ua)
 }
 
-// UserMap is map with users with uint64-keys produced as hash of address plus user-agent.
-type UserMap = map[uint64]*User
+// UserMap is map with users with IdType-keys produced as hash of address plus user-agent.
+type UserMap = map[IdType]*User
 
 // UserCache - users cache, ordered list and map.
 type UserCache struct {
@@ -50,11 +50,11 @@ type UserCache struct {
 var userkeyhash = xxhash.New()
 
 // UserKey returns unique for this server session key for address
-// plus user-agent, produced on fast uint64-hash.
-func UserKey(addr, agent string) uint64 {
+// plus user-agent, produced on fast IdType-hash.
+func UserKey(addr, agent string) IdType {
 	userkeyhash.Reset()
 	userkeyhash.Write([]byte(addr + agent))
-	return userkeyhash.Sum64()
+	return IdType(userkeyhash.Sum64())
 }
 
 // Get returns User structure depending on http-request,
@@ -106,7 +106,7 @@ func UserScanner() {
 			user.LastAjax = UnixJSNow()
 			switch um.msg {
 			case "auth":
-				var aid = (um.val).(uint64)
+				var aid = (um.val).(IdType)
 				if aid > 0 {
 					user.IsAuth = true
 					user.AuthID = aid
@@ -115,7 +115,7 @@ func UserScanner() {
 				}
 			case "page":
 				user.LastPage = user.LastAjax
-				user.PrfID = (um.val).(uint64)
+				user.PrfID = (um.val).(IdType)
 			case "path":
 				user.Paths = append(user.Paths, HistItem{(um.val).(string), user.LastAjax})
 			case "file":
@@ -142,8 +142,8 @@ func usrlstAPI(w http.ResponseWriter, r *http.Request) {
 		File   string        `json:"file"`
 		Online bool          `json:"online"`
 		IsAuth bool          `json:"isauth"`
-		AuthID uint64        `json:"authid"`
-		PrfID  uint64        `json:"prfid"`
+		AuthID IdType        `json:"authid"`
+		PrfID  IdType        `json:"prfid"`
 	}
 
 	var err error

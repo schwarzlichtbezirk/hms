@@ -13,3 +13,8 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+/frontend/build/app.bundle.js
+/frontend/build/main.bundle.js
+/frontend/build/main.bundle.js.map
+/frontend/build/stat.bundle.js
+/frontend/build/stat.bundle.js.map
