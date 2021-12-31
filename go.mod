@@ -28,12 +28,11 @@ require (
 require (
 	github.com/frankban/quicktest v1.14.0 // indirect
 	github.com/google/uuid v1.3.0 // indirect
-	github.com/gopherjs/gopherjs v0.0.0-20211219123610-ec9572f70e60 // indirect
+	github.com/gopherjs/gopherjs v0.0.0-20211228203721-be292294a697 // indirect
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
 	github.com/pkg/xattr v0.4.4 // indirect
 	github.com/schwarzlichtbezirk/mmap-go v1.0.2 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
-	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/ulikunitz/xz v0.5.10 // indirect
 	golang.org/x/net v0.0.0-20211216030914-fe4d6282115f // indirect
 	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect

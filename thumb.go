@@ -73,9 +73,9 @@ type MediaData struct {
 
 // TmbProp is thumbnails properties.
 type TmbProp struct {
-	PUIDVal string `json:"puid,omitempty" yaml:"puid,omitempty"`
-	NTmbVal int    `json:"ntmb,omitempty" yaml:"ntmb,omitempty"`
-	MTmbVal string `json:"mtmb,omitempty" yaml:"mtmb,omitempty"`
+	PUIDVal PuidType `json:"puid,omitempty" yaml:"puid,omitempty"`
+	NTmbVal int      `json:"ntmb,omitempty" yaml:"ntmb,omitempty"`
+	MTmbVal string   `json:"mtmb,omitempty" yaml:"mtmb,omitempty"`
 }
 
 // Setup generates PUID (path unique identifier) and updates cached state.
@@ -104,7 +104,7 @@ func (tp *TmbProp) UpdateTmb() {
 }
 
 // PUID returns thumbnail key, it's full system path unique ID.
-func (tp *TmbProp) PUID() string {
+func (tp *TmbProp) PUID() PuidType {
 	return tp.PUIDVal
 }
 
@@ -244,8 +244,8 @@ func tmbchkAPI(w http.ResponseWriter, r *http.Request) {
 func tmbscnAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
-		AID   IdType   `json:"aid"`
-		PUIDs []string `json:"puids"`
+		AID   IdType     `json:"aid"`
+		PUIDs []PuidType `json:"puids"`
 	}
 
 	// get arguments

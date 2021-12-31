@@ -11,8 +11,8 @@ import (
 // HistItem is history item. Contains PUID of served file or
 // opened directory and UNIX-time in milliseconds of start of this event.
 type HistItem struct {
-	PUID string `json:"puid"`
-	Time int64  `json:"time"`
+	PUID PuidType `json:"puid"`
+	Time int64    `json:"time"`
 }
 
 // User has vomplete information about user activity on server,
@@ -117,9 +117,9 @@ func UserScanner() {
 				user.LastPage = user.LastAjax
 				user.PrfID = (um.val).(IdType)
 			case "path":
-				user.Paths = append(user.Paths, HistItem{(um.val).(string), user.LastAjax})
+				user.Paths = append(user.Paths, HistItem{(um.val).(PuidType), user.LastAjax})
 			case "file":
-				user.Files = append(user.Files, HistItem{(um.val).(string), user.LastAjax})
+				user.Files = append(user.Files, HistItem{(um.val).(PuidType), user.LastAjax})
 			}
 
 		case r := <-userajax:

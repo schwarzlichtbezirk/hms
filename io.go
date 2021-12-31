@@ -54,7 +54,7 @@ func (pc *PathCache) Load(fname string) (err error) {
 		return
 	}
 
-	pc.pathkey = make(map[string]string, len(pc.keypath))
+	pc.pathkey = make(map[string]PuidType, len(pc.keypath))
 	for key, fpath := range pc.keypath {
 		pc.pathkey[fpath] = key
 	}

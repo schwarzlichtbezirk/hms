@@ -74,6 +74,7 @@ const (
 
 	AECthumbbadaccid
 	AECthumbnoacc
+	AECthumbnopuid
 	AECthumbnopath
 	AECthumbhidden
 	AECthumbnoprop
@@ -401,7 +402,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 				}
 			}()
 			w.Header().Set("Content-Type", md.Mime)
-			http.ServeContent(w, r, puid, starttime, bytes.NewReader(md.Data))
+			http.ServeContent(w, r, puid.String(), starttime, bytes.NewReader(md.Data))
 			return
 		}
 	}
@@ -434,7 +435,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 				}
 			}()
 			w.Header().Set("Content-Type", md.Mime)
-			http.ServeContent(w, r, puid, starttime, bytes.NewReader(md.Data))
+			http.ServeContent(w, r, puid.String(), starttime, bytes.NewReader(md.Data))
 			return
 		}
 	}
@@ -491,7 +492,11 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var puid = chunks[3]
+	var puid PuidType
+	if err = puid.Set(chunks[3]); err != nil {
+		WriteError400(w, err, AECthumbnopuid)
+		return
+	}
 	var syspath, ok = pathcache.Path(puid)
 	if !ok {
 		WriteError(w, http.StatusNotFound, ErrNoPath, AECthumbnopath)
@@ -531,7 +536,7 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", md.Mime)
-	http.ServeContent(w, r, puid, starttime, bytes.NewReader(md.Data))
+	http.ServeContent(w, r, puid.String(), starttime, bytes.NewReader(md.Data))
 }
 
 // APIHANDLER
@@ -758,9 +763,9 @@ func ishomeAPI(w http.ResponseWriter, r *http.Request) {
 func ctgrAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
-		AID  IdType `json:"aid"`
-		PUID string `json:"puid"`
-		CID  string `json:"cid"`
+		AID  IdType   `json:"aid"`
+		PUID PuidType `json:"puid"`
+		CID  string   `json:"cid"`
 	}
 	var ret = []Pather{}
 
@@ -777,7 +782,7 @@ func ctgrAPI(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		arg.PUID = pathcache.Cache(catpath)
-	} else if len(arg.PUID) > 0 {
+	} else if arg.PUID > 0 {
 		var ok bool
 		if catpath, ok = pathcache.Path(arg.PUID); !ok {
 			WriteError(w, http.StatusNotFound, ErrNoPath, AECctgrnopath)
@@ -803,7 +808,7 @@ func ctgrAPI(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, http.StatusForbidden, ErrNotShared, AECctgrnoshr)
 		return
 	}
-	var catprop = func(puids []string) {
+	var catprop = func(puids []PuidType) {
 		for _, puid := range puids {
 			if fpath, ok := pathcache.Path(puid); ok {
 				if prop, err := propcache.Get(fpath); err == nil {
@@ -854,13 +859,13 @@ func ctgrAPI(w http.ResponseWriter, r *http.Request) {
 func folderAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
-		AID  IdType `json:"aid"`
-		PUID string `json:"puid,omitempty"`
-		Path string `json:"path,omitempty"`
+		AID  IdType   `json:"aid"`
+		PUID PuidType `json:"puid,omitempty"`
+		Path string   `json:"path,omitempty"`
 	}
 	var ret struct {
 		List []Pather `json:"list"`
-		PUID string   `json:"puid"`
+		PUID PuidType `json:"puid"`
 		Path string   `json:"path"`
 		Name string   `json:"shrname"`
 	}
@@ -869,7 +874,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 	if err = AjaxGetArg(w, r, &arg); err != nil {
 		return
 	}
-	if len(arg.PUID) == 0 && len(arg.Path) == 0 {
+	if arg.PUID == 0 && len(arg.Path) == 0 {
 		WriteError400(w, ErrArgNoPuid, AECfoldernodata)
 		return
 	}
@@ -936,9 +941,9 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 func playlistAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
-		AID  IdType `json:"aid"`
-		PUID string `json:"puid,omitempty"`
-		Ext  string `json:"ext,omitempty"`
+		AID  IdType   `json:"aid"`
+		PUID PuidType `json:"puid,omitempty"`
+		Ext  string   `json:"ext,omitempty"`
 	}
 	var ret struct {
 		List []Pather `json:"list"`
@@ -951,7 +956,7 @@ func playlistAPI(w http.ResponseWriter, r *http.Request) {
 	if err = AjaxGetArg(w, r, &arg); err != nil {
 		return
 	}
-	if len(arg.PUID) == 0 {
+	if arg.PUID == 0 {
 		WriteError400(w, ErrArgNoPuid, AECplaylistnodata)
 		return
 	}
@@ -1129,15 +1134,15 @@ func shrlstAPI(w http.ResponseWriter, r *http.Request) {
 func shraddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var err error
 	var arg struct {
-		AID  IdType `json:"aid"`
-		PUID string `json:"puid"`
+		AID  IdType   `json:"aid"`
+		PUID PuidType `json:"puid"`
 	}
 
 	// get arguments
 	if err = AjaxGetArg(w, r, &arg); err != nil {
 		return
 	}
-	if len(arg.PUID) == 0 {
+	if arg.PUID == 0 {
 		WriteError400(w, ErrArgNoPuid, AECshraddnodata)
 		return
 	}
@@ -1171,8 +1176,8 @@ func shraddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 func shrdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var err error
 	var arg struct {
-		AID  IdType `json:"aid"`
-		PUID string `json:"puid"`
+		AID  IdType   `json:"aid"`
+		PUID PuidType `json:"puid"`
 	}
 	var ok bool
 
@@ -1180,7 +1185,7 @@ func shrdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	if err = AjaxGetArg(w, r, &arg); err != nil {
 		return
 	}
-	if len(arg.PUID) == 0 {
+	if arg.PUID == 0 {
 		WriteError400(w, ErrArgNoPuid, AECshrdelnodata)
 		return
 	}
@@ -1296,15 +1301,15 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 func drvdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var err error
 	var arg struct {
-		AID  IdType `json:"aid"`
-		PUID string `json:"puid"`
+		AID  IdType   `json:"aid"`
+		PUID PuidType `json:"puid"`
 	}
 
 	// get arguments
 	if err = AjaxGetArg(w, r, &arg); err != nil {
 		return
 	}
-	if len(arg.PUID) == 0 {
+	if arg.PUID == 0 {
 		WriteError400(w, ErrArgNoPuid, AECdrvdelnodata)
 		return
 	}
@@ -1338,17 +1343,17 @@ func drvdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 func edtcopyAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var err error
 	var arg struct {
-		AID IdType `json:"aid"`
-		Src string `json:"src"`
-		Dst string `json:"dst"`
-		Ovw bool   `json:"overwrite,omitempty"`
+		AID IdType   `json:"aid"`
+		Src PuidType `json:"src"`
+		Dst PuidType `json:"dst"`
+		Ovw bool     `json:"overwrite,omitempty"`
 	}
 
 	// get arguments
 	if err = AjaxGetArg(w, r, &arg); err != nil {
 		return
 	}
-	if len(arg.Src) == 0 || len(arg.Dst) == 0 {
+	if arg.Src == 0 || arg.Dst == 0 {
 		WriteError400(w, ErrArgNoPuid, AECedtcopynodata)
 		return
 	}
@@ -1478,17 +1483,17 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 func edtrenameAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var err error
 	var arg struct {
-		AID IdType `json:"aid"`
-		Src string `json:"src"`
-		Dst string `json:"dst"`
-		Ovw bool   `json:"overwrite,omitempty"`
+		AID IdType   `json:"aid"`
+		Src PuidType `json:"src"`
+		Dst PuidType `json:"dst"`
+		Ovw bool     `json:"overwrite,omitempty"`
 	}
 
 	// get arguments
 	if err = AjaxGetArg(w, r, &arg); err != nil {
 		return
 	}
-	if len(arg.Src) == 0 || len(arg.Dst) == 0 {
+	if arg.Src == 0 || arg.Dst == 0 {
 		WriteError400(w, ErrArgNoPuid, AECedtrennodata)
 		return
 	}
@@ -1556,15 +1561,15 @@ func edtrenameAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 func edtdeleteAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var err error
 	var arg struct {
-		AID  IdType `json:"aid"`
-		PUID string `json:"puid"`
+		AID  IdType   `json:"aid"`
+		PUID PuidType `json:"puid"`
 	}
 
 	// get arguments
 	if err = AjaxGetArg(w, r, &arg); err != nil {
 		return
 	}
-	if len(arg.PUID) == 0 {
+	if arg.PUID == 0 {
 		WriteError400(w, ErrArgNoPuid, AECedtdelnodata)
 		return
 	}

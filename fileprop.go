@@ -334,13 +334,13 @@ func IsTypeEXIF(ext string) bool {
 
 // Pather is path properties interface.
 type Pather interface {
-	Name() string // string identifier
-	Type() int    // type identifier
-	Size() int64  // size in bytes
-	Time() int64  // UNIX time in milliseconds
-	PUID() string // path unique ID encoded to hex-base32
-	NTmb() int    // -1 - can not make thumbnail; 0 - not cached; 1 - cached
-	MTmb() string // thumbnail MIME type
+	Name() string   // string identifier
+	Type() int      // type identifier
+	Size() int64    // size in bytes
+	Time() int64    // UNIX time in milliseconds
+	PUID() PuidType // path unique ID encoded to hex-base32
+	NTmb() int      // -1 - can not make thumbnail; 0 - not cached; 1 - cached
+	MTmb() string   // thumbnail MIME type
 	SetTmb(int, string)
 }
 

@@ -67,10 +67,10 @@ type CfgAppConf struct {
 	ThumbFileMaxSize int64 `json:"thumb-file-maxsize" yaml:"thumb-file-maxsize" long:"tfms" description:"Maximum size of image to make thumbnail."`
 	// Stretch big image embedded into mp3-file to fit into standard icon size.
 	FitEmbeddedTmb bool `json:"fit-embedded-tmb" yaml:"fit-embedded-tmb" long:"fet" description:"Stretch big image embedded into mp3-file to fit into standard icon size."`
-	// Initial size of path unique identifiers in bytes, maximum is 10
-	// (x1.6 for length of string representation).
-	// When the bottom pool arrives to 90%, size increases to next available value.
-	PUIDsize int `json:"puid-size" yaml:"puid-size" long:"puidsize" description:"Initial size of path unique identifiers in bytes, maximum is 10 (x1.6 for length of string representation). When the bottom pool arrives to 90%, size increases to next available value."`
+	// Initial length of path unique identifiers in base32 symbols, maximum is 12
+	// (x5 for length in bits).
+	// When the bottom pool arrives to 90%, length increases to next available value.
+	PUIDlen int `json:"puid-length" yaml:"puid-length" long:"puidlen" description:"Initial length of path unique identifiers in base32 symbols, maximum is 12 (x5 for length in bits). When the bottom pool arrives to 90%, length increases to next available value."`
 	// Maximum items number in files properties cache.
 	PropCacheMaxNum int `json:"prop-cache-maxnum" yaml:"prop-cache-maxnum" long:"pcmn" description:"Maximum items number in files properties cache."`
 	// Maximum items number in thumbnails cache.
@@ -114,7 +114,7 @@ var cfg = Config{ // inits default values:
 		OnlineTimeout:    time.Duration(3*60*1000) * time.Millisecond,
 		DefAccID:         1,
 		ThumbFileMaxSize: 4096*3072*4 + 65536,
-		PUIDsize:         3,
+		PUIDlen:          5,
 		PropCacheMaxNum:  32 * 1024,
 		ThumbCacheMaxNum: 2 * 1024,
 		MediaCacheMaxNum: 64,

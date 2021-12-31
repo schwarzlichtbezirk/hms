@@ -38,9 +38,6 @@ const (
 	FPAshare = 2
 )
 
-// IdType is the type of any users identifiers
-type IdType uint64
-
 // CatGrp indicates access to each file group.
 type CatGrp [FGnum]bool
 
@@ -75,8 +72,8 @@ type Profile struct {
 	Shares []string `json:"shares"`
 
 	// private shares data
-	sharepuid map[string]string // share/puid key/values
-	puidshare map[string]string // puid/share key/values
+	sharepuid map[string]PuidType // share/puid key/values
+	puidshare map[PuidType]string // puid/share key/values
 	ctgrshare CatGrp
 
 	mux sync.RWMutex
@@ -96,8 +93,8 @@ func (pl *Profiles) NewProfile(login, password string) *Profile {
 		Roots:     []string{},
 		Hidden:    []string{},
 		Shares:    []string{},
-		sharepuid: map[string]string{},
-		puidshare: map[string]string{},
+		sharepuid: map[string]PuidType{},
+		puidshare: map[PuidType]string{},
 	}
 	if len(pl.list) > 0 {
 		prf.ID = pl.list[len(pl.list)-1].ID + 1
@@ -269,8 +266,8 @@ func (prf *Profile) UpdateShares() {
 	prf.mux.Lock()
 	defer prf.mux.Unlock()
 
-	prf.sharepuid = map[string]string{}
-	prf.puidshare = map[string]string{}
+	prf.sharepuid = map[string]PuidType{}
+	prf.puidshare = map[PuidType]string{}
 	for _, shr := range prf.Shares {
 		var syspath = shr
 		if prop, err := propcache.Get(syspath); err == nil {
@@ -326,7 +323,7 @@ func (prf *Profile) AddShare(syspath string) bool {
 }
 
 // DelShare deletes share by given path unigue identifier.
-func (prf *Profile) DelShare(puid string) bool {
+func (prf *Profile) DelShare(puid PuidType) bool {
 	prf.mux.Lock()
 	defer prf.mux.Unlock()
 
@@ -357,7 +354,7 @@ func (prf *Profile) GetSharePath(syspath string, isadmin bool) (shrpath string, 
 		}
 	}
 	if len(base) > 0 {
-		shrpath = path.Join(pathcache.Cache(base), syspath[len(base):])
+		shrpath = path.Join(pathcache.Cache(base).String(), syspath[len(base):])
 		cg.SetAll(true)
 		return
 	}
@@ -370,7 +367,7 @@ func (prf *Profile) GetSharePath(syspath string, isadmin bool) (shrpath string, 
 		}
 	}
 	if len(base) > 0 {
-		shrpath = path.Join(pathcache.Cache(base), syspath[len(base):])
+		shrpath = path.Join(pathcache.Cache(base).String(), syspath[len(base):])
 		if isadmin {
 			cg.SetAll(true)
 		} else {

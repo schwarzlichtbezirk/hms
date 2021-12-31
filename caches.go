@@ -2,7 +2,6 @@ package hms
 
 import (
 	"bytes"
-	"crypto/rand"
 	"encoding/base32"
 	"errors"
 	"image"
@@ -56,13 +55,13 @@ var (
 
 // PathCache is unlimited cache with puid/syspath and syspath/puid values.
 type PathCache struct {
-	keypath map[string]string // puid/path key/values
-	pathkey map[string]string // path/puid key/values
+	keypath map[PuidType]string // puid/path key/values
+	pathkey map[string]PuidType // path/puid key/values
 	mux     sync.RWMutex
 }
 
 // PUID returns cached PUID for specified system path.
-func (c *PathCache) PUID(syspath string) (puid string, ok bool) {
+func (c *PathCache) PUID(syspath string) (puid PuidType, ok bool) {
 	c.mux.RLock()
 	defer c.mux.RUnlock()
 	puid, ok = c.pathkey[syspath]
@@ -70,7 +69,7 @@ func (c *PathCache) PUID(syspath string) (puid string, ok bool) {
 }
 
 // Path returns cached system path of specified PUID (path unique identifier).
-func (c *PathCache) Path(puid string) (syspath string, ok bool) {
+func (c *PathCache) Path(puid PuidType) (syspath string, ok bool) {
 	c.mux.RLock()
 	defer c.mux.RUnlock()
 	syspath, ok = c.keypath[puid]
@@ -78,63 +77,46 @@ func (c *PathCache) Path(puid string) (syspath string, ok bool) {
 }
 
 // MakePUID generates new path unique ID.
-func (c *PathCache) MakePUID() string {
+func (c *PathCache) MakePUID() (puid PuidType) {
 	c.mux.RLock()
 	defer c.mux.RUnlock()
 
-	var puid string
 	var n = 0
-	var buf [10]byte
 	for ok := true; ok; _, ok = c.keypath[puid] {
 		if n == 10 {
-			switch {
-			case cfg.PUIDsize < 3:
-				cfg.PUIDsize = 3 // 16M pool
-				n = 0
-			case cfg.PUIDsize < 5:
-				cfg.PUIDsize = 5 // 1T pool
-				n = 0
-			case cfg.PUIDsize < 10:
-				cfg.PUIDsize = 10 // 10^24 pool
-				n = 0
+			cfg.PUIDlen++
+			if cfg.PUIDlen > 12 {
+				panic("PUID pool is exhausted")
 			}
+			n = 0
 		}
-		if _, err := rand.Read(buf[:cfg.PUIDsize]); err != nil {
-			panic(err)
-		}
-		puid = idenc.EncodeToString(buf[:cfg.PUIDsize])
+		puid.Rand(cfg.PUIDlen * 5)
 		n++
 	}
-	return puid
+	return
 }
 
 // Cache returns cached PUID for specified system path, or make it and put into cache.
-func (c *PathCache) Cache(syspath string) string {
-	if puid, ok := c.PUID(syspath); ok {
-		return puid
+func (c *PathCache) Cache(syspath string) (puid PuidType) {
+	var ok bool
+	if puid, ok = c.PUID(syspath); ok {
+		return
 	}
 
-	var puid = c.MakePUID()
+	puid = c.MakePUID()
 
 	c.mux.Lock()
 	defer c.mux.Unlock()
 	c.pathkey[syspath] = puid
 	c.keypath[puid] = syspath
-	return puid
+	return
 }
 
 var puidsym = (func() (t [256]bool) {
-	for i := '0'; i <= '9'; i++ {
-		t[i] = true
+	const encodeHex = "0123456789ABCDEFGHIJKLMNOPQRSTUV"
+	for _, c := range encodeHex {
+		t[c] = true
 	}
-	for i := 'A'; i <= 'Z'; i++ {
-		t[i] = true
-	}
-	for i := 'a'; i <= 'z'; i++ {
-		t[i] = true
-	}
-	t['_'] = true
-	t['-'] = true
 	return
 })()
 
@@ -157,29 +139,32 @@ func UnfoldPath(shrpath string) string {
 		return shrpath
 	}
 
-	if fpath, ok := pathcache.Path(pref); ok {
-		if suff != "" { // prevent modify original path if suffix is absent
-			fpath = path.Join(fpath, suff)
+	var puid PuidType
+	if err := puid.Set(pref); err == nil {
+		if fpath, ok := pathcache.Path(puid); ok {
+			if suff != "" { // prevent modify original path if suffix is absent
+				fpath = path.Join(fpath, suff)
+			}
+			return fpath
 		}
-		return fpath
 	}
 	return shrpath
 }
 
 // Instance of unlimited cache with PUID<=>syspath pairs.
 var pathcache = PathCache{
-	keypath: map[string]string{},
-	pathkey: map[string]string{},
+	keypath: map[PuidType]string{},
+	pathkey: map[string]PuidType{},
 }
 
 // DirCache is unlimited cache with puid/DirProp values.
 type DirCache struct {
-	keydir map[string]DirProp
+	keydir map[PuidType]DirProp
 	mux    sync.RWMutex
 }
 
 // Get value from cache.
-func (c *DirCache) Get(puid string) (dp DirProp, ok bool) {
+func (c *DirCache) Get(puid PuidType) (dp DirProp, ok bool) {
 	c.mux.RLock()
 	defer c.mux.RUnlock()
 	dp, ok = c.keydir[puid]
@@ -187,7 +172,7 @@ func (c *DirCache) Get(puid string) (dp DirProp, ok bool) {
 }
 
 // Set value to cache.
-func (c *DirCache) Set(puid string, dp DirProp) {
+func (c *DirCache) Set(puid PuidType, dp DirProp) {
 	c.mux.Lock()
 	defer c.mux.Unlock()
 	c.keydir[puid] = dp
@@ -195,7 +180,7 @@ func (c *DirCache) Set(puid string, dp DirProp) {
 
 // Category returns PUIDs list of directories where number
 // of files of given category is more then given percent.
-func (c *DirCache) Category(ctgr int, percent float64) (ret []string) {
+func (c *DirCache) Category(ctgr int, percent float64) (ret []PuidType) {
 	c.mux.RLock()
 	defer c.mux.RUnlock()
 	for puid, dp := range c.keydir {
@@ -212,7 +197,7 @@ func (c *DirCache) Category(ctgr int, percent float64) (ret []string) {
 
 // Categories return PUIDs list of directories where number
 // of files of any given categories is more then given percent.
-func (c *DirCache) Categories(cats []int, percent float64) (ret []string) {
+func (c *DirCache) Categories(cats []int, percent float64) (ret []PuidType) {
 	c.mux.RLock()
 	defer c.mux.RUnlock()
 	for puid, dp := range c.keydir {
@@ -233,7 +218,7 @@ func (c *DirCache) Categories(cats []int, percent float64) (ret []string) {
 
 // Instance of unlimited cache with puid/DirProp values.
 var dircache = DirCache{
-	keydir: map[string]DirProp{},
+	keydir: map[PuidType]DirProp{},
 }
 
 // Prepares caches depends of previously loaded configuration.
@@ -267,7 +252,7 @@ func initcaches() {
 	thumbcache = gcache.New(cfg.ThumbCacheMaxNum).
 		LRU().
 		LoaderFunc(func(key interface{}) (ret interface{}, err error) {
-			var syspath, ok = pathcache.Path(key.(string))
+			var syspath, ok = pathcache.Path(key.(PuidType))
 			if !ok {
 				err = ErrNoPUID
 				return // file path not found
@@ -298,7 +283,7 @@ func initcaches() {
 	mediacache = gcache.New(cfg.MediaCacheMaxNum).
 		LRU().
 		LoaderFunc(func(key interface{}) (ret interface{}, err error) {
-			var syspath, ok = pathcache.Path(key.(string))
+			var syspath, ok = pathcache.Path(key.(PuidType))
 			if !ok {
 				err = ErrNoPUID
 				return // file path not found
@@ -374,7 +359,7 @@ func initcaches() {
 	hdcache = gcache.New(cfg.MediaCacheMaxNum).
 		LRU().
 		LoaderFunc(func(key interface{}) (ret interface{}, err error) {
-			var syspath, ok = pathcache.Path(key.(string))
+			var syspath, ok = pathcache.Path(key.(PuidType))
 			if !ok {
 				err = ErrNoPUID
 				return // file path not found
