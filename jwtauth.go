@@ -104,40 +104,46 @@ func IsLocalhost(addrport string) bool {
 }
 
 // GetAuth returns profile from authorization header if it present,
-// or default profile with no error if authorization is absent.
-func GetAuth(r *http.Request) (auth *Profile, aerr error) {
+// or default profile with no error if authorization is absent on localhost.
+// Returns nil pointer and nil error on unauthorized request from any host.
+func GetAuth(w http.ResponseWriter, r *http.Request) (auth *Profile, err error) {
 	defer func() {
-		if auth != nil {
-			go func() { usermsg <- UsrMsg{r, "auth", auth.ID} }()
-		} else {
-			go func() { usermsg <- UsrMsg{r, "auth", IdType(0)} }()
+		if err == nil {
+			var aid IdType
+			if auth != nil {
+				aid = auth.ID
+			}
+			go func() { usermsg <- UsrMsg{r, "auth", aid} }()
 		}
 	}()
 	if pool, is := r.Header["Authorization"]; is {
-		var err error // stores last bearer error
 		var claims Claims
 		var bearer = false
+		// at least one authorization field should have valid bearer access
 		for _, val := range pool {
-			if strings.HasPrefix(val, "Bearer ") {
+			if strings.HasPrefix(strings.ToLower(val), "bearer ") {
 				bearer = true
 				if _, err = jwt.ParseWithClaims(val[7:], &claims, func(token *jwt.Token) (interface{}, error) {
-					return []byte(cfg.AccessKey), nil
-				}); err != nil {
-					break
+					if claims.AID > 0 {
+						return []byte(cfg.AccessKey), nil
+					} else {
+						return nil, ErrNoUserID
+					}
+				}); err == nil {
+					break // found valid authorization
 				}
 			}
 		}
-		if !bearer {
-			aerr = &ErrAjax{ErrNoBearer, AECtokenless}
+		if err != nil {
+			WriteError(w, http.StatusUnauthorized, err, AECtokenerror)
 			return
-		} else if _, is := err.(*jwt.ValidationError); is {
-			aerr = &ErrAjax{err, AECtokenerror}
-			return
-		} else if err != nil {
-			aerr = &ErrAjax{err, AECtokenbad}
+		} else if !bearer {
+			err = ErrNoBearer
+			WriteError(w, http.StatusUnauthorized, err, AECtokenless)
 			return
 		} else if auth = prflist.ByID(claims.AID); auth == nil {
-			aerr = &ErrAjax{ErrNoAcc, AECtokennoacc}
+			err = ErrNoAcc
+			WriteError(w, http.StatusUnauthorized, err, AECtokennoacc)
 			return
 		}
 		return
@@ -151,30 +157,14 @@ func GetAuth(r *http.Request) (auth *Profile, aerr error) {
 // AuthWrap is handler wrapper for API with admin checkup.
 func AuthWrap(fn AuthHandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		go func() {
-			userajax <- r
-		}()
-
 		var err error
 		var auth *Profile
-		if auth, err = GetAuth(r); err != nil {
-			WriteJSON(w, http.StatusUnauthorized, err)
+		if auth, err = GetAuth(w, r); err != nil {
 			return
 		}
 		if auth == nil {
 			WriteError(w, http.StatusUnauthorized, ErrNoAuth, AECnoauth)
 			return
-		}
-
-		// lock before exit check
-		handwg.Add(1)
-		defer handwg.Done()
-
-		// check on exit during handler is called
-		select {
-		case <-exitctx.Done():
-			return
-		default:
 		}
 
 		fn(w, r, auth)

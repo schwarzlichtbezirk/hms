@@ -644,7 +644,7 @@ const VueMainApp = {
 		},
 
 		async fetchishome() {
-			const response = await fetchajaxauth("POST", "/api/card/ishome", {
+			const response = await fetchajaxauth("POST", "/api/res/ishome", {
 				aid: this.aid
 			});
 			traceajax(response);
@@ -655,7 +655,7 @@ const VueMainApp = {
 		},
 
 		async fetchcategory(hist) {
-			const response = await fetchajaxauth("POST", "/api/card/ctgr", {
+			const response = await fetchajaxauth("POST", "/api/res/ctgr", {
 				aid: hist.aid, puid: hist.puid, cid: hist.cid
 			});
 			traceajax(response);
@@ -681,7 +681,7 @@ const VueMainApp = {
 
 		// opens given folder cleary
 		async fetchfolder(hist) {
-			const response = await fetchajaxauth("POST", "/api/card/folder", {
+			const response = await fetchajaxauth("POST", "/api/res/folder", {
 				aid: hist.aid, puid: hist.puid, path: hist.path
 			});
 			traceajax(response);
@@ -704,7 +704,7 @@ const VueMainApp = {
 
 		// opens given folder cleary
 		async fetchplaylist(hist) {
-			const response = await fetchajaxauth("POST", "/api/card/playlist", {
+			const response = await fetchajaxauth("POST", "/api/res/playlist", {
 				aid: hist.aid, puid: hist.puid
 			});
 			traceajax(response);
@@ -790,8 +790,9 @@ const VueMainApp = {
 		},
 
 		async fetchshared() {
-			const response = await fetchajaxauth("POST", "/api/share/lst", {
-				aid: this.aid
+			const response = await fetchajaxauth("POST", "/api/res/ctgr", {
+				aid: this.aid,
+				cid: "shares"
 			});
 			traceajax(response);
 			if (!response.ok) {
@@ -1020,7 +1021,7 @@ const VueMainApp = {
 					if (this.isadmin && this.curcid !== "shares") {
 						await this.fetchshared(); // get shares
 					}
-					if (!this.isadmin && this.curcid !== "home") {
+					if (!this.isadmin) {
 						await this.fetchishome();
 					}
 				} catch (e) {
@@ -1108,7 +1109,7 @@ const VueMainApp = {
 		ondiskpathchange(e) {
 			(async () => {
 				try {
-					const response = await fetchajaxauth("POST", "/api/card/ispath", {
+					const response = await fetchajaxauth("POST", "/api/res/ispath", {
 						aid: this.$root.aid,
 						path: this.diskpath
 					});
@@ -1404,7 +1405,7 @@ const VueMainApp = {
 				if (this.isadmin && hist.cid !== "share") {
 					await this.fetchshared(); // get shares
 				}
-				if (!this.isadmin && hist.cid !== "home") {
+				if (!this.isadmin) {
 					await this.fetchishome();
 				}
 				this.pushhist(hist);

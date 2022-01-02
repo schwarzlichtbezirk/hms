@@ -16,246 +16,6 @@ import (
 	"time"
 )
 
-// API error codes.
-// Each error code have unique source code point,
-// so this error code at service reply exactly points to error place.
-const (
-	AECnull = iota
-	AECbadbody
-	AECnoreq
-	AECbadjson
-
-	// auth
-
-	AECnoauth
-	AECtokenless
-	AECtokenerror
-	AECtokenbad
-	AECtokennoacc
-
-	// page
-
-	AECpageabsent
-	AECfileabsent
-
-	// file
-
-	AECfilebadaccid
-	AECfilenoacc
-	AECfilehroot
-	AECfilehidden
-	AECfilenoprop
-	AECfilenofile
-	AECfileaccess
-	AECfileopen
-
-	// media
-
-	AECmediabadmedia
-	AECmediabadhd
-	AECmediabadaccid
-	AECmedianoacc
-	AECmediaroot
-	AECmedianopath
-	AECmediahidden
-	AECmedianoprop
-	AECmedianofile
-	AECmediaaccess
-	AECmediahdgone
-	AECmediahdfail
-	AECmediahdnocnt
-	AECmediamedgone
-	AECmediamedfail
-	AECmediamednocnt
-	AECmediafilegone
-	AECmediafileopen
-
-	// thumb
-
-	AECthumbbadaccid
-	AECthumbnoacc
-	AECthumbnopuid
-	AECthumbnopath
-	AECthumbhidden
-	AECthumbnoprop
-	AECthumbnofile
-	AECthumbaccess
-	AECthumbabsent
-	AECthumbbadcnt
-
-	// pubkey
-
-	AECpubkeyrand
-
-	// signin
-
-	AECsigninnodata
-	AECsigninnoacc
-	AECsigninpkey
-	AECsignindeny
-
-	// refrsh
-
-	AECrefrshnodata
-	AECrefrshparse
-
-	// reload
-
-	AECreloadload
-	AECreloadtmpl
-
-	// getlog
-
-	AECgetlogbadnum
-
-	// ishome
-
-	AECishomenoacc
-
-	// ctgr
-
-	AECctgrnodata
-	AECctgrnopath
-	AECctgrnocid
-	AECctgrnoacc
-	AECctgrnoshr
-	AECctgrnotcat
-
-	// folder
-
-	AECfoldernodata
-	AECfoldernoacc
-	AECfolderroot
-	AECfoldernopath
-	AECfolderhidden
-	AECfolderaccess
-	AECfolderabsent
-	AECfolderfail
-
-	// playlist
-
-	AECplaylistnodata
-	AECplaylistnoacc
-	AECplaylistnopath
-	AECplaylisthidden
-	AECplaylistaccess
-	AECplaylistopen
-	AECplaylistm3u
-	AECplaylistwpl
-	AECplaylistpls
-	AECplaylistasx
-	AECplaylistxspf
-	AECplaylistformat
-
-	// ispath
-
-	AECispathnoacc
-	AECispathdeny
-	AECispathroot
-	AECispathhidden
-
-	// tmb/chk
-
-	AECtmbchknodata
-
-	// tmb/scn
-
-	AECtmbscnnodata
-	AECtmbscnnoacc
-
-	// share/lst
-
-	AECshrlstnoacc
-	AECshrlstnoshr
-
-	// share/add
-
-	AECshraddnodata
-	AECshraddnoacc
-	AECshradddeny
-	AECshraddnopath
-	AECshraddaccess
-
-	// share/del
-
-	AECshrdelnodata
-	AECshrdelnoacc
-	AECshrdeldeny
-
-	// drive/lst
-
-	AECdrvlstnoacc
-	AECdrvlstnoshr
-
-	// drive/add
-
-	AECdrvaddnodata
-	AECdrvaddnoacc
-	AECdrvadddeny
-	AECdrvaddroot
-	AECdrvaddfile
-
-	// drive/del
-
-	AECdrvdelnodata
-	AECdrvdelnoacc
-	AECdrvdeldeny
-	AECdrvdelnopath
-
-	// edit/copy
-	AECedtcopynodata
-	AECedtcopynoacc
-	AECedtcopydeny
-	AECedtcopynopath
-	AECedtcopynodest
-	AECedtcopyover
-	AECedtcopyopsrc
-	AECedtcopystatsrc
-	AECedtcopymkdir
-	AECedtcopyrd
-	AECedtcopyopdst
-	AECedtcopycopy
-	AECedtcopystatfile
-
-	// edit/rename
-	AECedtrennodata
-	AECedtrennoacc
-	AECedtrendeny
-	AECedtrennopath
-	AECedtrennodest
-	AECedtrenover
-	AECedtrenmove
-	AECedtrenstat
-
-	// edit/del
-	AECedtdelnodata
-	AECedtdelnoacc
-	AECedtdeldeny
-	AECedtdelnopath
-	AECedtdelremove
-)
-
-// HTTP error messages
-var (
-	ErrNoJSON = errors.New("data not given")
-	ErrNoData = errors.New("data is empty")
-
-	ErrNotFound  = errors.New("404 page not found")
-	ErrArgNoNum  = errors.New("'num' parameter not recognized")
-	ErrArgNoHD   = errors.New("'hd' parameter not recognized")
-	ErrArgNoCid  = errors.New("'cid' parameter not recognized")
-	ErrArgNoPuid = errors.New("'puid' argument required")
-	ErrNotDir    = errors.New("path is not directory")
-	ErrNoPath    = errors.New("path is not found")
-	ErrDeny      = errors.New("access denied for specified authorization")
-	ErrNotShared = errors.New("access to specified resource does not shared")
-	ErrHidden    = errors.New("access to specified file path is disabled")
-	ErrNoAccess  = errors.New("profile has no access to specified file path")
-	ErrNotCat    = errors.New("only categories can be accepted")
-	ErrNotPlay   = errors.New("file can not be read as playlist")
-	ErrFileOver  = errors.New("to many files with same names contains")
-)
-
 //////////////////////////
 // API request handlers //
 //////////////////////////
@@ -327,8 +87,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var auth *Profile
-	if auth, err = GetAuth(r); err != nil {
-		WriteJSON(w, http.StatusUnauthorized, err)
+	if auth, err = GetAuth(w, r); err != nil {
 		return
 	}
 
@@ -487,8 +246,7 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var auth *Profile
-	if auth, err = GetAuth(r); err != nil {
-		WriteJSON(w, http.StatusUnauthorized, err)
+	if auth, err = GetAuth(w, r); err != nil {
 		return
 	}
 
@@ -548,7 +306,7 @@ func pingAPI(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
-func purgeAPI(w http.ResponseWriter, _ *http.Request, _ *Profile) {
+func purgeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	propcache.Purge()
 	thumbcache.Purge()
 
@@ -562,7 +320,7 @@ func purgeAPI(w http.ResponseWriter, _ *http.Request, _ *Profile) {
 }
 
 // APIHANDLER
-func reloadAPI(w http.ResponseWriter, _ *http.Request, _ *Profile) {
+func reloadAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var err error
 	var ret struct {
 		RecNumber int64 `json:"recnumber"`
@@ -584,7 +342,7 @@ func reloadAPI(w http.ResponseWriter, _ *http.Request, _ *Profile) {
 }
 
 // APIHANDLER
-func srvinfAPI(w http.ResponseWriter, _ *http.Request) {
+func srvinfAPI(w http.ResponseWriter, r *http.Request) {
 	var ret = map[string]interface{}{
 		"started":  UnixJS(starttime),
 		"govers":   runtime.Version(),
@@ -600,7 +358,7 @@ func srvinfAPI(w http.ResponseWriter, _ *http.Request) {
 }
 
 // APIHANDLER
-func memusgAPI(w http.ResponseWriter, _ *http.Request) {
+func memusgAPI(w http.ResponseWriter, r *http.Request) {
 	var mem runtime.MemStats
 	runtime.ReadMemStats(&mem)
 
@@ -619,7 +377,7 @@ func memusgAPI(w http.ResponseWriter, _ *http.Request) {
 }
 
 // APIHANDLER
-func cchinfAPI(w http.ResponseWriter, _ *http.Request) {
+func cchinfAPI(w http.ResponseWriter, r *http.Request) {
 	pathcache.mux.RLock()
 	var pathnum = len(pathcache.keypath)
 	pathcache.mux.RUnlock()
@@ -734,8 +492,7 @@ func ishomeAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var auth *Profile
-	if auth, err = GetAuth(r); err != nil {
-		WriteJSON(w, http.StatusUnauthorized, err)
+	if auth, err = GetAuth(w, r); err != nil {
 		return
 	}
 
@@ -755,7 +512,6 @@ func ishomeAPI(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	Log.Printf("id%d: navigate to home", prf.ID)
 	WriteOK(w, ret)
 }
 
@@ -764,8 +520,8 @@ func ctgrAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
 		AID  IdType   `json:"aid"`
-		PUID PuidType `json:"puid"`
-		CID  string   `json:"cid"`
+		PUID PuidType `json:"puid,omitempty"`
+		CID  string   `json:"cid,omitempty"`
 	}
 	var ret = []Pather{}
 
@@ -799,8 +555,7 @@ func ctgrAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var auth *Profile
-	if auth, err = GetAuth(r); err != nil {
-		WriteJSON(w, http.StatusUnauthorized, err)
+	if auth, err = GetAuth(w, r); err != nil {
 		return
 	}
 
@@ -885,8 +640,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var auth *Profile
-	if auth, err = GetAuth(r); err != nil {
-		WriteJSON(w, http.StatusUnauthorized, err)
+	if auth, err = GetAuth(w, r); err != nil {
 		return
 	}
 
@@ -967,8 +721,7 @@ func playlistAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var auth *Profile
-	if auth, err = GetAuth(r); err != nil {
-		WriteJSON(w, http.StatusUnauthorized, err)
+	if auth, err = GetAuth(w, r); err != nil {
 		return
 	}
 
@@ -1098,39 +851,6 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 }
 
 // APIHANDLER
-func shrlstAPI(w http.ResponseWriter, r *http.Request) {
-	var err error
-	var arg struct {
-		AID IdType `json:"aid"`
-	}
-	var ret = []Pather{}
-
-	// get arguments
-	if err = AjaxGetArg(w, r, &arg); err != nil {
-		return
-	}
-
-	var prf *Profile
-	if prf = prflist.ByID(arg.AID); prf == nil {
-		WriteError400(w, ErrNoAcc, AECshrlstnoacc)
-		return
-	}
-	var auth *Profile
-	if auth, err = GetAuth(r); err != nil {
-		WriteJSON(w, http.StatusUnauthorized, err)
-		return
-	}
-
-	if auth != prf && !prf.IsShared(CPshares) {
-		WriteError(w, http.StatusForbidden, ErrNotShared, AECshrlstnoshr)
-		return
-	}
-
-	ret = prf.ScanShares()
-	WriteOK(w, ret)
-}
-
-// APIHANDLER
 func shraddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var err error
 	var arg struct {
@@ -1205,40 +925,6 @@ func shrdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	}
 
 	WriteOK(w, ok)
-}
-
-// APIHANDLER
-func drvlstAPI(w http.ResponseWriter, r *http.Request) {
-	var err error
-	var arg struct {
-		AID IdType `json:"aid"`
-	}
-	var ret []Pather
-
-	// get arguments
-	if err = AjaxGetArg(w, r, &arg); err != nil {
-		return
-	}
-
-	var prf *Profile
-	if prf = prflist.ByID(arg.AID); prf == nil {
-		WriteError400(w, ErrNoAcc, AECdrvlstnoacc)
-		return
-	}
-	var auth *Profile
-	if auth, err = GetAuth(r); err != nil {
-		WriteJSON(w, http.StatusUnauthorized, err)
-		return
-	}
-
-	if auth != prf && !prf.IsShared(CPdrives) {
-		WriteError(w, http.StatusForbidden, ErrNotShared, AECdrvlstnoshr)
-		return
-	}
-
-	ret = prf.ScanRoots()
-	Log.Printf("id%d: navigate to drives", prf.ID)
-	WriteOK(w, ret)
 }
 
 // APIHANDLER

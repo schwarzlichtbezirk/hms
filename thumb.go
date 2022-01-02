@@ -263,8 +263,7 @@ func tmbscnAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var auth *Profile
-	if auth, err = GetAuth(r); err != nil {
-		WriteJSON(w, http.StatusUnauthorized, err)
+	if auth, err = GetAuth(w, r); err != nil {
 		return
 	}
 
