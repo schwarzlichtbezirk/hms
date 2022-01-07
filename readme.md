@@ -24,7 +24,7 @@ At first, install [Golang](https://golang.org/) minimum 1.16 version, and run th
 go get github.com/schwarzlichtbezirk/hms
 go build -o %GOPATH%\bin\wpkbuild.exe -v github.com/schwarzlichtbezirk/wpk/build
 xcopy %GOPATH%\src\github.com\schwarzlichtbezirk\hms\config %GOPATH%\bin\hms /f /d /i /s /e /k /y
-%GOPATH%/bin/wpkbuild.exe %GOPATH%/src/github.com/schwarzlichtbezirk/hms/frontend/tool/pack.lua
+%GOPATH%/bin/wpkbuild.exe %GOPATH%/src/github.com/schwarzlichtbezirk/hms/frontend/tools/pack.lua
 go build -o %GOPATH%\bin\hms.exe -v github.com/schwarzlichtbezirk/hms/run
 ```
 
@@ -39,7 +39,7 @@ By default script `pack.lua` produces full package with all icons collections wi
 To make full package with `webp` icons only, use `hms-all.lua` script:
 
 ```batch
-%GOPATH%/bin/wpkbuild.exe %GOPATH%/src/github.com/schwarzlichtbezirk/hms/frontend/tool/hms-all.lua
+%GOPATH%/bin/wpkbuild.exe %GOPATH%/src/github.com/schwarzlichtbezirk/hms/frontend/tools/hms-all.lua
 ```
 
 To make package with minimal size, use `hms-tiny.lua` script. Script `hms-free.lua` produces package with icons, which have allowed commercial usage by their license.
