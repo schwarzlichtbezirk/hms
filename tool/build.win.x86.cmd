@@ -1,4 +1,4 @@
 @echo off
-cd /d %GOPATH%\src\github.com\schwarzlichtbezirk\hms
+cd /d %~dp0..
 go env -w GOOS=windows GOARCH=386
 go build -o %GOPATH%/bin/hms.x86.exe -v ./cmd

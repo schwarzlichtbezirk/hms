@@ -4,7 +4,6 @@ go 1.17
 
 require (
 	github.com/avct/uasurfer v0.0.0-20191028135549-26b5daa857f1
-	github.com/beevik/guid v0.0.0-20170504223318-d0ea8faecee0
 	github.com/bluele/gcache v0.0.2
 	github.com/cespare/xxhash v1.1.0
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
@@ -12,6 +11,7 @@ require (
 	github.com/disintegration/gift v1.2.1
 	github.com/diskfs/go-diskfs v1.2.0
 	github.com/ftrvxmtrx/tga v0.0.0-20150524081124-bd8e8d5be13a
+	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/oov/psd v0.0.0-20210618170533-9fb823ddb631
@@ -27,14 +27,14 @@ require (
 
 require (
 	github.com/frankban/quicktest v1.14.0 // indirect
-	github.com/google/uuid v1.3.0 // indirect
-	github.com/gopherjs/gopherjs v0.0.0-20211228203721-be292294a697 // indirect
+	github.com/gopherjs/gopherjs v0.0.0-20220104163920-15ed2e8cf2bd // indirect
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
 	github.com/pkg/xattr v0.4.4 // indirect
 	github.com/schwarzlichtbezirk/mmap-go v1.0.2 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
+	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/ulikunitz/xz v0.5.10 // indirect
-	golang.org/x/net v0.0.0-20211216030914-fe4d6282115f // indirect
+	golang.org/x/net v0.0.0-20220105145211-5b0dc2dfae98 // indirect
 	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
 	gopkg.in/djherbis/times.v1 v1.3.0 // indirect
 )

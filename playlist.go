@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/beevik/guid"
+	"github.com/google/uuid"
 	"gopkg.in/ini.v1"
 )
 
@@ -356,8 +356,8 @@ func (pl *Playlist) WriteWPL(w io.Writer) (num int64, err error) {
 				return
 			}
 		}
-		var g = guid.New()
-		wpl.Body.Seq.Media = append(wpl.Body.Seq.Media, WplMedia{Src: fpath, Tid: "{" + g.StringUpper() + "}"})
+		var id = uuid.NewSHA1(uuid.NameSpaceURL, []byte(fpath)).String()
+		wpl.Body.Seq.Media = append(wpl.Body.Seq.Media, WplMedia{Src: fpath, Tid: "{" + id + "}"})
 	}
 
 	var body []byte

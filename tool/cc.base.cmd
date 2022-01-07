@@ -1,5 +1,5 @@
 @echo off
-cd /d %GOPATH%/src/github.com/schwarzlichtbezirk/hms/frontend
+cd /d %~dp0../frontend
 
 java -jar %~d0/tools/closure-compiler-v20210907.jar^
  --js plugin/leaflet.js^
