@@ -3,62 +3,62 @@
 # "access-key" and "refresh-key" for tokens protection.
 
 authentication:
-    # Access token time to live.
-    access-ttl: 24h # 1 day
-    # Refresh token time to live.
-    refresh-ttl: 72h # 3 days
-    # Key for access HS-256 JWT-tokens.
-    access-key: skJgM4NsbP3fs4k7vh0gfdkgGl8dJTszdLxZ1sQ9ksFnxbgvw2RsGH8xxddUV479
-    # Key for refresh HS-256 JWT-tokens.
-    refresh-key: zxK4dUnuq3Lhd1Gzhpr3usI5lAzgvy2t3fmxld2spzz7a5nfv0hsksm9cheyutie
-webserver: # See https://golang.org/pkg/net/http/#Server for details.
-    # Indicates to get TLS-certificate from letsencrypt.org service
-    # if this value is true. Uses local TLS-certificate otherwise.
-    auto-cert: false
-    # List of address:port values for non-encrypted connections.
-    # Address is skipped in most common cases, port only remains.
-    port-http:
-        - :80
-        - :8080
-    # List of address:port values for encrypted connections.
-    # Address is skipped in most common cases, port only remains.
-    port-tls:
-        - :443
-        - :4804
-    # Maximum duration for reading the entire request, including the body.
-    read-timeout: 15s
-    # Amount of time allowed to read request headers.
-    read-header-timeout: 15s
-    # Maximum duration before timing out writes of the response.
-    write-timeout: 15s
-    # Maximum amount of time to wait for the next request when keep-alives are enabled.
-    idle-timeout: 60s
-    # Controls the maximum number of bytes the server will read parsing
-    # the request header's keys and values, including the request line, in bytes.
-    max-header-bytes: 1048576 # 1M
-    # Maximum duration to wait for graceful shutdown.
-    shutdown-timeout: 15s
+  # Access token time to live.
+  access-ttl: 24h # 1 day
+  # Refresh token time to live.
+  refresh-ttl: 72h # 3 days
+  # Key for access HS-256 JWT-tokens.
+  access-key: skJgM4NsbP3fs4k7vh0gfdkgGl8dJTszdLxZ1sQ9ksFnxbgvw2RsGH8xxddUV479
+  # Key for refresh HS-256 JWT-tokens.
+  refresh-key: zxK4dUnuq3Lhd1Gzhpr3usI5lAzgvy2t3fmxld2spzz7a5nfv0hsksm9cheyutie
+web-server: # See https://golang.org/pkg/net/http/#Server for details.
+  # Indicates to get TLS-certificate from letsencrypt.org service
+  # if this value is true. Uses local TLS-certificate otherwise.
+  auto-cert: false
+  # List of address:port values for non-encrypted connections.
+  # Address is skipped in most common cases, port only remains.
+  port-http:
+      - :80
+      - :8080
+  # List of address:port values for encrypted connections.
+  # Address is skipped in most common cases, port only remains.
+  port-tls:
+      - :443
+      - :4804
+  # Maximum duration for reading the entire request, including the body.
+  read-timeout: 15s
+  # Amount of time allowed to read request headers.
+  read-header-timeout: 15s
+  # Maximum duration before timing out writes of the response.
+  write-timeout: 15s
+  # Maximum amount of time to wait for the next request when keep-alives are enabled.
+  idle-timeout: 60s
+  # Controls the maximum number of bytes the server will read parsing
+  # the request header's keys and values, including the request line, in bytes.
+  max-header-bytes: 1048576 # 1M
+  # Maximum duration to wait for graceful shutdown.
+  shutdown-timeout: 15s
 specification:
-    # Name of wpk-file with program resources.
-    wpk-name: hms.wpk
-    # On 'true' use memory mapping technology for access to wpk-package nested files.
-    # On 'false' use wpk-package loaded into one solid byte slice.
-    wpk-mmap: false
-    # Maximum duration between two ajax-calls to think client is online.
-    online-timeout: 180s # 3 minutes
-    # Default profile identifier for user on localhost.
-    default-profile-id: 1
-    # Maximum size of image to make thumbnail.
-    thumb-file-maxsize: 50397184 # 4096*3072*4 + 65536, 48M, max 4K image + 64K exif metadata
-    # Stretch big image embedded into mp3-file to fit into standard icon size.
-    fit-embedded-tmb: true
-    # Initial length of path unique identifiers in base32 symbols, maximum is 12 (x5 for length in bits).
-    puid-length: 5
-    # Maximum items number in files properties cache.
-    prop-cache-maxnum: 32768
-    # Maximum items number in thumbnails cache.
-    thumb-cache-maxnum: 2048
-    # Maximum items number in converted media files cache.
-    media-cache-maxnum: 64
-    # Expiration duration to keep opened iso-disk structures in cache from last access to it.
-    disk-cache-expire: 15s
+  # Name of wpk-file with program resources.
+  wpk-name: hms.wpk
+  # On 'true' use memory mapping technology for access to wpk-package nested files.
+  # On 'false' use wpk-package loaded into one solid byte slice.
+  wpk-mmap: false
+  # Maximum duration between two ajax-calls to think client is online.
+  online-timeout: 180s # 3 minutes
+  # Default profile identifier for user on localhost.
+  default-profile-id: 1
+  # Maximum size of image to make thumbnail.
+  thumb-file-maxsize: 50397184 # 4096*3072*4 + 65536, 48M, max 4K image + 64K exif metadata
+  # Stretch big image embedded into mp3-file to fit into standard icon size.
+  fit-embedded-tmb: true
+  # Initial length of path unique identifiers in base32 symbols, maximum is 12 (x5 for length in bits).
+  puid-length: 5
+  # Maximum items number in files properties cache.
+  prop-cache-maxnum: 32768
+  # Maximum items number in thumbnails cache.
+  thumb-cache-maxnum: 2048
+  # Maximum items number in converted media files cache.
+  media-cache-maxnum: 64
+  # Expiration duration to keep opened iso-disk structures in cache from last access to it.
+  disk-cache-expire: 15s

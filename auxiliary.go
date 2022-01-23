@@ -13,7 +13,8 @@ var (
 	evwre = regexp.MustCompile(`\%\w+\%`)   // env var with windows-like syntax
 )
 
-func envfmt(p string) string {
+// EnvFmt helps to format path patterns, it expands contained environment variables to there values.
+func EnvFmt(p string) string {
 	return evwre.ReplaceAllStringFunc(evure.ReplaceAllStringFunc(evlre.ReplaceAllStringFunc(p, func(name string) string {
 		// strip $VAR and replace by environment value
 		if val, ok := os.LookupEnv(name[1:]); ok {
@@ -38,7 +39,8 @@ func envfmt(p string) string {
 	})
 }
 
-func pathexists(path string) (bool, error) {
+// PathExists makes check up on path existance.
+func PathExists(path string) (bool, error) {
 	var err error
 	if _, err = os.Stat(path); err == nil {
 		return true, nil

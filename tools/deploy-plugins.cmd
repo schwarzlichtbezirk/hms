@@ -1,5 +1,6 @@
 @echo off
 set pldir=%~dp0..\frontend\plugin\
+mkdir %pldir%\images
 
 rem bootstrap 5.1.3
 rem https://cdnjs.com/libraries/bootstrap
@@ -13,11 +14,11 @@ rem https://cdnjs.com/libraries/popper.js
 curl https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.2/umd/popper.min.js --output %pldir%/popper.min.js
 curl https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.2/umd/popper.min.js.map --output %pldir%/popper.min.js.map
 
-rem Vue 3.2.26
+rem Vue 3.2.28
 rem https://cdnjs.com/libraries/vue
 rem https://unpkg.com/vue@next
-curl https://unpkg.com/vue@3.2.26/dist/vue.global.js --output %pldir%/vue.global.js
-curl https://unpkg.com/vue@3.2.26/dist/vue.global.prod.js --output %pldir%/vue.global.prod.js
+curl https://unpkg.com/vue@3.2.28/dist/vue.global.js --output %pldir%/vue.global.js
+curl https://unpkg.com/vue@3.2.28/dist/vue.global.prod.js --output %pldir%/vue.global.prod.js
 
 rem leaflet 1.7.1
 rem https://cdnjs.com/libraries/leaflet

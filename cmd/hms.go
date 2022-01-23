@@ -4,14 +4,9 @@ import (
 	"github.com/schwarzlichtbezirk/hms"
 )
 
-const buildvers = "0.7.8"
-const builddate = "2022.01.02"
-
 var log = hms.Log
 
 func main() {
-	log.Printf("version: %s, builton: %s\n", buildvers, builddate)
-	hms.MakeServerLabel("hms", buildvers)
 	hms.Init()
 	var gmux = hms.NewRouter()
 	hms.RegisterRoutes(gmux)

@@ -64,5 +64,5 @@ func (pt *PuidType) Rand(bits int) {
 		panic(err)
 	}
 	*pt = PuidType(binary.LittleEndian.Uint64(buf[:]))
-	*pt &= 0xffffffffffffffff >> (64 - bits)
+	*pt &= 0xffffffffffffffff >> (65 - bits) // throw one more bit to prevent string representation overflow
 }

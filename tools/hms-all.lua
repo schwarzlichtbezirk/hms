@@ -4,6 +4,20 @@
 wpkconf = {
 	-- result package name
 	label = "hms-all",
+	-- list of icons collections IDs, see 'id' tags of 'iconlist' in 'resmodel.json' file
+	iconset = {
+		junior = {"webp"},
+		oxygen = {"webp"},
+		tulliana = {"webp"},
+		ubuntu = {"webp"},
+		papirus = {"svg"},
+		chakram = {"webp"},
+		senary = {"webp"},
+		senary2 = {"webp"},
+		delta = {"webp"},
+		whistlepuff = {"webp"},
+		xrabbit = {"webp"},
+	},
 	-- default skin ID if nothing was selected
 	defskinid = "neon",
 	-- default icons collection ID if nothing was selected

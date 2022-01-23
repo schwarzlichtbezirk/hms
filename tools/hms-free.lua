@@ -12,10 +12,10 @@ wpkconf = {
 	},
 	-- list of icons collections IDs, see 'id' tags of 'iconlist' in 'resmodel.json' file
 	iconset = {
-		"oxygen" = {"avif", "webp", "png"},
-		"ubuntu" = {"webp", "png"},
-		"papirus" = {"svg"},
-		"tulliana" = {"webp", "png"},
+		oxygen = {"avif", "webp", "png"},
+		ubuntu = {"webp", "png"},
+		papirus = {"svg"},
+		tulliana = {"webp", "png"},
 	},
 	-- default skin ID if nothing was selected
 	defskinid = "neon",

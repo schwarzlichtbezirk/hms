@@ -11,7 +11,17 @@ import (
 )
 
 const (
-	rootsuff = "hms"
+	gitname = "hms"
+	gitpath = "github.com/schwarzlichtbezirk/" + gitname
+	cfgfile = "settings.yaml"
+
+	pcfile = "pathcache.yaml"
+	dcfile = "dircache.yaml"
+	pffile = "profiles.yaml"
+	ulfile = "userlist.yaml"
+)
+
+const (
 	asstsuff = "assets"  // relative path to assets folder
 	devmsuff = "devmode" // relative path to folder with development mode code files
 	relmsuff = "build"   // relative path to folder with compiled code files
@@ -22,9 +32,9 @@ const (
 
 // CfgCmdLine is command line arguments representation for YAML settings.
 type CfgCmdLine struct {
-	ConfigPath string `json:"-" yaml:"-" env:"HMSCONFIGPATH" short:"c" long:"cfgpath" description:"Configuration path. Can be full path to config folder, or relative from executable destination."`
+	ConfigPath string `json:"-" yaml:"-" env:"CONFIGPATH" short:"c" long:"cfgpath" description:"Configuration path. Can be full path to config folder, or relative from executable destination."`
 	NoConfig   bool   `json:"-" yaml:"-" long:"nocfg" description:"Specifies do not load settings from YAML-settings file, keeps default."`
-	PackPath   string `json:"-" yaml:"-" env:"HMSPACKPATH" long:"wpkpath" description:"Determines package path. Can be full path to folder with package, or relative from executable destination."`
+	PackPath   string `json:"-" yaml:"-" env:"PACKPATH" short:"p" long:"wpkpath" description:"Determines package path. Can be full path to folder with package, or relative from executable destination."`
 }
 
 // CfgJWTAuth is authentication settings.
@@ -42,8 +52,8 @@ type CfgJWTAuth struct {
 // CfgWebServ is web server settings.
 type CfgWebServ struct {
 	AutoCert          bool          `json:"auto-cert" yaml:"auto-cert" long:"autocert" description:"Indicates to get TLS-certificate from letsencrypt.org service if this value is true. Uses local TLS-certificate otherwise."`
-	PortHTTP          []string      `json:"port-http" yaml:"port-http" short:"w" long:"porthttp" description:"List of address:port values for non-encrypted connections. Address is skipped in most common cases, port only remains."`
-	PortTLS           []string      `json:"port-tls" yaml:"port-tls" short:"s" long:"porttls" description:"List of address:port values for encrypted connections. Address is skipped in most common cases, port only remains."`
+	PortHTTP          []string      `json:"port-http" yaml:"port-http" env:"PORTHTTP" env-delim:";" short:"w" long:"http" description:"List of address:port values for non-encrypted connections. Address is skipped in most common cases, port only remains."`
+	PortTLS           []string      `json:"port-tls" yaml:"port-tls" env:"PORTTLS" env-delim:";" short:"s" long:"tls" description:"List of address:port values for encrypted connections. Address is skipped in most common cases, port only remains."`
 	ReadTimeout       time.Duration `json:"read-timeout" yaml:"read-timeout" long:"rt" description:"Maximum duration for reading the entire request, including the body."`
 	ReadHeaderTimeout time.Duration `json:"read-header-timeout" yaml:"read-header-timeout" long:"rht" description:"Amount of time allowed to read request headers."`
 	WriteTimeout      time.Duration `json:"write-timeout" yaml:"write-timeout" long:"wt" description:"Maximum duration before timing out writes of the response."`
@@ -83,9 +93,9 @@ type CfgAppConf struct {
 
 // Config is common service settings.
 type Config struct {
-	CfgCmdLine `json:"command-line" yaml:"command-line" group:"Data Parameters"`
+	CfgCmdLine `json:"-" yaml:"-" group:"Command line arguments"`
 	CfgJWTAuth `json:"authentication" yaml:"authentication" group:"Authentication"`
-	CfgWebServ `json:"webserver" yaml:"webserver" group:"Web Server"`
+	CfgWebServ `json:"web-server" yaml:"web-server" group:"Web Server"`
 	CfgAppConf `json:"specification" yaml:"specification" group:"Application settings"`
 }
 
@@ -122,23 +132,28 @@ var cfg = Config{ // inits default values:
 	},
 }
 
+// compiled binary version, sets by compiler with command
+//    go build -ldflags="-X 'github.com/schwarzlichtbezirk/hms.buildvers=%buildvers%'"
+var buildvers string
+
+// compiled binary build date, sets by compiler with command
+//    go build -ldflags="-X 'github.com/schwarzlichtbezirk/hms.builddate=%date%'"
+var builddate string
+
+// compiled binary build time, sets by compiler with command
+//    go build -ldflags="-X 'github.com/schwarzlichtbezirk/hms.buildtime=%time%'"
+var buildtime string
+
+// save server start time
+var starttime = time.Now()
+
 func init() {
 	if _, err := flags.Parse(&cfg); err != nil {
 		os.Exit(1)
 	}
 }
 
-const (
-	gitname = "hms"
-	gitpath = "github.com/schwarzlichtbezirk/" + gitname
-	cfgbase = gitname
-	cfgfile = "settings.yaml"
-
-	pcfile = "pathcache.yaml"
-	dcfile = "dircache.yaml"
-	pffile = "profiles.yaml"
-	ulfile = "userlist.yaml"
-)
+const cfgbase = "config"
 
 // ConfigPath determines configuration path, depended on what directory is exist.
 var ConfigPath string
@@ -154,15 +169,15 @@ func DetectConfigPath() (retpath string, err error) {
 
 	// try to get from environment setting
 	if cfg.ConfigPath != "" {
-		path = envfmt(cfg.ConfigPath)
+		path = EnvFmt(cfg.ConfigPath)
 		// try to get access to full path
-		if ok, _ = pathexists(filepath.Join(path, cfgfile)); ok {
+		if ok, _ = PathExists(filepath.Join(path, cfgfile)); ok {
 			retpath = path
 			return
 		}
 		// try to find relative from executable path
 		path = filepath.Join(exepath, path)
-		if ok, _ = pathexists(filepath.Join(path, cfgfile)); ok {
+		if ok, _ = PathExists(filepath.Join(path, cfgfile)); ok {
 			retpath = path
 			return
 		}
@@ -171,34 +186,34 @@ func DetectConfigPath() (retpath string, err error) {
 
 	// try to get from config subdirectory on executable path
 	path = filepath.Join(exepath, cfgbase)
-	if ok, _ = pathexists(filepath.Join(path, cfgfile)); ok {
+	if ok, _ = PathExists(filepath.Join(path, cfgfile)); ok {
 		retpath = path
 		return
 	}
 	// try to find in executable path
-	if ok, _ = pathexists(filepath.Join(exepath, cfgfile)); ok {
+	if ok, _ = PathExists(filepath.Join(exepath, cfgfile)); ok {
 		retpath = exepath
 		return
 	}
 	// try to find in config subdirectory of current path
-	if ok, _ = pathexists(filepath.Join(cfgbase, cfgfile)); ok {
+	if ok, _ = PathExists(filepath.Join(cfgbase, cfgfile)); ok {
 		retpath = cfgbase
 		return
 	}
 	// try to find in current path
-	if ok, _ = pathexists(cfgfile); ok {
+	if ok, _ = PathExists(cfgfile); ok {
 		retpath = "."
 		return
 	}
 	// check up current path is the git root path
-	if ok, _ = pathexists(filepath.Join("config", cfgfile)); ok {
+	if ok, _ = PathExists(filepath.Join("config", cfgfile)); ok {
 		retpath = "config"
 		return
 	}
 
 	// check up running in devcontainer workspace
 	path = filepath.Join("/workspaces", gitname, "config")
-	if ok, _ = pathexists(filepath.Join(path, cfgfile)); ok {
+	if ok, _ = PathExists(filepath.Join(path, cfgfile)); ok {
 		retpath = path
 		return
 	}
@@ -207,7 +222,7 @@ func DetectConfigPath() (retpath string, err error) {
 	var prefix string
 	if prefix, ok = os.LookupEnv("GOPATH"); ok {
 		path = filepath.Join(prefix, "src", gitpath, "config")
-		if ok, _ = pathexists(filepath.Join(path, cfgfile)); ok {
+		if ok, _ = PathExists(filepath.Join(path, cfgfile)); ok {
 			retpath = path
 			return
 		}
@@ -222,12 +237,12 @@ func DetectConfigPath() (retpath string, err error) {
 	if ok {
 		// try to get from go bin config
 		path = filepath.Join(prefix, cfgbase)
-		if ok, _ = pathexists(filepath.Join(path, cfgfile)); ok {
+		if ok, _ = PathExists(filepath.Join(path, cfgfile)); ok {
 			retpath = path
 			return
 		}
 		// try to get from go bin root
-		if ok, _ = pathexists(filepath.Join(prefix, cfgfile)); ok {
+		if ok, _ = PathExists(filepath.Join(prefix, cfgfile)); ok {
 			retpath = prefix
 			return
 		}
@@ -252,15 +267,15 @@ func DetectPackPath() (retpath string, err error) {
 
 	// try to get from environment setting
 	if cfg.PackPath != "" {
-		path = envfmt(cfg.PackPath)
+		path = EnvFmt(cfg.PackPath)
 		// try to get access to full path
-		if ok, _ = pathexists(filepath.Join(path, cfg.WPKName)); ok {
+		if ok, _ = PathExists(filepath.Join(path, cfg.WPKName)); ok {
 			retpath = path
 			return
 		}
 		// try to find relative from executable path
 		path = filepath.Join(exepath, path)
-		if ok, _ = pathexists(filepath.Join(path, cfg.WPKName)); ok {
+		if ok, _ = PathExists(filepath.Join(path, cfg.WPKName)); ok {
 			retpath = path
 			return
 		}
@@ -268,18 +283,18 @@ func DetectPackPath() (retpath string, err error) {
 	}
 
 	// try to find in executable path
-	if ok, _ = pathexists(filepath.Join(exepath, cfg.WPKName)); ok {
+	if ok, _ = PathExists(filepath.Join(exepath, cfg.WPKName)); ok {
 		retpath = exepath
 		return
 	}
 	// try to find in current path
-	if ok, _ = pathexists(cfg.WPKName); ok {
+	if ok, _ = PathExists(cfg.WPKName); ok {
 		retpath = "."
 		return
 	}
 	// try to find at parental of cofiguration path
 	path = filepath.Join(ConfigPath, "..")
-	if ok, _ = pathexists(filepath.Join(path, cfg.WPKName)); ok {
+	if ok, _ = PathExists(filepath.Join(path, cfg.WPKName)); ok {
 		retpath = path
 		return
 	}
@@ -287,7 +302,7 @@ func DetectPackPath() (retpath string, err error) {
 	// if GOBIN is present
 	var prefix string
 	if prefix, ok = os.LookupEnv("GOBIN"); ok {
-		if ok, _ = pathexists(filepath.Join(prefix, cfg.WPKName)); ok {
+		if ok, _ = PathExists(filepath.Join(prefix, cfg.WPKName)); ok {
 			retpath = prefix
 			return
 		}
@@ -297,7 +312,7 @@ func DetectPackPath() (retpath string, err error) {
 	if prefix, ok = os.LookupEnv("GOPATH"); ok {
 		// try to get from go bin root
 		path = filepath.Join(prefix, "bin")
-		if ok, _ = pathexists(filepath.Join(path, cfg.WPKName)); ok {
+		if ok, _ = PathExists(filepath.Join(path, cfg.WPKName)); ok {
 			retpath = path
 			return
 		}

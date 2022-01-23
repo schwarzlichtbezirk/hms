@@ -18,23 +18,27 @@ Compiled binaries can be downloaded in [Releases](https://github.com/schwarzlich
 
 # How to build
 
-At first, install [Golang](https://golang.org/) minimum 1.16 version, and run those commands in command prompt:
+At first, install [Golang](https://go.dev/dl/) of last version, and clone project:
 
 ```batch
-go get github.com/schwarzlichtbezirk/hms
-go build -o %GOPATH%\bin\wpkbuild.exe -v github.com/schwarzlichtbezirk/wpk/build
-xcopy %GOPATH%\src\github.com\schwarzlichtbezirk\hms\config %GOPATH%\bin\hms /f /d /i /s /e /k /y
-%GOPATH%/bin/wpkbuild.exe %GOPATH%/src/github.com/schwarzlichtbezirk/hms/frontend/tools/pack.lua
-go build -o %GOPATH%\bin\hms.exe -v github.com/schwarzlichtbezirk/hms/run
+git clone github.com/schwarzlichtbezirk/hms
 ```
 
-First command extracts program package with all dependencies. Second makes wpk-build utilite. Third copies/updates initial settings files from source folder to destination binary folder. 4th produces full resources package. 5th makes server executable file.
+Then run some batch-files at `tools` directory of project:
 
-If you want some other shorter package, you can replace Lua-script name in 4th command.
+1) `tools/make-builder.cmd` installs `wpk` builder to `%GOPATH%\bin` folder. It can be done only once.
+
+2) `tools/get-plugins.cmd` downloads js-plugins for frontend client. It can be run on every time when it needs to update plugins. And update script to actual versions of libraries.
+
+3) `tools/cc.base.cmd` and `tools/cc.page.cmd` to compile js-files to bundle. Batch-files expects that [Closure Compiler](https://developers.google.com/closure/compiler) is downloaded to path pointed in those batch-files. Java VM is needed for this.
+
+4) `tools/wpk.full.cmd` packs all resources to single file used by program. It can be run after any resources changes. New package can be compiled during program is running, if does NOT used memory mapping mode. `tools/wpk.tiny.cmd` can be used instead to produce small cuted version of resources. If you want package with some other resources combination, you can write for this Lua-script same as, for example, `hms-free.lua` or `hms-tiny.lua`.
+
+5) `tools/build.win.x64.cmd` to build program for `Windows amd64` platform, or run `build.win.x86.cmd` to build program for `Windows x86` platform.
 
 # Packages variations
 
-By default script `pack.lua` produces full package with all icons collections with both `png` and `webp` formats. `webp` icons are more than 5x times shorter than `png` and this format is supported by Android, Chrome, Opera, Edge, Firefox, but in some cases it's can be needed `png` yet.
+By default script `pack.lua` produces full package with all icons collections in all supported formats: `webp`, `png`, and some icon sets with `jp2` for Safari browser, `avif` for Google-produced browsers. `webp` icons are more than 5x shorter than `png` and this format is supported by Android, Chrome, Opera, Edge, Firefox, but in some rarity used browsers it's can be needed `png` yet.
 
 To make full package with `webp` icons only, use `hms-all.lua` script:
 

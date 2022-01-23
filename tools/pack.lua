@@ -262,11 +262,11 @@ end
 
 -- replace wpk-name in settings
 do
-	local f = assert(io.open(envfmt("${GOPATH}/bin/hms/settings.yaml"), "rb"))
+	local f = assert(io.open(envfmt("${GOPATH}/bin/config/settings.yaml"), "rb"))
 	local content = f:read("*all")
 	f:close()
 	content = string.gsub(content, "wpk%-name:(%s+)[%w%-]+%.wpk", "wpk-name:%1"..wpkconf.label..".wpk")
-	local f = assert(io.open(envfmt("${GOPATH}/bin/hms/settings.yaml"), "wb+"))
+	local f = assert(io.open(envfmt("${GOPATH}/bin/config/settings.yaml"), "wb+"))
 	f:write(content)
 	f:close()
 end

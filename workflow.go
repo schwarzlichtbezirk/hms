@@ -13,7 +13,6 @@ import (
 	"strings"
 	"sync"
 	"syscall"
-	"time"
 
 	"github.com/jessevdk/go-flags"
 	"github.com/schwarzlichtbezirk/wpk"
@@ -29,8 +28,6 @@ var (
 	// wait group for all service goroutines
 	exitwg sync.WaitGroup
 )
-
-var starttime = time.Now() // save server start time
 
 // Package root dir.
 var packager wpk.Packager
@@ -114,6 +111,7 @@ func loadtemplates() (err error) {
 
 // Init performs global data initialization. Loads configuration files, initializes file cache.
 func Init() {
+	Log.Printf("version: %s, builton: %s %s\n", buildvers, builddate, buildtime)
 	Log.Println("starts")
 
 	// create context and wait the break
@@ -148,6 +146,8 @@ func Init() {
 	}()
 
 	var err error
+
+	MakeServerLabel("hms", buildvers)
 
 	// get confiruration path
 	if ConfigPath, err = DetectConfigPath(); err != nil {
