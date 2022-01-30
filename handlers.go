@@ -14,6 +14,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/gorilla/mux"
 )
 
 //////////////////////////
@@ -98,7 +100,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	syspath = UnfoldPath(syspath)
 
-	var puid, ok = pathcache.PUID(syspath)
+	var puid, ok = syspathcache.PUID(syspath)
 	if !ok {
 		WriteError(w, http.StatusNotFound, ErrNoPath, AECmedianopath)
 		return
@@ -229,16 +231,12 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 func thumbHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
 
-	var chunks = strings.Split(r.URL.Path, "/")
-	if len(chunks) < 4 {
+	var chunks = mux.Vars(r)
+	if chunks == nil {
 		panic("bad route for URL " + r.URL.Path)
 	}
 
-	var aid uint64
-	if aid, err = strconv.ParseUint(chunks[1][2:], 10, 32); err != nil {
-		WriteError400(w, err, AECthumbbadaccid)
-		return
-	}
+	var aid, _ = strconv.ParseUint(chunks["aid"], 10, 64)
 
 	var prf *Profile
 	if prf = prflist.ByID(IdType(aid)); prf == nil {
@@ -251,11 +249,11 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var puid PuidType
-	if err = puid.Set(chunks[3]); err != nil {
+	if err = puid.Set(chunks["puid"]); err != nil {
 		WriteError400(w, err, AECthumbnopuid)
 		return
 	}
-	var syspath, ok = pathcache.Path(puid)
+	var syspath, ok = syspathcache.Path(puid)
 	if !ok {
 		WriteError(w, http.StatusNotFound, ErrNoPath, AECthumbnopath)
 		return
@@ -291,6 +289,75 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) {
 	var md *MediaData
 	if md, ok = val.(*MediaData); !ok || md == nil {
 		WriteError500(w, ErrBadMedia, AECthumbbadcnt)
+		return
+	}
+	w.Header().Set("Content-Type", md.Mime)
+	http.ServeContent(w, r, puid.String(), starttime, bytes.NewReader(md.Data))
+}
+
+// Hands out thumbnails for given files if them cached.
+func tileHandler(w http.ResponseWriter, r *http.Request) {
+	var err error
+
+	var chunks = mux.Vars(r)
+	if chunks == nil {
+		panic("bad route for URL " + r.URL.Path)
+	}
+
+	var aid, _ = strconv.ParseUint(chunks["aid"], 10, 64)
+
+	var prf *Profile
+	if prf = prflist.ByID(IdType(aid)); prf == nil {
+		WriteError400(w, ErrNoAcc, AECtilenoacc)
+		return
+	}
+	var auth *Profile
+	if auth, err = GetAuth(w, r); err != nil {
+		return
+	}
+
+	var puid PuidType
+	if err = puid.Set(chunks["puid"]); err != nil {
+		WriteError400(w, err, AECtilenopuid)
+		return
+	}
+	var syspath, ok = syspathcache.Path(puid)
+	if !ok {
+		WriteError(w, http.StatusNotFound, ErrNoPath, AECtilenopath)
+		return
+	}
+
+	if prf.IsHidden(syspath) {
+		WriteError(w, http.StatusForbidden, ErrHidden, AECtilehidden)
+		return
+	}
+
+	var prop interface{}
+	if prop, err = propcache.Get(syspath); err != nil {
+		WriteError(w, http.StatusNotFound, err, AECtilenoprop)
+		return
+	}
+	var fp = prop.(Pather)
+	if fp.Type() != FTfile {
+		WriteError(w, http.StatusUnsupportedMediaType, ErrNotFile, AECtilenofile)
+		return
+	}
+	var cg = prf.PathAccess(syspath, auth == prf)
+	var grp = GetFileGroup(syspath)
+	if !cg[grp] {
+		WriteError(w, http.StatusForbidden, ErrNoAccess, AECtileaccess)
+		return
+	}
+
+	var tid = tilepathcache.Cache(syspath + "?" + chunks["resol"])
+	var val interface{}
+	if val, err = tilecache.Get(tid); err != nil {
+		WriteError(w, http.StatusNotFound, err, AECtileabsent)
+		return
+	}
+	var md *MediaData
+	if md, ok = val.(*MediaData); !ok || md == nil {
+		WriteError500(w, ErrBadMedia, AECtilebadcnt)
 		return
 	}
 	w.Header().Set("Content-Type", md.Mime)
@@ -363,6 +430,9 @@ func memusgAPI(w http.ResponseWriter, r *http.Request) {
 	runtime.ReadMemStats(&mem)
 
 	var ret = map[string]interface{}{
+		"buildvers":     buildvers,
+		"builddate":     builddate,
+		"buildtime":     buildtime,
 		"running":       time.Since(starttime) / time.Millisecond,
 		"heapalloc":     mem.HeapAlloc,
 		"heapsys":       mem.HeapSys,
@@ -378,9 +448,9 @@ func memusgAPI(w http.ResponseWriter, r *http.Request) {
 
 // APIHANDLER
 func cchinfAPI(w http.ResponseWriter, r *http.Request) {
-	pathcache.mux.RLock()
-	var pathnum = len(pathcache.keypath)
-	pathcache.mux.RUnlock()
+	syspathcache.mux.RLock()
+	var pathnum = len(syspathcache.keypath)
+	syspathcache.mux.RUnlock()
 
 	var propnum = propcache.Len(false)
 
@@ -537,10 +607,10 @@ func ctgrAPI(w http.ResponseWriter, r *http.Request) {
 			WriteError400(w, ErrArgNoCid, AECctgrnocid)
 			return
 		}
-		arg.PUID = pathcache.Cache(catpath)
+		arg.PUID = syspathcache.Cache(catpath)
 	} else if arg.PUID > 0 {
 		var ok bool
-		if catpath, ok = pathcache.Path(arg.PUID); !ok {
+		if catpath, ok = syspathcache.Path(arg.PUID); !ok {
 			WriteError(w, http.StatusNotFound, ErrNoPath, AECctgrnopath)
 			return
 		}
@@ -565,7 +635,7 @@ func ctgrAPI(w http.ResponseWriter, r *http.Request) {
 	}
 	var catprop = func(puids []PuidType) {
 		for _, puid := range puids {
-			if fpath, ok := pathcache.Path(puid); ok {
+			if fpath, ok := syspathcache.Path(puid); ok {
 				if prop, err := propcache.Get(fpath); err == nil {
 					ret = append(ret, prop.(Pather))
 				}
@@ -652,10 +722,10 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		syspath = UnfoldPath(syspath)
-		ret.PUID = pathcache.Cache(syspath)
+		ret.PUID = syspathcache.Cache(syspath)
 	} else {
 		var ok bool
-		if syspath, ok = pathcache.Path(arg.PUID); !ok {
+		if syspath, ok = syspathcache.Path(arg.PUID); !ok {
 			WriteError(w, http.StatusNotFound, ErrNoPath, AECfoldernopath)
 			return
 		}
@@ -727,7 +797,7 @@ func playlistAPI(w http.ResponseWriter, r *http.Request) {
 
 	var syspath string
 	var ok bool
-	if syspath, ok = pathcache.Path(arg.PUID); !ok {
+	if syspath, ok = syspathcache.Path(arg.PUID); !ok {
 		WriteError(w, http.StatusNotFound, ErrNoPath, AECplaylistnopath)
 		return
 	}
@@ -877,7 +947,7 @@ func shraddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		return
 	}
 
-	var syspath, ok = pathcache.Path(arg.PUID)
+	var syspath, ok = syspathcache.Path(arg.PUID)
 	if !ok {
 		WriteError(w, http.StatusNotFound, ErrNoPath, AECshraddnopath)
 	}
@@ -1010,7 +1080,7 @@ func drvdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		return
 	}
 
-	var syspath, ok = pathcache.Path(arg.PUID)
+	var syspath, ok = syspathcache.Path(arg.PUID)
 	if !ok {
 		WriteError(w, http.StatusNotFound, ErrNoPath, AECdrvdelnopath)
 	}
@@ -1057,11 +1127,11 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	// get source and destination filenames
 	var srcpath, dstpath string
 	var ok bool
-	if srcpath, ok = pathcache.Path(arg.Src); !ok {
+	if srcpath, ok = syspathcache.Path(arg.Src); !ok {
 		WriteError(w, http.StatusNotFound, ErrNoPath, AECedtcopynopath)
 		return
 	}
-	if dstpath, ok = pathcache.Path(arg.Dst); !ok {
+	if dstpath, ok = syspathcache.Path(arg.Dst); !ok {
 		WriteError(w, http.StatusNotFound, ErrNoPath, AECedtcopynodest)
 		return
 	}
@@ -1197,11 +1267,11 @@ func edtrenameAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	// get source and destination filenames
 	var srcpath, dstpath string
 	var ok bool
-	if srcpath, ok = pathcache.Path(arg.Src); !ok {
+	if srcpath, ok = syspathcache.Path(arg.Src); !ok {
 		WriteError(w, http.StatusNotFound, ErrNoPath, AECedtrennopath)
 		return
 	}
-	if dstpath, ok = pathcache.Path(arg.Dst); !ok {
+	if dstpath, ok = syspathcache.Path(arg.Dst); !ok {
 		WriteError(w, http.StatusNotFound, ErrNoPath, AECedtrennodest)
 		return
 	}
@@ -1270,7 +1340,7 @@ func edtdeleteAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		return
 	}
 
-	var syspath, ok = pathcache.Path(arg.PUID)
+	var syspath, ok = syspathcache.Path(arg.PUID)
 	if !ok {
 		WriteError(w, http.StatusNotFound, ErrNoPath, AECedtdelnopath)
 	}

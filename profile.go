@@ -311,7 +311,7 @@ func (prf *Profile) AddShare(syspath string) bool {
 	prf.mux.Lock()
 	defer prf.mux.Unlock()
 
-	var puid = pathcache.Cache(syspath)
+	var puid = syspathcache.Cache(syspath)
 	if _, ok := prf.puidshare[puid]; !ok {
 		prf.Shares = append(prf.Shares, syspath)
 		prf.sharepuid[syspath] = puid
@@ -354,7 +354,7 @@ func (prf *Profile) GetSharePath(syspath string, isadmin bool) (shrpath string, 
 		}
 	}
 	if len(base) > 0 {
-		shrpath = path.Join(pathcache.Cache(base).String(), syspath[len(base):])
+		shrpath = path.Join(syspathcache.Cache(base).String(), syspath[len(base):])
 		cg.SetAll(true)
 		return
 	}
@@ -367,7 +367,7 @@ func (prf *Profile) GetSharePath(syspath string, isadmin bool) (shrpath string, 
 		}
 	}
 	if len(base) > 0 {
-		shrpath = path.Join(pathcache.Cache(base).String(), syspath[len(base):])
+		shrpath = path.Join(syspathcache.Cache(base).String(), syspath[len(base):])
 		if isadmin {
 			cg.SetAll(true)
 		} else {

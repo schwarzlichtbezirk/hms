@@ -77,6 +77,8 @@ type CfgAppConf struct {
 	ThumbFileMaxSize int64 `json:"thumb-file-maxsize" yaml:"thumb-file-maxsize" long:"tfms" description:"Maximum size of image to make thumbnail."`
 	// Stretch big image embedded into mp3-file to fit into standard icon size.
 	FitEmbeddedTmb bool `json:"fit-embedded-tmb" yaml:"fit-embedded-tmb" long:"fet" description:"Stretch big image embedded into mp3-file to fit into standard icon size."`
+	// JPEG quality, ranges from 1 to 100 inclusive.
+	TmbJpegQuality int `json:"tmb-jpeg-quality" yaml:"tmb-jpeg-quality" long:"tjq" description:"JPEG quality, ranges from 1 to 100 inclusive."`
 	// Initial length of path unique identifiers in base32 symbols, maximum is 12
 	// (x5 for length in bits).
 	// When the bottom pool arrives to 90%, length increases to next available value.
@@ -124,6 +126,8 @@ var cfg = Config{ // inits default values:
 		OnlineTimeout:    time.Duration(3*60*1000) * time.Millisecond,
 		DefAccID:         1,
 		ThumbFileMaxSize: 4096*3072*4 + 65536,
+		FitEmbeddedTmb:   true,
+		TmbJpegQuality:   80,
 		PUIDlen:          5,
 		PropCacheMaxNum:  32 * 1024,
 		ThumbCacheMaxNum: 2 * 1024,

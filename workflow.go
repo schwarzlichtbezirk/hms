@@ -186,12 +186,12 @@ func Init() {
 	// build caches with given sizes from settings
 	initcaches()
 
-	if err = pathcache.Load(pcfile); err != nil {
+	if err = syspathcache.Load(pcfile); err != nil {
 		Log.Println("error on path cache file: " + err.Error())
 		Log.Println("loading of directories cache and users list were missed for a reason path cache loading failure")
 	} else {
 		// load directories file groups
-		Log.Printf("loaded %d items into path cache", len(pathcache.keypath))
+		Log.Printf("loaded %d items into path cache", len(syspathcache.keypath))
 		if err = dircache.Load(dcfile); err != nil {
 			Log.Println("error on directories cache file: " + err.Error())
 		}
@@ -359,7 +359,7 @@ func Shutdown() {
 	exitwg.Add(1)
 	go func() {
 		defer exitwg.Done()
-		if err := pathcache.Save(pcfile); err != nil {
+		if err := syspathcache.Save(pcfile); err != nil {
 			Log.Println("error on path cache file: " + err.Error())
 			Log.Println("saving of directories cache and users list were missed for a reason path cache saving failure")
 			return

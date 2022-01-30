@@ -297,7 +297,8 @@ func IsTypeJPEG(ext string) bool {
 // IsTypeAlpha checks that file extension belongs to images with alpha channel.
 func IsTypeAlpha(ext string) bool {
 	switch ext {
-	case ".dds", ".psd", ".psb":
+	case ".png", ".webp", ".gif",
+		".dds", ".psd", ".psb":
 		return true
 	}
 	return false
@@ -306,7 +307,8 @@ func IsTypeAlpha(ext string) bool {
 // IsTypeNonalpha checks that file extension belongs to images without alpha channel.
 func IsTypeNonalpha(ext string) bool {
 	switch ext {
-	case ".tga", ".bmp", ".dib", ".rle", ".tif", ".tiff":
+	case ".jpg", ".jpe", ".jpeg", ".jfif",
+		".tga", ".bmp", ".dib", ".rle", ".tif", ".tiff":
 		return true
 	}
 	return false
@@ -458,7 +460,7 @@ type DirKit struct {
 func (dk *DirKit) Setup(syspath string) {
 	dk.NameVal = PathBase(syspath)
 	dk.TypeVal = FTdir
-	dk.PUIDVal = pathcache.Cache(syspath)
+	dk.PUIDVal = syspathcache.Cache(syspath)
 	dk.SetTmb(TMBreject, "")
 	if dp, ok := dircache.Get(dk.PUIDVal); ok {
 		dk.DirProp = dp
@@ -476,7 +478,7 @@ type DriveKit struct {
 func (dk *DriveKit) Setup(syspath string) {
 	dk.NameVal = PathBase(syspath)
 	dk.TypeVal = FTdrv
-	dk.PUIDVal = pathcache.Cache(syspath)
+	dk.PUIDVal = syspathcache.Cache(syspath)
 	dk.SetTmb(TMBreject, "")
 }
 
@@ -507,7 +509,7 @@ func (ck *CatKit) Setup(fpath string) {
 	var pos = strings.IndexByte(fpath, '/')
 	ck.NameVal = fpath[pos+1 : len(fpath)-1]
 	ck.TypeVal = FTctgr
-	ck.PUIDVal = pathcache.Cache(fpath)
+	ck.PUIDVal = syspathcache.Cache(fpath)
 	ck.SetTmb(TMBreject, "")
 	ck.CID = fpath[1:pos]
 }
@@ -586,7 +588,7 @@ func (tk *TagKit) Setup(syspath string, fi os.FileInfo) {
 			}
 		}
 	}
-	tk.PUIDVal = pathcache.Cache(syspath)
+	tk.PUIDVal = syspathcache.Cache(syspath)
 	if md != nil {
 		tk.SetTmb(TMBcached, md.Mime)
 		thumbcache.Set(tk.PUIDVal, md)

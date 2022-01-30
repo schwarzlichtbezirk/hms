@@ -260,6 +260,9 @@ const filehint = file => {
 	if (file.uniqueid) {
 		lst.push(`unique ID: ${file.uniqueid}`);
 	}
+	if (file.thumbjpeglen) {
+		lst.push(`thumbnail length: ${file.thumbjpeglen}`);
+	}
 	return lst;
 };
 

@@ -32,6 +32,7 @@ type ExifProp struct {
 	DigitalZoom  float64 `json:"digitalzoom,omitempty" yaml:"digitalzoom,omitempty"`
 	Flash        int     `json:"flash,omitempty" yaml:"flash,omitempty"`
 	UniqueID     string  `json:"uniqueid,omitempty" yaml:"uniqueid,omitempty"`
+	ThumbJpegLen int     `json:"thumbjpeglen,omitempty" yaml:"thumbjpeglen,omitempty"`
 	// GPS
 	Latitude  float64 `json:"latitude,omitempty" yaml:"latitude,omitempty"`
 	Longitude float64 `json:"longitude,omitempty" yaml:"longitude,omitempty"`
@@ -116,6 +117,9 @@ func (ep *ExifProp) Setup(x *exif.Exif) {
 	if t, err = x.Get(exif.ImageUniqueID); err == nil {
 		ep.UniqueID, _ = t.StringVal()
 	}
+	if t, err = x.Get(exif.ThumbJPEGInterchangeFormatLength); err == nil {
+		ep.ThumbJpegLen, _ = t.Int(0)
+	}
 	if lat, lng, err := x.LatLong(); err == nil {
 		ep.Latitude, ep.Longitude = lat, lng
 	}
@@ -151,7 +155,7 @@ func (ek *ExifKit) Setup(syspath string, fi os.FileInfo) {
 			ek.ExifProp.Setup(x)
 			var pic []byte
 			if pic, err = x.JpegThumbnail(); err == nil {
-				ek.PUIDVal = pathcache.Cache(syspath)
+				ek.PUIDVal = syspathcache.Cache(syspath)
 				ek.SetTmb(TMBcached, "image/jpeg")
 				thumbcache.Set(ek.PUIDVal, &MediaData{
 					Data: pic,

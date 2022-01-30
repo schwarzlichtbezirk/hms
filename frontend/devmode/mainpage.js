@@ -674,7 +674,7 @@ const VueMainApp = {
 			this.curpuid = hist.puid;
 			this.curpath = "";
 			this.shrname = "";
-			document.title = `file browser - ${this.curbasename}`;
+			document.title = `hms - ${this.curbasename}`;
 
 			this.newfolder(response.data, hist.cid === "home");
 		},
@@ -697,7 +697,7 @@ const VueMainApp = {
 			this.curpuid = hist.puid;
 			this.curpath = hist.path;
 			this.shrname = response.data.shrname;
-			document.title = `file browser - ${this.curbasename}`;
+			document.title = `hms - ${this.curbasename}`;
 
 			this.newfolder(response.data.list);
 		},
@@ -719,7 +719,7 @@ const VueMainApp = {
 			this.curpuid = hist.puid;
 			this.curpath = response.data.path;
 			this.shrname = response.data.shrname;
-			document.title = `file browser - ${this.curbasename}`;
+			document.title = `hms - ${this.curbasename}`;
 
 			this.newfolder(response.data.list);
 		},

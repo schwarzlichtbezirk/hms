@@ -30,21 +30,14 @@ const (
 	TMBcached = 1
 )
 
-// Allow images a bit larger than standard icon stay as is.
-var thumbmaxrect = image.Rect(0, 0, 320, 320)
+// Encoder configures encoding PNG images for thumbnails and tiles.
+var tmbpngenc = png.Encoder{
+	CompressionLevel: png.BestCompression,
+}
 
 // HD horizontal and HD vertical rectangles.
 var hdhrect = image.Rect(0, 0, 1920, 1080)
 var hdvrect = image.Rect(0, 0, 1080, 1920)
-
-// Resize big images to fit into standard icon size.
-var thumbfilter = gift.New(
-	gift.ResizeToFit(256, 256, gift.LinearResampling),
-)
-
-var thumbpngenc = png.Encoder{
-	CompressionLevel: png.BestCompression,
-}
 
 // Resize big images to fit into full HD size with horizontal aspect ratio.
 var hdhfilter = gift.New(
@@ -80,7 +73,7 @@ type TmbProp struct {
 
 // Setup generates PUID (path unique identifier) and updates cached state.
 func (tp *TmbProp) Setup(syspath string) {
-	tp.PUIDVal = pathcache.Cache(syspath)
+	tp.PUIDVal = syspathcache.Cache(syspath)
 	tp.UpdateTmb()
 }
 
@@ -175,9 +168,12 @@ func MakeTmb(r io.Reader) (md *MediaData, err error) {
 			return // can not decode file by any codec
 		}
 	}
-	if src.Bounds().In(thumbmaxrect) {
+	if src.Bounds().In(image.Rect(0, 0, 320, 320)) {
 		dst = src
 	} else {
+		var thumbfilter = gift.New(
+			gift.ResizeToFit(256, 256, gift.LinearResampling),
+		)
 		var img = image.NewRGBA(thumbfilter.Bounds(src.Bounds()))
 		thumbfilter.Draw(img, src)
 		dst = img
@@ -186,6 +182,7 @@ func MakeTmb(r io.Reader) (md *MediaData, err error) {
 	return ToNativeImg(dst, ftype) // set valid thumbnail
 }
 
+// ToNativeImg converts Image to specified file format supported by browser.
 func ToNativeImg(m image.Image, ftype string) (md *MediaData, err error) {
 	var buf bytes.Buffer
 	var mime string
@@ -196,12 +193,12 @@ func ToNativeImg(m image.Image, ftype string) (md *MediaData, err error) {
 		}
 		mime = "image/gif"
 	case "png", "dds", "webp", "psd":
-		if err = thumbpngenc.Encode(&buf, m); err != nil {
+		if err = tmbpngenc.Encode(&buf, m); err != nil {
 			return // can not write png
 		}
 		mime = "image/png"
 	default:
-		if err = jpeg.Encode(&buf, m, &jpeg.Options{Quality: 80}); err != nil {
+		if err = jpeg.Encode(&buf, m, &jpeg.Options{Quality: cfg.TmbJpegQuality}); err != nil {
 			return // can not write jpeg
 		}
 		mime = "image/jpeg"
@@ -230,7 +227,7 @@ func tmbchkAPI(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, tp := range arg.Tmbs {
-		if syspath, ok := pathcache.Path(tp.PUID()); ok {
+		if syspath, ok := syspathcache.Path(tp.PUID()); ok {
 			if prop, err := propcache.Get(syspath); err == nil {
 				tp.SetTmb(prop.(Pather).NTmb(), prop.(Pather).MTmb())
 			}
@@ -269,7 +266,7 @@ func tmbscnAPI(w http.ResponseWriter, r *http.Request) {
 
 	go func() {
 		for _, puid := range arg.PUIDs {
-			if syspath, ok := pathcache.Path(puid); ok {
+			if syspath, ok := syspathcache.Path(puid); ok {
 				if cg := prf.PathAccess(syspath, auth == prf); cg.IsZero() {
 					continue
 				}

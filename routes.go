@@ -271,8 +271,8 @@ func RegisterRoutes(gmux *Router) {
 	}
 
 	// UI routes
-	var dacc = devm.PathPrefix("/id{id}/").Subrouter()
-	var gacc = gmux.PathPrefix("/id{id}/").Subrouter()
+	var dacc = devm.PathPrefix("/id{aid:[0-9]+}/").Subrouter()
+	var gacc = gmux.PathPrefix("/id{aid:[0-9]+}/").Subrouter()
 	dacc.Use(AjaxMiddleware)
 	gacc.Use(AjaxMiddleware)
 	for _, pref := range routemain {
@@ -292,8 +292,9 @@ func RegisterRoutes(gmux *Router) {
 
 	// file system sharing & converted media files
 	gacc.PathPrefix("/file/").HandlerFunc(fileHandler)
-	// cached thumbs
-	gacc.PathPrefix("/thumb/").HandlerFunc(thumbHandler)
+	// cached thumbs and tiles
+	gacc.Path("/thumb/{puid}").HandlerFunc(thumbHandler)
+	gacc.Path("/tile/{puid}/{resol:[0-9]+x[0-9]+}").HandlerFunc(tileHandler)
 
 	// API routes
 	var api = gmux.PathPrefix("/api").Subrouter()

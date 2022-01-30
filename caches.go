@@ -1,19 +1,19 @@
 package hms
 
 import (
-	"bytes"
 	"encoding/base32"
 	"errors"
 	"image"
-	"image/jpeg"
 	"io"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/bluele/gcache"
+	"github.com/disintegration/gift"
 )
 
 // gcaches
@@ -32,6 +32,10 @@ var (
 	// Converted media files cache.
 	// Key - path unique ID, value - media file in MediaData.
 	mediacache gcache.Cache
+
+	// Tiles cache.
+	// Key - path unique ID, value - tile image in MediaData.
+	tilecache gcache.Cache
 
 	// Photos compressed to HD resolution.
 	// Key - path unique ID, value - media file in MediaData.
@@ -53,7 +57,7 @@ var (
 	ErrNotDisk     = errors.New("file is not image of supported format")
 )
 
-// PathCache is unlimited cache with puid/syspath and syspath/puid values.
+// PathCache is unlimited cache with puid/fpath and fpath/puid values.
 type PathCache struct {
 	keypath map[PuidType]string // puid/path key/values
 	pathkey map[string]PuidType // path/puid key/values
@@ -61,18 +65,18 @@ type PathCache struct {
 }
 
 // PUID returns cached PUID for specified system path.
-func (c *PathCache) PUID(syspath string) (puid PuidType, ok bool) {
+func (c *PathCache) PUID(fpath string) (puid PuidType, ok bool) {
 	c.mux.RLock()
 	defer c.mux.RUnlock()
-	puid, ok = c.pathkey[syspath]
+	puid, ok = c.pathkey[fpath]
 	return
 }
 
 // Path returns cached system path of specified PUID (path unique identifier).
-func (c *PathCache) Path(puid PuidType) (syspath string, ok bool) {
+func (c *PathCache) Path(puid PuidType) (fpath string, ok bool) {
 	c.mux.RLock()
 	defer c.mux.RUnlock()
-	syspath, ok = c.keypath[puid]
+	fpath, ok = c.keypath[puid]
 	return
 }
 
@@ -97,9 +101,9 @@ func (c *PathCache) MakePUID() (puid PuidType) {
 }
 
 // Cache returns cached PUID for specified system path, or make it and put into cache.
-func (c *PathCache) Cache(syspath string) (puid PuidType) {
+func (c *PathCache) Cache(fpath string) (puid PuidType) {
 	var ok bool
-	if puid, ok = c.PUID(syspath); ok {
+	if puid, ok = c.PUID(fpath); ok {
 		return
 	}
 
@@ -107,8 +111,8 @@ func (c *PathCache) Cache(syspath string) (puid PuidType) {
 
 	c.mux.Lock()
 	defer c.mux.Unlock()
-	c.pathkey[syspath] = puid
-	c.keypath[puid] = syspath
+	c.pathkey[fpath] = puid
+	c.keypath[puid] = fpath
 	return
 }
 
@@ -141,7 +145,7 @@ func UnfoldPath(shrpath string) string {
 
 	var puid PuidType
 	if err := puid.Set(pref); err == nil {
-		if fpath, ok := pathcache.Path(puid); ok {
+		if fpath, ok := syspathcache.Path(puid); ok {
 			if suff != "" { // prevent modify original path if suffix is absent
 				fpath = path.Join(fpath, suff)
 			}
@@ -152,9 +156,20 @@ func UnfoldPath(shrpath string) string {
 }
 
 // Instance of unlimited cache with PUID<=>syspath pairs.
-var pathcache = PathCache{
+var syspathcache = PathCache{
 	keypath: map[PuidType]string{},
 	pathkey: map[string]PuidType{},
+}
+
+// Instance of unlimited cache with PUID<=>tilepath pairs.
+var tilepathcache = PathCache{
+	keypath: map[PuidType]string{},
+	pathkey: map[string]PuidType{},
+}
+
+// CacheThumbID returns PUID of image thumbnail at the tiles path cache.
+func CacheThumbID(fpath string) PuidType {
+	return tilepathcache.Cache(fpath + "?256x256")
 }
 
 // DirCache is unlimited cache with puid/DirProp values.
@@ -252,28 +267,28 @@ func initcaches() {
 	thumbcache = gcache.New(cfg.ThumbCacheMaxNum).
 		LRU().
 		LoaderFunc(func(key interface{}) (ret interface{}, err error) {
-			var syspath, ok = pathcache.Path(key.(PuidType))
+			var syspath, ok = syspathcache.Path(key.(PuidType))
 			if !ok {
 				err = ErrNoPUID
 				return // file path not found
 			}
 
-			var pv interface{}
-			if pv, err = propcache.Get(syspath); err != nil {
+			var prop interface{}
+			if prop, err = propcache.Get(syspath); err != nil {
 				return // can not get properties
 			}
-			var prop = pv.(Pather)
-			if prop.NTmb() == TMBreject {
+			var fp = prop.(Pather)
+			if fp.NTmb() == TMBreject {
 				err = ErrNotThumb
 				return // thumbnail rejected
 			}
 
 			var md *MediaData
-			if md, err = FindTmb(prop, syspath); md != nil {
-				prop.SetTmb(TMBcached, md.Mime)
+			if md, err = FindTmb(fp, syspath); md != nil {
+				fp.SetTmb(TMBcached, md.Mime)
 				ret = md
 			} else {
-				prop.SetTmb(TMBreject, "")
+				fp.SetTmb(TMBreject, "")
 			}
 			return // ok
 		}).
@@ -283,7 +298,7 @@ func initcaches() {
 	mediacache = gcache.New(cfg.MediaCacheMaxNum).
 		LRU().
 		LoaderFunc(func(key interface{}) (ret interface{}, err error) {
-			var syspath, ok = pathcache.Path(key.(PuidType))
+			var syspath, ok = syspathcache.Path(key.(PuidType))
 			if !ok {
 				err = ErrNoPUID
 				return // file path not found
@@ -301,57 +316,100 @@ func initcaches() {
 
 			var ext = GetFileExt(fp.Name())
 			switch {
+			case IsTypeNativeImg(ext):
+				err = ErrUncacheable
+				return // uncacheable type
 			case IsTypeNonalpha(ext):
-				var file VFile
-				if file, err = OpenFile(syspath); err != nil {
-					return // can not open file
-				}
-				defer file.Close()
-
-				var img image.Image
-				if img, _, err = image.Decode(file); err != nil {
-					if img == nil { // skip "short Huffman data" or others errors with partial results
-						return // can not decode file by any codec
-					}
-				}
-
-				var buf bytes.Buffer
-				if err = jpeg.Encode(&buf, img, &jpeg.Options{Quality: 80}); err != nil {
-					return // can not write jpeg
-				}
-				ret = &MediaData{
-					Data: buf.Bytes(),
-					Mime: "image/jpeg",
-				}
-				return
-
 			case IsTypeAlpha(ext):
-				var file VFile
-				if file, err = OpenFile(syspath); err != nil {
-					return // can not open file
-				}
-				defer file.Close()
+			default:
+				err = ErrUncacheable
+				return // uncacheable type
+			}
 
-				var img image.Image
-				if img, _, err = image.Decode(file); err != nil {
-					if img == nil { // skip "short Huffman data" or others errors with partial results
-						return // can not decode file by any codec
-					}
-				}
+			var file VFile
+			if file, err = OpenFile(syspath); err != nil {
+				return // can not open file
+			}
+			defer file.Close()
 
-				var buf bytes.Buffer
-				if err = thumbpngenc.Encode(&buf, img); err != nil {
-					return // can not write png
+			var ftype string
+			var src image.Image
+			if src, ftype, err = image.Decode(file); err != nil {
+				if src == nil { // skip "short Huffman data" or others errors with partial results
+					return // can not decode file by any codec
 				}
-				ret = &MediaData{
-					Data: buf.Bytes(),
-					Mime: "image/png",
-				}
+			}
+
+			ret, err = ToNativeImg(src, ftype)
+			return
+		}).
+		Build()
+
+	// init tiles cache
+	tilecache = gcache.New(cfg.ThumbCacheMaxNum).
+		LRU().
+		LoaderFunc(func(key interface{}) (ret interface{}, err error) {
+			var tilepath, ok = tilepathcache.Path(key.(PuidType))
+			if !ok {
+				err = ErrNoPUID
+				return // file path not found
+			}
+
+			var syspath = tilepath
+			var wdh, hgt int = 480, 360
+			if pos := strings.IndexByte(tilepath, '?'); pos != -1 {
+				syspath = tilepath[:pos]
+				var resol = strings.SplitN(tilepath[pos+1:], "x", 2)
+				var w64, h64 uint64
+				w64, _ = strconv.ParseUint(resol[0], 10, 64)
+				h64, _ = strconv.ParseUint(resol[1], 10, 64)
+				wdh, hgt = int(w64), int(h64)
+			}
+
+			var prop interface{}
+			if prop, err = propcache.Get(syspath); err != nil {
+				return // can not get properties
+			}
+			var fp = prop.(Pather)
+			if fp.Type() < 0 {
+				err = ErrNotFile
 				return
 			}
 
-			err = ErrUncacheable
-			return // uncacheable type
+			var ext = GetFileExt(fp.Name())
+			switch {
+			case IsTypeNativeImg(ext):
+				err = ErrUncacheable
+				return // uncacheable type
+			case IsTypeNonalpha(ext):
+			case IsTypeAlpha(ext):
+			default:
+				err = ErrUncacheable
+				return // uncacheable type
+			}
+
+			var file VFile
+			if file, err = OpenFile(syspath); err != nil {
+				return // can not open file
+			}
+			defer file.Close()
+
+			var ftype string
+			var src, dst image.Image
+			if src, ftype, err = image.Decode(file); err != nil {
+				if src == nil { // skip "short Huffman data" or others errors with partial results
+					return // can not decode file by any codec
+				}
+			}
+
+			var filter = gift.New(
+				gift.ResizeToFill(wdh, hgt, gift.LinearResampling, gift.CenterAnchor),
+			)
+			var img = image.NewRGBA(filter.Bounds(src.Bounds()))
+			filter.Draw(img, src)
+			dst = img
+
+			return ToNativeImg(dst, ftype)
 		}).
 		Build()
 
@@ -359,7 +417,7 @@ func initcaches() {
 	hdcache = gcache.New(cfg.MediaCacheMaxNum).
 		LRU().
 		LoaderFunc(func(key interface{}) (ret interface{}, err error) {
-			var syspath, ok = pathcache.Path(key.(PuidType))
+			var syspath, ok = syspathcache.Path(key.(PuidType))
 			if !ok {
 				err = ErrNoPUID
 				return // file path not found
@@ -375,7 +433,7 @@ func initcaches() {
 				return
 			}
 
-			if ek, ok := prop.(ExifKit); ok {
+			if ek, ok := prop.(*ExifKit); ok {
 				if (ek.Width <= 1920 && ek.Height <= 1080) ||
 					(ek.Width <= 1080 && ek.Height <= 1920) {
 					err = ErrNotHD

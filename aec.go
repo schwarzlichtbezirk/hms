@@ -47,7 +47,6 @@ const (
 
 	// thumb
 
-	AECthumbbadaccid
 	AECthumbnoacc
 	AECthumbnopuid
 	AECthumbnopath
@@ -57,6 +56,18 @@ const (
 	AECthumbaccess
 	AECthumbabsent
 	AECthumbbadcnt
+
+	// tile
+
+	AECtilenoacc
+	AECtilenopuid
+	AECtilenopath
+	AECtilehidden
+	AECtilenoprop
+	AECtilenofile
+	AECtileaccess
+	AECtileabsent
+	AECtilebadcnt
 
 	// reload
 

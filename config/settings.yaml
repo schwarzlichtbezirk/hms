@@ -52,6 +52,8 @@ specification:
   thumb-file-maxsize: 50397184 # 4096*3072*4 + 65536, 48M, max 4K image + 64K exif metadata
   # Stretch big image embedded into mp3-file to fit into standard icon size.
   fit-embedded-tmb: true
+  # JPEG quality, ranges from 1 to 100 inclusive.
+  tmb-jpeg-quality: 80
   # Initial length of path unique identifiers in base32 symbols, maximum is 12 (x5 for length in bits).
   puid-length: 5
   # Maximum items number in files properties cache.

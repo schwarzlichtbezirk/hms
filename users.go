@@ -170,11 +170,11 @@ func usrlstAPI(w http.ResponseWriter, r *http.Request) {
 		ui.UA = user.ua
 		ui.Lang = user.Lang
 		if len(user.Paths) > 0 {
-			var fpath, _ = pathcache.Path(user.Paths[len(user.Paths)-1].PUID)
+			var fpath, _ = syspathcache.Path(user.Paths[len(user.Paths)-1].PUID)
 			ui.Path = PathBase(fpath)
 		}
 		if len(user.Files) > 0 {
-			var fpath, _ = pathcache.Path(user.Files[len(user.Files)-1].PUID)
+			var fpath, _ = syspathcache.Path(user.Files[len(user.Files)-1].PUID)
 			ui.File = PathBase(fpath)
 		}
 		ui.Online = user.LastAjax > ot

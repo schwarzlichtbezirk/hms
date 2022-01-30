@@ -192,8 +192,8 @@ const VueStatApp = {
 				const response = await fetch("/api/stat/srvinf");
 				if (response.ok) {
 					this.srvinf = await response.json();
-					this.srvinf.buildvers = buildvers;
-					this.srvinf.builddate = builddate;
+					this.srvinf.clientbuildvers = buildvers;
+					this.srvinf.clientbuilddate = builddate;
 				}
 			} catch (e) { console.error(e); }
 		})();

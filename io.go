@@ -136,11 +136,11 @@ func (pl *Profiles) Load(fname string) (err error) {
 			Log.Printf("loaded profile id%d, login='%s'", prf.ID, prf.Login)
 			// cache roots
 			for _, fpath := range prf.Roots {
-				pathcache.Cache(fpath)
+				syspathcache.Cache(fpath)
 			}
 			// cache shares
 			for _, fpath := range prf.Shares {
-				pathcache.Cache(fpath)
+				syspathcache.Cache(fpath)
 			}
 
 			// bring all hidden to lowercase

@@ -123,7 +123,7 @@ func GetAuth(w http.ResponseWriter, r *http.Request) (auth *Profile, err error) 
 		for _, val := range pool {
 			if strings.HasPrefix(strings.ToLower(val), "bearer ") {
 				bearer = true
-				if _, err = jwt.ParseWithClaims(val[7:], &claims, func(token *jwt.Token) (interface{}, error) {
+				if _, err = jwt.ParseWithClaims(val[7:], &claims, func(*jwt.Token) (interface{}, error) {
 					if claims.AID > 0 {
 						return []byte(cfg.AccessKey), nil
 					} else {
