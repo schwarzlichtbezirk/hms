@@ -38,9 +38,20 @@ web-server: # See https://golang.org/pkg/net/http/#Server for details.
   max-header-bytes: 1048576 # 1M
   # Maximum duration to wait for graceful shutdown.
   shutdown-timeout: 15s
+images-prop:
+  # Maximum size of image to make thumbnail.
+  thumb-file-maxsize: 50397184 # 4096*3072*4 + 65536, 48M, max 4K image + 64K exif metadata
+  # Stretch big image embedded into mp3-file to fit into standard icon size.
+  fit-embedded-tmb: true
+  # Thumbnails width and height.
+  tmb-resolution: [256, 256]
+  # HD images width and height.
+  hd-resolution: [1920, 1080]
+  # Thumbnails JPEG quality, ranges from 1 to 100 inclusive.
+  tmb-jpeg-quality: 80
 specification:
   # Name of wpk-file with program resources.
-  wpk-name: hms.wpk
+  wpk-name: hms-full.wpk
   # On 'true' use memory mapping technology for access to wpk-package nested files.
   # On 'false' use wpk-package loaded into one solid byte slice.
   wpk-mmap: false
@@ -48,12 +59,6 @@ specification:
   online-timeout: 180s # 3 minutes
   # Default profile identifier for user on localhost.
   default-profile-id: 1
-  # Maximum size of image to make thumbnail.
-  thumb-file-maxsize: 50397184 # 4096*3072*4 + 65536, 48M, max 4K image + 64K exif metadata
-  # Stretch big image embedded into mp3-file to fit into standard icon size.
-  fit-embedded-tmb: true
-  # JPEG quality, ranges from 1 to 100 inclusive.
-  tmb-jpeg-quality: 80
   # Initial length of path unique identifiers in base32 symbols, maximum is 12 (x5 for length in bits).
   puid-length: 5
   # Maximum items number in files properties cache.

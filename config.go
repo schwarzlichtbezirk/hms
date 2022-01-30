@@ -63,8 +63,21 @@ type CfgWebServ struct {
 	ShutdownTimeout time.Duration `json:"shutdown-timeout" yaml:"shutdown-timeout" long:"st" description:"Maximum duration to wait for graceful shutdown."`
 }
 
-// CfgAppConf is settings for application-specific logic.
-type CfgAppConf struct {
+type CfgImgProp struct {
+	// Maximum size of image to make thumbnail.
+	ThumbFileMaxSize int64 `json:"thumb-file-maxsize" yaml:"thumb-file-maxsize" long:"tfms" description:"Maximum size of image to make thumbnail."`
+	// Stretch big image embedded into mp3-file to fit into standard icon size.
+	FitEmbeddedTmb bool `json:"fit-embedded-tmb" yaml:"fit-embedded-tmb" long:"fet" description:"Stretch big image embedded into mp3-file to fit into standard icon size."`
+	// Thumbnails width and height.
+	TmbResolution [2]int `json:"tmb-resolution" yaml:"tmb-resolution" long:"tr" description:"Thumbnails width and height."`
+	// HD images width and height.
+	HDResolution [2]int `json:"hd-resolution" yaml:"hd-resolution" long:"hd" description:"HD images width and height."`
+	// Thumbnails JPEG quality, ranges from 1 to 100 inclusive.
+	TmbJpegQuality int `json:"tmb-jpeg-quality" yaml:"tmb-jpeg-quality" long:"tjq" description:"Thumbnails JPEG quality, ranges from 1 to 100 inclusive."`
+}
+
+// CfgAppSets is settings for application-specific logic.
+type CfgAppSets struct {
 	// Name of wpk-file with program resources.
 	WPKName string `json:"wpk-name" yaml:"wpk-name" long:"wpk" description:"Name of wpk-file with program resources."`
 	// Memory mapping technology for WPK, or load into one solid byte slice otherwise.
@@ -73,12 +86,6 @@ type CfgAppConf struct {
 	OnlineTimeout time.Duration `json:"online-timeout" yaml:"online-timeout" long:"ot" description:"Maximum duration between two ajax-calls to think client is online."`
 	// Default profile identifier for user on localhost.
 	DefAccID IdType `json:"default-profile-id" yaml:"default-profile-id" long:"defaid" description:"Default profile identifier for user on localhost."`
-	// Maximum size of image to make thumbnail.
-	ThumbFileMaxSize int64 `json:"thumb-file-maxsize" yaml:"thumb-file-maxsize" long:"tfms" description:"Maximum size of image to make thumbnail."`
-	// Stretch big image embedded into mp3-file to fit into standard icon size.
-	FitEmbeddedTmb bool `json:"fit-embedded-tmb" yaml:"fit-embedded-tmb" long:"fet" description:"Stretch big image embedded into mp3-file to fit into standard icon size."`
-	// JPEG quality, ranges from 1 to 100 inclusive.
-	TmbJpegQuality int `json:"tmb-jpeg-quality" yaml:"tmb-jpeg-quality" long:"tjq" description:"JPEG quality, ranges from 1 to 100 inclusive."`
 	// Initial length of path unique identifiers in base32 symbols, maximum is 12
 	// (x5 for length in bits).
 	// When the bottom pool arrives to 90%, length increases to next available value.
@@ -97,8 +104,9 @@ type CfgAppConf struct {
 type Config struct {
 	CfgCmdLine `json:"-" yaml:"-" group:"Command line arguments"`
 	CfgJWTAuth `json:"authentication" yaml:"authentication" group:"Authentication"`
-	CfgWebServ `json:"web-server" yaml:"web-server" group:"Web Server"`
-	CfgAppConf `json:"specification" yaml:"specification" group:"Application settings"`
+	CfgWebServ `json:"web-server" yaml:"web-server" group:"Web server"`
+	CfgImgProp `json:"images-prop" yaml:"images-prop" group:"Images properties"`
+	CfgAppSets `json:"specification" yaml:"specification" group:"Application settings"`
 }
 
 // Instance of common service settings.
@@ -120,14 +128,17 @@ var cfg = Config{ // inits default values:
 		MaxHeaderBytes:    1 << 20,
 		ShutdownTimeout:   time.Duration(15) * time.Second,
 	},
-	CfgAppConf: CfgAppConf{
-		WPKName:          "hms.wpk",
+	CfgImgProp: CfgImgProp{
+		ThumbFileMaxSize: 4096*3072*4 + 65536,
+		FitEmbeddedTmb:   true,
+		TmbResolution:    [2]int{256, 256},
+		TmbJpegQuality:   80,
+	},
+	CfgAppSets: CfgAppSets{
+		WPKName:          "hms-full.wpk",
 		WPKmmap:          false,
 		OnlineTimeout:    time.Duration(3*60*1000) * time.Millisecond,
 		DefAccID:         1,
-		ThumbFileMaxSize: 4096*3072*4 + 65536,
-		FitEmbeddedTmb:   true,
-		TmbJpegQuality:   80,
 		PUIDlen:          5,
 		PropCacheMaxNum:  32 * 1024,
 		ThumbCacheMaxNum: 2 * 1024,

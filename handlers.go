@@ -374,6 +374,7 @@ func pingAPI(w http.ResponseWriter, r *http.Request) {
 
 // APIHANDLER
 func purgeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
+	_, _ = r, auth
 	propcache.Purge()
 	thumbcache.Purge()
 
@@ -388,6 +389,7 @@ func purgeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 
 // APIHANDLER
 func reloadAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
+	_, _ = r, auth
 	var err error
 	var ret struct {
 		RecNumber int64 `json:"recnumber"`
@@ -410,6 +412,7 @@ func reloadAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 
 // APIHANDLER
 func srvinfAPI(w http.ResponseWriter, r *http.Request) {
+	_ = r
 	var ret = map[string]interface{}{
 		"started":  UnixJS(starttime),
 		"govers":   runtime.Version(),
@@ -426,6 +429,7 @@ func srvinfAPI(w http.ResponseWriter, r *http.Request) {
 
 // APIHANDLER
 func memusgAPI(w http.ResponseWriter, r *http.Request) {
+	_ = r
 	var mem runtime.MemStats
 	runtime.ReadMemStats(&mem)
 
@@ -448,6 +452,7 @@ func memusgAPI(w http.ResponseWriter, r *http.Request) {
 
 // APIHANDLER
 func cchinfAPI(w http.ResponseWriter, r *http.Request) {
+	_ = r
 	syspathcache.mux.RLock()
 	var pathnum = len(syspathcache.keypath)
 	syspathcache.mux.RUnlock()

@@ -434,8 +434,8 @@ func initcaches() {
 			}
 
 			if ek, ok := prop.(*ExifKit); ok {
-				if (ek.Width <= 1920 && ek.Height <= 1080) ||
-					(ek.Width <= 1080 && ek.Height <= 1920) {
+				if (ek.Width <= cfg.HDResolution[0] && ek.Height <= cfg.HDResolution[1]) ||
+					(ek.Width <= cfg.HDResolution[1] && ek.Height <= cfg.HDResolution[0]) {
 					err = ErrNotHD
 					return // does not fit to HD
 				}
@@ -454,16 +454,22 @@ func initcaches() {
 					return // can not decode file by any codec
 				}
 			}
-			if src.Bounds().In(hdhrect) || src.Bounds().In(hdvrect) {
+			if src.Bounds().In(image.Rect(0, 0, cfg.HDResolution[0], cfg.HDResolution[1])) || src.Bounds().In(image.Rect(0, 0, cfg.HDResolution[1], cfg.HDResolution[0])) {
 				err = ErrNotHD
 				return // does not fit to HD
 			} else if src.Bounds().Dx() > src.Bounds().Dy() {
-				var img = image.NewRGBA(hdhfilter.Bounds(src.Bounds()))
-				hdhfilter.Draw(img, src)
+				var filter = gift.New(
+					gift.ResizeToFit(cfg.HDResolution[0], cfg.HDResolution[1], gift.LinearResampling),
+				)
+				var img = image.NewRGBA(filter.Bounds(src.Bounds()))
+				filter.Draw(img, src)
 				dst = img
 			} else {
-				var img = image.NewRGBA(hdvfilter.Bounds(src.Bounds()))
-				hdvfilter.Draw(img, src)
+				var filter = gift.New(
+					gift.ResizeToFit(cfg.HDResolution[1], cfg.HDResolution[0], gift.LinearResampling),
+				)
+				var img = image.NewRGBA(filter.Bounds(src.Bounds()))
+				filter.Draw(img, src)
 				dst = img
 			}
 

@@ -35,20 +35,6 @@ var tmbpngenc = png.Encoder{
 	CompressionLevel: png.BestCompression,
 }
 
-// HD horizontal and HD vertical rectangles.
-var hdhrect = image.Rect(0, 0, 1920, 1080)
-var hdvrect = image.Rect(0, 0, 1080, 1920)
-
-// Resize big images to fit into full HD size with horizontal aspect ratio.
-var hdhfilter = gift.New(
-	gift.ResizeToFit(1920, 1080, gift.LinearResampling),
-)
-
-// Resize big images to fit into full HD size with vertical aspect ratio.
-var hdvfilter = gift.New(
-	gift.ResizeToFit(1080, 1920, gift.LinearResampling),
-)
-
 // Error messages
 var (
 	ErrBadMedia = errors.New("media content is corrupted")
@@ -172,7 +158,7 @@ func MakeTmb(r io.Reader) (md *MediaData, err error) {
 		dst = src
 	} else {
 		var thumbfilter = gift.New(
-			gift.ResizeToFit(256, 256, gift.LinearResampling),
+			gift.ResizeToFit(cfg.TmbResolution[0], cfg.TmbResolution[1], gift.LinearResampling),
 		)
 		var img = image.NewRGBA(thumbfilter.Bounds(src.Bounds()))
 		thumbfilter.Draw(img, src)
