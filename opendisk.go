@@ -3,6 +3,7 @@ package hms
 import (
 	"errors"
 	"io"
+	"io/fs"
 	"os"
 	"path"
 	"strings"
@@ -83,7 +84,7 @@ func OpenFile(syspath string) (r VFile, err error) {
 	if r, err = os.Open(fpath); err == nil { // primary filesystem file
 		return
 	}
-	if !os.IsNotExist(err) {
+	if !errors.Is(err, fs.ErrNotExist) {
 		return
 	}
 
@@ -151,7 +152,7 @@ func OpenDir(syspath string) (ret []os.FileInfo, err error) {
 			defer file.Close()
 			break
 		}
-		if !os.IsNotExist(err) {
+		if !errors.Is(err, fs.ErrNotExist) {
 			return
 		}
 		fpath = path.Dir(fpath)

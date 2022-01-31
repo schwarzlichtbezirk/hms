@@ -212,6 +212,9 @@ func Init() {
 	// run users scanner for statistics
 	go UserScanner()
 
+	// run thumbnails scanner
+	go ThumbScanner.Scan()
+
 	// EXIF parsers
 	exifparsers()
 }

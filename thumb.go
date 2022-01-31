@@ -10,7 +10,6 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/bluele/gcache"
 	"github.com/disintegration/gift"
 	_ "github.com/oov/psd"           // register PSD format
 	_ "github.com/spate/glimage/dds" // register DDS format
@@ -42,6 +41,7 @@ var (
 	ErrNotFile  = errors.New("property is not file")
 	ErrNotImg   = errors.New("file is not image")
 	ErrTooBig   = errors.New("file is too big")
+	ErrImgNil   = errors.New("can not allocate image")
 )
 
 // MediaData is thumbnails cache element.
@@ -65,21 +65,22 @@ func (tp *TmbProp) Setup(syspath string) {
 
 // UpdateTmb updates cached state for this cache key.
 func (tp *TmbProp) UpdateTmb() {
-	var v, err = thumbcache.GetIFPresent(tp.PUIDVal)
-	if err == gcache.KeyNotFoundError {
+	if thumbcache.Has(tp.PUIDVal) {
+		var v, err = thumbcache.Get(tp.PUIDVal)
+		if err != nil {
+			tp.SetTmb(TMBreject, "")
+			return
+		}
+		var md, ok = v.(*MediaData)
+		if !ok {
+			tp.SetTmb(TMBreject, "")
+			return
+		}
+		tp.SetTmb(TMBcached, md.Mime)
+	} else {
 		tp.SetTmb(TMBnone, "")
 		return
 	}
-	if err != nil {
-		tp.SetTmb(TMBreject, "")
-		return
-	}
-	var md, ok = v.(*MediaData)
-	if !ok {
-		tp.SetTmb(TMBreject, "")
-		return
-	}
-	tp.SetTmb(TMBcached, md.Mime)
 }
 
 // PUID returns thumbnail key, it's full system path unique ID.
@@ -111,9 +112,11 @@ func FindTmb(prop Pather, syspath string) (md *MediaData, err error) {
 	}
 
 	// try to extract from EXIF
-	if _, ok := prop.(*ExifKit); ok { // skip non-EXIF properties
-		if md, err = GetExifTmb(syspath); err == nil {
-			return // thumbnail from EXIF
+	if cfg.UseEmbeddedTmb {
+		if _, ok := prop.(*ExifKit); ok { // skip non-EXIF properties
+			if md, err = GetExifTmb(syspath); err == nil {
+				return // thumbnail from EXIF
+			}
 		}
 	}
 
@@ -161,6 +164,10 @@ func MakeTmb(r io.Reader) (md *MediaData, err error) {
 			gift.ResizeToFit(cfg.TmbResolution[0], cfg.TmbResolution[1], gift.LinearResampling),
 		)
 		var img = image.NewRGBA(thumbfilter.Bounds(src.Bounds()))
+		if img.Pix == nil {
+			err = ErrImgNil
+			return // out of memory
+		}
 		thumbfilter.Draw(img, src)
 		dst = img
 	}
@@ -194,6 +201,68 @@ func ToNativeImg(m image.Image, ftype string) (md *MediaData, err error) {
 		Mime: mime,
 	}
 	return
+}
+
+// ThumbScanner is singleton for thumbnails producing
+// with single queue to prevent overload.
+var ThumbScanner scanner
+
+type scanner struct {
+	put chan PuidType
+	del chan PuidType
+}
+
+// Scan is goroutine for thumbnails scanning.
+func (s *scanner) Scan() {
+	s.put = make(chan PuidType)
+	s.del = make(chan PuidType)
+
+	var list []PuidType
+	var ctx chan struct{}
+
+	var cache = func() {
+		if len(list) > 0 {
+			var puid = list[0]
+			list = list[1:]
+			ctx = make(chan struct{})
+			go func() {
+				defer close(ctx)
+				if puid != 0 {
+					thumbcache.Get(puid)
+				}
+			}()
+		}
+	}
+
+	for {
+		select {
+		case puid := <-s.put:
+			list = append(list, puid)
+			if ctx == nil {
+				cache()
+			}
+		case puid1 := <-s.del:
+			for i, puid2 := range list {
+				if puid1 == puid2 {
+					list = append(list[:i], list[i+1:]...)
+					break
+				}
+			}
+		case <-ctx:
+			ctx = nil
+			cache()
+		}
+	}
+}
+
+// Add list of PUIDs to queue to make thumbnails.
+func (s *scanner) Add(puid PuidType) {
+	s.put <- puid
+}
+
+// Remove list of PUIDs from thumbnails queue.
+func (s *scanner) Remove(puid PuidType) {
+	s.del <- puid
 }
 
 // APIHANDLER
@@ -253,10 +322,9 @@ func tmbscnAPI(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		for _, puid := range arg.PUIDs {
 			if syspath, ok := syspathcache.Path(puid); ok {
-				if cg := prf.PathAccess(syspath, auth == prf); cg.IsZero() {
-					continue
+				if cg := prf.PathAccess(syspath, auth == prf); !cg.IsZero() {
+					ThumbScanner.Add(puid)
 				}
-				thumbcache.Get(puid)
 			}
 		}
 	}()

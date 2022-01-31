@@ -731,11 +731,11 @@ const VueMainApp = {
 			if (hist.cid) {
 				await this.fetchcategory(hist);
 				if (hist.cid === "shares") {
-					await this.fetchscanthumbs();
+					this.fetchscanthumbs(); // fetch at backround
 				}
 			} else {
 				await this.fetchfolder(hist);
-				await this.fetchscanthumbs();
+				this.fetchscanthumbs(); // fetch at backround
 			}
 			this.seturl();
 		},
@@ -1146,7 +1146,7 @@ const VueMainApp = {
 							} else {
 								this.filelist.push(response.data);
 							}
-							await this.fetchscanthumbs();
+							this.fetchscanthumbs(); // fetch at backround
 						} else {
 							throw new HttpError(response.status, response.data);
 						}
@@ -1178,7 +1178,7 @@ const VueMainApp = {
 								}
 								this.filelist.push(response.data);
 							}
-							await this.fetchscanthumbs();
+							this.fetchscanthumbs(); // fetch at backround
 						} else {
 							throw new HttpError(response.status, response.data);
 						}
@@ -1283,7 +1283,7 @@ const VueMainApp = {
 						// open route and push history step
 						const hist = { cid: this.curcid, aid: this.aid, puid: file.puid };
 						await this.fetchplaylist(hist);
-						await this.fetchscanthumbs();
+						this.fetchscanthumbs(); // fetch at backround
 						this.pushhist(hist);
 					} catch (e) {
 						ajaxfail(e);

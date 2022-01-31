@@ -272,6 +272,7 @@ func initcaches() {
 				err = ErrNoPUID
 				return // file path not found
 			}
+			Log.Printf("tmb: %s\n", syspath)
 
 			var prop interface{}
 			if prop, err = propcache.Get(syspath); err != nil {
@@ -406,6 +407,10 @@ func initcaches() {
 				gift.ResizeToFill(wdh, hgt, gift.LinearResampling, gift.CenterAnchor),
 			)
 			var img = image.NewRGBA(filter.Bounds(src.Bounds()))
+			if img.Pix == nil {
+				err = ErrImgNil
+				return // out of memory
+			}
 			filter.Draw(img, src)
 			dst = img
 
@@ -462,6 +467,10 @@ func initcaches() {
 					gift.ResizeToFit(cfg.HDResolution[0], cfg.HDResolution[1], gift.LinearResampling),
 				)
 				var img = image.NewRGBA(filter.Bounds(src.Bounds()))
+				if img.Pix == nil {
+					err = ErrImgNil
+					return // out of memory
+				}
 				filter.Draw(img, src)
 				dst = img
 			} else {
@@ -469,6 +478,10 @@ func initcaches() {
 					gift.ResizeToFit(cfg.HDResolution[1], cfg.HDResolution[0], gift.LinearResampling),
 				)
 				var img = image.NewRGBA(filter.Bounds(src.Bounds()))
+				if img.Pix == nil {
+					err = ErrImgNil
+					return // out of memory
+				}
 				filter.Draw(img, src)
 				dst = img
 			}

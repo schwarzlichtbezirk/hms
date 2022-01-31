@@ -150,18 +150,18 @@ func (ek *ExifKit) Setup(syspath string, fi os.FileInfo) {
 
 	if file, err := OpenFile(syspath); err == nil {
 		defer file.Close()
-		var x *exif.Exif
-		if x, err = exif.Decode(file); err == nil {
+		if x, err := exif.Decode(file); err == nil {
 			ek.ExifProp.Setup(x)
-			var pic []byte
-			if pic, err = x.JpegThumbnail(); err == nil {
-				ek.PUIDVal = syspathcache.Cache(syspath)
-				ek.SetTmb(TMBcached, "image/jpeg")
-				thumbcache.Set(ek.PUIDVal, &MediaData{
-					Data: pic,
-					Mime: ek.MTmbVal,
-				})
-				return
+			if cfg.UseEmbeddedTmb {
+				if pic, err := x.JpegThumbnail(); err == nil {
+					ek.PUIDVal = syspathcache.Cache(syspath)
+					ek.SetTmb(TMBcached, "image/jpeg")
+					thumbcache.Set(ek.PUIDVal, &MediaData{
+						Data: pic,
+						Mime: ek.MTmbVal,
+					})
+					return
+				}
 			}
 		}
 	}

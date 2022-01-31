@@ -154,9 +154,9 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 
 			go func() {
 				if _, ok := r.Header["If-Range"]; !ok {
+					Log.Printf("id%d: media %s", prf.ID, PathBase(syspath))
 					// not partial content
 					usermsg <- UsrMsg{r, "file", puid}
-					Log.Printf("id%d: media %s", prf.ID, PathBase(syspath))
 				} else {
 					// update statistics for partial content
 					userajax <- r
@@ -187,9 +187,9 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 
 			go func() {
 				if _, ok := r.Header["If-Range"]; !ok {
+					Log.Printf("id%d: media %s", prf.ID, PathBase(syspath))
 					// not partial content
 					usermsg <- UsrMsg{r, "file", puid}
-					Log.Printf("id%d: media %s", prf.ID, PathBase(syspath))
 				} else {
 					// update statistics for partial content
 					userajax <- r
@@ -203,9 +203,9 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 
 	go func() {
 		if _, ok := r.Header["If-Range"]; !ok {
+			Log.Printf("id%d: serve %s", prf.ID, PathBase(syspath))
 			// not partial content
 			usermsg <- UsrMsg{r, "file", puid}
-			Log.Printf("id%d: serve %s", prf.ID, PathBase(syspath))
 		} else {
 			// update statistics for partial content
 			userajax <- r
@@ -680,8 +680,9 @@ func ctgrAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	usermsg <- UsrMsg{r, "path", arg.PUID}
 	Log.Printf("id%d: navigate to %s", prf.ID, catpath)
+	usermsg <- UsrMsg{r, "path", arg.PUID}
+
 	WriteOK(w, ret)
 }
 
@@ -750,6 +751,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 	ret.Path = shrpath
 	ret.Name = PathBase(base)
 
+	var t = time.Now()
 	if ret.List, err = ScanDir(syspath, &cg, func(fpath string) bool {
 		return prf.IsHidden(fpath)
 	}); err != nil {
@@ -760,8 +762,9 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
+	Log.Printf("id%d: navigate to %s, items %d, timeout %s", prf.ID, syspath, len(ret.List), time.Since(t))
 	usermsg <- UsrMsg{r, "path", ret.PUID}
-	Log.Printf("id%d: navigate to %s", prf.ID, syspath)
 
 	WriteOK(w, ret)
 }
@@ -876,8 +879,8 @@ func playlistAPI(w http.ResponseWriter, r *http.Request) {
 		ret.Skip++
 	}
 
-	usermsg <- UsrMsg{r, "path", arg.PUID}
 	Log.Printf("id%d: navigate to %s", prf.ID, syspath)
+	usermsg <- UsrMsg{r, "path", arg.PUID}
 
 	WriteOK(w, ret)
 }

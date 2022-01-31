@@ -66,6 +66,8 @@ type CfgWebServ struct {
 type CfgImgProp struct {
 	// Maximum size of image to make thumbnail.
 	ThumbFileMaxSize int64 `json:"thumb-file-maxsize" yaml:"thumb-file-maxsize" long:"tfms" description:"Maximum size of image to make thumbnail."`
+	// Use JPEG thumbnails embedded into image.
+	UseEmbeddedTmb bool `json:"use-embedded-tmb" yaml:"use-embedded-tmb" long:"uet" description:"Use JPEG thumbnails embedded into image."`
 	// Stretch big image embedded into mp3-file to fit into standard icon size.
 	FitEmbeddedTmb bool `json:"fit-embedded-tmb" yaml:"fit-embedded-tmb" long:"fet" description:"Stretch big image embedded into mp3-file to fit into standard icon size."`
 	// Thumbnails width and height.
@@ -130,6 +132,7 @@ var cfg = Config{ // inits default values:
 	},
 	CfgImgProp: CfgImgProp{
 		ThumbFileMaxSize: 4096*3072*4 + 65536,
+		UseEmbeddedTmb:   true,
 		FitEmbeddedTmb:   true,
 		TmbResolution:    [2]int{256, 256},
 		TmbJpegQuality:   80,
