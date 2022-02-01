@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -182,6 +183,9 @@ func (pl *Playlist) WriteTo(w io.Writer) (num int64, err error) {
 	return pl.WriteM3U(w)
 }
 
+var extinfre = regexp.MustCompile(`^#EXTINF:\s*(\d+),\s*(.*)$`)
+var plistre = regexp.MustCompile(`^#PLAYLIST:\s*(.*)$`)
+
 func (pl *Playlist) ReadM3U(r io.Reader) (num int64, err error) {
 	var buf = bufio.NewReader(r)
 	var line string
@@ -210,6 +214,7 @@ func (pl *Playlist) ReadM3U(r io.Reader) (num int64, err error) {
 		return 0, ErrM3USign
 	}
 
+	var match []string
 	for {
 		var track Track
 
@@ -217,9 +222,10 @@ func (pl *Playlist) ReadM3U(r io.Reader) (num int64, err error) {
 			return
 		}
 
-		if strings.HasPrefix(line, "#EXTINF") {
+		match = extinfre.FindStringSubmatch(line)
+		if match != nil {
 			var sec int64
-			if _, err = fmt.Sscanf(line, "#EXTINF:%d,%s", &sec, &track.Title); err != nil {
+			if sec, err = strconv.ParseInt(match[1], 10, 0); err != nil {
 				return
 			}
 			if sec >= 0 {
@@ -227,17 +233,23 @@ func (pl *Playlist) ReadM3U(r io.Reader) (num int64, err error) {
 			} else {
 				track.Duration = -1
 			}
+			track.Title = match[2]
 
 			if readline(); err != nil || len(line) == 0 {
 				return
 			}
 			track.Location = pl.AbsPath(line)
 			pl.Tracks = append(pl.Tracks, track)
-		} else if strings.HasPrefix(line, "#PLAYLIST:") {
-			if _, err = fmt.Sscanf(line, "#PLAYLIST:%s", &pl.Title); err != nil {
-				return
-			}
-		} else if strings.HasPrefix(line, "#") { // any other comment
+			continue
+		}
+
+		match = plistre.FindStringSubmatch(line)
+		if match != nil {
+			pl.Title = match[1]
+			continue
+		}
+
+		if strings.HasPrefix(line, "#") { // any other comment
 			continue
 		} else {
 			track.Location = pl.AbsPath(line)

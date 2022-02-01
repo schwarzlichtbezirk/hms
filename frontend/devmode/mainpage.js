@@ -728,26 +728,27 @@ const VueMainApp = {
 			if (!hist.cid && !hist.puid && !hist.path) {
 				hist.cid = "home";
 			}
+			await this.fetchscanbreak() // stop previous folder scanning
 			if (hist.cid) {
 				await this.fetchcategory(hist);
 				if (hist.cid === "shares") {
-					this.fetchscanthumbs(); // fetch at backround
+					this.fetchscanstart(); // fetch at backround
 				}
 			} else {
 				await this.fetchfolder(hist);
-				this.fetchscanthumbs(); // fetch at backround
+				this.fetchscanstart(); // fetch at backround
 			}
 			this.seturl();
 		},
 
-		async fetchscanthumbs() {
+		async fetchscanstart() {
 			if (!this.uncached.length) {
 				return;
 			}
 
-			const response = await fetchjsonauth("POST", "/api/tmb/scn", {
+			const response = await fetchjsonauth("POST", "/api/tmb/scnstart", {
 				aid: this.aid,
-				puids: this.uncached.map(fp => fp.puid)
+				list: this.uncached.map(fp => fp.puid)
 			});
 			traceajax(response);
 			if (!response.ok) {
@@ -786,6 +787,21 @@ const VueMainApp = {
 				this.$refs.mcard.addmarkers(gpslist);
 				// wait and run again
 				await new Promise(resolve => setTimeout(resolve, 1500));
+			}
+		},
+
+		async fetchscanbreak() {
+			if (!this.uncached.length) {
+				return;
+			}
+
+			const response = await fetchjsonauth("POST", "/api/tmb/scnbreak", {
+				aid: this.aid,
+				list: this.uncached.map(fp => fp.puid)
+			});
+			traceajax(response);
+			if (!response.ok) {
+				throw new HttpError(response.status, response.data);
 			}
 		},
 
@@ -1146,7 +1162,7 @@ const VueMainApp = {
 							} else {
 								this.filelist.push(response.data);
 							}
-							this.fetchscanthumbs(); // fetch at backround
+							this.fetchscanstart(); // fetch at backround
 						} else {
 							throw new HttpError(response.status, response.data);
 						}
@@ -1178,7 +1194,7 @@ const VueMainApp = {
 								}
 								this.filelist.push(response.data);
 							}
-							this.fetchscanthumbs(); // fetch at backround
+							this.fetchscanstart(); // fetch at backround
 						} else {
 							throw new HttpError(response.status, response.data);
 						}
@@ -1256,7 +1272,7 @@ const VueMainApp = {
 						eventHub.emit('ajax', +1);
 						try {
 							// open route and push history step
-							const hist = { aid: this.aid };
+							const hist = { aid: this.aid, name: file.name };
 							if (file.cid) {
 								hist.cid = file.cid;
 							}
@@ -1281,9 +1297,10 @@ const VueMainApp = {
 					eventHub.emit('ajax', +1);
 					try {
 						// open route and push history step
-						const hist = { cid: this.curcid, aid: this.aid, puid: file.puid };
+						const hist = { aid: this.aid, cid: this.curcid, puid: file.puid, name: file.name };
+						await this.fetchscanbreak() // stop previous folder scanning
 						await this.fetchplaylist(hist);
-						this.fetchscanthumbs(); // fetch at backround
+						this.fetchscanstart(); // fetch at backround
 						this.pushhist(hist);
 					} catch (e) {
 						ajaxfail(e);

@@ -217,40 +217,51 @@ func (s *scanner) Scan() {
 	s.put = make(chan PuidType)
 	s.del = make(chan PuidType)
 
-	var list []PuidType
+	var queue []PuidType
 	var ctx chan struct{}
 
-	var cache = func() {
-		if len(list) > 0 {
-			var puid = list[0]
-			list = list[1:]
-			ctx = make(chan struct{})
-			go func() {
-				defer close(ctx)
-				if puid != 0 {
-					thumbcache.Get(puid)
-				}
-			}()
-		}
+	var cache = func(puid PuidType) {
+		ctx = make(chan struct{})
+		go func() {
+			defer close(ctx)
+			if puid != 0 {
+				thumbcache.Get(puid)
+			}
+		}()
 	}
 
 	for {
 		select {
-		case puid := <-s.put:
-			list = append(list, puid)
-			if ctx == nil {
-				cache()
+		case puid1 := <-s.put:
+			var found = false
+			for _, puid2 := range queue {
+				if puid1 == puid2 {
+					found = true
+					break
+				}
+			}
+			if !found {
+				if ctx == nil {
+					cache(puid1)
+				} else {
+					queue = append(queue, puid1)
+				}
 			}
 		case puid1 := <-s.del:
-			for i, puid2 := range list {
+			for i, puid2 := range queue {
 				if puid1 == puid2 {
-					list = append(list[:i], list[i+1:]...)
+					queue = append(queue[:i], queue[i+1:]...)
 					break
 				}
 			}
 		case <-ctx:
-			ctx = nil
-			cache()
+			if len(queue) > 0 {
+				var puid = queue[0]
+				queue = queue[1:]
+				cache(puid)
+			} else {
+				ctx = nil
+			}
 		}
 	}
 }
@@ -293,25 +304,25 @@ func tmbchkAPI(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
-func tmbscnAPI(w http.ResponseWriter, r *http.Request) {
+func tmbscnstartAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
-		AID   IdType     `json:"aid"`
-		PUIDs []PuidType `json:"puids"`
+		AID  IdType     `json:"aid"`
+		List []PuidType `json:"list"`
 	}
 
 	// get arguments
 	if err = AjaxGetArg(w, r, &arg); err != nil {
 		return
 	}
-	if len(arg.PUIDs) == 0 {
-		WriteError400(w, ErrNoData, AECtmbscnnodata)
+	if len(arg.List) == 0 {
+		WriteError400(w, ErrNoData, AECscnstartnodata)
 		return
 	}
 
 	var prf *Profile
 	if prf = prflist.ByID(arg.AID); prf == nil {
-		WriteError400(w, ErrNoAcc, AECtmbscnnoacc)
+		WriteError400(w, ErrNoAcc, AECscnstartnoacc)
 		return
 	}
 	var auth *Profile
@@ -319,15 +330,51 @@ func tmbscnAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go func() {
-		for _, puid := range arg.PUIDs {
-			if syspath, ok := syspathcache.Path(puid); ok {
-				if cg := prf.PathAccess(syspath, auth == prf); !cg.IsZero() {
-					ThumbScanner.Add(puid)
-				}
+	for _, puid := range arg.List {
+		if syspath, ok := syspathcache.Path(puid); ok {
+			if cg := prf.PathAccess(syspath, auth == prf); !cg.IsZero() {
+				ThumbScanner.Add(puid)
 			}
 		}
-	}()
+	}
+
+	WriteOK(w, nil)
+}
+
+// APIHANDLER
+func tmbscnbreakAPI(w http.ResponseWriter, r *http.Request) {
+	var err error
+	var arg struct {
+		AID  IdType     `json:"aid"`
+		List []PuidType `json:"list"`
+	}
+
+	// get arguments
+	if err = AjaxGetArg(w, r, &arg); err != nil {
+		return
+	}
+	if len(arg.List) == 0 {
+		WriteError400(w, ErrNoData, AECscnbreaknodata)
+		return
+	}
+
+	var prf *Profile
+	if prf = prflist.ByID(arg.AID); prf == nil {
+		WriteError400(w, ErrNoAcc, AECscnbreaknoacc)
+		return
+	}
+	var auth *Profile
+	if auth, err = GetAuth(w, r); err != nil {
+		return
+	}
+
+	for _, puid := range arg.List {
+		if syspath, ok := syspathcache.Path(puid); ok {
+			if cg := prf.PathAccess(syspath, auth == prf); !cg.IsZero() {
+				ThumbScanner.Remove(puid)
+			}
+		}
+	}
 
 	WriteOK(w, nil)
 }

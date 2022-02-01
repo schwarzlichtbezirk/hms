@@ -144,10 +144,15 @@ const (
 
 	AECtmbchknodata
 
-	// tmb/scn
+	// tmb/scnstart
 
-	AECtmbscnnodata
-	AECtmbscnnoacc
+	AECscnstartnodata
+	AECscnstartnoacc
+
+	// tmb/scnbreak
+
+	AECscnbreaknodata
+	AECscnbreaknoacc
 
 	// share/add
 

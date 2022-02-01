@@ -868,10 +868,11 @@ func playlistAPI(w http.ResponseWriter, r *http.Request) {
 
 	var prop interface{}
 	for _, track := range pl.Tracks {
-		var cg = prf.PathAccess(track.Location, auth == prf)
-		var grp = GetFileGroup(track.Location)
+		var loc = ToSlash(track.Location)
+		var cg = prf.PathAccess(loc, auth == prf)
+		var grp = GetFileGroup(loc)
 		if cg[grp] {
-			if prop, err = propcache.Get(track.Location); err == nil {
+			if prop, err = propcache.Get(loc); err == nil {
 				ret.List = append(ret.List, prop.(Pather))
 				continue
 			}
