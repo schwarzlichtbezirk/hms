@@ -115,23 +115,16 @@ const (
 	AECfoldernopath
 	AECfolderhidden
 	AECfolderaccess
+	AECfolderstat
+	AECfolderopen
+	AECfolderm3u
+	AECfolderwpl
+	AECfolderpls
+	AECfolderasx
+	AECfolderxspf
+	AECfolderformat
 	AECfolderabsent
 	AECfolderfail
-
-	// res/playlist
-
-	AECplaylistnodata
-	AECplaylistnoacc
-	AECplaylistnopath
-	AECplaylisthidden
-	AECplaylistaccess
-	AECplaylistopen
-	AECplaylistm3u
-	AECplaylistwpl
-	AECplaylistpls
-	AECplaylistasx
-	AECplaylistxspf
-	AECplaylistformat
 
 	// res/ispath
 

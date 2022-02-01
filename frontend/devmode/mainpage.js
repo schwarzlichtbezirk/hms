@@ -146,7 +146,7 @@ const extfmt = {
 		".wpk": 1
 	},
 	"playlist": {
-		".m3u": 1, ".m3u8": 1, ".pls": 1, ".wpl": 1, ".asx": 1, ".xspf": 1
+		".m3u": 1, ".m3u8": 1, ".wpl": 1, ".pls": 1, ".asx": 1, ".xspf": 1
 	},
 
 	"image": {
@@ -193,7 +193,7 @@ const extfmt = {
 		".img": 1, ".ima": 1, ".imz": 1, ".ccd": 1, ".vc4": 1, ".dmg": 1,
 		".daa": 1, ".uif": 1, ".vhd": 1, ".vhdx": 1, ".vmdk": 1,
 		".wpk": 1,
-		".m3u": 1, ".m3u8": 1, ".pls": 1, ".wpl": 1, ".asx": 1, ".xspf": 1
+		".m3u": 1, ".m3u8": 1, ".wpl": 1, ".pls": 1, ".asx": 1, ".xspf": 1
 	}
 };
 
@@ -694,29 +694,7 @@ const VueMainApp = {
 			// current path & state
 			this.curscan = new Date(Date.now());
 			this.curcid = "";
-			this.curpuid = hist.puid;
-			this.curpath = hist.path;
-			this.shrname = response.data.shrname;
-			document.title = `hms - ${this.curbasename}`;
-
-			this.newfolder(response.data.list);
-		},
-
-		// opens given folder cleary
-		async fetchplaylist(hist) {
-			const response = await fetchajaxauth("POST", "/api/res/playlist", {
-				aid: hist.aid, puid: hist.puid
-			});
-			traceajax(response);
-			if (!response.ok) {
-				throw new HttpError(response.status, response.data);
-			}
-
-			hist.path = response.data.path;
-			// current path & state
-			this.curscan = new Date(Date.now());
-			this.curcid = "";
-			this.curpuid = hist.puid;
+			this.curpuid = response.data.puid;
 			this.curpath = response.data.path;
 			this.shrname = response.data.shrname;
 			document.title = `hms - ${this.curbasename}`;
@@ -1266,21 +1244,18 @@ const VueMainApp = {
 				return;
 			}
 			const ext = pathext(file.name);
-			if (file.type || ext === ".iso") {
+			if (file.type || ext === ".iso" || extfmt.playlist[ext]) {
 				if (!file.latency || file.latency > 0) {
 					(async () => {
 						eventHub.emit('ajax', +1);
 						try {
 							// open route and push history step
-							const hist = { aid: this.aid, name: file.name };
+							const hist = { aid: this.aid };
 							if (file.cid) {
 								hist.cid = file.cid;
 							}
 							if (file.puid) {
 								hist.puid = file.puid;
-							}
-							if (file.path) {
-								hist.path = file.path;
 							}
 							await this.fetchopenroute(hist);
 							this.pushhist(hist);
@@ -1291,23 +1266,6 @@ const VueMainApp = {
 						}
 					})();
 				}
-			} else if (extfmt.playlist[ext]) {
-				// open route
-				(async () => {
-					eventHub.emit('ajax', +1);
-					try {
-						// open route and push history step
-						const hist = { aid: this.aid, cid: this.curcid, puid: file.puid, name: file.name };
-						await this.fetchscanbreak() // stop previous folder scanning
-						await this.fetchplaylist(hist);
-						this.fetchscanstart(); // fetch at backround
-						this.pushhist(hist);
-					} catch (e) {
-						ajaxfail(e);
-					} finally {
-						eventHub.emit('ajax', -1);
-					}
-				})();
 			} else if (extfmt.books[ext] || extfmt.texts[ext]) {
 				const url = mediaurl(file, 1, 0);
 				window.open(url, file.name);

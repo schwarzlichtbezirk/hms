@@ -5,7 +5,7 @@ import (
 	"errors"
 	"image"
 	"io"
-	"os"
+	"io/fs"
 	"path"
 	"strconv"
 	"strings"
@@ -243,7 +243,7 @@ func initcaches() {
 		LRU().
 		LoaderFunc(func(key interface{}) (ret interface{}, err error) {
 			var syspath = key.(string)
-			var fi os.FileInfo
+			var fi fs.FileInfo
 			if fi, err = StatFile(syspath); err != nil {
 				for _, fpath := range CatPath {
 					if fpath == syspath {

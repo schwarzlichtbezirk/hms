@@ -316,7 +316,6 @@ func RegisterRoutes(gmux *Router) {
 	res.Path("/ishome").HandlerFunc(ishomeAPI)
 	res.Path("/ctgr").HandlerFunc(ctgrAPI)
 	res.Path("/folder").HandlerFunc(folderAPI)
-	res.Path("/playlist").HandlerFunc(playlistAPI)
 	res.Path("/ispath").HandlerFunc(AuthWrap(ispathAPI))
 	var tmb = api.PathPrefix("/tmb").Subrouter()
 	tmb.Path("/chk").HandlerFunc(tmbchkAPI)

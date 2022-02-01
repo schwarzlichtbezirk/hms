@@ -2,7 +2,7 @@ package hms
 
 import (
 	"fmt"
-	"os"
+	"io/fs"
 
 	"github.com/rwcarlsen/goexif/exif"
 	"github.com/rwcarlsen/goexif/mknote"
@@ -145,7 +145,7 @@ type ExifKit struct {
 }
 
 // Setup fills fields with given path.
-func (ek *ExifKit) Setup(syspath string, fi os.FileInfo) {
+func (ek *ExifKit) Setup(syspath string, fi fs.FileInfo) {
 	ek.FileProp.Setup(fi)
 
 	if file, err := OpenFile(syspath); err == nil {

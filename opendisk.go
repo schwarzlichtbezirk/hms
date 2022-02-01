@@ -118,8 +118,8 @@ func OpenFile(syspath string) (r VFile, err error) {
 	panic("not released disk type present")
 }
 
-// StatFile returns os.FileInfo of file in file system, or file nested in disk image.
-func StatFile(syspath string) (fi os.FileInfo, err error) {
+// StatFile returns fs.FileInfo of file in file system, or file nested in disk image.
+func StatFile(syspath string) (fi fs.FileInfo, err error) {
 	var r VFile
 	if r, err = OpenFile(syspath); err != nil {
 		return // can not open file
@@ -141,10 +141,10 @@ func StatFile(syspath string) (fi os.FileInfo, err error) {
 	}
 }
 
-// OpenDir returns directory files os.FileInfo list. It scan file system path,
+// OpenDir returns directory files fs.FileInfo list. It scan file system path,
 // or looking for iso-disk in the given path, opens it, and scan files nested
 // into iso-disk local directory.
-func OpenDir(syspath string) (ret []os.FileInfo, err error) {
+func OpenDir(syspath string) (ret []fs.FileInfo, err error) {
 	var fpath = syspath
 	var file *os.File
 	for len(fpath) > 0 {
@@ -158,7 +158,7 @@ func OpenDir(syspath string) (ret []os.FileInfo, err error) {
 		fpath = path.Dir(fpath)
 	}
 	if fpath == syspath { // primary filesystem directory
-		var fi os.FileInfo
+		var fi fs.FileInfo
 		if fi, err = file.Stat(); err != nil {
 			return
 		}
@@ -191,21 +191,21 @@ func OpenDir(syspath string) (ret []os.FileInfo, err error) {
 }
 
 // ScanDir returns file properties list for given file system directory, or directory in iso-disk.
-func ScanDir(syspath string, cg *CatGrp, skip func(string) bool) (ret []Pather, err error) {
-	var files []os.FileInfo
+func ScanDir(syspath string, cg *CatGrp, pass func(string) bool) (ret []Pather, skip int, err error) {
+	var files []fs.FileInfo
 	if files, err = OpenDir(syspath); err != nil {
 		return
 	}
 
-	if skip == nil {
-		skip = func(string) bool { return false }
+	if pass == nil {
+		pass = func(string) bool { return true }
 	}
 
 	var fgrp = FileGrp{}
 	for _, fi := range files {
 		if fi != nil {
 			var fpath = path.Join(syspath, fi.Name())
-			if !skip(fpath) {
+			if pass(fpath) {
 				var grp = GetFileGroup(fpath)
 				if cg[grp] {
 					var prop Pather
@@ -230,6 +230,7 @@ func ScanDir(syspath string, cg *CatGrp, skip func(string) bool) (ret []Pather, 
 			dircache.Set(dk.PUIDVal, dk.DirProp)
 		}
 	}
+	skip = len(files) - len(ret)
 
 	return
 }

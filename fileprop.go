@@ -3,6 +3,7 @@ package hms
 import (
 	"bytes"
 	"io"
+	"io/fs"
 	"os"
 	"path"
 	"strings"
@@ -334,6 +335,15 @@ func IsTypeEXIF(ext string) bool {
 	return false
 }
 
+// IsTypePlaylist checks that file extension belongs playlist file.
+func IsTypePlaylist(ext string) bool {
+	switch ext {
+	case ".m3u", ".m3u8", ".wpl", ".pls", ".asx", ".xspf":
+		return true
+	}
+	return false
+}
+
 // Pather is path properties interface.
 type Pather interface {
 	Name() string   // string identifier
@@ -379,8 +389,8 @@ type FileProp struct {
 	TimeVal int64 `json:"time,omitempty" yaml:"time,omitempty"`
 }
 
-// Setup fills fields from os.FileInfo structure. Do not looks for share.
-func (fp *FileProp) Setup(fi os.FileInfo) {
+// Setup fills fields from fs.FileInfo structure. Do not looks for share.
+func (fp *FileProp) Setup(fi fs.FileInfo) {
 	fp.NameVal = fi.Name()
 	fp.TypeVal = FTfile
 	fp.SizeVal = fi.Size()
@@ -404,7 +414,7 @@ type FileKit struct {
 }
 
 // Setup calls nested structures setups.
-func (fk *FileKit) Setup(syspath string, fi os.FileInfo) {
+func (fk *FileKit) Setup(syspath string, fi fs.FileInfo) {
 	fk.FileProp.Setup(fi)
 	fk.TmbProp.Setup(syspath)
 }
@@ -563,7 +573,7 @@ type TagKit struct {
 
 // Setup fills fields with given path.
 // Puts into the cache nested at the tags thumbnail if it present.
-func (tk *TagKit) Setup(syspath string, fi os.FileInfo) {
+func (tk *TagKit) Setup(syspath string, fi fs.FileInfo) {
 	tk.FileProp.Setup(fi)
 
 	var md *MediaData
@@ -629,7 +639,7 @@ func GetTagTmb(syspath string) (md *MediaData, err error) {
 }
 
 // MakeProp is file properties factory.
-func MakeProp(syspath string, fi os.FileInfo) Pather {
+func MakeProp(syspath string, fi fs.FileInfo) Pather {
 	if fi.IsDir() {
 		var dk DirKit
 		dk.Setup(syspath)

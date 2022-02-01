@@ -693,9 +693,11 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 		AID  IdType   `json:"aid"`
 		PUID PuidType `json:"puid,omitempty"`
 		Path string   `json:"path,omitempty"`
+		Ext  string   `json:"ext,omitempty"`
 	}
 	var ret struct {
 		List []Pather `json:"list"`
+		Skip int      `json:"skip"`
 		PUID PuidType `json:"puid"`
 		Path string   `json:"path"`
 		Name string   `json:"shrname"`
@@ -751,137 +753,89 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 	ret.Path = shrpath
 	ret.Name = PathBase(base)
 
-	var t = time.Now()
-	if ret.List, err = ScanDir(syspath, &cg, func(fpath string) bool {
-		return prf.IsHidden(fpath)
-	}); err != nil {
-		if errors.Is(err, fs.ErrNotExist) {
-			WriteError(w, http.StatusNotFound, err, AECfolderabsent)
-		} else {
-			WriteError500(w, err, AECfolderfail)
-		}
+	var fi fs.FileInfo
+	if fi, err = StatFile(syspath); err != nil {
+		WriteError500(w, err, AECfolderstat)
 		return
 	}
 
-	Log.Printf("id%d: navigate to %s, items %d, timeout %s", prf.ID, syspath, len(ret.List), time.Since(t))
-	usermsg <- UsrMsg{r, "path", ret.PUID}
-
-	WriteOK(w, ret)
-}
-
-// APIHANDLER
-func playlistAPI(w http.ResponseWriter, r *http.Request) {
-	var err error
-	var arg struct {
-		AID  IdType   `json:"aid"`
-		PUID PuidType `json:"puid,omitempty"`
-		Ext  string   `json:"ext,omitempty"`
-	}
-	var ret struct {
-		List []Pather `json:"list"`
-		Skip int      `json:"skip"`
-		Path string   `json:"path"`
-		Name string   `json:"shrname"`
-	}
-
-	// get arguments
-	if err = AjaxGetArg(w, r, &arg); err != nil {
-		return
-	}
-	if arg.PUID == 0 {
-		WriteError400(w, ErrArgNoPuid, AECplaylistnodata)
-		return
-	}
-
-	var prf *Profile
-	if prf = prflist.ByID(arg.AID); prf == nil {
-		WriteError400(w, ErrNoAcc, AECplaylistnoacc)
-		return
-	}
-	var auth *Profile
-	if auth, err = GetAuth(w, r); err != nil {
-		return
-	}
-
-	var syspath string
-	var ok bool
-	if syspath, ok = syspathcache.Path(arg.PUID); !ok {
-		WriteError(w, http.StatusNotFound, ErrNoPath, AECplaylistnopath)
-		return
-	}
-
-	if prf.IsHidden(syspath) {
-		WriteError(w, http.StatusForbidden, ErrHidden, AECplaylisthidden)
-		return
-	}
-
-	var shrpath, base, cg = prf.GetSharePath(syspath, auth == prf)
-	var grp = GetFileGroup(syspath)
-	if !cg[grp] {
-		WriteError(w, http.StatusForbidden, ErrNoAccess, AECplaylistaccess)
-		return
-	}
-	ret.Path = shrpath
-	ret.Name = PathBase(base)
-
-	var file VFile
-	if file, err = OpenFile(syspath); err != nil {
-		WriteError500(w, err, AECplaylistopen)
-		return
-	}
-	var pl Playlist
-	pl.Dest = path.Dir(syspath)
 	var ext = arg.Ext
 	if ext == "" {
 		ext = GetFileExt(syspath)
 	}
-	switch ext {
-	case ".m3u", ".m3u8":
-		if _, err = pl.ReadM3U(file); err != nil {
-			WriteError(w, http.StatusUnsupportedMediaType, err, AECplaylistm3u)
-			return
-		}
-	case ".wpl":
-		if _, err = pl.ReadWPL(file); err != nil {
-			WriteError(w, http.StatusUnsupportedMediaType, err, AECplaylistwpl)
-			return
-		}
-	case ".pls":
-		if _, err = pl.ReadPLS(file); err != nil {
-			WriteError(w, http.StatusUnsupportedMediaType, err, AECplaylistpls)
-			return
-		}
-	case ".asx":
-		if _, err = pl.ReadASX(file); err != nil {
-			WriteError(w, http.StatusUnsupportedMediaType, err, AECplaylistasx)
-			return
-		}
-	case ".xspf":
-		if _, err = pl.ReadXSPF(file); err != nil {
-			WriteError(w, http.StatusUnsupportedMediaType, err, AECplaylistxspf)
-			return
-		}
-	default:
-		WriteError(w, http.StatusUnsupportedMediaType, ErrNotPlay, AECplaylistformat)
-		return
-	}
 
-	var prop interface{}
-	for _, track := range pl.Tracks {
-		var loc = ToSlash(track.Location)
-		var cg = prf.PathAccess(loc, auth == prf)
-		var grp = GetFileGroup(loc)
-		if cg[grp] {
-			if prop, err = propcache.Get(loc); err == nil {
-				ret.List = append(ret.List, prop.(Pather))
-				continue
+	var t = time.Now()
+	if !fi.IsDir() && IsTypePlaylist(ext) {
+		var file VFile
+		if file, err = OpenFile(syspath); err != nil {
+			WriteError500(w, err, AECfolderopen)
+			return
+		}
+		defer file.Close()
+
+		var pl Playlist
+		pl.Dest = path.Dir(syspath)
+		switch ext {
+		case ".m3u", ".m3u8":
+			if _, err = pl.ReadM3U(file); err != nil {
+				WriteError(w, http.StatusUnsupportedMediaType, err, AECfolderm3u)
+				return
+			}
+		case ".wpl":
+			if _, err = pl.ReadWPL(file); err != nil {
+				WriteError(w, http.StatusUnsupportedMediaType, err, AECfolderwpl)
+				return
+			}
+		case ".pls":
+			if _, err = pl.ReadPLS(file); err != nil {
+				WriteError(w, http.StatusUnsupportedMediaType, err, AECfolderpls)
+				return
+			}
+		case ".asx":
+			if _, err = pl.ReadASX(file); err != nil {
+				WriteError(w, http.StatusUnsupportedMediaType, err, AECfolderasx)
+				return
+			}
+		case ".xspf":
+			if _, err = pl.ReadXSPF(file); err != nil {
+				WriteError(w, http.StatusUnsupportedMediaType, err, AECfolderxspf)
+				return
+			}
+		default:
+			WriteError(w, http.StatusUnsupportedMediaType, ErrNotPlay, AECfolderformat)
+			return
+		}
+
+		var prop interface{}
+		for _, track := range pl.Tracks {
+			var fpath = ToSlash(track.Location)
+			if !prf.IsHidden(fpath) {
+				var cg = prf.PathAccess(fpath, auth == prf)
+				var grp = GetFileGroup(fpath)
+				if cg[grp] {
+					if prop, err = propcache.Get(fpath); err == nil {
+						ret.List = append(ret.List, prop.(Pather))
+						continue
+					}
+				}
 			}
 		}
-		ret.Skip++
+		ret.Skip = len(pl.Tracks) - len(ret.List)
+	} else {
+		if ret.List, ret.Skip, err = ScanDir(syspath, &cg, func(fpath string) bool {
+			return !prf.IsHidden(fpath)
+		}); err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				WriteError(w, http.StatusNotFound, err, AECfolderabsent)
+			} else {
+				WriteError500(w, err, AECfolderfail)
+			}
+			return
+		}
 	}
 
-	Log.Printf("id%d: navigate to %s", prf.ID, syspath)
-	usermsg <- UsrMsg{r, "path", arg.PUID}
+	Log.Printf("id%d: navigate to %s, items %d, timeout %s", prf.ID, syspath, len(ret.List), time.Since(t))
+	usermsg <- UsrMsg{r, "path", ret.PUID}
 
 	WriteOK(w, ret)
 }
@@ -1170,7 +1124,7 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		}
 
 		var src, dst *os.File
-		var fi os.FileInfo
+		var fi fs.FileInfo
 		// open source file
 		if src, err = os.Open(srcpath); err != nil {
 			WriteError500(w, err, AECedtcopyopsrc)
@@ -1227,7 +1181,7 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 
 			// get returned file properties at last
 			if prop == nil {
-				var fi os.FileInfo
+				var fi fs.FileInfo
 				if fi, err = dst.Stat(); err != nil {
 					WriteError500(w, err, AECedtcopystatfile)
 					return
@@ -1312,7 +1266,7 @@ func edtrenameAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	}
 
 	// get returned file properties at last
-	var fi os.FileInfo
+	var fi fs.FileInfo
 	if fi, err = os.Stat(dstpath); err != nil {
 		WriteError500(w, err, AECedtrenstat)
 		return
