@@ -112,12 +112,14 @@ func FindTmb(prop Pather, syspath string) (md *MediaData, err error) {
 	}
 
 	// try to extract from EXIF
-	if cfg.UseEmbeddedTmb {
-		if _, ok := prop.(*ExifKit); ok { // skip non-EXIF properties
+	var orientation = OrientNormal
+	if ek, ok := prop.(*ExifKit); ok { // skip non-EXIF properties
+		if cfg.UseEmbeddedTmb {
 			if md, err = GetExifTmb(syspath); err == nil {
 				return // thumbnail from EXIF
 			}
 		}
+		orientation = ek.Orientation
 	}
 
 	// try to extract from ID3
@@ -144,12 +146,12 @@ func FindTmb(prop Pather, syspath string) (md *MediaData, err error) {
 	}
 	defer file.Close()
 
-	return MakeTmb(file)
+	return MakeTmb(file, orientation)
 }
 
 // MakeTmb reads image from the stream and makes thumbnail with format
 // depended from alpha-channel is present in the original image.
-func MakeTmb(r io.Reader) (md *MediaData, err error) {
+func MakeTmb(r io.Reader, orientation int) (md *MediaData, err error) {
 	var ftype string
 	var src, dst image.Image
 	if src, ftype, err = image.Decode(r); err != nil {
@@ -160,9 +162,10 @@ func MakeTmb(r io.Reader) (md *MediaData, err error) {
 	if src.Bounds().In(image.Rect(0, 0, 320, 320)) {
 		dst = src
 	} else {
-		var thumbfilter = gift.New(
+		var fltlst = AddOrientFilter([]gift.Filter{
 			gift.ResizeToFit(cfg.TmbResolution[0], cfg.TmbResolution[1], gift.LinearResampling),
-		)
+		}, orientation)
+		var thumbfilter = gift.New(fltlst...)
 		var img = image.NewRGBA(thumbfilter.Bounds(src.Bounds()))
 		if img.Pix == nil {
 			err = ErrImgNil

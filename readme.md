@@ -28,7 +28,7 @@ Then run some batch-files at `tools` directory of project:
 
 1) `tools/make-builder.cmd` installs `wpk` builder to `%GOPATH%\bin` folder. It can be done only once.
 
-2) `tools/get-plugins.cmd` downloads js-plugins for frontend client. It can be run on every time when it needs to update plugins. And update script to actual versions of libraries.
+2) `tools/deploy-plugins.cmd` downloads js-plugins for frontend client. It can be run on every time when it needs to update plugins. And update script to actual versions of libraries.
 
 3) `tools/cc.base.cmd` and `tools/cc.page.cmd` to compile js-files to bundle. Batch-files expects that [Closure Compiler](https://developers.google.com/closure/compiler) is downloaded to path pointed in those batch-files. Java VM is needed for this.
 

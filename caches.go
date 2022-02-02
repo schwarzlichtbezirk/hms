@@ -389,6 +389,11 @@ func initcaches() {
 				return // uncacheable type
 			}
 
+			var orientation = OrientNormal
+			if ek, ok := prop.(*ExifKit); ok {
+				orientation = ek.Orientation
+			}
+
 			var file VFile
 			if file, err = OpenFile(syspath); err != nil {
 				return // can not open file
@@ -403,9 +408,14 @@ func initcaches() {
 				}
 			}
 
-			var filter = gift.New(
+			switch orientation {
+			case OrientCwHorzReversed, OrientCw, OrientAcwHorzReversed, OrientAcw:
+				wdh, hgt = hgt, wdh
+			}
+			var fltlst = AddOrientFilter([]gift.Filter{
 				gift.ResizeToFill(wdh, hgt, gift.LinearResampling, gift.CenterAnchor),
-			)
+			}, orientation)
+			var filter = gift.New(fltlst...)
 			var img = image.NewRGBA(filter.Bounds(src.Bounds()))
 			if img.Pix == nil {
 				err = ErrImgNil
@@ -438,12 +448,14 @@ func initcaches() {
 				return
 			}
 
+			var orientation = OrientNormal
 			if ek, ok := prop.(*ExifKit); ok {
 				if (ek.Width <= cfg.HDResolution[0] && ek.Height <= cfg.HDResolution[1]) ||
 					(ek.Width <= cfg.HDResolution[1] && ek.Height <= cfg.HDResolution[0]) {
 					err = ErrNotHD
 					return // does not fit to HD
 				}
+				orientation = ek.Orientation
 			}
 
 			var file VFile
@@ -459,32 +471,30 @@ func initcaches() {
 					return // can not decode file by any codec
 				}
 			}
-			if src.Bounds().In(image.Rect(0, 0, cfg.HDResolution[0], cfg.HDResolution[1])) || src.Bounds().In(image.Rect(0, 0, cfg.HDResolution[1], cfg.HDResolution[0])) {
+
+			var wdh, hgt int
+			if src.Bounds().Dx() > src.Bounds().Dy() {
+				wdh, hgt = cfg.HDResolution[0], cfg.HDResolution[1]
+			} else {
+				wdh, hgt = cfg.HDResolution[1], cfg.HDResolution[0]
+			}
+
+			if src.Bounds().In(image.Rect(0, 0, wdh, hgt)) {
 				err = ErrNotHD
 				return // does not fit to HD
-			} else if src.Bounds().Dx() > src.Bounds().Dy() {
-				var filter = gift.New(
-					gift.ResizeToFit(cfg.HDResolution[0], cfg.HDResolution[1], gift.LinearResampling),
-				)
-				var img = image.NewRGBA(filter.Bounds(src.Bounds()))
-				if img.Pix == nil {
-					err = ErrImgNil
-					return // out of memory
-				}
-				filter.Draw(img, src)
-				dst = img
-			} else {
-				var filter = gift.New(
-					gift.ResizeToFit(cfg.HDResolution[1], cfg.HDResolution[0], gift.LinearResampling),
-				)
-				var img = image.NewRGBA(filter.Bounds(src.Bounds()))
-				if img.Pix == nil {
-					err = ErrImgNil
-					return // out of memory
-				}
-				filter.Draw(img, src)
-				dst = img
 			}
+
+			var fltlst = AddOrientFilter([]gift.Filter{
+				gift.ResizeToFit(wdh, hgt, gift.LinearResampling),
+			}, orientation)
+			var filter = gift.New(fltlst...)
+			var img = image.NewRGBA(filter.Bounds(src.Bounds()))
+			if img.Pix == nil {
+				err = ErrImgNil
+				return // out of memory
+			}
+			filter.Draw(img, src)
+			dst = img
 
 			return ToNativeImg(dst, ftype)
 		}).

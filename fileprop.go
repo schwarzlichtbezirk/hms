@@ -583,7 +583,7 @@ func (tk *TagKit) Setup(syspath string, fi fs.FileInfo) {
 			tk.TagProp.Setup(m)
 			if pic := m.Picture(); pic != nil {
 				if cfg.FitEmbeddedTmb {
-					if md, err = MakeTmb(bytes.NewReader(pic.Data)); err != nil {
+					if md, err = MakeTmb(bytes.NewReader(pic.Data), OrientNormal); err != nil {
 						md = &MediaData{
 							Data: pic.Data,
 							Mime: pic.MIMEType,
@@ -619,7 +619,7 @@ func GetTagTmb(syspath string) (md *MediaData, err error) {
 	if m, err = tag.ReadFrom(file); err == nil {
 		if pic := m.Picture(); pic != nil {
 			if cfg.FitEmbeddedTmb {
-				if md, err = MakeTmb(bytes.NewReader(pic.Data)); err != nil {
+				if md, err = MakeTmb(bytes.NewReader(pic.Data), OrientNormal); err != nil {
 					md = &MediaData{
 						Data: pic.Data,
 						Mime: pic.MIMEType,
