@@ -26,15 +26,15 @@ require (
 )
 
 require (
-	github.com/frankban/quicktest v1.14.1 // indirect
+	github.com/frankban/quicktest v1.14.2 // indirect
 	github.com/gopherjs/gopherjs v0.0.0-20220104163920-15ed2e8cf2bd // indirect
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
-	github.com/pkg/xattr v0.4.4 // indirect
+	github.com/pkg/xattr v0.4.5 // indirect
 	github.com/schwarzlichtbezirk/mmap-go v1.0.2 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/ulikunitz/xz v0.5.10 // indirect
 	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd // indirect
-	golang.org/x/sys v0.0.0-20220128215802-99c3d69c2c27 // indirect
+	golang.org/x/sys v0.0.0-20220204135822-1c1b9b1eba6a // indirect
 	gopkg.in/djherbis/times.v1 v1.3.0 // indirect
 )

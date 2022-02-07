@@ -391,6 +391,59 @@ const VueFileIcon = {
 	}
 };
 
+const VueTileIcon = {
+	template: '#tile-icon-tpl',
+	props: ["file", "sx", "sy"],
+	data() {
+		return {
+			iconfmt: [],
+			tm: true
+		};
+	},
+	computed: {
+		fmtalt() {
+			return pathext(this.file.name);
+		},
+		fmttitle() {
+			return filehint(this.file).join('\n');
+		},
+		iconsrcmd() {
+			return `/id${appvm.aid}/tile/${this.file.puid}/${64*this.sx}x${48*this.sy}`;
+		},
+		iconsrcxl() {
+			return `/id${appvm.aid}/tile/${this.file.puid}/${100*this.sx}x${75*this.sy}`;
+		},
+		iconsrchd() {
+			return `/id${appvm.aid}/tile/${this.file.puid}/${160*this.sx}x${120*this.sy}`;
+		}
+	},
+	methods: {
+		onselect() {
+			eventHub.emit('select', this.file);
+		},
+
+		onopen() {
+			eventHub.emit('open', this.file);
+		},
+		_iconset(im) {
+			this.iconfmt = im.iconfmt;
+		},
+		_thumbmode(tm) {
+			this.tm = tm;
+		}
+	},
+	created() {
+		this.iconfmt = iconmapping.iconfmt;
+		this.tm = thumbmode;
+		eventHub.on('iconset', this._iconset);
+		eventHub.on('thumbmode', this._thumbmode);
+	},
+	unmounted() {
+		eventHub.off('iconset', this._iconset);
+		eventHub.off('thumbmode', this._thumbmode);
+	}
+};
+
 const VueImgIcon = {
 	template: '#img-icon-tpl',
 	props: ["file"],

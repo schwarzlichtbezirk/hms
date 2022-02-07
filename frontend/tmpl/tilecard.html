@@ -1,0 +1,40 @@
+
+<div v-show="isvisible" class="card m-sm-2">
+	<div class="card-header bg-card d-flex flex-wrap align-items-center">
+		<div class="navbar-text flex-grow-1 py-0">
+			<a class="card-link d-block" data-bs-toggle="collapse" v-bind:href="'#card'+iid">smart tiles</a>
+		</div>
+		<ul class="navbar-nav flex-row ms-auto">
+			<li><button class="btn" v-on:click="onrebuild" title="rebuild cascade"><span class="material-icons">widgets</span></button></li>
+		</ul>
+	</div>
+	<div v-bind:id="'card'+iid" class="collapse show">
+		<div ref="slide" class="card-body p-1 p-sm-3 folder-table" v-on:click="onunselect">
+			<table class="w-100">
+				<tr>
+					<td class="col-1"></td>
+					<td class="col-1"></td>
+					<td class="col-1"></td>
+					<td class="col-1"></td>
+					<td class="col-1"></td>
+					<td class="col-1"></td>
+					<td class="col-1"></td>
+					<td class="col-1"></td>
+					<td class="col-1"></td>
+					<td class="col-1"></td>
+					<td class="col-1"></td>
+					<td class="col-1"></td>
+				</tr>
+				<template v-for="tr in sheetbl">
+					<tr>
+						<template v-for="td in tr">
+							<td v-bind:colspan="td.sx" v-bind:rowspan="td.sy">
+								<tile-icon-tag v-bind:file="td.file" v-bind:sx="td.sx" v-bind:sy="td.sy" />
+							</td>
+						</template>
+					</tr>
+				</template>
+			</table>
+		</div>
+	</div>
+</div>

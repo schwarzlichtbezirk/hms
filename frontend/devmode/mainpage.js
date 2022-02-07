@@ -925,6 +925,7 @@ const VueMainApp = {
 
 			// clear current selected
 			eventHub.emit('select', null);
+
 			// init map card
 			this.$refs.mcard.new();
 			// update map card
@@ -1513,9 +1514,11 @@ const appws = Vue.createApp(VueMainApp)
 	.component('mp3-player-tag', VuePlayer)
 	.component('dir-card-tag', VueDirCard)
 	.component('file-card-tag', VueFileCard)
+	.component('tile-card-tag', VueTileCard)
 	.component('map-card-tag', VueMapCard)
 	.component('icon-tag', VueIcon)
 	.component('file-icon-tag', VueFileIcon)
+	.component('tile-icon-tag', VueTileIcon)
 	.component('img-icon-tag', VueImgIcon);
 const appvm = appws.mount('#app');
 

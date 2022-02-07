@@ -272,7 +272,6 @@ func initcaches() {
 				err = ErrNoPUID
 				return // file path not found
 			}
-			Log.Printf("tmb: %s\n", syspath)
 
 			var prop interface{}
 			if prop, err = propcache.Get(syspath); err != nil {
@@ -377,18 +376,6 @@ func initcaches() {
 				return
 			}
 
-			var ext = GetFileExt(fp.Name())
-			switch {
-			case IsTypeNativeImg(ext):
-				err = ErrUncacheable
-				return // uncacheable type
-			case IsTypeNonalpha(ext):
-			case IsTypeAlpha(ext):
-			default:
-				err = ErrUncacheable
-				return // uncacheable type
-			}
-
 			var orientation = OrientNormal
 			if ek, ok := prop.(*ExifKit); ok {
 				orientation = ek.Orientation
@@ -411,6 +398,7 @@ func initcaches() {
 			switch orientation {
 			case OrientCwHorzReversed, OrientCw, OrientAcwHorzReversed, OrientAcw:
 				wdh, hgt = hgt, wdh
+				Log.Printf("turned: %s, %dx%d\n", syspath, wdh, hgt)
 			}
 			var fltlst = AddOrientFilter([]gift.Filter{
 				gift.ResizeToFill(wdh, hgt, gift.LinearResampling, gift.CenterAnchor),
@@ -450,8 +438,13 @@ func initcaches() {
 
 			var orientation = OrientNormal
 			if ek, ok := prop.(*ExifKit); ok {
-				if (ek.Width <= cfg.HDResolution[0] && ek.Height <= cfg.HDResolution[1]) ||
-					(ek.Width <= cfg.HDResolution[1] && ek.Height <= cfg.HDResolution[0]) {
+				var wdh, hgt int
+				if ek.Width > ek.Height {
+					wdh, hgt = cfg.HDResolution[0], cfg.HDResolution[1]
+				} else {
+					wdh, hgt = cfg.HDResolution[1], cfg.HDResolution[0]
+				}
+				if ek.Width <= wdh && ek.Height <= hgt {
 					err = ErrNotHD
 					return // does not fit to HD
 				}

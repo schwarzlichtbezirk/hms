@@ -47,7 +47,7 @@ const VuePhotoSlider = {
 		return {
 			loadbar: false,
 			list: [],
-			autolist: true,
+			autolist: false,
 			hd: true,
 			selfile: null,
 			repeatmode: 0, // 0 - no any repeat, 1 - repeat single, 2 - repeat playlist

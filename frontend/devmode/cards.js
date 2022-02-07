@@ -280,14 +280,6 @@ const VueFileCard = {
 			iid: makestrid(10) // instance ID
 		};
 	},
-	watch: {
-		fgshow: {
-			handler(val, oldVal) {
-				console.log('fgshow changed');
-			},
-			deep: true
-		}
-	},
 	computed: {
 		// is it authorized or running on localhost
 		isadmin() {
@@ -484,6 +476,237 @@ const VueFileCard = {
 	unmounted() {
 		eventHub.off('auth', this.authclosure);
 		eventHub.off('audioonly', this.onaudioonly);
+	}
+};
+
+// set of possible sizes for horizontal images
+const htiles = [
+	[2, 2], // 0
+	[3, 3], // 1
+	[4, 4], // 2
+	[5, 5], // 3
+	[6, 6], // 4
+];
+// set of possible sizes for vertical images
+const vtiles = [
+	[2, 4],
+	[3, 6],
+];
+// indexes in htiles depended on free space size
+const tilemode2346 = [
+	[0, 1, 2, 4], // for all
+	[], // 1
+	[0], // 2
+	[1], // 3
+	[0, 2], // 4
+	[0, 1], // 5
+	[0, 1, 2, 4], // 6
+	[0, 1, 2], // 7
+];
+const tilemode246 = [
+	[0, 2, 4], // for all
+	[], // 1
+	[0], // 2
+	[], // 3
+	[0, 2], // 4
+	[], // 5
+	[0, 2, 4], // 6
+];
+const tilemode2345 = [
+	[0, 2, 4], // for all
+	[], // 1
+	[0], // 2
+	[0, 1], // 3
+	[0, 2], // 4
+	[0, 1, 3], // 5
+	[0, 1, 2], // 6
+];
+const rollbacktiles = 11;
+
+const maketileslide = list => {
+	const tiles = [];
+	const sheet = [];
+	let fill = 0; // filled line
+	const randomint = max => {
+		return Math.floor(Math.random() * max);
+	};
+	const addline = () => {
+		sheet.push([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+	};
+	const zeropos = y => {
+		for (let x = 0; x < 12; x++) {
+			if (!sheet[y][x]) {
+				return x;
+			}
+		}
+		return -1;
+	};
+	const posfill = () => {
+		while (fill < sheet.length) {
+			const pos = zeropos(fill);
+			if (pos >= 0) {
+				return pos;
+			}
+			fill++;
+		}
+		addline();
+		return 0;
+	};
+	const sizefill = pf => {
+		for (let i = pf + 1; i < 12; i++) {
+			if (sheet[fill][i]) {
+				return i - pf;
+			}
+		}
+		return 12 - pf;
+	};
+
+	let rollbackcount = 0;
+	addline();
+	let ti = 0;
+	for (; ;) {
+		for (; ti < list.length; ti++) {
+			const fp = list[ti];
+			if (!fp.width || !fp.height) {
+				continue;
+			}
+			const pf = posfill();
+			const sf = sizefill(pf);
+			const im = tilemode246[sf < tilemode246.length ? sf : 0];
+			let ts = htiles[im[randomint(im.length)]];
+			const nl = ts[1] - sheet.length + fill;
+			for (let i = 0; i < nl; i++) {
+				addline();
+			}
+			for (let x = 0; x < ts[0]; x++) {
+				for (let y = 0; y < ts[1]; y++) {
+					sheet[fill + y][x + pf] = Number(ti) + 1;
+				}
+			}
+
+			tiles.push({
+				file: fp,
+				px: pf,
+				py: fill,
+				sx: ts[0],
+				sy: ts[1],
+			});
+		}
+
+		if (tiles.length == 0 || tiles.length == 1 || tiles.length == 5
+			|| zeropos(sheet.length-1) < 0) {
+			break;
+		}
+
+		// rollback
+		if (rollbackcount > 120) {
+			console.error("rollback overflows, sheet remains with spaces");
+			break;
+		}
+		if (tiles.length > rollbacktiles) {
+			ti = tiles.length - rollbacktiles;
+		} else {
+			ti = 0;
+		}
+		// remove from sheet
+		fill = tiles[ti].py;
+		for (let y = fill; y < sheet.length; y++) {
+			for (let x = 0; x < 12; x++) {
+				if (sheet[y][x] > ti) {
+					sheet[y][x] = 0;
+				}
+			}
+		}
+		// remove zero lines
+		delzero: for (let y = sheet.length-1; y >= tiles[ti].py; y--) {
+			for (let x = 0; x < 12; x++) {
+				if (sheet[y][x] !== 0) {
+					break delzero;
+				}
+			}
+			sheet.splice(y, 1);
+		}
+		// remove tiles
+		tiles.splice(ti, rollbacktiles);
+		rollbackcount++;
+	}
+	console.info("rollback count:", rollbackcount)
+
+	return {tiles, sheet};
+}
+
+const VueTileCard = {
+	template: '#tile-card-tpl',
+	props: ["list"],
+	data() {
+		return {
+			isauth: false, // is authorized
+			tiles: [],
+			sheet: [],
+			iid: makestrid(10) // instance ID
+		};
+	},
+	watch: {
+		list: {
+			handler(val, oldVal) {
+				if (val.length === oldVal.length) {
+					return; // list size not changed
+				}
+				console.log('tiles list changed', val.length, oldVal.length);
+				const ret = maketileslide(val);
+				this.tiles = ret.tiles;
+				this.sheet = ret.sheet;
+			},
+			deep: true
+		}
+	},
+	computed: {
+		// is it authorized or running on localhost
+		isadmin() {
+			return this.isauth || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+		},
+		isvisible() {
+			return this.sheetbl.length > 0;
+		},
+
+		sheetbl() {
+			let tbl = [];
+			let row0 = [];
+			for (let line = 0; line < this.sheet.length; line++) {
+				const tr = [];
+				const row1 = this.sheet[line];
+				for (let x = 0; x < 12; x++) {
+					if (row1[x] && row1[x] !== row1[x - 1] && row0[x] !== row1[x]) {
+						const tile = this.tiles[row1[x] - 1];
+						tr.push(tile);
+					}
+				}
+				row0 = row1;
+				tbl.push(tr);
+			}
+			return tbl;
+		}
+	},
+	methods: {
+		onrebuild() {
+			const ret = maketileslide(this.list);
+			this.tiles = ret.tiles;
+			this.sheet = ret.sheet;
+		},
+
+		authclosure(is) {
+			this.isauth = is;
+		},
+
+		onunselect() {
+			eventHub.emit('select', null);
+		}
+	},
+	created() {
+		eventHub.on('auth', this.authclosure);
+	},
+	unmounted() {
+		eventHub.off('auth', this.authclosure);
 	}
 };
 
