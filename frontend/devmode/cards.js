@@ -169,17 +169,12 @@ const VueDirCard = {
 	props: ["list"],
 	data() {
 		return {
-			isauth: false, // is authorized
 			sortorder: 1,
 			listmode: "smicon",
 			iid: makestrid(10) // instance ID
 		};
 	},
 	computed: {
-		// is it authorized or running on localhost
-		isadmin() {
-			return this.isauth || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-		},
 		isvisible() {
 			return this.list.length > 0;
 		},
@@ -227,9 +222,6 @@ const VueDirCard = {
 		}
 	},
 	methods: {
-		authclosure(is) {
-			this.isauth = is;
-		},
 		onorder() {
 			this.sortorder = -this.sortorder;
 		},
@@ -246,12 +238,6 @@ const VueDirCard = {
 		onunselect() {
 			eventHub.emit('select', null);
 		}
-	},
-	created() {
-		eventHub.on('auth', this.authclosure);
-	},
-	unmounted() {
-		eventHub.off('auth', this.authclosure);
 	}
 };
 
@@ -260,7 +246,6 @@ const VueFileCard = {
 	props: ["list"],
 	data() {
 		return {
-			isauth: false, // is authorized
 			sortorder: 1,
 			sortmode: 'byalpha',
 			listmode: 'smicon',
@@ -281,10 +266,6 @@ const VueFileCard = {
 		};
 	},
 	computed: {
-		// is it authorized or running on localhost
-		isadmin() {
-			return this.isauth || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-		},
 		isvisible() {
 			return this.list.length > 0;
 		},
@@ -396,10 +377,6 @@ const VueFileCard = {
 		}
 	},
 	methods: {
-		authclosure(is) {
-			this.isauth = is;
-		},
-
 		onorder() {
 			this.sortorder = -this.sortorder;
 			const fl = this.filelist; // update filelist now
@@ -470,11 +447,9 @@ const VueFileCard = {
 		}
 	},
 	created() {
-		eventHub.on('auth', this.authclosure);
 		eventHub.on('audioonly', this.onaudioonly);
 	},
 	unmounted() {
-		eventHub.off('auth', this.authclosure);
 		eventHub.off('audioonly', this.onaudioonly);
 	}
 };
@@ -493,6 +468,32 @@ const vtiles = [
 	[3, 6],
 ];
 // indexes in htiles depended on free space size
+const tilemode246 = [
+	[0, 2, 4], // for all
+	[], // 1
+	[0], // 2
+	[], // 3
+	[0, 2], // 4
+	[], // 5
+	[0, 2, 4], // 6
+];
+const tilemode234 = [
+	[0, 1, 2], // for all
+	[], // 1
+	[0], // 2
+	[1], // 3
+	[0, 2], // 4
+	[0, 1], // 5
+];
+const tilemode26 = [
+	[0, 4], // for all
+	[], // 1
+	[0], // 2
+	[], // 3
+	[0], // 4
+	[], // 5
+	[0, 4], // 6
+];
 const tilemode2346 = [
 	[0, 1, 2, 4], // for all
 	[], // 1
@@ -503,27 +504,15 @@ const tilemode2346 = [
 	[0, 1, 2, 4], // 6
 	[0, 1, 2], // 7
 ];
-const tilemode246 = [
-	[0, 2, 4], // for all
-	[], // 1
-	[0], // 2
-	[], // 3
-	[0, 2], // 4
-	[], // 5
-	[0, 2, 4], // 6
-];
-const tilemode2345 = [
-	[0, 2, 4], // for all
-	[], // 1
-	[0], // 2
-	[0, 1], // 3
-	[0, 2], // 4
-	[0, 1, 3], // 5
-	[0, 1, 2], // 6
-];
+const tilemodetype = {
+	'mode-246': tilemode246,
+	'mode-234': tilemode234,
+	'mode-26': tilemode26,
+	'mode-2346': tilemode2346,
+};
 const rollbacktiles = 11;
 
-const maketileslide = list => {
+const maketileslide = (list, tilemode) => {
 	const tiles = [];
 	const sheet = [];
 	let fill = 0; // filled line
@@ -572,8 +561,11 @@ const maketileslide = list => {
 			}
 			const pf = posfill();
 			const sf = sizefill(pf);
-			const im = tilemode246[sf < tilemode246.length ? sf : 0];
+			const im = tilemode[sf < tilemode.length ? sf : 0];
 			let ts = htiles[im[randomint(im.length)]];
+			if (!ts) {
+				console.log("null:", sf, pf, sheet);
+			}
 			const nl = ts[1] - sheet.length + fill;
 			for (let i = 0; i < nl; i++) {
 				addline();
@@ -594,7 +586,7 @@ const maketileslide = list => {
 		}
 
 		if (tiles.length == 0 || tiles.length == 1 || tiles.length == 5
-			|| zeropos(sheet.length-1) < 0) {
+			|| zeropos(sheet.length - 1) < 0) {
 			break;
 		}
 
@@ -618,7 +610,7 @@ const maketileslide = list => {
 			}
 		}
 		// remove zero lines
-		delzero: for (let y = sheet.length-1; y >= tiles[ti].py; y--) {
+		delzero: for (let y = sheet.length - 1; y >= tiles[ti].py; y--) {
 			for (let x = 0; x < 12; x++) {
 				if (sheet[y][x] !== 0) {
 					break delzero;
@@ -632,7 +624,7 @@ const maketileslide = list => {
 	}
 	console.info("rollback count:", rollbackcount)
 
-	return {tiles, sheet};
+	return { tiles, sheet };
 }
 
 const VueTileCard = {
@@ -640,31 +632,33 @@ const VueTileCard = {
 	props: ["list"],
 	data() {
 		return {
-			isauth: false, // is authorized
 			tiles: [],
 			sheet: [],
+			tilemode: "mode-246",
 			iid: makestrid(10) // instance ID
 		};
 	},
 	watch: {
 		list: {
-			handler(val, oldVal) {
-				if (val.length === oldVal.length) {
+			handler(val, oldval) {
+				if (val.length === oldval.length) {
 					return; // list size not changed
 				}
-				console.log('tiles list changed', val.length, oldVal.length);
-				const ret = maketileslide(val);
+				const ret = maketileslide(val, tilemodetype[this.tilemode]);
 				this.tiles = ret.tiles;
 				this.sheet = ret.sheet;
 			},
 			deep: true
+		},
+		tilemode: {
+			handler(val, oldval) {
+				const ret = maketileslide(this.list, tilemodetype[val]);
+				this.tiles = ret.tiles;
+				this.sheet = ret.sheet;
+			}
 		}
 	},
 	computed: {
-		// is it authorized or running on localhost
-		isadmin() {
-			return this.isauth || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-		},
 		isvisible() {
 			return this.sheetbl.length > 0;
 		},
@@ -685,28 +679,46 @@ const VueTileCard = {
 				tbl.push(tr);
 			}
 			return tbl;
+		},
+
+		hinttilemode() {
+			return this.tilemode;
+		},
+		clsmode246() {
+			return { active: this.tilemode === 'mode-246' };
+		},
+		clsmode234() {
+			return { active: this.tilemode === 'mode-234' };
+		},
+		clsmode26() {
+			return { active: this.tilemode === 'mode-26' };
+		},
+		clsmode2346() {
+			return { active: this.tilemode === 'mode-2346' };
 		}
 	},
 	methods: {
 		onrebuild() {
-			const ret = maketileslide(this.list);
+			const ret = maketileslide(this.list, tilemodetype[this.tilemode]);
 			this.tiles = ret.tiles;
 			this.sheet = ret.sheet;
 		},
-
-		authclosure(is) {
-			this.isauth = is;
+		onmode246() {
+			this.tilemode = 'mode-246';
+		},
+		onmode234() {
+			this.tilemode = 'mode-234';
+		},
+		onmode26() {
+			this.tilemode = 'mode-26';
+		},
+		onmode2346() {
+			this.tilemode = 'mode-2346';
 		},
 
 		onunselect() {
 			eventHub.emit('select', null);
 		}
-	},
-	created() {
-		eventHub.on('auth', this.authclosure);
-	},
-	unmounted() {
-		eventHub.off('auth', this.authclosure);
 	}
 };
 
@@ -772,7 +784,7 @@ const VueMapCard = {
 			switch (this.markermode) {
 				case 'marker': return 'place';
 				case 'thumb': return 'local_see';
-		}
+			}
 		},
 		hintlandscape() {
 			switch (this.styleid) {

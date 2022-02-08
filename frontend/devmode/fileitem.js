@@ -408,13 +408,13 @@ const VueTileIcon = {
 			return filehint(this.file).join('\n');
 		},
 		iconsrcmd() {
-			return `/id${appvm.aid}/tile/${this.file.puid}/${64*this.sx}x${48*this.sy}`;
+			return `/id${appvm.aid}/tile/${this.file.puid}/${64 * this.sx}x${48 * this.sy}`;
 		},
 		iconsrcxl() {
-			return `/id${appvm.aid}/tile/${this.file.puid}/${100*this.sx}x${75*this.sy}`;
+			return `/id${appvm.aid}/tile/${this.file.puid}/${100 * this.sx}x${75 * this.sy}`;
 		},
 		iconsrchd() {
-			return `/id${appvm.aid}/tile/${this.file.puid}/${160*this.sx}x${120*this.sy}`;
+			return `/id${appvm.aid}/tile/${this.file.puid}/${160 * this.sx}x${120 * this.sy}`;
 		}
 	},
 	methods: {

@@ -118,7 +118,7 @@ const extfmt = {
 		".java": 1, ".jsp": 1, ".asp": 1,
 		".asm": 1, ".c": 1, ".h": 1, ".hpp": 1, ".hxx": 1, ".cpp": 1, ".cxx": 1, ".cc": 1, ".cs": 1,
 		".go": 1, ".r": 1, ".d": 1, ".pas": 1, ".inc": 1,
-		".py": 1, ".pyw": 1, ".pl": 1, ".pm": 1, ".plx": 1, ".rb": 1, ".rbw":1
+		".py": 1, ".pyw": 1, ".pl": 1, ".pm": 1, ".plx": 1, ".rb": 1, ".rbw": 1
 	},
 
 	"msoffice": {
@@ -292,7 +292,6 @@ const geticonpath = file => {
 const encode = uri => encodeURI(uri).replace('#', '%23').replace('&', '%26').replace('+', '%2B');
 
 const fileurl = file => `/id${appvm.aid}/file/${file.puid}`;
-const pathurl = file => `${(devmode ? "/dev" : "")}/id${appvm.aid}/path/${file.puid}`;
 const mediaurl = (file, media, hd) => `/id${appvm.aid}/file/${file.puid}?media=${media}&hd=${hd}`;
 
 const showmsgbox = (title, message, details) => {

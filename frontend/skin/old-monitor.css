@@ -112,6 +112,18 @@ a, .btn-link {
 	align-items: center;
 }
 
+.folder-table {
+	table-layout: fixed;
+}
+
+.folder-table tr, .folder-table td {
+	padding: 0;
+}
+
+.folder-table img {
+	padding: 2px;
+}
+
 .breadcrumb-item.active {
 	font-size: 1.5rem;
 }

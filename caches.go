@@ -398,7 +398,6 @@ func initcaches() {
 			switch orientation {
 			case OrientCwHorzReversed, OrientCw, OrientAcwHorzReversed, OrientAcw:
 				wdh, hgt = hgt, wdh
-				Log.Printf("turned: %s, %dx%d\n", syspath, wdh, hgt)
 			}
 			var fltlst = AddOrientFilter([]gift.Filter{
 				gift.ResizeToFill(wdh, hgt, gift.LinearResampling, gift.CenterAnchor),
