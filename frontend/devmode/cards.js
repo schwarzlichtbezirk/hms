@@ -175,12 +175,21 @@ const VueDirCard = {
 		};
 	},
 	computed: {
+		pathlist() {
+			const l = [];
+			for (const file of this.list) {
+				if (file.type) {
+					l.push(file);
+				}
+			}
+			return l;
+		},
 		isvisible() {
-			return this.list.length > 0;
+			return this.pathlist.length > 0;
 		},
 		sortable() {
-			for (const fp of this.list) {
-				if (fp.type === FT.ctgr) {
+			for (const file of this.pathlist) {
+				if (file.type === FT.ctgr) {
 					return false;
 				}
 			}
@@ -189,10 +198,10 @@ const VueDirCard = {
 		// sorted subfolders list
 		sortedlist() {
 			return this.sortable
-				? this.list.slice().sort((v1, v2) => {
+				? this.pathlist.slice().sort((v1, v2) => {
 					return this.sortorder * (v1.name.toLowerCase() > v2.name.toLowerCase() ? 1 : -1);
 				})
-				: this.list;
+				: this.pathlist;
 		},
 
 		clsfilelist() {
@@ -266,13 +275,22 @@ const VueFileCard = {
 		};
 	},
 	computed: {
+		filelist() {
+			const l = [];
+			for (const file of this.list) {
+				if (!file.type) {
+					l.push(file);
+				}
+			}
+			return l;
+		},
 		isvisible() {
-			return this.list.length > 0;
+			return this.filelist.length > 0;
 		},
 		// filtered sorted list of files
-		filelist() {
+		filtlist() {
 			const res = [];
-			for (const file of this.list) {
+			for (const file of this.filelist) {
 				if (this.fgshow[getFileGroup(file)]) {
 					res.push(file);
 				}
@@ -311,25 +329,25 @@ const VueFileCard = {
 		},
 
 		showmusic() {
-			return !!this.list.find(file => extfmt.audio[pathext(file.name)]);
+			return !!this.filelist.find(file => extfmt.audio[pathext(file.name)]);
 		},
 		showvideo() {
-			return !!this.list.find(file => extfmt.video[pathext(file.name)]);
+			return !!this.filelist.find(file => extfmt.video[pathext(file.name)]);
 		},
 		showphoto() {
-			return !!this.list.find(file => extfmt.image[pathext(file.name)]);
+			return !!this.filelist.find(file => extfmt.image[pathext(file.name)]);
 		},
 		showbooks() {
-			return !!this.list.find(file => extfmt.books[pathext(file.name)]);
+			return !!this.filelist.find(file => extfmt.books[pathext(file.name)]);
 		},
 		showtexts() {
-			return !!this.list.find(file => extfmt.texts[pathext(file.name)]);
+			return !!this.filelist.find(file => extfmt.texts[pathext(file.name)]);
 		},
 		showpacks() {
-			return !!this.list.find(file => extfmt.packs[pathext(file.name)]);
+			return !!this.filelist.find(file => extfmt.packs[pathext(file.name)]);
 		},
 		showother() {
-			return !!this.list.find(file => getFileGroup(file) === FG.other);
+			return !!this.filelist.find(file => getFileGroup(file) === FG.other);
 		},
 
 		clsthumbmode() {
@@ -379,19 +397,19 @@ const VueFileCard = {
 	methods: {
 		onorder() {
 			this.sortorder = -this.sortorder;
-			const fl = this.filelist; // update filelist now
+			const fl = this.filtlist; // update filtlist now
 		},
 		onsortalpha() {
 			this.sortmode = 'byalpha';
-			const fl = this.filelist; // update filelist now
+			const fl = this.filtlist; // update filtlist now
 		},
 		onsortsize() {
 			this.sortmode = 'bysize';
-			const fl = this.filelist; // update filelist now
+			const fl = this.filtlist; // update filtlist now
 		},
 		onsortunsorted() {
 			this.sortmode = 'unsorted';
-			const fl = this.filelist; // update filelist now
+			const fl = this.filtlist; // update filtlist now
 		},
 		onlistmodesm() {
 			this.listmode = 'smicon';
@@ -412,31 +430,31 @@ const VueFileCard = {
 		},
 		onaudio() {
 			this.fgshow[FG.audio] = !this.fgshow[FG.audio];
-			const fl = this.filelist; // update filelist now
+			const fl = this.filtlist; // update filtlist now
 		},
 		onvideo() {
 			this.fgshow[FG.video] = !this.fgshow[FG.video];
-			const fl = this.filelist; // update filelist now
+			const fl = this.filtlist; // update filtlist now
 		},
 		onphoto() {
 			this.fgshow[FG.image] = !this.fgshow[FG.image];
-			const fl = this.filelist; // update filelist now
+			const fl = this.filtlist; // update filtlist now
 		},
 		onbooks() {
 			this.fgshow[FG.books] = !this.fgshow[FG.books];
-			const fl = this.filelist; // update filelist now
+			const fl = this.filtlist; // update filtlist now
 		},
 		ontexts() {
 			this.fgshow[FG.texts] = !this.fgshow[FG.texts];
-			const fl = this.filelist; // update filelist now
+			const fl = this.filtlist; // update filtlist now
 		},
 		onpacks() {
 			this.fgshow[FG.packs] = !this.fgshow[FG.packs];
-			const fl = this.filelist; // update filelist now
+			const fl = this.filtlist; // update filtlist now
 		},
 		onother() {
 			this.fgshow[FG.other] = !this.fgshow[FG.other];
-			const fl = this.filelist; // update filelist now
+			const fl = this.filtlist; // update filtlist now
 		},
 
 		onunselect() {
@@ -555,10 +573,6 @@ const maketileslide = (list, tilemode) => {
 	let ti = 0;
 	for (; ;) {
 		for (; ti < list.length; ti++) {
-			const fp = list[ti];
-			if (!fp.width || !fp.height) {
-				continue;
-			}
 			const pf = posfill();
 			const sf = sizefill(pf);
 			const im = tilemode[sf < tilemode.length ? sf : 0];
@@ -577,7 +591,7 @@ const maketileslide = (list, tilemode) => {
 			}
 
 			tiles.push({
-				file: fp,
+				file: list[ti],
 				px: pf,
 				py: fill,
 				sx: ts[0],
@@ -585,8 +599,7 @@ const maketileslide = (list, tilemode) => {
 			});
 		}
 
-		if (tiles.length == 0 || tiles.length == 1 || tiles.length == 5
-			|| zeropos(sheet.length - 1) < 0) {
+		if (tiles.length < 6 || zeropos(sheet.length - 1) < 0) {
 			break;
 		}
 
@@ -639,7 +652,7 @@ const VueTileCard = {
 		};
 	},
 	watch: {
-		list: {
+		photolist: {
 			handler(val, oldval) {
 				if (val.length === oldval.length) {
 					return; // list size not changed
@@ -652,15 +665,24 @@ const VueTileCard = {
 		},
 		tilemode: {
 			handler(val, oldval) {
-				const ret = maketileslide(this.list, tilemodetype[val]);
+				const ret = maketileslide(this.photolist, tilemodetype[val]);
 				this.tiles = ret.tiles;
 				this.sheet = ret.sheet;
 			}
 		}
 	},
 	computed: {
+		photolist() {
+			const l = [];
+			for (const file of this.list) {
+				if (!file.type && (file.model || file.height || file.orientation)) {
+					l.push(file);
+				}
+			}
+			return l;
+		},
 		isvisible() {
-			return this.sheetbl.length > 0;
+			return this.tiles.length > 0;
 		},
 
 		sheetbl() {
@@ -699,7 +721,7 @@ const VueTileCard = {
 	},
 	methods: {
 		onrebuild() {
-			const ret = maketileslide(this.list, tilemodetype[this.tilemode]);
+			const ret = maketileslide(this.photolist, tilemodetype[this.tilemode]);
 			this.tiles = ret.tiles;
 			this.sheet = ret.sheet;
 		},
@@ -1019,9 +1041,9 @@ const VueMapCard = {
 				.addTo(this.map);
 		},
 		// add GPX track polyline
-		addgpx(fp) {
+		addgpx(file) {
 			const gpx = {};
-			gpx.prop = fp;
+			gpx.prop = file;
 			gpx.trkpt = [];
 			const ci = this.gpxlist.length % gpxcolors.length;
 			this.gpxlist.push(gpx);
@@ -1029,7 +1051,7 @@ const VueMapCard = {
 			(async () => {
 				eventHub.emit('ajax', +1);
 				try {
-					const response = await fetch(fileurl(fp));
+					const response = await fetch(fileurl(file));
 					const body = await response.text();
 					const re = /lat="(\d+\.\d+)" lon="(\d+\.\d+)"/g;
 					const matches = body.matchAll(re);

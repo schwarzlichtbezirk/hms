@@ -395,8 +395,7 @@ const VueMainApp = {
 			histlist: [], // history stack
 
 			// current opened folder data
-			pathlist: [], // list of subfolders properties in current folder
-			filelist: [], // list of files properties in current folder
+			flist: [], // list of files and subfolders in in current folder as is
 			curscan: new Date(), // time of last scanning of current folder
 			curcid: "", // current category ID
 			curpuid: "", // current folder PUID
@@ -469,18 +468,38 @@ const VueMainApp = {
 		// not cached files
 		uncached() {
 			const lst = [];
-			for (const file of this.filelist) {
-				if (!file.ntmb) {
+			for (const file of this.flist) {
+				if (!file.type && !file.ntmb) {
 					lst.push(file);
 				}
 			}
 			return lst;
 		},
 
+		// number of subfolders
+		pathcount() {
+			let n = 0
+			for (const file of this.flist) {
+				if (file.type === FT.dir) {
+					n++;
+				}
+			}
+			return n;
+		},
+		// number of files
+		filecount() {
+			let n = 0
+			for (const file of this.flist) {
+				if (!file.type) {
+					n++;
+				}
+			}
+			return n;
+		},
 		// files sum size
 		sumsize() {
 			let ss = 0;
-			for (const file of this.filelist) {
+			for (const file of this.flist) {
 				ss += file.size ?? 0;
 			}
 			return fmtitemsize(ss);
@@ -543,17 +562,9 @@ const VueMainApp = {
 			const sel = this.copied ?? this.cuted;
 			return {
 				'disabled': !sel || (() => {
-					if (sel.type) {
-						for (const fp of this.pathlist) {
-							if (fp.puid === sel.puid) {
-								return true;
-							}
-						}
-					} else {
-						for (const fp of this.filelist) {
-							if (fp.puid === sel.puid) {
-								return true;
-							}
+					for (const file of this.flist) {
+						if (file.puid === sel.puid) {
+							return true;
 						}
 					}
 					return false;
@@ -564,17 +575,9 @@ const VueMainApp = {
 			const sel = this.copied ?? this.cuted;
 			return {
 				'disabled': !sel || !(() => {
-					if (sel.type) {
-						for (const fp of this.pathlist) {
-							if (fp.name === sel.name) {
-								return true;
-							}
-						}
-					} else {
-						for (const fp of this.filelist) {
-							if (fp.name === sel.name) {
-								return true;
-							}
+					for (const file of this.flist) {
+						if (file.name === sel.name) {
+							return true;
 						}
 					}
 					return false;
@@ -675,7 +678,7 @@ const VueMainApp = {
 			this.shrname = "";
 			document.title = `hms - ${this.curbasename}`;
 
-			this.newfolder(response.data, hist.cid === "home");
+			this.newfolder(response.data);
 		},
 
 		// opens given folder cleary
@@ -725,7 +728,7 @@ const VueMainApp = {
 
 			const response = await fetchjsonauth("POST", "/api/tmb/scnstart", {
 				aid: this.aid,
-				list: this.uncached.map(fp => fp.puid)
+				list: this.uncached.map(file => file.puid)
 			});
 			traceajax(response);
 			if (!response.ok) {
@@ -737,7 +740,7 @@ const VueMainApp = {
 			while (curpuid === this.puid && this.uncached.length) {
 				// check cached state loop
 				const response = await fetchajaxauth("POST", "/api/tmb/chk", {
-					tmbs: this.uncached.map(fp => ({ puid: fp.puid }))
+					tmbs: this.uncached.map(file => ({ puid: file.puid }))
 				});
 				traceajax(response);
 				if (!response.ok) {
@@ -747,13 +750,13 @@ const VueMainApp = {
 				const gpslist = [];
 				for (const tp of response.data.tmbs) {
 					if (tp.ntmb) {
-						for (const fp of this.filelist) {
-							if (fp.puid === tp.puid) {
-								fp.ntmb = tp.ntmb; // Vue.set
-								fp.mtmb = tp.mtmb; // Vue.set
+						for (const file of this.flist) {
+							if (file.puid === tp.puid) {
+								file.ntmb = tp.ntmb; // Vue.set
+								file.mtmb = tp.mtmb; // Vue.set
 								// add gps-item
-								if (fp.latitude && fp.longitude && fp.ntmb === 1) {
-									gpslist.push(fp);
+								if (file.latitude && file.longitude && file.ntmb === 1) {
+									gpslist.push(file);
 								}
 								break;
 							}
@@ -774,7 +777,7 @@ const VueMainApp = {
 
 			const response = await fetchjsonauth("POST", "/api/tmb/scnbreak", {
 				aid: this.aid,
-				list: this.uncached.map(fp => fp.puid)
+				list: this.uncached.map(file => file.puid)
 			});
 			traceajax(response);
 			if (!response.ok) {
@@ -832,25 +835,15 @@ const VueMainApp = {
 		},
 
 		updateshared() {
-			for (const fp of this.pathlist) {
+			for (const file of this.flist) {
 				let sf = false;
 				for (const shr of this.shared) {
-					if (shr.puid === fp.puid) {
+					if (shr.puid === file.puid) {
 						sf = true;
 						break;
 					}
 				}
-				fp.shared = sf; // Vue.set
-			}
-			for (const fp of this.filelist) {
-				let sf = false;
-				for (const shr of this.shared) {
-					if (shr.puid === fp.puid) {
-						sf = true;
-						break;
-					}
-				}
-				fp.shared = sf; // Vue.set
+				file.shared = sf; // Vue.set
 			}
 		},
 
@@ -907,17 +900,12 @@ const VueMainApp = {
 			this.histpos = this.histlist.length;
 		},
 
-		newfolder(list, ishome) {
-			this.pathlist = [];
-			this.filelist = [];
+		newfolder(list) {
+			this.flist = [];
 			// update folder settings
-			for (const fp of list ?? []) {
-				if (fp && (fp.type !== FT.ctgr || ishome)) {
-					if (fp.type) {
-						this.pathlist.push(fp);
-					} else {
-						this.filelist.push(fp);
-					}
+			for (const file of list ?? []) {
+				if (file && (file.type !== FT.ctgr || this.curcid === "home")) {
+					this.flist.push(file);
 				}
 			}
 			this.updateshared();
@@ -928,18 +916,16 @@ const VueMainApp = {
 			// init map card
 			this.$refs.mcard.new();
 			// update map card
-			if (this.filelist.length) {
-				const gpslist = [];
-				for (const fp of this.filelist) {
-					if (fp.latitude && fp.longitude && fp.ntmb === 1) {
-						gpslist.push(fp);
-					}
-					if (pathext(fp.name) === ".gpx") {
-						this.$refs.mcard.addgpx(fp);
-					}
+			const gpslist = [];
+			for (const file of this.flist) {
+				if (file.latitude && file.longitude && file.ntmb === 1) {
+					gpslist.push(file);
 				}
-				this.$refs.mcard.addmarkers(gpslist);
+				if (pathext(file.name) === ".gpx") {
+					this.$refs.mcard.addgpx(file);
+				}
 			}
+			this.$refs.mcard.addmarkers(gpslist);
 		},
 
 		onhome() {
@@ -1061,7 +1047,7 @@ const VueMainApp = {
 					if (response.ok) {
 						const file = response.data;
 						if (file) {
-							this.pathlist.push(file);
+							this.flist.push(file);
 						}
 						this.diskadd?.hide();
 					} else {
@@ -1088,7 +1074,7 @@ const VueMainApp = {
 					}
 
 					if (response.data) {
-						this.pathlist.splice(this.pathlist.findIndex(elem => elem === this.selfile), 1);
+						this.flist.splice(this.flist.findIndex(elem => elem === this.selfile), 1);
 						if (this.selfile.shared) {
 							await this.fetchsharedel(this.selfile);
 						}
@@ -1125,53 +1111,39 @@ const VueMainApp = {
 			(async () => {
 				try {
 					if (this.copied) {
-						const fp = this.copied;
+						const file = this.copied;
 						const response = await fetchajaxauth("POST", "/api/edit/copy", {
 							aid: this.$root.aid,
-							src: fp.puid,
+							src: file.puid,
 							dst: this.curpuid,
 							overwrite: ovw
 						});
 						traceajax(response);
 						if (response.ok) {
 							// update folder settings
-							if (fp.type) {
-								this.pathlist.push(response.data);
-							} else {
-								this.filelist.push(response.data);
-							}
+							this.flist.push(response.data);
 							this.fetchscanstart(); // fetch at backround
 						} else {
 							throw new HttpError(response.status, response.data);
 						}
 					} else {
-						const fp = this.cuted;
+						const file = this.cuted;
 						const response = await fetchajaxauth("POST", "/api/edit/rename", {
 							aid: this.$root.aid,
-							src: fp.puid,
+							src: file.puid,
 							dst: this.curpuid,
 							overwrite: false
 						});
 						traceajax(response);
 						if (response.ok) {
 							// update folder settings
-							if (fp.type) {
-								for (let i = 0; i < this.pathlist.length; i++) {
-									if (this.pathlist[i].puid === fp.puid) {
-										this.pathlist.splice(i, 1);
-										break;
-									}
+							for (let i = 0; i < this.flist.length; i++) {
+								if (this.flist[i].puid === file.puid) {
+									this.flist.splice(i, 1);
+									break;
 								}
-								this.pathlist.push(response.data);
-							} else {
-								for (let i = 0; i < this.filelist.length; i++) {
-									if (this.filelist[i].puid === fp.puid) {
-										this.filelist.splice(i, 1);
-										break;
-									}
-								}
-								this.filelist.push(response.data);
 							}
+							this.flist.push(response.data);
 							this.fetchscanstart(); // fetch at backround
 						} else {
 							throw new HttpError(response.status, response.data);
@@ -1194,28 +1166,19 @@ const VueMainApp = {
 		},
 		ondelete() {
 			(async () => {
-				const fp = this.selfile;
+				const file = this.selfile;
 				try {
 					const response = await fetchjsonauth("POST", "/api/edit/delete", {
 						aid: this.$root.aid,
-						puid: fp.puid
+						puid: file.puid
 					});
 					traceajax(response);
 					if (response.ok) {
 						// update folder settings
-						if (fp.type) {
-							for (let i = 0; i < this.pathlist.length; i++) {
-								if (this.pathlist[i].puid === fp.puid) {
-									this.pathlist.splice(i, 1);
-									break;
-								}
-							}
-						} else {
-							for (let i = 0; i < this.filelist.length; i++) {
-								if (this.filelist[i].puid === fp.puid) {
-									this.filelist.splice(i, 1);
-									break;
-								}
+						for (let i = 0; i < this.flist.length; i++) {
+							if (this.flist[i].puid === file.puid) {
+								this.flist.splice(i, 1);
+								break;
 							}
 						}
 					} else {
