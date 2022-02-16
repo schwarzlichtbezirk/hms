@@ -574,7 +574,7 @@ func ishomeAPI(w http.ResponseWriter, r *http.Request) {
 	if auth == prf {
 		ret = true
 	} else if prf.IsShared(CPhome) {
-		for _, fpath := range CatPath {
+		for _, fpath := range CatKeyPath {
 			if fpath == CPhome {
 				continue
 			}
@@ -595,8 +595,7 @@ func ctgrAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
 		AID  IdType   `json:"aid"`
-		PUID PuidType `json:"puid,omitempty"`
-		CID  string   `json:"cid,omitempty"`
+		PUID PuidType `json:"puid"`
 	}
 	var ret = []Pather{}
 
@@ -604,23 +603,14 @@ func ctgrAPI(w http.ResponseWriter, r *http.Request) {
 	if err = AjaxGetArg(w, r, &arg); err != nil {
 		return
 	}
-
-	var catpath string
-	if len(arg.CID) > 0 {
-		var ok bool
-		if catpath, ok = CidCatPath[arg.CID]; !ok {
-			WriteError400(w, ErrArgNoCid, AECctgrnocid)
-			return
-		}
-		arg.PUID = syspathcache.Cache(catpath)
-	} else if arg.PUID > 0 {
-		var ok bool
-		if catpath, ok = syspathcache.Path(arg.PUID); !ok {
-			WriteError(w, http.StatusNotFound, ErrNoPath, AECctgrnopath)
-			return
-		}
-	} else {
+	if arg.PUID == 0 {
 		WriteError400(w, ErrArgNoPuid, AECctgrnodata)
+		return
+	}
+
+	var catpath, ok = CatKeyPath[arg.PUID]
+	if !ok {
+		WriteError(w, http.StatusNotFound, ErrNoPath, AECctgrnopath)
 		return
 	}
 
@@ -647,33 +637,35 @@ func ctgrAPI(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	switch catpath {
-	case CPhome:
-		for _, fpath := range CatPath {
-			if fpath == CPhome {
+	switch arg.PUID {
+	case PUIDhome:
+		for puid := PuidType(1); puid < PUIDreserved; puid++ {
+			if puid == PUIDhome {
 				continue
 			}
-			if auth == prf || prf.IsShared(fpath) {
-				if prop, err := propcache.Get(fpath); err == nil {
-					ret = append(ret, prop.(Pather))
+			if fpath, ok := CatKeyPath[puid]; ok {
+				if auth == prf || prf.IsShared(fpath) {
+					if prop, err := propcache.Get(fpath); err == nil {
+						ret = append(ret, prop.(Pather))
+					}
 				}
 			}
 		}
-	case CPdrives:
+	case PUIDdrives:
 		ret = prf.ScanRoots()
-	case CPshares:
+	case PUIDshares:
 		ret = prf.ScanShares()
-	case CPmedia:
+	case PUIDmedia:
 		catprop(dircache.Categories([]int{FGvideo, FGaudio, FGimage}, 0.5))
-	case CPvideo:
+	case PUIDvideo:
 		catprop(dircache.Category(FGvideo, 0.5))
-	case CPaudio:
+	case PUIDaudio:
 		catprop(dircache.Category(FGaudio, 0.5))
-	case CPimage:
+	case PUIDimage:
 		catprop(dircache.Category(FGimage, 0.5))
-	case CPbooks:
+	case PUIDbooks:
 		catprop(dircache.Category(FGbooks, 0.5))
-	case CPtexts:
+	case PUIDtexts:
 		catprop(dircache.Category(FGtexts, 0.5))
 	default:
 		WriteError(w, http.StatusMethodNotAllowed, ErrNotCat, AECctgrnotcat)

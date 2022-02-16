@@ -419,10 +419,8 @@ func (prf *Profile) PathAdmin(syspath string) bool {
 			return true
 		}
 	}
-	for _, fpath := range CatPath {
-		if fpath == syspath {
-			return true
-		}
+	if _, ok := CatPathKey[syspath]; ok {
+		return true
 	}
 	return false
 }

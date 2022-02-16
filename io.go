@@ -58,11 +58,6 @@ func (pc *PathCache) Load(fname string) (err error) {
 	for key, fpath := range pc.keypath {
 		pc.pathkey[fpath] = key
 	}
-
-	// cache categories paths
-	for _, fpath := range CatPath {
-		pc.Cache(fpath)
-	}
 	return
 }
 

@@ -1,7 +1,6 @@
 package hms
 
 import (
-	"encoding/base32"
 	"errors"
 	"image"
 	"io"
@@ -46,9 +45,6 @@ var (
 	diskcache gcache.Cache
 )
 
-// Produce base32 string representation of given random bytes slice.
-var idenc = base32.HexEncoding.WithPadding(base32.NoPadding)
-
 // Error messages
 var (
 	ErrNoPUID      = errors.New("file with given puid not found")
@@ -66,17 +62,24 @@ type PathCache struct {
 
 // PUID returns cached PUID for specified system path.
 func (c *PathCache) PUID(fpath string) (puid PuidType, ok bool) {
-	c.mux.RLock()
-	defer c.mux.RUnlock()
-	puid, ok = c.pathkey[fpath]
+	puid, ok = CatPathKey[fpath]
+	if !ok {
+		c.mux.RLock()
+		puid, ok = c.pathkey[fpath]
+		c.mux.RUnlock()
+	}
 	return
 }
 
 // Path returns cached system path of specified PUID (path unique identifier).
 func (c *PathCache) Path(puid PuidType) (fpath string, ok bool) {
-	c.mux.RLock()
-	defer c.mux.RUnlock()
-	fpath, ok = c.keypath[puid]
+	if puid < PUIDreserved {
+		fpath, ok = CatKeyPath[puid]
+	} else {
+		c.mux.RLock()
+		fpath, ok = c.keypath[puid]
+		c.mux.RUnlock()
+	}
 	return
 }
 
@@ -86,7 +89,7 @@ func (c *PathCache) MakePUID() (puid PuidType) {
 	defer c.mux.RUnlock()
 
 	var n = 0
-	for ok := true; ok; _, ok = c.keypath[puid] {
+	for ok := true; puid < PUIDreserved || ok; _, ok = c.keypath[puid] {
 		if n == 10 {
 			cfg.PUIDlen++
 			if cfg.PUIDlen > 12 {
@@ -243,16 +246,17 @@ func initcaches() {
 		LRU().
 		LoaderFunc(func(key interface{}) (ret interface{}, err error) {
 			var syspath = key.(string)
+			if puid, ok := CatPathKey[syspath]; ok {
+				var fk FileKit
+				fk.NameVal = CatNames[puid]
+				fk.TypeVal = FTctgr
+				fk.PUIDVal = puid
+				fk.SetTmb(TMBreject, "")
+				ret = &fk
+				return
+			}
 			var fi fs.FileInfo
 			if fi, err = StatFile(syspath); err != nil {
-				for _, fpath := range CatPath {
-					if fpath == syspath {
-						var ck CatKit
-						ck.Setup(fpath)
-						ret, err = &ck, nil
-						return
-					}
-				}
 				return
 			}
 			ret = MakeProp(syspath, fi)

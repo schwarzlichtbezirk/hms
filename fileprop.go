@@ -227,45 +227,6 @@ var extgrp = map[string]int{
 	".asx":  FGpacks,
 }
 
-// Categories properties constants.
-const (
-	CPhome   = "[home/Home]"
-	CPdrives = "[drives/Drives list]"
-	CPshares = "[shares/Shared resources]"
-	CPmedia  = "[media/Multimedia files]"
-	CPvideo  = "[video/Movie and video files]"
-	CPaudio  = "[audio/Music and audio files]"
-	CPimage  = "[image/Photos and images]"
-	CPbooks  = "[books/Books]"
-	CPtexts  = "[texts/Text files]"
-)
-
-// CatPath is paths list of categories properties.
-var CatPath = []string{
-	CPhome,
-	CPdrives,
-	CPshares,
-	CPmedia,
-	CPvideo,
-	CPaudio,
-	CPimage,
-	CPbooks,
-	CPtexts,
-}
-
-// CidCatPath is map where key is CID, value is categories paths.
-var CidCatPath = map[string]string{
-	"home":   CPhome,
-	"drives": CPdrives,
-	"shares": CPshares,
-	"media":  CPmedia,
-	"video":  CPvideo,
-	"audio":  CPaudio,
-	"image":  CPimage,
-	"books":  CPbooks,
-	"texts":  CPtexts,
-}
-
 // GetFileExt returns file extension converted to lowercase.
 func GetFileExt(fname string) string {
 	return strings.ToLower(path.Ext(fname))
@@ -505,23 +466,6 @@ func (dk *DriveKit) Scan(syspath string) error {
 		dk.Latency = -1
 	}
 	return err
-}
-
-// CatKit is categories properties kit.
-type CatKit struct {
-	PathProp
-	TmbProp
-	CID string `json:"cid"`
-}
-
-// Setup fills fields with given path. Do not looks for share.
-func (ck *CatKit) Setup(fpath string) {
-	var pos = strings.IndexByte(fpath, '/')
-	ck.NameVal = fpath[pos+1 : len(fpath)-1]
-	ck.TypeVal = FTctgr
-	ck.PUIDVal = syspathcache.Cache(fpath)
-	ck.SetTmb(TMBreject, "")
-	ck.CID = fpath[1:pos]
 }
 
 // TagEnum is descriptor for discs and tracks.

@@ -102,7 +102,6 @@ const (
 
 	AECctgrnodata
 	AECctgrnopath
-	AECctgrnocid
 	AECctgrnoacc
 	AECctgrnoshr
 	AECctgrnotcat

@@ -24,17 +24,45 @@ let iconmapping = {
 };
 let thumbmode = true;
 
-// Category properties
+// Predefined PUIDs.
+const PUID = {
+	home: "04",
+	drives: "08",
+	shares: "0C",
+	media: "0G",
+	video: "0K",
+	audio: "0O",
+	image: "0S",
+	books: "10",
+	texts: "14",
+
+	reserved: 32
+};
+
+// Category identifiers.
+const CID = {
+	"04": "home",
+	"08": "drives",
+	"0C": "shares",
+	"0G": "media",
+	"0K": "video",
+	"0O": "audio",
+	"0S": "image",
+	"10": "books",
+	"14": "texts",
+};
+
+// Category properties.
 const CP = {
-	home: "Home",
-	drives: "Drives list",
-	shares: "Shared resources",
-	media: "Multimedia files",
-	video: "Movie and video files",
-	audio: "Music and audio files",
-	image: "Photos and images",
-	books: "Books",
-	texts: "Text files"
+	"04": "Home",
+	"08": "Drives list",
+	"0C": "Shared resources",
+	"0G": "Multimedia files",
+	"0K": "Movie and video files",
+	"0O": "Music and audio files",
+	"0S": "Photos and images",
+	"10": "Books",
+	"14": "Text files"
 };
 
 // File types
@@ -226,8 +254,8 @@ const geticonpath = file => {
 	switch (file.type) {
 		case FT.ctgr:
 			return {
-				org: org.cid[file.cid] || org.cid.cid,
-				alt: alt.cid[file.cid] || alt.cid.cid
+				org: org.cid[CID[file.puid]] || org.cid.cid,
+				alt: alt.cid[CID[file.puid]] || alt.cid.cid
 			};
 		case FT.drv:
 			if (file.latency < 0) {
@@ -397,7 +425,6 @@ const VueMainApp = {
 			// current opened folder data
 			flist: [], // list of files and subfolders in in current folder as is
 			curscan: new Date(), // time of last scanning of current folder
-			curcid: "", // current category ID
 			curpuid: "", // current folder PUID
 			curpath: "", // current folder path and path state
 			shrname: "", // current folder path share name
@@ -422,8 +449,8 @@ const VueMainApp = {
 		},
 		// current path base name
 		curbasename() {
-			if (this.curcid) {
-				return CP[this.curcid] || this.curcid;
+			if (CP[this.curpuid]) {
+				return CP[this.curpuid];
 			} else if (this.curpath) {
 				const arr = this.curpath.split('/');
 				const base = arr.pop() || arr.pop();
@@ -508,7 +535,7 @@ const VueMainApp = {
 		// common buttons enablers
 
 		clshome() {
-			return { 'disabled': this.curcid === "home" || !(this.isadmin || this.ishome) };
+			return { 'disabled': this.curpuid === PUID.home || !(this.isadmin || this.ishome) };
 		},
 		clsback() {
 			return { 'disabled': this.histpos < 2 };
@@ -531,7 +558,7 @@ const VueMainApp = {
 		},
 
 		showdiskadd() {
-			return this.isadmin && this.curcid === 'drives';
+			return this.isadmin && this.curpuid === PUID.drives;
 		},
 		clsdiskpathedt() {
 			return {
@@ -601,8 +628,8 @@ const VueMainApp = {
 		hintback() {
 			if (this.histpos > 1) {
 				const hist = this.histlist[this.histpos - 2];
-				if (hist.cid) {
-					return `back to ${hist.cid}`;
+				if (CP[hist.puid]) {
+					return `back to "${CP[hist.puid]}"`;
 				} else if (hist.path) {
 					return `back to /id${hist.aid}/path/${hist.path}`;
 				} else {
@@ -614,8 +641,8 @@ const VueMainApp = {
 		hintforward() {
 			if (this.histpos < this.histlist.length) {
 				const hist = this.histlist[this.histpos];
-				if (hist.cid) {
-					return `forward to ${hist.cid}`;
+				if (CP[hist.puid]) {
+					return `forward to ${CP[hist.puid]}`;
 				} else if (hist.path) {
 					return `forward to /id${hist.aid}/path/${hist.path}`;
 				} else {
@@ -658,7 +685,7 @@ const VueMainApp = {
 
 		async fetchcategory(hist) {
 			const response = await fetchajaxauth("POST", "/api/res/ctgr", {
-				aid: hist.aid, puid: hist.puid, cid: hist.cid
+				aid: hist.aid, puid: hist.puid
 			});
 			traceajax(response);
 			if (!response.ok) {
@@ -666,13 +693,12 @@ const VueMainApp = {
 			}
 
 			// update shared
-			if (hist.cid === "shares" && this.isadmin) {
+			if (hist.puid === PUID.shares && this.isadmin) {
 				this.shared = response.data ?? [];
 			}
 
 			// current path & state
 			this.curscan = new Date(Date.now());
-			this.curcid = hist.cid;
 			this.curpuid = hist.puid;
 			this.curpath = "";
 			this.shrname = "";
@@ -695,7 +721,6 @@ const VueMainApp = {
 			hist.path = response.data.path;
 			// current path & state
 			this.curscan = new Date(Date.now());
-			this.curcid = "";
 			this.curpuid = response.data.puid;
 			this.curpath = response.data.path;
 			this.shrname = response.data.shrname;
@@ -705,13 +730,13 @@ const VueMainApp = {
 		},
 
 		async fetchopenroute(hist) {
-			if (!hist.cid && !hist.puid && !hist.path) {
-				hist.cid = "home";
+			if (!hist.puid && !hist.path) {
+				hist.puid = PUID.home;
 			}
 			await this.fetchscanbreak() // stop previous folder scanning
-			if (hist.cid) {
+			if (CP[hist.puid]) {
 				await this.fetchcategory(hist);
-				if (hist.cid === "shares") {
+				if (hist.puid === PUID.shares) {
 					this.fetchscanstart(); // fetch at backround
 				}
 			} else {
@@ -882,8 +907,8 @@ const VueMainApp = {
 
 		seturl() {
 			const url = (() => {
-				if (this.curcid) {
-					return `${(devmode ? "/dev" : "")}/id${this.aid}/ctgr/${this.curcid}/`;
+				if (CID[this.curpuid]) {
+					return `${(devmode ? "/dev" : "")}/id${this.aid}/ctgr/${CID[this.curpuid]}/`;
 				} else if (this.curpath) {
 					return this.curlongurl;
 				} else {
@@ -904,7 +929,7 @@ const VueMainApp = {
 			this.flist = [];
 			// update folder settings
 			for (const file of list ?? []) {
-				if (file && (file.type !== FT.ctgr || this.curcid === "home")) {
+				if (file && (file.type !== FT.ctgr || this.curpuid === PUID.home)) {
 					this.flist.push(file);
 				}
 			}
@@ -997,8 +1022,8 @@ const VueMainApp = {
 			(async () => {
 				eventHub.emit('ajax', +1);
 				try {
-					await this.fetchopenroute({ cid: this.curcid, aid: this.aid, puid: this.curpuid, path: this.curpath });
-					if (this.isadmin && this.curcid !== "shares") {
+					await this.fetchopenroute({ aid: this.aid, puid: this.curpuid, path: this.curpath });
+					if (this.isadmin && this.curpuid !== PUID.shares) {
 						await this.fetchshared(); // get shares
 					}
 					if (!this.isadmin) {
@@ -1214,11 +1239,11 @@ const VueMainApp = {
 						try {
 							// open route and push history step
 							const hist = { aid: this.aid };
-							if (file.cid) {
-								hist.cid = file.cid;
-							}
 							if (file.puid) {
 								hist.puid = file.puid;
+							}
+							if (file.path) {
+								hist.path = file.path;
 							}
 							await this.fetchopenroute(hist);
 							this.pushhist(hist);
@@ -1298,15 +1323,15 @@ const VueMainApp = {
 		const route = chunks[0];
 		chunks.shift();
 		if (route === "ctgr") {
-			hist.cid = chunks[0];
+			hist.puid = PUID[chunks[0]];
 			chunks.shift();
 		} else if (route === "path") {
 			hist.path = chunks.join('/');
 		} else if (route === "main") {
-			hist.cid = "home";
+			hist.puid = PUID.home;
 		}
-		if (!hist.cid && !hist.path) {
-			hist.cid = "home";
+		if (!hist.puid && !hist.path) {
+			hist.puid = PUID.home;
 		}
 
 		// load resources and open route
@@ -1340,7 +1365,7 @@ const VueMainApp = {
 
 				// open route and push history step
 				await this.fetchopenroute(hist);
-				if (this.isadmin && hist.cid !== "share") {
+				if (this.isadmin && hist.puid !== PUID.shares) {
 					await this.fetchshared(); // get shares
 				}
 				if (!this.isadmin) {
