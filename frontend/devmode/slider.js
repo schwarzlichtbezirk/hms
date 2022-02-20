@@ -251,7 +251,7 @@ const VuePhotoSlider = {
 				return;
 			}
 			if (imagefilter(file) || videofilter(file)) {
-				this.popup(file, list ?? this.$root.$refs.fcard.flist);
+				this.popup(file, list ?? this.$root.$refs.fcard.filelist);
 			}
 		},
 		onselect(file) {

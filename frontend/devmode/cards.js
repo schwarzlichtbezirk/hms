@@ -2,11 +2,13 @@
 
 const sortmodeicon = {
 	byalpha: 'sort_by_alpha',
+	bytime: 'schedule',
 	bysize: 'sort',
-	unsorted: 'reorder'
+	unsorted: 'filter_alt_off'
 };
 const sortmodehint = {
 	byalpha: "sort by alpha",
+	bytime: "sort by time",
 	bysize: "sort by size",
 	unsorted: "as is unsorted"
 };
@@ -22,9 +24,9 @@ const listmoderow = {
 	lgicon: 'align-items-center'
 };
 const listmodeicon = {
-	smicon: 'format_align_justify',
-	mdicon: 'view_comfy',
-	lgicon: 'view_module'
+	smicon: 'view_comfy',
+	mdicon: 'view_module',
+	lgicon: 'widgets'
 };
 const listmodehint = {
 	smicon: "small icons",
@@ -274,6 +276,13 @@ const VueFileCard = {
 			iid: makestrid(10) // instance ID
 		};
 	},
+	watch: {
+		filtlist: {
+			handler(val, oldval) {
+				eventHub.emit('playlist', val);
+			}
+		}
+	},
 	computed: {
 		filelist() {
 			const l = [];
@@ -299,16 +308,25 @@ const VueFileCard = {
 				res.sort((v1, v2) => {
 					return this.sortorder * (v1.name.toLowerCase() > v2.name.toLowerCase() ? 1 : -1);
 				});
+			} else if (this.sortmode === 'bytime') {
+				res.sort((v1, v2) => {
+					const t1 = v1.datetime ?? v1.time;
+					const t2 = v2.datetime ?? v2.time;
+					if (t1 !== t2) {
+						return this.sortorder * (t1 > t2 ? 1 : -1);
+					}
+					return this.sortorder * (v1.name.toLowerCase() > v2.name.toLowerCase() ? 1 : -1);
+				});
 			} else if (this.sortmode === 'bysize') {
 				res.sort((v1, v2) => {
-					if (v1.size === v2.size) {
-						return this.sortorder * (v1.name.toLowerCase() > v2.name.toLowerCase() ? 1 : -1);
-					} else {
-						return this.sortorder * (v1.size > v2.size ? 1 : -1);
+					const s1 = v1.size ?? 0;
+					const s2 = v2.size ?? 0;
+					if (s1 !== s2) {
+						return this.sortorder * (s1 > s2 ? 1 : -1);
 					}
+					return this.sortorder * (v1.name.toLowerCase() > v2.name.toLowerCase() ? 1 : -1);
 				});
 			}
-			eventHub.emit('playlist', res);
 			return res;
 		},
 
@@ -397,19 +415,18 @@ const VueFileCard = {
 	methods: {
 		onorder() {
 			this.sortorder = -this.sortorder;
-			const fl = this.filtlist; // update filtlist now
 		},
 		onsortalpha() {
 			this.sortmode = 'byalpha';
-			const fl = this.filtlist; // update filtlist now
+		},
+		onsorttime() {
+			this.sortmode = 'bytime';
 		},
 		onsortsize() {
 			this.sortmode = 'bysize';
-			const fl = this.filtlist; // update filtlist now
 		},
 		onsortunsorted() {
 			this.sortmode = 'unsorted';
-			const fl = this.filtlist; // update filtlist now
 		},
 		onlistmodesm() {
 			this.listmode = 'smicon';
@@ -430,31 +447,24 @@ const VueFileCard = {
 		},
 		onaudio() {
 			this.fgshow[FG.audio] = !this.fgshow[FG.audio];
-			const fl = this.filtlist; // update filtlist now
 		},
 		onvideo() {
 			this.fgshow[FG.video] = !this.fgshow[FG.video];
-			const fl = this.filtlist; // update filtlist now
 		},
 		onphoto() {
 			this.fgshow[FG.image] = !this.fgshow[FG.image];
-			const fl = this.filtlist; // update filtlist now
 		},
 		onbooks() {
 			this.fgshow[FG.books] = !this.fgshow[FG.books];
-			const fl = this.filtlist; // update filtlist now
 		},
 		ontexts() {
 			this.fgshow[FG.texts] = !this.fgshow[FG.texts];
-			const fl = this.filtlist; // update filtlist now
 		},
 		onpacks() {
 			this.fgshow[FG.packs] = !this.fgshow[FG.packs];
-			const fl = this.filtlist; // update filtlist now
 		},
 		onother() {
 			this.fgshow[FG.other] = !this.fgshow[FG.other];
-			const fl = this.filtlist; // update filtlist now
 		},
 
 		onunselect() {
@@ -645,6 +655,7 @@ const VueTileCard = {
 	props: ["list"],
 	data() {
 		return {
+			sortorder: 1,
 			tiles: [],
 			sheet: [],
 			tilemode: "mode-246",
@@ -690,7 +701,7 @@ const VueTileCard = {
 			let row0 = [];
 			for (let line = 0; line < this.sheet.length; line++) {
 				const tr = [];
-				const row1 = this.sheet[line];
+				const row1 = this.sheet[this.sortorder > 0 ? line : this.sheet.length - line - 1];
 				for (let x = 0; x < 12; x++) {
 					if (row1[x] && row1[x] !== row1[x - 1] && row0[x] !== row1[x]) {
 						const tile = this.tiles[row1[x] - 1];
@@ -703,8 +714,19 @@ const VueTileCard = {
 			return tbl;
 		},
 
+		hintorder() {
+			return this.sortorder > 0
+				? "direct order"
+				: "reverse order";
+		},
 		hinttilemode() {
 			return this.tilemode;
+		},
+
+		clsorder() {
+			return this.sortorder > 0
+				? 'arrow_downward'
+				: 'arrow_upward';
 		},
 		clsmode246() {
 			return { active: this.tilemode === 'mode-246' };
@@ -720,6 +742,9 @@ const VueTileCard = {
 		}
 	},
 	methods: {
+		onorder() {
+			this.sortorder = -this.sortorder;
+		},
 		onrebuild() {
 			const ret = maketileslide(this.photolist, tilemodetype[this.tilemode]);
 			this.tiles = ret.tiles;

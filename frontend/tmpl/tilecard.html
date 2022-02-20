@@ -5,10 +5,11 @@
 			<a class="card-link d-block" data-bs-toggle="collapse" v-bind:href="'#card'+iid">smart tiles</a>
 		</div>
 		<ul class="navbar-nav flex-row ms-auto">
+			<li><button class="btn" v-on:click="onorder" v-bind:title="hintorder"><i class="material-icons">{{clsorder}}</i></button></li>
 			<li>
 				<div class="btn-group">
 					<button type="button" class="btn dropdown-toggle" v-bind:title="hinttilemode" data-bs-toggle="dropdown" aria-expanded="false">
-						<i class="material-icons">widgets</i>
+						<i class="material-icons">dashboard</i>
 					</button>
 					<div class="dropdown-menu dropdown-menu-end bg-card menu-scrollable">
 						<button class="dropdown-item" type="button" v-on:click="onmode246" v-bind:class="clsmode246">mode-246</button>

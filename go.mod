@@ -27,7 +27,7 @@ require (
 
 require (
 	github.com/frankban/quicktest v1.14.2 // indirect
-	github.com/gopherjs/gopherjs v0.0.0-20220104163920-15ed2e8cf2bd // indirect
+	github.com/gopherjs/gopherjs v0.0.0-20220219203646-6bee22ae7f6e // indirect
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
 	github.com/pkg/xattr v0.4.5 // indirect
 	github.com/schwarzlichtbezirk/mmap-go v1.0.2 // indirect

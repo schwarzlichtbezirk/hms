@@ -219,7 +219,6 @@ var (
 	ErrNotFound  = errors.New("404 page not found")
 	ErrArgNoNum  = errors.New("'num' parameter not recognized")
 	ErrArgNoHD   = errors.New("'hd' parameter not recognized")
-	ErrArgNoCid  = errors.New("'cid' parameter not recognized")
 	ErrArgNoPuid = errors.New("'puid' argument required")
 	ErrNotDir    = errors.New("path is not directory")
 	ErrNoPath    = errors.New("path is not found")

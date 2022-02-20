@@ -812,8 +812,7 @@ const VueMainApp = {
 
 		async fetchshared() {
 			const response = await fetchajaxauth("POST", "/api/res/ctgr", {
-				aid: this.aid,
-				cid: "shares"
+				aid: this.aid, puid: PUID.shares
 			});
 			traceajax(response);
 			if (!response.ok) {
@@ -958,7 +957,7 @@ const VueMainApp = {
 				eventHub.emit('ajax', +1);
 				try {
 					// open route and push history step
-					const hist = { cid: "home", aid: this.aid };
+					const hist = { aid: this.aid, puid: PUID.home };
 					await this.fetchopenroute(hist);
 					this.pushhist(hist);
 				} catch (e) {
@@ -1238,13 +1237,11 @@ const VueMainApp = {
 						eventHub.emit('ajax', +1);
 						try {
 							// open route and push history step
-							const hist = { aid: this.aid };
-							if (file.puid) {
-								hist.puid = file.puid;
-							}
-							if (file.path) {
-								hist.path = file.path;
-							}
+							const hist = {
+								aid: this.aid,
+								puid: file.puid,
+								path: file.path
+							};
 							await this.fetchopenroute(hist);
 							this.pushhist(hist);
 						} catch (e) {
