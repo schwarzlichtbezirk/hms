@@ -292,12 +292,6 @@ const VueIcon = {
 		}
 	},
 	methods: {
-		onselect() {
-			eventHub.emit('select', this.file);
-		},
-		onopen() {
-			eventHub.emit('open', this.file);
-		},
 		_iconset(im) {
 			this.iconfmt = im.iconfmt;
 		},
@@ -366,12 +360,6 @@ const VueFileIcon = {
 		}
 	},
 	methods: {
-		onselect() {
-			eventHub.emit('select', this.file);
-		},
-		onopen() {
-			eventHub.emit('open', this.file);
-		},
 		_iconset(im) {
 			this.iconfmt = im.iconfmt;
 		},
@@ -418,13 +406,6 @@ const VueTileIcon = {
 		}
 	},
 	methods: {
-		onselect() {
-			eventHub.emit('select', this.file);
-		},
-
-		onopen() {
-			eventHub.emit('open', this.file);
-		},
 		_iconset(im) {
 			this.iconfmt = im.iconfmt;
 		},
@@ -473,13 +454,6 @@ const VueImgIcon = {
 		}
 	},
 	methods: {
-		onselect() {
-			eventHub.emit('select', this.file);
-		},
-
-		onopen() {
-			eventHub.emit('open', this.file);
-		},
 		_iconset(im) {
 			this.iconfmt = im.iconfmt;
 		},

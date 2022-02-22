@@ -246,6 +246,12 @@ const VueDirCard = {
 			this.listmode = 'lgicon';
 		},
 
+		onselect(file) {
+			eventHub.emit('select', file);
+		},
+		onopen(file) {
+			eventHub.emit('open', file);
+		},
 		onunselect() {
 			eventHub.emit('select', null);
 		}
@@ -467,6 +473,12 @@ const VueFileCard = {
 			this.fgshow[FG.other] = !this.fgshow[FG.other];
 		},
 
+		onselect(file) {
+			eventHub.emit('select', file);
+		},
+		onopen(file) {
+			eventHub.emit('open', file, this.filtlist);
+		},
 		onunselect() {
 			eventHub.emit('select', null);
 		},
@@ -656,6 +668,7 @@ const VueTileCard = {
 	data() {
 		return {
 			sortorder: 1,
+			sortmode: 'byalpha',
 			tiles: [],
 			sheet: [],
 			tilemode: "mode-246",
@@ -674,6 +687,13 @@ const VueTileCard = {
 			},
 			deep: true
 		},
+		sortmode: {
+			handler(val, oldval) {
+				const ret = maketileslide(this.photolist, tilemodetype[this.tilemode]);
+				this.tiles = ret.tiles;
+				this.sheet = ret.sheet;
+			}
+		},
 		tilemode: {
 			handler(val, oldval) {
 				const ret = maketileslide(this.photolist, tilemodetype[val]);
@@ -684,13 +704,36 @@ const VueTileCard = {
 	},
 	computed: {
 		photolist() {
-			const l = [];
+			const res = [];
 			for (const file of this.list) {
 				if (!file.type && (file.model || file.height || file.orientation)) {
-					l.push(file);
+					res.push(file);
 				}
 			}
-			return l;
+			if (this.sortmode === 'byalpha') {
+				res.sort((v1, v2) => {
+					return v1.name.toLowerCase() > v2.name.toLowerCase() ? 1 : -1;
+				});
+			} else if (this.sortmode === 'bytime') {
+				res.sort((v1, v2) => {
+					const t1 = v1.datetime ?? v1.time;
+					const t2 = v2.datetime ?? v2.time;
+					if (t1 !== t2) {
+						return t1 > t2 ? 1 : -1;
+					}
+					return v1.name.toLowerCase() > v2.name.toLowerCase() ? 1 : -1;
+				});
+			} else if (this.sortmode === 'bysize') {
+				res.sort((v1, v2) => {
+					const s1 = v1.size ?? 0;
+					const s2 = v2.size ?? 0;
+					if (s1 !== s2) {
+						return this.sortorder * (s1 > s2 ? 1 : -1);
+					}
+					return v1.name.toLowerCase() > v2.name.toLowerCase() ? 1 : -1;
+				});
+			}
+			return res;
 		},
 		isvisible() {
 			return this.tiles.length > 0;
@@ -719,6 +762,9 @@ const VueTileCard = {
 				? "direct order"
 				: "reverse order";
 		},
+		hintsortmode() {
+			return sortmodehint[this.sortmode];
+		},
 		hinttilemode() {
 			return this.tilemode;
 		},
@@ -727,6 +773,9 @@ const VueTileCard = {
 			return this.sortorder > 0
 				? 'arrow_downward'
 				: 'arrow_upward';
+		},
+		clssortmode() {
+			return sortmodeicon[this.sortmode];
 		},
 		clsmode246() {
 			return { active: this.tilemode === 'mode-246' };
@@ -744,6 +793,18 @@ const VueTileCard = {
 	methods: {
 		onorder() {
 			this.sortorder = -this.sortorder;
+		},
+		onsortalpha() {
+			this.sortmode = 'byalpha';
+		},
+		onsorttime() {
+			this.sortmode = 'bytime';
+		},
+		onsortsize() {
+			this.sortmode = 'bysize';
+		},
+		onsortunsorted() {
+			this.sortmode = 'unsorted';
 		},
 		onrebuild() {
 			const ret = maketileslide(this.photolist, tilemodetype[this.tilemode]);
@@ -763,8 +824,9 @@ const VueTileCard = {
 			this.tilemode = 'mode-2346';
 		},
 
-		onunselect() {
-			eventHub.emit('select', null);
+		onopen(file) {
+			eventHub.emit('select', file);
+			eventHub.emit('open', file, this.photolist);
 		}
 	}
 };

@@ -8,6 +8,19 @@
 			<li><button class="btn" v-on:click="onorder" v-bind:title="hintorder"><i class="material-icons">{{clsorder}}</i></button></li>
 			<li>
 				<div class="btn-group">
+					<button type="button" class="btn dropdown-toggle" v-bind:title="hintsortmode" data-bs-toggle="dropdown" aria-expanded="false">
+						<i class="material-icons">{{clssortmode}}</i>
+					</button>
+					<div class="dropdown-menu dropdown-menu-end bg-card">
+						<button class="dropdown-item" type="button" v-on:click="onsortalpha"><i class="material-icons pe-2">sort_by_alpha</i>sort by alpha</button>
+						<button class="dropdown-item" type="button" v-on:click="onsorttime"><i class="material-icons pe-2">schedule</i>sort by time</button>
+						<button class="dropdown-item" type="button" v-on:click="onsortsize"><i class="material-icons pe-2">sort</i>sort by size</button>
+						<button class="dropdown-item" type="button" v-on:click="onsortunsorted"><i class="material-icons pe-2">filter_alt_off</i>as is unsorted</button>
+					</div>
+				</div>
+			</li>
+			<li>
+				<div class="btn-group">
 					<button type="button" class="btn dropdown-toggle" v-bind:title="hinttilemode" data-bs-toggle="dropdown" aria-expanded="false">
 						<i class="material-icons">dashboard</i>
 					</button>
@@ -23,7 +36,7 @@
 		</ul>
 	</div>
 	<div v-bind:id="'card'+iid" class="collapse show">
-		<div ref="slide" class="card-body p-1 p-sm-3 folder-table" v-on:click="onunselect">
+		<div ref="slide" class="card-body p-1 p-sm-3 folder-table">
 			<table class="w-100">
 				<tr>
 					<td class="col-1"></td>
@@ -43,7 +56,7 @@
 					<tr>
 						<template v-for="td in tr">
 							<td v-bind:colspan="td.sx" v-bind:rowspan="td.sy">
-								<tile-icon-tag v-bind:file="td.file" v-bind:sx="td.sx" v-bind:sy="td.sy" />
+								<tile-icon-tag v-bind:file="td.file" v-bind:sx="td.sx" v-bind:sy="td.sy" v-on:dblclick.stop="onopen(td.file)" />
 							</td>
 						</template>
 					</tr>

@@ -247,11 +247,8 @@ const VuePhotoSlider = {
 		},
 
 		onopen(file, list) {
-			if (file.type || !file.size) {
-				return;
-			}
 			if (imagefilter(file) || videofilter(file)) {
-				this.popup(file, list ?? this.$root.$refs.fcard.filelist);
+				this.popup(file, list);
 			}
 		},
 		onselect(file) {
