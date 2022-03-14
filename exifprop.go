@@ -86,8 +86,7 @@ type ExifProp struct {
 }
 
 func ratfloat(t *tiff.Tag) float64 {
-	var numer, denom, _ = t.Rat2(0)
-	if denom != 0 {
+	if numer, denom, _ := t.Rat2(0); denom != 0 {
 		return float64(numer) / float64(denom)
 	}
 	return 0

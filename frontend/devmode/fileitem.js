@@ -311,8 +311,8 @@ const VueIcon = {
 	}
 };
 
-const VueFileIcon = {
-	template: '#file-icon-tpl',
+const VueListItem = {
+	template: '#list-item-tpl',
 	props: ["file", "size"],
 	data() {
 		return {
@@ -379,9 +379,9 @@ const VueFileIcon = {
 	}
 };
 
-const VueTileIcon = {
-	template: '#tile-icon-tpl',
-	props: ["file", "sx", "sy"],
+const VueFileItem = {
+	template: '#file-item-tpl',
+	props: ["file", "size"],
 	data() {
 		return {
 			iconfmt: [],
@@ -389,20 +389,42 @@ const VueTileIcon = {
 		};
 	},
 	computed: {
-		fmtalt() {
-			return pathext(this.file.name);
-		},
 		fmttitle() {
 			return filehint(this.file).join('\n');
 		},
-		iconsrcmd() {
-			return `/id${appvm.aid}/tile/${this.file.puid}/${64 * this.sx}x${48 * this.sy}`;
+		label() {
+			const _ = this.iconfmt; // force update field
+			if (this.file.ntmb === 1 && this.tm
+				|| !geticonpath(this.file).org) {
+				return this.file.shared
+					? iconmapping.shared.label
+					: iconmapping.private.label;
+			}
 		},
-		iconsrcxl() {
-			return `/id${appvm.aid}/tile/${this.file.puid}/${100 * this.sx}x${75 * this.sy}`;
+		clsimgwdh() {
+			switch (this.size) {
+				case "smicon":
+					return "smimgw";
+				case "mdicon":
+					return "mdimgw";
+				case "lgicon":
+					return "lgimgw";
+			}
 		},
-		iconsrchd() {
-			return `/id${appvm.aid}/tile/${this.file.puid}/${160 * this.sx}x${120 * this.sy}`;
+		clsimage() {
+			switch (this.size) {
+				case "smicon":
+					return "smimgw smimgh";
+				case "mdicon":
+					return "mdimgw mdimgh";
+				case "lgicon":
+					return "lgimgw lgimgh";
+			}
+		},
+
+		// manage items classes
+		itemview() {
+			return { 'selected': this.file.selected };
 		}
 	},
 	methods: {
@@ -425,8 +447,8 @@ const VueTileIcon = {
 	}
 };
 
-const VueImgIcon = {
-	template: '#img-icon-tpl',
+const VueImgItem = {
+	template: '#img-item-tpl',
 	props: ["file"],
 	data() {
 		return {
@@ -451,6 +473,52 @@ const VueImgIcon = {
 		// manage items classes
 		itemview() {
 			return { 'selected': this.file.selected };
+		}
+	},
+	methods: {
+		_iconset(im) {
+			this.iconfmt = im.iconfmt;
+		},
+		_thumbmode(tm) {
+			this.tm = tm;
+		}
+	},
+	created() {
+		this.iconfmt = iconmapping.iconfmt;
+		this.tm = thumbmode;
+		eventHub.on('iconset', this._iconset);
+		eventHub.on('thumbmode', this._thumbmode);
+	},
+	unmounted() {
+		eventHub.off('iconset', this._iconset);
+		eventHub.off('thumbmode', this._thumbmode);
+	}
+};
+
+const VueTileItem = {
+	template: '#tile-item-tpl',
+	props: ["file", "sx", "sy"],
+	data() {
+		return {
+			iconfmt: [],
+			tm: true
+		};
+	},
+	computed: {
+		fmtalt() {
+			return pathext(this.file.name);
+		},
+		fmttitle() {
+			return filehint(this.file).join('\n');
+		},
+		iconsrcmd() {
+			return `/id${appvm.aid}/tile/${this.file.puid}/${64 * this.sx}x${48 * this.sy}`;
+		},
+		iconsrcxl() {
+			return `/id${appvm.aid}/tile/${this.file.puid}/${100 * this.sx}x${75 * this.sy}`;
+		},
+		iconsrchd() {
+			return `/id${appvm.aid}/tile/${this.file.puid}/${160 * this.sx}x${120 * this.sy}`;
 		}
 	},
 	methods: {

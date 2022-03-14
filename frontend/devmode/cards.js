@@ -14,21 +14,25 @@ const sortmodehint = {
 };
 
 const listmodetag = {
-	smicon: 'file-icon-tag',
-	mdicon: 'file-icon-tag',
-	lgicon: 'img-icon-tag'
+	lsicon: 'list-item-tag',
+	smicon: 'file-item-tag',
+	mdicon: 'file-item-tag',
+	lgicon: 'img-item-tag'
 };
 const listmoderow = {
+	lsicon: 'align-items-start',
 	smicon: 'align-items-start',
 	mdicon: 'align-items-start',
 	lgicon: 'align-items-center'
 };
 const listmodeicon = {
+	lsicon: 'format_align_justify',
 	smicon: 'view_comfy',
 	mdicon: 'view_module',
 	lgicon: 'widgets'
 };
 const listmodehint = {
+	lsicon: "list",
 	smicon: "small icons",
 	mdicon: "middle icons",
 	lgicon: "large icons"
@@ -236,6 +240,9 @@ const VueDirCard = {
 		onorder() {
 			this.sortorder = -this.sortorder;
 		},
+		onlistmodels() {
+			this.listmode = 'lsicon';
+		},
 		onlistmodesm() {
 			this.listmode = 'smicon';
 		},
@@ -433,6 +440,9 @@ const VueFileCard = {
 		},
 		onsortunsorted() {
 			this.sortmode = 'unsorted';
+		},
+		onlistmodels() {
+			this.listmode = 'lsicon';
 		},
 		onlistmodesm() {
 			this.listmode = 'smicon';

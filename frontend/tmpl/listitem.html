@@ -1,0 +1,18 @@
+
+<div class="listitem itemfont d-flex flex-nowrap overflow-hidden" v-bind:title="fmttitle">
+	<div class="position-relative">
+		<icon-tag v-bind:file="file" clsimg="pict" />
+		<picture v-if="label">
+			<template v-for="fmt in iconfmt">
+				<source v-bind:srcset="label+fmt.ext" v-bind:type="fmt.mime">
+			</template>
+			<img class="label position-absolute bottom-0 start-0" alt="shared">
+		</picture>
+		<img v-if="file.playback" class="bars position-absolute top-50 start-50 translate-middle" src="/asst/equalizer-bars.gif" alt="play">
+	</div>
+	<div class="name">{{file.name}}</div>
+	<div class="attr">
+		<div><span class="key">date</span><span class="val">{{file.time}}</span></div>
+		<div><span class="key">size</span><span class="val">{{file.size}}</span></div>
+	</div>
+</div>

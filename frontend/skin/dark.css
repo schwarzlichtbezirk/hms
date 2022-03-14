@@ -201,6 +201,17 @@ body {
 	height: 256px;
 }
 
+.itemfont {
+	line-height: 1.25;
+	font-size: 0.72rem;
+}
+
+	.itemfont .tag {
+		text-align: center;
+		color: #404040;
+		max-height: 3.8rem;
+	}
+
 .fileitem {
 	border: 1px solid transparent;
 	border-radius: 0.25rem;
@@ -228,10 +239,7 @@ body {
 		}
 
 	.fileitem > .tag {
-		text-align: center;
-		color: #404040;
 		background: #909090;
-		max-height: 3.8rem;
 	}
 
 	.fileitem:hover > .tag {
@@ -245,8 +253,7 @@ body {
 	}
 
 .imgitem {
-	line-height: 1.25;
-	font-size: 0.72rem;
+	z-index: auto;
 }
 
 	.imgitem:hover {
@@ -285,11 +292,8 @@ body {
 		right: 16px;
 		bottom: 16px;
 		display: block;
-		text-align: center;
-		color: #404040;
 		background: rgba(144, 144, 144, 0.5);
 		max-width: 112px;
-		max-height: 3.8rem;
 	}
 
 	.imgitem:hover > .tag {
@@ -301,6 +305,40 @@ body {
 		color: #202020;
 		background: #c0c0c0;
 	}
+
+.listitem {
+	width: 100%;
+}
+@media (min-width: 576px) {
+	.listitem {
+		width: 100%;
+	}
+}
+@media (min-width: 768px) {
+	.listitem {
+		width: 100%;
+	}
+}
+@media (min-width: 992px) {
+	.listitem {
+		width: 50%;
+	}
+}
+@media (min-width: 1200px) {
+	.listitem {
+		width: 33.33333333%;
+	}
+}
+@media (min-width: 1400px) {
+	.listitem {
+		width: 25%;
+	}
+}
+
+.listitem .pict {
+	max-width: 48px;
+	max-height: 48px;
+}
 
 /* leaflet container */
 

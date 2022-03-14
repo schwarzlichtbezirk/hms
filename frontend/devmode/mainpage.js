@@ -1501,9 +1501,10 @@ const appws = Vue.createApp(VueMainApp)
 	.component('tile-card-tag', VueTileCard)
 	.component('map-card-tag', VueMapCard)
 	.component('icon-tag', VueIcon)
-	.component('file-icon-tag', VueFileIcon)
-	.component('tile-icon-tag', VueTileIcon)
-	.component('img-icon-tag', VueImgIcon);
+	.component('list-item-tag', VueListItem)
+	.component('file-item-tag', VueFileItem)
+	.component('img-item-tag', VueImgItem)
+	.component('tile-item-tag', VueTileItem);
 const appvm = appws.mount('#app');
 
 // The End.

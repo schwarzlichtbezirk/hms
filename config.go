@@ -2,7 +2,6 @@ package hms
 
 import (
 	"errors"
-	"log"
 	"os"
 	"path/filepath"
 	"time"
@@ -199,7 +198,7 @@ func DetectConfigPath() (retpath string, err error) {
 			retpath = path
 			return
 		}
-		log.Printf("no access to pointed configuration path '%s'\n", cfg.ConfigPath)
+		Log.Printf("no access to pointed configuration path '%s'\n", cfg.ConfigPath)
 	}
 
 	// try to get from config subdirectory on executable path
@@ -297,7 +296,7 @@ func DetectPackPath() (retpath string, err error) {
 			retpath = path
 			return
 		}
-		log.Printf("no access to pointed package path '%s'\n", cfg.PackPath)
+		Log.Printf("no access to pointed package path '%s'\n", cfg.PackPath)
 	}
 
 	// try to find in executable path

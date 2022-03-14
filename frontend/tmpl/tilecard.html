@@ -56,7 +56,7 @@
 					<tr>
 						<template v-for="td in tr">
 							<td v-bind:colspan="td.sx" v-bind:rowspan="td.sy">
-								<tile-icon-tag v-bind:file="td.file" v-bind:sx="td.sx" v-bind:sy="td.sy" v-on:dblclick.stop="onopen(td.file)" />
+								<tile-item-tag v-bind:file="td.file" v-bind:sx="td.sx" v-bind:sy="td.sy" v-on:dblclick.stop="onopen(td.file)" />
 							</td>
 						</template>
 					</tr>

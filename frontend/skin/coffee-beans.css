@@ -223,6 +223,17 @@ a, .btn-link {
 	height: 256px;
 }
 
+.itemfont {
+	line-height: 1.25;
+	font-size: 0.72rem;
+}
+
+	.itemfont .tag {
+		text-align: center;
+		color: PaleGoldenRod;
+		max-height: 3.8rem;
+	}
+
 .fileitem {
 	border: 1px solid transparent;
 	border-radius: 4px;
@@ -250,10 +261,7 @@ a, .btn-link {
 		}
 
 	.fileitem > .tag {
-		text-align: center;
-		color: PaleGoldenRod;
 		background: rgba(102, 51, 153, 0.33); /* RebeccaPurple */
-		max-height: 3.8rem;
 	}
 
 	.fileitem:hover > .tag {
@@ -261,8 +269,7 @@ a, .btn-link {
 	}
 
 .imgitem {
-	line-height: 1.25;
-	font-size: 0.72rem;
+	z-index: auto;
 }
 
 	.imgitem:hover {
@@ -304,17 +311,48 @@ a, .btn-link {
 		right: 16px;
 		bottom: 16px;
 		display: block;
-		text-align: center;
-		color: PaleGoldenRod;
 		background: rgba(102, 51, 153, 0.33); /* RebeccaPurple */
 		max-width: 112px;
-		max-height: 3.8rem;
 	}
 
 	.imgitem:hover > .tag {
 		color: LightGoldenRodYellow;
 		background: rgba(102, 51, 153, 0.67); /* RebeccaPurple */
 	}
+
+.listitem {
+	width: 100%;
+}
+@media (min-width: 576px) {
+	.listitem {
+		width: 100%;
+	}
+}
+@media (min-width: 768px) {
+	.listitem {
+		width: 100%;
+	}
+}
+@media (min-width: 992px) {
+	.listitem {
+		width: 50%;
+	}
+}
+@media (min-width: 1200px) {
+	.listitem {
+		width: 33.33333333%;
+	}
+}
+@media (min-width: 1400px) {
+	.listitem {
+		width: 25%;
+	}
+}
+
+.listitem .pict {
+	max-width: 48px;
+	max-height: 48px;
+}
 
 /* leaflet container */
 

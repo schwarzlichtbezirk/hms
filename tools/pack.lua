@@ -212,9 +212,10 @@ for id, fmtlst in pairs(wpkconf.iconset) do
 	if logrec then logfile(kpath) end
 end
 -- put sources
-for i, fpath in ipairs{path.glob(rootdir.."../?*.?*")} do
-	local fname = string.match(fpath, "/([%w_]+%.%w+)$")
-	if fname then
+for i, fpath in ipairs{path.glob(rootdir.."../*")} do
+	local has, isdir = checkfile(fpath)
+	if not isdir then
+		local fname = string.match(fpath, "/([%w%-%.]+)$")
 		authput("src/"..fname, fpath)
 	end
 end
