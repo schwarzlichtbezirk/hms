@@ -196,7 +196,7 @@ a, .btn-link {
 
 .centerimg {
 	object-position: center center;
-	object-fit: contain;
+	object-fit: scale-down;
 }
 
 .smimgw {
@@ -226,11 +226,11 @@ a, .btn-link {
 .itemfont {
 	line-height: 1.25;
 	font-size: 0.72rem;
+	color: Lime;
 }
 
 	.itemfont .tag {
 		text-align: center;
-		color: Lime;
 		max-height: 3.8rem;
 	}
 
@@ -345,7 +345,7 @@ a, .btn-link {
 	}
 }
 
-.listitem .pict {
+.listitem .pict, .listitem .label, .listitem .bars {
 	max-width: 48px;
 	max-height: 48px;
 }

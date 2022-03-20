@@ -1,12 +1,14 @@
 
-<div class="fileitem itemfont position-relative" v-bind:class="itemview" v-bind:title="fmttitle">
-	<icon-tag v-bind:file="file" v-bind:clsimg="clsimage" />
-	<picture v-if="label">
-		<template v-for="fmt in iconfmt">
-			<source v-bind:srcset="label+fmt.ext" v-bind:type="fmt.mime">
-		</template>
-		<img v-bind:class="clsimage" class="centerimg position-absolute bottom-0 start-0" alt="shared">
-	</picture>
-	<img v-if="file.playback" src="/asst/equalizer-bars.gif" v-bind:class="clsimage" class="centerimg position-absolute top-50 start-50 translate-middle" alt="play">
+<div class="d-flex flex-column fileitem itemfont" v-bind:class="itemview" v-bind:title="fmttitle">
+	<div class="position-relative">
+		<icon-tag v-bind:file="file" v-bind:clsimg="clsimage" />
+		<picture v-if="label">
+			<template v-for="fmt in iconfmt">
+				<source v-bind:srcset="label+fmt.ext" v-bind:type="fmt.mime">
+			</template>
+			<img v-bind:class="clsimage" class="label position-absolute bottom-0 start-0" alt="shared">
+		</picture>
+		<img v-if="file.playback" src="/asst/equalizer-bars.gif" v-bind:class="clsimage" class="bars position-absolute top-50 start-50 translate-middle" alt="play">
+	</div>
 	<div v-bind:class="clsimgwdh" class="tag overflow-hidden">{{file.name}}</div>
 </div>

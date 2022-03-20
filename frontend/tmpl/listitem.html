@@ -1,5 +1,5 @@
 
-<div class="listitem itemfont d-flex flex-nowrap overflow-hidden" v-bind:title="fmttitle">
+<div class="fileitem listitem itemfont d-flex flex-nowrap overflow-hidden" v-bind:class="itemview" v-bind:title="fmttitle">
 	<div class="position-relative">
 		<icon-tag v-bind:file="file" clsimg="pict" />
 		<picture v-if="label">
@@ -12,7 +12,7 @@
 	</div>
 	<div class="name">{{file.name}}</div>
 	<div class="attr">
-		<div><span class="key">date</span><span class="val">{{file.time}}</span></div>
-		<div><span class="key">size</span><span class="val">{{file.size}}</span></div>
+		<div><span class="key">size</span><span class="val">{{filesize}}</span></div>
+		<div><span class="key">date</span><span class="val">{{filetime}}</span></div>
 	</div>
 </div>

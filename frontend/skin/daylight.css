@@ -175,7 +175,7 @@ body {
 
 .centerimg {
 	object-position: center center;
-	object-fit: contain;
+	object-fit: scale-down;
 }
 
 .smimgw {
@@ -205,11 +205,11 @@ body {
 .itemfont {
 	line-height: 1.25;
 	font-size: 0.72rem;
+	color: Black;
 }
 
 	.itemfont .tag {
 		text-align: center;
-		color: Black;
 		max-height: 3.8rem;
 	}
 
@@ -321,7 +321,7 @@ body {
 	}
 }
 
-.listitem .pict {
+.listitem .pict, .listitem .label, .listitem .bars {
 	max-width: 48px;
 	max-height: 48px;
 }

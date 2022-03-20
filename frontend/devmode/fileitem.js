@@ -357,6 +357,12 @@ const VueListItem = {
 		// manage items classes
 		itemview() {
 			return { 'selected': this.file.selected };
+		},
+		filesize() {
+			return fmtfilesize(this.file.size ?? 0);
+		},
+		filetime() {
+			return (new Date(this.file.time)).toLocaleString();
 		}
 	},
 	methods: {
