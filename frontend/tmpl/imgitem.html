@@ -1,5 +1,5 @@
 
-<div class="imgitem itemfont position-relative" v-bind:class="itemview" v-bind:title="fmttitle">
+<div class="imgitem position-relative" v-bind:class="itemview" v-bind:title="fmttitle">
 	<icon-tag v-bind:file="file" clsimg="pict" />
 	<picture v-if="label">
 		<template v-for="fmt in iconfmt">
@@ -8,5 +8,5 @@
 		<img class="label position-absolute bottom-0 start-0" alt="shared">
 	</picture>
 	<img v-if="file.playback" class="bars position-absolute top-50 start-50 translate-middle" src="/asst/equalizer-bars.gif" alt="play">
-	<div class="tag overflow-hidden">{{file.name}}</div>
+	<div class="tag itemfont overflow-hidden">{{file.name}}</div>
 </div>

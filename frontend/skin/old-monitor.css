@@ -116,13 +116,13 @@ a, .btn-link {
 	table-layout: fixed;
 }
 
-.folder-table tr, .folder-table td {
-	padding: 0;
-}
+	.folder-table tr, .folder-table td {
+		padding: 0;
+	}
 
-.folder-table img {
-	padding: 2px;
-}
+	.folder-table img {
+		padding: 2px;
+	}
 
 .breadcrumb-item.active {
 	font-size: 1.5rem;
@@ -229,44 +229,42 @@ a, .btn-link {
 	color: Lime;
 }
 
-	.itemfont .tag {
+	.itemfont.tag {
 		text-align: center;
 		max-height: 3.8rem;
 	}
 
-.fileitem {
+.fileitem, .listitem {
 	border: 1px solid transparent;
 	border-radius: 0;
-	padding: 4px;
-	line-height: 1.25;
-	font-size: 0.72rem;
+	padding: 0.25rem;
 }
 
-	.fileitem:hover {
+	.fileitem:hover, .listitem:hover {
 		background: ForestGreen;
 		border: 1px solid LimeGreen;
 		cursor: pointer;
 	}
 
-	.fileitem.selected {
+	.fileitem.selected, .listitem.selected {
 		background: SeaGreen;
 		border: 1px solid SpringGreen;
 		box-shadow: 0px 0px 8px rgba(255, 255, 255, 0.5);
 	}
 
-		.fileitem.selected:hover {
+		.fileitem.selected:hover, .listitem.selected:hover {
 			background: MediumSeaGreen;
 			border: 1px solid SpringGreen;
 			box-shadow: 0px 0px 12px rgba(255, 255, 255, 0.5);
 		}
 
-	.fileitem > .tag {
+	.fileitem > .tag, .listitem {
 		background: #003000;
 	}
 
-	.fileitem:hover > .tag {
-		background: #004800;
-	}
+		.fileitem:hover > .tag, .listitem:hover {
+			background: #004800;
+		}
 
 .imgitem {
 	z-index: auto;
@@ -319,26 +317,31 @@ a, .btn-link {
 .listitem {
 	width: 100%;
 }
+
 @media (min-width: 576px) {
 	.listitem {
 		width: 100%;
 	}
 }
+
 @media (min-width: 768px) {
 	.listitem {
 		width: 100%;
 	}
 }
+
 @media (min-width: 992px) {
 	.listitem {
 		width: 50%;
 	}
 }
+
 @media (min-width: 1200px) {
 	.listitem {
 		width: 33.33333333%;
 	}
 }
+
 @media (min-width: 1400px) {
 	.listitem {
 		width: 25%;
@@ -346,8 +349,35 @@ a, .btn-link {
 }
 
 .listitem .pict, .listitem .label, .listitem .bars {
-	max-width: 48px;
+	width: 48px;
+	height: 48px;
+}
+
+.listitem .name, .listitem .attr {
+	margin-left: 0.25rem;
+	margin-right: 0.25rem;
+}
+
+.listitem .name {
 	max-height: 48px;
+	overflow: hidden;
+}
+
+.listitem:hover .name {
+	background: rgba(0, 48, 0, 0.67);
+}
+
+.listitem .attr .key {
+	font-style: italic;
+	margin-right: 0.25rem;
+}
+
+.listitem .attr .val {
+	font-style: normal;
+}
+
+.attr > div {
+	display: inline-block;
 }
 
 /* leaflet container */

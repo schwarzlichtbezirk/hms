@@ -102,13 +102,13 @@ body {
 	table-layout: fixed;
 }
 
-.folder-table tr, .folder-table td {
-	padding: 0;
-}
+	.folder-table tr, .folder-table td {
+		padding: 0;
+	}
 
-.folder-table img {
-	padding: 2px;
-}
+	.folder-table img {
+		padding: 2px;
+	}
 
 .breadcrumb-item.active {
 	font-size: 1.5rem;
@@ -216,44 +216,42 @@ body {
 	color: PaleGoldenRod;
 }
 
-	.itemfont .tag {
+	.itemfont.tag {
 		text-align: center;
 		max-height: 3.8rem;
 	}
 
-.fileitem {
+.fileitem, .listitem {
 	border: 1px solid transparent;
-	border-radius: 4px;
-	padding: 4px;
-	line-height: 1.25;
-	font-size: 0.72rem;
+	border-radius: 0.25rem;
+	padding: 0.25rem;
 }
 
-	.fileitem:hover {
+	.fileitem:hover, .listitem:hover {
 		background: rgba(184, 134, 11, 0.5); /* DarkGoldenRod */
 		border: 1px solid Indigo;
 		cursor: pointer;
 	}
 
-	.fileitem.selected {
+	.fileitem.selected, .listitem.selected {
 		background: rgba(255, 215, 0, 0.5); /* Gold */
 		border: 1px solid RebeccaPurple;
 		box-shadow: 0px 0px 8px rgba(255, 255, 255, 0.5);
 	}
 
-		.fileitem.selected:hover {
+		.fileitem.selected:hover, .listitem.selected:hover {
 			background: rgba(255, 232, 102, 0.5); /* Gold 70%, #ffe866 */
 			border: 1px solid RebeccaPurple;
 			box-shadow: 0px 0px 12px rgba(255, 255, 255, 0.5);
 		}
 
-	.fileitem > .tag {
+	.fileitem > .tag, .listitem {
 		background: rgba(102, 51, 153, 0.33); /* RebeccaPurple */
 	}
 
-	.fileitem:hover > .tag {
-		background: rgba(102, 51, 153, 0.67); /* RebeccaPurple */
-	}
+		.fileitem:hover > .tag, .listitem:hover {
+			background: rgba(102, 51, 153, 0.67); /* RebeccaPurple */
+		}
 
 .imgitem {
 	z-index: auto;
@@ -310,26 +308,31 @@ body {
 .listitem {
 	width: 100%;
 }
+
 @media (min-width: 576px) {
 	.listitem {
 		width: 100%;
 	}
 }
+
 @media (min-width: 768px) {
 	.listitem {
 		width: 100%;
 	}
 }
+
 @media (min-width: 992px) {
 	.listitem {
 		width: 50%;
 	}
 }
+
 @media (min-width: 1200px) {
 	.listitem {
 		width: 33.33333333%;
 	}
 }
+
 @media (min-width: 1400px) {
 	.listitem {
 		width: 25%;
@@ -337,8 +340,39 @@ body {
 }
 
 .listitem .pict, .listitem .label, .listitem .bars {
-	max-width: 48px;
+	width: 48px;
+	height: 48px;
+}
+
+.listitem:hover .name {
+	color: LightGoldenRodYellow;
+}
+
+.listitem .name, .listitem .attr {
+	margin-left: 0.25rem;
+	margin-right: 0.25rem;
+}
+
+.listitem .name {
 	max-height: 48px;
+	overflow: hidden;
+}
+
+.listitem:hover .name {
+	background: rgba(102, 51, 153, 0.67); /* RebeccaPurple */
+}
+
+.listitem .attr .key {
+	font-style: italic;
+	margin-right: 0.25rem;
+}
+
+.listitem .attr .val {
+	font-style: normal;
+}
+
+.attr > div {
+	display: inline-block;
 }
 
 /* leaflet container */

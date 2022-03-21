@@ -361,8 +361,11 @@ const VueListItem = {
 		filesize() {
 			return fmtfilesize(this.file.size ?? 0);
 		},
+		filedate() {
+			return (new Date(this.file.time)).toLocaleDateString();
+		},
 		filetime() {
-			return (new Date(this.file.time)).toLocaleString();
+			return (new Date(this.file.time)).toLocaleTimeString('en-US', { hour12: false });
 		}
 	},
 	methods: {

@@ -97,13 +97,13 @@ body {
 	table-layout: fixed;
 }
 
-.folder-table tr, .folder-table td {
-	padding: 0;
-}
+	.folder-table tr, .folder-table td {
+		padding: 0;
+	}
 
-.folder-table img {
-	padding: 2px;
-}
+	.folder-table img {
+		padding: 2px;
+	}
 
 .breadcrumb-item.active {
 	font-size: 1.5rem;
@@ -207,50 +207,48 @@ body {
 	color: #404040;
 }
 
-	.itemfont .tag {
+	.itemfont.tag {
 		text-align: center;
 		max-height: 3.8rem;
 	}
 
-.fileitem {
+.fileitem, .listitem {
 	border: 1px solid transparent;
 	border-radius: 0.25rem;
 	padding: 0.25rem;
-	line-height: 1.25;
-	font-size: 0.72rem;
 }
 
-	.fileitem:hover {
+	.fileitem:hover, .listitem:hover {
 		background: LightSteelBlue;
 		border: 1px solid CornflowerBlue;
 		cursor: pointer;
 	}
 
-	.fileitem.selected {
+	.fileitem.selected, .listitem.selected {
 		background: LightSkyBlue;
 		border: 1px solid DodgerBlue;
 		box-shadow: 0px 0px 8px rgba(255, 255, 255, 0.5);
 	}
 
-		.fileitem.selected:hover {
+		.fileitem.selected:hover, .listitem.selected:hover {
 			background: DeepSkyBlue;
 			border: 1px solid DodgerBlue;
 			box-shadow: 0px 0px 12px rgba(255, 255, 255, 0.5);
 		}
 
-	.fileitem > .tag {
+	.fileitem > .tag, .listitem {
 		background: #cccedb;
 	}
 
-	.fileitem:hover > .tag {
-		color: #303030;
-		background: Lavender;
-	}
+		.fileitem:hover > .tag, .listitem:hover {
+			color: #303030;
+			background: Lavender;
+		}
 
-	.fileitem.selected > .tag {
-		color: #202020;
-		background: #fff29d;
-	}
+		.fileitem.selected > .tag, .listitem.selected {
+			color: #202020;
+			background: #fff29d;
+		}
 
 .imgitem {
 	z-index: auto;
@@ -309,26 +307,31 @@ body {
 .listitem {
 	width: 100%;
 }
+
 @media (min-width: 576px) {
 	.listitem {
 		width: 100%;
 	}
 }
+
 @media (min-width: 768px) {
 	.listitem {
 		width: 100%;
 	}
 }
+
 @media (min-width: 992px) {
 	.listitem {
 		width: 50%;
 	}
 }
+
 @media (min-width: 1200px) {
 	.listitem {
 		width: 33.33333333%;
 	}
 }
+
 @media (min-width: 1400px) {
 	.listitem {
 		width: 25%;
@@ -336,8 +339,35 @@ body {
 }
 
 .listitem .pict, .listitem .label, .listitem .bars {
-	max-width: 48px;
+	width: 48px;
+	height: 48px;
+}
+
+.listitem .name, .listitem .attr {
+	margin-left: 0.25rem;
+	margin-right: 0.25rem;
+}
+
+.listitem .name {
 	max-height: 48px;
+	overflow: hidden;
+}
+
+.listitem:hover .name {
+	color: #202020;
+}
+
+.listitem .attr .key {
+	font-style: italic;
+	margin-right: 0.25rem;
+}
+
+.listitem .attr .val {
+	font-style: normal;
+}
+
+.attr > div {
+	display: inline-block;
 }
 
 /* leaflet container */
