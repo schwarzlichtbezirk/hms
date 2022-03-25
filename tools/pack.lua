@@ -1,3 +1,15 @@
+local rootdir = path.join(scrdir, "..", "frontend").."/"
+
+-- check up deployment
+if not checkfile(path.join(rootdir, "plugin")) then
+	error"plugins does not installed, run 'tools/deploy-plugins' script"
+end
+if not checkfile(path.join(rootdir, "build/app.bundle.js")) then
+	error"frontend application bundle does not builded, run 'tools/cc.base' script"
+end
+if not checkfile(path.join(rootdir, "build/main.bundle.js")) then
+	error"frontend pages bundle does not builded, run 'tools/cc.page' script"
+end
 
 -- full map of skins identifiers to lists of files
 local fullskinmap = {
@@ -161,7 +173,6 @@ end
 
 if logdir then logfmt("writes %s package", pkg.path) end
 
-local rootdir = path.join(scrdir, "..", "frontend").."/"
 -- put some directories as is
 packdir("assets", rootdir.."assets", commonput)
 packdir("build", rootdir.."build", commonput)

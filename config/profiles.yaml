@@ -25,4 +25,4 @@
     - ?:/Recovery
     - ?:/Config.Msi
   shares:
-    - '[home/Home]'
+    - '<home>'
