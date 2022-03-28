@@ -154,7 +154,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 
 			go func() {
 				if _, ok := r.Header["If-Range"]; !ok {
-					Log.Printf("id%d: media %s", prf.ID, PathBase(syspath))
+					Log.Infof("id%d: media %s", prf.ID, PathBase(syspath))
 					// not partial content
 					usermsg <- UsrMsg{r, "file", puid}
 				} else {
@@ -187,7 +187,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 
 			go func() {
 				if _, ok := r.Header["If-Range"]; !ok {
-					Log.Printf("id%d: media %s", prf.ID, PathBase(syspath))
+					Log.Infof("id%d: media %s", prf.ID, PathBase(syspath))
 					// not partial content
 					usermsg <- UsrMsg{r, "file", puid}
 				} else {
@@ -203,7 +203,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 
 	go func() {
 		if _, ok := r.Header["If-Range"]; !ok {
-			Log.Printf("id%d: serve %s", prf.ID, PathBase(syspath))
+			Log.Infof("id%d: serve %s", prf.ID, PathBase(syspath))
 			// not partial content
 			usermsg <- UsrMsg{r, "file", puid}
 		} else {
@@ -672,7 +672,7 @@ func ctgrAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	Log.Printf("id%d: navigate to %s", prf.ID, catpath)
+	Log.Infof("id%d: navigate to %s", prf.ID, catpath)
 	usermsg <- UsrMsg{r, "path", arg.PUID}
 
 	WriteOK(w, ret)
@@ -826,7 +826,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	Log.Printf("id%d: navigate to %s, items %d, timeout %s", prf.ID, syspath, len(ret.List), time.Since(t))
+	Log.Infof("id%d: navigate to %s, items %d, timeout %s", prf.ID, syspath, len(ret.List), time.Since(t))
 	usermsg <- UsrMsg{r, "path", ret.PUID}
 
 	WriteOK(w, ret)
@@ -912,7 +912,7 @@ func shraddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	}
 
 	var ret = prf.AddShare(syspath)
-	Log.Printf("id%d: add share '%s' as %s", prf.ID, syspath, arg.PUID)
+	Log.Infof("id%d: add share '%s' as %s", prf.ID, syspath, arg.PUID)
 
 	WriteOK(w, ret)
 }
@@ -946,7 +946,7 @@ func shrdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	}
 
 	if ok = prf.DelShare(arg.PUID); ok {
-		Log.Printf("id%d: delete share %s", prf.ID, arg.PUID)
+		Log.Infof("id%d: delete share %s", prf.ID, arg.PUID)
 	}
 
 	WriteOK(w, ok)

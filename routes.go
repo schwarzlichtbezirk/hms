@@ -235,7 +235,7 @@ func AjaxMiddleware(next http.Handler) http.Handler {
 				var buf [2048]byte
 				var stacklen = runtime.Stack(buf[:], false)
 				var str = string(buf[:stacklen])
-				Log.Println(str)
+				Log.Infoln(str)
 				WriteJSON(w, http.StatusInternalServerError, MakeErrPanic(err, AECpanic, str))
 			}
 		}()

@@ -11,7 +11,7 @@ func main() {
 	var gmux = hms.NewRouter()
 	hms.RegisterRoutes(gmux)
 	hms.Run(gmux)
-	log.Println("hint: Open http://localhost page in browser to view the player. If you want to stop the server, press 'Ctrl+C' for graceful network shutdown. Use http://localhost/stat for server state monitoring.")
+	log.Infoln("hint: Open http://localhost page in browser to view the player. If you want to stop the server, press 'Ctrl+C' for graceful network shutdown. Use http://localhost/stat for server state monitoring.")
 	hms.WaitExit()
 	hms.Shutdown()
 }

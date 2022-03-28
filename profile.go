@@ -274,9 +274,9 @@ func (prf *Profile) UpdateShares() {
 			var puid = prop.(Pather).PUID()
 			prf.sharepuid[syspath] = puid
 			prf.puidshare[puid] = syspath
-			Log.Printf("id%d: shared '%s' as %s", prf.ID, syspath, puid)
+			Log.Infof("id%d: shared '%s' as %s", prf.ID, syspath, puid)
 		} else {
-			Log.Printf("id%d: can not share '%s'", prf.ID, syspath)
+			Log.Infof("id%d: can not share '%s'", prf.ID, syspath)
 		}
 	}
 	prf.updateGrp()

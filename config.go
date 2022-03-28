@@ -198,7 +198,7 @@ func DetectConfigPath() (retpath string, err error) {
 			retpath = path
 			return
 		}
-		Log.Printf("no access to pointed configuration path '%s'\n", cfg.ConfigPath)
+		Log.Infof("no access to pointed configuration path '%s'\n", cfg.ConfigPath)
 	}
 
 	// try to get from config subdirectory on executable path
@@ -296,7 +296,7 @@ func DetectPackPath() (retpath string, err error) {
 			retpath = path
 			return
 		}
-		Log.Printf("no access to pointed package path '%s'\n", cfg.PackPath)
+		Log.Infof("no access to pointed package path '%s'\n", cfg.PackPath)
 	}
 
 	// try to find in executable path

@@ -24,17 +24,17 @@ At first, install [Golang](https://go.dev/dl/) of last version, and clone projec
 git clone github.com/schwarzlichtbezirk/hms
 ```
 
-Then run some batch-files at `tools` directory of project:
+Then run some batch-files at `task` directory of project:
 
-1) `tools/make-builder.cmd` installs `wpk` builder to `%GOPATH%\bin` folder. It can be done only once.
+1) `task/make-builder.cmd` installs `wpk` builder to `%GOPATH%\bin` folder. It can be done only once.
 
-2) `tools/deploy-plugins.cmd` downloads js-plugins for frontend client. It can be run on every time when it needs to update plugins. And update script to actual versions of libraries.
+2) `task/deploy-plugins.cmd` downloads js-plugins for frontend client. It can be run on every time when it needs to update plugins. And update script to actual versions of libraries.
 
-3) `tools/cc.base.cmd` and `tools/cc.page.cmd` to compile js-files to bundle. Batch-files expects that [Closure Compiler](https://developers.google.com/closure/compiler) is downloaded to path pointed in those batch-files. Java VM is needed for this.
+3) `task/cc.base.cmd` and `task/cc.page.cmd` to compile js-files to bundle. Batch-files expects that [Closure Compiler](https://developers.google.com/closure/compiler) is downloaded to path pointed in those batch-files. Java VM is needed for this.
 
-4) `tools/wpk.full.cmd` packs all resources to single file used by program. It can be run after any resources changes. New package can be compiled during program is running, if does NOT used memory mapping mode. `tools/wpk.tiny.cmd` can be used instead to produce small cuted version of resources. If you want package with some other resources combination, you can write for this Lua-script same as, for example, `hms-free.lua` or `hms-tiny.lua`.
+4) `task/wpk.full.cmd` packs all resources to single file used by program. It can be run after any resources changes. New package can be compiled during program is running, if does NOT used memory mapping mode. `task/wpk.tiny.cmd` can be used instead to produce small cuted version of resources. If you want package with some other resources combination, you can write for this Lua-script same as, for example, `hms-free.lua` or `hms-tiny.lua`.
 
-5) `tools/build.win.x64.cmd` to build program for `Windows amd64` platform, or run `build.win.x86.cmd` to build program for `Windows x86` platform.
+5) `task/build.win.x64.cmd` to build program for `Windows amd64` platform, or run `build.win.x86.cmd` to build program for `Windows x86` platform.
 
 # Packages variations
 
@@ -43,7 +43,7 @@ By default script `pack.lua` produces full package with all icons collections in
 To make full package with `webp` icons only, use `hms-all.lua` script:
 
 ```batch
-%GOPATH%/bin/wpkbuild.exe %GOPATH%/src/github.com/schwarzlichtbezirk/hms/frontend/tools/hms-all.lua
+%GOPATH%/bin/wpkbuild.exe %GOPATH%/src/github.com/schwarzlichtbezirk/hms/frontend/task/hms-all.lua
 ```
 
 To make package with minimal size, use `hms-tiny.lua` script. Script `hms-free.lua` produces package with icons, which have allowed commercial usage by their license.

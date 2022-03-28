@@ -208,53 +208,53 @@ func (l *Logger) Log(level string, v ...interface{}) { l.Output(2, level, fmt.Sp
 // Arguments are handled in the manner of fmt.Println.
 func (l *Logger) Logln(level string, v ...interface{}) { l.Output(2, level, fmt.Sprintln(v...)) }
 
-// Printf calls l.Output to print to the logger.
+// Infof calls l.Output to print to the logger.
 // Arguments are handled in the manner of fmt.Printf.
-func (l *Logger) Printf(format string, v ...interface{}) {
+func (l *Logger) Infof(format string, v ...interface{}) {
 	l.Output(2, "info", fmt.Sprintf(format, v...))
 }
 
-// Print calls l.Output to print to the logger.
+// Info calls l.Output to print to the logger.
 // Arguments are handled in the manner of fmt.Print.
-func (l *Logger) Print(v ...interface{}) { l.Output(2, "info", fmt.Sprint(v...)) }
+func (l *Logger) Info(v ...interface{}) { l.Output(2, "info", fmt.Sprint(v...)) }
 
-// Println calls l.Output to print to the logger.
-// Arguments are handled in the manner of fmt.Println.
-func (l *Logger) Println(v ...interface{}) { l.Output(2, "info", fmt.Sprintln(v...)) }
+// Infoln calls l.Output to print to the logger.
+// Arguments are handled in the manner of fmt.Infoln.
+func (l *Logger) Infoln(v ...interface{}) { l.Output(2, "info", fmt.Sprintln(v...)) }
 
-// Fatal is equivalent to l.Print() followed by a call to os.Exit(1).
+// Fatal is equivalent to l.Info() followed by a call to os.Exit(1).
 func (l *Logger) Fatal(v ...interface{}) {
 	l.Output(2, "fatal", fmt.Sprint(v...))
 	os.Exit(1)
 }
 
-// Fatalf is equivalent to l.Printf() followed by a call to os.Exit(1).
+// Fatalf is equivalent to l.Infof() followed by a call to os.Exit(1).
 func (l *Logger) Fatalf(format string, v ...interface{}) {
 	l.Output(2, "fatal", fmt.Sprintf(format, v...))
 	os.Exit(1)
 }
 
-// Fatalln is equivalent to l.Println() followed by a call to os.Exit(1).
+// Fatalln is equivalent to l.Infoln() followed by a call to os.Exit(1).
 func (l *Logger) Fatalln(v ...interface{}) {
 	l.Output(2, "fatal", fmt.Sprintln(v...))
 	os.Exit(1)
 }
 
-// Panic is equivalent to l.Print() followed by a call to panic().
+// Panic is equivalent to l.Info() followed by a call to panic().
 func (l *Logger) Panic(v ...interface{}) {
 	var s = fmt.Sprint(v...)
 	l.Output(2, "panic", s)
 	panic(s)
 }
 
-// Panicf is equivalent to l.Printf() followed by a call to panic().
+// Panicf is equivalent to l.Infof() followed by a call to panic().
 func (l *Logger) Panicf(format string, v ...interface{}) {
 	var s = fmt.Sprintf(format, v...)
 	l.Output(2, "panic", s)
 	panic(s)
 }
 
-// Panicln is equivalent to l.Println() followed by a call to panic().
+// Panicln is equivalent to l.Infoln() followed by a call to panic().
 func (l *Logger) Panicln(v ...interface{}) {
 	var s = fmt.Sprintln(v...)
 	l.Output(2, "panic", s)

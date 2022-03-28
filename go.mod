@@ -1,6 +1,6 @@
 module github.com/schwarzlichtbezirk/hms
 
-go 1.17
+go 1.18
 
 require (
 	github.com/avct/uasurfer v0.0.0-20191028135549-26b5daa857f1
@@ -34,8 +34,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/stretchr/testify v1.7.1 // indirect
 	github.com/ulikunitz/xz v0.5.10 // indirect
-	github.com/yuin/gopher-lua v0.0.0-20210529063254-f4c35e4016d9 // indirect
-	golang.org/x/net v0.0.0-20220225172249-27dd8689420f // indirect
-	golang.org/x/sys v0.0.0-20220319134239-a9b59b0215f8 // indirect
+	golang.org/x/net v0.0.0-20220325170049-de3da57026de // indirect
+	golang.org/x/sys v0.0.0-20220328115105-d36c6a25d886 // indirect
 	gopkg.in/djherbis/times.v1 v1.3.0 // indirect
 )

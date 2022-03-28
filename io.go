@@ -128,7 +128,7 @@ func (pl *Profiles) Load(fname string) (err error) {
 
 	if len(pl.list) > 0 {
 		for _, prf := range pl.list {
-			Log.Printf("loaded profile id%d, login='%s'", prf.ID, prf.Login)
+			Log.Infof("loaded profile id%d, login='%s'", prf.ID, prf.Login)
 			// cache roots
 			for _, fpath := range prf.Roots {
 				syspathcache.Cache(fpath)
@@ -158,7 +158,7 @@ func (pl *Profiles) Load(fname string) (err error) {
 	} else {
 		var prf = pl.NewProfile("admin", "dag qus fly in the sky")
 		prf.ID = cfg.DefAccID
-		Log.Printf("created profile id%d, login='%s'", prf.ID, prf.Login)
+		Log.Infof("created profile id%d, login='%s'", prf.ID, prf.Login)
 		prf.SetDefaultHidden()
 		prf.FindRoots()
 	}
