@@ -39,6 +39,36 @@ const PUID = {
 	reserved: 32
 };
 
+// MIME enum values.
+const Mime = {
+	dis: -1,
+	nil: 0,
+	unk: 1,
+	gif: 2,
+	png: 3,
+	jpeg: 4,
+	webp: 5,
+};
+
+// MIME type string by value.
+const MimeStr = {
+	[Mime.nil]: "",
+	[Mime.unk]: "image/*",
+	[Mime.gif]: "image/gif",
+	[Mime.png]: "image/png",
+	[Mime.jpeg]: "image/jpeg",
+	[Mime.webp]: "image/webp",
+};
+
+// MIME type value by string.
+const MimeVal = {
+	"image/*": Mime.unk,
+	"image/gif": Mime.gif,
+	"image/png": Mime.png,
+	"image/jpeg": Mime.jpeg,
+	"image/webp": Mime.webp,
+};
+
 // Category identifiers.
 const CID = {
 	"04": "home",
@@ -496,7 +526,7 @@ const VueMainApp = {
 		uncached() {
 			const lst = [];
 			for (const file of this.flist) {
-				if (!file.type && !file.ntmb) {
+				if (!file.type && !file.mtmb) {
 					lst.push(file);
 				}
 			}
@@ -774,13 +804,12 @@ const VueMainApp = {
 
 				const gpslist = [];
 				for (const tp of response.data.tmbs) {
-					if (tp.ntmb) {
+					if (tp.mtmb) {
 						for (const file of this.flist) {
 							if (file.puid === tp.puid) {
-								file.ntmb = tp.ntmb; // Vue.set
 								file.mtmb = tp.mtmb; // Vue.set
 								// add gps-item
-								if (file.latitude && file.longitude && file.ntmb === 1) {
+								if (file.latitude && file.longitude && Number(file.mtmb) > 0) {
 									gpslist.push(file);
 								}
 								break;
@@ -942,7 +971,7 @@ const VueMainApp = {
 			// update map card
 			const gpslist = [];
 			for (const file of this.flist) {
-				if (file.latitude && file.longitude && file.ntmb === 1) {
+				if (file.latitude && file.longitude && Number(file.mtmb) > 0) {
 					gpslist.push(file);
 				}
 				if (pathext(file.name) === ".gpx") {

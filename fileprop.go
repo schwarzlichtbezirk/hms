@@ -312,9 +312,8 @@ type Pather interface {
 	Size() int64    // size in bytes
 	Time() int64    // UNIX time in milliseconds
 	PUID() PuidType // path unique ID encoded to hex-base32
-	NTmb() int      // -1 - can not make thumbnail; 0 - not cached; 1 - cached
-	MTmb() string   // thumbnail MIME type
-	SetTmb(int, Mime_t)
+	MTmb() Mime_t   // thumbnail MIME type, -1 - can not make thumbnail; 0 - not cached; >=1 - cached
+	SetTmb(Mime_t)
 }
 
 // PathProp is any path base properties.
@@ -432,7 +431,7 @@ func (dk *DirKit) Setup(syspath string) {
 	dk.NameVal = PathBase(syspath)
 	dk.TypeVal = FTdir
 	dk.PUIDVal = syspathcache.Cache(syspath)
-	dk.SetTmb(TMBreject, MimeNil)
+	dk.SetTmb(MimeDis)
 	if dp, ok := dircache.Get(dk.PUIDVal); ok {
 		dk.DirProp = dp
 	}
@@ -450,7 +449,7 @@ func (dk *DriveKit) Setup(syspath string) {
 	dk.NameVal = PathBase(syspath)
 	dk.TypeVal = FTdrv
 	dk.PUIDVal = syspathcache.Cache(syspath)
-	dk.SetTmb(TMBreject, MimeNil)
+	dk.SetTmb(MimeDis)
 }
 
 // Scan drive to check its latency.
@@ -530,13 +529,13 @@ func (tk *TagKit) Setup(syspath string, fi fs.FileInfo) {
 					if md, err = MakeTmb(bytes.NewReader(pic.Data), OrientNormal); err != nil {
 						md = &MediaData{
 							Data: pic.Data,
-							Mime: MimeVal[pic.MIMEType],
+							Mime: GetMimeVal(pic.MIMEType),
 						}
 					}
 				} else {
 					md = &MediaData{
 						Data: pic.Data,
-						Mime: MimeVal[pic.MIMEType],
+						Mime: GetMimeVal(pic.MIMEType),
 					}
 				}
 			}
@@ -544,10 +543,10 @@ func (tk *TagKit) Setup(syspath string, fi fs.FileInfo) {
 	}
 	tk.PUIDVal = syspathcache.Cache(syspath)
 	if md != nil {
-		tk.SetTmb(TMBcached, md.Mime)
+		tk.SetTmb(md.Mime)
 		thumbcache.Set(tk.PUIDVal, md)
 	} else {
-		tk.SetTmb(TMBreject, MimeNil)
+		tk.SetTmb(MimeDis)
 	}
 }
 
@@ -566,13 +565,13 @@ func GetTagTmb(syspath string) (md *MediaData, err error) {
 				if md, err = MakeTmb(bytes.NewReader(pic.Data), OrientNormal); err != nil {
 					md = &MediaData{
 						Data: pic.Data,
-						Mime: MimeVal[pic.MIMEType],
+						Mime: GetMimeVal(pic.MIMEType),
 					}
 				}
 			} else {
 				md = &MediaData{
 					Data: pic.Data,
-					Mime: MimeVal[pic.MIMEType],
+					Mime: GetMimeVal(pic.MIMEType),
 				}
 			}
 		} else {

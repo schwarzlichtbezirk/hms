@@ -20,15 +20,6 @@ import (
 	_ "github.com/ftrvxmtrx/tga" // put TGA to end, decoder does not register magic prefix
 )
 
-const (
-	// TMBnone - file is not cached for thumbnails.
-	TMBnone = 0
-	// TMBreject - file can not be cached for thumbnails.
-	TMBreject = -1
-	// TMBcached - file is already cached for thumbnails.
-	TMBcached = 1
-)
-
 // Encoder configures encoding PNG images for thumbnails and tiles.
 var tmbpngenc = png.Encoder{
 	CompressionLevel: png.BestCompression,
@@ -47,15 +38,18 @@ var (
 type Mime_t int
 
 const (
-	MimeNil  Mime_t = 0
-	MimeGif  Mime_t = 1
-	MimePng  Mime_t = 2
-	MimeJpeg Mime_t = 3
-	MimeWebp Mime_t = 4
+	MimeDis  Mime_t = -1 // file can not be cached for thumbnails.
+	MimeNil  Mime_t = 0  // file is not cached for thumbnails, have indeterminate state.
+	MimeUnk  Mime_t = 1
+	MimeGif  Mime_t = 2
+	MimePng  Mime_t = 3
+	MimeJpeg Mime_t = 4
+	MimeWebp Mime_t = 5
 )
 
 var MimeStr = map[Mime_t]string{
 	MimeNil:  "",
+	MimeUnk:  "image/*",
 	MimeGif:  "image/gif",
 	MimePng:  "image/png",
 	MimeJpeg: "image/jpeg",
@@ -63,11 +57,18 @@ var MimeStr = map[Mime_t]string{
 }
 
 var MimeVal = map[string]Mime_t{
-	"":           MimeNil,
+	"image/*":    MimeUnk,
 	"image/gif":  MimeGif,
 	"image/png":  MimePng,
 	"image/jpeg": MimeJpeg,
 	"image/webp": MimeWebp,
+}
+
+func GetMimeVal(str string) Mime_t {
+	if mime, ok := MimeVal[str]; ok {
+		return mime
+	}
+	return MimeUnk
 }
 
 // MediaData is thumbnails cache element.
@@ -78,9 +79,8 @@ type MediaData struct {
 
 // TmbProp is thumbnails properties.
 type TmbProp struct {
-	PUIDVal PuidType `json:"puid,omitempty" yaml:"puid,omitempty"`
-	NTmbVal int      `json:"ntmb,omitempty" yaml:"ntmb,omitempty"`
-	MTmbVal string   `json:"mtmb,omitempty" yaml:"mtmb,omitempty"`
+	PUIDVal PuidType `json:"puid" yaml:"puid"`
+	MTmbVal Mime_t   `json:"mtmb" yaml:"mtmb"`
 }
 
 // Setup generates PUID (path unique identifier) and updates cached state.
@@ -94,17 +94,17 @@ func (tp *TmbProp) UpdateTmb() {
 	if thumbcache.Has(tp.PUIDVal) {
 		var v, err = thumbcache.Get(tp.PUIDVal)
 		if err != nil {
-			tp.SetTmb(TMBreject, MimeNil)
+			tp.SetTmb(MimeDis)
 			return
 		}
 		var md, ok = v.(*MediaData)
 		if !ok {
-			tp.SetTmb(TMBreject, MimeNil)
+			tp.SetTmb(MimeDis)
 			return
 		}
-		tp.SetTmb(TMBcached, md.Mime)
+		tp.SetTmb(md.Mime)
 	} else {
-		tp.SetTmb(TMBnone, MimeNil)
+		tp.SetTmb(MimeNil)
 		return
 	}
 }
@@ -114,20 +114,14 @@ func (tp *TmbProp) PUID() PuidType {
 	return tp.PUIDVal
 }
 
-// NTmb returns thumbnail state, -1 impossible, 0 undefined, 1 ready.
-func (tp *TmbProp) NTmb() int {
-	return tp.NTmbVal
-}
-
-// MTmb returns thumbnail MIME type, if thumbnail is present and NTmb is 1.
-func (tp *TmbProp) MTmb() string {
+// MTmb returns thumbnail MIME type, if thumbnail is present.
+func (tp *TmbProp) MTmb() Mime_t {
 	return tp.MTmbVal
 }
 
 // SetTmb updates thumbnail state to given value.
-func (tp *TmbProp) SetTmb(tmb int, mime Mime_t) {
-	tp.NTmbVal = tmb
-	tp.MTmbVal = MimeStr[mime]
+func (tp *TmbProp) SetTmb(mime Mime_t) {
+	tp.MTmbVal = mime
 }
 
 // FindTmb finds thumbnail in embedded file tags, or build it if it possible.
@@ -324,7 +318,7 @@ func tmbchkAPI(w http.ResponseWriter, r *http.Request) {
 	for _, tp := range arg.Tmbs {
 		if syspath, ok := syspathcache.Path(tp.PUID()); ok {
 			if prop, err := propcache.Get(syspath); err == nil {
-				tp.SetTmb(prop.(Pather).NTmb(), MimeVal[prop.(Pather).MTmb()])
+				tp.SetTmb(prop.(Pather).MTmb())
 			}
 		}
 	}

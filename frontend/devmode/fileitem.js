@@ -280,7 +280,7 @@ const VueIcon = {
 			return pathext(this.file.name);
 		},
 		isthumb() {
-			return this.file.ntmb === 1 && this.tm;
+			return Number(this.file.mtmb) > 0 && this.tm;
 		},
 		iconsrc() {
 			const _ = this.iconfmt; // force update field
@@ -289,6 +289,9 @@ const VueIcon = {
 		},
 		iconthumb() {
 			return `/id${this.$root.aid}/thumb/${this.file.puid}`;
+		},
+		iconmime() {
+			return MimeStr[this.file.mtmb]
 		}
 	},
 	methods: {
@@ -326,7 +329,7 @@ const VueListItem = {
 		},
 		label() {
 			const _ = this.iconfmt; // force update field
-			if (this.file.ntmb === 1 && this.tm
+			if (Number(this.file.mtmb) > 0 && this.tm
 				|| !geticonpath(this.file).org) {
 				return this.file.shared
 					? iconmapping.shared.label
@@ -403,7 +406,7 @@ const VueFileItem = {
 		},
 		label() {
 			const _ = this.iconfmt; // force update field
-			if (this.file.ntmb === 1 && this.tm
+			if (Number(this.file.mtmb) > 0 && this.tm
 				|| !geticonpath(this.file).org) {
 				return this.file.shared
 					? iconmapping.shared.label
@@ -471,7 +474,7 @@ const VueImgItem = {
 		},
 		label() {
 			const _ = this.iconfmt; // force update field
-			if (this.file.ntmb === 1 && this.tm
+			if (Number(this.file.mtmb) > 0 && this.tm
 				|| !geticonpath(this.file).org) {
 				return this.file.shared
 					? iconmapping.shared.label

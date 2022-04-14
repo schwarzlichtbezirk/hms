@@ -251,7 +251,7 @@ func initcaches() {
 				fk.NameVal = CatNames[puid]
 				fk.TypeVal = FTctgr
 				fk.PUIDVal = puid
-				fk.SetTmb(TMBreject, MimeNil)
+				fk.SetTmb(MimeDis)
 				ret = &fk
 				return
 			}
@@ -282,17 +282,17 @@ func initcaches() {
 				return // can not get properties
 			}
 			var fp = prop.(Pather)
-			if fp.NTmb() == TMBreject {
+			if fp.MTmb() == MimeDis {
 				err = ErrNotThumb
 				return // thumbnail rejected
 			}
 
 			var md *MediaData
 			if md, err = FindTmb(fp, syspath); md != nil {
-				fp.SetTmb(TMBcached, md.Mime)
+				fp.SetTmb(md.Mime)
 				ret = md
 			} else {
-				fp.SetTmb(TMBreject, MimeNil)
+				fp.SetTmb(MimeDis)
 			}
 			return // ok
 		}).

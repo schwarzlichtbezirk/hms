@@ -1,7 +1,7 @@
 
 <picture>
 	<template v-if="isthumb">
-		<source v-bind:srcset="iconthumb" v-bind:type="file.mtmb">
+		<source v-bind:srcset="iconthumb" v-bind:type="iconmime">
 	</template>
 	<template v-else v-for="fmt in iconfmt">
 		<source v-bind:srcset="iconsrc+fmt.ext" v-bind:type="fmt.mime">

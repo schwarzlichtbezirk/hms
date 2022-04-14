@@ -116,8 +116,8 @@ const makemarkericon = file => {
 	const res = geticonpath(file);
 	const icp = res.org || res.alt;
 	let src = "";
-	if (file.ntmb === 1 && thumbmode) {
-		src = `<source srcset="/id${appvm.aid}/thumb/${file.puid}" type="${file.mtmb}">`;
+	if (Number(file.mtmb) > 0 && thumbmode) {
+		src = `<source srcset="/id${appvm.aid}/thumb/${file.puid}" type="${MimeStr[file.mtmb]}">`;
 	} else {
 		for (fmt of iconmapping.iconfmt) {
 			src += `<source srcset="${icp + fmt.ext}" type="${fmt.mime}">`;
@@ -137,8 +137,8 @@ const makemarkerpopup = file => {
 	const res = geticonpath(file);
 	const icp = res.org || res.alt;
 	let src = "";
-	if (file.ntmb === 1 && thumbmode) {
-		src = `<source srcset="/id${appvm.aid}/thumb/${file.puid}" type="${file.mtmb}">`;
+	if (Number(file.mtmb) > 0 && thumbmode) {
+		src = `<source srcset="/id${appvm.aid}/thumb/${file.puid}" type="${MimeStr[file.mtmb]}">`;
 	} else {
 		for (fmt of iconmapping.iconfmt) {
 			src += `<source srcset="${icp + fmt.ext}" type="${fmt.mime}">`;

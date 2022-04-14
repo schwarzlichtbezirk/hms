@@ -199,7 +199,7 @@ func (ek *ExifKit) Setup(syspath string, fi fs.FileInfo) {
 			if cfg.UseEmbeddedTmb {
 				if pic, err := x.JpegThumbnail(); err == nil {
 					ek.PUIDVal = syspathcache.Cache(syspath)
-					ek.SetTmb(TMBcached, MimeJpeg)
+					ek.SetTmb(MimeJpeg)
 					thumbcache.Set(ek.PUIDVal, &MediaData{
 						Data: pic,
 						Mime: MimeJpeg,
