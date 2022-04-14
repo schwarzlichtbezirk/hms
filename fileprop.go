@@ -314,7 +314,7 @@ type Pather interface {
 	PUID() PuidType // path unique ID encoded to hex-base32
 	NTmb() int      // -1 - can not make thumbnail; 0 - not cached; 1 - cached
 	MTmb() string   // thumbnail MIME type
-	SetTmb(int, string)
+	SetTmb(int, Mime_t)
 }
 
 // PathProp is any path base properties.
@@ -432,7 +432,7 @@ func (dk *DirKit) Setup(syspath string) {
 	dk.NameVal = PathBase(syspath)
 	dk.TypeVal = FTdir
 	dk.PUIDVal = syspathcache.Cache(syspath)
-	dk.SetTmb(TMBreject, "")
+	dk.SetTmb(TMBreject, MimeNil)
 	if dp, ok := dircache.Get(dk.PUIDVal); ok {
 		dk.DirProp = dp
 	}
@@ -450,7 +450,7 @@ func (dk *DriveKit) Setup(syspath string) {
 	dk.NameVal = PathBase(syspath)
 	dk.TypeVal = FTdrv
 	dk.PUIDVal = syspathcache.Cache(syspath)
-	dk.SetTmb(TMBreject, "")
+	dk.SetTmb(TMBreject, MimeNil)
 }
 
 // Scan drive to check its latency.
@@ -530,13 +530,13 @@ func (tk *TagKit) Setup(syspath string, fi fs.FileInfo) {
 					if md, err = MakeTmb(bytes.NewReader(pic.Data), OrientNormal); err != nil {
 						md = &MediaData{
 							Data: pic.Data,
-							Mime: pic.MIMEType,
+							Mime: MimeVal[pic.MIMEType],
 						}
 					}
 				} else {
 					md = &MediaData{
 						Data: pic.Data,
-						Mime: pic.MIMEType,
+						Mime: MimeVal[pic.MIMEType],
 					}
 				}
 			}
@@ -547,7 +547,7 @@ func (tk *TagKit) Setup(syspath string, fi fs.FileInfo) {
 		tk.SetTmb(TMBcached, md.Mime)
 		thumbcache.Set(tk.PUIDVal, md)
 	} else {
-		tk.SetTmb(TMBreject, "")
+		tk.SetTmb(TMBreject, MimeNil)
 	}
 }
 
@@ -566,13 +566,13 @@ func GetTagTmb(syspath string) (md *MediaData, err error) {
 				if md, err = MakeTmb(bytes.NewReader(pic.Data), OrientNormal); err != nil {
 					md = &MediaData{
 						Data: pic.Data,
-						Mime: pic.MIMEType,
+						Mime: MimeVal[pic.MIMEType],
 					}
 				}
 			} else {
 				md = &MediaData{
 					Data: pic.Data,
-					Mime: pic.MIMEType,
+					Mime: MimeVal[pic.MIMEType],
 				}
 			}
 		} else {

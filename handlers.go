@@ -162,7 +162,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 					userajax <- r
 				}
 			}()
-			w.Header().Set("Content-Type", md.Mime)
+			w.Header().Set("Content-Type", MimeStr[md.Mime])
 			http.ServeContent(w, r, puid.String(), starttime, bytes.NewReader(md.Data))
 			return
 		}
@@ -195,7 +195,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 					userajax <- r
 				}
 			}()
-			w.Header().Set("Content-Type", md.Mime)
+			w.Header().Set("Content-Type", MimeStr[md.Mime])
 			http.ServeContent(w, r, puid.String(), starttime, bytes.NewReader(md.Data))
 			return
 		}
@@ -291,7 +291,7 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) {
 		WriteError500(w, ErrBadMedia, AECthumbbadcnt)
 		return
 	}
-	w.Header().Set("Content-Type", md.Mime)
+	w.Header().Set("Content-Type", MimeStr[md.Mime])
 	http.ServeContent(w, r, puid.String(), starttime, bytes.NewReader(md.Data))
 }
 
@@ -360,7 +360,7 @@ func tileHandler(w http.ResponseWriter, r *http.Request) {
 		WriteError500(w, ErrBadMedia, AECtilebadcnt)
 		return
 	}
-	w.Header().Set("Content-Type", md.Mime)
+	w.Header().Set("Content-Type", MimeStr[md.Mime])
 	http.ServeContent(w, r, puid.String(), starttime, bytes.NewReader(md.Data))
 }
 
@@ -470,14 +470,14 @@ func cchinfAPI(w http.ResponseWriter, r *http.Request) {
 		var md = v.(*MediaData)
 		var s *stat
 		switch md.Mime {
-		case "image/gif":
+		case MimeGif:
 			s = &gif
-		case "image/png":
+		case MimePng:
 			s = &png
-		case "image/jpeg":
+		case MimeJpeg:
 			s = &jpg
 		default:
-			panic("unexpected MIME type in cache " + md.Mime)
+			panic(fmt.Sprintf("unexpected MIME type in cache %d", md.Mime))
 		}
 		var l = float64(len(md.Data))
 		s.size1 += l

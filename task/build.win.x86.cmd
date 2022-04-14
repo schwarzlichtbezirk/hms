@@ -7,4 +7,4 @@ set buildtime=%time:~0,8%
 if "%buildtime:~0,1%" == " " set buildtime=0%buildtime:~1,7%
 
 go env -w GOOS=windows GOARCH=386
-go build -o %GOPATH%/bin/hms.x86.exe -v -ldflags="-X 'github.com/schwarzlichtbezirk/hms.buildvers=%buildvers%' -X 'github.com/schwarzlichtbezirk/hms.builddate=%builddate%' -X 'github.com/schwarzlichtbezirk/hms.buildtime=%buildtime%'" ./cmd
+go build -o %GOPATH%/bin/hms.win.x86.exe -v -ldflags="-X 'github.com/schwarzlichtbezirk/hms.buildvers=%buildvers%' -X 'github.com/schwarzlichtbezirk/hms.builddate=%builddate%' -X 'github.com/schwarzlichtbezirk/hms.buildtime=%buildtime%'" ./cmd

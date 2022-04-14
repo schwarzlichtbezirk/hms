@@ -44,10 +44,36 @@ var (
 	ErrImgNil   = errors.New("can not allocate image")
 )
 
+type Mime_t int
+
+const (
+	MimeNil  Mime_t = 0
+	MimeGif  Mime_t = 1
+	MimePng  Mime_t = 2
+	MimeJpeg Mime_t = 3
+	MimeWebp Mime_t = 4
+)
+
+var MimeStr = map[Mime_t]string{
+	MimeNil:  "",
+	MimeGif:  "image/gif",
+	MimePng:  "image/png",
+	MimeJpeg: "image/jpeg",
+	MimeWebp: "image/webp",
+}
+
+var MimeVal = map[string]Mime_t{
+	"":           MimeNil,
+	"image/gif":  MimeGif,
+	"image/png":  MimePng,
+	"image/jpeg": MimeJpeg,
+	"image/webp": MimeWebp,
+}
+
 // MediaData is thumbnails cache element.
 type MediaData struct {
 	Data []byte
-	Mime string
+	Mime Mime_t
 }
 
 // TmbProp is thumbnails properties.
@@ -68,17 +94,17 @@ func (tp *TmbProp) UpdateTmb() {
 	if thumbcache.Has(tp.PUIDVal) {
 		var v, err = thumbcache.Get(tp.PUIDVal)
 		if err != nil {
-			tp.SetTmb(TMBreject, "")
+			tp.SetTmb(TMBreject, MimeNil)
 			return
 		}
 		var md, ok = v.(*MediaData)
 		if !ok {
-			tp.SetTmb(TMBreject, "")
+			tp.SetTmb(TMBreject, MimeNil)
 			return
 		}
 		tp.SetTmb(TMBcached, md.Mime)
 	} else {
-		tp.SetTmb(TMBnone, "")
+		tp.SetTmb(TMBnone, MimeNil)
 		return
 	}
 }
@@ -99,9 +125,9 @@ func (tp *TmbProp) MTmb() string {
 }
 
 // SetTmb updates thumbnail state to given value.
-func (tp *TmbProp) SetTmb(tmb int, mime string) {
+func (tp *TmbProp) SetTmb(tmb int, mime Mime_t) {
 	tp.NTmbVal = tmb
-	tp.MTmbVal = mime
+	tp.MTmbVal = MimeStr[mime]
 }
 
 // FindTmb finds thumbnail in embedded file tags, or build it if it possible.
@@ -181,23 +207,23 @@ func MakeTmb(r io.Reader, orientation int) (md *MediaData, err error) {
 // ToNativeImg converts Image to specified file format supported by browser.
 func ToNativeImg(m image.Image, ftype string) (md *MediaData, err error) {
 	var buf bytes.Buffer
-	var mime string
+	var mime Mime_t
 	switch ftype {
 	case "gif":
 		if err = gif.Encode(&buf, m, nil); err != nil {
 			return // can not write gif
 		}
-		mime = "image/gif"
+		mime = MimeGif
 	case "png", "dds", "webp", "psd":
 		if err = tmbpngenc.Encode(&buf, m); err != nil {
 			return // can not write png
 		}
-		mime = "image/png"
+		mime = MimePng
 	default:
 		if err = jpeg.Encode(&buf, m, &jpeg.Options{Quality: cfg.TmbJpegQuality}); err != nil {
 			return // can not write jpeg
 		}
-		mime = "image/jpeg"
+		mime = MimeJpeg
 	}
 	md = &MediaData{
 		Data: buf.Bytes(),
@@ -298,7 +324,7 @@ func tmbchkAPI(w http.ResponseWriter, r *http.Request) {
 	for _, tp := range arg.Tmbs {
 		if syspath, ok := syspathcache.Path(tp.PUID()); ok {
 			if prop, err := propcache.Get(syspath); err == nil {
-				tp.SetTmb(prop.(Pather).NTmb(), prop.(Pather).MTmb())
+				tp.SetTmb(prop.(Pather).NTmb(), MimeVal[prop.(Pather).MTmb()])
 			}
 		}
 	}

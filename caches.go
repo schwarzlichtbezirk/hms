@@ -251,7 +251,7 @@ func initcaches() {
 				fk.NameVal = CatNames[puid]
 				fk.TypeVal = FTctgr
 				fk.PUIDVal = puid
-				fk.SetTmb(TMBreject, "")
+				fk.SetTmb(TMBreject, MimeNil)
 				ret = &fk
 				return
 			}
@@ -292,7 +292,7 @@ func initcaches() {
 				fp.SetTmb(TMBcached, md.Mime)
 				ret = md
 			} else {
-				fp.SetTmb(TMBreject, "")
+				fp.SetTmb(TMBreject, MimeNil)
 			}
 			return // ok
 		}).
