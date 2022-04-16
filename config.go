@@ -5,8 +5,6 @@ import (
 	"os"
 	"path/filepath"
 	"time"
-
-	"github.com/jessevdk/go-flags"
 )
 
 const (
@@ -28,13 +26,6 @@ const (
 	confsuff = "config"  // relative path to configuration files folder
 	tmplsuff = "tmpl"    // relative path to html templates folder
 )
-
-// CfgCmdLine is command line arguments representation for YAML settings.
-type CfgCmdLine struct {
-	ConfigPath string `json:"-" yaml:"-" env:"CONFIGPATH" short:"c" long:"cfgpath" description:"Configuration path. Can be full path to config folder, or relative from executable destination."`
-	NoConfig   bool   `json:"-" yaml:"-" long:"nocfg" description:"Specifies do not load settings from YAML-settings file, keeps default."`
-	PackPath   string `json:"-" yaml:"-" env:"PACKPATH" short:"p" long:"wpkpath" description:"Determines package path. Can be full path to folder with package, or relative from executable destination."`
-}
 
 // CfgJWTAuth is authentication settings.
 type CfgJWTAuth struct {
@@ -86,7 +77,7 @@ type CfgAppSets struct {
 	// Maximum duration between two ajax-calls to think client is online.
 	OnlineTimeout time.Duration `json:"online-timeout" yaml:"online-timeout" long:"ot" description:"Maximum duration between two ajax-calls to think client is online."`
 	// Default profile identifier for user on localhost.
-	DefAccID IdType `json:"default-profile-id" yaml:"default-profile-id" long:"defaid" description:"Default profile identifier for user on localhost."`
+	DefAccID ID_t `json:"default-profile-id" yaml:"default-profile-id" long:"defaid" description:"Default profile identifier for user on localhost."`
 	// Initial length of path unique identifiers in base32 symbols, maximum is 12
 	// (x5 for length in bits).
 	// When the bottom pool arrives to 90%, length increases to next available value.
@@ -103,7 +94,6 @@ type CfgAppSets struct {
 
 // Config is common service settings.
 type Config struct {
-	CfgCmdLine `json:"-" yaml:"-" group:"Command line arguments"`
 	CfgJWTAuth `json:"authentication" yaml:"authentication" group:"Authentication"`
 	CfgWebServ `json:"web-server" yaml:"web-server" group:"Web server"`
 	CfgImgProp `json:"images-prop" yaml:"images-prop" group:"Images properties"`
@@ -164,12 +154,6 @@ var buildtime string
 // save server start time
 var starttime = time.Now()
 
-func init() {
-	if _, err := flags.Parse(&cfg); err != nil {
-		os.Exit(1)
-	}
-}
-
 const cfgbase = "config"
 
 // ConfigPath determines configuration path, depended on what directory is exist.
@@ -185,20 +169,19 @@ func DetectConfigPath() (retpath string, err error) {
 	var exepath = filepath.Dir(os.Args[0])
 
 	// try to get from environment setting
-	if cfg.ConfigPath != "" {
-		path = EnvFmt(cfg.ConfigPath)
+	if path, ok = os.LookupEnv("CONFIGPATH"); ok {
 		// try to get access to full path
 		if ok, _ = PathExists(filepath.Join(path, cfgfile)); ok {
 			retpath = path
 			return
 		}
 		// try to find relative from executable path
-		path = filepath.Join(exepath, path)
+		var exepath = filepath.Join(exepath, path)
 		if ok, _ = PathExists(filepath.Join(path, cfgfile)); ok {
-			retpath = path
+			retpath = exepath
 			return
 		}
-		Log.Infof("no access to pointed configuration path '%s'\n", cfg.ConfigPath)
+		Log.Infof("no access to pointed configuration path '%s'\n", path)
 	}
 
 	// try to get from config subdirectory on executable path
@@ -223,13 +206,13 @@ func DetectConfigPath() (retpath string, err error) {
 		return
 	}
 	// check up current path is the git root path
-	if ok, _ = PathExists(filepath.Join("config", cfgfile)); ok {
-		retpath = "config"
+	if ok, _ = PathExists(filepath.Join(cfgbase, cfgfile)); ok {
+		retpath = cfgbase
 		return
 	}
 
 	// check up running in devcontainer workspace
-	path = filepath.Join("/workspaces", gitname, "config")
+	path = filepath.Join("/workspaces", gitname, cfgbase)
 	if ok, _ = PathExists(filepath.Join(path, cfgfile)); ok {
 		retpath = path
 		return
@@ -238,7 +221,7 @@ func DetectConfigPath() (retpath string, err error) {
 	// check up git source path
 	var prefix string
 	if prefix, ok = os.LookupEnv("GOPATH"); ok {
-		path = filepath.Join(prefix, "src", gitpath, "config")
+		path = filepath.Join(prefix, "src", gitpath, cfgbase)
 		if ok, _ = PathExists(filepath.Join(path, cfgfile)); ok {
 			retpath = path
 			return
@@ -283,20 +266,19 @@ func DetectPackPath() (retpath string, err error) {
 	var exepath = filepath.Dir(os.Args[0])
 
 	// try to get from environment setting
-	if cfg.PackPath != "" {
-		path = EnvFmt(cfg.PackPath)
+	if path, ok = os.LookupEnv("PACKPATH"); ok {
 		// try to get access to full path
 		if ok, _ = PathExists(filepath.Join(path, cfg.WPKName)); ok {
 			retpath = path
 			return
 		}
 		// try to find relative from executable path
-		path = filepath.Join(exepath, path)
+		var exepath = filepath.Join(exepath, path)
 		if ok, _ = PathExists(filepath.Join(path, cfg.WPKName)); ok {
-			retpath = path
+			retpath = exepath
 			return
 		}
-		Log.Infof("no access to pointed package path '%s'\n", cfg.PackPath)
+		Log.Infof("no access to pointed package path '%s'\n", path)
 	}
 
 	// try to find in executable path

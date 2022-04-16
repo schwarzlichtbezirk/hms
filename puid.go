@@ -9,23 +9,23 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// IdType is the type of any users identifiers
-type IdType uint64
+// ID_t is the type of any users identifiers
+type ID_t uint64
 
-// PuidType represents integer form of path unique ID.
-type PuidType uint64
+// Puid_t represents integer form of path unique ID.
+type Puid_t uint64
 
 // Predefined PUIDs.
 const (
-	PUIDhome   PuidType = 1
-	PUIDdrives PuidType = 2
-	PUIDshares PuidType = 3
-	PUIDmedia  PuidType = 4
-	PUIDvideo  PuidType = 5
-	PUIDaudio  PuidType = 6
-	PUIDimage  PuidType = 7
-	PUIDbooks  PuidType = 8
-	PUIDtexts  PuidType = 9
+	PUIDhome   Puid_t = 1
+	PUIDdrives Puid_t = 2
+	PUIDshares Puid_t = 3
+	PUIDmedia  Puid_t = 4
+	PUIDvideo  Puid_t = 5
+	PUIDaudio  Puid_t = 6
+	PUIDimage  Puid_t = 7
+	PUIDbooks  Puid_t = 8
+	PUIDtexts  Puid_t = 9
 
 	PUIDreserved = 32
 )
@@ -43,7 +43,7 @@ const (
 	CPtexts  = "<texts>"
 )
 
-var CatNames = map[PuidType]string{
+var CatNames = map[Puid_t]string{
 	PUIDhome:   "Home",
 	PUIDdrives: "Drives list",
 	PUIDshares: "Shared resources",
@@ -56,7 +56,7 @@ var CatNames = map[PuidType]string{
 }
 
 // CatKeyPath is predefined read-only maps with PUIDs keys and categories values.
-var CatKeyPath = map[PuidType]string{
+var CatKeyPath = map[Puid_t]string{
 	PUIDhome:   CPhome,
 	PUIDdrives: CPdrives,
 	PUIDshares: CPshares,
@@ -69,7 +69,7 @@ var CatKeyPath = map[PuidType]string{
 }
 
 // CatPathKey is predefined read-only map with categories keys and PUIDs values.
-var CatPathKey = map[string]PuidType{
+var CatPathKey = map[string]Puid_t{
 	CPhome:   PUIDhome,
 	CPdrives: PUIDdrives,
 	CPshares: PUIDshares,
@@ -85,7 +85,7 @@ var CatPathKey = map[string]PuidType{
 var idenc = base32.HexEncoding.WithPadding(base32.NoPadding)
 
 // String converts path unique ID to base32 string representation.
-func (pt PuidType) String() string {
+func (pt Puid_t) String() string {
 	var buf [8]byte
 	binary.LittleEndian.PutUint64(buf[:], uint64(pt))
 	var n int
@@ -95,20 +95,20 @@ func (pt PuidType) String() string {
 }
 
 // Set writes base32 string representation of ID into integer value.
-func (pt *PuidType) Set(puid string) error {
+func (pt *Puid_t) Set(puid string) error {
 	var buf [8]byte
 	_, err := idenc.Decode(buf[:], []byte(puid))
-	*pt = PuidType(binary.LittleEndian.Uint64(buf[:]))
+	*pt = Puid_t(binary.LittleEndian.Uint64(buf[:]))
 	return err
 }
 
 // MarshalJSON is JSON marshaler interface implementation.
-func (pt PuidType) MarshalJSON() ([]byte, error) {
+func (pt Puid_t) MarshalJSON() ([]byte, error) {
 	return json.Marshal(pt.String())
 }
 
 // UnmarshalJSON is JSON unmarshaler interface implementation.
-func (pt *PuidType) UnmarshalJSON(b []byte) error {
+func (pt *Puid_t) UnmarshalJSON(b []byte) error {
 	var s string
 	if err := json.Unmarshal(b, &s); err != nil {
 		return err
@@ -117,22 +117,22 @@ func (pt *PuidType) UnmarshalJSON(b []byte) error {
 }
 
 // MarshalYAML is YAML marshaler interface implementation.
-func (pt PuidType) MarshalYAML() (interface{}, error) {
+func (pt Puid_t) MarshalYAML() (interface{}, error) {
 	return pt.String(), nil
 }
 
 // UnmarshalYAML is YAML unmarshaler interface implementation.
-func (pt *PuidType) UnmarshalYAML(value *yaml.Node) error {
+func (pt *Puid_t) UnmarshalYAML(value *yaml.Node) error {
 	return pt.Set(value.Value)
 }
 
 // Rand generates random identifier of given length in bits, maximum 64 bits.
 // Multiply x5 to convert length in base32 symbols to bits.
-func (pt *PuidType) Rand(bits int) {
+func (pt *Puid_t) Rand(bits int) {
 	var buf [8]byte
 	if _, err := rand.Read(buf[:(bits+7)/8]); err != nil {
 		panic(err)
 	}
-	*pt = PuidType(binary.LittleEndian.Uint64(buf[:]))
+	*pt = Puid_t(binary.LittleEndian.Uint64(buf[:]))
 	*pt &= 0xffffffffffffffff >> (65 - bits) // throw one more bit to prevent string representation overflow
 }

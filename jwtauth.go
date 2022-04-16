@@ -23,7 +23,7 @@ const jwtsubject = "hms"
 // Claims of JWT-tokens. Contains additional profile identifier.
 type Claims struct {
 	jwt.StandardClaims
-	AID IdType `json:"aid,omitempty"`
+	AID ID_t `json:"aid,omitempty"`
 }
 
 // HTTP error messages
@@ -49,7 +49,7 @@ type Tokens struct {
 type AuthHandlerFunc func(w http.ResponseWriter, r *http.Request, auth *Profile)
 
 // Make creates access and refresh tokens pair for given AID.
-func (t *Tokens) Make(aid IdType) {
+func (t *Tokens) Make(aid ID_t) {
 	var now = time.Now()
 	t.Access, _ = jwt.NewWithClaims(jwt.SigningMethodHS256, &Claims{
 		StandardClaims: jwt.StandardClaims{
@@ -109,7 +109,7 @@ func IsLocalhost(addrport string) bool {
 func GetAuth(w http.ResponseWriter, r *http.Request) (auth *Profile, err error) {
 	defer func() {
 		if err == nil {
-			var aid IdType
+			var aid ID_t
 			if auth != nil {
 				aid = auth.ID
 			}

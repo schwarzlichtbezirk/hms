@@ -35,7 +35,7 @@ var (
 	ErrImgNil   = errors.New("can not allocate image")
 )
 
-type Mime_t int
+type Mime_t int16
 
 const (
 	MimeDis  Mime_t = -1 // file can not be cached for thumbnails.
@@ -79,8 +79,8 @@ type MediaData struct {
 
 // TmbProp is thumbnails properties.
 type TmbProp struct {
-	PUIDVal PuidType `json:"puid" yaml:"puid"`
-	MTmbVal Mime_t   `json:"mtmb" yaml:"mtmb"`
+	PUIDVal Puid_t `json:"puid" yaml:"puid"`
+	MTmbVal Mime_t `json:"mtmb" yaml:"mtmb"`
 }
 
 // Setup generates PUID (path unique identifier) and updates cached state.
@@ -110,7 +110,7 @@ func (tp *TmbProp) UpdateTmb() {
 }
 
 // PUID returns thumbnail key, it's full system path unique ID.
-func (tp *TmbProp) PUID() PuidType {
+func (tp *TmbProp) PUID() Puid_t {
 	return tp.PUIDVal
 }
 
@@ -231,19 +231,19 @@ func ToNativeImg(m image.Image, ftype string) (md *MediaData, err error) {
 var ThumbScanner scanner
 
 type scanner struct {
-	put chan PuidType
-	del chan PuidType
+	put chan Puid_t
+	del chan Puid_t
 }
 
 // Scan is goroutine for thumbnails scanning.
 func (s *scanner) Scan() {
-	s.put = make(chan PuidType)
-	s.del = make(chan PuidType)
+	s.put = make(chan Puid_t)
+	s.del = make(chan Puid_t)
 
-	var queue []PuidType
+	var queue []Puid_t
 	var ctx chan struct{}
 
-	var cache = func(puid PuidType) {
+	var cache = func(puid Puid_t) {
 		ctx = make(chan struct{})
 		go func() {
 			defer close(ctx)
@@ -290,12 +290,12 @@ func (s *scanner) Scan() {
 }
 
 // Add list of PUIDs to queue to make thumbnails.
-func (s *scanner) Add(puid PuidType) {
+func (s *scanner) Add(puid Puid_t) {
 	s.put <- puid
 }
 
 // Remove list of PUIDs from thumbnails queue.
-func (s *scanner) Remove(puid PuidType) {
+func (s *scanner) Remove(puid Puid_t) {
 	s.del <- puid
 }
 
@@ -330,8 +330,8 @@ func tmbchkAPI(w http.ResponseWriter, r *http.Request) {
 func tmbscnstartAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
-		AID  IdType     `json:"aid"`
-		List []PuidType `json:"list"`
+		AID  ID_t     `json:"aid"`
+		List []Puid_t `json:"list"`
 	}
 
 	// get arguments
@@ -368,8 +368,8 @@ func tmbscnstartAPI(w http.ResponseWriter, r *http.Request) {
 func tmbscnbreakAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
-		AID  IdType     `json:"aid"`
-		List []PuidType `json:"list"`
+		AID  ID_t     `json:"aid"`
+		List []Puid_t `json:"list"`
 	}
 
 	// get arguments

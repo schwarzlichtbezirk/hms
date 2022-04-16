@@ -307,12 +307,12 @@ func IsTypePlaylist(ext string) bool {
 
 // Pather is path properties interface.
 type Pather interface {
-	Name() string   // string identifier
-	Type() int      // type identifier
-	Size() int64    // size in bytes
-	Time() int64    // UNIX time in milliseconds
-	PUID() PuidType // path unique ID encoded to hex-base32
-	MTmb() Mime_t   // thumbnail MIME type, -1 - can not make thumbnail; 0 - not cached; >=1 - cached
+	Name() string // string identifier
+	Type() int    // type identifier
+	Size() int64  // size in bytes
+	Time() int64  // UNIX time in milliseconds
+	PUID() Puid_t // path unique ID encoded to hex-base32
+	MTmb() Mime_t // thumbnail MIME type, -1 - can not make thumbnail; 0 - not cached; >=1 - cached
 	SetTmb(Mime_t)
 }
 

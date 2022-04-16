@@ -112,6 +112,29 @@ func loadtemplates() (err error) {
 // Init performs global data initialization. Loads configuration files, initializes file cache.
 func Init() {
 	Log.Infof("version: %s, builton: %s %s\n", buildvers, builddate, buildtime)
+
+	var err error
+
+	// get confiruration path
+	if ConfigPath, err = DetectConfigPath(); err != nil {
+		Log.Fatal(err)
+	}
+	// load content of Config structure from YAML-file.
+	if err = cfg.Load(cfgfile); err != nil {
+		Log.Infoln("error on settings file: " + err.Error())
+	}
+	// rewrite settings from config file
+	if _, err := flags.Parse(&cfg); err != nil {
+		os.Exit(1)
+	}
+	Log.Infof("config path: %s\n", ConfigPath)
+
+	// get package path
+	if PackPath, err = DetectPackPath(); err != nil {
+		Log.Fatal(err)
+	}
+	Log.Infof("package path: %s\n", PackPath)
+
 	Log.Infoln("starts")
 
 	// create context and wait the break
@@ -144,33 +167,6 @@ func Init() {
 		signal.Stop(sigint)
 		signal.Stop(sigterm)
 	}()
-
-	var err error
-
-	MakeServerLabel("hms", buildvers)
-
-	// get confiruration path
-	if ConfigPath, err = DetectConfigPath(); err != nil {
-		Log.Fatal(err)
-	}
-	Log.Infof("config path: %s\n", ConfigPath)
-
-	// load content of Config structure from YAML-file.
-	if !cfg.NoConfig {
-		if err = cfg.Load(cfgfile); err != nil {
-			Log.Infoln("error on settings file: " + err.Error())
-		}
-		// second iteration, rewrite settings from config file
-		if _, err = flags.NewParser(&cfg, flags.PassDoubleDash).Parse(); err != nil {
-			panic("no way to here")
-		}
-	}
-
-	// get package path
-	if PackPath, err = DetectPackPath(); err != nil {
-		Log.Fatal(err)
-	}
-	Log.Infof("package path: %s\n", PackPath)
 
 	// load package with data files
 	if packager, err = openimage(); err != nil {
@@ -208,6 +204,8 @@ func Init() {
 	if err = prflist.Load(pffile); err != nil {
 		Log.Fatal("error on profiles file: " + err.Error())
 	}
+
+	MakeServerLabel("hms", buildvers)
 
 	// run users scanner for statistics
 	go UserScanner()

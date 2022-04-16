@@ -63,7 +63,7 @@ func (cg *CatGrp) SetAll(v bool) {
 
 // Profile contains access configuration to resources.
 type Profile struct {
-	ID       IdType `json:"id"`
+	ID       ID_t   `json:"id"`
 	Login    string `json:"login"`
 	Password string `json:"password"`
 
@@ -72,8 +72,8 @@ type Profile struct {
 	Shares []string `json:"shares"`
 
 	// private shares data
-	sharepuid map[string]PuidType // share/puid key/values
-	puidshare map[PuidType]string // puid/share key/values
+	sharepuid map[string]Puid_t // share/puid key/values
+	puidshare map[Puid_t]string // puid/share key/values
 	ctgrshare CatGrp
 
 	mux sync.RWMutex
@@ -93,8 +93,8 @@ func (pl *Profiles) NewProfile(login, password string) *Profile {
 		Roots:     []string{},
 		Hidden:    []string{},
 		Shares:    []string{},
-		sharepuid: map[string]PuidType{},
-		puidshare: map[PuidType]string{},
+		sharepuid: map[string]Puid_t{},
+		puidshare: map[Puid_t]string{},
 	}
 	if len(pl.list) > 0 {
 		prf.ID = pl.list[len(pl.list)-1].ID + 1
@@ -105,7 +105,7 @@ func (pl *Profiles) NewProfile(login, password string) *Profile {
 }
 
 // ByID finds profile with given identifier.
-func (pl *Profiles) ByID(prfid IdType) *Profile {
+func (pl *Profiles) ByID(prfid ID_t) *Profile {
 	pl.mux.RLock()
 	defer pl.mux.RUnlock()
 	for _, prf := range pl.list {
@@ -136,7 +136,7 @@ func (pl *Profiles) Insert(prf *Profile) {
 }
 
 // Delete profile with "prfid" identifier from the list.
-func (pl *Profiles) Delete(prfid IdType) bool {
+func (pl *Profiles) Delete(prfid ID_t) bool {
 	pl.mux.RLock()
 	defer pl.mux.RUnlock()
 	for i, prf := range pl.list {
@@ -266,8 +266,8 @@ func (prf *Profile) UpdateShares() {
 	prf.mux.Lock()
 	defer prf.mux.Unlock()
 
-	prf.sharepuid = map[string]PuidType{}
-	prf.puidshare = map[PuidType]string{}
+	prf.sharepuid = map[string]Puid_t{}
+	prf.puidshare = map[Puid_t]string{}
 	for _, shr := range prf.Shares {
 		var syspath = shr
 		if prop, err := propcache.Get(syspath); err == nil {
@@ -323,7 +323,7 @@ func (prf *Profile) AddShare(syspath string) bool {
 }
 
 // DelShare deletes share by given path unigue identifier.
-func (prf *Profile) DelShare(puid PuidType) bool {
+func (prf *Profile) DelShare(puid Puid_t) bool {
 	prf.mux.Lock()
 	defer prf.mux.Unlock()
 
