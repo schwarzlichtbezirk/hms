@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/schwarzlichtbezirk/wpk"
 )
 
 //////////////////////////
@@ -396,7 +397,7 @@ func reloadAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		DataSize  int64 `json:"datasize"`
 	}
 
-	if packager, err = openimage(); err != nil {
+	if packager, err = openpackage(); err != nil {
 		WriteError500(w, err, AECreloadload)
 		return
 	}
@@ -405,8 +406,15 @@ func reloadAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		return
 	}
 
-	ret.RecNumber = int64(len(packager.NFTO()))
-	ret.DataSize = packager.DataSize()
+	packager.Enum(func(fkey string, ts *wpk.Tagset_t) bool {
+		if fkey != "" { // skip package info
+			ret.RecNumber++
+		}
+		return true
+	})
+	if ts, ok := packager.Tagset(""); ok {
+		ret.DataSize = ts.Size()
+	}
 	WriteOK(w, &ret)
 }
 

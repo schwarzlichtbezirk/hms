@@ -9,27 +9,27 @@ curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.min.js.
 curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css --output %pldir%/bootstrap.min.css
 curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css.map --output %pldir%/bootstrap.min.css.map
 
-rem popper 2.11.2
+rem popper 2.11.5
 rem https://cdnjs.com/libraries/popper.js
-curl https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.2/umd/popper.min.js --output %pldir%/popper.min.js
-curl https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.2/umd/popper.min.js.map --output %pldir%/popper.min.js.map
+curl https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.5/umd/popper.min.js --output %pldir%/popper.min.js
+curl https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.5/umd/popper.min.js.map --output %pldir%/popper.min.js.map
 
-rem Vue 3.2.28
+rem Vue 3.2.33
 rem https://cdnjs.com/libraries/vue
 rem https://unpkg.com/vue@next
-curl https://unpkg.com/vue@3.2.28/dist/vue.global.js --output %pldir%/vue.global.js
-curl https://unpkg.com/vue@3.2.28/dist/vue.global.prod.js --output %pldir%/vue.global.prod.js
+curl https://unpkg.com/vue@3.2.33/dist/vue.global.js --output %pldir%/vue.global.js
+curl https://unpkg.com/vue@3.2.33/dist/vue.global.prod.js --output %pldir%/vue.global.prod.js
 
-rem leaflet 1.7.1
+rem leaflet 1.8.0
 rem https://cdnjs.com/libraries/leaflet
-curl https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js --output %pldir%/leaflet.js
-curl https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.js.map --output %pldir%/leaflet.js.map
-curl https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/leaflet.min.css --output %pldir%/leaflet.min.css
-curl https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/layers.png --output %pldir%/images/layers.png
-curl https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/layers-2x.png --output %pldir%/images/layers-2x.png
-curl https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png --output %pldir%/images/marker-icon.png
-curl https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png --output %pldir%/images/marker-icon-2x.png
-curl https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png --output %pldir%/images/marker-shadow.png
+curl https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.8.0/leaflet.js --output %pldir%/leaflet.js
+curl https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.8.0/leaflet.js.map --output %pldir%/leaflet.js.map
+curl https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.8.0/leaflet.min.css --output %pldir%/leaflet.min.css
+curl https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.8.0/images/layers.png --output %pldir%/images/layers.png
+curl https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.8.0/images/layers-2x.png --output %pldir%/images/layers-2x.png
+curl https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.8.0/images/marker-icon.png --output %pldir%/images/marker-icon.png
+curl https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.8.0/images/marker-icon-2x.png --output %pldir%/images/marker-icon-2x.png
+curl https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.8.0/images/marker-shadow.png --output %pldir%/images/marker-shadow.png
 
 rem MarkerCluster 1.5.3
 rem https://cdnjs.com/libraries/leaflet.markercluster

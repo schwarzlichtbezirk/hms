@@ -1,9 +1,12 @@
 
 -- all icons collections in webp format
 
-wpkconf = {
-	-- result package name
-	label = "hms-all",
+cfg = {
+	-- package info
+	info = {
+		label = "hms-all",
+		link = "github.com/schwarzlichtbezirk/hms",
+	},
 	-- list of icons collections IDs, see 'id' tags of 'iconlist' in 'resmodel.json' file
 	iconset = {
 		junior = {"webp"},

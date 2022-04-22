@@ -39,12 +39,12 @@ var Log = NewLogger(os.Stderr, LstdFlags, 300)
 // Startup opening functions //
 ///////////////////////////////
 
-// openimage opens hms-package.
-func openimage() (pack wpk.Packager, err error) {
+// openpackage opens hms-package.
+func openpackage() (pack wpk.Packager, err error) {
 	if cfg.AutoCert {
-		return mmap.OpenImage(path.Join(PackPath, cfg.WPKName))
+		return mmap.OpenPackage(path.Join(PackPath, cfg.WPKName))
 	} else {
-		return bulk.OpenImage(path.Join(PackPath, cfg.WPKName))
+		return bulk.OpenPackage(path.Join(PackPath, cfg.WPKName))
 	}
 }
 
@@ -169,10 +169,20 @@ func Init() {
 	}()
 
 	// load package with data files
-	if packager, err = openimage(); err != nil {
+	if packager, err = openpackage(); err != nil {
 		Log.Fatal("can not load wpk-package: " + err.Error())
 	}
-	Log.Infof("package '%s': cached %d files on %d bytes", cfg.WPKName, len(packager.NFTO()), packager.DataSize())
+	var num, size int64
+	packager.Enum(func(fkey string, ts *wpk.Tagset_t) bool {
+		if fkey != "" { // skip package info
+			num++
+		}
+		return true
+	})
+	if ts, ok := packager.Tagset(""); ok {
+		size = ts.Size()
+	}
+	Log.Infof("package '%s': cached %d files on %d bytes", cfg.WPKName, num, size)
 
 	// insert components templates into pages
 	if err = loadtemplates(); err != nil {

@@ -16,7 +16,7 @@ require (
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/oov/psd v0.0.0-20220121172623-5db5eafcecbb
 	github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd
-	github.com/schwarzlichtbezirk/wpk v1.2.0
+	github.com/schwarzlichtbezirk/wpk v1.2.1-0.20220422124458-f1703c4e8da5
 	github.com/spate/glimage v0.0.0-20200505055513-fbdcc60a65e5
 	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4
 	golang.org/x/image v0.0.0-20220413100746-70e8d0d3baa9
@@ -27,14 +27,14 @@ require (
 
 require (
 	github.com/frankban/quicktest v1.14.3 // indirect
-	github.com/gopherjs/gopherjs v0.0.0-20220410123724-9e86199038b0 // indirect
+	github.com/gopherjs/gopherjs v1.17.2 // indirect
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
-	github.com/pkg/xattr v0.4.6 // indirect
+	github.com/pkg/xattr v0.4.7 // indirect
 	github.com/schwarzlichtbezirk/mmap-go v1.0.2 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/stretchr/testify v1.7.1 // indirect
 	github.com/ulikunitz/xz v0.5.10 // indirect
-	golang.org/x/net v0.0.0-20220412020605-290c469a71a5 // indirect
-	golang.org/x/sys v0.0.0-20220412211240-33da011f77ad // indirect
+	golang.org/x/net v0.0.0-20220421235706-1d1ef9303861 // indirect
+	golang.org/x/sys v0.0.0-20220422013727-9388b58f7150 // indirect
 	gopkg.in/djherbis/times.v1 v1.3.0 // indirect
 )

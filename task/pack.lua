@@ -1,3 +1,13 @@
+-- check up config data existence
+assert(cfg, "config is absent")
+assert(cfg.info, "package info is absent")
+assert(cfg.info.label, "label in package info is absent")
+assert(cfg.skinset, "skin set is absent")
+assert(cfg.iconset, "icon set is absent")
+assert(cfg.defskinid, "default skin ID is absent")
+assert(cfg.deficonid, "default icon ID is absent")
+
+-- get frontend data directory
 local rootdir = path.join(scrdir, "..", "frontend").."/"
 
 -- check up deployment
@@ -79,14 +89,6 @@ local iconfmtjson = {
 		}]],
 }
 
--- let's set package configuration to default if it was not provided
-wpkconf = wpkconf or {}
-wpkconf.label = wpkconf.label or "hms-full"
-wpkconf.skinset = wpkconf.skinset or fullskinset
-wpkconf.iconset = wpkconf.iconset or fulliconset
-wpkconf.defskinid = wpkconf.defskinid or "neon"
-wpkconf.deficonid = wpkconf.deficonid or "junior"
-
 -- write to log formatted string
 local function logfmt(...)
 	log(string.format(...))
@@ -100,14 +102,14 @@ end
 
 -- inits new package
 local pkg = wpk.new()
-pkg.label = wpkconf.label -- image label
 pkg.automime = true -- put MIME type for each file if it is not given explicit
 pkg.secret = "hms-package" -- private key to sign cryptographic hashes for each file
 pkg.crc32 = true -- generate CRC32 Castagnoli code for each file
 pkg.sha256 = true -- generate SHA256 hash for each file
+pkg:setinfo(cfg.info) -- set package info
 
 -- open wpk-file for write
-pkg:begin(envfmt("${GOPATH}/bin/"..wpkconf.label..".wpk"))
+pkg:begin(envfmt("${GOPATH}/bin/"..cfg.info.label..".wpk"))
 
 -- write record log
 local function logfile(kpath)
@@ -181,14 +183,14 @@ packdir("plugin", rootdir.."plugin", commonput)
 packdir("tmpl", rootdir.."tmpl", commonput)
 packdir("task", scrdir, commonput)
 -- put skins
-for i, id in ipairs(wpkconf.skinset) do
+for i, id in ipairs(cfg.skinset) do
 	for j, fname in ipairs(fullskinmap[id]) do
 		local kpath = "skin/"..fname
 		authput(kpath, rootdir..kpath)
 	end
 end
 -- put icons
-for id, fmtlst in pairs(wpkconf.iconset) do
+for id, fmtlst in pairs(cfg.iconset) do
 	local function iconput(kpath, fpath)
 		local is = false
 		for i, name in ipairs(fmtlst) do
@@ -239,7 +241,7 @@ do
 	-- cut extra items from skinlist
 	for i, id1 in ipairs(fullskinset) do
 		local found = false
-		for i, id2 in ipairs(wpkconf.skinset) do
+		for i, id2 in ipairs(cfg.skinset) do
 			if id1 == id2 then
 				found = true
 				break
@@ -252,7 +254,7 @@ do
 	-- cut extra items from iconlist
 	for id1, fmtlst in pairs(fulliconset) do
 		local found = false
-		for id2 in pairs(wpkconf.iconset) do
+		for id2 in pairs(cfg.iconset) do
 			if id1 == id2 then
 				found = true
 				break
@@ -263,9 +265,9 @@ do
 		end
 	end
 	-- replace defskinid
-	content = string.gsub(content, "\"defskinid\": \"[%w%-]+\"", "\"defskinid\": \""..wpkconf.defskinid.."\"")
+	content = string.gsub(content, "\"defskinid\": \"[%w%-]+\"", "\"defskinid\": \""..cfg.defskinid.."\"")
 	-- replace deficonid
-	content = string.gsub(content, "\"deficonid\": \"[%w%-]+\"", "\"deficonid\": \""..wpkconf.deficonid.."\"")
+	content = string.gsub(content, "\"deficonid\": \"[%w%-]+\"", "\"deficonid\": \""..cfg.deficonid.."\"")
 	-- correct arrays
 	content = string.gsub(content, "%[,", "[")
 	-- put modified file
@@ -277,7 +279,7 @@ do
 	local f = assert(io.open(envfmt("${GOPATH}/bin/config/settings.yaml"), "rb"))
 	local content = f:read("*all")
 	f:close()
-	content = string.gsub(content, "wpk%-name:(%s+)[%w%-]+%.wpk", "wpk-name:%1"..wpkconf.label..".wpk")
+	content = string.gsub(content, "wpk%-name:(%s+)[%w%-]+%.wpk", "wpk-name:%1"..cfg.info.label..".wpk")
 	local f = assert(io.open(envfmt("${GOPATH}/bin/config/settings.yaml"), "wb+"))
 	f:write(content)
 	f:close()

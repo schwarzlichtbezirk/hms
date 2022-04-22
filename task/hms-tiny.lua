@@ -1,9 +1,12 @@
 
 -- package with minimal resources size
 
-wpkconf = {
-	-- result package name
-	label = "hms-tiny",
+cfg = {
+	-- package info
+	info = {
+		label = "hms-tiny",
+		link = "github.com/schwarzlichtbezirk/hms",
+	},
 	-- list of skins IDs, see 'id' tags of 'skinlist' in 'resmodel.json' file
 	skinset = {
 		"daylight", "blue", "dark",
