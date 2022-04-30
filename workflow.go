@@ -172,17 +172,7 @@ func Init() {
 	if packager, err = openpackage(); err != nil {
 		Log.Fatal("can not load wpk-package: " + err.Error())
 	}
-	var num, size int64
-	packager.Enum(func(fkey string, ts *wpk.Tagset_t) bool {
-		if fkey != "" { // skip package info
-			num++
-		}
-		return true
-	})
-	if ts, ok := packager.Tagset(""); ok {
-		size = ts.Size()
-	}
-	Log.Infof("package '%s': cached %d files on %d bytes", cfg.WPKName, num, size)
+	PackInfo(cfg.WPKName, packager)
 
 	// insert components templates into pages
 	if err = loadtemplates(); err != nil {
@@ -191,6 +181,9 @@ func Init() {
 
 	// build caches with given sizes from settings
 	initcaches()
+	if err = initpackages(); err != nil {
+		Log.Fatal(err)
+	}
 
 	if err = syspathcache.Load(pcfile); err != nil {
 		Log.Infoln("error on path cache file: " + err.Error())
@@ -411,6 +404,12 @@ func Shutdown() {
 	go func() {
 		defer exitwg.Done()
 		packager.Close()
+	}()
+
+	exitwg.Add(1)
+	go func() {
+		defer exitwg.Done()
+		thumbpkg.Close()
 	}()
 
 	exitwg.Wait()

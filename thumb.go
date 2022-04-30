@@ -11,7 +11,8 @@ import (
 	"net/http"
 
 	"github.com/disintegration/gift"
-	_ "github.com/oov/psd"           // register PSD format
+	_ "github.com/oov/psd" // register PSD format
+	"github.com/schwarzlichtbezirk/wpk"
 	_ "github.com/spate/glimage/dds" // register DDS format
 	_ "golang.org/x/image/bmp"       // register BMP format
 	_ "golang.org/x/image/tiff"      // register TIFF format
@@ -160,18 +161,49 @@ func FindTmb(prop Pather, syspath string) (md *MediaData, err error) {
 		return // file is not image
 	}
 
-	var file VFile
+	var file io.ReadCloser
 	if file, err = OpenFile(syspath); err != nil {
 		return // can not open file
 	}
 	defer file.Close()
 
-	return MakeTmb(file, orientation)
+	if md, err = MakeTmb(syspath, file, orientation); err != nil {
+		return
+	}
+	return
 }
 
 // MakeTmb reads image from the stream and makes thumbnail with format
 // depended from alpha-channel is present in the original image.
-func MakeTmb(r io.Reader, orientation int) (md *MediaData, err error) {
+func MakeTmb(fkey string, r io.Reader, orientation int) (md *MediaData, err error) {
+	// try to extract thumbnail from package
+	if ts, ok := thumbpkg.Tagset(fkey); ok {
+		var mime Mime_t
+		if str, ok := ts.String(wpk.TIDmime); ok {
+			if mime, ok = MimeVal[str]; !ok {
+				mime = MimeUnk
+			}
+		}
+
+		var file io.ReadCloser
+		if file, err = thumbpkg.OpenTagset(ts); err != nil {
+			return
+		}
+		defer file.Close()
+
+		var size = ts.Size()
+		var buf = make([]byte, size)
+		if _, err = file.Read(buf); err != nil {
+			return
+		}
+		md = &MediaData{
+			Data: buf,
+			Mime: mime,
+		}
+		return
+	}
+
+	// create sized image for thumbnail
 	var ftype string
 	var src, dst image.Image
 	if src, ftype, err = image.Decode(r); err != nil {
@@ -179,7 +211,7 @@ func MakeTmb(r io.Reader, orientation int) (md *MediaData, err error) {
 			return // can not decode file by any codec
 		}
 	}
-	if src.Bounds().In(image.Rect(0, 0, 320, 320)) {
+	if src.Bounds().In(image.Rect(0, 0, cfg.TmbResolution[0], cfg.TmbResolution[1])) {
 		dst = src
 	} else {
 		var fltlst = AddOrientFilter([]gift.Filter{
@@ -195,7 +227,19 @@ func MakeTmb(r io.Reader, orientation int) (md *MediaData, err error) {
 		dst = img
 	}
 
-	return ToNativeImg(dst, ftype) // set valid thumbnail
+	// create valid thumbnail
+	if md, err = ToNativeImg(dst, ftype); err != nil {
+		return
+	}
+
+	// push thumbnail to package
+	var ts *wpk.Tagset_t
+	if ts, err = thumbpkg.PackData(thumbpkg.WPF, bytes.NewReader(md.Data), fkey); err != nil {
+		return
+	}
+	ts.Put(wpk.TIDmime, wpk.TagString(MimeStr[md.Mime]))
+	thumbpkg.SetTagset(fkey, ts)
+	return
 }
 
 // ToNativeImg converts Image to specified file format supported by browser.

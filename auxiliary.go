@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io/fs"
 	"os"
+	"path/filepath"
 	"regexp"
 )
 
@@ -40,13 +41,20 @@ func EnvFmt(p string) string {
 }
 
 // PathExists makes check up on path existance.
-func PathExists(path string) (bool, error) {
+func PathExists(fpath string) (bool, error) {
 	var err error
-	if _, err = os.Stat(path); err == nil {
+	if _, err = os.Stat(fpath); err == nil {
 		return true, nil
 	}
 	if errors.Is(err, fs.ErrNotExist) {
 		return false, nil
 	}
 	return true, err
+}
+
+func CheckPath(fpath string, fname string) (string, bool) {
+	if ok, _ := PathExists(filepath.Join(fpath, fname)); !ok {
+		return "", false
+	}
+	return fpath, true
 }

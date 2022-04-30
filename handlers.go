@@ -213,7 +213,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	var content VFile
+	var content io.ReadSeekCloser
 	if content, err = OpenFile(syspath); err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			WriteError(w, http.StatusGone, err, AECmediafilegone)
@@ -766,7 +766,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 
 	var t = time.Now()
 	if !fi.IsDir() && IsTypePlaylist(ext) {
-		var file VFile
+		var file io.ReadCloser
 		if file, err = OpenFile(syspath); err != nil {
 			WriteError500(w, err, AECfolderopen)
 			return

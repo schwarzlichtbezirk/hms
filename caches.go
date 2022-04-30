@@ -5,6 +5,7 @@ import (
 	"image"
 	"io"
 	"io/fs"
+	"os"
 	"path"
 	"strconv"
 	"strings"
@@ -13,6 +14,8 @@ import (
 
 	"github.com/bluele/gcache"
 	"github.com/disintegration/gift"
+	"github.com/schwarzlichtbezirk/wpk"
+	"github.com/schwarzlichtbezirk/wpk/fsys"
 )
 
 // gcaches
@@ -330,7 +333,7 @@ func initcaches() {
 				return // uncacheable type
 			}
 
-			var file VFile
+			var file io.ReadCloser
 			if file, err = OpenFile(syspath); err != nil {
 				return // can not open file
 			}
@@ -385,7 +388,7 @@ func initcaches() {
 				orientation = ek.Orientation
 			}
 
-			var file VFile
+			var file io.ReadCloser
 			if file, err = OpenFile(syspath); err != nil {
 				return // can not open file
 			}
@@ -454,7 +457,7 @@ func initcaches() {
 				orientation = ek.Orientation
 			}
 
-			var file VFile
+			var file io.ReadCloser
 			if file, err = OpenFile(syspath); err != nil {
 				return // can not open file
 			}
@@ -514,6 +517,98 @@ func initcaches() {
 			value.(io.Closer).Close()
 		}).
 		Build()
+}
+
+type CachePackage struct {
+	*fsys.Package
+	WPT wpk.WriteSeekCloser // package tags part
+	WPF wpk.WriteSeekCloser // package files part
+}
+
+func InitCacheWriter(fname string) (cw *CachePackage, err error) {
+	var pkgpath = wpk.MakeTagsPath(path.Join(cachepath, fname))
+	var datpath = wpk.MakeDataPath(path.Join(cachepath, fname))
+	cw = &CachePackage{}
+	defer func() {
+		if err != nil {
+			if cw.WPT != nil {
+				cw.WPT.Close()
+				cw.WPT = nil
+			}
+			if cw.WPF != nil {
+				cw.WPF.Close()
+				cw.WPF = nil
+			}
+		}
+	}()
+
+	var ok, _ = PathExists(pkgpath)
+	if cw.WPT, err = os.OpenFile(pkgpath, os.O_WRONLY|os.O_CREATE, 0755); err != nil {
+		return
+	}
+	if cw.WPF, err = os.OpenFile(datpath, os.O_WRONLY|os.O_CREATE, 0755); err != nil {
+		return
+	}
+	if ok {
+		if cw.Package, err = fsys.OpenPackage(pkgpath); err != nil {
+			return
+		}
+		var offset, size = cw.DataPos()
+		if _, err = cw.WPF.Seek(int64(offset+size), io.SeekStart); err != nil {
+			return
+		}
+	} else {
+		cw.Package = fsys.NewPackage(datpath)
+		if err = cw.Begin(cw.WPT); err != nil {
+			return
+		}
+		cw.Package.Info().
+			Put(wpk.TIDlabel, wpk.TagString(fname))
+	}
+	return
+}
+
+func (cw *CachePackage) Close() (err error) {
+	if et := cw.Sync(cw.WPT, cw.WPF); et != nil && err == nil {
+		err = et
+	}
+	if et := cw.WPT.Close(); et != nil && err == nil {
+		err = et
+	}
+	if et := cw.WPF.Close(); et != nil && err == nil {
+		err = et
+	}
+	return
+}
+
+var cachepath string
+var thumbpkg *CachePackage
+
+func PackInfo(fname string, pack wpk.Packager) {
+	var num, size int64
+	pack.Enum(func(fkey string, ts *wpk.Tagset_t) bool {
+		num++
+		return true
+	})
+	if ts, ok := pack.Tagset(""); ok {
+		size = ts.Size()
+	}
+	Log.Infof("package '%s': cached %d files on %d bytes", fname, num, size)
+}
+
+func initpackages() (err error) {
+	var fpath string
+	if fpath, err = DetectPackPath(); err != nil {
+		Log.Fatal(err)
+	}
+	cachepath = path.Join(fpath, "cache")
+	Log.Infof("cache path: %s\n", cachepath)
+
+	if thumbpkg, err = InitCacheWriter(cfg.ThumbCacheName); err != nil {
+		return
+	}
+	PackInfo(cfg.ThumbCacheName, thumbpkg)
+	return nil
 }
 
 // The End.

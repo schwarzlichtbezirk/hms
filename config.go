@@ -74,6 +74,8 @@ type CfgAppSets struct {
 	WPKName string `json:"wpk-name" yaml:"wpk-name" long:"wpk" description:"Name of wpk-file with program resources."`
 	// Memory mapping technology for WPK, or load into one solid byte slice otherwise.
 	WPKmmap bool `json:"wpk-mmap" yaml:"wpk-mmap" long:"mmap" description:"Memory mapping technology for WPK, or load into one solid byte slice otherwise."`
+	// Name of thumbnails cache package.
+	ThumbCacheName string `json:"thumb-cache-name" yaml:"thumb-cache-name" long:"tcn" description:"Name of thumbnails cache package."`
 	// Maximum duration between two ajax-calls to think client is online.
 	OnlineTimeout time.Duration `json:"online-timeout" yaml:"online-timeout" long:"ot" description:"Maximum duration between two ajax-calls to think client is online."`
 	// Default profile identifier for user on localhost.
@@ -129,6 +131,7 @@ var cfg = Config{ // inits default values:
 	CfgAppSets: CfgAppSets{
 		WPKName:          "hms-full.wpk",
 		WPKmmap:          false,
+		ThumbCacheName:   "thumb.wpt",
 		OnlineTimeout:    time.Duration(3*60*1000) * time.Millisecond,
 		DefAccID:         1,
 		PUIDlen:          5,
@@ -171,79 +174,62 @@ func DetectConfigPath() (retpath string, err error) {
 	// try to get from environment setting
 	if path, ok = os.LookupEnv("CONFIGPATH"); ok {
 		// try to get access to full path
-		if ok, _ = PathExists(filepath.Join(path, cfgfile)); ok {
-			retpath = path
+		if retpath, ok = CheckPath(path, cfgfile); ok {
 			return
 		}
 		// try to find relative from executable path
-		var exepath = filepath.Join(exepath, path)
-		if ok, _ = PathExists(filepath.Join(path, cfgfile)); ok {
-			retpath = exepath
+		if retpath, ok = CheckPath(filepath.Join(exepath, path), cfgfile); ok {
 			return
 		}
 		Log.Infof("no access to pointed configuration path '%s'\n", path)
 	}
 
 	// try to get from config subdirectory on executable path
-	path = filepath.Join(exepath, cfgbase)
-	if ok, _ = PathExists(filepath.Join(path, cfgfile)); ok {
-		retpath = path
+	if retpath, ok = CheckPath(filepath.Join(exepath, cfgbase), cfgfile); ok {
 		return
 	}
 	// try to find in executable path
-	if ok, _ = PathExists(filepath.Join(exepath, cfgfile)); ok {
-		retpath = exepath
+	if retpath, ok = CheckPath(exepath, cfgfile); ok {
 		return
 	}
 	// try to find in config subdirectory of current path
-	if ok, _ = PathExists(filepath.Join(cfgbase, cfgfile)); ok {
-		retpath = cfgbase
+	if retpath, ok = CheckPath(cfgbase, cfgfile); ok {
 		return
 	}
 	// try to find in current path
-	if ok, _ = PathExists(cfgfile); ok {
-		retpath = "."
+	if retpath, ok = CheckPath(".", cfgfile); ok {
 		return
 	}
 	// check up current path is the git root path
-	if ok, _ = PathExists(filepath.Join(cfgbase, cfgfile)); ok {
-		retpath = cfgbase
+	if retpath, ok = CheckPath(cfgbase, cfgfile); ok {
 		return
 	}
 
 	// check up running in devcontainer workspace
-	path = filepath.Join("/workspaces", gitname, cfgbase)
-	if ok, _ = PathExists(filepath.Join(path, cfgfile)); ok {
-		retpath = path
+	if retpath, ok = CheckPath(filepath.Join("/workspaces", gitname, cfgbase), cfgfile); ok {
 		return
 	}
 
 	// check up git source path
-	var prefix string
-	if prefix, ok = os.LookupEnv("GOPATH"); ok {
-		path = filepath.Join(prefix, "src", gitpath, cfgbase)
-		if ok, _ = PathExists(filepath.Join(path, cfgfile)); ok {
-			retpath = path
+	if path, ok = os.LookupEnv("GOPATH"); ok {
+		if retpath, ok = CheckPath(filepath.Join(path, "src", gitpath, cfgbase), cfgfile); ok {
 			return
 		}
 	}
 
 	// if GOBIN or GOPATH is present
-	if prefix, ok = os.LookupEnv("GOBIN"); !ok {
-		if prefix, ok = os.LookupEnv("GOPATH"); ok {
-			prefix = filepath.Join(prefix, "bin")
+	if path, ok = os.LookupEnv("GOBIN"); !ok {
+		if path, ok = os.LookupEnv("GOPATH"); ok {
+			path = filepath.Join(path, "bin")
 		}
 	}
 	if ok {
 		// try to get from go bin config
-		path = filepath.Join(prefix, cfgbase)
-		if ok, _ = PathExists(filepath.Join(path, cfgfile)); ok {
-			retpath = path
+		if retpath, ok = CheckPath(filepath.Join(path, cfgbase), cfgfile); ok {
 			return
 		}
 		// try to get from go bin root
-		if ok, _ = PathExists(filepath.Join(prefix, cfgfile)); ok {
-			retpath = prefix
+		if retpath, ok = CheckPath(path, cfgfile); ok {
 			return
 		}
 	}
@@ -268,51 +254,40 @@ func DetectPackPath() (retpath string, err error) {
 	// try to get from environment setting
 	if path, ok = os.LookupEnv("PACKPATH"); ok {
 		// try to get access to full path
-		if ok, _ = PathExists(filepath.Join(path, cfg.WPKName)); ok {
-			retpath = path
+		if retpath, ok = CheckPath(path, cfg.WPKName); ok {
 			return
 		}
 		// try to find relative from executable path
-		var exepath = filepath.Join(exepath, path)
-		if ok, _ = PathExists(filepath.Join(path, cfg.WPKName)); ok {
-			retpath = exepath
+		if retpath, ok = CheckPath(filepath.Join(exepath, path), cfg.WPKName); ok {
 			return
 		}
 		Log.Infof("no access to pointed package path '%s'\n", path)
 	}
 
 	// try to find in executable path
-	if ok, _ = PathExists(filepath.Join(exepath, cfg.WPKName)); ok {
-		retpath = exepath
+	if retpath, ok = CheckPath(exepath, cfg.WPKName); ok {
 		return
 	}
 	// try to find in current path
-	if ok, _ = PathExists(cfg.WPKName); ok {
-		retpath = "."
+	if retpath, ok = CheckPath(".", cfg.WPKName); ok {
 		return
 	}
 	// try to find at parental of cofiguration path
-	path = filepath.Join(ConfigPath, "..")
-	if ok, _ = PathExists(filepath.Join(path, cfg.WPKName)); ok {
-		retpath = path
+	if retpath, ok = CheckPath(filepath.Join(ConfigPath, ".."), cfg.WPKName); ok {
 		return
 	}
 
 	// if GOBIN is present
-	var prefix string
-	if prefix, ok = os.LookupEnv("GOBIN"); ok {
-		if ok, _ = PathExists(filepath.Join(prefix, cfg.WPKName)); ok {
-			retpath = prefix
+	if path, ok = os.LookupEnv("GOBIN"); ok {
+		if retpath, ok = CheckPath(path, cfg.WPKName); ok {
 			return
 		}
 	}
 
 	// if GOPATH is present
-	if prefix, ok = os.LookupEnv("GOPATH"); ok {
+	if path, ok = os.LookupEnv("GOPATH"); ok {
 		// try to get from go bin root
-		path = filepath.Join(prefix, "bin")
-		if ok, _ = PathExists(filepath.Join(path, cfg.WPKName)); ok {
-			retpath = path
+		if retpath, ok = CheckPath(filepath.Join(path, "bin"), cfg.WPKName); ok {
 			return
 		}
 	}

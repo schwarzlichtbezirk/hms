@@ -520,13 +520,13 @@ func (tk *TagKit) Setup(syspath string, fi fs.FileInfo) {
 	tk.FileProp.Setup(fi)
 
 	var md *MediaData
-	if file, err := OpenFile(syspath); err == nil { // VFile
+	if file, err := OpenFile(syspath); err == nil {
 		defer file.Close()
 		if m, err := tag.ReadFrom(file); err == nil {
 			tk.TagProp.Setup(m)
 			if pic := m.Picture(); pic != nil {
 				if cfg.FitEmbeddedTmb {
-					if md, err = MakeTmb(bytes.NewReader(pic.Data), OrientNormal); err != nil {
+					if md, err = MakeTmb(syspath, bytes.NewReader(pic.Data), OrientNormal); err != nil {
 						md = &MediaData{
 							Data: pic.Data,
 							Mime: GetMimeVal(pic.MIMEType),
@@ -552,7 +552,7 @@ func (tk *TagKit) Setup(syspath string, fi fs.FileInfo) {
 
 // GetTagTmb extracts embedded thumbnail from image file.
 func GetTagTmb(syspath string) (md *MediaData, err error) {
-	var file io.ReadSeekCloser // VFile
+	var file io.ReadSeekCloser
 	if file, err = OpenFile(syspath); err != nil {
 		return // can not open file
 	}
@@ -562,7 +562,7 @@ func GetTagTmb(syspath string) (md *MediaData, err error) {
 	if m, err = tag.ReadFrom(file); err == nil {
 		if pic := m.Picture(); pic != nil {
 			if cfg.FitEmbeddedTmb {
-				if md, err = MakeTmb(bytes.NewReader(pic.Data), OrientNormal); err != nil {
+				if md, err = MakeTmb(syspath, bytes.NewReader(pic.Data), OrientNormal); err != nil {
 					md = &MediaData{
 						Data: pic.Data,
 						Mime: GetMimeVal(pic.MIMEType),

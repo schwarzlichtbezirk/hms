@@ -57,6 +57,8 @@ specification:
   # On 'true' use memory mapping technology for access to wpk-package nested files.
   # On 'false' use wpk-package loaded into one solid byte slice.
   wpk-mmap: false
+  # Name of thumbnails cache package.
+  thumb-cache-name: thumb.wpt
   # Maximum duration between two ajax-calls to think client is online.
   online-timeout: 180s # 3 minutes
   # Default profile identifier for user on localhost.
@@ -65,9 +67,9 @@ specification:
   puid-length: 5
   # Maximum items number in files properties cache.
   prop-cache-maxnum: 32768
-  # Maximum items number in thumbnails cache.
+  # Maximum items number in thumbnails memory cache.
   thumb-cache-maxnum: 2048
-  # Maximum items number in converted media files cache.
+  # Maximum items number in converted media files memory cache.
   media-cache-maxnum: 64
   # Expiration duration to keep opened iso-disk structures in cache from last access to it.
   disk-cache-expire: 15s

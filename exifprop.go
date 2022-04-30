@@ -2,6 +2,7 @@ package hms
 
 import (
 	"fmt"
+	"io"
 	"io/fs"
 
 	"github.com/disintegration/gift"
@@ -214,7 +215,7 @@ func (ek *ExifKit) Setup(syspath string, fi fs.FileInfo) {
 
 // GetExifTmb extracts JPEG thumbnail from the image file.
 func GetExifTmb(syspath string) (md *MediaData, err error) {
-	var file VFile
+	var file io.ReadCloser
 	if file, err = OpenFile(syspath); err != nil {
 		return // can not open file
 	}

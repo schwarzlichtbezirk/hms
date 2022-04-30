@@ -173,7 +173,7 @@ local function packdir(prefix, dir, putfunc)
 	if logdir then logfmt("packed dir %s", dir) end
 end
 
-if logdir then logfmt("writes %s package", pkg.path) end
+if logdir then logfmt("writes %s package", pkg.pkgpath) end
 
 -- put some directories as is
 packdir("assets", rootdir.."assets", commonput)
@@ -288,7 +288,7 @@ end
 if logdir then
 	logfmt("packaged %d files to %d aliases on %d bytes", pkg.recnum, pkg.tagnum, pkg.datasize)
 else
-	logfmt("%s package: %d files, %d aliases, %d bytes", pkg.path, pkg.recnum, pkg.tagnum, pkg.datasize)
+	logfmt("%s package: %d files, %d aliases, %d bytes", pkg.pkgpath, pkg.recnum, pkg.tagnum, pkg.datasize)
 end
 
 -- write records table, tags table and finalize wpk-file
