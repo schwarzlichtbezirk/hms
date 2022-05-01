@@ -54,6 +54,10 @@ type CfgWebServ struct {
 }
 
 type CfgImgProp struct {
+	// Name of thumbnails cache package.
+	ThumbCacheName string `json:"thumb-cache-name" yaml:"thumb-cache-name" long:"thcn" description:"Name of thumbnails cache package."`
+	// Name of tiles cache package.
+	TilesCacheName string `json:"tiles-cache-name" yaml:"tiles-cache-name" long:"tlcn" description:"Name of tiles cache package."`
 	// Maximum size of image to make thumbnail.
 	ThumbFileMaxSize int64 `json:"thumb-file-maxsize" yaml:"thumb-file-maxsize" long:"tfms" description:"Maximum size of image to make thumbnail."`
 	// Use JPEG thumbnails embedded into image.
@@ -74,8 +78,6 @@ type CfgAppSets struct {
 	WPKName string `json:"wpk-name" yaml:"wpk-name" long:"wpk" description:"Name of wpk-file with program resources."`
 	// Memory mapping technology for WPK, or load into one solid byte slice otherwise.
 	WPKmmap bool `json:"wpk-mmap" yaml:"wpk-mmap" long:"mmap" description:"Memory mapping technology for WPK, or load into one solid byte slice otherwise."`
-	// Name of thumbnails cache package.
-	ThumbCacheName string `json:"thumb-cache-name" yaml:"thumb-cache-name" long:"tcn" description:"Name of thumbnails cache package."`
 	// Maximum duration between two ajax-calls to think client is online.
 	OnlineTimeout time.Duration `json:"online-timeout" yaml:"online-timeout" long:"ot" description:"Maximum duration between two ajax-calls to think client is online."`
 	// Default profile identifier for user on localhost.
@@ -122,6 +124,8 @@ var cfg = Config{ // inits default values:
 		ShutdownTimeout:   time.Duration(15) * time.Second,
 	},
 	CfgImgProp: CfgImgProp{
+		ThumbCacheName:   "thumb.wpt",
+		TilesCacheName:   "tiles.wpt",
 		ThumbFileMaxSize: 4096*3072*4 + 65536,
 		UseEmbeddedTmb:   true,
 		FitEmbeddedTmb:   true,
@@ -131,7 +135,6 @@ var cfg = Config{ // inits default values:
 	CfgAppSets: CfgAppSets{
 		WPKName:          "hms-full.wpk",
 		WPKmmap:          false,
-		ThumbCacheName:   "thumb.wpt",
 		OnlineTimeout:    time.Duration(3*60*1000) * time.Millisecond,
 		DefAccID:         1,
 		PUIDlen:          5,
@@ -239,7 +242,7 @@ func DetectConfigPath() (retpath string, err error) {
 	return
 }
 
-// PackPath determines package path, depended on what directory is exist.
+// PackPath determines resources package path, depended on what directory is exist.
 var PackPath string
 
 // ErrNoPack is "no package path was found" error message.
@@ -294,6 +297,32 @@ func DetectPackPath() (retpath string, err error) {
 
 	// no package was found
 	err = ErrNoPack
+	return
+}
+
+// CachePath determines images cache path, depended on what directory is exist.
+var CachePath string
+
+// DetectCachePath finds configuration path with existing configuration file at least.
+func DetectCachePath() (retpath string, err error) {
+	var ok bool
+	var path string
+	var exepath = filepath.Dir(os.Args[0])
+
+	// try to get from environment setting
+	if path, ok = os.LookupEnv("CACHEPATH"); ok {
+		// try to get access to full path
+		if retpath, ok = CheckPath(path, ""); ok {
+			return
+		}
+		// try to find relative from executable path
+		if retpath, ok = CheckPath(filepath.Join(exepath, path), ""); ok {
+			return
+		}
+		Log.Infof("no access to pointed cache path '%s'\n", path)
+	}
+
+	retpath = filepath.Join(PackPath, "cache")
 	return
 }
 

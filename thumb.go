@@ -177,29 +177,7 @@ func FindTmb(prop Pather, syspath string) (md *MediaData, err error) {
 // depended from alpha-channel is present in the original image.
 func MakeTmb(fkey string, r io.Reader, orientation int) (md *MediaData, err error) {
 	// try to extract thumbnail from package
-	if ts, ok := thumbpkg.Tagset(fkey); ok {
-		var mime Mime_t
-		if str, ok := ts.String(wpk.TIDmime); ok {
-			if mime, ok = MimeVal[str]; !ok {
-				mime = MimeUnk
-			}
-		}
-
-		var file io.ReadCloser
-		if file, err = thumbpkg.OpenTagset(ts); err != nil {
-			return
-		}
-		defer file.Close()
-
-		var size = ts.Size()
-		var buf = make([]byte, size)
-		if _, err = file.Read(buf); err != nil {
-			return
-		}
-		md = &MediaData{
-			Data: buf,
-			Mime: mime,
-		}
+	if md, err = thumbpkg.GetImage(fkey); err != nil || md != nil {
 		return
 	}
 

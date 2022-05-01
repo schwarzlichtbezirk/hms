@@ -135,6 +135,12 @@ func Init() {
 	}
 	Log.Infof("package path: %s\n", PackPath)
 
+	// get cache path
+	if CachePath, err = DetectCachePath(); err != nil {
+		Log.Fatal(err)
+	}
+	Log.Infof("cache path: %s\n", CachePath)
+
 	Log.Infoln("starts")
 
 	// create context and wait the break
@@ -410,6 +416,12 @@ func Shutdown() {
 	go func() {
 		defer exitwg.Done()
 		thumbpkg.Close()
+	}()
+
+	exitwg.Add(1)
+	go func() {
+		defer exitwg.Done()
+		tilespkg.Close()
 	}()
 
 	exitwg.Wait()

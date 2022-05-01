@@ -39,10 +39,14 @@ web-server: # See https://golang.org/pkg/net/http/#Server for details.
   # Maximum duration to wait for graceful shutdown.
   shutdown-timeout: 15s
 images-prop:
+  # Name of thumbnails cache package.
+  thumb-cache-name: thumb.wpt
+  # Name of tiles cache package.
+  tiles-cache-name: tiles.wpt
   # Maximum size of image to make thumbnail.
   thumb-file-maxsize: 50397184 # 4096*3072*4 + 65536, 48M, max 4K image + 64K exif metadata
   # Use JPEG thumbnails embedded into image.
-  use-embedded-tmb: true
+  use-embedded-tmb: false
   # Stretch big image embedded into mp3-file to fit into standard icon size.
   fit-embedded-tmb: true
   # Thumbnails width and height.
@@ -57,8 +61,6 @@ specification:
   # On 'true' use memory mapping technology for access to wpk-package nested files.
   # On 'false' use wpk-package loaded into one solid byte slice.
   wpk-mmap: false
-  # Name of thumbnails cache package.
-  thumb-cache-name: thumb.wpt
   # Maximum duration between two ajax-calls to think client is online.
   online-timeout: 180s # 3 minutes
   # Default profile identifier for user on localhost.

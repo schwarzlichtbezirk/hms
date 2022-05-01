@@ -1,12 +1,13 @@
 package hms
 
 import (
+	"bytes"
 	"errors"
 	"image"
 	"io"
 	"io/fs"
 	"os"
-	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -153,7 +154,7 @@ func UnfoldPath(shrpath string) string {
 	if err := puid.Set(pref); err == nil {
 		if fpath, ok := syspathcache.Path(puid); ok {
 			if suff != "" { // prevent modify original path if suffix is absent
-				fpath = path.Join(fpath, suff)
+				fpath = filepath.Join(fpath, suff)
 			}
 			return fpath
 		}
@@ -362,6 +363,16 @@ func initcaches() {
 				return // file path not found
 			}
 
+			var md *MediaData
+
+			// try to extract tile from package
+			if md, err = tilespkg.GetImage(tilepath); err != nil {
+				return
+			}
+			if md != nil {
+				return md, nil
+			}
+
 			var syspath = tilepath
 			var wdh, hgt int = 480, 360
 			if pos := strings.IndexByte(tilepath, '?'); pos != -1 {
@@ -418,7 +429,19 @@ func initcaches() {
 			filter.Draw(img, src)
 			dst = img
 
-			return ToNativeImg(dst, ftype)
+			if md, err = ToNativeImg(dst, ftype); err != nil {
+				return
+			}
+			ret = md
+
+			// push tile to package
+			var ts *wpk.Tagset_t
+			if ts, err = tilespkg.PackData(tilespkg.WPF, bytes.NewReader(md.Data), tilepath); err != nil {
+				return
+			}
+			ts.Put(wpk.TIDmime, wpk.TagString(MimeStr[md.Mime]))
+			tilespkg.SetTagset(tilepath, ts)
+			return
 		}).
 		Build()
 
@@ -503,7 +526,7 @@ func initcaches() {
 		Simple().
 		Expiration(cfg.DiskCacheExpire).
 		LoaderFunc(func(key interface{}) (ret interface{}, err error) {
-			var ext = strings.ToLower(path.Ext(key.(string)))
+			var ext = strings.ToLower(filepath.Ext(key.(string)))
 			if ext == ".iso" {
 				return NewDiskISO(key.(string))
 			}
@@ -526,8 +549,8 @@ type CachePackage struct {
 }
 
 func InitCacheWriter(fname string) (cw *CachePackage, err error) {
-	var pkgpath = wpk.MakeTagsPath(path.Join(cachepath, fname))
-	var datpath = wpk.MakeDataPath(path.Join(cachepath, fname))
+	var pkgpath = wpk.MakeTagsPath(filepath.Join(CachePath, fname))
+	var datpath = wpk.MakeDataPath(filepath.Join(CachePath, fname))
 	cw = &CachePackage{}
 	defer func() {
 		if err != nil {
@@ -578,11 +601,41 @@ func (cw *CachePackage) Close() (err error) {
 	if et := cw.WPF.Close(); et != nil && err == nil {
 		err = et
 	}
+	cw.WPT, cw.WPF = nil, nil
 	return
 }
 
-var cachepath string
-var thumbpkg *CachePackage
+func (cw *CachePackage) GetImage(fpath string) (md *MediaData, err error) {
+	if ts, ok := cw.Tagset(fpath); ok {
+		var str string
+		var mime Mime_t
+		if str, ok = ts.String(wpk.TIDmime); !ok {
+			return
+		}
+		if mime, ok = MimeVal[str]; !ok {
+			return
+		}
+
+		var file io.ReadCloser
+		if file, err = cw.OpenTagset(ts); err != nil {
+			return
+		}
+		defer file.Close()
+
+		var size = ts.Size()
+		var buf = make([]byte, size)
+		if _, err = file.Read(buf); err != nil {
+			return
+		}
+		md = &MediaData{
+			Data: buf,
+			Mime: mime,
+		}
+	}
+	return
+}
+
+var thumbpkg, tilespkg *CachePackage
 
 func PackInfo(fname string, pack wpk.Packager) {
 	var num, size int64
@@ -597,17 +650,16 @@ func PackInfo(fname string, pack wpk.Packager) {
 }
 
 func initpackages() (err error) {
-	var fpath string
-	if fpath, err = DetectPackPath(); err != nil {
-		Log.Fatal(err)
-	}
-	cachepath = path.Join(fpath, "cache")
-	Log.Infof("cache path: %s\n", cachepath)
-
 	if thumbpkg, err = InitCacheWriter(cfg.ThumbCacheName); err != nil {
 		return
 	}
 	PackInfo(cfg.ThumbCacheName, thumbpkg)
+
+	if tilespkg, err = InitCacheWriter(cfg.TilesCacheName); err != nil {
+		return
+	}
+	PackInfo(cfg.TilesCacheName, tilespkg)
+
 	return nil
 }
 

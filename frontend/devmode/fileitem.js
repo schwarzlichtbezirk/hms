@@ -523,14 +523,17 @@ const VueTileItem = {
 		fmttitle() {
 			return filehint(this.file).join('\n');
 		},
+		iconsrcsm() {
+			return `/id${appvm.aid}/tile/${this.file.puid}/${48 * this.sx}x${36 * this.sy}`;
+		},
 		iconsrcmd() {
-			return `/id${appvm.aid}/tile/${this.file.puid}/${64 * this.sx}x${48 * this.sy}`;
+			return `/id${appvm.aid}/tile/${this.file.puid}/${72 * this.sx}x${54 * this.sy}`;
 		},
 		iconsrcxl() {
-			return `/id${appvm.aid}/tile/${this.file.puid}/${100 * this.sx}x${75 * this.sy}`;
+			return `/id${appvm.aid}/tile/${this.file.puid}/${96 * this.sx}x${72 * this.sy}`;
 		},
 		iconsrchd() {
-			return `/id${appvm.aid}/tile/${this.file.puid}/${160 * this.sx}x${120 * this.sy}`;
+			return `/id${appvm.aid}/tile/${this.file.puid}/${144 * this.sx}x${108 * this.sy}`;
 		}
 	},
 	methods: {
