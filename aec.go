@@ -61,12 +61,12 @@ const (
 
 	AECtilenoacc
 	AECtilenopuid
+	AECtilebadres
 	AECtilenopath
 	AECtilehidden
 	AECtilenoprop
 	AECtilenofile
 	AECtileaccess
-	AECtileabsent
 	AECtilebadcnt
 
 	// reload
@@ -220,6 +220,7 @@ var (
 	ErrArgNoNum  = errors.New("'num' parameter not recognized")
 	ErrArgNoHD   = errors.New("'hd' parameter not recognized")
 	ErrArgNoPuid = errors.New("'puid' argument required")
+	ErrArgNoRes  = errors.New("bad tiles resolution")
 	ErrNotDir    = errors.New("path is not directory")
 	ErrNoPath    = errors.New("path is not found")
 	ErrDeny      = errors.New("access denied for specified authorization")

@@ -3,7 +3,7 @@ package hms
 import (
 	"errors"
 	"os"
-	"path/filepath"
+	"path"
 	"time"
 )
 
@@ -171,24 +171,25 @@ var ErrNoCongig = errors.New("no configuration path was found")
 // DetectConfigPath finds configuration path with existing configuration file at least.
 func DetectConfigPath() (retpath string, err error) {
 	var ok bool
-	var path string
-	var exepath = filepath.Dir(os.Args[0])
+	var fpath string
+	var exepath = path.Dir(ToSlash(os.Args[0]))
 
 	// try to get from environment setting
-	if path, ok = os.LookupEnv("CONFIGPATH"); ok {
+	if fpath, ok = os.LookupEnv("CONFIGPATH"); ok {
+		fpath = ToSlash(fpath)
 		// try to get access to full path
-		if retpath, ok = CheckPath(path, cfgfile); ok {
+		if retpath, ok = CheckPath(fpath, cfgfile); ok {
 			return
 		}
 		// try to find relative from executable path
-		if retpath, ok = CheckPath(filepath.Join(exepath, path), cfgfile); ok {
+		if retpath, ok = CheckPath(path.Join(exepath, fpath), cfgfile); ok {
 			return
 		}
-		Log.Infof("no access to pointed configuration path '%s'\n", path)
+		Log.Infof("no access to pointed configuration path '%s'\n", fpath)
 	}
 
 	// try to get from config subdirectory on executable path
-	if retpath, ok = CheckPath(filepath.Join(exepath, cfgbase), cfgfile); ok {
+	if retpath, ok = CheckPath(path.Join(exepath, cfgbase), cfgfile); ok {
 		return
 	}
 	// try to find in executable path
@@ -209,30 +210,31 @@ func DetectConfigPath() (retpath string, err error) {
 	}
 
 	// check up running in devcontainer workspace
-	if retpath, ok = CheckPath(filepath.Join("/workspaces", gitname, cfgbase), cfgfile); ok {
+	if retpath, ok = CheckPath(path.Join("/workspaces", gitname, cfgbase), cfgfile); ok {
 		return
 	}
 
 	// check up git source path
-	if path, ok = os.LookupEnv("GOPATH"); ok {
-		if retpath, ok = CheckPath(filepath.Join(path, "src", gitpath, cfgbase), cfgfile); ok {
+	if fpath, ok = os.LookupEnv("GOPATH"); ok {
+		if retpath, ok = CheckPath(path.Join(ToSlash(fpath), "src", gitpath, cfgbase), cfgfile); ok {
 			return
 		}
 	}
 
 	// if GOBIN or GOPATH is present
-	if path, ok = os.LookupEnv("GOBIN"); !ok {
-		if path, ok = os.LookupEnv("GOPATH"); ok {
-			path = filepath.Join(path, "bin")
+	if fpath, ok = os.LookupEnv("GOBIN"); !ok {
+		if fpath, ok = os.LookupEnv("GOPATH"); ok {
+			fpath = path.Join(fpath, "bin")
 		}
 	}
 	if ok {
+		fpath = ToSlash(fpath)
 		// try to get from go bin config
-		if retpath, ok = CheckPath(filepath.Join(path, cfgbase), cfgfile); ok {
+		if retpath, ok = CheckPath(path.Join(fpath, cfgbase), cfgfile); ok {
 			return
 		}
 		// try to get from go bin root
-		if retpath, ok = CheckPath(path, cfgfile); ok {
+		if retpath, ok = CheckPath(fpath, cfgfile); ok {
 			return
 		}
 	}
@@ -251,20 +253,21 @@ var ErrNoPack = errors.New("no package path was found")
 // DetectConfigPath finds configuration path with existing configuration file at least.
 func DetectPackPath() (retpath string, err error) {
 	var ok bool
-	var path string
-	var exepath = filepath.Dir(os.Args[0])
+	var fpath string
+	var exepath = path.Dir(ToSlash(os.Args[0]))
 
 	// try to get from environment setting
-	if path, ok = os.LookupEnv("PACKPATH"); ok {
+	if fpath, ok = os.LookupEnv("PACKPATH"); ok {
+		fpath = ToSlash(fpath)
 		// try to get access to full path
-		if retpath, ok = CheckPath(path, cfg.WPKName); ok {
+		if retpath, ok = CheckPath(fpath, cfg.WPKName); ok {
 			return
 		}
 		// try to find relative from executable path
-		if retpath, ok = CheckPath(filepath.Join(exepath, path), cfg.WPKName); ok {
+		if retpath, ok = CheckPath(path.Join(exepath, fpath), cfg.WPKName); ok {
 			return
 		}
-		Log.Infof("no access to pointed package path '%s'\n", path)
+		Log.Infof("no access to pointed package path '%s'\n", fpath)
 	}
 
 	// try to find in executable path
@@ -276,21 +279,21 @@ func DetectPackPath() (retpath string, err error) {
 		return
 	}
 	// try to find at parental of cofiguration path
-	if retpath, ok = CheckPath(filepath.Join(ConfigPath, ".."), cfg.WPKName); ok {
+	if retpath, ok = CheckPath(path.Join(ConfigPath, ".."), cfg.WPKName); ok {
 		return
 	}
 
 	// if GOBIN is present
-	if path, ok = os.LookupEnv("GOBIN"); ok {
-		if retpath, ok = CheckPath(path, cfg.WPKName); ok {
+	if fpath, ok = os.LookupEnv("GOBIN"); ok {
+		if retpath, ok = CheckPath(ToSlash(fpath), cfg.WPKName); ok {
 			return
 		}
 	}
 
 	// if GOPATH is present
-	if path, ok = os.LookupEnv("GOPATH"); ok {
+	if fpath, ok = os.LookupEnv("GOPATH"); ok {
 		// try to get from go bin root
-		if retpath, ok = CheckPath(filepath.Join(path, "bin"), cfg.WPKName); ok {
+		if retpath, ok = CheckPath(path.Join(ToSlash(fpath), "bin"), cfg.WPKName); ok {
 			return
 		}
 	}
@@ -306,23 +309,24 @@ var CachePath string
 // DetectCachePath finds configuration path with existing configuration file at least.
 func DetectCachePath() (retpath string, err error) {
 	var ok bool
-	var path string
-	var exepath = filepath.Dir(os.Args[0])
+	var fpath string
+	var exepath = path.Dir(ToSlash(os.Args[0]))
 
 	// try to get from environment setting
-	if path, ok = os.LookupEnv("CACHEPATH"); ok {
+	if fpath, ok = os.LookupEnv("CACHEPATH"); ok {
+		fpath = ToSlash(fpath)
 		// try to get access to full path
-		if retpath, ok = CheckPath(path, ""); ok {
+		if retpath, ok = CheckPath(fpath, ""); ok {
 			return
 		}
 		// try to find relative from executable path
-		if retpath, ok = CheckPath(filepath.Join(exepath, path), ""); ok {
+		if retpath, ok = CheckPath(path.Join(exepath, fpath), ""); ok {
 			return
 		}
-		Log.Infof("no access to pointed cache path '%s'\n", path)
+		Log.Infof("no access to pointed cache path '%s'\n", fpath)
 	}
 
-	retpath = filepath.Join(PackPath, "cache")
+	retpath = path.Join(PackPath, "cache")
 	return
 }
 

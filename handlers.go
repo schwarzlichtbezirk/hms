@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
@@ -322,6 +321,13 @@ func tileHandler(w http.ResponseWriter, r *http.Request) {
 		WriteError400(w, err, AECtilenopuid)
 		return
 	}
+	var wdh, _ = strconv.Atoi(chunks["wdh"])
+	var hgt, _ = strconv.Atoi(chunks["hgt"])
+	if wdh == 0 || hgt == 0 {
+		WriteError400(w, ErrArgNoRes, AECtilebadres)
+		return
+	}
+
 	var syspath, ok = syspathcache.Path(puid)
 	if !ok {
 		WriteError(w, http.StatusNotFound, ErrNoPath, AECtilenopath)
@@ -350,15 +356,9 @@ func tileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var tid = tilepathcache.Cache(syspath + "?" + chunks["resol"])
-	var val interface{}
-	if val, err = tilecache.Get(tid); err != nil {
-		WriteError(w, http.StatusNotFound, err, AECtileabsent)
-		return
-	}
 	var md *MediaData
-	if md, ok = val.(*MediaData); !ok || md == nil {
-		WriteError500(w, ErrBadMedia, AECtilebadcnt)
+	if md, err = GetCachedTile(syspath, wdh, hgt); err != nil {
+		WriteError500(w, err, AECtilebadcnt)
 		return
 	}
 	w.Header().Set("Content-Type", MimeStr[md.Mime])
@@ -427,7 +427,7 @@ func srvinfAPI(w http.ResponseWriter, r *http.Request) {
 		"os":       runtime.GOOS,
 		"numcpu":   runtime.NumCPU(),
 		"maxprocs": runtime.GOMAXPROCS(0),
-		"exepath":  filepath.Dir(os.Args[0]),
+		"exepath":  path.Dir(ToSlash(os.Args[0])),
 		"cfgpath":  ConfigPath,
 		"wpkpath":  PackPath,
 	}

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"io/fs"
 	"os"
-	"path/filepath"
+	"path"
 	"regexp"
 )
 
@@ -53,7 +53,7 @@ func PathExists(fpath string) (bool, error) {
 }
 
 func CheckPath(fpath string, fname string) (string, bool) {
-	if ok, _ := PathExists(filepath.Join(fpath, fname)); !ok {
+	if ok, _ := PathExists(path.Join(fpath, fname)); !ok {
 		return "", false
 	}
 	return fpath, true

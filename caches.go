@@ -3,12 +3,12 @@ package hms
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"image"
 	"io"
 	"io/fs"
 	"os"
-	"path/filepath"
-	"strconv"
+	"path"
 	"strings"
 	"sync"
 	"time"
@@ -35,10 +35,6 @@ var (
 	// Converted media files cache.
 	// Key - path unique ID, value - media file in MediaData.
 	mediacache gcache.Cache
-
-	// Tiles cache.
-	// Key - path unique ID, value - tile image in MediaData.
-	tilecache gcache.Cache
 
 	// Photos compressed to HD resolution.
 	// Key - path unique ID, value - media file in MediaData.
@@ -154,7 +150,7 @@ func UnfoldPath(shrpath string) string {
 	if err := puid.Set(pref); err == nil {
 		if fpath, ok := syspathcache.Path(puid); ok {
 			if suff != "" { // prevent modify original path if suffix is absent
-				fpath = filepath.Join(fpath, suff)
+				fpath = path.Join(fpath, suff)
 			}
 			return fpath
 		}
@@ -168,15 +164,9 @@ var syspathcache = PathCache{
 	pathkey: map[string]Puid_t{},
 }
 
-// Instance of unlimited cache with PUID<=>tilepath pairs.
-var tilepathcache = PathCache{
-	keypath: map[Puid_t]string{},
-	pathkey: map[string]Puid_t{},
-}
-
-// CacheThumbID returns PUID of image thumbnail at the tiles path cache.
-func CacheThumbID(fpath string) Puid_t {
-	return tilepathcache.Cache(fpath + "?256x256")
+// CacheThumb returns image thumbnail from the tiles cache package.
+func GetCachedThumb(fpath string) (md *MediaData, err error) {
+	return GetCachedTile(fpath, 256, 256)
 }
 
 // DirCache is unlimited cache with puid/DirProp values.
@@ -353,98 +343,6 @@ func initcaches() {
 		}).
 		Build()
 
-	// init tiles cache
-	tilecache = gcache.New(cfg.ThumbCacheMaxNum).
-		LRU().
-		LoaderFunc(func(key interface{}) (ret interface{}, err error) {
-			var tilepath, ok = tilepathcache.Path(key.(Puid_t))
-			if !ok {
-				err = ErrNoPUID
-				return // file path not found
-			}
-
-			var md *MediaData
-
-			// try to extract tile from package
-			if md, err = tilespkg.GetImage(tilepath); err != nil {
-				return
-			}
-			if md != nil {
-				return md, nil
-			}
-
-			var syspath = tilepath
-			var wdh, hgt int = 480, 360
-			if pos := strings.IndexByte(tilepath, '?'); pos != -1 {
-				syspath = tilepath[:pos]
-				var resol = strings.SplitN(tilepath[pos+1:], "x", 2)
-				var w64, h64 uint64
-				w64, _ = strconv.ParseUint(resol[0], 10, 64)
-				h64, _ = strconv.ParseUint(resol[1], 10, 64)
-				wdh, hgt = int(w64), int(h64)
-			}
-
-			var prop interface{}
-			if prop, err = propcache.Get(syspath); err != nil {
-				return // can not get properties
-			}
-			var fp = prop.(Pather)
-			if fp.Type() < 0 {
-				err = ErrNotFile
-				return
-			}
-
-			var orientation = OrientNormal
-			if ek, ok := prop.(*ExifKit); ok {
-				orientation = ek.Orientation
-			}
-
-			var file io.ReadCloser
-			if file, err = OpenFile(syspath); err != nil {
-				return // can not open file
-			}
-			defer file.Close()
-
-			var ftype string
-			var src, dst image.Image
-			if src, ftype, err = image.Decode(file); err != nil {
-				if src == nil { // skip "short Huffman data" or others errors with partial results
-					return // can not decode file by any codec
-				}
-			}
-
-			switch orientation {
-			case OrientCwHorzReversed, OrientCw, OrientAcwHorzReversed, OrientAcw:
-				wdh, hgt = hgt, wdh
-			}
-			var fltlst = AddOrientFilter([]gift.Filter{
-				gift.ResizeToFill(wdh, hgt, gift.LinearResampling, gift.CenterAnchor),
-			}, orientation)
-			var filter = gift.New(fltlst...)
-			var img = image.NewRGBA(filter.Bounds(src.Bounds()))
-			if img.Pix == nil {
-				err = ErrImgNil
-				return // out of memory
-			}
-			filter.Draw(img, src)
-			dst = img
-
-			if md, err = ToNativeImg(dst, ftype); err != nil {
-				return
-			}
-			ret = md
-
-			// push tile to package
-			var ts *wpk.Tagset_t
-			if ts, err = tilespkg.PackData(tilespkg.WPF, bytes.NewReader(md.Data), tilepath); err != nil {
-				return
-			}
-			ts.Put(wpk.TIDmime, wpk.TagString(MimeStr[md.Mime]))
-			tilespkg.SetTagset(tilepath, ts)
-			return
-		}).
-		Build()
-
 	// init converted media files cache
 	hdcache = gcache.New(cfg.MediaCacheMaxNum).
 		LRU().
@@ -526,7 +424,7 @@ func initcaches() {
 		Simple().
 		Expiration(cfg.DiskCacheExpire).
 		LoaderFunc(func(key interface{}) (ret interface{}, err error) {
-			var ext = strings.ToLower(filepath.Ext(key.(string)))
+			var ext = strings.ToLower(path.Ext(key.(string)))
 			if ext == ".iso" {
 				return NewDiskISO(key.(string))
 			}
@@ -542,6 +440,73 @@ func initcaches() {
 		Build()
 }
 
+func GetCachedTile(syspath string, wdh, hgt int) (md *MediaData, err error) {
+	var tilepath = fmt.Sprintf("%s?%dx%d", syspath, wdh, hgt)
+
+	// try to extract tile from package
+	if md, err = tilespkg.GetImage(tilepath); err != nil || md != nil {
+		return
+	}
+
+	var prop interface{}
+	if prop, err = propcache.Get(syspath); err != nil {
+		return // can not get properties
+	}
+	var fp = prop.(Pather)
+	if fp.Type() < 0 {
+		err = ErrNotFile
+		return
+	}
+
+	var orientation = OrientNormal
+	if ek, ok := prop.(*ExifKit); ok {
+		orientation = ek.Orientation
+	}
+
+	var file io.ReadCloser
+	if file, err = OpenFile(syspath); err != nil {
+		return // can not open file
+	}
+	defer file.Close()
+
+	var ftype string
+	var src, dst image.Image
+	if src, ftype, err = image.Decode(file); err != nil {
+		if src == nil { // skip "short Huffman data" or others errors with partial results
+			return // can not decode file by any codec
+		}
+	}
+
+	switch orientation {
+	case OrientCwHorzReversed, OrientCw, OrientAcwHorzReversed, OrientAcw:
+		wdh, hgt = hgt, wdh
+	}
+	var fltlst = AddOrientFilter([]gift.Filter{
+		gift.ResizeToFill(wdh, hgt, gift.LinearResampling, gift.CenterAnchor),
+	}, orientation)
+	var filter = gift.New(fltlst...)
+	var img = image.NewRGBA(filter.Bounds(src.Bounds()))
+	if img.Pix == nil {
+		err = ErrImgNil
+		return // out of memory
+	}
+	filter.Draw(img, src)
+	dst = img
+
+	if md, err = ToNativeImg(dst, ftype); err != nil {
+		return
+	}
+
+	// push tile to package
+	var ts *wpk.Tagset_t
+	if ts, err = tilespkg.PackData(tilespkg.WPF, bytes.NewReader(md.Data), tilepath); err != nil {
+		return
+	}
+	ts.Put(wpk.TIDmime, wpk.TagString(MimeStr[md.Mime]))
+	tilespkg.SetTagset(tilepath, ts)
+	return
+}
+
 type CachePackage struct {
 	*fsys.Package
 	WPT wpk.WriteSeekCloser // package tags part
@@ -549,8 +514,8 @@ type CachePackage struct {
 }
 
 func InitCacheWriter(fname string) (cw *CachePackage, err error) {
-	var pkgpath = wpk.MakeTagsPath(filepath.Join(CachePath, fname))
-	var datpath = wpk.MakeDataPath(filepath.Join(CachePath, fname))
+	var pkgpath = wpk.MakeTagsPath(path.Join(CachePath, fname))
+	var datpath = wpk.MakeDataPath(path.Join(CachePath, fname))
 	cw = &CachePackage{}
 	defer func() {
 		if err != nil {

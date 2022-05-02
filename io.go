@@ -2,7 +2,7 @@ package hms
 
 import (
 	"os"
-	"path/filepath"
+	"path"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -14,7 +14,7 @@ const utf8bom = "\xef\xbb\xbf"
 // File writes in UTF-8 format with BOM, and "intro" comment.
 func WriteYaml(fname, intro string, data interface{}) (err error) {
 	var file *os.File
-	if file, err = os.OpenFile(filepath.Join(ConfigPath, fname), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644); err != nil {
+	if file, err = os.OpenFile(path.Join(ConfigPath, fname), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644); err != nil {
 		return
 	}
 	defer file.Close()
@@ -39,7 +39,7 @@ func WriteYaml(fname, intro string, data interface{}) (err error) {
 // ReadYaml reads "data" object from YAML-file with given file name.
 func ReadYaml(fname string, data interface{}) (err error) {
 	var body []byte
-	if body, err = os.ReadFile(filepath.Join(ConfigPath, fname)); err != nil {
+	if body, err = os.ReadFile(path.Join(ConfigPath, fname)); err != nil {
 		return
 	}
 	if err = yaml.Unmarshal(body, data); err != nil {

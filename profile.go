@@ -168,7 +168,7 @@ func (prf *Profile) IsHidden(fpath string) bool {
 	prf.mux.RLock()
 	defer prf.mux.RUnlock()
 
-	var name = filepath.Base(kpath)
+	var name = path.Base(kpath)
 	for _, pattern := range prf.Hidden {
 		if strings.HasPrefix(pattern, "**/") {
 			if matched, _ = path.Match(pattern[3:], name); matched {
