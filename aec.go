@@ -55,7 +55,6 @@ const (
 	AECthumbnofile
 	AECthumbaccess
 	AECthumbabsent
-	AECthumbbadcnt
 
 	// tile
 

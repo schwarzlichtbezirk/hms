@@ -2,7 +2,6 @@ package hms
 
 import (
 	"fmt"
-	"io"
 	"io/fs"
 
 	"github.com/disintegration/gift"
@@ -79,6 +78,7 @@ type ExifProp struct {
 	Flash        int     `json:"flash,omitempty" yaml:"flash,omitempty"`
 	UniqueID     string  `json:"uniqueid,omitempty" yaml:"uniqueid,omitempty"`
 	ThumbJpegLen int     `json:"thumbjpeglen,omitempty" yaml:"thumbjpeglen,omitempty"`
+	thumbJpeg    []byte
 	// GPS
 	Latitude  float64 `json:"latitude,omitempty" yaml:"latitude,omitempty"`
 	Longitude float64 `json:"longitude,omitempty" yaml:"longitude,omitempty"`
@@ -97,6 +97,7 @@ func ratfloat(t *tiff.Tag) float64 {
 func (ep *ExifProp) Setup(x *exif.Exif) {
 	var err error
 	var t *tiff.Tag
+	var pic []byte
 
 	if t, err = x.Get(exif.PixelXDimension); err == nil {
 		ep.Width, _ = t.Int(0)
@@ -165,6 +166,9 @@ func (ep *ExifProp) Setup(x *exif.Exif) {
 	if t, err = x.Get(exif.ThumbJPEGInterchangeFormatLength); err == nil {
 		ep.ThumbJpegLen, _ = t.Int(0)
 	}
+	if pic, err = x.JpegThumbnail(); err == nil {
+		ep.thumbJpeg = pic
+	}
 	if lat, lng, err := x.LatLong(); err == nil {
 		ep.Latitude, ep.Longitude = lat, lng
 	}
@@ -197,42 +201,14 @@ func (ek *ExifKit) Setup(syspath string, fi fs.FileInfo) {
 		defer file.Close()
 		if x, err := exif.Decode(file); err == nil {
 			ek.ExifProp.Setup(x)
-			if cfg.UseEmbeddedTmb {
-				if pic, err := x.JpegThumbnail(); err == nil {
-					ek.PUIDVal = syspathcache.Cache(syspath)
-					ek.SetTmb(MimeJpeg)
-					thumbcache.Set(ek.PUIDVal, &MediaData{
-						Data: pic,
-						Mime: MimeJpeg,
-					})
-					return
-				}
+			if cfg.UseEmbeddedTmb && ek.ThumbJpegLen > 0 {
+				ek.PUIDVal = syspathcache.Cache(syspath)
+				ek.SetTmb(MimeJpeg)
+				return
 			}
 		}
 	}
 	ek.TmbProp.Setup(syspath)
-}
-
-// GetExifTmb extracts JPEG thumbnail from the image file.
-func GetExifTmb(syspath string) (md *MediaData, err error) {
-	var file io.ReadCloser
-	if file, err = OpenFile(syspath); err != nil {
-		return // can not open file
-	}
-	defer file.Close()
-
-	var x *exif.Exif
-	if x, err = exif.Decode(file); err == nil {
-		var pic []byte
-		if pic, err = x.JpegThumbnail(); err == nil {
-			md = &MediaData{
-				Data: pic,
-				Mime: MimeJpeg,
-			}
-			return
-		}
-	}
-	return
 }
 
 func exifparsers() {

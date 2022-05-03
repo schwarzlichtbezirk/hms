@@ -281,14 +281,9 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var val interface{}
-	if val, err = thumbcache.Get(puid); err != nil {
-		WriteError(w, http.StatusNotFound, err, AECthumbabsent)
-		return
-	}
 	var md *MediaData
-	if md, ok = val.(*MediaData); !ok || md == nil {
-		WriteError500(w, ErrBadMedia, AECthumbbadcnt)
+	if md, err = FindTmb(fp, syspath); err != nil {
+		WriteError(w, http.StatusNotFound, err, AECthumbabsent)
 		return
 	}
 	w.Header().Set("Content-Type", MimeStr[md.Mime])
@@ -374,21 +369,6 @@ func pingAPI(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
-func purgeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
-	_, _ = r, auth
-	propcache.Purge()
-	thumbcache.Purge()
-
-	prflist.mux.RLock()
-	for _, prf := range prflist.list {
-		prf.UpdateShares()
-	}
-	prflist.mux.RUnlock()
-
-	WriteOK(w, nil)
-}
-
-// APIHANDLER
 func reloadAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	_, _ = r, auth
 	var err error
@@ -467,41 +447,36 @@ func cchinfAPI(w http.ResponseWriter, r *http.Request) {
 
 	var propnum = propcache.Len(false)
 
-	var tc = thumbcache.GetALL(false)
 	type stat struct {
 		size1 float64
 		size2 float64
 		num   int
 	}
-	var jpg, png, gif stat
-	for _, v := range tc {
-		var md = v.(*MediaData)
-		var s *stat
-		switch md.Mime {
-		case MimeGif:
-			s = &gif
-		case MimePng:
-			s = &png
-		case MimeJpeg:
-			s = &jpg
-		default:
-			panic(fmt.Sprintf("unexpected MIME type in cache %d", md.Mime))
-		}
-		var l = float64(len(md.Data))
-		s.size1 += l
-		s.size2 += l * l
-		s.num++
-	}
-
-	var mc = mediacache.GetALL(false)
 	var med stat
-	for _, v := range mc {
-		var md = v.(*MediaData)
-		var l = float64(len(md.Data))
+	var jpg, png, gif stat
+	thumbpkg.Enum(func(fkey string, ts *wpk.Tagset_t) bool {
+		var l = float64(ts.Size())
 		med.size1 += l
 		med.size2 += l * l
 		med.num++
-	}
+		if str, ok := ts.String(wpk.TIDmime); ok {
+			var s *stat
+			switch MimeVal[str] {
+			case MimeGif:
+				s = &gif
+			case MimePng:
+				s = &png
+			case MimeJpeg:
+				s = &jpg
+			default:
+				panic(fmt.Sprintf("unexpected MIME type in cache %s", str))
+			}
+			s.size1 += l
+			s.size2 += l * l
+			s.num++
+		}
+		return true
+	})
 
 	var ret = map[string]interface{}{
 		"pathcchnum":  pathnum,

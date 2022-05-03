@@ -519,35 +519,28 @@ type TagKit struct {
 func (tk *TagKit) Setup(syspath string, fi fs.FileInfo) {
 	tk.FileProp.Setup(fi)
 
-	var md *MediaData
 	if file, err := OpenFile(syspath); err == nil {
 		defer file.Close()
 		if m, err := tag.ReadFrom(file); err == nil {
 			tk.TagProp.Setup(m)
 			if pic := m.Picture(); pic != nil {
 				if cfg.FitEmbeddedTmb {
-					if md, err = MakeTmb(syspath, bytes.NewReader(pic.Data), OrientNormal); err != nil {
-						md = &MediaData{
-							Data: pic.Data,
-							Mime: GetMimeVal(pic.MIMEType),
-						}
+					var md *MediaData
+					if md, err = GetCachedEmbThumb(bytes.NewReader(pic.Data), syspath); err == nil {
+						tk.PUIDVal = syspathcache.Cache(syspath)
+						tk.SetTmb(md.Mime)
+						return
 					}
 				} else {
-					md = &MediaData{
-						Data: pic.Data,
-						Mime: GetMimeVal(pic.MIMEType),
-					}
+					tk.PUIDVal = syspathcache.Cache(syspath)
+					tk.SetTmb(GetMimeVal(pic.MIMEType))
+					return
 				}
 			}
 		}
 	}
 	tk.PUIDVal = syspathcache.Cache(syspath)
-	if md != nil {
-		tk.SetTmb(md.Mime)
-		thumbcache.Set(tk.PUIDVal, md)
-	} else {
-		tk.SetTmb(MimeDis)
-	}
+	tk.SetTmb(MimeDis)
 }
 
 // GetTagTmb extracts embedded thumbnail from image file.
@@ -559,24 +552,20 @@ func GetTagTmb(syspath string) (md *MediaData, err error) {
 	defer file.Close()
 
 	var m tag.Metadata
-	if m, err = tag.ReadFrom(file); err == nil {
-		if pic := m.Picture(); pic != nil {
-			if cfg.FitEmbeddedTmb {
-				if md, err = MakeTmb(syspath, bytes.NewReader(pic.Data), OrientNormal); err != nil {
-					md = &MediaData{
-						Data: pic.Data,
-						Mime: GetMimeVal(pic.MIMEType),
-					}
-				}
-			} else {
-				md = &MediaData{
-					Data: pic.Data,
-					Mime: GetMimeVal(pic.MIMEType),
-				}
-			}
-		} else {
-			err = ErrNotThumb
-		}
+	if m, err = tag.ReadFrom(file); err != nil {
+		return
+	}
+	var pic *tag.Picture
+	if pic = m.Picture(); pic == nil {
+		err = ErrNotThumb
+		return
+	}
+	if cfg.FitEmbeddedTmb {
+		return GetCachedEmbThumb(bytes.NewReader(pic.Data), syspath)
+	}
+	md = &MediaData{
+		Data: pic.Data,
+		Mime: GetMimeVal(pic.MIMEType),
 	}
 	return
 }

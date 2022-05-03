@@ -9,6 +9,7 @@ import (
 	"image/png"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/disintegration/gift"
 	_ "github.com/oov/psd" // register PSD format
@@ -61,6 +62,7 @@ var MimeVal = map[string]Mime_t{
 	"image/*":    MimeUnk,
 	"image/gif":  MimeGif,
 	"image/png":  MimePng,
+	"image/jpg":  MimeJpeg,
 	"image/jpeg": MimeJpeg,
 	"image/webp": MimeWebp,
 }
@@ -87,26 +89,18 @@ type TmbProp struct {
 // Setup generates PUID (path unique identifier) and updates cached state.
 func (tp *TmbProp) Setup(syspath string) {
 	tp.PUIDVal = syspathcache.Cache(syspath)
-	tp.UpdateTmb()
-}
-
-// UpdateTmb updates cached state for this cache key.
-func (tp *TmbProp) UpdateTmb() {
-	if thumbcache.Has(tp.PUIDVal) {
-		var v, err = thumbcache.Get(tp.PUIDVal)
-		if err != nil {
-			tp.SetTmb(MimeDis)
-			return
+	if ts, ok := thumbpkg.Tagset(syspath); ok {
+		if str, ok := ts.String(wpk.TIDmime); ok {
+			if strings.HasPrefix(str, "image/") {
+				tp.SetTmb(GetMimeVal(str))
+			} else {
+				tp.SetTmb(MimeDis)
+			}
+		} else {
+			tp.SetTmb(MimeUnk)
 		}
-		var md, ok = v.(*MediaData)
-		if !ok {
-			tp.SetTmb(MimeDis)
-			return
-		}
-		tp.SetTmb(md.Mime)
 	} else {
 		tp.SetTmb(MimeNil)
-		return
 	}
 }
 
@@ -135,10 +129,12 @@ func FindTmb(prop Pather, syspath string) (md *MediaData, err error) {
 	// try to extract from EXIF
 	var orientation = OrientNormal
 	if ek, ok := prop.(*ExifKit); ok { // skip non-EXIF properties
-		if cfg.UseEmbeddedTmb {
-			if md, err = GetExifTmb(syspath); err == nil {
-				return // thumbnail from EXIF
+		if cfg.UseEmbeddedTmb && ek.ThumbJpegLen > 0 {
+			md = &MediaData{
+				Data: ek.thumbJpeg,
+				Mime: MimeJpeg,
 			}
+			return // thumbnail from EXIF
 		}
 		orientation = ek.Orientation
 	}
@@ -146,13 +142,8 @@ func FindTmb(prop Pather, syspath string) (md *MediaData, err error) {
 	// try to extract from ID3
 	if _, ok := prop.(*TagKit); ok { // skip non-ID3 properties
 		if md, err = GetTagTmb(syspath); err == nil {
-			return // thumbnail from ID3
+			return
 		}
-	}
-
-	if prop.Size() > cfg.ThumbFileMaxSize {
-		err = ErrTooBig
-		return // file is too big
 	}
 
 	// check all others are images
@@ -161,26 +152,19 @@ func FindTmb(prop Pather, syspath string) (md *MediaData, err error) {
 		return // file is not image
 	}
 
-	var file io.ReadCloser
-	if file, err = OpenFile(syspath); err != nil {
-		return // can not open file
+	if prop.Size() > cfg.ThumbFileMaxSize {
+		err = ErrTooBig
+		return // file is too big
 	}
-	defer file.Close()
 
-	if md, err = MakeTmb(syspath, file, orientation); err != nil {
+	if md, err = GetCachedThumb(syspath, orientation); err != nil {
 		return
 	}
 	return
 }
 
-// MakeTmb reads image from the stream and makes thumbnail with format
-// depended from alpha-channel is present in the original image.
-func MakeTmb(fkey string, r io.Reader, orientation int) (md *MediaData, err error) {
-	// try to extract thumbnail from package
-	if md, err = thumbpkg.GetImage(fkey); err != nil || md != nil {
-		return
-	}
-
+// MakeThumb produces new thumbnail object.
+func MakeThumb(r io.Reader, orientation int) (md *MediaData, err error) {
 	// create sized image for thumbnail
 	var ftype string
 	var src, dst image.Image
@@ -206,17 +190,46 @@ func MakeTmb(fkey string, r io.Reader, orientation int) (md *MediaData, err erro
 	}
 
 	// create valid thumbnail
-	if md, err = ToNativeImg(dst, ftype); err != nil {
+	return ToNativeImg(dst, ftype)
+}
+
+// GetCachedThumb tries to extract existing thumbnail from cache, otherwise
+// makes new one and put it to cache.
+func GetCachedThumb(syspath string, orientation int) (md *MediaData, err error) {
+	// try to extract thumbnail from package
+	if md, err = thumbpkg.GetImage(syspath); err != nil || md != nil {
+		return
+	}
+
+	var r io.ReadCloser
+	if r, err = OpenFile(syspath); err != nil {
+		return // can not open file
+	}
+	defer r.Close()
+
+	if md, err = MakeThumb(r, orientation); err != nil {
 		return
 	}
 
 	// push thumbnail to package
-	var ts *wpk.Tagset_t
-	if ts, err = thumbpkg.PackData(thumbpkg.WPF, bytes.NewReader(md.Data), fkey); err != nil {
+	err = thumbpkg.PutImage(syspath, md)
+	return
+}
+
+// GetCachedEmbThumb tries to extract existing thumbnail from cache, otherwise
+// reads image from the stream, makes new thumbnail and put it to cache.
+func GetCachedEmbThumb(r io.Reader, fkey string) (md *MediaData, err error) {
+	// try to extract thumbnail from package
+	if md, err = thumbpkg.GetImage(fkey); err != nil || md != nil {
 		return
 	}
-	ts.Put(wpk.TIDmime, wpk.TagString(MimeStr[md.Mime]))
-	thumbpkg.SetTagset(fkey, ts)
+
+	if md, err = MakeThumb(r, OrientNormal); err != nil {
+		return
+	}
+
+	// push thumbnail to package
+	err = thumbpkg.PutImage(fkey, md)
 	return
 }
 
@@ -270,7 +283,26 @@ func (s *scanner) Scan() {
 		go func() {
 			defer close(ctx)
 			if puid != 0 {
-				thumbcache.Get(puid)
+				var syspath, ok = syspathcache.Path(puid)
+				if !ok {
+					return // file path not found
+				}
+
+				var err error
+				var prop interface{}
+				if prop, err = propcache.Get(syspath); err != nil {
+					return // can not get properties
+				}
+				var fp = prop.(Pather)
+				if fp.MTmb() != MimeNil {
+					return // thumbnail already scanned
+				}
+				var md *MediaData
+				if md, err = FindTmb(fp, syspath); err != nil {
+					fp.SetTmb(MimeDis)
+					return
+				}
+				fp.SetTmb(md.Mime)
 			}
 		}()
 	}

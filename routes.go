@@ -294,13 +294,12 @@ func RegisterRoutes(gmux *Router) {
 	gacc.PathPrefix("/file/").HandlerFunc(fileHandler)
 	// cached thumbs and tiles
 	gacc.Path("/thumb/{puid}").HandlerFunc(thumbHandler)
-	gacc.Path("/tile/{puid}/{resol:[0-9]+x[0-9]+}").HandlerFunc(tileHandler)
+	gacc.Path("/tile/{puid}/{wdh:[0-9]+}x{hgt:[0-9]+}").HandlerFunc(tileHandler)
 
 	// API routes
 	var api = gmux.PathPrefix("/api").Subrouter()
 	api.Use(AjaxMiddleware)
 	api.Path("/ping").HandlerFunc(pingAPI)
-	api.Path("/purge").HandlerFunc(AuthWrap(purgeAPI))
 	api.Path("/reload").HandlerFunc(AuthWrap(reloadAPI))
 	var stc = api.PathPrefix("/stat").Subrouter()
 	stc.Path("/srvinf").HandlerFunc(srvinfAPI)

@@ -88,8 +88,6 @@ type CfgAppSets struct {
 	PUIDlen int `json:"puid-length" yaml:"puid-length" long:"puidlen" description:"Initial length of path unique identifiers in base32 symbols, maximum is 12 (x5 for length in bits). When the bottom pool arrives to 90%, length increases to next available value."`
 	// Maximum items number in files properties cache.
 	PropCacheMaxNum int `json:"prop-cache-maxnum" yaml:"prop-cache-maxnum" long:"pcmn" description:"Maximum items number in files properties cache."`
-	// Maximum items number in thumbnails cache.
-	ThumbCacheMaxNum int `json:"thumb-cache-maxnum" yaml:"thumb-cache-maxnum" long:"tcmn" description:"Maximum items number in thumbnails cache."`
 	// Maximum items number in converted media files cache.
 	MediaCacheMaxNum int `json:"media-cache-maxnum" yaml:"media-cache-maxnum" long:"mcmn" description:"Maximum items number in converted media files cache."`
 	// Expiration duration to keep opened iso-disk structures in cache from last access to it.
@@ -139,7 +137,6 @@ var cfg = Config{ // inits default values:
 		DefAccID:         1,
 		PUIDlen:          5,
 		PropCacheMaxNum:  32 * 1024,
-		ThumbCacheMaxNum: 2 * 1024,
 		MediaCacheMaxNum: 64,
 		DiskCacheExpire:  time.Duration(15) * time.Second,
 	},

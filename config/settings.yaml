@@ -48,7 +48,7 @@ images-prop:
   # Use JPEG thumbnails embedded into image.
   use-embedded-tmb: false
   # Stretch big image embedded into mp3-file to fit into standard icon size.
-  fit-embedded-tmb: true
+  fit-embedded-tmb: false
   # Thumbnails width and height.
   tmb-resolution: [256, 256]
   # HD images width and height.
@@ -69,8 +69,6 @@ specification:
   puid-length: 5
   # Maximum items number in files properties cache.
   prop-cache-maxnum: 32768
-  # Maximum items number in thumbnails memory cache.
-  thumb-cache-maxnum: 2048
   # Maximum items number in converted media files memory cache.
   media-cache-maxnum: 64
   # Expiration duration to keep opened iso-disk structures in cache from last access to it.
