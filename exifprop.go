@@ -78,12 +78,13 @@ type ExifProp struct {
 	Flash        int     `json:"flash,omitempty" yaml:"flash,omitempty"`
 	UniqueID     string  `json:"uniqueid,omitempty" yaml:"uniqueid,omitempty"`
 	ThumbJpegLen int     `json:"thumbjpeglen,omitempty" yaml:"thumbjpeglen,omitempty"`
-	thumbJpeg    []byte
 	// GPS
 	Latitude  float64 `json:"latitude,omitempty" yaml:"latitude,omitempty"`
 	Longitude float64 `json:"longitude,omitempty" yaml:"longitude,omitempty"`
 	Altitude  float64 `json:"altitude,omitempty" yaml:"altitude,omitempty"`
 	Satelites string  `json:"satelites,omitempty" yaml:"satelites,omitempty"`
+	// private
+	thumb MediaData
 }
 
 func ratfloat(t *tiff.Tag) float64 {
@@ -167,7 +168,8 @@ func (ep *ExifProp) Setup(x *exif.Exif) {
 		ep.ThumbJpegLen, _ = t.Int(0)
 	}
 	if pic, err = x.JpegThumbnail(); err == nil {
-		ep.thumbJpeg = pic
+		ep.thumb.Data = pic
+		ep.thumb.Mime = MimeJpeg
 	}
 	if lat, lng, err := x.LatLong(); err == nil {
 		ep.Latitude, ep.Longitude = lat, lng

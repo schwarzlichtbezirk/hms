@@ -189,36 +189,34 @@ func OpenDir(syspath string) (ret []fs.FileInfo, err error) {
 }
 
 // ScanDir returns file properties list for given file system directory, or directory in iso-disk.
-func ScanDir(syspath string, cg *CatGrp, pass func(string) bool) (ret []Pather, skip int, err error) {
+func ScanDir(syspath string, cg *CatGrp, filter func(string) bool) (ret []Pather, skip int, err error) {
 	var files []fs.FileInfo
 	if files, err = OpenDir(syspath); err != nil {
 		return
 	}
 
-	if pass == nil {
-		pass = func(string) bool { return true }
-	}
-
 	var fgrp = FileGrp{}
 	for _, fi := range files {
-		if fi != nil {
-			var fpath = path.Join(syspath, fi.Name())
-			if pass(fpath) {
-				var grp = GetFileGroup(fpath)
-				if cg[grp] {
-					var prop Pather
-					if propcache.Has(fpath) {
-						var pv, _ = propcache.Get(fpath)
-						prop = pv.(Pather)
-					} else {
-						prop = MakeProp(fpath, fi)
-						propcache.Set(fpath, prop)
-					}
-					ret = append(ret, prop)
-				}
-				fgrp[grp]++
-			}
+		if fi == nil {
+			continue
 		}
+		var fpath = path.Join(syspath, fi.Name())
+		if filter != nil && !filter(fpath) {
+			continue
+		}
+		var grp = GetFileGroup(fpath)
+		if cg[grp] {
+			var prop Pather
+			if propcache.Has(fpath) {
+				var pv, _ = propcache.Get(fpath)
+				prop = pv.(Pather)
+			} else {
+				prop = MakeProp(fpath, fi)
+				propcache.Set(fpath, prop)
+			}
+			ret = append(ret, prop)
+		}
+		fgrp[grp]++
 	}
 
 	if pv, err := propcache.Get(syspath); err == nil {

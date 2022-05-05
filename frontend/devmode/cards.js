@@ -261,6 +261,24 @@ const VueDirCard = {
 		},
 		onunselect() {
 			eventHub.emit('select', null);
+		},
+		onshown(e) {
+		},
+		onhidden(e) {
+		}
+	},
+	mounted() {
+		const el = document.getElementById('card' + this.iid);
+		if (el) {
+			el.addEventListener('shown.bs.collapse', this.onshown);
+			el.addEventListener('hidden.bs.collapse', this.onhidden);
+		}
+	},
+	unmounted() {
+		const el = document.getElementById('card' + this.iid);
+		if (el) {
+			el.removeEventListener('shown.bs.collapse', this.onshown);
+			el.removeEventListener('hidden.bs.collapse', this.onhidden);
 		}
 	}
 };
@@ -494,13 +512,27 @@ const VueFileCard = {
 		},
 		onaudioonly(val) {
 			this.audioonly = val;
+		},
+		onshown(e) {
+		},
+		onhidden(e) {
 		}
 	},
-	created() {
+	mounted() {
 		eventHub.on('audioonly', this.onaudioonly);
+		const el = document.getElementById('card' + this.iid);
+		if (el) {
+			el.addEventListener('shown.bs.collapse', this.onshown);
+			el.addEventListener('hidden.bs.collapse', this.onhidden);
+		}
 	},
 	unmounted() {
 		eventHub.off('audioonly', this.onaudioonly);
+		const el = document.getElementById('card' + this.iid);
+		if (el) {
+			el.removeEventListener('shown.bs.collapse', this.onshown);
+			el.removeEventListener('hidden.bs.collapse', this.onhidden);
+		}
 	}
 };
 
@@ -837,6 +869,24 @@ const VueTileCard = {
 		onopen(file) {
 			eventHub.emit('select', file);
 			eventHub.emit('open', file, this.photolist);
+		},
+		onshown(e) {
+		},
+		onhidden(e) {
+		}
+	},
+	mounted() {
+		const el = document.getElementById('card' + this.iid);
+		if (el) {
+			el.addEventListener('shown.bs.collapse', this.onshown);
+			el.addEventListener('hidden.bs.collapse', this.onhidden);
+		}
+	},
+	unmounted() {
+		const el = document.getElementById('card' + this.iid);
+		if (el) {
+			el.removeEventListener('shown.bs.collapse', this.onshown);
+			el.removeEventListener('hidden.bs.collapse', this.onhidden);
 		}
 	}
 };
@@ -1251,9 +1301,19 @@ const VueMapCard = {
 			this.map.flyToBounds(bounds, {
 				padding: [20, 20]
 			});
+		},
+		onshown(e) {
+		},
+		onhidden(e) {
 		}
 	},
 	mounted() {
+		const el = document.getElementById('card' + this.iid);
+		if (el) {
+			el.addEventListener('shown.bs.collapse', this.onshown);
+			el.addEventListener('hidden.bs.collapse', this.onhidden);
+		}
+
 		this.tiles = this.maketiles('mapbox-hybrid');
 		this.map = L.map(this.$refs.map, {
 			attributionControl: true,
@@ -1291,6 +1351,13 @@ const VueMapCard = {
 			return new L.Control.Fullscreen(opts);
 		};
 		L.control.fullscreen({ position: 'topright' }).addTo(this.map);
+	},
+	unmounted() {
+		const el = document.getElementById('card' + this.iid);
+		if (el) {
+			el.removeEventListener('shown.bs.collapse', this.onshown);
+			el.removeEventListener('hidden.bs.collapse', this.onhidden);
+		}
 	}
 };
 

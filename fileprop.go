@@ -395,20 +395,20 @@ func (fg *FileGrp) IsZero() bool {
 
 // PathBase returns safe base of path or CID as is.
 func PathBase(syspath string) string {
-	if len(syspath) > 0 {
-		var pos1 int
-		var pos2 = len(syspath)
-		if syspath[0] == '[' && syspath[pos2-1] == ']' {
-			return syspath
-		}
-		if syspath[pos2-1] == '/' || syspath[pos2-1] == '\\' {
-			pos2--
-		}
-		for pos1 = pos2; pos1 > 0 && syspath[pos1-1] != '/' && syspath[pos1-1] != '\\'; pos1-- {
-		}
-		return syspath[pos1:pos2]
+	var pos1 int
+	var pos2 = len(syspath)
+	if pos2 == 0 {
+		return ""
 	}
-	return syspath
+	if syspath[0] == '<' && syspath[pos2-1] == '>' {
+		return syspath
+	}
+	if syspath[pos2-1] == '/' || syspath[pos2-1] == '\\' {
+		pos2--
+	}
+	for pos1 = pos2; pos1 > 0 && syspath[pos1-1] != '/' && syspath[pos1-1] != '\\'; pos1-- {
+	}
+	return syspath[pos1:pos2]
 }
 
 // DirProp is directory properties chunk.

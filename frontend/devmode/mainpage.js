@@ -1328,8 +1328,8 @@ const VueMainApp = {
 		}
 
 		// get profile id
-		if (chunks[0].substr(0, 2) === "id") {
-			this.aid = Number(chunks[0].substr(2));
+		if (chunks[0].substring(0, 2) === "id") {
+			this.aid = Number(chunks[0].substring(2));
 			chunks.shift();
 		} else {
 			this.aid = 1;

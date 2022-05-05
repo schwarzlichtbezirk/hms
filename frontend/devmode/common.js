@@ -19,8 +19,8 @@ if (!String.prototype.printf) {
 		function callback(exp, p0, p1, p2, p3, p4) {
 			if (exp === '%%') return '%';
 			if (arr[++i] === undefined) return undefined;
-			exp = p2 ? parseInt(p2.substr(1)) : undefined;
-			var base = p3 ? parseInt(p3.substr(1)) : undefined;
+			exp = p2 ? parseInt(p2.substring(1)) : undefined;
+			var base = p3 ? parseInt(p3.substring(1)) : undefined;
 			var val;
 			switch (p4) {
 				case 's': val = arr[i]; break;
@@ -52,7 +52,7 @@ const pathjoin = (...args) => {
 	}).filter(x => x.length).join('/');
 };
 
-const pathext = fname => fname.substr(fname.lastIndexOf('.')).toLowerCase();
+const pathext = fname => fname.substring(fname.lastIndexOf('.')).toLowerCase();
 
 const fmtfilesize = (size) => {
 	if (size < 1536) {

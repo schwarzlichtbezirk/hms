@@ -41,6 +41,15 @@ var (
 	diskcache gcache.Cache
 )
 
+// package caches
+var (
+	// cache with images thumbnails which are placed in box 256x256.
+	thumbpkg *CachePackage
+	// cache with images tiles, size of each tile is placed as sufix
+	// of path in format "full/path/to/file.ext?144x108".
+	tilespkg *CachePackage
+)
+
 // Error messages
 var (
 	ErrNoPUID      = errors.New("file with given puid not found")
@@ -469,12 +478,17 @@ func GetCachedTile(syspath string, wdh, hgt int) (md *MediaData, err error) {
 	return
 }
 
+// CachePackage describes package cache functionality.
+// Package splitted in two files - tags table file and
+// cached images data file.
 type CachePackage struct {
 	*fsys.Package
 	WPT wpk.WriteSeekCloser // package tags part
 	WPF wpk.WriteSeekCloser // package files part
 }
 
+// InitCacheWriter opens existing cache with given file name placed in
+// cache directory, or creates new cache file if no one found.
 func InitCacheWriter(fname string) (cw *CachePackage, err error) {
 	var pkgpath = wpk.MakeTagsPath(path.Join(CachePath, fname))
 	var datpath = wpk.MakeDataPath(path.Join(CachePath, fname))
@@ -518,6 +532,7 @@ func InitCacheWriter(fname string) (cw *CachePackage, err error) {
 	return
 }
 
+// Close saves actual tags table and closes opened cache.
 func (cw *CachePackage) Close() (err error) {
 	if et := cw.Sync(cw.WPT, cw.WPF); et != nil && err == nil {
 		err = et
@@ -532,6 +547,7 @@ func (cw *CachePackage) Close() (err error) {
 	return
 }
 
+// GetImage extracts image from the cache with given file name.
 func (cw *CachePackage) GetImage(fpath string) (md *MediaData, err error) {
 	if ts, ok := cw.Tagset(fpath); ok {
 		var str string
@@ -572,8 +588,7 @@ func (cw *CachePackage) PutImage(fpath string, md *MediaData) (err error) {
 	return
 }
 
-var thumbpkg, tilespkg *CachePackage
-
+// PackInfo writes info to log about opened cache.
 func PackInfo(fname string, pack wpk.Packager) {
 	var num, size int64
 	pack.Enum(func(fkey string, ts *wpk.Tagset_t) bool {

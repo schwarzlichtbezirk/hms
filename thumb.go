@@ -121,19 +121,11 @@ func (tp *TmbProp) SetTmb(mime Mime_t) {
 
 // FindTmb finds thumbnail in embedded file tags, or build it if it possible.
 func FindTmb(prop Pather, syspath string) (md *MediaData, err error) {
-	if prop.Type() < 0 {
-		err = ErrNotFile
-		return // not a file
-	}
-
 	// try to extract from EXIF
 	var orientation = OrientNormal
 	if ek, ok := prop.(*ExifKit); ok { // skip non-EXIF properties
 		if cfg.UseEmbeddedTmb && ek.ThumbJpegLen > 0 {
-			md = &MediaData{
-				Data: ek.thumbJpeg,
-				Mime: MimeJpeg,
-			}
+			md = &ek.thumb
 			return // thumbnail from EXIF
 		}
 		orientation = ek.Orientation
@@ -266,67 +258,52 @@ func ToNativeImg(m image.Image, ftype string) (md *MediaData, err error) {
 var ThumbScanner scanner
 
 type scanner struct {
-	put chan Puid_t
-	del chan Puid_t
+	put chan string
+	del chan string
 }
 
 // Scan is goroutine for thumbnails scanning.
 func (s *scanner) Scan() {
-	s.put = make(chan Puid_t)
-	s.del = make(chan Puid_t)
+	s.put = make(chan string)
+	s.del = make(chan string)
 
-	var queue []Puid_t
+	var queue []string
 	var ctx chan struct{}
 
-	var cache = func(puid Puid_t) {
+	var cache = func(syspath string) {
 		ctx = make(chan struct{})
 		go func() {
 			defer close(ctx)
-			if puid != 0 {
-				var syspath, ok = syspathcache.Path(puid)
-				if !ok {
-					return // file path not found
-				}
 
-				var err error
-				var prop interface{}
-				if prop, err = propcache.Get(syspath); err != nil {
-					return // can not get properties
-				}
-				var fp = prop.(Pather)
-				if fp.MTmb() != MimeNil {
-					return // thumbnail already scanned
-				}
-				var md *MediaData
-				if md, err = FindTmb(fp, syspath); err != nil {
-					fp.SetTmb(MimeDis)
-					return
-				}
-				fp.SetTmb(md.Mime)
+			var err error
+			var prop interface{}
+			if prop, err = propcache.Get(syspath); err != nil {
+				return // can not get properties
 			}
+			var fp = prop.(Pather)
+			if fp.MTmb() != MimeNil {
+				return // thumbnail already scanned
+			}
+			var md *MediaData
+			if md, err = FindTmb(fp, syspath); err != nil {
+				fp.SetTmb(MimeDis)
+				return
+			}
+			fp.SetTmb(md.Mime)
 		}()
 	}
 
 	for {
 		select {
-		case puid1 := <-s.put:
-			var found = false
-			for _, puid2 := range queue {
-				if puid1 == puid2 {
-					found = true
-					break
-				}
+		case puid := <-s.put:
+			if ctx == nil {
+				cache(puid)
+			} else {
+				queue = append(queue, puid)
 			}
-			if !found {
-				if ctx == nil {
-					cache(puid1)
-				} else {
-					queue = append(queue, puid1)
-				}
-			}
-		case puid1 := <-s.del:
-			for i, puid2 := range queue {
-				if puid1 == puid2 {
+		case puid := <-s.del:
+			for i, val := range queue {
+				if puid == val {
 					queue = append(queue[:i], queue[i+1:]...)
 					break
 				}
@@ -344,13 +321,13 @@ func (s *scanner) Scan() {
 }
 
 // Add list of PUIDs to queue to make thumbnails.
-func (s *scanner) Add(puid Puid_t) {
-	s.put <- puid
+func (s *scanner) Add(syspath string) {
+	s.put <- syspath
 }
 
 // Remove list of PUIDs from thumbnails queue.
-func (s *scanner) Remove(puid Puid_t) {
-	s.del <- puid
+func (s *scanner) Remove(syspath string) {
+	s.del <- syspath
 }
 
 // APIHANDLER
@@ -410,7 +387,7 @@ func tmbscnstartAPI(w http.ResponseWriter, r *http.Request) {
 	for _, puid := range arg.List {
 		if syspath, ok := syspathcache.Path(puid); ok {
 			if cg := prf.PathAccess(syspath, auth == prf); !cg.IsZero() {
-				ThumbScanner.Add(puid)
+				ThumbScanner.Add(syspath)
 			}
 		}
 	}
@@ -448,7 +425,7 @@ func tmbscnbreakAPI(w http.ResponseWriter, r *http.Request) {
 	for _, puid := range arg.List {
 		if syspath, ok := syspathcache.Path(puid); ok {
 			if cg := prf.PathAccess(syspath, auth == prf); !cg.IsZero() {
-				ThumbScanner.Remove(puid)
+				ThumbScanner.Remove(syspath)
 			}
 		}
 	}
