@@ -120,7 +120,7 @@ func Init() {
 		Log.Fatal(err)
 	}
 	// load content of Config structure from YAML-file.
-	if err = cfg.Load(cfgfile); err != nil {
+	if err = cfg.ReadYaml(cfgfile); err != nil {
 		Log.Infoln("error on settings file: " + err.Error())
 	}
 	// rewrite settings from config file
@@ -191,26 +191,33 @@ func Init() {
 		Log.Fatal(err)
 	}
 
-	if err = syspathcache.Load(pcfile); err != nil {
+	if err = syspathcache.ReadYaml(pthfile); err != nil {
 		Log.Infoln("error on path cache file: " + err.Error())
 		Log.Infoln("loading of directories cache and users list were missed for a reason path cache loading failure")
 	} else {
 		// load directories file groups
 		Log.Infof("loaded %d items into path cache", len(syspathcache.keypath))
-		if err = dircache.Load(dcfile); err != nil {
+		if err = dircache.ReadYaml(dirfile); err != nil {
 			Log.Infoln("error on directories cache file: " + err.Error())
 		}
 		Log.Infof("loaded %d items into directories cache", len(dircache.keydir))
 
+		// load GPS data of scanned photos
+		var n int
+		if n, err = gpscache.ReadYaml(gpsfile); err != nil {
+			Log.Infoln("error on GPS cache file: " + err.Error())
+		}
+		Log.Infof("loaded %d items into GPS cache", n)
+
 		// load previous users states
-		if err = usercache.Load(ulfile); err != nil {
+		if err = usercache.ReadYaml(usrfile); err != nil {
 			Log.Infoln("error on users list file: " + err.Error())
 		}
 		Log.Infof("loaded %d items into users list", len(usercache.list))
 	}
 
 	// load profiles with roots, hidden and shares lists
-	if err = prflist.Load(pffile); err != nil {
+	if err = prflist.ReadYaml(prffile); err != nil {
 		Log.Fatal("error on profiles file: " + err.Error())
 	}
 
@@ -369,7 +376,7 @@ func Shutdown() {
 	exitwg.Add(1)
 	go func() {
 		defer exitwg.Done()
-		if err := syspathcache.Save(pcfile); err != nil {
+		if err := syspathcache.WriteYaml(pthfile); err != nil {
 			Log.Infoln("error on path cache file: " + err.Error())
 			Log.Infoln("saving of directories cache and users list were missed for a reason path cache saving failure")
 			return
@@ -378,7 +385,7 @@ func Shutdown() {
 		exitwg.Add(1)
 		go func() {
 			defer exitwg.Done()
-			if err := dircache.Save(dcfile); err != nil {
+			if err := dircache.WriteYaml(dirfile); err != nil {
 				Log.Infoln("error on directories cache file: " + err.Error())
 			}
 		}()
@@ -386,7 +393,15 @@ func Shutdown() {
 		exitwg.Add(1)
 		go func() {
 			defer exitwg.Done()
-			if err := usercache.Save(ulfile); err != nil {
+			if err := gpscache.WriteYaml(gpsfile); err != nil {
+				Log.Infoln("error on GPS cache file: " + err.Error())
+			}
+		}()
+
+		exitwg.Add(1)
+		go func() {
+			defer exitwg.Done()
+			if err := usercache.WriteYaml(usrfile); err != nil {
 				Log.Infoln("error on users list file: " + err.Error())
 			}
 		}()
@@ -395,7 +410,7 @@ func Shutdown() {
 	exitwg.Add(1)
 	go func() {
 		defer exitwg.Done()
-		if err := prflist.Save(pffile); err != nil {
+		if err := prflist.WriteYaml(prffile); err != nil {
 			Log.Infoln("error on profiles list file: " + err.Error())
 		}
 	}()
@@ -409,12 +424,6 @@ func Shutdown() {
 	exitwg.Add(1)
 	go func() {
 		defer exitwg.Done()
-		packager.Close()
-	}()
-
-	exitwg.Add(1)
-	go func() {
-		defer exitwg.Done()
 		thumbpkg.Close()
 	}()
 
@@ -422,6 +431,12 @@ func Shutdown() {
 	go func() {
 		defer exitwg.Done()
 		tilespkg.Close()
+	}()
+
+	exitwg.Add(1)
+	go func() {
+		defer exitwg.Done()
+		packager.Close()
 	}()
 
 	exitwg.Wait()

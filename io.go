@@ -36,7 +36,8 @@ func WriteYaml(fname, intro string, data interface{}) (err error) {
 	return
 }
 
-// ReadYaml reads "data" object from YAML-file with given file name.
+// ReadYaml reads "data" object from YAML-file
+// with given file name.
 func ReadYaml(fname string, data interface{}) (err error) {
 	var body []byte
 	if body, err = os.ReadFile(path.Join(ConfigPath, fname)); err != nil {
@@ -48,8 +49,9 @@ func ReadYaml(fname string, data interface{}) (err error) {
 	return
 }
 
-// Load content of PathCache structure from YAML-file with given file name.
-func (pc *PathCache) Load(fname string) (err error) {
+// ReadYaml reads content of PathCache structure from YAML-file
+// with given file name.
+func (pc *PathCache) ReadYaml(fname string) (err error) {
 	if err = ReadYaml(fname, &pc.keypath); err != nil {
 		return
 	}
@@ -61,9 +63,9 @@ func (pc *PathCache) Load(fname string) (err error) {
 	return
 }
 
-// Save content of PathCache object in YAML format with
-// header comment to file with given file name.
-func (pc *PathCache) Save(fname string) error {
+// WriteYaml writes content of PathCache object in YAML format
+// with header comment to file with given file name.
+func (pc *PathCache) WriteYaml(fname string) error {
 	const intro = `
 # Here is rewritable cache with key/path pairs list.
 # It's loads on server start, and saves before exit.
@@ -77,17 +79,18 @@ func (pc *PathCache) Save(fname string) error {
 	return WriteYaml(fname, intro, pc.keypath)
 }
 
-// Load content of DirCache structure from YAML-file with given file name.
-func (dc *DirCache) Load(fname string) (err error) {
+// ReadYaml reads content of DirCache structure from YAML-file
+// with given file name.
+func (dc *DirCache) ReadYaml(fname string) (err error) {
 	if err = ReadYaml(fname, &dc.keydir); err != nil {
 		return
 	}
 	return
 }
 
-// Save content of DirCache object in YAML format with
-// header comment to file with given file name.
-func (dc *DirCache) Save(fname string) error {
+// WriteYaml writes content of DirCache object in YAML format
+// with header comment to file with given file name.
+func (dc *DirCache) WriteYaml(fname string) error {
 	const intro = `
 # Here is rewritable cache with key/path pairs list.
 # It's loads on server start, and saves before exit.
@@ -101,17 +104,48 @@ func (dc *DirCache) Save(fname string) error {
 	return WriteYaml(fname, intro, dc.keydir)
 }
 
-// Load content of Config structure from YAML-file with given file name.
-func (cfg *Config) Load(fname string) (err error) {
+// ReadYaml reads content of DirCache structure from YAML-file
+// with given file name.
+func (gc *GpsCache) ReadYaml(fname string) (n int, err error) {
+	var m map[Puid_t]*GpsInfo
+	if err = ReadYaml(fname, &m); err != nil {
+		return
+	}
+	for k, v := range m {
+		gc.Store(k, v)
+	}
+	n = len(m)
+	return
+}
+
+// WriteYaml writes content of GpsCache object in YAML format
+// with header comment to file with given file name.
+func (gc *GpsCache) WriteYaml(fname string) error {
+	const intro = `
+# Map with PUID/GpsInfo pairs. Contains GPS-coordinates
+# and creation time from EXIF-data of scanned photos.
+
+`
+	var m = map[Puid_t]*GpsInfo{}
+	gc.Range(func(key any, value any) bool {
+		m[key.(Puid_t)] = value.(*GpsInfo)
+		return true
+	})
+	return WriteYaml(fname, intro, m)
+}
+
+// ReadYaml reads content of Config structure from YAML-file
+// with given file name.
+func (cfg *Config) ReadYaml(fname string) (err error) {
 	if err = ReadYaml(fname, &cfg); err != nil {
 		return
 	}
 	return
 }
 
-// Save content of Config object in YAML format with
-// header comment to file with given file name.
-func (cfg *Config) Save(fname string) error {
+// WriteYaml writes content of Config object in YAML format
+// with header comment to file with given file name.
+func (cfg *Config) WriteYaml(fname string) error {
 	const intro = `
 # Server configuration file. First of all you can change
 # "access-key" and "refresh-key" for tokens protection.
@@ -120,8 +154,9 @@ func (cfg *Config) Save(fname string) error {
 	return WriteYaml(fname, intro, &cfg)
 }
 
-// Load content of Profiles structure from YAML-file with given file name.
-func (pl *Profiles) Load(fname string) (err error) {
+// ReadYaml reads content of Profiles structure from YAML-file
+// with given file name.
+func (pl *Profiles) ReadYaml(fname string) (err error) {
 	if err = ReadYaml(fname, &pl.list); err != nil {
 		return
 	}
@@ -165,9 +200,9 @@ func (pl *Profiles) Load(fname string) (err error) {
 	return
 }
 
-// Save content of Profiles object in YAML format with
-// header comment to file with given file name.
-func (pl *Profiles) Save(fname string) error {
+// WriteYaml writes content of Profiles object in YAML format
+// with header comment to file with given file name.
+func (pl *Profiles) WriteYaml(fname string) error {
 	const intro = `
 # List of administration profiles. Each profile should be with
 # unique password, and allows to configure access to specified
@@ -177,8 +212,9 @@ func (pl *Profiles) Save(fname string) error {
 	return WriteYaml(fname, intro, pl.list)
 }
 
-// Load content of UserCache structure from YAML-file with given file name.
-func (uc *UserCache) Load(fname string) (err error) {
+// ReadYaml reads content of UserCache structure from YAML-file
+// with given file name.
+func (uc *UserCache) ReadYaml(fname string) (err error) {
 	if err = ReadYaml(fname, &uc.list); err != nil {
 		return
 	}
@@ -192,9 +228,9 @@ func (uc *UserCache) Load(fname string) (err error) {
 	return
 }
 
-// Save content of UserCache object in YAML format with
-// header comment to file with given file name.
-func (uc *UserCache) Save(fname string) (err error) {
+// WriteYaml writes content of UserCache object in YAML format
+// with header comment to file with given file name.
+func (uc *UserCache) WriteYaml(fname string) (err error) {
 	const intro = `
 # Log of all clients that had activity on the server.
 # Each client identify by IP-address and user-agent.

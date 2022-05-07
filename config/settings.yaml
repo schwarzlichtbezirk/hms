@@ -39,10 +39,6 @@ web-server: # See https://golang.org/pkg/net/http/#Server for details.
   # Maximum duration to wait for graceful shutdown.
   shutdown-timeout: 15s
 images-prop:
-  # Name of thumbnails cache package.
-  thumb-cache-name: thumb.wpt
-  # Name of tiles cache package.
-  tiles-cache-name: tiles.wpt
   # Maximum size of image to make thumbnail.
   thumb-file-maxsize: 50397184 # 4096*3072*4 + 65536, 48M, max 4K image + 64K exif metadata
   # Use JPEG thumbnails embedded into image.

@@ -50,9 +50,11 @@ To make package with minimal size, use `hms-tiny.lua` script. Script `hms-free.l
 
 # Configuration
 
-Before server start you can configure some options. Any configuration files lays at "hms" folder, and have `yaml` file format.
+Before server start you can configure some options. Any configuration files lays at "config" folder, and have `yaml` file format.
 
 If you're going to share resources, first of all you can open `settings.yaml` file and change `access-key` and `refresh-key` for tokens protection. This is main server settings file, and it does not modified by program. Then you can open `profiles.yaml` file and change default admin password to anything other. Changing authentication passwords and profile passwords - that's all modifications to provide basic protection access to server.
+
+Resources placement can be configured by environment variables. Path with configurations files - by `CONFIGPATH`, placement of resorces package - by `PACKPATH`, path with package caches - by `CACHEPATH`.
 
 # Authorization
 

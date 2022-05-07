@@ -66,28 +66,35 @@ type ExifProp struct {
 	Orientation  int     `json:"orientation,omitempty" yaml:"orientation,omitempty"`
 	ExposureTime string  `json:"exposuretime,omitempty" yaml:"exposuretime,omitempty"`
 	ExposureProg int     `json:"exposureprog,omitempty" yaml:"exposureprog,omitempty"`
-	FNumber      float64 `json:"fnumber,omitempty" yaml:"fnumber,omitempty"`
+	FNumber      float32 `json:"fnumber,omitempty" yaml:"fnumber,omitempty"`
 	ISOSpeed     int     `json:"isospeed,omitempty" yaml:"isospeed,omitempty"`
-	ShutterSpeed float64 `json:"shutterspeed,omitempty" yaml:"shutterspeed,omitempty"`
-	Aperture     float64 `json:"aperture,omitempty" yaml:"aperture,omitempty"`
-	ExposureBias float64 `json:"exposurebias,omitempty" yaml:"exposurebias,omitempty"`
+	ShutterSpeed float32 `json:"shutterspeed,omitempty" yaml:"shutterspeed,omitempty"`
+	Aperture     float32 `json:"aperture,omitempty" yaml:"aperture,omitempty"`
+	ExposureBias float32 `json:"exposurebias,omitempty" yaml:"exposurebias,omitempty"`
 	LightSource  int     `json:"lightsource,omitempty" yaml:"lightsource,omitempty"`
-	Focal        float64 `json:"focal,omitempty" yaml:"focal,omitempty"`
+	Focal        float32 `json:"focal,omitempty" yaml:"focal,omitempty"`
 	Focal35mm    int     `json:"focal35mm,omitempty" yaml:"focal35mm,omitempty"`
-	DigitalZoom  float64 `json:"digitalzoom,omitempty" yaml:"digitalzoom,omitempty"`
+	DigitalZoom  float32 `json:"digitalzoom,omitempty" yaml:"digitalzoom,omitempty"`
 	Flash        int     `json:"flash,omitempty" yaml:"flash,omitempty"`
 	UniqueID     string  `json:"uniqueid,omitempty" yaml:"uniqueid,omitempty"`
 	ThumbJpegLen int     `json:"thumbjpeglen,omitempty" yaml:"thumbjpeglen,omitempty"`
 	// GPS
 	Latitude  float64 `json:"latitude,omitempty" yaml:"latitude,omitempty"`
 	Longitude float64 `json:"longitude,omitempty" yaml:"longitude,omitempty"`
-	Altitude  float64 `json:"altitude,omitempty" yaml:"altitude,omitempty"`
+	Altitude  float32 `json:"altitude,omitempty" yaml:"altitude,omitempty"`
 	Satelites string  `json:"satelites,omitempty" yaml:"satelites,omitempty"`
 	// private
 	thumb MediaData
 }
 
-func ratfloat(t *tiff.Tag) float64 {
+func ratfloat32(t *tiff.Tag) float32 {
+	if numer, denom, _ := t.Rat2(0); denom != 0 {
+		return float32(numer) / float32(denom)
+	}
+	return 0
+}
+
+func ratfloat64(t *tiff.Tag) float64 {
 	if numer, denom, _ := t.Rat2(0); denom != 0 {
 		return float64(numer) / float64(denom)
 	}
@@ -129,31 +136,31 @@ func (ep *ExifProp) Setup(x *exif.Exif) {
 		ep.ExposureProg, _ = t.Int(0)
 	}
 	if t, err = x.Get(exif.FNumber); err == nil {
-		ep.FNumber = ratfloat(t)
+		ep.FNumber = ratfloat32(t)
 	}
 	if t, err = x.Get(exif.ISOSpeedRatings); err == nil {
 		ep.ISOSpeed, _ = t.Int(0)
 	}
 	if t, err = x.Get(exif.ShutterSpeedValue); err == nil {
-		ep.ShutterSpeed = ratfloat(t)
+		ep.ShutterSpeed = ratfloat32(t)
 	}
 	if t, err = x.Get(exif.ApertureValue); err == nil {
-		ep.Aperture = ratfloat(t)
+		ep.Aperture = ratfloat32(t)
 	}
 	if t, err = x.Get(exif.ExposureBiasValue); err == nil {
-		ep.ExposureBias = ratfloat(t)
+		ep.ExposureBias = ratfloat32(t)
 	}
 	if t, err = x.Get(exif.LightSource); err == nil {
 		ep.LightSource, _ = t.Int(0)
 	}
 	if t, err = x.Get(exif.FocalLength); err == nil {
-		ep.Focal = ratfloat(t)
+		ep.Focal = ratfloat32(t)
 	}
 	if t, err = x.Get(exif.FocalLengthIn35mmFilm); err == nil {
 		ep.Focal35mm, _ = t.Int(0)
 	}
 	if t, err = x.Get(exif.DigitalZoomRatio); err == nil {
-		ep.DigitalZoom = ratfloat(t)
+		ep.DigitalZoom = ratfloat32(t)
 	}
 	if t, err = x.Get(exif.ImageLength); err == nil {
 		ep.Height, _ = t.Int(0)
@@ -175,7 +182,7 @@ func (ep *ExifProp) Setup(x *exif.Exif) {
 		ep.Latitude, ep.Longitude = lat, lng
 	}
 	if t, err = x.Get(exif.GPSAltitude); err == nil {
-		ep.Altitude = ratfloat(t)
+		ep.Altitude = ratfloat32(t)
 		if t, err = x.Get(exif.GPSAltitudeRef); err == nil {
 			var ref, _ = t.Int(0)
 			if ref == 1 {
@@ -203,6 +210,16 @@ func (ek *ExifKit) Setup(syspath string, fi fs.FileInfo) {
 		defer file.Close()
 		if x, err := exif.Decode(file); err == nil {
 			ek.ExifProp.Setup(x)
+			if ek.Latitude != 0 && ek.Longitude != 0 {
+				defer func() {
+					gpscache.Store(ek.PUIDVal, &GpsInfo{
+						DateTime:  ek.DateTime,
+						Latitude:  ek.Latitude,
+						Longitude: ek.Longitude,
+						Altitude:  ek.Altitude,
+					})
+				}()
+			}
 			if cfg.UseEmbeddedTmb && ek.ThumbJpegLen > 0 {
 				ek.PUIDVal = syspathcache.Cache(syspath)
 				ek.SetTmb(MimeJpeg)

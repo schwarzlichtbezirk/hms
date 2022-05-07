@@ -896,21 +896,24 @@ const VueMapCard = {
 	data() {
 		return {
 			styleid: 'mapbox-hybrid',
+			markermode: "thumb",
+			showtrack: false,
+			layernum: 0,
+
 			map: null, // set it on mounted event
 			tiles: null,
 			markers: null,
-			markermode: "thumb",
 			phototrack: null,
-			showtrack: false,
+			tracks: null,
+
 			gpslist: [],
-			gpxlist: [],
 
 			iid: makestrid(10) // instance ID
 		};
 	},
 	computed: {
 		isvisible() {
-			return this.gpslist.length > 0 || this.gpxlist.length > 0;
+			return this.layernum > 0;
 		},
 		clsmapboxhybrid() {
 			return { active: this.styleid === 'mapbox-hybrid' };
@@ -991,30 +994,18 @@ const VueMapCard = {
 	methods: {
 		// create new opened folder
 		new() {
-			if (!this.markers || this.gpslist.length > 0) {
-				// remove previous set
-				if (this.markers) {
-					this.map.removeLayer(this.markers);
-				}
-				// create new group
-				this.markers = L.markerClusterGroup();
-				// add new set
-				this.map.addLayer(this.markers);
-				// remove previous track
-				if (this.phototrack) {
-					this.map.removeLayer(this.phototrack);
-					this.phototrack = null;
-				}
+			if (this.layernum > 0) {
 				// new empty list
 				this.gpslist = [];
+				// remove all markers from the cluster
+				this.markers.clearLayers();
+				// remove previous track
+				this.phototrack.setLatLngs([]);
+				// remove all gpx-tracks
+				this.tracks.clearLayers();
+				// no any markers or gpx on map
+				this.layernum = 0;
 			}
-			// remove previous gpx-tracks
-			for (const gpx of this.gpxlist) {
-				if (gpx.layer) {
-					this.map.removeLayer(gpx.layer);
-				}
-			}
-			this.gpxlist = [];
 		},
 		// make tiles layer
 		maketiles(id) {
@@ -1119,49 +1110,49 @@ const VueMapCard = {
 			if (!gpslist.length) {
 				return;
 			}
-			const size = 60;
-			for (const file of gpslist) {
-				const opt = {
-					title: file.name,
-					riseOnHover: true
-				};
-				if (this.markermode === 'thumb' && file.puid) {
-					opt.icon = L.divIcon({
-						html: makemarkericon(file),
-						className: "photomarker",
-						iconSize: [size, size],
-						iconAnchor: [size / 2, size / 2],
-						popupAnchor: [0, -size / 4]
+			if (this.markers) {
+				const size = 60;
+				for (const file of gpslist) {
+					const opt = {
+						title: file.name,
+						riseOnHover: true
+					};
+					if (this.markermode === 'thumb' && file.puid) {
+						opt.icon = L.divIcon({
+							html: makemarkericon(file),
+							className: "photomarker",
+							iconSize: [size, size],
+							iconAnchor: [size / 2, size / 2],
+							popupAnchor: [0, -size / 4]
+						});
+					}
+
+					const template = document.createElement('template');
+					template.innerHTML = makemarkerpopup(file).trim();
+					const popup = template.content.firstChild;
+					popup.querySelector(".photoinfo picture")?.addEventListener('click', () => {
+						eventHub.emit('open', file, this.gpslist);
 					});
-				}
 
-				const template = document.createElement('template');
-				template.innerHTML = makemarkerpopup(file).trim();
-				const popup = template.content.firstChild;
-				popup.querySelector(".photoinfo picture")?.addEventListener('click', () => {
-					eventHub.emit('open', file, this.gpslist);
+					L.marker([file.latitude, file.longitude], opt)
+						.addTo(this.markers)
+						.bindPopup(popup);
+				}
+				this.layernum += gpslist.length;
+
+				const update = this.gpslist.length == 0;
+				Vue.nextTick(() => {
+					if (update) {
+						this.map.invalidateSize();
+					}
+					this.onfitbounds();
 				});
-
-				L.marker([file.latitude, file.longitude], opt)
-					.addTo(this.markers)
-					.bindPopup(popup);
 			}
-
-			const mustsize = !this.gpslist.length;
-			Vue.nextTick(() => {
-				if (mustsize) {
-					this.map.invalidateSize();
-				}
-				this.onfitbounds();
-			});
-
 			this.gpslist.push(...gpslist);
-			if (this.showtrack) {
-				this.makephototrack();
-			}
+			this.buildphototrack();
 		},
 		// produces reduced track polyline
-		makephototrack() {
+		buildphototrack() {
 			let last = L.latLng(this.gpslist[0].latitude, this.gpslist[0].longitude, this.gpslist[0].altitude);
 			let prev = last;
 			let route = 0, trk = 0, asc = 0;
@@ -1180,20 +1171,13 @@ const VueMapCard = {
 				trk += prev.distanceTo(p);
 				prev = p;
 			}
-			if (this.phototrack) {
-				this.map.removeLayer(this.phototrack);
-			}
-			this.phototrack = L.polyline(latlngs, { color: '#3CB371' }) // MediumSeaGreen
+			this.phototrack.setLatLngs(latlngs)
 				.bindPopup(`total <b>${latlngs.length}</b> waypoints<br>route <b>${route.toFixed()}</b> m<br>track <b>${trk.toFixed()}</b> m<br>ascent <b>${asc.toFixed()}</b> m`)
-				.addTo(this.map);
 		},
 		// add GPX track polyline
 		addgpx(file) {
-			const gpx = {};
-			gpx.prop = file;
-			gpx.trkpt = [];
-			const ci = this.gpxlist.length % gpxcolors.length;
-			this.gpxlist.push(gpx);
+			const latlngs = [];
+			const ci = this.tracks.getLayers().length % gpxcolors.length;
 
 			(async () => {
 				eventHub.emit('ajax', +1);
@@ -1210,11 +1194,12 @@ const VueMapCard = {
 							route += p.distanceTo(prev);
 						}
 						prev = p;
-						gpx.trkpt.push(p);
+						latlngs.push(p);
 					}
-					gpx.layer = L.polyline(gpx.trkpt, { color: gpxcolors[ci] })
-						.bindPopup(`points <b>${gpx.trkpt.length}</b><br>route <b>${route.toFixed()}</b> m`)
-						.addTo(this.map);
+					L.polyline(latlngs, { color: gpxcolors[ci] })
+						.bindPopup(`points <b>${latlngs.length}</b><br>route <b>${route.toFixed()}</b> m`)
+						.addTo(this.tracks);
+					this.layernum++;
 				} catch (e) {
 					ajaxfail(e);
 				} finally {
@@ -1257,12 +1242,12 @@ const VueMapCard = {
 			this.changetiles('hikebike');
 		},
 		onphototrack() {
-			this.showtrack = !this.showtrack;
-			if (this.showtrack) {
-				this.makephototrack();
-			} else {
+			if (this.map.hasLayer(this.phototrack)) {
 				this.map.removeLayer(this.phototrack);
-				this.phototrack = null;
+				this.showtrack = false;
+			} else {
+				this.map.addLayer(this.phototrack);
+				this.showtrack = true;
 			}
 		},
 		onmarkermode() {
@@ -1274,8 +1259,10 @@ const VueMapCard = {
 					this.markermode = 'marker';
 					break;
 			}
+			// recreate markers layers
 			const gpslist = this.gpslist;
-			this.new();
+			this.gpslist = [];
+			this.markers.clearLayers();
 			this.addmarkers(gpslist);
 		},
 		onfullscreenchange() {
@@ -1293,11 +1280,9 @@ const VueMapCard = {
 		},
 		onfitbounds() {
 			const bounds = this.markers.getBounds();
-			for (const gpx of this.gpxlist) {
-				if (gpx.layer) {
-					bounds.extend(gpx.layer.getBounds());
-				}
-			}
+			this.tracks.eachLayer(layer => {
+				bounds.extend(layer.getBounds());
+			})
 			this.map.flyToBounds(bounds, {
 				padding: [20, 20]
 			});
@@ -1322,6 +1307,31 @@ const VueMapCard = {
 			zoom: 8,
 			layers: [this.tiles]
 		});
+		this.phototrack = L.polyline([], { color: '#3CB371' }); // MediumSeaGreen
+		if (this.showtrack) {
+			this.map.addLayer(this.phototrack);
+		}
+		this.tracks = L.layerGroup().addTo(this.map);
+
+		const resizeObserver = new ResizeObserver(entries => {
+			// recreate content only if widget is not hidden
+			const size = entries[0].contentBoxSize[0].inlineSize;
+			if (size > 0) {
+				// recreate markers cluster
+				if (this.markers) {
+					this.map.removeLayer(this.markers);
+				}
+				const gpslist = this.gpslist;
+				this.gpslist = [];
+				this.markers = L.markerClusterGroup();
+				this.addmarkers(gpslist);
+				this.map.addLayer(this.markers);
+				// update map
+				this.map.invalidateSize();
+			}
+		});
+		resizeObserver.observe(this.$refs.map);
+
 		L.control.scale().addTo(this.map);
 		L.control.zoom({
 			zoomInText: '<span class="material-icons">add</span>',

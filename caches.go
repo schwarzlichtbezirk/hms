@@ -233,6 +233,22 @@ var dircache = DirCache{
 	keydir: map[Puid_t]DirProp{},
 }
 
+// GpsInfo describes GPS-data from the photos:
+// latitude, longitude, altitude and creation time.
+type GpsInfo struct {
+	DateTime  int64   `json:"time" yaml:"time"` // photo creation date/time in Unix milliseconds
+	Latitude  float64 `json:"lat" yaml:"lat"`
+	Longitude float64 `json:"lon" yaml:"lon"`
+	Altitude  float32 `json:"alt,omitempty" yaml:"alt,omitempty"`
+}
+
+// GpsCache inherits sync.Map and encapsulates functionality for cache.
+type GpsCache struct {
+	sync.Map
+}
+
+var gpscache GpsCache
+
 // Prepares caches depends of previously loaded configuration.
 func initcaches() {
 	// init properties cache
@@ -602,15 +618,15 @@ func PackInfo(fname string, pack wpk.Packager) {
 }
 
 func initpackages() (err error) {
-	if thumbpkg, err = InitCacheWriter(cfg.ThumbCacheName); err != nil {
+	if thumbpkg, err = InitCacheWriter(tmbfile); err != nil {
 		return
 	}
-	PackInfo(cfg.ThumbCacheName, thumbpkg)
+	PackInfo(tmbfile, thumbpkg)
 
-	if tilespkg, err = InitCacheWriter(cfg.TilesCacheName); err != nil {
+	if tilespkg, err = InitCacheWriter(tilfile); err != nil {
 		return
 	}
-	PackInfo(cfg.TilesCacheName, tilespkg)
+	PackInfo(tilfile, tilespkg)
 
 	return nil
 }

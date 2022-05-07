@@ -12,10 +12,14 @@ const (
 	gitpath = "github.com/schwarzlichtbezirk/" + gitname
 	cfgfile = "settings.yaml"
 
-	pcfile = "pathcache.yaml"
-	dcfile = "dircache.yaml"
-	pffile = "profiles.yaml"
-	ulfile = "userlist.yaml"
+	pthfile = "pathcache.yaml"
+	dirfile = "dircache.yaml"
+	gpsfile = "gpscache.yaml"
+	prffile = "profiles.yaml"
+	usrfile = "userlist.yaml"
+
+	tmbfile = "thumb.wpt"
+	tilfile = "tiles.wpt"
 )
 
 const (
@@ -54,10 +58,6 @@ type CfgWebServ struct {
 }
 
 type CfgImgProp struct {
-	// Name of thumbnails cache package.
-	ThumbCacheName string `json:"thumb-cache-name" yaml:"thumb-cache-name" long:"thcn" description:"Name of thumbnails cache package."`
-	// Name of tiles cache package.
-	TilesCacheName string `json:"tiles-cache-name" yaml:"tiles-cache-name" long:"tlcn" description:"Name of tiles cache package."`
 	// Maximum size of image to make thumbnail.
 	ThumbFileMaxSize int64 `json:"thumb-file-maxsize" yaml:"thumb-file-maxsize" long:"tfms" description:"Maximum size of image to make thumbnail."`
 	// Use JPEG thumbnails embedded into image.
@@ -122,8 +122,6 @@ var cfg = Config{ // inits default values:
 		ShutdownTimeout:   time.Duration(15) * time.Second,
 	},
 	CfgImgProp: CfgImgProp{
-		ThumbCacheName:   "thumb.wpt",
-		TilesCacheName:   "tiles.wpt",
 		ThumbFileMaxSize: 4096*3072*4 + 65536,
 		UseEmbeddedTmb:   true,
 		FitEmbeddedTmb:   true,
