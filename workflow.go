@@ -19,6 +19,7 @@ import (
 	"github.com/schwarzlichtbezirk/wpk/bulk"
 	"github.com/schwarzlichtbezirk/wpk/mmap"
 	"golang.org/x/crypto/acme/autocert"
+	"golang.org/x/sync/errgroup"
 )
 
 var (
@@ -373,73 +374,67 @@ func WaitExit() {
 
 // Shutdown performs graceful network shutdown.
 func Shutdown() {
-	exitwg.Add(1)
-	go func() {
-		defer exitwg.Done()
-		if err := syspathcache.WriteYaml(pthfile); err != nil {
-			Log.Infoln("error on path cache file: " + err.Error())
+	var wg errgroup.Group
+	wg.Go(func() (err error) {
+		if err1 := syspathcache.WriteYaml(pthfile); err1 != nil {
+			Log.Infoln("error on path cache file: " + err1.Error())
 			Log.Infoln("saving of directories cache and users list were missed for a reason path cache saving failure")
 			return
 		}
 
-		exitwg.Add(1)
-		go func() {
-			defer exitwg.Done()
+		wg.Go(func() (err error) {
 			if err := dircache.WriteYaml(dirfile); err != nil {
 				Log.Infoln("error on directories cache file: " + err.Error())
 			}
-		}()
+			return
+		})
 
-		exitwg.Add(1)
-		go func() {
-			defer exitwg.Done()
-			if err := gpscache.WriteYaml(gpsfile); err != nil {
-				Log.Infoln("error on GPS cache file: " + err.Error())
-			}
-		}()
-
-		exitwg.Add(1)
-		go func() {
-			defer exitwg.Done()
+		wg.Go(func() (err error) {
 			if err := usercache.WriteYaml(usrfile); err != nil {
 				Log.Infoln("error on users list file: " + err.Error())
 			}
-		}()
-	}()
+			return
+		})
+		return
+	})
 
-	exitwg.Add(1)
-	go func() {
-		defer exitwg.Done()
+	wg.Go(func() (err error) {
+		if err := gpscache.WriteYaml(gpsfile); err != nil {
+			Log.Infoln("error on GPS cache file: " + err.Error())
+		}
+		return
+	})
+
+	wg.Go(func() (err error) {
 		if err := prflist.WriteYaml(prffile); err != nil {
 			Log.Infoln("error on profiles list file: " + err.Error())
 		}
-	}()
+		return
+	})
 
-	exitwg.Add(1)
-	go func() {
-		defer exitwg.Done()
+	wg.Go(func() (err error) {
 		diskcache.Purge()
-	}()
+		return
+	})
 
-	exitwg.Add(1)
-	go func() {
-		defer exitwg.Done()
+	wg.Go(func() (err error) {
 		thumbpkg.Close()
-	}()
+		return
+	})
 
-	exitwg.Add(1)
-	go func() {
-		defer exitwg.Done()
+	wg.Go(func() (err error) {
 		tilespkg.Close()
-	}()
+		return
+	})
 
-	exitwg.Add(1)
-	go func() {
-		defer exitwg.Done()
+	wg.Go(func() (err error) {
 		packager.Close()
-	}()
+		return
+	})
 
-	exitwg.Wait()
+	if err := wg.Wait(); err != nil {
+		return
+	}
 	Log.Infoln("shutting down complete.")
 }
 

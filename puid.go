@@ -5,6 +5,7 @@ import (
 	"encoding/base32"
 	"encoding/binary"
 	"encoding/json"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
@@ -135,4 +136,43 @@ func (pt *Puid_t) Rand(bits int) {
 	}
 	*pt = Puid_t(binary.LittleEndian.Uint64(buf[:]))
 	*pt &= 0xffffffffffffffff >> (65 - bits) // throw one more bit to prevent string representation overflow
+}
+
+type unix_t uint64
+
+func (ut unix_t) Time() time.Time {
+	return time.Unix(int64(ut/1000), int64(ut%1000)*1000000)
+}
+
+const ExifDate = "2006:01:02 15:04:05.999"
+
+// MarshalYAML is YAML marshaler interface implementation.
+func (ut unix_t) MarshalYAML() (interface{}, error) {
+	return ut.Time().Format(ExifDate), nil
+}
+
+// UnmarshalYAML is YAML unmarshaler interface implementation.
+func (ut *unix_t) UnmarshalYAML(value *yaml.Node) (err error) {
+	var t time.Time
+	if t, err = time.Parse(ExifDate, value.Value); err != nil {
+		return
+	}
+	*ut = UnixJS(t)
+	return
+}
+
+// UnixJS converts time to UNIX-time in milliseconds, compatible with javascript time format.
+func UnixJS(u time.Time) unix_t {
+	return unix_t(u.UnixNano() / 1000000)
+}
+
+// UnixJSNow returns same result as Date.now() in javascript.
+func UnixJSNow() unix_t {
+	return unix_t(time.Now().UnixNano() / 1000000)
+}
+
+// TimeJS is backward conversion from javascript compatible Unix time
+// in milliseconds to golang structure.
+func TimeJS(ujs unix_t) time.Time {
+	return time.Unix(int64(ujs/1000), int64(ujs%1000)*1000000)
 }

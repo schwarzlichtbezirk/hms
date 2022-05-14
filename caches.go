@@ -236,7 +236,7 @@ var dircache = DirCache{
 // GpsInfo describes GPS-data from the photos:
 // latitude, longitude, altitude and creation time.
 type GpsInfo struct {
-	DateTime  int64   `json:"time" yaml:"time"` // photo creation date/time in Unix milliseconds
+	DateTime  unix_t  `json:"time" yaml:"time"` // photo creation date/time in Unix milliseconds
 	Latitude  float64 `json:"lat" yaml:"lat"`
 	Longitude float64 `json:"lon" yaml:"lon"`
 	Altitude  float32 `json:"alt,omitempty" yaml:"alt,omitempty"`

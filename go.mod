@@ -20,6 +20,7 @@ require (
 	github.com/spate/glimage v0.0.0-20200505055513-fbdcc60a65e5
 	golang.org/x/crypto v0.0.0-20220427172511-eb4f295cb31f
 	golang.org/x/image v0.0.0-20220413100746-70e8d0d3baa9
+	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/text v0.3.7
 	gopkg.in/ini.v1 v1.66.4
 	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b

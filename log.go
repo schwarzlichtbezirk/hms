@@ -33,7 +33,7 @@ const (
 // LogItem represents structured log fields for each log entry.
 // It's used to transmit the log items by network.
 type LogItem struct {
-	Time    int64  `json:"time"`
+	Time    unix_t `json:"time"`
 	Message string `json:"msg"`
 	Level   string `json:"level"`
 	Line    int    `json:"line"`

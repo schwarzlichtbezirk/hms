@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"math"
 	"net/http"
 	"os"
 	"path"
@@ -410,6 +411,7 @@ func srvinfAPI(w http.ResponseWriter, r *http.Request) {
 		"exepath":  path.Dir(ToSlash(os.Args[0])),
 		"cfgpath":  ConfigPath,
 		"wpkpath":  PackPath,
+		"cchpath":  CachePath,
 	}
 
 	WriteOK(w, ret)
@@ -504,6 +506,9 @@ func cchinfAPI(w http.ResponseWriter, r *http.Request) {
 // APIHANDLER
 func getlogAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
+	var ret struct {
+		List []LogItem `json:"list"`
+	}
 
 	var size = Log.Size()
 
@@ -521,14 +526,14 @@ func getlogAPI(w http.ResponseWriter, r *http.Request) {
 		num = size
 	}
 
-	var ret = make([]interface{}, num)
+	ret.List = make([]LogItem, num)
 	var h = Log.Ring()
 	for i := 0; i < num; i++ {
-		ret[i] = h.Value
+		ret.List[i] = h.Value.(LogItem)
 		h = h.Prev()
 	}
 
-	WriteOK(w, ret)
+	WriteOK(w, &ret)
 }
 
 // APIHANDLER
@@ -580,7 +585,9 @@ func ctgrAPI(w http.ResponseWriter, r *http.Request) {
 		AID  ID_t   `json:"aid"`
 		PUID Puid_t `json:"puid"`
 	}
-	var ret = []Pather{}
+	var ret struct {
+		List []Pather `json:"list"`
+	}
 
 	// get arguments
 	if err = AjaxGetArg(w, r, &arg); err != nil {
@@ -615,7 +622,7 @@ func ctgrAPI(w http.ResponseWriter, r *http.Request) {
 		for _, puid := range puids {
 			if fpath, ok := syspathcache.Path(puid); ok {
 				if prop, err := propcache.Get(fpath); err == nil {
-					ret = append(ret, prop.(Pather))
+					ret.List = append(ret.List, prop.(Pather))
 				}
 			}
 		}
@@ -629,15 +636,15 @@ func ctgrAPI(w http.ResponseWriter, r *http.Request) {
 			if fpath, ok := CatKeyPath[puid]; ok {
 				if auth == prf || prf.IsShared(fpath) {
 					if prop, err := propcache.Get(fpath); err == nil {
-						ret = append(ret, prop.(Pather))
+						ret.List = append(ret.List, prop.(Pather))
 					}
 				}
 			}
 		}
 	case PUIDdrives:
-		ret = prf.ScanRoots()
+		ret.List = prf.ScanRoots()
 	case PUIDshares:
-		ret = prf.ScanShares()
+		ret.List = prf.ScanShares()
 	case PUIDmedia:
 		catprop(dircache.Categories([]int{FGvideo, FGaudio, FGimage}, 0.5))
 	case PUIDvideo:
@@ -1289,6 +1296,72 @@ func edtdeleteAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	}
 
 	WriteOK(w, nil)
+}
+
+const rangepool = 4
+
+// Haversine uses formula to calculate the great-circle distance between
+// two points – that is, the shortest distance over the earth’s surface –
+// giving an ‘as-the-crow-flies’ distance between the points (ignoring
+// any hills they fly over, of course!).
+//
+// See https://www.movable-type.co.uk/scripts/latlong.html
+func Haversine(lat1, lon1, lat2, lon2 float64) float64 {
+	const R = 6371e3 // metres
+	var (
+		φ1 = lat1 * math.Pi / 180 // φ, λ in radians
+		φ2 = lat2 * math.Pi / 180
+		Δφ = (lat2 - lat1) * math.Pi / 180
+		Δλ = (lon2 - lon1) * math.Pi / 180
+		a  = math.Sin(Δφ/2)*math.Sin(Δφ/2) +
+			math.Cos(φ1)*math.Cos(φ2)*math.Sin(Δλ/2)*math.Sin(Δλ/2)
+		c = 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
+		d = R * c // in metres
+	)
+	return d
+}
+
+// APIHANDLER
+func gpsrangeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
+	var err error
+	var arg struct {
+		Latitude  float64 `json:"lat"`
+		Longitude float64 `json:"lon"`
+		Radius    float64 `json:"radius"` // in meters
+		Limit     int     `json:"limit,omitempty"`
+		Time1     unix_t  `json:"time1,omitempty"`
+		Time2     unix_t  `json:"time2,omitempty"`
+	}
+	var ret struct {
+		List []Puid_t `json:"list"`
+	}
+
+	// get arguments
+	if err = AjaxGetArg(w, r, &arg); err != nil {
+		return
+	}
+	if arg.Latitude == 0 || arg.Longitude == 0 || arg.Radius == 0 {
+		WriteError400(w, ErrNoData, AECgpsrangenodata)
+		return
+	}
+
+	gpscache.Range(func(key interface{}, value interface{}) bool {
+		var gps = value.(*GpsInfo)
+		var d = Haversine(arg.Latitude, arg.Longitude, gps.Latitude, gps.Longitude)
+		if d > arg.Radius {
+			return true
+		}
+		if arg.Time1 > 0 && gps.DateTime < arg.Time1 {
+			return true
+		}
+		if arg.Time2 > 0 && gps.DateTime > arg.Time2 {
+			return true
+		}
+		ret.List = append(ret.List, key.(Puid_t))
+		return arg.Limit > 0 && len(ret.List) < arg.Limit
+	})
+
+	WriteOK(w, ret)
 }
 
 // The End.

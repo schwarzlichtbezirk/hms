@@ -162,7 +162,8 @@ const VueStatApp = {
 				try {
 					const response = await fetch("/api/stat/getlog");
 					if (response.ok) {
-						this.log = await response.json();
+						const data = await response.json();
+						this.log = data.list;
 					}
 				} catch (e) { console.error(e); }
 			})();

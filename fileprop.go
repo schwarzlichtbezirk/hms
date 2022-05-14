@@ -310,7 +310,7 @@ type Pather interface {
 	Name() string // string identifier
 	Type() int    // type identifier
 	Size() int64  // size in bytes
-	Time() int64  // UNIX time in milliseconds
+	Time() unix_t // UNIX time in milliseconds
 	PUID() Puid_t // path unique ID encoded to hex-base32
 	MTmb() Mime_t // thumbnail MIME type, -1 - can not make thumbnail; 0 - not cached; >=1 - cached
 	SetTmb(Mime_t)
@@ -338,15 +338,15 @@ func (pp *PathProp) Size() int64 {
 }
 
 // Time is file creation time in UNIX format, milliseconds.
-func (pp *PathProp) Time() int64 {
+func (pp *PathProp) Time() unix_t {
 	return 0
 }
 
 // FileProp is common file properties chunk.
 type FileProp struct {
 	PathProp
-	SizeVal int64 `json:"size,omitempty" yaml:"size,omitempty"`
-	TimeVal int64 `json:"time,omitempty" yaml:"time,omitempty"`
+	SizeVal int64  `json:"size,omitempty" yaml:"size,omitempty"`
+	TimeVal unix_t `json:"time,omitempty" yaml:"time,omitempty"`
 }
 
 // Setup fills fields from fs.FileInfo structure. Do not looks for share.
@@ -363,7 +363,7 @@ func (fp *FileProp) Size() int64 {
 }
 
 // Time is file creation time in UNIX format, milliseconds.
-func (fp *FileProp) Time() int64 {
+func (fp *FileProp) Time() unix_t {
 	return fp.TimeVal
 }
 
@@ -414,7 +414,7 @@ func PathBase(syspath string) string {
 // DirProp is directory properties chunk.
 type DirProp struct {
 	// Directory scanning time in UNIX format, milliseconds.
-	Scan int64 `json:"scan" yaml:"scan"`
+	Scan unix_t `json:"scan" yaml:"scan"`
 	// Directory file groups counters.
 	FGrp FileGrp `json:"fgrp" yaml:"fgrp,flow"`
 }

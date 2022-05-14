@@ -69,22 +69,6 @@ func (t *Tokens) Make(aid ID_t) {
 	}).SignedString([]byte(cfg.RefreshKey))
 }
 
-// UnixJS converts time to UNIX-time in milliseconds, compatible with javascript time format.
-func UnixJS(u time.Time) int64 {
-	return u.UnixNano() / 1000000
-}
-
-// UnixJSNow returns same result as Date.now() in javascript.
-func UnixJSNow() int64 {
-	return time.Now().UnixNano() / 1000000
-}
-
-// TimeJS is backward conversion from javascript compatible Unix time
-// in milliseconds to golang structure.
-func TimeJS(ujs int64) time.Time {
-	return time.Unix(ujs/1000, (ujs%1000)*1000000)
-}
-
 // StripPort makes fast IP-address extract from valid host:port string.
 func StripPort(addrport string) string {
 	// IPv6

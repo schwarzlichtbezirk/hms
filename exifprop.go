@@ -62,7 +62,7 @@ type ExifProp struct {
 	Model        string  `json:"model,omitempty" yaml:"model,omitempty"`
 	Make         string  `json:"make,omitempty" yaml:"make,omitempty"`
 	Software     string  `json:"software,omitempty" yaml:"software,omitempty"`
-	DateTime     int64   `json:"datetime,omitempty" yaml:"datetime,omitempty"`
+	DateTime     unix_t  `json:"datetime,omitempty" yaml:"datetime,omitempty"`
 	Orientation  int     `json:"orientation,omitempty" yaml:"orientation,omitempty"`
 	ExposureTime string  `json:"exposuretime,omitempty" yaml:"exposuretime,omitempty"`
 	ExposureProg int     `json:"exposureprog,omitempty" yaml:"exposureprog,omitempty"`

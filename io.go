@@ -107,12 +107,13 @@ func (dc *DirCache) WriteYaml(fname string) error {
 // ReadYaml reads content of DirCache structure from YAML-file
 // with given file name.
 func (gc *GpsCache) ReadYaml(fname string) (n int, err error) {
-	var m map[Puid_t]*GpsInfo
+	var m map[string]*GpsInfo
 	if err = ReadYaml(fname, &m); err != nil {
 		return
 	}
 	for k, v := range m {
-		gc.Store(k, v)
+		var puid = syspathcache.Cache(k)
+		gc.Store(puid, v)
 	}
 	n = len(m)
 	return
@@ -126,9 +127,11 @@ func (gc *GpsCache) WriteYaml(fname string) error {
 # and creation time from EXIF-data of scanned photos.
 
 `
-	var m = map[Puid_t]*GpsInfo{}
-	gc.Range(func(key any, value any) bool {
-		m[key.(Puid_t)] = value.(*GpsInfo)
+	var m = map[string]*GpsInfo{}
+	gc.Range(func(key interface{}, value interface{}) bool {
+		if syspath, ok := syspathcache.Path(key.(Puid_t)); ok {
+			m[syspath] = value.(*GpsInfo)
+		}
 		return true
 	})
 	return WriteYaml(fname, intro, m)

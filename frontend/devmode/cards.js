@@ -1149,6 +1149,9 @@ const VueMapCard = {
 				});
 			}
 			this.gpslist.push(...gpslist);
+			this.gpslist.sort((a, b) => {
+				return a.datetime ?? a.time < b.datetime ?? b.time ? -1 : +1;
+			})
 			this.buildphototrack();
 		},
 		// produces reduced track polyline

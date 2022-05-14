@@ -12,7 +12,7 @@ import (
 // opened directory and UNIX-time in milliseconds of start of this event.
 type HistItem struct {
 	PUID Puid_t `json:"puid"`
-	Time int64  `json:"time"`
+	Time unix_t `json:"time"`
 }
 
 // User has vomplete information about user activity on server,
@@ -21,8 +21,8 @@ type User struct {
 	Addr      string     `json:"addr" yaml:"addr"`            // remote address
 	UserAgent string     `json:"useragent" yaml:"user-agent"` // user agent
 	Lang      string     `json:"lang" yaml:"lang"`            // accept language
-	LastAjax  int64      `json:"lastajax" yaml:"last-ajax"`   // last ajax-call UNIX-time in milliseconds
-	LastPage  int64      `json:"lastpage" yaml:"last-page"`   // last page load UNIX-time in milliseconds
+	LastAjax  unix_t     `json:"lastajax" yaml:"last-ajax"`   // last ajax-call UNIX-time in milliseconds
+	LastPage  unix_t     `json:"lastpage" yaml:"last-page"`   // last page load UNIX-time in milliseconds
 	IsAuth    bool       `json:"isauth" yaml:"is-auth"`       // is user authorized
 	AuthID    ID_t       `json:"authid" yaml:"auth-id"`       // authorized ID
 	PrfID     ID_t       `json:"prfid" yaml:"prf-id"`         // page profile ID
@@ -162,7 +162,7 @@ func usrlstAPI(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ret.Total = len(usercache.list)
-	var ot = UnixJSNow() - int64(cfg.OnlineTimeout/time.Millisecond)
+	var ot = UnixJSNow() - unix_t(cfg.OnlineTimeout/time.Millisecond)
 	for i := arg.Pos; i < arg.Pos+arg.Num && i < len(usercache.list); i++ {
 		var user = usercache.list[i]
 		var ui item

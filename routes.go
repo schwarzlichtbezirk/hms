@@ -31,7 +31,7 @@ func (e *jerr) MarshalJSON() ([]byte, error) {
 // ErrAjax is error object on AJAX API handlers calls.
 type ErrAjax struct {
 	What jerr   `json:"what"`           // message with problem description
-	When int64  `json:"when"`           // time of error rising, in milliseconds of UNIX format
+	When unix_t `json:"when"`           // time of error rising, in milliseconds of UNIX format
 	Code int    `json:"code,omitempty"` // unique API error code
 	Info string `json:"info,omitempty"` // URL with problem detailed description
 }
@@ -301,35 +301,29 @@ func RegisterRoutes(gmux *Router) {
 	api.Use(AjaxMiddleware)
 	api.Path("/ping").HandlerFunc(pingAPI)
 	api.Path("/reload").HandlerFunc(AuthWrap(reloadAPI))
-	var stc = api.PathPrefix("/stat").Subrouter()
-	stc.Path("/srvinf").HandlerFunc(srvinfAPI)
-	stc.Path("/memusg").HandlerFunc(memusgAPI)
-	stc.Path("/cchinf").HandlerFunc(cchinfAPI)
-	stc.Path("/getlog").HandlerFunc(getlogAPI)
-	stc.Path("/usrlst").HandlerFunc(usrlstAPI)
-	var reg = api.PathPrefix("/auth").Subrouter()
-	reg.Path("/pubkey").HandlerFunc(pubkeyAPI)
-	reg.Path("/signin").HandlerFunc(signinAPI)
-	reg.Path("/refrsh").HandlerFunc(refrshAPI)
-	var res = api.PathPrefix("/res").Subrouter()
-	res.Path("/ishome").HandlerFunc(ishomeAPI)
-	res.Path("/ctgr").HandlerFunc(ctgrAPI)
-	res.Path("/folder").HandlerFunc(folderAPI)
-	res.Path("/ispath").HandlerFunc(AuthWrap(ispathAPI))
-	var tmb = api.PathPrefix("/tmb").Subrouter()
-	tmb.Path("/chk").HandlerFunc(tmbchkAPI)
-	tmb.Path("/scnstart").HandlerFunc(tmbscnstartAPI)
-	tmb.Path("/scnbreak").HandlerFunc(tmbscnbreakAPI)
-	var shr = api.PathPrefix("/share").Subrouter()
-	shr.Path("/add").HandlerFunc(AuthWrap(shraddAPI))
-	shr.Path("/del").HandlerFunc(AuthWrap(shrdelAPI))
-	var drv = api.PathPrefix("/drive").Subrouter()
-	drv.Path("/add").HandlerFunc(AuthWrap(drvaddAPI))
-	drv.Path("/del").HandlerFunc(AuthWrap(drvdelAPI))
-	var edt = api.PathPrefix("/edit").Subrouter()
-	edt.Path("/copy").HandlerFunc(AuthWrap(edtcopyAPI))
-	edt.Path("/rename").HandlerFunc(AuthWrap(edtrenameAPI))
-	edt.Path("/delete").HandlerFunc(AuthWrap(edtdeleteAPI))
+	api.Path("/stat/srvinf").HandlerFunc(srvinfAPI)
+	api.Path("/stat/memusg").HandlerFunc(memusgAPI)
+	api.Path("/stat/cchinf").HandlerFunc(cchinfAPI)
+	api.Path("/stat/getlog").HandlerFunc(getlogAPI)
+	api.Path("/stat/usrlst").HandlerFunc(usrlstAPI)
+	api.Path("/auth/pubkey").HandlerFunc(pubkeyAPI)
+	api.Path("/auth/signin").HandlerFunc(signinAPI)
+	api.Path("/auth/refrsh").HandlerFunc(refrshAPI)
+	api.Path("/res/ishome").HandlerFunc(ishomeAPI)
+	api.Path("/res/ctgr").HandlerFunc(ctgrAPI)
+	api.Path("/res/folder").HandlerFunc(folderAPI)
+	api.Path("/res/ispath").HandlerFunc(AuthWrap(ispathAPI))
+	api.Path("/tmb/chk").HandlerFunc(tmbchkAPI)
+	api.Path("/tmb/scnstart").HandlerFunc(tmbscnstartAPI)
+	api.Path("/tmb/scnbreak").HandlerFunc(tmbscnbreakAPI)
+	api.Path("/share/add").HandlerFunc(AuthWrap(shraddAPI))
+	api.Path("/share/del").HandlerFunc(AuthWrap(shrdelAPI))
+	api.Path("/drive/add").HandlerFunc(AuthWrap(drvaddAPI))
+	api.Path("/drive/del").HandlerFunc(AuthWrap(drvdelAPI))
+	api.Path("/edit/copy").HandlerFunc(AuthWrap(edtcopyAPI))
+	api.Path("/edit/rename").HandlerFunc(AuthWrap(edtrenameAPI))
+	api.Path("/edit/delete").HandlerFunc(AuthWrap(edtdeleteAPI))
+	api.Path("/gps/range").HandlerFunc(AuthWrap(gpsrangeAPI))
 }
 
 // The End.

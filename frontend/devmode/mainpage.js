@@ -724,7 +724,7 @@ const VueMainApp = {
 
 			// update shared
 			if (hist.puid === PUID.shares && this.isadmin) {
-				this.shared = response.data ?? [];
+				this.shared = response.data.list ?? [];
 			}
 
 			// current path & state
@@ -734,7 +734,7 @@ const VueMainApp = {
 			this.shrname = "";
 			document.title = `hms - ${this.curbasename}`;
 
-			this.newfolder(response.data);
+			this.newfolder(response.data.list);
 		},
 
 		// opens given folder cleary
@@ -847,7 +847,7 @@ const VueMainApp = {
 			if (!response.ok) {
 				throw new HttpError(response.status, response.data);
 			}
-			this.shared = response.data ?? [];
+			this.shared = response.data.list ?? [];
 			this.updateshared();
 		},
 
