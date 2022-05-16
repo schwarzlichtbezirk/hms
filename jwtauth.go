@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/hmac"
 	"crypto/sha256"
+	"encoding/xml"
 	"errors"
 	"math/rand"
 	"net"
@@ -41,8 +42,8 @@ var zero32 [32]byte
 
 // Tokens is access and refresh tokens pair.
 type Tokens struct {
-	Access string `json:"access"`
-	Refrsh string `json:"refrsh"`
+	Access string `json:"access" yaml:"access" xml:"access"`
+	Refrsh string `json:"refrsh" yaml:"refrsh" xml:"refrsh"`
 }
 
 // AuthHandlerFunc is type of handler for authorized API calls.
@@ -119,15 +120,15 @@ func GetAuth(w http.ResponseWriter, r *http.Request) (auth *Profile, err error) 
 			}
 		}
 		if err != nil {
-			WriteError(w, http.StatusUnauthorized, err, AECtokenerror)
+			WriteError(w, r, http.StatusUnauthorized, err, AECtokenerror)
 			return
 		} else if !bearer {
 			err = ErrNoBearer
-			WriteError(w, http.StatusUnauthorized, err, AECtokenless)
+			WriteError(w, r, http.StatusUnauthorized, err, AECtokenless)
 			return
 		} else if auth = prflist.ByID(claims.AID); auth == nil {
 			err = ErrNoAcc
-			WriteError(w, http.StatusUnauthorized, err, AECtokennoacc)
+			WriteError(w, r, http.StatusUnauthorized, err, AECtokennoacc)
 			return
 		}
 		return
@@ -147,7 +148,7 @@ func AuthWrap(fn AuthHandlerFunc) http.HandlerFunc {
 			return
 		}
 		if auth == nil {
-			WriteError(w, http.StatusUnauthorized, ErrNoAuth, AECnoauth)
+			WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, AECnoauth)
 			return
 		}
 
@@ -155,45 +156,51 @@ func AuthWrap(fn AuthHandlerFunc) http.HandlerFunc {
 	}
 }
 
-func pubkeyAPI(w http.ResponseWriter, _ *http.Request) {
+func pubkeyAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
-	var buf [32]byte
-	if _, err = rand.Read(buf[:]); err != nil {
-		WriteError500(w, err, AECpubkeyrand)
+	var ret struct {
+		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
+
+		Key [32]byte `json:"key" yaml:"key,flow" xml:"key"`
+	}
+	if _, err = rand.Read(ret.Key[:]); err != nil {
+		WriteError500(w, r, err, AECpubkeyrand)
 		return
 	}
 
-	pubkeycache.Set(idenc.EncodeToString(buf[:]), struct{}{})
+	pubkeycache.Set(idenc.EncodeToString(ret.Key[:]), struct{}{})
 
-	WriteOK(w, buf)
+	WriteOK(w, r, &ret)
 }
 
 func signinAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
-		Name string   `json:"name"`
-		PubK [32]byte `json:"pubk"`
-		Hash [32]byte `json:"hash"`
+		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
+
+		Name string   `json:"name" yaml:"name" xml:"name"`
+		PubK [32]byte `json:"pubk" yaml:"pubk" xml:"pubk"`
+		Hash [32]byte `json:"hash" yaml:"hash" xml:"hash"`
 	}
 	var res Tokens
 
 	// get arguments
-	if err = AjaxGetArg(w, r, &arg); err != nil {
+	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
 	if arg.Name == "" || bytes.Equal(arg.PubK[:], zero32[:]) || bytes.Equal(arg.Hash[:], zero32[:]) {
-		WriteError400(w, ErrNoData, AECsigninnodata)
+		WriteError400(w, r, ErrNoData, AECsigninnodata)
 		return
 	}
 
 	var prf *Profile
 	if prf = prflist.ByLogin(arg.Name); prf == nil {
-		WriteError(w, http.StatusForbidden, ErrNoAcc, AECsigninnoacc)
+		WriteError(w, r, http.StatusForbidden, ErrNoAcc, AECsigninnoacc)
 		return
 	}
 
 	if _, err = pubkeycache.Get(idenc.EncodeToString(arg.PubK[:])); err != nil {
-		WriteError(w, http.StatusForbidden, ErrNoPubKey, AECsigninpkey)
+		WriteError(w, r, http.StatusForbidden, ErrNoPubKey, AECsigninpkey)
 		return
 	}
 
@@ -201,13 +208,13 @@ func signinAPI(w http.ResponseWriter, r *http.Request) {
 	mac.Write([]byte(prf.Password))
 	var cmp = mac.Sum(nil)
 	if !hmac.Equal(arg.Hash[:], cmp) {
-		WriteError(w, http.StatusForbidden, ErrBadPass, AECsignindeny)
+		WriteError(w, r, http.StatusForbidden, ErrBadPass, AECsignindeny)
 		return
 	}
 
 	res.Make(prf.ID)
 
-	WriteOK(w, &res)
+	WriteOK(w, r, &res)
 }
 
 func refrshAPI(w http.ResponseWriter, r *http.Request) {
@@ -216,11 +223,11 @@ func refrshAPI(w http.ResponseWriter, r *http.Request) {
 	var res Tokens
 
 	// get arguments
-	if err = AjaxGetArg(w, r, &arg); err != nil {
+	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
 	if len(arg.Refrsh) == 0 {
-		WriteError400(w, ErrNoData, AECrefrshnodata)
+		WriteError400(w, r, ErrNoData, AECrefrshnodata)
 		return
 	}
 
@@ -228,13 +235,13 @@ func refrshAPI(w http.ResponseWriter, r *http.Request) {
 	if _, err = jwt.ParseWithClaims(arg.Refrsh, &claims, func(token *jwt.Token) (interface{}, error) {
 		return []byte(cfg.RefreshKey), nil
 	}); err != nil {
-		WriteError400(w, err, AECrefrshparse)
+		WriteError400(w, r, err, AECrefrshparse)
 		return
 	}
 
 	res.Make(claims.AID)
 
-	WriteOK(w, &res)
+	WriteOK(w, r, &res)
 }
 
 // The End.

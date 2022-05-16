@@ -710,7 +710,7 @@ const VueMainApp = {
 			if (!response.ok) {
 				throw new HttpError(response.status, response.data);
 			}
-			this.ishome = response.data;
+			this.ishome = response.data.ishome;
 		},
 
 		async fetchcategory(hist) {
@@ -875,7 +875,7 @@ const VueMainApp = {
 			}
 
 			// update folder settings
-			if (response.data) { // on ok
+			if (response.data.deleted) { // on ok
 				file.shared = false; // Vue.set
 				for (let i = 0; i < this.shared.length;) {
 					if (this.shared[i].puid === file.puid) {
@@ -1126,7 +1126,7 @@ const VueMainApp = {
 						throw new HttpError(response.status, response.data);
 					}
 
-					if (response.data) {
+					if (response.data.deleted) {
 						this.flist.splice(this.flist.findIndex(elem => elem === this.selfile), 1);
 						if (this.selfile.shared) {
 							await this.fetchsharedel(this.selfile);
@@ -1458,12 +1458,12 @@ const VueAuth = {
 					}
 
 					// github.com/emn178/js-sha256
-					const hash = sha256.hmac.create(data1);
+					const hash = sha256.hmac.create(data1.key);
 					hash.update(this.password);
 
 					const resp2 = await fetchjson("POST", "/api/auth/signin", {
 						name: this.login,
-						pubk: data1,
+						pubk: data1.key,
 						hash: hash.digest()
 					});
 					const data2 = await resp2.json();

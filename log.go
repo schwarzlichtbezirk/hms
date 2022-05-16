@@ -33,11 +33,11 @@ const (
 // LogItem represents structured log fields for each log entry.
 // It's used to transmit the log items by network.
 type LogItem struct {
-	Time    unix_t `json:"time"`
-	Message string `json:"msg"`
-	Level   string `json:"level"`
-	Line    int    `json:"line"`
-	File    string `json:"file"`
+	Time    unix_t `json:"time" yaml:"time" xml:"time"`
+	Message string `json:"msg" yaml:"msg" xml:"msg"`
+	Level   string `json:"level" yaml:"level" xml:"level"`
+	Line    int    `json:"line" yaml:"line" xml:"line"`
+	File    string `json:"file" yaml:"file" xml:"file"`
 }
 
 // A Logger represents an active logging object that generates lines of

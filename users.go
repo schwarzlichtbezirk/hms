@@ -1,6 +1,7 @@
 package hms
 
 import (
+	"encoding/xml"
 	"net/http"
 	"time"
 
@@ -135,29 +136,33 @@ func UserScanner() {
 // APIHANDLER
 func usrlstAPI(w http.ResponseWriter, r *http.Request) {
 	type item struct { // user info
-		Addr   string        `json:"addr"`
-		UA     uas.UserAgent `json:"ua"`
-		Lang   string        `json:"lang"`
-		Path   string        `json:"path"`
-		File   string        `json:"file"`
-		Online bool          `json:"online"`
-		IsAuth bool          `json:"isauth"`
-		AuthID ID_t          `json:"authid"`
-		PrfID  ID_t          `json:"prfid"`
+		Addr   string        `json:"addr" yaml:"addr" xml:"addr"`
+		UA     uas.UserAgent `json:"ua" yaml:"ua" xml:"ua"`
+		Lang   string        `json:"lang" yaml:"lang" xml:"lang"`
+		Path   string        `json:"path" yaml:"path" xml:"path"`
+		File   string        `json:"file" yaml:"file" xml:"file"`
+		Online bool          `json:"online" yaml:"online" xml:"online"`
+		IsAuth bool          `json:"isauth" yaml:"isauth" xml:"isauth"`
+		AuthID ID_t          `json:"authid" yaml:"authid" xml:"authid"`
+		PrfID  ID_t          `json:"prfid" yaml:"prfid" xml:"prfid"`
 	}
 
 	var err error
 	var arg struct {
-		Pos int `json:"pos"`
-		Num int `json:"num"`
+		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
+
+		Pos int `json:"pos,omitempty" yaml:"pos,omitempty" xml:"pos,omitempty"`
+		Num int `json:"num" yaml:"num" xml:"num"`
 	}
 	var ret struct {
-		Total int    `json:"total"`
-		List  []item `json:"list"`
+		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
+
+		Total int    `json:"total" yaml:"total" xml:"total"`
+		List  []item `json:"list" yaml:"list" xml:"list>item"`
 	}
 
 	// get arguments
-	if err = AjaxGetArg(w, r, &arg); err != nil {
+	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
 
@@ -184,7 +189,7 @@ func usrlstAPI(w http.ResponseWriter, r *http.Request) {
 		ret.List = append(ret.List, ui)
 	}
 
-	WriteOK(w, ret)
+	WriteOK(w, r, &ret)
 }
 
 // The End.

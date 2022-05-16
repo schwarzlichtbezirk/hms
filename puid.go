@@ -5,6 +5,7 @@ import (
 	"encoding/base32"
 	"encoding/binary"
 	"encoding/json"
+	"encoding/xml"
 	"time"
 
 	"gopkg.in/yaml.v3"
@@ -125,6 +126,20 @@ func (pt Puid_t) MarshalYAML() (interface{}, error) {
 // UnmarshalYAML is YAML unmarshaler interface implementation.
 func (pt *Puid_t) UnmarshalYAML(value *yaml.Node) error {
 	return pt.Set(value.Value)
+}
+
+// MarshalXML is XML marshaler interface implementation.
+func (pt Puid_t) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	return e.EncodeElement(pt.String(), start)
+}
+
+// UnmarshalXML is XML unmarshaler interface implementation.
+func (pt *Puid_t) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	var s string
+	if err := d.DecodeElement(&s, &start); err != nil {
+		return err
+	}
+	return pt.Set(s)
 }
 
 // Rand generates random identifier of given length in bits, maximum 64 bits.

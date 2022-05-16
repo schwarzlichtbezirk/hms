@@ -318,8 +318,8 @@ type Pather interface {
 
 // PathProp is any path base properties.
 type PathProp struct {
-	NameVal string `json:"name,omitempty" yaml:"name,omitempty"`
-	TypeVal int    `json:"type,omitempty" yaml:"type,omitempty"`
+	NameVal string `json:"name,omitempty" yaml:"name,omitempty" xml:"name,omitempty"`
+	TypeVal int    `json:"type,omitempty" yaml:"type,omitempty" xml:"type,omitempty"`
 }
 
 // Name is file name with extension without path.
@@ -345,8 +345,8 @@ func (pp *PathProp) Time() unix_t {
 // FileProp is common file properties chunk.
 type FileProp struct {
 	PathProp
-	SizeVal int64  `json:"size,omitempty" yaml:"size,omitempty"`
-	TimeVal unix_t `json:"time,omitempty" yaml:"time,omitempty"`
+	SizeVal int64  `json:"size,omitempty" yaml:"size,omitempty" xml:"size,omitempty"`
+	TimeVal unix_t `json:"time,omitempty" yaml:"time,omitempty" xml:"time,omitempty"`
 }
 
 // Setup fills fields from fs.FileInfo structure. Do not looks for share.
@@ -414,9 +414,9 @@ func PathBase(syspath string) string {
 // DirProp is directory properties chunk.
 type DirProp struct {
 	// Directory scanning time in UNIX format, milliseconds.
-	Scan unix_t `json:"scan" yaml:"scan"`
+	Scan unix_t `json:"scan" yaml:"scan" xml:"scan"`
 	// Directory file groups counters.
-	FGrp FileGrp `json:"fgrp" yaml:"fgrp,flow"`
+	FGrp FileGrp `json:"fgrp" yaml:"fgrp,flow" xml:"fgrp"`
 }
 
 // DirKit is directory properties kit.
@@ -441,7 +441,7 @@ func (dk *DirKit) Setup(syspath string) {
 type DriveKit struct {
 	PathProp
 	TmbProp
-	Latency int `json:"latency"` // drive connection latency in ms, or -1 on error
+	Latency int `json:"latency,omitempty" yaml:"latency,omitempty" xml:"latency,omitempty"` // drive connection latency in ms, or -1 on error
 }
 
 // Setup fills fields with given path. Do not looks for share.
@@ -469,8 +469,8 @@ func (dk *DriveKit) Scan(syspath string) error {
 
 // TagEnum is descriptor for discs and tracks.
 type TagEnum struct {
-	Number int `json:"number,omitempty" yaml:"number,omitempty"`
-	Total  int `json:"total,omitempty" yaml:"total,omitempty"`
+	Number int `json:"number,omitempty" yaml:"number,omitempty" xml:"number,omitempty"`
+	Total  int `json:"total,omitempty" yaml:"total,omitempty" xml:"total,omitempty"`
 }
 
 // IsZero used to check whether an object is zero to determine whether
@@ -481,16 +481,16 @@ func (te *TagEnum) IsZero() bool {
 
 // TagProp is Music file tags properties chunk.
 type TagProp struct {
-	Title    string  `json:"title,omitempty" yaml:"title,omitempty"`
-	Album    string  `json:"album,omitempty" yaml:"album,omitempty"`
-	Artist   string  `json:"artist,omitempty" yaml:"artist,omitempty"`
-	Composer string  `json:"composer,omitempty" yaml:"composer,omitempty"`
-	Genre    string  `json:"genre,omitempty" yaml:"genre,omitempty"`
-	Year     int     `json:"year,omitempty" yaml:"year,omitempty"`
-	Track    TagEnum `json:"track,omitempty" yaml:"track,flow,omitempty"`
-	Disc     TagEnum `json:"disc,omitempty" yaml:"disc,flow,omitempty"`
-	Lyrics   string  `json:"lyrics,omitempty" yaml:"lyrics,omitempty"`
-	Comment  string  `json:"comment,omitempty" yaml:"comment,omitempty"`
+	Title    string  `json:"title,omitempty" yaml:"title,omitempty" xml:"title,omitempty"`
+	Album    string  `json:"album,omitempty" yaml:"album,omitempty" xml:"album,omitempty"`
+	Artist   string  `json:"artist,omitempty" yaml:"artist,omitempty" xml:"artist,omitempty"`
+	Composer string  `json:"composer,omitempty" yaml:"composer,omitempty" xml:"composer,omitempty"`
+	Genre    string  `json:"genre,omitempty" yaml:"genre,omitempty" xml:"genre,omitempty"`
+	Year     int     `json:"year,omitempty" yaml:"year,omitempty" xml:"year,omitempty"`
+	Track    TagEnum `json:"track,omitempty" yaml:"track,flow,omitempty" xml:"track,omitempty"`
+	Disc     TagEnum `json:"disc,omitempty" yaml:"disc,flow,omitempty" xml:"disc,omitempty"`
+	Lyrics   string  `json:"lyrics,omitempty" yaml:"lyrics,omitempty" xml:"lyrics,omitempty"`
+	Comment  string  `json:"comment,omitempty" yaml:"comment,omitempty" xml:"comment,omitempty"`
 }
 
 // Setup fills fields from tags metadata.

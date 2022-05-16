@@ -7,9 +7,12 @@ import "errors"
 // so this error code at service reply exactly points to error place.
 const (
 	AECnull = iota
-	AECbadbody
 	AECnoreq
 	AECbadjson
+	AECbadyaml
+	AECbadxml
+	AECargundef
+	AECbadenc
 	AECpanic
 
 	// auth
@@ -215,8 +218,10 @@ const (
 
 // HTTP error messages
 var (
-	ErrNoJSON = errors.New("data not given")
-	ErrNoData = errors.New("data is empty")
+	ErrNoJSON   = errors.New("data not given")
+	ErrNoData   = errors.New("data is empty")
+	ErrArgUndef = errors.New("request content type is undefined")
+	ErrBadEnc   = errors.New("encoding format does not supported")
 
 	ErrNotFound  = errors.New("404 page not found")
 	ErrArgNoNum  = errors.New("'num' parameter not recognized")

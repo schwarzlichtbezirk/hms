@@ -2,6 +2,7 @@ package hms
 
 import (
 	"bytes"
+	"encoding/xml"
 	"errors"
 	"image"
 	"image/gif"
@@ -82,8 +83,8 @@ type MediaData struct {
 
 // TmbProp is thumbnails properties.
 type TmbProp struct {
-	PUIDVal Puid_t `json:"puid" yaml:"puid"`
-	MTmbVal Mime_t `json:"mtmb" yaml:"mtmb"`
+	PUIDVal Puid_t `json:"puid" yaml:"puid" xml:"puid"`
+	MTmbVal Mime_t `json:"mtmb" yaml:"mtmb" xml:"mtmb"`
 }
 
 // Setup generates PUID (path unique identifier) and updates cached state.
@@ -334,15 +335,17 @@ func (s *scanner) Remove(syspath string) {
 func tmbchkAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
-		Tmbs []*TmbProp `json:"tmbs"`
+		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
+
+		Tmbs []*TmbProp `json:"tmbs" yaml:"tmbs" xml:"tmbs"`
 	}
 
 	// get arguments
-	if err = AjaxGetArg(w, r, &arg); err != nil {
+	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
 	if len(arg.Tmbs) == 0 {
-		WriteError400(w, ErrNoData, AECtmbchknodata)
+		WriteError400(w, r, ErrNoData, AECtmbchknodata)
 		return
 	}
 
@@ -354,29 +357,31 @@ func tmbchkAPI(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	WriteOK(w, arg)
+	WriteOK(w, r, &arg)
 }
 
 // APIHANDLER
 func tmbscnstartAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
-		AID  ID_t     `json:"aid"`
-		List []Puid_t `json:"list"`
+		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
+
+		AID  ID_t     `json:"aid" yaml:"aid" xml:"aid,attr"`
+		List []Puid_t `json:"list" yaml:"list" xml:"list"`
 	}
 
 	// get arguments
-	if err = AjaxGetArg(w, r, &arg); err != nil {
+	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
 	if len(arg.List) == 0 {
-		WriteError400(w, ErrNoData, AECscnstartnodata)
+		WriteError400(w, r, ErrNoData, AECscnstartnodata)
 		return
 	}
 
 	var prf *Profile
 	if prf = prflist.ByID(arg.AID); prf == nil {
-		WriteError400(w, ErrNoAcc, AECscnstartnoacc)
+		WriteError400(w, r, ErrNoAcc, AECscnstartnoacc)
 		return
 	}
 	var auth *Profile
@@ -392,29 +397,31 @@ func tmbscnstartAPI(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	WriteOK(w, nil)
+	WriteOK(w, r, nil)
 }
 
 // APIHANDLER
 func tmbscnbreakAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
-		AID  ID_t     `json:"aid"`
-		List []Puid_t `json:"list"`
+		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
+
+		AID  ID_t     `json:"aid" yaml:"aid" xml:"aid,attr"`
+		List []Puid_t `json:"list" yaml:"list" xml:"list"`
 	}
 
 	// get arguments
-	if err = AjaxGetArg(w, r, &arg); err != nil {
+	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
 	if len(arg.List) == 0 {
-		WriteError400(w, ErrNoData, AECscnbreaknodata)
+		WriteError400(w, r, ErrNoData, AECscnbreaknodata)
 		return
 	}
 
 	var prf *Profile
 	if prf = prflist.ByID(arg.AID); prf == nil {
-		WriteError400(w, ErrNoAcc, AECscnbreaknoacc)
+		WriteError400(w, r, ErrNoAcc, AECscnbreaknoacc)
 		return
 	}
 	var auth *Profile
@@ -430,7 +437,7 @@ func tmbscnbreakAPI(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	WriteOK(w, nil)
+	WriteOK(w, r, nil)
 }
 
 // The End.

@@ -2,14 +2,17 @@ package hms
 
 import (
 	"encoding/json"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"runtime"
+	"strings"
 	"sync"
 
 	"github.com/gorilla/mux"
+	"gopkg.in/yaml.v3"
 )
 
 type void = struct{}
@@ -30,10 +33,14 @@ func (e *jerr) MarshalJSON() ([]byte, error) {
 
 // ErrAjax is error object on AJAX API handlers calls.
 type ErrAjax struct {
-	What jerr   `json:"what"`           // message with problem description
-	When unix_t `json:"when"`           // time of error rising, in milliseconds of UNIX format
-	Code int    `json:"code,omitempty"` // unique API error code
-	Info string `json:"info,omitempty"` // URL with problem detailed description
+	// message with problem description
+	What jerr `json:"what" yaml:"what" xml:"what"`
+	// time of error rising, in milliseconds of UNIX format
+	When unix_t `json:"when" yaml:"when" xml:"when"`
+	// unique API error code
+	Code int `json:"code,omitempty" yaml:"code,omitempty" xml:"code,omitempty"`
+	// URL with problem detailed description
+	Info string `json:"info,omitempty" yaml:"info,omitempty" xml:"info,omitempty"`
 }
 
 // MakeAjaxErr is ErrAjax simple constructor.
@@ -82,6 +89,56 @@ func MakeErrPanic(what error, code int, stack string) *ErrPanic {
 	}
 }
 
+type XmlMap map[string]interface{}
+
+type xmlMapEntry struct {
+	XMLName xml.Name
+	Value   interface{} `xml:",chardata"`
+}
+
+// MarshalXML marshals the map to XML, with each key in the map being a
+// tag and it's corresponding value being it's contents.
+func (m XmlMap) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	if len(m) == 0 {
+		return nil
+	}
+
+	if err := e.EncodeToken(start); err != nil {
+		return err
+	}
+
+	for k, v := range m {
+		e.Encode(xmlMapEntry{XMLName: xml.Name{Local: k}, Value: v})
+	}
+
+	return e.EncodeToken(start.End())
+}
+
+// UnmarshalXML unmarshals the XML into a map of string to strings,
+// creating a key in the map for each tag and setting it's value to the
+// tags contents.
+//
+// The fact this function is on the pointer of Map is important, so that
+// if m is nil it can be initialized, which is often the case if m is
+// nested in another xml structurel. This is also why the first thing done
+// on the first line is initialize it.
+func (m *XmlMap) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
+	*m = XmlMap{}
+	for {
+		var e xmlMapEntry
+
+		var err = d.Decode(&e)
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			return err
+		}
+
+		(*m)[e.XMLName.Local] = e.Value
+	}
+	return nil
+}
+
 ////////////////
 // Routes API //
 ////////////////
@@ -93,29 +150,43 @@ type Router = mux.Router
 var NewRouter = mux.NewRouter
 
 const (
-	jsoncontent = "application/json;charset=utf-8"
-	htmlcontent = "text/html;charset=utf-8"
-	csscontent  = "text/css;charset=utf-8"
-	jscontent   = "text/javascript;charset=utf-8"
+	htmlcontent = "text/html; charset=utf-8"
+	csscontent  = "text/css; charset=utf-8"
+	jscontent   = "text/javascript; charset=utf-8"
 )
 
-var serverlabel string
+// "Server" field for HTTP headers.
+var serverlabel = fmt.Sprintf("hms/%s (%s)", buildvers, runtime.GOOS)
 
-// MakeServerLabel formats "Server" field for HTTP headers.
-func MakeServerLabel(label, version string) {
-	serverlabel = fmt.Sprintf("%s/%s (%s)", label, version, runtime.GOOS)
-}
-
-// AjaxGetArg fetch and unmarshal request argument.
-func AjaxGetArg(w http.ResponseWriter, r *http.Request, arg interface{}) (err error) {
+// ParseBody fetch and unmarshal request argument.
+func ParseBody(w http.ResponseWriter, r *http.Request, arg interface{}) (err error) {
 	if jb, _ := io.ReadAll(r.Body); len(jb) > 0 {
-		if err = json.Unmarshal(jb, arg); err != nil {
-			WriteError400(w, err, AECbadjson)
+		var ctype = r.Header.Get("Content-Type")
+		if pos := strings.IndexByte(ctype, ';'); pos != -1 {
+			ctype = ctype[:pos]
+		}
+		if ctype == "application/json" {
+			if err = json.Unmarshal(jb, arg); err != nil {
+				WriteError400(w, r, err, AECbadjson)
+				return
+			}
+		} else if ctype == "application/x-yaml" || ctype == "application/yaml" {
+			if err = yaml.Unmarshal(jb, arg); err != nil {
+				WriteError400(w, r, err, AECbadyaml)
+				return
+			}
+		} else if ctype == "application/xml" {
+			if err = xml.Unmarshal(jb, arg); err != nil {
+				WriteError400(w, r, err, AECbadxml)
+				return
+			}
+		} else {
+			WriteError400(w, r, ErrArgUndef, AECargundef)
 			return
 		}
 	} else {
 		err = ErrNoJSON
-		WriteError400(w, err, AECnoreq)
+		WriteError400(w, r, err, AECnoreq)
 		return
 	}
 	return
@@ -125,66 +196,99 @@ func AjaxGetArg(w http.ResponseWriter, r *http.Request, arg interface{}) (err er
 func WriteStdHeader(w http.ResponseWriter) {
 	w.Header().Set("Connection", "keep-alive")
 	w.Header().Set("Server", serverlabel)
-	w.Header().Set("X-Frame-Options", "sameorigin")
 }
 
 // WriteHTMLHeader setup standard response headers for message with HTML content.
 func WriteHTMLHeader(w http.ResponseWriter) {
 	WriteStdHeader(w)
+	w.Header().Set("X-Frame-Options", "sameorigin")
 	w.Header().Set("Content-Type", htmlcontent)
 }
 
-// WriteJSONHeader setup standard response headers for message with JSON content.
-func WriteJSONHeader(w http.ResponseWriter) {
-	WriteStdHeader(w)
-	w.Header().Set("Content-Type", jsoncontent)
-	w.Header().Set("X-Content-Type-Options", "nosniff")
-}
-
-// WriteJSON writes to response given status code and marshaled body.
-func WriteJSON(w http.ResponseWriter, status int, body interface{}) {
+// WriteRet writes to response given status code and marshaled body.
+func WriteRet(w http.ResponseWriter, r *http.Request, status int, body interface{}) {
 	if body == nil {
 		w.WriteHeader(status)
-		WriteJSONHeader(w)
+		WriteStdHeader(w)
 		return
 	}
-	/*if b, ok := body.([]byte); ok {
-		w.WriteHeader(status)
-		WriteJSONHeader(w)
-		w.Write(b)
-		return
-	}*/
-	var b, err = json.Marshal(body)
-	if err == nil {
-		w.WriteHeader(status)
-		WriteJSONHeader(w)
-		w.Write(b)
+	var list []string
+	if val := r.Header.Get("Accept"); val != "" {
+		if pos := strings.IndexByte(val, ';'); pos != -1 {
+			val = val[:pos]
+		}
+		list = strings.Split(val, ", ")
 	} else {
-		b, _ = json.Marshal(MakeAjaxErr(err, AECbadbody))
-		w.WriteHeader(http.StatusInternalServerError)
-		WriteJSONHeader(w)
-		w.Write(b)
+		var ctype = r.Header.Get("Content-Type")
+		if pos := strings.IndexByte(ctype, ';'); pos != -1 {
+			ctype = ctype[:pos]
+		}
+		if ctype == "" {
+			ctype = "application/json"
+		}
+		list = []string{ctype}
 	}
+	var b []byte
+	var err error
+	for _, ctype := range list {
+		if ctype == "*/*" || ctype == "application/json" {
+			WriteStdHeader(w)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(status)
+			if b, err = json.Marshal(body); err != nil {
+				break
+			}
+			w.Write(b)
+			return
+		} else if ctype == "application/x-yaml" || ctype == "application/yaml" {
+			WriteStdHeader(w)
+			w.Header().Set("Content-Type", ctype)
+			w.WriteHeader(status)
+			if b, err = yaml.Marshal(body); err != nil {
+				break
+			}
+			w.Write(b)
+			return
+		} else if ctype == "application/xml" {
+			WriteStdHeader(w)
+			w.Header().Set("Content-Type", ctype)
+			w.WriteHeader(status)
+			if b, err = xml.Marshal(body); err != nil {
+				break
+			}
+			w.Write(b)
+			return
+		}
+	}
+	WriteStdHeader(w)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusMethodNotAllowed)
+	if err == nil {
+		err = ErrBadEnc // no released encoding was found
+	}
+	b, _ = json.Marshal(MakeAjaxErr(err, AECbadenc))
+	w.Write(b)
+	return
 }
 
 // WriteOK puts 200 status code and some data to response.
-func WriteOK(w http.ResponseWriter, body interface{}) {
-	WriteJSON(w, http.StatusOK, body)
+func WriteOK(w http.ResponseWriter, r *http.Request, body interface{}) {
+	WriteRet(w, r, http.StatusOK, body)
 }
 
 // WriteError puts to response given error status code and ErrAjax formed by given error object.
-func WriteError(w http.ResponseWriter, status int, err error, code int) {
-	WriteJSON(w, status, MakeAjaxErr(err, code))
+func WriteError(w http.ResponseWriter, r *http.Request, status int, err error, code int) {
+	WriteRet(w, r, status, MakeAjaxErr(err, code))
 }
 
 // WriteError400 puts to response 400 status code and ErrAjax formed by given error object.
-func WriteError400(w http.ResponseWriter, err error, code int) {
-	WriteJSON(w, http.StatusBadRequest, MakeAjaxErr(err, code))
+func WriteError400(w http.ResponseWriter, r *http.Request, err error, code int) {
+	WriteRet(w, r, http.StatusBadRequest, MakeAjaxErr(err, code))
 }
 
 // WriteError500 puts to response 500 status code and ErrAjax formed by given error object.
-func WriteError500(w http.ResponseWriter, err error, code int) {
-	WriteJSON(w, http.StatusInternalServerError, MakeAjaxErr(err, code))
+func WriteError500(w http.ResponseWriter, r *http.Request, err error, code int) {
+	WriteRet(w, r, http.StatusInternalServerError, MakeAjaxErr(err, code))
 }
 
 //////////////////
@@ -236,7 +340,7 @@ func AjaxMiddleware(next http.Handler) http.Handler {
 				var stacklen = runtime.Stack(buf[:], false)
 				var str = string(buf[:stacklen])
 				Log.Infoln(str)
-				WriteJSON(w, http.StatusInternalServerError, MakeErrPanic(err, AECpanic, str))
+				WriteRet(w, r, http.StatusInternalServerError, MakeErrPanic(err, AECpanic, str))
 			}
 		}()
 		go func() {

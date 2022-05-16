@@ -222,8 +222,6 @@ func Init() {
 		Log.Fatal("error on profiles file: " + err.Error())
 	}
 
-	MakeServerLabel("hms", buildvers)
-
 	// run users scanner for statistics
 	go UserScanner()
 

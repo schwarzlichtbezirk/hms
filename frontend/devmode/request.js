@@ -67,8 +67,8 @@ class HttpError extends Error {
 // returns header properties set for ajax calls with json data.
 const ajaxheader = (bearer) => {
 	const hdr = {
-		'Accept': 'application/json;charset=utf-8',
-		'Content-Type': 'application/json;charset=utf-8'
+		'Accept': 'application/json',
+		'Content-Type': 'application/json; charset=utf-8'
 	};
 	if (bearer && auth.token.access) {
 		hdr['Authorization'] = 'Bearer ' + auth.token.access;
