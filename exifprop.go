@@ -79,10 +79,10 @@ type ExifProp struct {
 	UniqueID     string  `json:"uniqueid,omitempty" yaml:"uniqueid,omitempty" xml:"uniqueid,omitempty"`
 	ThumbJpegLen int     `json:"thumbjpeglen,omitempty" yaml:"thumbjpeglen,omitempty" xml:"thumbjpeglen,omitempty"`
 	// GPS
-	Latitude  float64 `json:"latitude,omitempty" yaml:"latitude,omitempty" xml:"latitude,omitempty"`
-	Longitude float64 `json:"longitude,omitempty" yaml:"longitude,omitempty" xml:"longitude,omitempty"`
-	Altitude  float32 `json:"altitude,omitempty" yaml:"altitude,omitempty" xml:"altitude,omitempty"`
-	Satelites string  `json:"satelites,omitempty" yaml:"satelites,omitempty" xml:"satelites,omitempty"`
+	Latitude   float64 `json:"latitude,omitempty" yaml:"latitude,omitempty" xml:"latitude,omitempty"`
+	Longitude  float64 `json:"longitude,omitempty" yaml:"longitude,omitempty" xml:"longitude,omitempty"`
+	Altitude   float32 `json:"altitude,omitempty" yaml:"altitude,omitempty" xml:"altitude,omitempty"`
+	Satellites string  `json:"satellites,omitempty" yaml:"satellites,omitempty" xml:"satellites,omitempty"`
 	// private
 	thumb MediaData
 }
@@ -191,15 +191,15 @@ func (ep *ExifProp) Setup(x *exif.Exif) {
 		}
 	}
 	if t, err = x.Get(exif.GPSSatelites); err == nil {
-		ep.Satelites, _ = t.StringVal()
+		ep.Satellites, _ = t.StringVal()
 	}
 }
 
 // ExifKit is file with EXIF tags.
 type ExifKit struct {
-	FileProp
-	TmbProp
-	ExifProp
+	FileProp `yaml:",inline"`
+	TmbProp  `yaml:",inline"`
+	ExifProp `yaml:",inline"`
 }
 
 // Setup fills fields with given path.

@@ -344,9 +344,9 @@ func (pp *PathProp) Time() unix_t {
 
 // FileProp is common file properties chunk.
 type FileProp struct {
-	PathProp
-	SizeVal int64  `json:"size,omitempty" yaml:"size,omitempty" xml:"size,omitempty"`
-	TimeVal unix_t `json:"time,omitempty" yaml:"time,omitempty" xml:"time,omitempty"`
+	PathProp `yaml:",inline"`
+	SizeVal  int64  `json:"size,omitempty" yaml:"size,omitempty" xml:"size,omitempty"`
+	TimeVal  unix_t `json:"time,omitempty" yaml:"time,omitempty" xml:"time,omitempty"`
 }
 
 // Setup fills fields from fs.FileInfo structure. Do not looks for share.
@@ -369,8 +369,8 @@ func (fp *FileProp) Time() unix_t {
 
 // FileKit is common files properties kit.
 type FileKit struct {
-	FileProp
-	TmbProp
+	FileProp `yaml:",inline"`
+	TmbProp  `yaml:",inline"`
 }
 
 // Setup calls nested structures setups.
@@ -421,9 +421,9 @@ type DirProp struct {
 
 // DirKit is directory properties kit.
 type DirKit struct {
-	PathProp
-	TmbProp
-	DirProp
+	PathProp `yaml:",inline"`
+	TmbProp  `yaml:",inline"`
+	DirProp  `yaml:",inline"`
 }
 
 // Setup fills fields with given path. Do not looks for share.
@@ -439,9 +439,9 @@ func (dk *DirKit) Setup(syspath string) {
 
 // DriveKit is drive properties kit.
 type DriveKit struct {
-	PathProp
-	TmbProp
-	Latency int `json:"latency,omitempty" yaml:"latency,omitempty" xml:"latency,omitempty"` // drive connection latency in ms, or -1 on error
+	PathProp `yaml:",inline"`
+	TmbProp  `yaml:",inline"`
+	Latency  int `json:"latency,omitempty" yaml:"latency,omitempty" xml:"latency,omitempty"` // drive connection latency in ms, or -1 on error
 }
 
 // Setup fills fields with given path. Do not looks for share.
@@ -509,9 +509,9 @@ func (tp *TagProp) Setup(m tag.Metadata) {
 
 // TagKit is music file tags properties kit.
 type TagKit struct {
-	FileProp
-	TmbProp
-	TagProp
+	FileProp `yaml:",inline"`
+	TmbProp  `yaml:",inline"`
+	TagProp  `yaml:",inline"`
 }
 
 // Setup fills fields with given path.

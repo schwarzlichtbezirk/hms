@@ -36,8 +36,8 @@ type LogItem struct {
 	Time    unix_t `json:"time" yaml:"time" xml:"time"`
 	Message string `json:"msg" yaml:"msg" xml:"msg"`
 	Level   string `json:"level" yaml:"level" xml:"level"`
-	Line    int    `json:"line" yaml:"line" xml:"line"`
-	File    string `json:"file" yaml:"file" xml:"file"`
+	Line    int    `json:"line,omitempty" yaml:"line,omitempty" xml:"line,omitempty"`
+	File    string `json:"file,omitempty" yaml:"file,omitempty" xml:"file,omitempty"`
 }
 
 // A Logger represents an active logging object that generates lines of

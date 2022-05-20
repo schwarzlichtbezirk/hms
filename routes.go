@@ -31,8 +31,8 @@ func (e *jerr) MarshalJSON() ([]byte, error) {
 	return json.Marshal(e.Error())
 }
 
-// ErrAjax is error object on AJAX API handlers calls.
-type ErrAjax struct {
+// AjaxErr is error object on AJAX API handlers calls.
+type AjaxErr struct {
 	// message with problem description
 	What jerr `json:"what" yaml:"what" xml:"what"`
 	// time of error rising, in milliseconds of UNIX format
@@ -43,18 +43,18 @@ type ErrAjax struct {
 	Info string `json:"info,omitempty" yaml:"info,omitempty" xml:"info,omitempty"`
 }
 
-// MakeAjaxErr is ErrAjax simple constructor.
-func MakeAjaxErr(what error, code int) *ErrAjax {
-	return &ErrAjax{
+// MakeAjaxErr is AjaxErr simple constructor.
+func MakeAjaxErr(what error, code int) *AjaxErr {
+	return &AjaxErr{
 		What: jerr{what},
 		When: UnixJSNow(),
 		Code: code,
 	}
 }
 
-// MakeAjaxInfo is ErrAjax constructor with info URL.
-func MakeAjaxInfo(what error, code int, info string) *ErrAjax {
-	return &ErrAjax{
+// MakeAjaxInfo is AjaxErr constructor with info URL.
+func MakeAjaxInfo(what error, code int, info string) *AjaxErr {
+	return &AjaxErr{
 		What: jerr{what},
 		When: UnixJSNow(),
 		Code: code,
@@ -62,25 +62,25 @@ func MakeAjaxInfo(what error, code int, info string) *ErrAjax {
 	}
 }
 
-func (e *ErrAjax) Error() string {
+func (e *AjaxErr) Error() string {
 	return fmt.Sprintf("error with code %d: %s", e.Code, e.What.Error())
 }
 
 // Unwrap returns inherited error object.
-func (e *ErrAjax) Unwrap() error {
+func (e *AjaxErr) Unwrap() error {
 	return e.What
 }
 
 // ErrPanic is error object that helps to get stack trace of goroutine within panic rises.
 type ErrPanic struct {
-	ErrAjax
+	AjaxErr
 	Stack string `json:"stack,omitempty"`
 }
 
 // MakeErrPanic is ErrPanic constructor.
 func MakeErrPanic(what error, code int, stack string) *ErrPanic {
 	return &ErrPanic{
-		ErrAjax: ErrAjax{
+		AjaxErr: AjaxErr{
 			What: jerr{what},
 			When: UnixJSNow(),
 			Code: code,
@@ -98,6 +98,8 @@ type xmlMapEntry struct {
 
 // MarshalXML marshals the map to XML, with each key in the map being a
 // tag and it's corresponding value being it's contents.
+//
+// See https://stackoverflow.com/questions/30928770/marshall-map-to-xml-in-go
 func (m XmlMap) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	if len(m) == 0 {
 		return nil
@@ -231,7 +233,8 @@ func WriteRet(w http.ResponseWriter, r *http.Request, status int, body interface
 	var b []byte
 	var err error
 	for _, ctype := range list {
-		if ctype == "*/*" || ctype == "application/json" {
+		switch ctype {
+		case "*/*", "application/json", "text/json":
 			WriteStdHeader(w)
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(status)
@@ -240,7 +243,8 @@ func WriteRet(w http.ResponseWriter, r *http.Request, status int, body interface
 			}
 			w.Write(b)
 			return
-		} else if ctype == "application/x-yaml" || ctype == "application/yaml" {
+		case "application/x-yaml", "application/yaml", "application/yml",
+			"text/x-yaml", "text/yaml", "text/yml":
 			WriteStdHeader(w)
 			w.Header().Set("Content-Type", ctype)
 			w.WriteHeader(status)
@@ -249,7 +253,7 @@ func WriteRet(w http.ResponseWriter, r *http.Request, status int, body interface
 			}
 			w.Write(b)
 			return
-		} else if ctype == "application/xml" {
+		case "application/xml", "text/xml":
 			WriteStdHeader(w)
 			w.Header().Set("Content-Type", ctype)
 			w.WriteHeader(status)
@@ -276,17 +280,17 @@ func WriteOK(w http.ResponseWriter, r *http.Request, body interface{}) {
 	WriteRet(w, r, http.StatusOK, body)
 }
 
-// WriteError puts to response given error status code and ErrAjax formed by given error object.
+// WriteError puts to response given error status code and AjaxErr formed by given error object.
 func WriteError(w http.ResponseWriter, r *http.Request, status int, err error, code int) {
 	WriteRet(w, r, status, MakeAjaxErr(err, code))
 }
 
-// WriteError400 puts to response 400 status code and ErrAjax formed by given error object.
+// WriteError400 puts to response 400 status code and AjaxErr formed by given error object.
 func WriteError400(w http.ResponseWriter, r *http.Request, err error, code int) {
 	WriteRet(w, r, http.StatusBadRequest, MakeAjaxErr(err, code))
 }
 
-// WriteError500 puts to response 500 status code and ErrAjax formed by given error object.
+// WriteError500 puts to response 500 status code and AjaxErr formed by given error object.
 func WriteError500(w http.ResponseWriter, r *http.Request, err error, code int) {
 	WriteRet(w, r, http.StatusInternalServerError, MakeAjaxErr(err, code))
 }

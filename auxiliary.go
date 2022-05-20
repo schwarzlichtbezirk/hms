@@ -40,7 +40,7 @@ func EnvFmt(p string) string {
 	})
 }
 
-// PathExists makes check up on path existance.
+// PathExists makes check up on path existence.
 func PathExists(fpath string) (bool, error) {
 	var err error
 	if _, err = os.Stat(fpath); err == nil {
@@ -52,6 +52,7 @@ func PathExists(fpath string) (bool, error) {
 	return true, err
 }
 
+// CheckPath is short variant of path existence check.
 func CheckPath(fpath string, fname string) (string, bool) {
 	if ok, _ := PathExists(path.Join(fpath, fname)); !ok {
 		return "", false

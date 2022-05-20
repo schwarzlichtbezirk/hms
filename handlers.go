@@ -365,8 +365,8 @@ func tileHandler(w http.ResponseWriter, r *http.Request) {
 // APIHANDLER
 func pingAPI(w http.ResponseWriter, r *http.Request) {
 	var body, _ = io.ReadAll(r.Body)
-	w.WriteHeader(http.StatusOK)
 	WriteStdHeader(w)
+	w.WriteHeader(http.StatusOK)
 	w.Write(body)
 }
 
@@ -507,7 +507,7 @@ func getlogAPI(w http.ResponseWriter, r *http.Request) {
 	var ret struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
 
-		List []LogItem `json:"list" yaml:"list" xml:"list"`
+		List []LogItem `json:"list" yaml:"list" xml:"list>item"`
 	}
 
 	var size = Log.Size()
@@ -692,7 +692,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 	var ret struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
 
-		List []Pather `json:"list" yaml:"list" xml:"list"`
+		List []Pather `json:"list" yaml:"list" xml:"list>prop"`
 		Skip int      `json:"skip" yaml:"skip" xml:"skip"`
 		PUID Puid_t   `json:"puid" yaml:"puid" xml:"puid"`
 		Path string   `json:"path" yaml:"path" xml:"path"`
@@ -1383,7 +1383,7 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var ret struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
 
-		List []Puid_t `json:"list" yaml:"list" xml:"list"`
+		List []Puid_t `json:"list" yaml:"list" xml:"list>puid"`
 	}
 
 	// get arguments

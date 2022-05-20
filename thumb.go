@@ -337,7 +337,7 @@ func tmbchkAPI(w http.ResponseWriter, r *http.Request) {
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
-		Tmbs []*TmbProp `json:"tmbs" yaml:"tmbs" xml:"tmbs"`
+		Tmbs []*TmbProp `json:"tmbs" yaml:"tmbs" xml:"list>tmb"`
 	}
 
 	// get arguments
@@ -367,7 +367,7 @@ func tmbscnstartAPI(w http.ResponseWriter, r *http.Request) {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
 		AID  ID_t     `json:"aid" yaml:"aid" xml:"aid,attr"`
-		List []Puid_t `json:"list" yaml:"list" xml:"list"`
+		List []Puid_t `json:"list" yaml:"list" xml:"list>puid"`
 	}
 
 	// get arguments
@@ -407,7 +407,7 @@ func tmbscnbreakAPI(w http.ResponseWriter, r *http.Request) {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
 		AID  ID_t     `json:"aid" yaml:"aid" xml:"aid,attr"`
-		List []Puid_t `json:"list" yaml:"list" xml:"list"`
+		List []Puid_t `json:"list" yaml:"list" xml:"list>puid"`
 	}
 
 	// get arguments
