@@ -11,6 +11,7 @@
 			"image": "/data/icon/chakram/folder-image",
 			"books": "/data/icon/chakram/folder-books",
 			"texts": "/data/icon/chakram/folder-texts",
+			"map": "/data/icon/chakram/cid-map",
 			"cid": "/data/icon/chakram/folder-data"
 		},
 		"drive": {

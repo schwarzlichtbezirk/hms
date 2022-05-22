@@ -11,6 +11,7 @@
 			"image": "/data/icon/ubuntu/cid-image",
 			"books": "/data/icon/ubuntu/cid-books",
 			"texts": "/data/icon/ubuntu/cid-texts",
+			"map": "/data/icon/ubuntu/cid-map",
 			"cid": "/data/icon/ubuntu/cid-cid"
 		},
 		"drive": {

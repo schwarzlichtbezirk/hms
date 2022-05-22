@@ -11,6 +11,7 @@
 			"image": "/data/icon/xrabbit/folder-image",
 			"books": "/data/icon/xrabbit/folder-books",
 			"texts": "/data/icon/xrabbit/folder-texts",
+			"map": "/data/icon/xrabbit/cid-map",
 			"cid": "/data/icon/xrabbit/folder-other"
 		},
 		"drive": {

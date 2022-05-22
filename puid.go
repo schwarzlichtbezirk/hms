@@ -28,6 +28,7 @@ const (
 	PUIDimage  Puid_t = 7
 	PUIDbooks  Puid_t = 8
 	PUIDtexts  Puid_t = 9
+	PUIDmap    Puid_t = 10
 
 	PUIDreserved = 32
 )
@@ -43,6 +44,7 @@ const (
 	CPimage  = "<image>"
 	CPbooks  = "<books>"
 	CPtexts  = "<texts>"
+	CPmap    = "<map>"
 )
 
 var CatNames = map[Puid_t]string{
@@ -55,6 +57,7 @@ var CatNames = map[Puid_t]string{
 	PUIDimage:  "Photos and images",
 	PUIDbooks:  "Books",
 	PUIDtexts:  "Text files",
+	PUIDmap:    "Map",
 }
 
 // CatKeyPath is predefined read-only maps with PUIDs keys and categories values.
@@ -68,6 +71,7 @@ var CatKeyPath = map[Puid_t]string{
 	PUIDimage:  CPimage,
 	PUIDbooks:  CPbooks,
 	PUIDtexts:  CPtexts,
+	PUIDmap:    CPmap,
 }
 
 // CatPathKey is predefined read-only map with categories keys and PUIDs values.
@@ -81,6 +85,7 @@ var CatPathKey = map[string]Puid_t{
 	CPimage:  PUIDimage,
 	CPbooks:  PUIDbooks,
 	CPtexts:  PUIDtexts,
+	CPmap:    PUIDmap,
 }
 
 // Produce base32 string representation of given random bytes slice.

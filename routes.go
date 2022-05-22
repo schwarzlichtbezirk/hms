@@ -219,7 +219,7 @@ func WriteRet(w http.ResponseWriter, r *http.Request, status int, body interface
 		if pos := strings.IndexByte(val, ';'); pos != -1 {
 			val = val[:pos]
 		}
-		list = strings.Split(val, ", ")
+		list = strings.Split(val, ",")
 	} else {
 		var ctype = r.Header.Get("Content-Type")
 		if pos := strings.IndexByte(ctype, ';'); pos != -1 {
@@ -233,7 +233,7 @@ func WriteRet(w http.ResponseWriter, r *http.Request, status int, body interface
 	var b []byte
 	var err error
 	for _, ctype := range list {
-		switch ctype {
+		switch strings.TrimSpace(ctype) {
 		case "*/*", "application/json", "text/json":
 			WriteStdHeader(w)
 			w.Header().Set("Content-Type", "application/json")

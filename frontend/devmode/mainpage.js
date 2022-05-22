@@ -35,8 +35,37 @@ const PUID = {
 	image: "0S",
 	books: "10",
 	texts: "14",
+	map: "18",
 
 	reserved: 32
+};
+
+// Category identifiers.
+const CID = {
+	"04": "home",
+	"08": "drives",
+	"0C": "shares",
+	"0G": "media",
+	"0K": "video",
+	"0O": "audio",
+	"0S": "image",
+	"10": "books",
+	"14": "texts",
+	"18": "map",
+};
+
+// Category properties.
+const CP = {
+	"04": "Home",
+	"08": "Drives list",
+	"0C": "Shared resources",
+	"0G": "Multimedia files",
+	"0K": "Movie and video files",
+	"0O": "Music and audio files",
+	"0S": "Photos and images",
+	"10": "Books",
+	"14": "Text files",
+	"18": "Map",
 };
 
 // MIME enum values.
@@ -67,32 +96,6 @@ const MimeVal = {
 	"image/png": Mime.png,
 	"image/jpeg": Mime.jpeg,
 	"image/webp": Mime.webp,
-};
-
-// Category identifiers.
-const CID = {
-	"04": "home",
-	"08": "drives",
-	"0C": "shares",
-	"0G": "media",
-	"0K": "video",
-	"0O": "audio",
-	"0S": "image",
-	"10": "books",
-	"14": "texts",
-};
-
-// Category properties.
-const CP = {
-	"04": "Home",
-	"08": "Drives list",
-	"0C": "Shared resources",
-	"0G": "Multimedia files",
-	"0K": "Movie and video files",
-	"0O": "Music and audio files",
-	"0S": "Photos and images",
-	"10": "Books",
-	"14": "Text files"
 };
 
 // File types

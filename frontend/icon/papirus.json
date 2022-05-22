@@ -11,6 +11,7 @@
 			"image": "/data/icon/papirus/cid-image",
 			"books": "/data/icon/papirus/cid-books",
 			"texts": "/data/icon/papirus/cid-texts",
+			"map": "/data/icon/papirus/cid-map",
 			"cid": "/data/icon/papirus/cid-store"
 		},
 		"drive": {

@@ -667,8 +667,22 @@ func ctgrAPI(w http.ResponseWriter, r *http.Request) {
 		catprop(dircache.Category(FGbooks, 0.5))
 	case PUIDtexts:
 		catprop(dircache.Category(FGtexts, 0.5))
+	case PUIDmap:
+		var n = 100
+		gpscache.Range(func(key interface{}, value interface{}) bool {
+			var puid = key.(Puid_t)
+			if fpath, ok := syspathcache.Path(puid); ok {
+				if auth == prf || prf.IsShared(fpath) {
+					if prop, err := propcache.Get(fpath); err == nil {
+						ret.List = append(ret.List, prop.(Pather))
+						n--
+					}
+				}
+			}
+			return n > 0
+		})
 	default:
-		WriteError(w, r, http.StatusMethodNotAllowed, ErrNotCat, AECctgrnotcat)
+		WriteError(w, r, http.StatusNotFound, ErrNotCat, AECctgrnotcat)
 		return
 	}
 

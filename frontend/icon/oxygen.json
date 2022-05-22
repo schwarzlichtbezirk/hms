@@ -11,6 +11,7 @@
 			"image": "/data/icon/oxygen/cid-image",
 			"books": "/data/icon/oxygen/cid-books",
 			"texts": "/data/icon/oxygen/cid-texts",
+			"map": "/data/icon/oxygen/cid-map",
 			"cid": "/data/icon/oxygen/cid-store"
 		},
 		"drive": {

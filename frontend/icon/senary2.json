@@ -11,6 +11,7 @@
 			"image": "/data/icon/senary/cid-image",
 			"books": "/data/icon/senary/cid-texts",
 			"texts": "/data/icon/senary/cid-texts",
+			"map": "/data/icon/senary2/cid-map",
 			"cid": "/data/icon/senary/folder-other"
 		},
 		"drive": {
