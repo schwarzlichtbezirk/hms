@@ -426,20 +426,26 @@ a, .btn-link {
 
 .leaflet-bar a, .leaflet-bar button {
 	background-color: rgba(152, 251, 152, 0.5); /* PaleGreen */
-	color: #222;
+	color: #333;
 	font: bold 18px 'Lucida Console', Monaco, monospace; /* for vertical alignment as at zoom control */
 }
 
 	.leaflet-bar a:hover, .leaflet-bar button:hover {
-		background-color: rgba(152, 251, 152, 0.75);
+		background-color: rgba(152, 251, 152, 0.80);
 		color: #000;
 	}
 
-	.leaflet-bar a.leaflet-disabled, .leaflet-bar button.leaflet-disabled {
+	.leaflet-bar a.active, .leaflet-bar button.active {
+		background-color: rgba(152, 251, 152, 0.80);
+		color: #222;
+	}
+
+	.leaflet-bar a.leaflet-disabled, .leaflet-bar button.leaflet-disabled,
+	.leaflet-bar a:disabled, .leaflet-bar button:disabled {
 		cursor: default;
 		pointer-events: none;
 		background-color: rgba(152, 251, 152, 0.25);
-		color: #444;
+		color: #555;
 	}
 
 .photoinfo .thumb {

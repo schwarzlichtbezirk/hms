@@ -668,7 +668,7 @@ func ctgrAPI(w http.ResponseWriter, r *http.Request) {
 	case PUIDtexts:
 		catprop(dircache.Category(FGtexts, 0.5))
 	case PUIDmap:
-		var n = 100
+		var n = 25
 		gpscache.Range(func(key interface{}, value interface{}) bool {
 			var puid = key.(Puid_t)
 			if fpath, ok := syspathcache.Path(puid); ok {

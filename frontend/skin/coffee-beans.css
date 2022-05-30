@@ -435,11 +435,17 @@ a, .btn-link {
 }
 
 	.leaflet-bar a:hover, .leaflet-bar button:hover {
-		background-color: rgba(102, 51, 153, 0.75);
+		background-color: rgba(102, 51, 153, 0.80);
 		color: #fff;
 	}
 
-	.leaflet-bar a.leaflet-disabled, .leaflet-bar button.leaflet-disabled {
+	.leaflet-bar a.active, .leaflet-bar button.active {
+		background-color: rgba(102, 51, 153, 0.80);
+		color: #ccc;
+	}
+
+	.leaflet-bar a.leaflet-disabled, .leaflet-bar button.leaflet-disabled,
+	.leaflet-bar a:disabled, .leaflet-bar button:disabled {
 		cursor: default;
 		pointer-events: none;
 		background-color: rgba(102, 51, 153, 0.25);

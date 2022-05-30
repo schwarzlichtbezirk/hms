@@ -2,6 +2,7 @@ package hms
 
 import (
 	"bytes"
+	"context"
 	"encoding/xml"
 	"errors"
 	"image"
@@ -10,7 +11,9 @@ import (
 	"image/png"
 	"io"
 	"net/http"
+	"runtime"
 	"strings"
+	"sync"
 
 	"github.com/disintegration/gift"
 	_ "github.com/oov/psd" // register PSD format
@@ -254,80 +257,157 @@ func ToNativeImg(m image.Image, ftype string) (md *MediaData, err error) {
 	return
 }
 
-// ThumbScanner is singleton for thumbnails producing
+// Cacher provides function to perform image converting.
+type Cacher interface {
+	Cache()
+}
+
+// ThumbPath is thumbnail path type for cache processing.
+type ThumbPath string
+
+// Cache is Cacher implementation for ThumbPath type.
+func (fpath ThumbPath) Cache() {
+	var err error
+	var prop interface{}
+	if prop, err = propcache.Get(string(fpath)); err != nil {
+		return // can not get properties
+	}
+	var fp = prop.(Pather)
+	if fp.MTmb() != MimeNil {
+		return // thumbnail already scanned
+	}
+	var md *MediaData
+	if md, err = FindTmb(fp, string(fpath)); err != nil {
+		fp.SetTmb(MimeDis)
+		return
+	}
+	fp.SetTmb(md.Mime)
+}
+
+// TilePath is tile path type for cache processing.
+type TilePath struct {
+	Path string
+	Wdh  int
+	Hgt  int
+}
+
+// Cache is Cacher implementation for TilePath type.
+func (tp *TilePath) Cache() {
+}
+
+// ImgScanner is singleton for thumbnails producing
 // with single queue to prevent overload.
-var ThumbScanner scanner
+var ImgScanner scanner
 
 type scanner struct {
-	put chan string
-	del chan string
+	put    chan string
+	del    chan string
+	cancel context.CancelFunc
+	fin    context.Context
 }
 
 // Scan is goroutine for thumbnails scanning.
 func (s *scanner) Scan() {
 	s.put = make(chan string)
 	s.del = make(chan string)
+	var ctx context.Context
+	ctx, s.cancel = context.WithCancel(context.Background())
+	var cancel context.CancelFunc
+	s.fin, cancel = context.WithCancel(context.Background())
+	defer func() {
+		s.fin, s.cancel = nil, nil
+		cancel()
+	}()
+
+	var thrnum = cfg.ScanThreadsNum
+	if thrnum == 0 {
+		thrnum = runtime.GOMAXPROCS(0)
+	}
+	var busy = make([]bool, thrnum)
+	var free = make(chan int)
+	var arg = make([]chan Cacher, thrnum)
+	for i := range arg {
+		arg[i] = make(chan Cacher)
+	}
 
 	var queue []string
-	var ctx chan struct{}
 
-	var cache = func(syspath string) {
-		ctx = make(chan struct{})
+	var wg sync.WaitGroup
+	wg.Add(thrnum)
+	for i := 0; i < thrnum; i++ {
+		var i = i // localize
 		go func() {
-			defer close(ctx)
-
-			var err error
-			var prop interface{}
-			if prop, err = propcache.Get(syspath); err != nil {
-				return // can not get properties
+			defer wg.Done()
+			for {
+				select {
+				case fpath := <-arg[i]:
+					fpath.Cache()
+					free <- i
+				case <-ctx.Done():
+					return
+				}
 			}
-			var fp = prop.(Pather)
-			if fp.MTmb() != MimeNil {
-				return // thumbnail already scanned
-			}
-			var md *MediaData
-			if md, err = FindTmb(fp, syspath); err != nil {
-				fp.SetTmb(MimeDis)
-				return
-			}
-			fp.SetTmb(md.Mime)
 		}()
 	}
 
-	for {
-		select {
-		case puid := <-s.put:
-			if ctx == nil {
-				cache(puid)
-			} else {
-				queue = append(queue, puid)
-			}
-		case puid := <-s.del:
-			for i, val := range queue {
-				if puid == val {
-					queue = append(queue[:i], queue[i+1:]...)
-					break
+	func() {
+		for {
+			select {
+			case fpath := <-s.put:
+				var found = false
+				for i, b := range busy {
+					if !b {
+						busy[i] = true
+						arg[i] <- ThumbPath(fpath)
+						found = true
+						break
+					}
 				}
-			}
-		case <-ctx:
-			if len(queue) > 0 {
-				var puid = queue[0]
-				queue = queue[1:]
-				cache(puid)
-			} else {
-				ctx = nil
+				if !found {
+					queue = append(queue, fpath)
+				}
+			case fpath := <-s.del:
+				for i, val := range queue {
+					if fpath == val {
+						queue = append(queue[:i], queue[i+1:]...)
+						break
+					}
+				}
+			case i := <-free:
+				if len(queue) > 0 {
+					var fpath = queue[0]
+					queue = queue[1:]
+					busy[i] = true
+					arg[i] <- ThumbPath(fpath)
+				} else {
+					busy[i] = false
+				}
+			case <-ctx.Done():
+				return
 			}
 		}
-	}
+	}()
+
+	wg.Wait()
 }
 
-// Add list of PUIDs to queue to make thumbnails.
-func (s *scanner) Add(syspath string) {
+// Stop makes the break to scanning process and returns context
+// that indicates graceful scanning end.
+func (s *scanner) Stop() (ctx context.Context) {
+	ctx = s.fin
+	if s.cancel != nil {
+		s.cancel()
+	}
+	return
+}
+
+// AddTmb adds PUID to queue to make thumbnails.
+func (s *scanner) AddTmb(syspath string) {
 	s.put <- syspath
 }
 
 // Remove list of PUIDs from thumbnails queue.
-func (s *scanner) Remove(syspath string) {
+func (s *scanner) RemoveTmb(syspath string) {
 	s.del <- syspath
 }
 
@@ -392,7 +472,7 @@ func tmbscnstartAPI(w http.ResponseWriter, r *http.Request) {
 	for _, puid := range arg.List {
 		if syspath, ok := syspathcache.Path(puid); ok {
 			if cg := prf.PathAccess(syspath, auth == prf); !cg.IsZero() {
-				ThumbScanner.Add(syspath)
+				ImgScanner.AddTmb(syspath)
 			}
 		}
 	}
@@ -432,7 +512,7 @@ func tmbscnbreakAPI(w http.ResponseWriter, r *http.Request) {
 	for _, puid := range arg.List {
 		if syspath, ok := syspathcache.Path(puid); ok {
 			if cg := prf.PathAccess(syspath, auth == prf); !cg.IsZero() {
-				ThumbScanner.Remove(syspath)
+				ImgScanner.RemoveTmb(syspath)
 			}
 		}
 	}

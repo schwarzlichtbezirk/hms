@@ -226,7 +226,7 @@ func Init() {
 	go UserScanner()
 
 	// run thumbnails scanner
-	go ThumbScanner.Scan()
+	go ImgScanner.Scan()
 
 	// EXIF parsers
 	exifparsers()
@@ -373,6 +373,7 @@ func WaitExit() {
 // Shutdown performs graceful network shutdown.
 func Shutdown() {
 	var wg errgroup.Group
+
 	wg.Go(func() (err error) {
 		if err1 := syspathcache.WriteYaml(pthfile); err1 != nil {
 			Log.Infoln("error on path cache file: " + err1.Error())
@@ -407,6 +408,12 @@ func Shutdown() {
 		if err := prflist.WriteYaml(prffile); err != nil {
 			Log.Infoln("error on profiles list file: " + err.Error())
 		}
+		return
+	})
+
+	wg.Go(func() (err error) {
+		var ctx = ImgScanner.Stop()
+		<-ctx.Done()
 		return
 	})
 

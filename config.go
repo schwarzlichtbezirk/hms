@@ -70,6 +70,9 @@ type CfgImgProp struct {
 	HDResolution [2]int `json:"hd-resolution" yaml:"hd-resolution" long:"hd" description:"HD images width and height."`
 	// Thumbnails JPEG quality, ranges from 1 to 100 inclusive.
 	TmbJpegQuality int `json:"tmb-jpeg-quality" yaml:"tmb-jpeg-quality" long:"tjq" description:"Thumbnails JPEG quality, ranges from 1 to 100 inclusive."`
+	// Number of image processing threads in which performs converting to
+	// tiles and thumbnails. Zero sets this number to GOMAXPROCS value.
+	ScanThreadsNum int `json:"scan-threads-num" yaml:"scan-threads-num" long:"stn" description:"Number of image processing threads in which performs converting to tiles and thumbnails."`
 }
 
 // CfgAppSets is settings for application-specific logic.
@@ -127,6 +130,7 @@ var cfg = Config{ // inits default values:
 		FitEmbeddedTmb:   true,
 		TmbResolution:    [2]int{256, 256},
 		TmbJpegQuality:   80,
+		ScanThreadsNum:   2,
 	},
 	CfgAppSets: CfgAppSets{
 		WPKName:          "hms-full.wpk",

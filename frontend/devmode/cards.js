@@ -641,9 +641,6 @@ const maketileslide = (list, tilemode) => {
 			const sf = sizefill(pf);
 			const im = tilemode[sf < tilemode.length ? sf : 0];
 			let ts = htiles[im[randomint(im.length)]];
-			if (!ts) {
-				console.log("null:", sf, pf, sheet);
-			}
 			const nl = ts[1] - sheet.length + fill;
 			for (let i = 0; i < nl; i++) {
 				addline();
@@ -893,12 +890,15 @@ const VueTileCard = {
 
 const VueMapCard = {
 	template: '#map-card-tpl',
+	props: ["list"],
 	data() {
 		return {
 			styleid: 'mapbox-hybrid',
 			markermode: "thumb",
 			showtrack: false,
-			layernum: 0,
+			tracknum: 0,
+			mapmode: false,
+			drawmode: false,
 
 			map: null, // set it on mounted event
 			tiles: null,
@@ -911,9 +911,23 @@ const VueMapCard = {
 			iid: makestrid(10) // instance ID
 		};
 	},
+	watch: {
+		drawmode: {
+			handler(val, oldval) {
+				const e = this.$refs.map.querySelector(".leaflet-control-range");
+				if (e) {
+					if (val) {
+						e.classList.add("active");
+					} else {
+						e.classList.remove("active");
+					}
+				}
+			}
+		}
+	},
 	computed: {
 		isvisible() {
-			return this.layernum > 0;
+			return this.mapmode || this.gpslist.length > 0 || this.tracknum > 0;
 		},
 		clsmapboxhybrid() {
 			return { active: this.styleid === 'mapbox-hybrid' };
@@ -993,18 +1007,23 @@ const VueMapCard = {
 	},
 	methods: {
 		// create new opened folder
-		new() {
-			if (this.layernum > 0) {
+		new(mapmode) {
+			this.mapmode = mapmode;
+			if (this.gpslist.length > 0) {
 				// new empty list
 				this.gpslist = [];
 				// remove all markers from the cluster
-				this.markers.clearLayers();
+				if (this.markers) {
+					this.markers.clearLayers();
+				}
 				// remove previous track
 				this.phototrack.setLatLngs([]);
+			}
+			if (this.tracknum > 0) {
 				// remove all gpx-tracks
 				this.tracks.clearLayers();
-				// no any markers or gpx on map
-				this.layernum = 0;
+				// no any gpx on map
+				this.tracknum = 0;
 			}
 		},
 		// make tiles layer
@@ -1138,7 +1157,6 @@ const VueMapCard = {
 						.addTo(this.markers)
 						.bindPopup(popup);
 				}
-				this.layernum += gpslist.length;
 
 				const update = this.gpslist.length == 0;
 				Vue.nextTick(() => {
@@ -1180,7 +1198,7 @@ const VueMapCard = {
 		// add GPX track polyline
 		addgpx(file) {
 			const latlngs = [];
-			const ci = this.tracks.getLayers().length % gpxcolors.length;
+			const ci = this.tracknum % gpxcolors.length; // this.tracks.getLayers().length % gpxcolors.length
 
 			(async () => {
 				eventHub.emit('ajax', +1);
@@ -1202,7 +1220,7 @@ const VueMapCard = {
 					L.polyline(latlngs, { color: gpxcolors[ci] })
 						.bindPopup(`points <b>${latlngs.length}</b><br>route <b>${route.toFixed()}</b> m`)
 						.addTo(this.tracks);
-					this.layernum++;
+					this.tracknum++;
 				} catch (e) {
 					ajaxfail(e);
 				} finally {
@@ -1290,6 +1308,10 @@ const VueMapCard = {
 				padding: [20, 20]
 			});
 		},
+		onrangesearch() {
+			this.drawmode = !this.drawmode;
+			this.mapmode = true;
+		},
 		onshown(e) {
 		},
 		onhidden(e) {
@@ -1306,7 +1328,7 @@ const VueMapCard = {
 		this.map = L.map(this.$refs.map, {
 			attributionControl: true,
 			zoomControl: false,
-			center: [0, 0],
+			center: [44.576825, 33.830575],
 			zoom: 8,
 			layers: [this.tiles]
 		});
@@ -1340,8 +1362,8 @@ const VueMapCard = {
 			zoomInText: '<span class="material-icons">add</span>',
 			zoomOutText: '<span class="material-icons">remove</span>'
 		}).addTo(this.map);
-		// create fullscreen button
-		L.Control.Fullscreen = L.Control.extend({
+		// create toolbar buttons
+		L.Control.ToolBar = L.Control.extend({
 			onAdd: map => {
 				const html = document.getElementById("leaflet-toolbar").innerHTML;
 				const template = document.createElement('template');
@@ -1351,19 +1373,23 @@ const VueMapCard = {
 				tb?.querySelector(".leaflet-control-fullscreen")?.addEventListener('click', e => {
 					this.onfullscreen();
 				});
-				tb?.querySelector(".leaflet-control-adjust")?.addEventListener('click', e => {
+				tb?.querySelector(".leaflet-control-fit")?.addEventListener('click', e => {
 					this.onfitbounds();
 				});
+				tb?.querySelector(".leaflet-control-range")?.addEventListener('click', e => {
+					this.onrangesearch();
+				});
+				tb?.querySelector(".leaflet-control-range")?.classList.add
 
 				return tb;
 			},
 			onRemove: map => {
 			}
 		});
-		L.control.fullscreen = opts => {
-			return new L.Control.Fullscreen(opts);
+		L.control.toolbar = opts => {
+			return new L.Control.ToolBar(opts);
 		};
-		L.control.fullscreen({ position: 'topright' }).addTo(this.map);
+		L.control.toolbar({ position: 'topright' }).addTo(this.map);
 	},
 	unmounted() {
 		const el = document.getElementById('card' + this.iid);

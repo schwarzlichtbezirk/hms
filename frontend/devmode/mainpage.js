@@ -769,13 +769,10 @@ const VueMainApp = {
 			await this.fetchscanbreak() // stop previous folder scanning
 			if (CP[hist.puid]) {
 				await this.fetchcategory(hist);
-				if (hist.puid === PUID.shares) {
-					this.fetchscanstart(); // fetch at backround
-				}
 			} else {
 				await this.fetchfolder(hist);
-				this.fetchscanstart(); // fetch at backround
 			}
+			this.fetchscanstart(); // fetch at backround
 			this.seturl();
 		},
 
@@ -959,9 +956,15 @@ const VueMainApp = {
 		newfolder(list) {
 			this.flist = [];
 			// update folder settings
-			for (const file of list ?? []) {
-				if (file && (file.type !== FT.ctgr || this.curpuid === PUID.home)) {
+			if (this.curpuid === PUID.home) {
+				for (const file of list ?? []) {
 					this.flist.push(file);
+				}
+			} else {
+				for (const file of list ?? []) {
+					if (file && file.type !== FT.ctgr) {
+						this.flist.push(file);
+					}
 				}
 			}
 			this.updateshared();
@@ -970,7 +973,7 @@ const VueMainApp = {
 			eventHub.emit('select', null);
 
 			// init map card
-			this.$refs.mcard.new();
+			this.$refs.mcard.new(this.curpuid === PUID.map);
 			// update map card
 			const gpslist = [];
 			for (const file of this.flist) {

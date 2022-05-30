@@ -425,7 +425,13 @@ body {
 		color: #eee;
 	}
 
-	.leaflet-bar a.leaflet-disabled, .leaflet-bar button.leaflet-disabled {
+	.leaflet-bar a.active, .leaflet-bar button.active {
+		background-color: #444444;
+		color: #ccc;
+	}
+
+	.leaflet-bar a.leaflet-disabled, .leaflet-bar button.leaflet-disabled,
+	.leaflet-bar a:disabled, .leaflet-bar button:disabled {
 		cursor: default;
 		pointer-events: none;
 		background-color: #242424;
