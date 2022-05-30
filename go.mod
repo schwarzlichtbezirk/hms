@@ -7,7 +7,7 @@ require (
 	github.com/bluele/gcache v0.0.2
 	github.com/cespare/xxhash v1.1.0
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
-	github.com/dhowden/tag v0.0.0-20201120070457-d52dcb253c63
+	github.com/dhowden/tag v0.0.0-20220530110423-77907a30b7f1
 	github.com/disintegration/gift v1.2.1
 	github.com/diskfs/go-diskfs v1.2.0
 	github.com/ftrvxmtrx/tga v0.0.0-20150524081124-bd8e8d5be13a

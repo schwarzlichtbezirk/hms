@@ -893,6 +893,7 @@ const VueMapCard = {
 	props: ["list"],
 	data() {
 		return {
+			isfullscreen: false,
 			styleid: 'mapbox-hybrid',
 			markermode: "thumb",
 			showtrack: false,
@@ -956,16 +957,31 @@ const VueMapCard = {
 		clsosm() {
 			return { active: this.styleid === 'osm' };
 		},
+		clscyclosm() {
+			return { active: this.styleid === 'cyclosm' };
+		},
 		clsopentopomap() {
 			return { active: this.styleid === 'opentopo' };
 		},
-		clshikebike() {
-			return { active: this.styleid === 'hikebike' };
+		clsersiimg() {
+			return { active: this.styleid === 'ersiimg' };
+		},
+		clsersitopo() {
+			return { active: this.styleid === 'ersitopo' };
+		},
+		clsersistreet() {
+			return { active: this.styleid === 'ersistreet' };
+		},
+		cls2gis() {
+			return { active: this.styleid === '2gis' };
 		},
 		clsphototrack() {
 			return { active: this.showtrack };
 		},
 
+		iconscreen() {
+			return this.isfullscreen ? 'fullscreen_exit' : 'fullscreen';
+		},
 		iconmarkermode() {
 			switch (this.markermode) {
 				case 'marker': return 'place';
@@ -992,10 +1008,18 @@ const VueMapCard = {
 					return "Google maps streets";
 				case 'osm':
 					return "Open Street Map";
+				case 'cyclosm':
+					return "CyclOSM - Open Bicycle render";
 				case 'opentopo':
 					return "Open topo map";
-				case 'hikebike':
-					return "HikeBike map";
+				case 'ersiimg':
+					return "Esri World Imagery";
+				case 'ersitopo':
+					return "Esri World Topo map";
+				case 'ersistreet':
+					return "Esri World Street map";
+				case '2gis':
+					return "2GIS map";
 			}
 		},
 		hintmarkermode() {
@@ -1027,6 +1051,7 @@ const VueMapCard = {
 			}
 		},
 		// make tiles layer
+		// see: https://leaflet-extras.github.io/leaflet-providers/preview/
 		maketiles(id) {
 			switch (id) {
 				case 'mapbox-hybrid':
@@ -1102,6 +1127,11 @@ const VueMapCard = {
 						maxZoom: 19,
 						attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors'
 					});
+				case 'cyclosm':
+					return L.tileLayer('https://{s}.tile-cyclosm.openstreetmap.fr/cyclosm/{z}/{x}/{y}.png', {
+						maxZoom: 20,
+						attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors'
+					});
 				case 'opentopo':
 					return L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
 						attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors, ' +
@@ -1109,11 +1139,29 @@ const VueMapCard = {
 						minZoom: 2,
 						maxZoom: 17
 					});
-				case 'hikebike':
-					return L.tileLayer('https://tiles.wmflabs.org/hikebike/{z}/{x}/{y}.png', {
-						attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors',
+				case 'ersiimg':
+					return L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+						attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+						minZoom: 2,
+						maxZoom: 17
+					});
+				case 'ersitopo':
+					return L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', {
+						attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community',
 						minZoom: 2,
 						maxZoom: 19
+					});
+				case 'ersistreet':
+					return L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}', {
+						attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ, TomTom, Intermap, iPC, USGS, FAO, NPS, NRCAN, GeoBase, Kadaster NL, Ordnance Survey, Esri Japan, METI, Esri China (Hong Kong), and the GIS User Community',
+						minZoom: 2,
+						maxZoom: 20
+					});
+				case '2gis':
+					return L.tileLayer('http://tile2.maps.2gis.com/tiles?x={x}&y={y}&z={z}', {
+						attribution: 'Map data: &copy; <a href="https://2gis.ru/" target="_blank">2gis</a>',
+						minZoom: 2,
+						maxZoom: 18
 					});
 			}
 		},
@@ -1256,11 +1304,20 @@ const VueMapCard = {
 		onosm() {
 			this.changetiles('osm');
 		},
+		oncyclosm() {
+			this.changetiles('cyclosm');
+		},
 		onopentopo() {
 			this.changetiles('opentopo');
 		},
-		onhikebike() {
-			this.changetiles('hikebike');
+		onersiimg() {
+			this.changetiles('ersiimg');
+		},
+		onersitopo() {
+			this.changetiles('ersitopo');
+		},
+		on2gis() {
+			this.changetiles('2gis');
 		},
 		onphototrack() {
 			if (this.map.hasLayer(this.phototrack)) {
@@ -1287,10 +1344,7 @@ const VueMapCard = {
 			this.addmarkers(gpslist);
 		},
 		onfullscreenchange() {
-			const e = this.$refs.map.querySelector(".leaflet-control-fullscreen > span");
-			if (e) {
-				e.innerHTML = isFullscreen() ? 'fullscreen_exit' : 'fullscreen';
-			}
+			this.isfullscreen = isFullscreen();
 		},
 		onfullscreen() {
 			if (isFullscreen()) {
@@ -1362,34 +1416,6 @@ const VueMapCard = {
 			zoomInText: '<span class="material-icons">add</span>',
 			zoomOutText: '<span class="material-icons">remove</span>'
 		}).addTo(this.map);
-		// create toolbar buttons
-		L.Control.ToolBar = L.Control.extend({
-			onAdd: map => {
-				const html = document.getElementById("leaflet-toolbar").innerHTML;
-				const template = document.createElement('template');
-				template.innerHTML = html?.trim();
-				const tb = template.content.firstChild;
-
-				tb?.querySelector(".leaflet-control-fullscreen")?.addEventListener('click', e => {
-					this.onfullscreen();
-				});
-				tb?.querySelector(".leaflet-control-fit")?.addEventListener('click', e => {
-					this.onfitbounds();
-				});
-				tb?.querySelector(".leaflet-control-range")?.addEventListener('click', e => {
-					this.onrangesearch();
-				});
-				tb?.querySelector(".leaflet-control-range")?.classList.add
-
-				return tb;
-			},
-			onRemove: map => {
-			}
-		});
-		L.control.toolbar = opts => {
-			return new L.Control.ToolBar(opts);
-		};
-		L.control.toolbar({ position: 'topright' }).addTo(this.map);
 	},
 	unmounted() {
 		const el = document.getElementById('card' + this.iid);
