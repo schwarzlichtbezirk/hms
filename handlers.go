@@ -1381,48 +1381,69 @@ func Haversine(lat1, lon1, lat2, lon2 float64) float64 {
 	return d
 }
 
+// MapPath describes any map path that can contains a points.
+type MapPath interface {
+	Contains(lat, lon float64) bool
+}
+
+type Circle struct {
+	Latitude  float64 `json:"lat" yaml:"lat" xml:"lat"`
+	Longitude float64 `json:"lon" yaml:"lon" xml:"lon"`
+	Radius    float64 `json:"radius" yaml:"radius" xml:"radius"` // in meters
+}
+
+func (circle *Circle) Contains(lat, lon float64) bool {
+	var d = Haversine(circle.Latitude, circle.Longitude, lat, lon)
+	return d <= circle.Radius
+}
+
 // APIHANDLER
 func gpsrangeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var err error
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
-		Latitude  float64 `json:"lat" yaml:"lat" xml:"lat"`
-		Longitude float64 `json:"lon" yaml:"lon" xml:"lon"`
-		Radius    float64 `json:"radius" yaml:"radius" xml:"radius"` // in meters
-		Limit     int     `json:"limit,omitempty" yaml:"limit,omitempty" xml:"limit,omitempty"`
-		Time1     unix_t  `json:"time1,omitempty" yaml:"time1,omitempty" xml:"time1,omitempty"`
-		Time2     unix_t  `json:"time2,omitempty" yaml:"time2,omitempty" xml:"time2,omitempty"`
+		Path  []Circle `json:"path" yaml:"path" xml:"path>circle"`
+		Limit int      `json:"limit,omitempty" yaml:"limit,omitempty" xml:"limit,omitempty"`
+		Time1 unix_t   `json:"time1,omitempty" yaml:"time1,omitempty" xml:"time1,omitempty"`
+		Time2 unix_t   `json:"time2,omitempty" yaml:"time2,omitempty" xml:"time2,omitempty"`
 	}
 	var ret struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
 
-		List []Puid_t `json:"list" yaml:"list" xml:"list>puid"`
+		List []Pather `json:"list" yaml:"list" xml:"list>prop"`
 	}
 
 	// get arguments
 	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
-	if arg.Latitude == 0 || arg.Longitude == 0 || arg.Radius == 0 {
+	if len(arg.Path) == 0 {
 		WriteError400(w, r, ErrNoData, AECgpsrangenodata)
 		return
 	}
 
 	gpscache.Range(func(key interface{}, value interface{}) bool {
+		var puid = key.(Puid_t)
 		var gps = value.(*GpsInfo)
-		var d = Haversine(arg.Latitude, arg.Longitude, gps.Latitude, gps.Longitude)
-		if d > arg.Radius {
-			return true
+		for _, circle := range arg.Path {
+			if !circle.Contains(gps.Latitude, gps.Longitude) {
+				continue
+			}
+			if arg.Time1 > 0 && gps.DateTime < arg.Time1 {
+				continue
+			}
+			if arg.Time2 > 0 && gps.DateTime > arg.Time2 {
+				continue
+			}
+			if fpath, ok := syspathcache.Path(puid); ok {
+				if prop, err := propcache.Get(fpath); err == nil {
+					ret.List = append(ret.List, prop.(Pather))
+				}
+			}
+			break
 		}
-		if arg.Time1 > 0 && gps.DateTime < arg.Time1 {
-			return true
-		}
-		if arg.Time2 > 0 && gps.DateTime > arg.Time2 {
-			return true
-		}
-		ret.List = append(ret.List, key.(Puid_t))
-		return arg.Limit > 0 && len(ret.List) < arg.Limit
+		return arg.Limit <= 0 || len(ret.List) < arg.Limit
 	})
 
 	WriteOK(w, r, &ret)

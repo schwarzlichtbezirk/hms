@@ -57,10 +57,13 @@
 							<span class="material-icons">{{iconscreen}}</span>
 						</a>
 						<a class="leaflet-control-fit" role="button" title="Fit to bounds" v-on:click="onfitbounds">
-							<span class="material-icons">view_in_ar</span>
+							<span class="material-icons">center_focus_strong</span>
 						</a>
-						<a class="leaflet-control-range" role="button" title="Search in range" v-on:click="onrangesearch">
+						<a class="leaflet-control-range" role="button" title="Search in circle" v-on:click="ondrawmode" v-bind:class="clsdrawmode">
 							<span class="material-icons">ads_click</span>
+						</a>
+						<a class="leaflet-control-range" role="button" title="Remove circle" v-on:click="onremovemode" v-bind:class="clsremovemode">
+							<span class="material-icons">delete_outline</span>
 						</a>
 					</div>
 				</div>

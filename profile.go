@@ -15,8 +15,6 @@ var DefHidden = []string{
 	"**/*.bak",
 	"**/.*",
 	"**/Thumbs.db",
-	"**/AlbumArt*.jpg",
-	"**/Folder.jpg",
 	"?:/System Volume Information",
 	"?:/Windows",
 	"?:/WindowsApps",

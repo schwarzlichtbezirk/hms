@@ -40,6 +40,17 @@ const listmodehint = {
 
 const noderadius = 15;
 
+const circulartimeout = 3 * 1000;
+const circularmindist = 5; // minimum distance in points
+const circularmaxradius = 112 * 1000;
+
+// map modes states
+const mm = {
+	view: 'view',
+	draw: 'draw',
+	remove: 'remove',
+};
+
 const gpxcolors = [
 	'#6495ED', // CornflowerBlue
 	'#DA70D6', // Orchid
@@ -898,37 +909,41 @@ const VueMapCard = {
 			markermode: "thumb",
 			showtrack: false,
 			tracknum: 0,
-			mapmode: false,
-			drawmode: false,
+			keepmap: false,
+			mapmode: mm.view,
+			iszooming: false,
+			zoomlevel: 8,
 
 			map: null, // set it on mounted event
 			tiles: null,
 			markers: null,
 			phototrack: null,
 			tracks: null,
-
 			gpslist: [],
 
 			iid: makestrid(10) // instance ID
 		};
 	},
 	watch: {
-		drawmode: {
+		mapmode: {
 			handler(val, oldval) {
-				const e = this.$refs.map.querySelector(".leaflet-control-range");
-				if (e) {
-					if (val) {
-						e.classList.add("active");
-					} else {
-						e.classList.remove("active");
+				switch (val) {
+					case mm.view:
+						this.toviewmode();
+						break;
+					case mm.draw:
+						this.todrawmode();
+						break;
+					case mm.remove:
+						this.toremovemode();
+						break;
 					}
-				}
 			}
 		}
 	},
 	computed: {
 		isvisible() {
-			return this.mapmode || this.gpslist.length > 0 || this.tracknum > 0;
+			return this.keepmap || this.gpslist.length > 0 || this.tracknum > 0;
 		},
 		clsmapboxhybrid() {
 			return { active: this.styleid === 'mapbox-hybrid' };
@@ -979,8 +994,17 @@ const VueMapCard = {
 			return { active: this.showtrack };
 		},
 
+		clsdrawmode() {
+			return { 
+				'active': this.mapmode === mm.draw,
+				'leaflet-disabled': this.iszooming || this.zoomlevel < 6,
+			};
+		},
+		clsremovemode() {
+			return { 'active': this.mapmode === mm.remove };
+		},
 		iconscreen() {
-			return this.isfullscreen ? 'fullscreen_exit' : 'fullscreen';
+			return this.isfullscreen ? 'zoom_in_map' : 'zoom_out_map';
 		},
 		iconmarkermode() {
 			switch (this.markermode) {
@@ -1031,8 +1055,8 @@ const VueMapCard = {
 	},
 	methods: {
 		// create new opened folder
-		new(mapmode) {
-			this.mapmode = mapmode;
+		new(keepmap) {
+			this.keepmap = keepmap;
 			if (this.gpslist.length > 0) {
 				// new empty list
 				this.gpslist = [];
@@ -1053,6 +1077,7 @@ const VueMapCard = {
 		// make tiles layer
 		// see: https://leaflet-extras.github.io/leaflet-providers/preview/
 		maketiles(id) {
+			this.styleid = id;
 			switch (id) {
 				case 'mapbox-hybrid':
 					return L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
@@ -1168,7 +1193,6 @@ const VueMapCard = {
 		// change tiles layer
 		changetiles(id) {
 			this.map.removeLayer(this.tiles);
-			this.styleid = id;
 			this.tiles = this.maketiles(id);
 			this.map.addLayer(this.tiles);
 		},
@@ -1246,7 +1270,7 @@ const VueMapCard = {
 		// add GPX track polyline
 		addgpx(file) {
 			const latlngs = [];
-			const ci = this.tracknum % gpxcolors.length; // this.tracks.getLayers().length % gpxcolors.length
+			const ci = this.tracknum % gpxcolors.length;
 
 			(async () => {
 				eventHub.emit('ajax', +1);
@@ -1362,9 +1386,20 @@ const VueMapCard = {
 				padding: [20, 20]
 			});
 		},
-		onrangesearch() {
-			this.drawmode = !this.drawmode;
-			this.mapmode = true;
+		ondrawmode() {
+			if (this.mapmode === mm.draw) {
+				this.mapmode = mm.view;
+			} else {
+				this.mapmode = mm.draw;
+			}
+			this.keepmap = true;
+		},
+		onremovemode() {
+			if (this.mapmode === mm.remove) {
+				this.mapmode = mm.view;
+			} else {
+				this.mapmode = mm.remove;
+			}
 		},
 		onshown(e) {
 		},
@@ -1379,18 +1414,21 @@ const VueMapCard = {
 		}
 
 		this.tiles = this.maketiles('mapbox-hybrid');
-		this.map = L.map(this.$refs.map, {
+		this.tracks = L.layerGroup();
+		const circles = L.layerGroup();
+		const map = L.map(this.$refs.map, {
 			attributionControl: true,
 			zoomControl: false,
 			center: [44.576825, 33.830575],
-			zoom: 8,
-			layers: [this.tiles]
+			zoom: this.zoomlevel,
+			layers: [this.tiles, this.tracks, circles],
 		});
 		this.phototrack = L.polyline([], { color: '#3CB371' }); // MediumSeaGreen
 		if (this.showtrack) {
-			this.map.addLayer(this.phototrack);
+			map.addLayer(this.phototrack);
 		}
-		this.tracks = L.layerGroup().addTo(this.map);
+
+		this.map = map;
 
 		const resizeObserver = new ResizeObserver(entries => {
 			// recreate content only if widget is not hidden
@@ -1398,24 +1436,221 @@ const VueMapCard = {
 			if (size > 0) {
 				// recreate markers cluster
 				if (this.markers) {
-					this.map.removeLayer(this.markers);
+					map.removeLayer(this.markers);
 				}
 				const gpslist = this.gpslist;
 				this.gpslist = [];
 				this.markers = L.markerClusterGroup();
 				this.addmarkers(gpslist);
-				this.map.addLayer(this.markers);
+				map.addLayer(this.markers);
 				// update map
-				this.map.invalidateSize();
+				map.invalidateSize();
 			}
 		});
 		resizeObserver.observe(this.$refs.map);
 
-		L.control.scale().addTo(this.map);
+		L.control.scale().addTo(map);
 		L.control.zoom({
 			zoomInText: '<span class="material-icons">add</span>',
 			zoomOutText: '<span class="material-icons">remove</span>'
-		}).addTo(this.map);
+		}).addTo(map);
+
+		// disable drag and zoom handlers
+		const lockmap = () => {
+			map.dragging.disable();
+			map.touchZoom.disable();
+			map.doubleClickZoom.disable();
+			map.scrollWheelZoom.disable();
+			map.boxZoom.disable();
+			map.keyboard.disable();
+			if (map.tap) map.tap.disable();
+		};
+
+		// enable drag and zoom handlers
+		const unlockmap = () => {
+			map.dragging.enable();
+			map.touchZoom.enable();
+			map.doubleClickZoom.enable();
+			map.scrollWheelZoom.enable();
+			map.boxZoom.enable();
+			map.keyboard.enable();
+			if (map.tap) map.tap.enable();
+		};
+
+		const viewmode = () => {
+			const onmousemove = e => {
+			};
+
+			const evmap = {
+				'mousemove': onmousemove,
+			};
+			const setup = () => {
+				map.on(evmap);
+			};
+			const cancel = () => {
+				map.off(evmap);
+			};
+
+			setup();
+			this.todrawmode = () => {
+				cancel();
+				drawmode();
+			};
+			this.toremovemode = () => {
+				cancel();
+				removemode();
+			};
+		};
+
+		const drawmode = () => {
+			let centerll, centerpt;
+			let layer = null;
+			let radius = 0;
+			let draw = false;
+
+			const onmousedown = e => {
+				if (e.originalEvent.which === 1) { // left button click
+					centerll = e.latlng;
+					centerpt = e.layerPoint;
+					draw = true;
+				} else {
+					draw = false;
+					if (layer) {
+						circles.removeLayer(layer);
+						layer = null;
+					}
+				}
+			};
+			const onmousemove = e => {
+				if (!draw) {
+					return;
+				}
+				if (centerpt.distanceTo(e.layerPoint) > circularmindist) {
+					radius = Math.min(centerll.distanceTo(e.latlng), circularmaxradius);
+					if (!layer) {
+						// start circular
+						layer = L.circle(centerll, {
+							radius: radius,
+							color: 'DodgerBlue',
+							fillColor: 'DodgerBlue',
+							fillOpacity: 0.3
+						});
+						const onmouseover = e => {
+						};
+						const onmouseout = e => {
+						};
+						const evmap = {
+							'mouseover': onmouseover,
+							'mouseout': onmouseout,
+						};
+						layer.on(evmap);
+						circles.addLayer(layer);
+					} else {
+						layer.setRadius(radius);
+					}
+				} else {
+					if (layer) { // remove too small circular
+						circles.removeLayer(layer);
+						layer = null;
+					}
+				}
+			};
+			const onmouseup = e => {
+				if (e.originalEvent.which === 1) {
+					layer = null;
+					draw = false;
+				}
+			};
+			const onkeyup = e => {
+				if (e.originalEvent.key === "Escape") {
+					e.originalEvent.preventDefault();
+					draw = false;
+					if (layer) {
+						circles.removeLayer(layer);
+						layer = null;
+					}
+				}
+			};
+
+			const evmap = {
+				'mousedown': onmousedown,
+				'mousemove': onmousemove,
+				'mouseup': onmouseup,
+				'keyup': onkeyup,
+			};
+			const setup = () => {
+				lockmap();
+				map.on(evmap);
+			};
+			const cancel = () => {
+				map.off(evmap);
+				unlockmap();
+			};
+
+			setup();
+			this.toviewmode = () => {
+				cancel();
+				viewmode();
+			};
+			this.toremovemode = () => {
+				cancel();
+				removemode();
+			};
+		};
+
+		const removemode = () => {
+			const setup = () => {
+				for (const layer of circles.getLayers()) {
+					layer.on('mouseover', e => {
+						layer.setStyle({
+							color: 'red',
+							fillColor: '#f03',
+							fillOpacity: 0.3
+						});
+					});
+					layer.on('mouseout', e => {
+						layer.setStyle({
+							color: 'DodgerBlue',
+							fillColor: 'DodgerBlue',
+							fillOpacity: 0.3
+						});
+					});
+					layer.on('click', e => {
+						circles.removeLayer(layer);
+					});
+				}
+			};
+			const cancel = () => {
+				for (const layer of circles.getLayers()) {
+					layer.off('mouseover mouseout click');
+				}
+			};
+
+			setup();
+			this.toviewmode = () => {
+				cancel();
+				viewmode();
+			};
+			this.todrawmode = () => {
+				cancel();
+				drawmode();
+			};
+		};
+
+		if (this.mapmode === mm.draw) {
+			drawmode();
+		} else {
+			viewmode();
+		}
+
+		map.on('zoomstart', e => {
+			this.iszooming = true;
+		});
+
+		map.on('zoomend', e => {
+			this.iszooming = false;
+			this.zoomlevel = map.getZoom();
+		});
 	},
 	unmounted() {
 		const el = document.getElementById('card' + this.iid);
