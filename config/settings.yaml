@@ -72,3 +72,7 @@ specification:
   media-cache-maxnum: 64
   # Expiration duration to keep opened iso-disk structures in cache from last access to it.
   disk-cache-expire: 15s
+  # Maximum number of photos to get on default map state.
+  range-search-any: 20
+  # Limit of range search.
+  range-search-limit: 100

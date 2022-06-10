@@ -169,7 +169,7 @@ const makemarkerpopup = file => {
 			</picture>
 			<div class="d-flex flex-wrap latlng">
 				<div><div class="name">lat:</div> <div class="value">${file.latitude.toFixed(6)}</div></div>
-				<div><div class="name">lng:</div> <div class="value">${file.longitude.toFixed(6)}</div></div>
+				<div><div class="name">lon:</div> <div class="value">${file.longitude.toFixed(6)}</div></div>
 				<div><div class="name">alt:</div> <div class="value">${file.altitude ?? "N/A"}</div></div>
 			</div>
 		</div>
@@ -911,6 +911,7 @@ const VueMapCard = {
 			tracknum: 0,
 			keepmap: false,
 			mapmode: mm.view,
+			bounds: L.latLngBounds([]),
 			iszooming: false,
 			zoomlevel: 8,
 
@@ -994,6 +995,9 @@ const VueMapCard = {
 			return { active: this.showtrack };
 		},
 
+		clsfitbounds() {
+			return { 'leaflet-disabled': !this.bounds.isValid() };
+		},
 		clsdrawmode() {
 			return { 
 				'active': this.mapmode === mm.draw,
@@ -1243,6 +1247,7 @@ const VueMapCard = {
 				return a.datetime ?? a.time < b.datetime ?? b.time ? -1 : +1;
 			})
 			this.buildphototrack();
+			this.updatebounds();
 		},
 		// produces reduced track polyline
 		buildphototrack() {
@@ -1289,16 +1294,27 @@ const VueMapCard = {
 						prev = p;
 						latlngs.push(p);
 					}
-					L.polyline(latlngs, { color: gpxcolors[ci] })
+					const layer = L.polyline(latlngs, { color: gpxcolors[ci] })
 						.bindPopup(`points <b>${latlngs.length}</b><br>route <b>${route.toFixed()}</b> m`)
 						.addTo(this.tracks);
 					this.tracknum++;
+					this.bounds.extend(layer.getBounds());
 				} catch (e) {
 					ajaxfail(e);
 				} finally {
 					eventHub.emit('ajax', -1);
 				}
 			})();
+		},
+		updatebounds() {
+			if (this.markers) {
+				this.bounds = this.markers.getBounds();
+			} else {
+				this.bounds = L.latLngBounds([]);
+			}
+			this.tracks.eachLayer(layer => {
+				this.bounds.extend(layer.getBounds());
+			});
 		},
 
 		onmapboxhybrid() {
@@ -1367,9 +1383,6 @@ const VueMapCard = {
 			this.markers.clearLayers();
 			this.addmarkers(gpslist);
 		},
-		onfullscreenchange() {
-			this.isfullscreen = isFullscreen();
-		},
 		onfullscreen() {
 			if (isFullscreen()) {
 				closeFullscreen();
@@ -1378,13 +1391,11 @@ const VueMapCard = {
 			}
 		},
 		onfitbounds() {
-			const bounds = this.markers.getBounds();
-			this.tracks.eachLayer(layer => {
-				bounds.extend(layer.getBounds());
-			})
-			this.map.flyToBounds(bounds, {
-				padding: [20, 20]
-			});
+			if (this.bounds.isValid()) {
+				this.map.flyToBounds(this.bounds, {
+					padding: [20, 20]
+				});
+			}
 		},
 		ondrawmode() {
 			if (this.mapmode === mm.draw) {
@@ -1392,7 +1403,6 @@ const VueMapCard = {
 			} else {
 				this.mapmode = mm.draw;
 			}
-			this.keepmap = true;
 		},
 		onremovemode() {
 			if (this.mapmode === mm.remove) {
@@ -1431,6 +1441,7 @@ const VueMapCard = {
 		this.map = map;
 
 		const resizeObserver = new ResizeObserver(entries => {
+			this.isfullscreen = isFullscreen();
 			// recreate content only if widget is not hidden
 			const size = entries[0].contentBoxSize[0].inlineSize;
 			if (size > 0) {
@@ -1475,6 +1486,19 @@ const VueMapCard = {
 			map.boxZoom.enable();
 			map.keyboard.enable();
 			if (map.tap) map.tap.enable();
+		};
+
+		const postmsg = () => {
+			const arg = { path: [] };
+			for (const layer of circles.getLayers()) {
+				arg.path.push({
+					lat: layer.getLatLng().lat,
+					lon: layer.getLatLng().lng,
+					radius: layer.getRadius(),
+				})
+			}
+			this.$root.rangesearch(arg);
+			this.keepmap = true;
 		};
 
 		const viewmode = () => {
@@ -1557,8 +1581,14 @@ const VueMapCard = {
 			};
 			const onmouseup = e => {
 				if (e.originalEvent.which === 1) {
-					layer = null;
-					draw = false;
+					if (draw) {
+						draw = false;
+						if (layer) {
+							layer.bindTooltip(`lat: ${centerll.lat.toFixed(6)},\nlon: ${centerll.lng.toFixed(6)},\nradius: ${layer.getRadius().toFixed()}`);
+							layer = null;
+							postmsg();
+						}
+					}
 				}
 			};
 			const onkeyup = e => {
@@ -1617,6 +1647,7 @@ const VueMapCard = {
 					});
 					layer.on('click', e => {
 						circles.removeLayer(layer);
+						postmsg();
 					});
 				}
 			};

@@ -293,7 +293,7 @@ const geticonpath = file => {
 		case FT.drv:
 			if (file.latency < 0) {
 				return { org: org.drive.offline, alt: alt.drive.offline };
-			} else if (file.latency < DS.yellow) {
+			} else if (!file.latency || file.latency < DS.yellow) {
 				return { org: org.drive.green, alt: alt.drive.green };
 			} else if (file.latency < DS.red) {
 				return { org: org.drive.yellow, alt: alt.drive.yellow };
@@ -767,13 +767,30 @@ const VueMainApp = {
 				hist.puid = PUID.home;
 			}
 			await this.fetchscanbreak() // stop previous folder scanning
-			if (CP[hist.puid]) {
+			if (CID[hist.puid]) {
 				await this.fetchcategory(hist);
 			} else {
 				await this.fetchfolder(hist);
 			}
 			this.fetchscanstart(); // fetch at backround
 			this.seturl();
+		},
+
+		async fetchrangesearch(arg) {
+			const response = await fetchajaxauth("POST", "/api/gps/range", arg);
+			traceajax(response);
+			if (!response.ok) {
+				throw new HttpError(response.status, response.data);
+			}
+
+			// current path & state
+			this.curscan = new Date(Date.now());
+			this.curpuid = PUID.map;
+			this.curpath = "";
+			this.shrname = "";
+			document.title = `hms - ${this.curbasename}`;
+
+			this.newfolder(response.data.list);
 		},
 
 		async fetchscanstart() {
@@ -1248,6 +1265,26 @@ const VueMainApp = {
 					ajaxfail(e);
 				}
 				eventHub.emit('select', null);
+			})();
+		},
+
+		rangesearch(arg) {
+			(async () => {
+				try {
+					await this.fetchscanbreak() // stop previous folder scanning
+					if (this.curpuid !== PUID.map) {
+						// open route and push history step
+						const hist = { aid: this.aid, puid: PUID.map };
+						await this.fetchrangesearch(arg);
+						this.pushhist(hist);
+					} else {
+						await this.fetchrangesearch(arg);
+					}
+					this.fetchscanstart(); // fetch at backround
+					this.seturl();
+				} catch (e) {
+					ajaxfail(e);
+				}
 			})();
 		},
 

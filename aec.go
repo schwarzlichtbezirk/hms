@@ -211,9 +211,6 @@ const (
 	AECedtdeldeny
 	AECedtdelnopath
 	AECedtdelremove
-
-	// gps/range
-	AECgpsrangenodata
 )
 
 // HTTP error messages

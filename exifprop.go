@@ -178,8 +178,8 @@ func (ep *ExifProp) Setup(x *exif.Exif) {
 		ep.thumb.Data = pic
 		ep.thumb.Mime = MimeJpeg
 	}
-	if lat, lng, err := x.LatLong(); err == nil {
-		ep.Latitude, ep.Longitude = lat, lng
+	if lat, lon, err := x.LatLong(); err == nil {
+		ep.Latitude, ep.Longitude = lat, lon
 	}
 	if t, err = x.Get(exif.GPSAltitude); err == nil {
 		ep.Altitude = ratfloat32(t)

@@ -95,6 +95,10 @@ type CfgAppSets struct {
 	MediaCacheMaxNum int `json:"media-cache-maxnum" yaml:"media-cache-maxnum" long:"mcmn" description:"Maximum items number in converted media files cache."`
 	// Expiration duration to keep opened iso-disk structures in cache from last access to it.
 	DiskCacheExpire time.Duration `json:"disk-cache-expire" yaml:"disk-cache-expire" long:"dce" description:"Expiration duration to keep opened iso-disk structures in cache from last access to it."`
+	// Maximum number of photos to get on default map state.
+	RangeSearchAny int `json:"range-search-any" yaml:"range-search-any" long:"rsa" description:"Maximum number of photos to get on default map state."`
+	// Limit of range search.
+	RangeSearchLimit int `json:"range-search-limit" yaml:"range-search-limit" long:"rsmn" description:"Limit of range search."`
 }
 
 // Config is common service settings.
@@ -141,6 +145,8 @@ var cfg = Config{ // inits default values:
 		PropCacheMaxNum:  32 * 1024,
 		MediaCacheMaxNum: 64,
 		DiskCacheExpire:  time.Duration(15) * time.Second,
+		RangeSearchAny:   20,
+		RangeSearchLimit: 100,
 	},
 }
 

@@ -668,7 +668,7 @@ func ctgrAPI(w http.ResponseWriter, r *http.Request) {
 	case PUIDtexts:
 		catprop(dircache.Category(FGtexts, 0.5))
 	case PUIDmap:
-		var n = 25
+		var n = cfg.RangeSearchAny
 		gpscache.Range(func(key interface{}, value interface{}) bool {
 			var puid = key.(Puid_t)
 			if fpath, ok := syspathcache.Path(puid); ok {
@@ -1418,9 +1418,8 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
-	if len(arg.Path) == 0 {
-		WriteError400(w, r, ErrNoData, AECgpsrangenodata)
-		return
+	if arg.Limit < 0 {
+		arg.Limit = cfg.RangeSearchLimit
 	}
 
 	gpscache.Range(func(key interface{}, value interface{}) bool {
@@ -1443,7 +1442,7 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 			}
 			break
 		}
-		return arg.Limit <= 0 || len(ret.List) < arg.Limit
+		return arg.Limit == 0 || len(ret.List) < arg.Limit
 	})
 
 	WriteOK(w, r, &ret)

@@ -164,7 +164,7 @@ func (ut unix_t) Time() time.Time {
 	return time.Unix(int64(ut/1000), int64(ut%1000)*1000000)
 }
 
-const ExifDate = "2006:01:02 15:04:05.999"
+const ExifDate = "2006-01-02 15:04:05.999"
 
 // MarshalYAML is YAML marshaler interface implementation.
 func (ut unix_t) MarshalYAML() (interface{}, error) {

@@ -1,3 +1,4 @@
+
 <div v-show="isvisible" class="card m-sm-2">
 	<div class="card-header bg-card d-flex flex-wrap align-items-center">
 		<div class="navbar-text flex-grow-1 py-0">
@@ -8,7 +9,7 @@
 				<div class="btn-group">
 					<button type="button" class="btn dropdown-toggle" v-bind:title="hintlandscape"
 						data-bs-toggle="dropdown" aria-expanded="false">
-						<i class="material-icons">map</i>
+						<span class="material-icons">map</span>
 					</button>
 					<div class="dropdown-menu dropdown-menu-end bg-card menu-scrollable">
 						<button class="dropdown-item" type="button" v-on:click="onmapboxhybrid"
@@ -42,21 +43,21 @@
 					</div>
 				</div>
 			</li>
-			<li><button class="btn" v-on:click="onphototrack" v-bind:class="clsphototrack"
-					title="show photo track"><span class="material-icons">show_chart</span></button></li>
-			<li><button class="btn" v-on:click="onmarkermode" v-bind:title="hintmarkermode"><i
-						class="material-icons">{{iconmarkermode}}</i></button></li>
+			<li><button class="btn" v-on:click="onphototrack" v-bind:class="clsphototrack" title="show photo track"><span
+						class="material-icons">show_chart</span></button></li>
+			<li><button class="btn" v-on:click="onmarkermode" v-bind:title="hintmarkermode"><span
+						class="material-icons">{{iconmarkermode}}</span></button></li>
 		</ul>
 	</div>
 	<div v-bind:id="'card'+iid" class="collapse show">
 		<div class="card-body">
-			<div ref="map" v-on:fullscreenchange="onfullscreenchange" class="photomap">
+			<div ref="map" class="photomap">
 				<div class="leaflet-top leaflet-right">
-					<div class="leaflet-bar leaflet-control">
+					<div class="leaflet-bar leaflet-control" v-on:click.stop v-on:dblclick.stop>
 						<a class="leaflet-control-fullscreen" role="button" title="Fullscreen mode" v-on:click="onfullscreen">
 							<span class="material-icons">{{iconscreen}}</span>
 						</a>
-						<a class="leaflet-control-fit" role="button" title="Fit to bounds" v-on:click="onfitbounds">
+						<a class="leaflet-control-fit" role="button" title="Fit to bounds" v-on:click="onfitbounds" v-bind:class="clsfitbounds">
 							<span class="material-icons">center_focus_strong</span>
 						</a>
 						<a class="leaflet-control-range" role="button" title="Search in circle" v-on:click="ondrawmode" v-bind:class="clsdrawmode">
