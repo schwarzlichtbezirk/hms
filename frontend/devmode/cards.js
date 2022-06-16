@@ -1425,13 +1425,13 @@ const VueMapCard = {
 
 		this.tiles = this.maketiles('mapbox-hybrid');
 		this.tracks = L.layerGroup();
-		const circles = L.layerGroup();
+		const mappaths = L.layerGroup();
 		const map = L.map(this.$refs.map, {
 			attributionControl: true,
 			zoomControl: false,
 			center: [44.576825, 33.830575],
 			zoom: this.zoomlevel,
-			layers: [this.tiles, this.tracks, circles],
+			layers: [this.tiles, this.tracks, mappaths],
 		});
 		this.phototrack = L.polyline([], { color: '#3CB371' }); // MediumSeaGreen
 		if (this.showtrack) {
@@ -1489,13 +1489,15 @@ const VueMapCard = {
 		};
 
 		const postmsg = () => {
-			const arg = { path: [] };
-			for (const layer of circles.getLayers()) {
-				arg.path.push({
-					lat: layer.getLatLng().lat,
-					lon: layer.getLatLng().lng,
+			const arg = { paths: [] };
+			for (const layer of mappaths.getLayers()) {
+				arg.paths.push({
+					shape: "circle",
 					radius: layer.getRadius(),
-				})
+					coord: [
+						{ lat: layer.getLatLng().lat, lon: layer.getLatLng().lng },
+					],
+				});
 			}
 			this.$root.rangesearch(arg);
 			this.keepmap = true;
@@ -1540,7 +1542,7 @@ const VueMapCard = {
 				} else {
 					draw = false;
 					if (layer) {
-						circles.removeLayer(layer);
+						mappaths.removeLayer(layer);
 						layer = null;
 					}
 				}
@@ -1568,13 +1570,13 @@ const VueMapCard = {
 							'mouseout': onmouseout,
 						};
 						layer.on(evmap);
-						circles.addLayer(layer);
+						mappaths.addLayer(layer);
 					} else {
 						layer.setRadius(radius);
 					}
 				} else {
 					if (layer) { // remove too small circular
-						circles.removeLayer(layer);
+						mappaths.removeLayer(layer);
 						layer = null;
 					}
 				}
@@ -1596,7 +1598,7 @@ const VueMapCard = {
 					e.originalEvent.preventDefault();
 					draw = false;
 					if (layer) {
-						circles.removeLayer(layer);
+						mappaths.removeLayer(layer);
 						layer = null;
 					}
 				}
@@ -1630,7 +1632,7 @@ const VueMapCard = {
 
 		const removemode = () => {
 			const setup = () => {
-				for (const layer of circles.getLayers()) {
+				for (const layer of mappaths.getLayers()) {
 					layer.on('mouseover', e => {
 						layer.setStyle({
 							color: 'red',
@@ -1646,13 +1648,13 @@ const VueMapCard = {
 						});
 					});
 					layer.on('click', e => {
-						circles.removeLayer(layer);
+						mappaths.removeLayer(layer);
 						postmsg();
 					});
 				}
 			};
 			const cancel = () => {
-				for (const layer of circles.getLayers()) {
+				for (const layer of mappaths.getLayers()) {
 					layer.off('mouseover mouseout click');
 				}
 			};

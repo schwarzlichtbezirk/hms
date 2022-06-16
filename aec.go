@@ -211,6 +211,12 @@ const (
 	AECedtdeldeny
 	AECedtdelnopath
 	AECedtdelremove
+
+	// gps/range
+	AECgpsrangeshpcirc
+	AECgpsrangeshppoly
+	AECgpsrangeshprect
+	AECgpsrangeshpbad
 )
 
 // HTTP error messages
@@ -234,4 +240,8 @@ var (
 	ErrNotCat    = errors.New("only categories can be accepted")
 	ErrNotPlay   = errors.New("file can not be read as playlist")
 	ErrFileOver  = errors.New("to many files with same names contains")
+	ErrShapeCirc = errors.New("circle must contains 1 coordinates point")
+	ErrShapePoly = errors.New("polygon must contains 3 coordinates points at least")
+	ErrShapeRect = errors.New("rectangle must contains 4 coordinates points")
+	ErrShapeBad  = errors.New("shape is not recognized")
 )

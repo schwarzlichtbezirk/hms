@@ -1357,8 +1357,6 @@ func edtdeleteAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	WriteOK(w, r, nil)
 }
 
-const rangepool = 4
-
 // Haversine uses formula to calculate the great-circle distance between
 // two points – that is, the shortest distance over the earth’s surface –
 // giving an ‘as-the-crow-flies’ distance between the points (ignoring
@@ -1381,20 +1379,35 @@ func Haversine(lat1, lon1, lat2, lon2 float64) float64 {
 	return d
 }
 
+type Point struct {
+	Latitude  float64 `json:"lat" yaml:"lat" xml:"lat,attr"`
+	Longitude float64 `json:"lon" yaml:"lon" xml:"lon,attr"`
+}
+
+type Shape string
+
+const (
+	Circle    Shape = "circle"
+	Polygon   Shape = "polygon"
+	Rectangle Shape = "rectangle"
+)
+
 // MapPath describes any map path that can contains a points.
-type MapPath interface {
-	Contains(lat, lon float64) bool
+type MapPath struct {
+	Shape  Shape   `json:"shape" yaml:"shape" xml:"shape"`
+	Eject  bool    `json:"eject" yaml:"eject" xml:"eject"`
+	Radius float64 `json:"radius,omitempty" yaml:"radius,omitempty" xml:"radius,omitempty"`
+	Coord  []Point `json:"coord" yaml:"coord,flow" xml:"coord>point"`
 }
 
-type Circle struct {
-	Latitude  float64 `json:"lat" yaml:"lat" xml:"lat"`
-	Longitude float64 `json:"lon" yaml:"lon" xml:"lon"`
-	Radius    float64 `json:"radius" yaml:"radius" xml:"radius"` // in meters
-}
-
-func (circle *Circle) Contains(lat, lon float64) bool {
-	var d = Haversine(circle.Latitude, circle.Longitude, lat, lon)
-	return d <= circle.Radius
+func (mp *MapPath) Contains(lat, lon float64) bool {
+	switch mp.Shape {
+	case Circle:
+		var d = Haversine(mp.Coord[0].Latitude, mp.Coord[0].Longitude, lat, lon)
+		return d <= mp.Radius
+	default:
+		panic(ErrShapeBad)
+	}
 }
 
 // APIHANDLER
@@ -1403,10 +1416,10 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
-		Path  []Circle `json:"path" yaml:"path" xml:"path>circle"`
-		Limit int      `json:"limit,omitempty" yaml:"limit,omitempty" xml:"limit,omitempty"`
-		Time1 unix_t   `json:"time1,omitempty" yaml:"time1,omitempty" xml:"time1,omitempty"`
-		Time2 unix_t   `json:"time2,omitempty" yaml:"time2,omitempty" xml:"time2,omitempty"`
+		Paths []MapPath `json:"paths" yaml:"paths" xml:"paths>path"`
+		Limit int       `json:"limit,omitempty" yaml:"limit,omitempty" xml:"limit,omitempty"`
+		Time1 unix_t    `json:"time1,omitempty" yaml:"time1,omitempty" xml:"time1,omitempty"`
+		Time2 unix_t    `json:"time2,omitempty" yaml:"time2,omitempty" xml:"time2,omitempty"`
 	}
 	var ret struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
@@ -1418,6 +1431,28 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
+	for _, mp := range arg.Paths {
+		switch mp.Shape {
+		case Circle:
+			if len(mp.Coord) != 1 {
+				WriteError400(w, r, ErrShapeCirc, AECgpsrangeshpcirc)
+				return
+			}
+		case Polygon:
+			if len(mp.Coord) < 3 {
+				WriteError400(w, r, ErrShapePoly, AECgpsrangeshppoly)
+				return
+			}
+		case Rectangle:
+			if len(mp.Coord) != 4 {
+				WriteError400(w, r, ErrShapeRect, AECgpsrangeshprect)
+				return
+			}
+		default:
+			WriteError400(w, r, ErrShapeBad, AECgpsrangeshpbad)
+			return
+		}
+	}
 	if arg.Limit < 0 {
 		arg.Limit = cfg.RangeSearchLimit
 	}
@@ -1425,8 +1460,9 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	gpscache.Range(func(key interface{}, value interface{}) bool {
 		var puid = key.(Puid_t)
 		var gps = value.(*GpsInfo)
-		for _, circle := range arg.Path {
-			if !circle.Contains(gps.Latitude, gps.Longitude) {
+		var inc bool
+		for _, mp := range arg.Paths {
+			if !mp.Contains(gps.Latitude, gps.Longitude) {
 				continue
 			}
 			if arg.Time1 > 0 && gps.DateTime < arg.Time1 {
@@ -1435,12 +1471,14 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 			if arg.Time2 > 0 && gps.DateTime > arg.Time2 {
 				continue
 			}
+			inc = !mp.Eject
+		}
+		if inc {
 			if fpath, ok := syspathcache.Path(puid); ok {
 				if prop, err := propcache.Get(fpath); err == nil {
 					ret.List = append(ret.List, prop.(Pather))
 				}
 			}
-			break
 		}
 		return arg.Limit == 0 || len(ret.List) < arg.Limit
 	})
