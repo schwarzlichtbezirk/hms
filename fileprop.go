@@ -314,6 +314,8 @@ type Pather interface {
 	PUID() Puid_t // path unique ID encoded to hex-base32
 	MTmb() Mime_t // thumbnail MIME type, -1 - can not make thumbnail; 0 - not cached; >=1 - cached
 	SetTmb(Mime_t)
+	Tile(int) (Mime_t, bool) // tile MIME type, -1 - can not make thumbnail; 0 - not cached; >=1 - cached
+	SetTile(int, Mime_t) bool
 }
 
 // PathProp is any path base properties.
