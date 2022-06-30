@@ -270,8 +270,7 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, r, http.StatusNotFound, err, AECthumbnoprop)
 		return
 	}
-	var fp = prop.(Pather)
-	if fp.Type() != FTfile {
+	if prop.(Pather).Type() != FTfile {
 		WriteError(w, r, http.StatusUnsupportedMediaType, ErrNotFile, AECthumbnofile)
 		return
 	}
@@ -283,7 +282,7 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var md *MediaData
-	if md, err = FindTmb(fp, syspath); err != nil {
+	if md, err = FindTmb(prop, syspath); err != nil {
 		WriteError(w, r, http.StatusNotFound, err, AECthumbabsent)
 		return
 	}
@@ -655,7 +654,7 @@ func ctgrAPI(w http.ResponseWriter, r *http.Request) {
 	case PUIDshares:
 		ret.List = prf.ScanShares()
 	case PUIDmedia:
-		catprop(dircache.Categories([]int{FGvideo, FGaudio, FGimage}, 0.5))
+		catprop(dircache.Categories([]FG_t{FGvideo, FGaudio, FGimage}, 0.5))
 	case PUIDvideo:
 		catprop(dircache.Category(FGvideo, 0.5))
 	case PUIDaudio:

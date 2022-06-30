@@ -192,7 +192,7 @@ func (c *DirCache) Set(puid Puid_t, dp DirProp) {
 
 // Category returns PUIDs list of directories where number
 // of files of given category is more then given percent.
-func (c *DirCache) Category(ctgr int, percent float64) (ret []Puid_t) {
+func (c *DirCache) Category(ctgr FG_t, percent float64) (ret []Puid_t) {
 	c.mux.RLock()
 	defer c.mux.RUnlock()
 	for puid, dp := range c.keydir {
@@ -209,7 +209,7 @@ func (c *DirCache) Category(ctgr int, percent float64) (ret []Puid_t) {
 
 // Categories return PUIDs list of directories where number
 // of files of any given categories is more then given percent.
-func (c *DirCache) Categories(cats []int, percent float64) (ret []Puid_t) {
+func (c *DirCache) Categories(cats []FG_t, percent float64) (ret []Puid_t) {
 	c.mux.RLock()
 	defer c.mux.RUnlock()
 	for puid, dp := range c.keydir {
@@ -257,12 +257,9 @@ func initcaches() {
 		LoaderFunc(func(key interface{}) (ret interface{}, err error) {
 			var syspath = key.(string)
 			if puid, ok := CatPathKey[syspath]; ok {
-				var fk FileKit
-				fk.NameVal = CatNames[puid]
-				fk.TypeVal = FTctgr
-				fk.PUIDVal = puid
-				fk.SetTmb(MimeDis)
-				ret = &fk
+				var ck CatKit
+				ck.Setup(puid)
+				ret = &ck
 				return
 			}
 			var fi fs.FileInfo
@@ -292,7 +289,7 @@ func initcaches() {
 				return // can not get properties
 			}
 			var fp = prop.(Pather)
-			if fp.Type() < 0 {
+			if fp.Type() != FTfile {
 				err = ErrNotFile
 				return
 			}
@@ -343,7 +340,7 @@ func initcaches() {
 				return // can not get properties
 			}
 			var fp = prop.(Pather)
-			if fp.Type() < 0 {
+			if fp.Type() != FTfile {
 				err = ErrNotFile
 				return
 			}
@@ -475,7 +472,7 @@ func GetCachedTile(syspath string, wdh, hgt int) (md *MediaData, err error) {
 		return // can not get properties
 	}
 	var fp = prop.(Pather)
-	if fp.Type() < 0 {
+	if fp.Type() != FTfile {
 		err = ErrNotFile
 		return
 	}

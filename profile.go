@@ -269,7 +269,7 @@ func (prf *Profile) UpdateShares() {
 	for _, shr := range prf.Shares {
 		var syspath = shr
 		if prop, err := propcache.Get(syspath); err == nil {
-			var puid = prop.(Pather).PUID()
+			var puid = prop.(Puider).PUID()
 			prf.sharepuid[syspath] = puid
 			prf.puidshare[puid] = syspath
 			Log.Infof("id%d: shared '%s' as %s", prf.ID, syspath, puid)

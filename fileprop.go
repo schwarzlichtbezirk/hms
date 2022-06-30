@@ -1,41 +1,43 @@
 package hms
 
 import (
-	"bytes"
-	"io"
 	"io/fs"
 	"os"
 	"path"
 	"strings"
 	"time"
-
-	"github.com/dhowden/tag"
 )
 
-// File types
+// FT_t is enum type for properties file types.
+type FT_t int
+
+// File types.
 const (
-	FTfile = 0
-	FTdir  = 1
-	FTdrv  = 2
-	FTctgr = 3
+	FTfile FT_t = 0
+	FTdir  FT_t = 1
+	FTdrv  FT_t = 2
+	FTctgr FT_t = 3
 )
 
-// File groups
+// FG_t is enum type for file groups.
+type FG_t int
+
+// File groups.
 const (
-	FGother = 0
-	FGvideo = 1
-	FGaudio = 2
-	FGimage = 3
-	FGbooks = 4
-	FGtexts = 5
-	FGpacks = 6
-	FGdir   = 7
+	FGother FG_t = 0
+	FGvideo FG_t = 1
+	FGaudio FG_t = 2
+	FGimage FG_t = 3
+	FGbooks FG_t = 4
+	FGtexts FG_t = 5
+	FGpacks FG_t = 6
+	FGdir   FG_t = 7
 )
 
-// FGnum is count of file groups
+// FGnum is count of file groups.
 const FGnum = 8
 
-var extgrp = map[string]int{
+var extgrp = map[string]FG_t{
 	// Video
 	".avi":  FGvideo,
 	".mpe":  FGvideo,
@@ -233,7 +235,7 @@ func GetFileExt(fname string) string {
 }
 
 // GetFileGroup returns file group integer value for given file name by it's extension.
-func GetFileGroup(fpath string) int {
+func GetFileGroup(fpath string) FG_t {
 	return extgrp[GetFileExt(fpath)]
 }
 
@@ -308,20 +310,15 @@ func IsTypePlaylist(ext string) bool {
 // Pather is path properties interface.
 type Pather interface {
 	Name() string // string identifier
-	Type() int    // type identifier
+	Type() FT_t   // type identifier
 	Size() int64  // size in bytes
 	Time() unix_t // UNIX time in milliseconds
-	PUID() Puid_t // path unique ID encoded to hex-base32
-	MTmb() Mime_t // thumbnail MIME type, -1 - can not make thumbnail; 0 - not cached; >=1 - cached
-	SetTmb(Mime_t)
-	Tile(int) (Mime_t, bool) // tile MIME type, -1 - can not make thumbnail; 0 - not cached; >=1 - cached
-	SetTile(int, Mime_t) bool
 }
 
 // PathProp is any path base properties.
 type PathProp struct {
 	NameVal string `json:"name,omitempty" yaml:"name,omitempty" xml:"name,omitempty"`
-	TypeVal int    `json:"type,omitempty" yaml:"type,omitempty" xml:"type,omitempty"`
+	TypeVal FT_t   `json:"type,omitempty" yaml:"type,omitempty" xml:"type,omitempty"`
 }
 
 // Name is file name with extension without path.
@@ -330,7 +327,7 @@ func (pp *PathProp) Name() string {
 }
 
 // Type is enumerated file type.
-func (pp *PathProp) Type() int {
+func (pp *PathProp) Type() FT_t {
 	return pp.TypeVal
 }
 
@@ -372,12 +369,14 @@ func (fp *FileProp) Time() unix_t {
 // FileKit is common files properties kit.
 type FileKit struct {
 	FileProp `yaml:",inline"`
+	PuidProp `yaml:",inline"`
 	TmbProp  `yaml:",inline"`
 }
 
 // Setup calls nested structures setups.
 func (fk *FileKit) Setup(syspath string, fi fs.FileInfo) {
 	fk.FileProp.Setup(fi)
+	fk.PuidProp.Setup(syspath)
 	fk.TmbProp.Setup(syspath)
 }
 
@@ -424,7 +423,7 @@ type DirProp struct {
 // DirKit is directory properties kit.
 type DirKit struct {
 	PathProp `yaml:",inline"`
-	TmbProp  `yaml:",inline"`
+	PuidProp `yaml:",inline"`
 	DirProp  `yaml:",inline"`
 }
 
@@ -432,8 +431,7 @@ type DirKit struct {
 func (dk *DirKit) Setup(syspath string) {
 	dk.NameVal = PathBase(syspath)
 	dk.TypeVal = FTdir
-	dk.PUIDVal = syspathcache.Cache(syspath)
-	dk.SetTmb(MimeDis)
+	dk.PuidProp.Setup(syspath)
 	if dp, ok := dircache.Get(dk.PUIDVal); ok {
 		dk.DirProp = dp
 	}
@@ -442,7 +440,7 @@ func (dk *DirKit) Setup(syspath string) {
 // DriveKit is drive properties kit.
 type DriveKit struct {
 	PathProp `yaml:",inline"`
-	TmbProp  `yaml:",inline"`
+	PuidProp `yaml:",inline"`
 	Latency  int `json:"latency,omitempty" yaml:"latency,omitempty" xml:"latency,omitempty"` // drive connection latency in ms, or -1 on error
 }
 
@@ -450,8 +448,7 @@ type DriveKit struct {
 func (dk *DriveKit) Setup(syspath string) {
 	dk.NameVal = PathBase(syspath)
 	dk.TypeVal = FTdrv
-	dk.PUIDVal = syspathcache.Cache(syspath)
-	dk.SetTmb(MimeDis)
+	dk.PuidProp.Setup(syspath)
 }
 
 // Scan drive to check its latency.
@@ -469,130 +466,17 @@ func (dk *DriveKit) Scan(syspath string) error {
 	return err
 }
 
-// TagEnum is descriptor for discs and tracks.
-type TagEnum struct {
-	Number int `json:"number,omitempty" yaml:"number,omitempty" xml:"number,omitempty"`
-	Total  int `json:"total,omitempty" yaml:"total,omitempty" xml:"total,omitempty"`
+// CatKit is category properties kit.
+type CatKit struct {
+	PathProp `yaml:",inline"`
+	PuidProp `yaml:",inline"`
 }
 
-// IsZero used to check whether an object is zero to determine whether
-// it should be omitted when marshaling to yaml.
-func (te *TagEnum) IsZero() bool {
-	return te.Number == 0 && te.Total == 0
-}
-
-// TagProp is Music file tags properties chunk.
-type TagProp struct {
-	Title    string  `json:"title,omitempty" yaml:"title,omitempty" xml:"title,omitempty"`
-	Album    string  `json:"album,omitempty" yaml:"album,omitempty" xml:"album,omitempty"`
-	Artist   string  `json:"artist,omitempty" yaml:"artist,omitempty" xml:"artist,omitempty"`
-	Composer string  `json:"composer,omitempty" yaml:"composer,omitempty" xml:"composer,omitempty"`
-	Genre    string  `json:"genre,omitempty" yaml:"genre,omitempty" xml:"genre,omitempty"`
-	Year     int     `json:"year,omitempty" yaml:"year,omitempty" xml:"year,omitempty"`
-	Track    TagEnum `json:"track,omitempty" yaml:"track,flow,omitempty" xml:"track,omitempty"`
-	Disc     TagEnum `json:"disc,omitempty" yaml:"disc,flow,omitempty" xml:"disc,omitempty"`
-	Lyrics   string  `json:"lyrics,omitempty" yaml:"lyrics,omitempty" xml:"lyrics,omitempty"`
-	Comment  string  `json:"comment,omitempty" yaml:"comment,omitempty" xml:"comment,omitempty"`
-}
-
-// Setup fills fields from tags metadata.
-func (tp *TagProp) Setup(m tag.Metadata) {
-	tp.Title = m.Title()
-	tp.Album = m.Album()
-	tp.Artist = m.Artist()
-	tp.Composer = m.Composer()
-	tp.Genre = m.Genre()
-	tp.Year = m.Year()
-	tp.Track.Number, tp.Track.Total = m.Track()
-	tp.Disc.Number, tp.Disc.Total = m.Disc()
-	tp.Lyrics = m.Lyrics()
-	tp.Comment = m.Comment()
-}
-
-// TagKit is music file tags properties kit.
-type TagKit struct {
-	FileProp `yaml:",inline"`
-	TmbProp  `yaml:",inline"`
-	TagProp  `yaml:",inline"`
-}
-
-// Setup fills fields with given path.
-// Puts into the cache nested at the tags thumbnail if it present.
-func (tk *TagKit) Setup(syspath string, fi fs.FileInfo) {
-	tk.FileProp.Setup(fi)
-
-	if file, err := OpenFile(syspath); err == nil {
-		defer file.Close()
-		if m, err := tag.ReadFrom(file); err == nil {
-			tk.TagProp.Setup(m)
-			if pic := m.Picture(); pic != nil {
-				if cfg.FitEmbeddedTmb {
-					var md *MediaData
-					if md, err = GetCachedEmbThumb(bytes.NewReader(pic.Data), syspath); err == nil {
-						tk.PUIDVal = syspathcache.Cache(syspath)
-						tk.SetTmb(md.Mime)
-						return
-					}
-				} else {
-					tk.PUIDVal = syspathcache.Cache(syspath)
-					tk.SetTmb(GetMimeVal(pic.MIMEType))
-					return
-				}
-			}
-		}
-	}
-	tk.PUIDVal = syspathcache.Cache(syspath)
-	tk.SetTmb(MimeDis)
-}
-
-// GetTagTmb extracts embedded thumbnail from image file.
-func GetTagTmb(syspath string) (md *MediaData, err error) {
-	var file io.ReadSeekCloser
-	if file, err = OpenFile(syspath); err != nil {
-		return // can not open file
-	}
-	defer file.Close()
-
-	var m tag.Metadata
-	if m, err = tag.ReadFrom(file); err != nil {
-		return
-	}
-	var pic *tag.Picture
-	if pic = m.Picture(); pic == nil {
-		err = ErrNotThumb
-		return
-	}
-	if cfg.FitEmbeddedTmb {
-		return GetCachedEmbThumb(bytes.NewReader(pic.Data), syspath)
-	}
-	md = &MediaData{
-		Data: pic.Data,
-		Mime: GetMimeVal(pic.MIMEType),
-	}
-	return
-}
-
-// MakeProp is file properties factory.
-func MakeProp(syspath string, fi fs.FileInfo) Pather {
-	if fi.IsDir() {
-		var dk DirKit
-		dk.Setup(syspath)
-		return &dk
-	}
-	var ext = GetFileExt(syspath)
-	if IsTypeID3(ext) {
-		var tk TagKit
-		tk.Setup(syspath, fi)
-		return &tk
-	} else if IsTypeEXIF(ext) {
-		var ek ExifKit
-		ek.Setup(syspath, fi)
-		return &ek
-	} else {
-		var fk FileKit
-		fk.Setup(syspath, fi)
-		return &fk
-	}
+// Setup fills fields with given path. Do not looks for share.
+func (ck *CatKit) Setup(puid Puid_t) {
+	ck.NameVal = CatNames[puid]
+	ck.TypeVal = FTctgr
+	ck.PUIDVal = puid
 }
 
 // The End.

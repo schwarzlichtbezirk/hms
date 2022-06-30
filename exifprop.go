@@ -198,6 +198,7 @@ func (ep *ExifProp) Setup(x *exif.Exif) {
 // ExifKit is file with EXIF tags.
 type ExifKit struct {
 	FileProp `yaml:",inline"`
+	PuidProp `yaml:",inline"`
 	TmbProp  `yaml:",inline"`
 	ExifProp `yaml:",inline"`
 }
@@ -205,6 +206,7 @@ type ExifKit struct {
 // Setup fills fields with given path.
 func (ek *ExifKit) Setup(syspath string, fi fs.FileInfo) {
 	ek.FileProp.Setup(fi)
+	ek.PuidProp.Setup(syspath)
 
 	if file, err := OpenFile(syspath); err == nil {
 		defer file.Close()
@@ -221,8 +223,7 @@ func (ek *ExifKit) Setup(syspath string, fi fs.FileInfo) {
 				}()
 			}
 			if cfg.UseEmbeddedTmb && ek.ThumbJpegLen > 0 {
-				ek.PUIDVal = syspathcache.Cache(syspath)
-				ek.SetTmb(MimeJpeg)
+				ek.MTmbVal = MimeJpeg
 				return
 			}
 		}

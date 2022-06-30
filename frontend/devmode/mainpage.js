@@ -812,7 +812,7 @@ const VueMainApp = {
 			while (curpuid === this.puid && this.uncached.length) {
 				// check cached state loop
 				const response = await fetchajaxauth("POST", "/api/tmb/chk", {
-					puids: this.uncached.map(file => file.puid)
+					list: this.uncached.map(file => file.puid)
 				});
 				traceajax(response);
 				if (!response.ok) {

@@ -85,6 +85,25 @@ type MediaData struct {
 	Mime Mime_t
 }
 
+// Puider helps to get PUID from some properties kit.
+type Puider interface {
+	PUID() Puid_t // path unique ID encoded to hex-base32
+}
+
+// PuidProp encapsulated path unique ID value for some properties kit.
+type PuidProp struct {
+	PUIDVal Puid_t `json:"puid" yaml:"puid" xml:"puid"`
+}
+
+func (pp *PuidProp) Setup(syspath string) {
+	pp.PUIDVal = syspathcache.Cache(syspath)
+}
+
+// PUID returns thumbnail key, it's full system path unique ID.
+func (pp *PuidProp) PUID() Puid_t {
+	return pp.PUIDVal
+}
+
 // Tiles multipliers:
 //  576px: 2,  4,  6,  8, 10, 12
 //  768px: 3,  6,  9, 12, 15, 18
@@ -99,7 +118,6 @@ type MediaData struct {
 
 // TmbProp is thumbnails properties.
 type TmbProp struct {
-	PUIDVal Puid_t `json:"puid" yaml:"puid" xml:"puid"`
 	MTmbVal Mime_t `json:"mtmb" yaml:"mtmb" xml:"mtmb"`
 	TM02Val Mime_t `json:"tm02,omitempty" yaml:"tm02,omitempty" xml:"tm02,omitempty"`
 	TM03Val Mime_t `json:"tm03,omitempty" yaml:"tm03,omitempty" xml:"tm03,omitempty"`
@@ -120,21 +138,50 @@ type TmbProp struct {
 
 var tmset = [...]int{2, 3, 4, 6, 8, 9, 10, 12, 15, 16, 18, 20, 24, 30, 36}
 
+var tmbdis = TmbProp{
+	MTmbVal: MimeDis,
+	TM02Val: MimeDis,
+	TM03Val: MimeDis,
+	TM04Val: MimeDis,
+	TM06Val: MimeDis,
+	TM08Val: MimeDis,
+	TM10Val: MimeDis,
+	TM12Val: MimeDis,
+	TM15Val: MimeDis,
+	TM16Val: MimeDis,
+	TM18Val: MimeDis,
+	TM20Val: MimeDis,
+	TM24Val: MimeDis,
+	TM30Val: MimeDis,
+	TM36Val: MimeDis,
+}
+
+// Thumber helps to cast some properties kit to TmbProp struct.
+type Thumber interface {
+	Tmb() *TmbProp           // returns self pointers for embedded structures
+	Tile(int) (Mime_t, bool) // tile MIME type, -1 - can not make thumbnail; 0 - not cached; >=1 - cached
+	SetTile(int, Mime_t) bool
+}
+
+// Tmb is Thumber interface implementation.
+func (tp *TmbProp) Tmb() *TmbProp {
+	return tp
+}
+
 // Setup generates PUID (path unique identifier) and updates cached state.
 func (tp *TmbProp) Setup(syspath string) {
-	tp.PUIDVal = syspathcache.Cache(syspath)
 	if ts, ok := thumbpkg.Tagset(syspath); ok {
 		if str, ok := ts.String(wpk.TIDmime); ok {
 			if strings.HasPrefix(str, "image/") {
-				tp.SetTmb(GetMimeVal(str))
+				tp.MTmbVal = GetMimeVal(str)
 			} else {
-				tp.SetTmb(MimeDis)
+				tp.MTmbVal = MimeDis
 			}
 		} else {
-			tp.SetTmb(MimeUnk)
+			tp.MTmbVal = MimeUnk
 		}
 	} else {
-		tp.SetTmb(MimeNil)
+		tp.MTmbVal = MimeNil
 	}
 	for _, tm := range tmset {
 		var tilepath = fmt.Sprintf("%s?%dx%d", syspath, tm*24, tm*18)
@@ -152,21 +199,6 @@ func (tp *TmbProp) Setup(syspath string) {
 			tp.SetTile(tm, MimeNil)
 		}
 	}
-}
-
-// PUID returns thumbnail key, it's full system path unique ID.
-func (tp *TmbProp) PUID() Puid_t {
-	return tp.PUIDVal
-}
-
-// MTmb returns thumbnail MIME type, if thumbnail is present.
-func (tp *TmbProp) MTmb() Mime_t {
-	return tp.MTmbVal
-}
-
-// SetTmb updates thumbnail state to given value.
-func (tp *TmbProp) SetTmb(mime Mime_t) {
-	tp.MTmbVal = mime
 }
 
 // Tile returns image MIME type with given tile multiplier.
@@ -250,7 +282,7 @@ func (tp *TmbProp) SetTile(tm int, mime Mime_t) (ok bool) {
 }
 
 // FindTmb finds thumbnail in embedded file tags, or build it if it possible.
-func FindTmb(prop Pather, syspath string) (md *MediaData, err error) {
+func FindTmb(prop interface{}, syspath string) (md *MediaData, err error) {
 	// try to extract from EXIF
 	var orientation = OrientNormal
 	if ek, ok := prop.(*ExifKit); ok { // skip non-EXIF properties
@@ -269,12 +301,12 @@ func FindTmb(prop Pather, syspath string) (md *MediaData, err error) {
 	}
 
 	// check all others are images
-	if GetFileGroup(prop.Name()) != FGimage {
+	if GetFileGroup(prop.(Pather).Name()) != FGimage {
 		err = ErrNotImg
 		return // file is not image
 	}
 
-	if prop.Size() > cfg.ThumbFileMaxSize {
+	if prop.(Pather).Size() > cfg.ThumbFileMaxSize {
 		err = ErrTooBig
 		return // file is too big
 	}
@@ -398,16 +430,19 @@ func (fpath ThumbPath) Cache() {
 	if prop, err = propcache.Get(string(fpath)); err != nil {
 		return // can not get properties
 	}
-	var fp = prop.(Pather)
-	if fp.MTmb() != MimeNil {
-		return // thumbnail already scanned
+	if tmb, ok := prop.(Thumber); ok {
+		var tp = tmb.Tmb()
+		if tp.MTmbVal != MimeNil {
+			return // thumbnail already scanned
+		}
+
+		var md *MediaData
+		if md, err = FindTmb(prop, string(fpath)); err != nil {
+			tp.MTmbVal = MimeDis
+			return
+		}
+		tp.MTmbVal = md.Mime
 	}
-	var md *MediaData
-	if md, err = FindTmb(fp, string(fpath)); err != nil {
-		fp.SetTmb(MimeDis)
-		return
-	}
-	fp.SetTmb(md.Mime)
 }
 
 // TilePath is tile path type for cache processing.
@@ -418,23 +453,25 @@ type TilePath struct {
 }
 
 // Cache is Cacher implementation for TilePath type.
-func (tp TilePath) Cache() {
+func (tile TilePath) Cache() {
 	var err error
 	var prop interface{}
-	if prop, err = propcache.Get(tp.Path); err != nil {
+	if prop, err = propcache.Get(tile.Path); err != nil {
 		return // can not get properties
 	}
-	var fp = prop.(Pather)
-	var tm = tp.Wdh / 24
-	if mime, ok := fp.Tile(tm); ok && mime != MimeNil {
-		return // thumbnail already scanned
+	if tmb, ok := prop.(Thumber); ok {
+		var tp = tmb.Tmb()
+		var tm = tile.Wdh / 24
+		if mime, ok := tp.Tile(tm); ok && mime != MimeNil {
+			return // thumbnail already scanned
+		}
+		var md *MediaData
+		if md, err = GetCachedTile(tile.Path, tile.Wdh, tile.Hgt); err != nil {
+			tp.SetTile(tm, MimeDis)
+			return
+		}
+		tp.SetTile(tm, md.Mime)
 	}
-	var md *MediaData
-	if md, err = GetCachedTile(tp.Path, tp.Wdh, tp.Hgt); err != nil {
-		fp.SetTile(tm, MimeDis)
-		return
-	}
-	fp.SetTile(tm, md.Mime)
 }
 
 // ImgScanner is singleton for thumbnails producing
@@ -565,36 +602,46 @@ func (s *scanner) RemoveTile(syspath string, tm int) {
 
 // APIHANDLER
 func tmbchkAPI(w http.ResponseWriter, r *http.Request) {
+	type TmbKit struct {
+		PuidProp `yaml:",inline"`
+		TmbProp  `yaml:",inline"`
+	}
 	var err error
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
-		Puids []Puid_t `json:"puids" yaml:"puids" xml:"list>puid"`
+		List []Puid_t `json:"list" yaml:"list" xml:"list>puid"`
 	}
 	var ret struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
 
-		Tmbs []TmbProp `json:"tmbs" yaml:"tmbs" xml:"list>tmb"`
+		Tmbs []TmbKit `json:"tmbs" yaml:"tmbs" xml:"list>tmb"`
 	}
 
 	// get arguments
 	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
-	if len(arg.Puids) == 0 {
+	if len(arg.List) == 0 {
 		WriteError400(w, r, ErrNoData, AECtmbchknodata)
 		return
 	}
 
-	for _, puid := range arg.Puids {
+	for _, puid := range arg.List {
 		if syspath, ok := syspathcache.Path(puid); ok {
+			var tk TmbKit
+			tk.PUIDVal = puid
 			if prop, err := propcache.Get(syspath); err == nil {
-				var tmb = TmbProp{
-					PUIDVal: puid,
-					MTmbVal: prop.(Pather).MTmb(),
+				if tmb, ok := prop.(Thumber); ok {
+					var tp = tmb.Tmb()
+					tk.TmbProp = *tp
+				} else {
+					tk.TmbProp = tmbdis
 				}
-				ret.Tmbs = append(ret.Tmbs, tmb)
+			} else {
+				tk.TmbProp = tmbdis
 			}
+			ret.Tmbs = append(ret.Tmbs, tk)
 		}
 	}
 
