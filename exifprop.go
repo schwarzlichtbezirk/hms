@@ -222,13 +222,12 @@ func (ek *ExifKit) Setup(syspath string, fi fs.FileInfo) {
 					})
 				}()
 			}
-			if cfg.UseEmbeddedTmb && ek.ThumbJpegLen > 0 {
-				ek.MTmbVal = MimeJpeg
-				return
-			}
 		}
 	}
 	ek.TmbProp.Setup(syspath)
+	if cfg.UseEmbeddedTmb && ek.ThumbJpegLen > 0 {
+		ek.MTmbVal = MimeJpeg
+	}
 }
 
 func exifparsers() {

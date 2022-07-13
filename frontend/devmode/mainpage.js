@@ -798,9 +798,9 @@ const VueMainApp = {
 				return;
 			}
 
-			const response = await fetchjsonauth("POST", "/api/tmb/scnstart", {
+			const response = await fetchjsonauth("POST", "/api/tile/scnstart", {
 				aid: this.aid,
-				list: this.uncached.map(file => file.puid)
+				list: this.uncached.map(file => ({ puid: file.puid })),
 			});
 			traceajax(response);
 			if (!response.ok) {
@@ -811,7 +811,7 @@ const VueMainApp = {
 			const curpuid = this.puid;
 			while (curpuid === this.puid && this.uncached.length) {
 				// check cached state loop
-				const response = await fetchajaxauth("POST", "/api/tmb/chk", {
+				const response = await fetchajaxauth("POST", "/api/tile/chk", {
 					list: this.uncached.map(file => file.puid)
 				});
 				traceajax(response);
@@ -846,9 +846,9 @@ const VueMainApp = {
 				return;
 			}
 
-			const response = await fetchjsonauth("POST", "/api/tmb/scnbreak", {
+			const response = await fetchjsonauth("POST", "/api/tile/scnbreak", {
 				aid: this.aid,
-				list: this.uncached.map(file => file.puid)
+				list: this.uncached.map(file => ({ puid: file.puid })),
 			});
 			traceajax(response);
 			if (!response.ok) {

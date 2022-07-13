@@ -119,48 +119,74 @@ func (pp *PuidProp) PUID() Puid_t {
 // TmbProp is thumbnails properties.
 type TmbProp struct {
 	MTmbVal Mime_t `json:"mtmb" yaml:"mtmb" xml:"mtmb"`
-	TM02Val Mime_t `json:"tm02,omitempty" yaml:"tm02,omitempty" xml:"tm02,omitempty"`
-	TM03Val Mime_t `json:"tm03,omitempty" yaml:"tm03,omitempty" xml:"tm03,omitempty"`
-	TM04Val Mime_t `json:"tm04,omitempty" yaml:"tm04,omitempty" xml:"tm04,omitempty"`
-	TM06Val Mime_t `json:"tm06,omitempty" yaml:"tm06,omitempty" xml:"tm06,omitempty"`
-	TM08Val Mime_t `json:"tm08,omitempty" yaml:"tm08,omitempty" xml:"tm08,omitempty"`
-	TM09Val Mime_t `json:"tm09,omitempty" yaml:"tm09,omitempty" xml:"tm09,omitempty"`
-	TM10Val Mime_t `json:"tm10,omitempty" yaml:"tm10,omitempty" xml:"tm10,omitempty"`
-	TM12Val Mime_t `json:"tm12,omitempty" yaml:"tm12,omitempty" xml:"tm12,omitempty"`
-	TM15Val Mime_t `json:"tm15,omitempty" yaml:"tm15,omitempty" xml:"tm15,omitempty"`
-	TM16Val Mime_t `json:"tm16,omitempty" yaml:"tm16,omitempty" xml:"tm16,omitempty"`
-	TM18Val Mime_t `json:"tm18,omitempty" yaml:"tm18,omitempty" xml:"tm18,omitempty"`
-	TM20Val Mime_t `json:"tm20,omitempty" yaml:"tm20,omitempty" xml:"tm20,omitempty"`
-	TM24Val Mime_t `json:"tm24,omitempty" yaml:"tm24,omitempty" xml:"tm24,omitempty"`
-	TM30Val Mime_t `json:"tm30,omitempty" yaml:"tm30,omitempty" xml:"tm30,omitempty"`
-	TM36Val Mime_t `json:"tm36,omitempty" yaml:"tm36,omitempty" xml:"tm36,omitempty"`
+	MT02Val Mime_t `json:"mt02,omitempty" yaml:"mt02,omitempty" xml:"mt02,omitempty"`
+	MT03Val Mime_t `json:"mt03,omitempty" yaml:"mt03,omitempty" xml:"mt03,omitempty"`
+	MT04Val Mime_t `json:"mt04,omitempty" yaml:"mt04,omitempty" xml:"mt04,omitempty"`
+	MT06Val Mime_t `json:"mt06,omitempty" yaml:"mt06,omitempty" xml:"mt06,omitempty"`
+	MT08Val Mime_t `json:"mt08,omitempty" yaml:"mt08,omitempty" xml:"mt08,omitempty"`
+	MT09Val Mime_t `json:"mt09,omitempty" yaml:"mt09,omitempty" xml:"mt09,omitempty"`
+	MT10Val Mime_t `json:"mt10,omitempty" yaml:"mt10,omitempty" xml:"mt10,omitempty"`
+	MT12Val Mime_t `json:"mt12,omitempty" yaml:"mt12,omitempty" xml:"mt12,omitempty"`
+	MT15Val Mime_t `json:"mt15,omitempty" yaml:"mt15,omitempty" xml:"mt15,omitempty"`
+	MT16Val Mime_t `json:"mt16,omitempty" yaml:"mt16,omitempty" xml:"mt16,omitempty"`
+	MT18Val Mime_t `json:"mt18,omitempty" yaml:"mt18,omitempty" xml:"mt18,omitempty"`
+	MT20Val Mime_t `json:"mt20,omitempty" yaml:"mt20,omitempty" xml:"mt20,omitempty"`
+	MT24Val Mime_t `json:"mt24,omitempty" yaml:"mt24,omitempty" xml:"mt24,omitempty"`
+	MT30Val Mime_t `json:"mt30,omitempty" yaml:"mt30,omitempty" xml:"mt30,omitempty"`
+	MT36Val Mime_t `json:"mt36,omitempty" yaml:"mt36,omitempty" xml:"mt36,omitempty"`
 }
 
-var tmset = [...]int{2, 3, 4, 6, 8, 9, 10, 12, 15, 16, 18, 20, 24, 30, 36}
+const (
+	htcell = 24 // horizontal tile cell length
+	vtcell = 18 // vertical tile cell length
+)
+
+type TM_t int
+
+const (
+	tm0  TM_t = 0
+	tm2  TM_t = 2
+	tm3  TM_t = 3
+	tm4  TM_t = 4
+	tm6  TM_t = 6
+	tm8  TM_t = 8
+	tm9  TM_t = 9
+	tm10 TM_t = 10
+	tm12 TM_t = 12
+	tm15 TM_t = 15
+	tm16 TM_t = 16
+	tm18 TM_t = 18
+	tm20 TM_t = 20
+	tm24 TM_t = 24
+	tm30 TM_t = 30
+	tm36 TM_t = 36
+)
+
+var tmset = [...]TM_t{2, 3, 4, 6, 8, 9, 10, 12, 15, 16, 18, 20, 24, 30, 36}
 
 var tmbdis = TmbProp{
 	MTmbVal: MimeDis,
-	TM02Val: MimeDis,
-	TM03Val: MimeDis,
-	TM04Val: MimeDis,
-	TM06Val: MimeDis,
-	TM08Val: MimeDis,
-	TM10Val: MimeDis,
-	TM12Val: MimeDis,
-	TM15Val: MimeDis,
-	TM16Val: MimeDis,
-	TM18Val: MimeDis,
-	TM20Val: MimeDis,
-	TM24Val: MimeDis,
-	TM30Val: MimeDis,
-	TM36Val: MimeDis,
+	MT02Val: MimeDis,
+	MT03Val: MimeDis,
+	MT04Val: MimeDis,
+	MT06Val: MimeDis,
+	MT08Val: MimeDis,
+	MT10Val: MimeDis,
+	MT12Val: MimeDis,
+	MT15Val: MimeDis,
+	MT16Val: MimeDis,
+	MT18Val: MimeDis,
+	MT20Val: MimeDis,
+	MT24Val: MimeDis,
+	MT30Val: MimeDis,
+	MT36Val: MimeDis,
 }
 
 // Thumber helps to cast some properties kit to TmbProp struct.
 type Thumber interface {
-	Tmb() *TmbProp           // returns self pointers for embedded structures
-	Tile(int) (Mime_t, bool) // tile MIME type, -1 - can not make thumbnail; 0 - not cached; >=1 - cached
-	SetTile(int, Mime_t) bool
+	Tmb() *TmbProp            // returns self pointers for embedded structures
+	Tile(TM_t) (Mime_t, bool) // tile MIME type, -1 - can not make thumbnail; 0 - not cached; >=1 - cached
+	SetTile(TM_t, Mime_t) bool
 }
 
 // Tmb is Thumber interface implementation.
@@ -184,7 +210,7 @@ func (tp *TmbProp) Setup(syspath string) {
 		tp.MTmbVal = MimeNil
 	}
 	for _, tm := range tmset {
-		var tilepath = fmt.Sprintf("%s?%dx%d", syspath, tm*24, tm*18)
+		var tilepath = fmt.Sprintf("%s?%dx%d", syspath, tm*htcell, tm*vtcell)
 		if ts, ok := tilespkg.Tagset(tilepath); ok {
 			if str, ok := ts.String(wpk.TIDmime); ok {
 				if strings.HasPrefix(str, "image/") {
@@ -202,39 +228,41 @@ func (tp *TmbProp) Setup(syspath string) {
 }
 
 // Tile returns image MIME type with given tile multiplier.
-func (tp *TmbProp) Tile(tm int) (mime Mime_t, ok bool) {
+func (tp *TmbProp) Tile(tm TM_t) (mime Mime_t, ok bool) {
 	ok = true
 	switch tm {
+	case 0:
+		mime = tp.MTmbVal
 	case 2:
-		mime = tp.TM02Val
+		mime = tp.MT02Val
 	case 3:
-		mime = tp.TM03Val
+		mime = tp.MT03Val
 	case 4:
-		mime = tp.TM04Val
+		mime = tp.MT04Val
 	case 6:
-		mime = tp.TM06Val
+		mime = tp.MT06Val
 	case 8:
-		mime = tp.TM08Val
+		mime = tp.MT08Val
 	case 9:
-		mime = tp.TM09Val
+		mime = tp.MT09Val
 	case 10:
-		mime = tp.TM10Val
+		mime = tp.MT10Val
 	case 12:
-		mime = tp.TM12Val
+		mime = tp.MT12Val
 	case 15:
-		mime = tp.TM15Val
+		mime = tp.MT15Val
 	case 16:
-		mime = tp.TM16Val
+		mime = tp.MT16Val
 	case 18:
-		mime = tp.TM18Val
+		mime = tp.MT18Val
 	case 20:
-		mime = tp.TM20Val
+		mime = tp.MT20Val
 	case 24:
-		mime = tp.TM24Val
+		mime = tp.MT24Val
 	case 30:
-		mime = tp.TM30Val
+		mime = tp.MT30Val
 	case 36:
-		mime = tp.TM36Val
+		mime = tp.MT36Val
 	default:
 		ok = false
 	}
@@ -242,39 +270,41 @@ func (tp *TmbProp) Tile(tm int) (mime Mime_t, ok bool) {
 }
 
 // SetTile updates image state to given value for tile with given tile multiplier.
-func (tp *TmbProp) SetTile(tm int, mime Mime_t) (ok bool) {
+func (tp *TmbProp) SetTile(tm TM_t, mime Mime_t) (ok bool) {
 	ok = true
 	switch tm {
+	case 0:
+		tp.MTmbVal = mime
 	case 2:
-		tp.TM02Val = mime
+		tp.MT02Val = mime
 	case 3:
-		tp.TM03Val = mime
+		tp.MT03Val = mime
 	case 4:
-		tp.TM04Val = mime
+		tp.MT04Val = mime
 	case 6:
-		tp.TM06Val = mime
+		tp.MT06Val = mime
 	case 8:
-		tp.TM08Val = mime
+		tp.MT08Val = mime
 	case 9:
-		tp.TM09Val = mime
+		tp.MT09Val = mime
 	case 10:
-		tp.TM10Val = mime
+		tp.MT10Val = mime
 	case 12:
-		tp.TM12Val = mime
+		tp.MT12Val = mime
 	case 15:
-		tp.TM15Val = mime
+		tp.MT15Val = mime
 	case 16:
-		tp.TM16Val = mime
+		tp.MT16Val = mime
 	case 18:
-		tp.TM18Val = mime
+		tp.MT18Val = mime
 	case 20:
-		tp.TM20Val = mime
+		tp.MT20Val = mime
 	case 24:
-		tp.TM24Val = mime
+		tp.MT24Val = mime
 	case 30:
-		tp.TM30Val = mime
+		tp.MT30Val = mime
 	case 36:
-		tp.TM36Val = mime
+		tp.MT36Val = mime
 	default:
 		ok = false
 	}
@@ -461,7 +491,7 @@ func (tile TilePath) Cache() {
 	}
 	if tmb, ok := prop.(Thumber); ok {
 		var tp = tmb.Tmb()
-		var tm = tile.Wdh / 24
+		var tm = TM_t(tile.Wdh / htcell)
 		if mime, ok := tp.Tile(tm); ok && mime != MimeNil {
 			return // thumbnail already scanned
 		}
@@ -591,17 +621,17 @@ func (s *scanner) RemoveTmb(syspath string) {
 }
 
 // AddTile adds PUID to queue to make tile with given tile multiplier.
-func (s *scanner) AddTile(syspath string, tm int) {
-	s.put <- TilePath{syspath, tm * 24, tm * 18}
+func (s *scanner) AddTile(syspath string, tm TM_t) {
+	s.put <- TilePath{syspath, int(tm * htcell), int(tm * vtcell)}
 }
 
 // Remove list of PUIDs from thumbnails queue.
-func (s *scanner) RemoveTile(syspath string, tm int) {
-	s.del <- TilePath{syspath, tm * 24, tm * 18}
+func (s *scanner) RemoveTile(syspath string, tm TM_t) {
+	s.del <- TilePath{syspath, int(tm * htcell), int(tm * vtcell)}
 }
 
 // APIHANDLER
-func tmbchkAPI(w http.ResponseWriter, r *http.Request) {
+func tilechkAPI(w http.ResponseWriter, r *http.Request) {
 	type TmbKit struct {
 		PuidProp `yaml:",inline"`
 		TmbProp  `yaml:",inline"`
@@ -623,7 +653,7 @@ func tmbchkAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if len(arg.List) == 0 {
-		WriteError400(w, r, ErrNoData, AECtmbchknodata)
+		WriteError400(w, r, ErrNoData, AECtilechknodata)
 		return
 	}
 
@@ -649,13 +679,17 @@ func tmbchkAPI(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
-func tmbscnstartAPI(w http.ResponseWriter, r *http.Request) {
+func tilescnstartAPI(w http.ResponseWriter, r *http.Request) {
+	type tiletm struct {
+		PUID Puid_t `json:"puid" yaml:"puid" xml:"puid,attr"`
+		TM   TM_t   `json:"tm,omitempty" yaml:"tm,omitempty" xml:"tm,omitempty,attr"`
+	}
 	var err error
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
 		AID  ID_t     `json:"aid" yaml:"aid" xml:"aid,attr"`
-		List []Puid_t `json:"list" yaml:"list" xml:"list>puid"`
+		List []tiletm `json:"list" yaml:"list" xml:"list>tiletm"`
 	}
 
 	// get arguments
@@ -677,10 +711,14 @@ func tmbscnstartAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for _, puid := range arg.List {
-		if syspath, ok := syspathcache.Path(puid); ok {
+	for _, ttm := range arg.List {
+		if syspath, ok := syspathcache.Path(ttm.PUID); ok {
 			if cg := prf.PathAccess(syspath, auth == prf); !cg.IsZero() {
-				ImgScanner.AddTmb(syspath)
+				if ttm.TM == tm0 {
+					ImgScanner.AddTmb(syspath)
+				} else {
+					ImgScanner.AddTile(syspath, ttm.TM)
+				}
 			}
 		}
 	}
@@ -689,13 +727,17 @@ func tmbscnstartAPI(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
-func tmbscnbreakAPI(w http.ResponseWriter, r *http.Request) {
+func tilescnbreakAPI(w http.ResponseWriter, r *http.Request) {
+	type tiletm struct {
+		PUID Puid_t `json:"puid" yaml:"puid" xml:"puid,attr"`
+		TM   TM_t   `json:"tm,omitempty" yaml:"tm,omitempty" xml:"tm,omitempty,attr"`
+	}
 	var err error
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
 		AID  ID_t     `json:"aid" yaml:"aid" xml:"aid,attr"`
-		List []Puid_t `json:"list" yaml:"list" xml:"list>puid"`
+		List []tiletm `json:"list" yaml:"list" xml:"list>tiletm"`
 	}
 
 	// get arguments
@@ -717,10 +759,14 @@ func tmbscnbreakAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for _, puid := range arg.List {
-		if syspath, ok := syspathcache.Path(puid); ok {
+	for _, ttm := range arg.List {
+		if syspath, ok := syspathcache.Path(ttm.PUID); ok {
 			if cg := prf.PathAccess(syspath, auth == prf); !cg.IsZero() {
-				ImgScanner.RemoveTmb(syspath)
+				if ttm.TM == tm0 {
+					ImgScanner.RemoveTmb(syspath)
+				} else {
+					ImgScanner.RemoveTile(syspath, ttm.TM)
+				}
 			}
 		}
 	}

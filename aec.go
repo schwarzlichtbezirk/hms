@@ -134,16 +134,16 @@ const (
 	AECispathroot
 	AECispathhidden
 
-	// tmb/chk
+	// tile/chk
 
-	AECtmbchknodata
+	AECtilechknodata
 
-	// tmb/scnstart
+	// tile/scnstart
 
 	AECscnstartnodata
 	AECscnstartnoacc
 
-	// tmb/scnbreak
+	// tile/scnbreak
 
 	AECscnbreaknodata
 	AECscnbreaknoacc
