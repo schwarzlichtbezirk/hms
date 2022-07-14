@@ -35,8 +35,6 @@
 				</button>
 				<div class="collapse navbar-collapse" id="menuaddon">
 					<ul class="navbar-nav flex-row flex-wrap">
-						<li v-show="showdiskadd"><button class="btn toolbtn" title="add disk" data-bs-toggle="modal" v-bind:data-bs-target="'#diskadd'+iid"><i class="material-icons">add_circle_outline</i></button></li>
-						<li v-show="showdiskadd"><button class="btn toolbtn" v-bind:class="clsdiskremove" v-on:click="ondiskremove" title="remove disk"><i class="material-icons">remove_circle_outline</i></button></li>
 						<li><button class="btn toolbtn" v-on:click="onlink" v-bind:class="clslink" title="copy direct link to resource"><i class="material-icons">link</i></button></li>
 						<li v-show="isadmin"><button class="btn toolbtn" v-on:click="onshare" v-bind:class="clsshared" title="share resource to get access from internet"><i class="material-icons">share</i></button></li>
 					</ul>
@@ -72,10 +70,12 @@
 			</nav>
 
 			<div id="accordion">
-				<dir-card-tag ref="dcard" v-bind:list="flist" />
-				<file-card-tag ref="fcard" v-bind:list="flist" />
-				<tile-card-tag ref="tcard" v-bind:list="flist" />
-				<map-card-tag ref="mcard" v-bind:list="flist" />
+				<ctgr-card-tag ref="ccard" v-bind:flist="flist" />
+				<drive-card-tag ref="dcard" v-bind:flist="flist" />
+				<dir-card-tag ref="pcard" v-bind:flist="flist" />
+				<file-card-tag ref="fcard" v-bind:flist="flist" />
+				<tile-card-tag ref="tcard" v-bind:flist="flist" />
+				<map-card-tag ref="mcard" v-bind:flist="flist" />
 			</div>
 		</div>
 
@@ -85,23 +85,6 @@
 	<photoslider-tag />
 
 	<!-- Dialog managed by Bootstrap calls -->
-
-	<div class="modal fade" v-bind:id="'diskadd'+iid" tabindex="-1" role="dialog" aria-labelledby="disk add" aria-hidden="true">
-		<div class="modal-dialog modal-dialog-centered" role="document">
-			<div class="modal-content">
-				<div class="rounded py-2 bg-tool">
-					<div class="px-2 fg-tool">
-						<label v-bind:for="'inp'+iid" class="small navbar-text form-label">Type here valid full path to resource that will be accessed as the disk. For example, <span class="bg-stat">C:/Music</span></label>
-						<div class="form-floating input-group">
-							<input v-model.trim="diskpath" v-bind:class="clsdiskpathedt" v-bind:id="'inp'+iid" v-on:keyup.enter.prevent="ondiskadd" v-on:keyup="ondiskpathchange" v-bind:aria-describedby="'but'+iid" class="form-control toolinp bg-tool" type="text" maxlength="256" placeholder="c:/music" required>
-							<label v-bind:for="'inp'+iid">destination path</label>
-							<button v-bind:id="'but'+iid" class="btn toolbtn bg-high" v-bind:class="clsdiskadd" v-on:click="ondiskadd">Add disk</button>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
 
 	<div class="modal fade" id="msgbox">
 		<div class="modal-dialog modal-dialog-centered">

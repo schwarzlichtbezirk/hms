@@ -2,10 +2,9 @@
 <div v-show="isvisible" class="card m-sm-2">
 	<div class="card-header bg-card d-flex flex-wrap align-items-center">
 		<div class="navbar-text flex-grow-1 py-0">
-			<a class="card-link d-block" data-bs-toggle="collapse" v-bind:href="'#card'+iid">folders</a>
+			<a class="card-link d-block" data-bs-toggle="collapse" v-bind:href="'#card'+iid">categories</a>
 		</div>
 		<ul class="navbar-nav flex-row ms-auto">
-			<li v-show="sortable"><button class="btn" v-on:click="onorder" v-bind:title="hintorder"><i class="material-icons">{{clsorder}}</i></button></li>
 			<li>
 				<div class="btn-group">
 					<button type="button" class="btn dropdown-toggle" v-bind:title="hintlist" data-bs-toggle="dropdown" aria-expanded="false">

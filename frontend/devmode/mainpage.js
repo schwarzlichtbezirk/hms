@@ -445,10 +445,6 @@ const VueMainApp = {
 			ishome: false, // able to go home
 
 			selfile: null, // current selected item
-			diskpath: "", // path to disk to add
-			diskpathstate: 0,
-			diskadd: null,
-
 			shared: [], // list of shared items
 
 			// history
@@ -588,22 +584,6 @@ const VueMainApp = {
 				'active': this.selfile && this.selfile.shared,
 				'disabled': !this.selfile
 			};
-		},
-
-		showdiskadd() {
-			return this.isadmin && this.curpuid === PUID.drives;
-		},
-		clsdiskpathedt() {
-			return {
-				'is-invalid': this.diskpathstate === -1,
-				'is-valid': this.diskpathstate == 1
-			};
-		},
-		clsdiskadd() {
-			return { 'disabled': !this.diskpath.length };
-		},
-		clsdiskremove() {
-			return { 'disabled': !this.selfile || this.selfile.type !== FT.drv };
 		},
 
 		textauthcaret() {
@@ -971,19 +951,8 @@ const VueMainApp = {
 		},
 
 		newfolder(list) {
-			this.flist = [];
 			// update folder settings
-			if (this.curpuid === PUID.home) {
-				for (const file of list ?? []) {
-					this.flist.push(file);
-				}
-			} else {
-				for (const file of list ?? []) {
-					if (file && file.type !== FT.ctgr) {
-						this.flist.push(file);
-					}
-				}
-			}
+			this.flist = list ?? [];
 			this.updateshared();
 
 			// clear current selected
@@ -1111,74 +1080,6 @@ const VueMainApp = {
 			this.showauth = !this.showauth;
 		},
 
-		ondiskadd() {
-			(async () => {
-				eventHub.emit('ajax', +1);
-				try {
-					const response = await fetchajaxauth("POST", "/api/drive/add", {
-						aid: this.$root.aid,
-						path: this.diskpath
-					});
-					traceajax(response);
-					if (response.ok) {
-						const file = response.data;
-						if (file) {
-							this.flist.push(file);
-						}
-						this.diskadd?.hide();
-					} else {
-						this.diskpathstate = -1;
-					}
-				} catch (e) {
-					ajaxfail(e);
-				} finally {
-					eventHub.emit('ajax', -1);
-				}
-			})();
-		},
-		ondiskremove() {
-			(async () => {
-				eventHub.emit('ajax', +1);
-				try {
-					const response = await fetchajaxauth("POST", "/api/drive/del", {
-						aid: this.$root.aid,
-						puid: this.selfile.puid
-					});
-					traceajax(response);
-					if (!response.ok) {
-						throw new HttpError(response.status, response.data);
-					}
-
-					if (response.data.deleted) {
-						this.flist.splice(this.flist.findIndex(elem => elem === this.selfile), 1);
-						if (this.selfile.shared) {
-							await this.fetchsharedel(this.selfile);
-						}
-					}
-				} catch (e) {
-					ajaxfail(e);
-				} finally {
-					eventHub.emit('ajax', -1);
-				}
-			})();
-		},
-		ondiskpathchange(e) {
-			(async () => {
-				try {
-					const response = await fetchajaxauth("POST", "/api/res/ispath", {
-						aid: this.$root.aid,
-						path: this.diskpath
-					});
-					if (response.ok) {
-						this.diskpathstate = response.data ? 1 : 0;
-					} else {
-						this.diskpathstate = -1;
-					}
-				} catch (e) {
-					ajaxfail(e);
-				}
-			})();
-		},
 		oncopy() {
 			this.copied = this.selfile;
 			this.cuted = null;
@@ -1378,15 +1279,6 @@ const VueMainApp = {
 			this.aid = 1;
 		}
 
-		// init diskadd dialog
-		const el = document.getElementById('diskadd' + this.iid);
-		if (el) {
-			this.diskadd = new bootstrap.Modal(el);
-			el.addEventListener('shown.bs.modal', e => {
-				el.querySelector('input').focus();
-			});
-		}
-
 		const hist = { aid: this.aid };
 		// get route
 		const route = chunks[0];
@@ -1457,9 +1349,6 @@ const VueMainApp = {
 		eventHub.off('open', this.onopen);
 		eventHub.off('select', this.onselect);
 		eventHub.off('playback', this.onplayback);
-
-		// erase diskadd dialog
-		this.diskadd = null;
 	}
 };
 
@@ -1568,6 +1457,8 @@ const appws = Vue.createApp(VueMainApp)
 	.component('thumbslider-tag', VueThumbSlider)
 	.component('photoslider-tag', VuePhotoSlider)
 	.component('mp3-player-tag', VuePlayer)
+	.component('ctgr-card-tag', VueCtgrCard)
+	.component('drive-card-tag', VueDriveCard)
 	.component('dir-card-tag', VueDirCard)
 	.component('file-card-tag', VueFileCard)
 	.component('tile-card-tag', VueTileCard)

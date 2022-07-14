@@ -181,9 +181,323 @@ const makemarkerpopup = file => {
 `;
 };
 
+const VueCtgrCard = {
+	template: '#ctgr-card-tpl',
+	props: ["flist"],
+	data() {
+		return {
+			listmode: "smicon",
+			iid: makestrid(10) // instance ID
+		};
+	},
+	computed: {
+		ctgrlist() {
+			const l = [];
+			for (const file of this.flist) {
+				if (file.type === FT.ctgr) {
+					l.push(file);
+				}
+			}
+			return l;
+		},
+		isvisible() {
+			return this.ctgrlist.length > 0;
+		},
+		sortedlist() {
+			return this.ctgrlist;
+		},
+
+		clsfilelist() {
+			return listmoderow[this.listmode];
+		},
+
+		clslistmode() {
+			return listmodeicon[this.listmode];
+		},
+
+		iconmodetag() {
+			return listmodetag[this.listmode];
+		},
+
+		hintlist() {
+			return listmodehint[this.listmode];
+		}
+	},
+	methods: {
+		onlistmodels() {
+			this.listmode = 'lsicon';
+		},
+		onlistmodesm() {
+			this.listmode = 'smicon';
+		},
+		onlistmodemd() {
+			this.listmode = 'mdicon';
+		},
+		onlistmodelg() {
+			this.listmode = 'lgicon';
+		},
+
+		onselect(file) {
+			eventHub.emit('select', file);
+		},
+		onopen(file) {
+			eventHub.emit('open', file);
+		},
+		onunselect() {
+			eventHub.emit('select', null);
+		},
+		onshown(e) {
+		},
+		onhidden(e) {
+		}
+	},
+	mounted() {
+		const el = document.getElementById('card' + this.iid);
+		if (el) {
+			el.addEventListener('shown.bs.collapse', this.onshown);
+			el.addEventListener('hidden.bs.collapse', this.onhidden);
+		}
+	},
+	unmounted() {
+		const el = document.getElementById('card' + this.iid);
+		if (el) {
+			el.removeEventListener('shown.bs.collapse', this.onshown);
+			el.removeEventListener('hidden.bs.collapse', this.onhidden);
+		}
+	}
+};
+
+const VueDriveCard = {
+	template: '#drive-card-tpl',
+	props: ["flist"],
+	data() {
+		return {
+			isauth: false, // is authorized
+			selfile: null, // current selected drive
+			diskpath: "", // path to disk to add
+			diskpathstate: 0,
+			diskadd: null,
+
+			sortorder: 1,
+			listmode: "smicon",
+			iid: makestrid(10) // instance ID
+		};
+	},
+	computed: {
+		drvlist() {
+			const l = [];
+			for (const file of this.flist) {
+				if (file.type === FT.drv) {
+					l.push(file);
+				}
+			}
+			return l;
+		},
+		// is it authorized or running on localhost
+		isadmin() {
+			return this.isauth || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+		},
+		isvisible() {
+			return this.drvlist.length > 0;
+		},
+		sortedlist() {
+			return this.drvlist.slice().sort((v1, v2) => {
+				return this.sortorder * (v1.name.toLowerCase() > v2.name.toLowerCase() ? 1 : -1);
+			});
+		},
+
+		clsfilelist() {
+			return listmoderow[this.listmode];
+		},
+
+		clsorder() {
+			return this.sortorder > 0
+				? 'arrow_downward'
+				: 'arrow_upward';
+		},
+		clslistmode() {
+			return listmodeicon[this.listmode];
+		},
+
+		clsdiskpathedt() {
+			return {
+				'is-invalid': this.diskpathstate === -1,
+				'is-valid': this.diskpathstate == 1
+			};
+		},
+		clsdiskadd() {
+			return { 'disabled': !this.diskpath.length };
+		},
+		clsdiskremove() {
+			return { 'disabled': !this.selfile };
+		},
+
+		iconmodetag() {
+			return listmodetag[this.listmode];
+		},
+
+		hintorder() {
+			return this.sortorder > 0
+				? "direct order"
+				: "reverse order";
+		},
+		hintlist() {
+			return listmodehint[this.listmode];
+		}
+	},
+	methods: {
+		onorder() {
+			this.sortorder = -this.sortorder;
+		},
+		onlistmodels() {
+			this.listmode = 'lsicon';
+		},
+		onlistmodesm() {
+			this.listmode = 'smicon';
+		},
+		onlistmodemd() {
+			this.listmode = 'mdicon';
+		},
+		onlistmodelg() {
+			this.listmode = 'lgicon';
+		},
+
+		ondiskadd() {
+			(async () => {
+				eventHub.emit('ajax', +1);
+				try {
+					const response = await fetchajaxauth("POST", "/api/drive/add", {
+						aid: this.$root.aid,
+						path: this.diskpath
+					});
+					traceajax(response);
+					if (response.ok) {
+						const file = response.data;
+						if (file) {
+							this.flist.push(file);
+						}
+						this.diskadd?.hide();
+					} else {
+						this.diskpathstate = -1;
+					}
+				} catch (e) {
+					ajaxfail(e);
+				} finally {
+					eventHub.emit('ajax', -1);
+				}
+			})();
+		},
+		ondiskremove() {
+			(async () => {
+				eventHub.emit('ajax', +1);
+				try {
+					const response = await fetchajaxauth("POST", "/api/drive/del", {
+						aid: this.$root.aid,
+						puid: this.selfile.puid
+					});
+					traceajax(response);
+					if (!response.ok) {
+						throw new HttpError(response.status, response.data);
+					}
+
+					if (response.data.deleted) {
+						this.flist.splice(this.flist.findIndex(elem => elem === this.selfile), 1);
+						if (this.selfile.shared) {
+							await this.$root.fetchsharedel(this.selfile);
+						}
+						this.selfile = null;
+					}
+				} catch (e) {
+					ajaxfail(e);
+				} finally {
+					eventHub.emit('ajax', -1);
+				}
+			})();
+		},
+		ondiskpathchange(e) {
+			(async () => {
+				try {
+					const response = await fetchajaxauth("POST", "/api/res/ispath", {
+						aid: this.$root.aid,
+						path: this.diskpath
+					});
+					if (response.ok) {
+						this.diskpathstate = response.data ? 1 : 0;
+					} else {
+						this.diskpathstate = -1;
+					}
+				} catch (e) {
+					ajaxfail(e);
+				}
+			})();
+		},
+
+		onselect(file) {
+			eventHub.emit('select', file);
+		},
+		onopen(file) {
+			eventHub.emit('open', file);
+		},
+		onunselect() {
+			eventHub.emit('select', null);
+		},
+		onshown(e) {
+		},
+		onhidden(e) {
+		},
+
+		authclosure(is) {
+			this.isauth = is;
+		},
+		onanyselect(file) {
+			if (file && file.type === FT.drv) {
+				this.selfile = file
+			} else {
+				this.selfile = null;
+			}
+		}
+	},
+	mounted() {
+		eventHub.on('auth', this.authclosure);
+		eventHub.on('select', this.onanyselect);
+		{
+			const el = document.getElementById('card' + this.iid);
+			if (el) {
+				el.addEventListener('shown.bs.collapse', this.onshown);
+				el.addEventListener('hidden.bs.collapse', this.onhidden);
+			}
+		}
+
+		// init diskadd dialog
+		{
+			const el = document.getElementById('diskadd' + this.iid);
+			if (el) {
+				this.diskadd = new bootstrap.Modal(el);
+				el.addEventListener('shown.bs.modal', e => {
+					el.querySelector('input').focus();
+				});
+			}
+		}
+	},
+	unmounted() {
+		eventHub.off('auth', this.authclosure);
+		eventHub.off('select', this.onanyselect);
+		{
+			const el = document.getElementById('card' + this.iid);
+			if (el) {
+				el.removeEventListener('shown.bs.collapse', this.onshown);
+				el.removeEventListener('hidden.bs.collapse', this.onhidden);
+			}
+		}
+
+		// erase diskadd dialog
+		this.diskadd = null;
+	}
+};
+
 const VueDirCard = {
 	template: '#dir-card-tpl',
-	props: ["list"],
+	props: ["flist"],
 	data() {
 		return {
 			sortorder: 1,
@@ -192,33 +506,22 @@ const VueDirCard = {
 		};
 	},
 	computed: {
-		pathlist() {
+		dirlist() {
 			const l = [];
-			for (const file of this.list) {
-				if (file.type) {
+			for (const file of this.flist) {
+				if (file.type === FT.dir) {
 					l.push(file);
 				}
 			}
 			return l;
 		},
 		isvisible() {
-			return this.pathlist.length > 0;
+			return this.dirlist.length > 0;
 		},
-		sortable() {
-			for (const file of this.pathlist) {
-				if (file.type === FT.ctgr) {
-					return false;
-				}
-			}
-			return true;
-		},
-		// sorted subfolders list
 		sortedlist() {
-			return this.sortable
-				? this.pathlist.slice().sort((v1, v2) => {
-					return this.sortorder * (v1.name.toLowerCase() > v2.name.toLowerCase() ? 1 : -1);
-				})
-				: this.pathlist;
+			return this.dirlist.slice().sort((v1, v2) => {
+				return this.sortorder * (v1.name.toLowerCase() > v2.name.toLowerCase() ? 1 : -1);
+			});
 		},
 
 		clsfilelist() {
@@ -296,7 +599,7 @@ const VueDirCard = {
 
 const VueFileCard = {
 	template: '#file-card-tpl',
-	props: ["list"],
+	props: ["flist"],
 	data() {
 		return {
 			sortorder: 1,
@@ -319,7 +622,7 @@ const VueFileCard = {
 		};
 	},
 	watch: {
-		filtlist: {
+		sortedlist: {
 			handler(val, oldval) {
 				eventHub.emit('playlist', val);
 			}
@@ -328,7 +631,7 @@ const VueFileCard = {
 	computed: {
 		filelist() {
 			const l = [];
-			for (const file of this.list) {
+			for (const file of this.flist) {
 				if (!file.type) {
 					l.push(file);
 				}
@@ -338,8 +641,7 @@ const VueFileCard = {
 		isvisible() {
 			return this.filelist.length > 0;
 		},
-		// filtered sorted list of files
-		filtlist() {
+		sortedlist() {
 			const res = [];
 			for (const file of this.filelist) {
 				if (this.fgshow[getFileGroup(file)]) {
@@ -516,7 +818,7 @@ const VueFileCard = {
 			eventHub.emit('select', file);
 		},
 		onopen(file) {
-			eventHub.emit('open', file, this.filtlist);
+			eventHub.emit('open', file, this.sortedlist);
 		},
 		onunselect() {
 			eventHub.emit('select', null);
@@ -714,7 +1016,7 @@ const maketileslide = (list, tilemode) => {
 
 const VueTileCard = {
 	template: '#tile-card-tpl',
-	props: ["list"],
+	props: ["flist"],
 	data() {
 		return {
 			sortorder: 1,
@@ -755,7 +1057,7 @@ const VueTileCard = {
 	computed: {
 		photolist() {
 			const res = [];
-			for (const file of this.list) {
+			for (const file of this.flist) {
 				if (!file.type && (file.model || file.height || file.orientation)) {
 					res.push(file);
 				}
@@ -901,7 +1203,7 @@ const VueTileCard = {
 
 const VueMapCard = {
 	template: '#map-card-tpl',
-	props: ["list"],
+	props: ["flist"],
 	data() {
 		return {
 			isfullscreen: false,

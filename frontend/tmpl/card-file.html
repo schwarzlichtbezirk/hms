@@ -47,7 +47,7 @@
 	</div>
 	<div v-bind:id="'card'+iid" class="collapse show">
 		<div class="card-body p-1 p-sm-3 folder-list" v-bind:class="clsfilelist" v-on:click="onunselect">
-			<template v-for="file in filtlist">
+			<template v-for="file in sortedlist">
 				<component v-bind:is="iconmodetag" v-bind:file="file" v-bind:size="listmode" v-on:click.stop="onselect(file)" v-on:dblclick.stop="onopen(file)" />
 			</template>
 		</div>
