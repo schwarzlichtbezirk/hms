@@ -17,6 +17,9 @@ type ID_t uint64
 // Puid_t represents integer form of path unique ID.
 type Puid_t uint64
 
+// unix_t is UNIX time in milliseconds.
+type unix_t uint64
+
 // Predefined PUIDs.
 const (
 	PUIDhome   Puid_t = 1
@@ -158,13 +161,30 @@ func (pt *Puid_t) Rand(bits int) {
 	*pt &= 0xffffffffffffffff >> (65 - bits) // throw one more bit to prevent string representation overflow
 }
 
-type unix_t uint64
-
 func (ut unix_t) Time() time.Time {
 	return time.Unix(int64(ut/1000), int64(ut%1000)*1000000)
 }
 
 const ExifDate = "2006-01-02 15:04:05.999"
+
+// MarshalJSON is JSON marshaler interface implementation.
+func (ut unix_t) MarshalJSON() ([]byte, error) {
+	return json.Marshal(ut.Time().Format(ExifDate))
+}
+
+// UnmarshalJSON is JSON unmarshaler interface implementation.
+func (ut *unix_t) UnmarshalJSON(b []byte) (err error) {
+	var s string
+	if err = json.Unmarshal(b, &s); err != nil {
+		return err
+	}
+	var t time.Time
+	if t, err = time.Parse(ExifDate, s); err != nil {
+		return
+	}
+	*ut = UnixJS(t)
+	return
+}
 
 // MarshalYAML is YAML marshaler interface implementation.
 func (ut unix_t) MarshalYAML() (interface{}, error) {
@@ -181,14 +201,33 @@ func (ut *unix_t) UnmarshalYAML(value *yaml.Node) (err error) {
 	return
 }
 
+// MarshalXML is XML marshaler interface implementation.
+func (ut unix_t) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	return e.EncodeElement(ut.Time().Format(ExifDate), start)
+}
+
+// UnmarshalXML is XML unmarshaler interface implementation.
+func (ut *unix_t) UnmarshalXML(d *xml.Decoder, start xml.StartElement) (err error) {
+	var s string
+	if err = d.DecodeElement(&s, &start); err != nil {
+		return err
+	}
+	var t time.Time
+	if t, err = time.Parse(ExifDate, s); err != nil {
+		return
+	}
+	*ut = UnixJS(t)
+	return
+}
+
 // UnixJS converts time to UNIX-time in milliseconds, compatible with javascript time format.
 func UnixJS(u time.Time) unix_t {
-	return unix_t(u.UnixNano() / 1000000)
+	return unix_t(u.UnixMilli())
 }
 
 // UnixJSNow returns same result as Date.now() in javascript.
 func UnixJSNow() unix_t {
-	return unix_t(time.Now().UnixNano() / 1000000)
+	return unix_t(time.Now().UnixMilli())
 }
 
 // TimeJS is backward conversion from javascript compatible Unix time

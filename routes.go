@@ -22,13 +22,23 @@ type jerr struct {
 }
 
 // Unwrap returns inherited error object.
-func (e *jerr) Unwrap() error {
-	return e.error
+func (err *jerr) Unwrap() error {
+	return err.error
 }
 
 // MarshalJSON is standard JSON interface implementation to stream errors on Ajax.
-func (e *jerr) MarshalJSON() ([]byte, error) {
-	return json.Marshal(e.Error())
+func (err *jerr) MarshalJSON() ([]byte, error) {
+	return json.Marshal(err.Error())
+}
+
+// MarshalYAML is YAML marshaler interface implementation to stream errors on Ajax.
+func (err *jerr) MarshalYAML() (interface{}, error) {
+	return err.Error(), nil
+}
+
+// MarshalXML is XML marshaler interface implementation to stream errors on Ajax.
+func (err *jerr) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+	return e.EncodeElement(err.Error(), start)
 }
 
 // AjaxErr is error object on AJAX API handlers calls.
@@ -216,15 +226,9 @@ func WriteRet(w http.ResponseWriter, r *http.Request, status int, body interface
 	}
 	var list []string
 	if val := r.Header.Get("Accept"); val != "" {
-		if pos := strings.IndexByte(val, ';'); pos != -1 {
-			val = val[:pos]
-		}
 		list = strings.Split(val, ",")
 	} else {
 		var ctype = r.Header.Get("Content-Type")
-		if pos := strings.IndexByte(ctype, ';'); pos != -1 {
-			ctype = ctype[:pos]
-		}
 		if ctype == "" {
 			ctype = "application/json"
 		}
@@ -233,6 +237,9 @@ func WriteRet(w http.ResponseWriter, r *http.Request, status int, body interface
 	var b []byte
 	var err error
 	for _, ctype := range list {
+		if pos := strings.IndexByte(ctype, ';'); pos != -1 {
+			ctype = ctype[:pos]
+		}
 		switch strings.TrimSpace(ctype) {
 		case "*/*", "application/json", "text/json":
 			WriteStdHeader(w)
