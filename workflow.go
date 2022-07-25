@@ -204,11 +204,10 @@ func Init() {
 		Log.Infof("loaded %d items into directories cache", len(dircache.keydir))
 
 		// load GPS data of scanned photos
-		var n int
-		if n, err = gpscache.ReadYaml(gpsfile); err != nil {
+		if err = gpscache.ReadYaml(gpsfile); err != nil {
 			Log.Infoln("error on GPS cache file: " + err.Error())
 		}
-		Log.Infof("loaded %d items into GPS cache", n)
+		Log.Infof("loaded %d items into GPS cache", gpscache.Count())
 
 		// load previous users states
 		if err = usercache.ReadYaml(usrfile); err != nil {

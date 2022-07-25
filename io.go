@@ -1,6 +1,7 @@
 package hms
 
 import (
+	"io"
 	"os"
 	"path"
 	"strings"
@@ -13,16 +14,16 @@ const utf8bom = "\xef\xbb\xbf"
 // WriteYaml writes "data" object to YAML-file with given file name.
 // File writes in UTF-8 format with BOM, and "intro" comment.
 func WriteYaml(fname, intro string, data interface{}) (err error) {
-	var file *os.File
-	if file, err = os.OpenFile(path.Join(ConfigPath, fname), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644); err != nil {
+	var w io.WriteCloser
+	if w, err = os.OpenFile(path.Join(ConfigPath, fname), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644); err != nil {
 		return
 	}
-	defer file.Close()
+	defer w.Close()
 
-	if _, err = file.WriteString(utf8bom); err != nil {
+	if _, err = w.Write(s2b(utf8bom)); err != nil {
 		return
 	}
-	if _, err = file.WriteString(intro); err != nil {
+	if _, err = w.Write(s2b(intro)); err != nil {
 		return
 	}
 
@@ -30,7 +31,7 @@ func WriteYaml(fname, intro string, data interface{}) (err error) {
 	if body, err = yaml.Marshal(data); err != nil {
 		return
 	}
-	if _, err = file.Write(body); err != nil {
+	if _, err = w.Write(body); err != nil {
 		return
 	}
 	return
@@ -47,6 +48,13 @@ func ReadYaml(fname string, data interface{}) (err error) {
 		return
 	}
 	return
+}
+
+// YamlReadWriter allows to get common access to all structures with
+// reading/writing itself to YAML-file.
+type YamlReadWriter interface {
+	ReadYaml(string) error
+	WriteYaml(string) error
 }
 
 // ReadYaml reads content of PathCache structure from YAML-file
@@ -82,15 +90,38 @@ func (pc *PathCache) WriteYaml(fname string) error {
 // ReadYaml reads content of DirCache structure from YAML-file
 // with given file name.
 func (dc *DirCache) ReadYaml(fname string) (err error) {
-	if err = ReadYaml(fname, &dc.keydir); err != nil {
+	var r io.ReadCloser
+	if r, err = os.Open(path.Join(ConfigPath, fname)); err != nil {
 		return
+	}
+	defer r.Close()
+
+	type item struct {
+		Path    string `json:"path" yaml:"path" xml:"path"`
+		DirProp `yaml:",inline"`
+	}
+	var dec = yaml.NewDecoder(r)
+	for {
+		var item item
+		if err = dec.Decode(&item); err != nil {
+			if err == io.EOF {
+				if item.Path == "" {
+					err = nil
+					break
+				}
+			} else {
+				return
+			}
+		}
+		var puid = syspathcache.Cache(item.Path)
+		dc.keydir[puid] = item.DirProp
 	}
 	return
 }
 
 // WriteYaml writes content of DirCache object in YAML format
 // with header comment to file with given file name.
-func (dc *DirCache) WriteYaml(fname string) error {
+func (dc *DirCache) WriteYaml(fname string) (err error) {
 	const intro = `
 # Here is rewritable cache with key/path pairs list.
 # It's loads on server start, and saves before exit.
@@ -101,40 +132,103 @@ func (dc *DirCache) WriteYaml(fname string) error {
 # [misc, video, audio, image, books, txt, arch, dir]
 
 `
-	return WriteYaml(fname, intro, dc.keydir)
+	var w io.WriteCloser
+	if w, err = os.OpenFile(path.Join(ConfigPath, fname), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644); err != nil {
+		return
+	}
+	defer w.Close()
+
+	if _, err = w.Write(s2b(utf8bom)); err != nil {
+		return
+	}
+	if _, err = w.Write(s2b(intro)); err != nil {
+		return
+	}
+
+	type item struct {
+		Path    string `json:"path" yaml:"path" xml:"path"`
+		DirProp `yaml:",inline"`
+	}
+	var enc = yaml.NewEncoder(w)
+	for puid, dc := range dc.keydir {
+		if syspath, ok := syspathcache.Path(puid); ok {
+			if err = enc.Encode(&item{syspath, dc}); err != nil {
+				return
+			}
+		}
+	}
+	enc.Close()
+	return
 }
 
 // ReadYaml reads content of DirCache structure from YAML-file
 // with given file name.
-func (gc *GpsCache) ReadYaml(fname string) (n int, err error) {
-	var m map[string]*GpsInfo
-	if err = ReadYaml(fname, &m); err != nil {
+func (gc *GpsCache) ReadYaml(fname string) (err error) {
+	var r io.ReadCloser
+	if r, err = os.Open(path.Join(ConfigPath, fname)); err != nil {
 		return
 	}
-	for k, v := range m {
-		var puid = syspathcache.Cache(k)
-		gc.Store(puid, v)
+	defer r.Close()
+
+	type item struct {
+		Path     string `json:"path" yaml:"path" xml:"path"`
+		*GpsInfo `yaml:",inline"`
 	}
-	n = len(m)
+	var dec = yaml.NewDecoder(r)
+	for {
+		var item item
+		if err = dec.Decode(&item); err != nil {
+			if err == io.EOF {
+				if item.Path == "" {
+					err = nil
+					break
+				}
+			} else {
+				return
+			}
+		}
+		var puid = syspathcache.Cache(item.Path)
+		gc.Store(puid, item.GpsInfo)
+	}
 	return
 }
 
 // WriteYaml writes content of GpsCache object in YAML format
 // with header comment to file with given file name.
-func (gc *GpsCache) WriteYaml(fname string) error {
+func (gc *GpsCache) WriteYaml(fname string) (err error) {
 	const intro = `
-# Map with PUID/GpsInfo pairs. Contains GPS-coordinates
-# and creation time from EXIF-data of scanned photos.
+# Contains GPS-coordinates and creation
+# time from EXIF-data of scanned photos.
 
 `
-	var m = map[string]*GpsInfo{}
-	gc.Range(func(key interface{}, value interface{}) bool {
-		if syspath, ok := syspathcache.Path(key.(Puid_t)); ok {
-			m[syspath] = value.(*GpsInfo)
+	var w io.WriteCloser
+	if w, err = os.OpenFile(path.Join(ConfigPath, fname), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644); err != nil {
+		return
+	}
+	defer w.Close()
+
+	if _, err = w.Write(s2b(utf8bom)); err != nil {
+		return
+	}
+	if _, err = w.Write(s2b(intro)); err != nil {
+		return
+	}
+
+	type item struct {
+		Path     string `json:"path" yaml:"path" xml:"path"`
+		*GpsInfo `yaml:",inline"`
+	}
+	var enc = yaml.NewEncoder(w)
+	gc.Range(func(puid Puid_t, gps *GpsInfo) bool {
+		if syspath, ok := syspathcache.Path(puid); ok {
+			if err = enc.Encode(&item{syspath, gps}); err != nil {
+				return false
+			}
 		}
 		return true
 	})
-	return WriteYaml(fname, intro, m)
+	enc.Close()
+	return
 }
 
 // ReadYaml reads content of Config structure from YAML-file

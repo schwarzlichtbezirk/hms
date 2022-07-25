@@ -283,6 +283,7 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) {
 
 	var md *MediaData
 	if md, err = FindTmb(prop, syspath); err != nil {
+		Log.Infoln(syspath, err)
 		WriteError(w, r, http.StatusNotFound, err, AECthumbabsent)
 		return
 	}
@@ -667,8 +668,7 @@ func ctgrAPI(w http.ResponseWriter, r *http.Request) {
 		catprop(dircache.Category(FGtexts, 0.5))
 	case PUIDmap:
 		var n = cfg.RangeSearchAny
-		gpscache.Range(func(key interface{}, value interface{}) bool {
-			var puid = key.(Puid_t)
+		gpscache.Range(func(puid Puid_t, gps *GpsInfo) bool {
 			if fpath, ok := syspathcache.Path(puid); ok {
 				if auth == prf || prf.IsShared(fpath) {
 					if prop, err := propcache.Get(fpath); err == nil {

@@ -247,6 +247,22 @@ type GpsCache struct {
 	sync.Map
 }
 
+// Count returns number of entries in the map.
+func (gc *GpsCache) Count() (n int) {
+	gc.Map.Range(func(key interface{}, value interface{}) bool {
+		n++
+		return true
+	})
+	return
+}
+
+// Range calls given closure for each GpsInfo in the map.
+func (gc *GpsCache) Range(f func(Puid_t, *GpsInfo) bool) {
+	gc.Map.Range(func(key, value interface{}) bool {
+		return f(key.(Puid_t), value.(*GpsInfo))
+	})
+}
+
 var gpscache GpsCache
 
 // Prepares caches depends of previously loaded configuration.

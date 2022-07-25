@@ -106,9 +106,7 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		arg.Limit = cfg.RangeSearchLimit
 	}
 
-	gpscache.Range(func(key interface{}, value interface{}) bool {
-		var puid = key.(Puid_t)
-		var gps = value.(*GpsInfo)
+	gpscache.Range(func(puid Puid_t, gps *GpsInfo) bool {
 		var inc bool
 		for _, mp := range arg.Paths {
 			if !mp.Contains(gps.Latitude, gps.Longitude) {
