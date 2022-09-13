@@ -511,7 +511,7 @@ func GetCachedTile(syspath string, wdh, hgt int) (md *MediaData, err error) {
 // Package splitted in two files - tags table file and
 // cached images data file.
 type CachePackage struct {
-	*fsys.Package
+	wpk.Package
 	WPT wpk.WriteSeekCloser // package tags part
 	WPF wpk.WriteSeekCloser // package files part
 }
@@ -521,7 +521,12 @@ type CachePackage struct {
 func InitCacheWriter(fname string) (cw *CachePackage, err error) {
 	var pkgpath = wpk.MakeTagsPath(path.Join(CachePath, fname))
 	var datpath = wpk.MakeDataPath(path.Join(CachePath, fname))
-	cw = &CachePackage{}
+	cw = &CachePackage{
+		Package: wpk.Package{
+			FTT:       &wpk.FTT{},
+			Workspace: ".",
+		},
+	}
 	defer func() {
 		if err != nil {
 			if cw.WPT != nil {
@@ -543,20 +548,32 @@ func InitCacheWriter(fname string) (cw *CachePackage, err error) {
 		return
 	}
 	if ok {
-		if cw.Package, err = fsys.OpenPackage(pkgpath); err != nil {
+		var r io.ReadSeekCloser
+		if r, err = os.Open(pkgpath); err != nil {
 			return
 		}
-		var offset, size = cw.DataPos()
-		if _, err = cw.WPF.Seek(int64(offset+size), io.SeekStart); err != nil {
+		defer r.Close()
+
+		if err = cw.ReadFTT(r); err != nil {
+			return
+		}
+
+		if err = cw.Append(cw.WPT, cw.WPF); err != nil {
 			return
 		}
 	} else {
-		cw.Package = fsys.NewPackage(datpath)
+		cw.Init(wpk.TypeSize{
+			tidsz, tagsz, tssize,
+		})
+
 		if err = cw.Begin(cw.WPT); err != nil {
 			return
 		}
-		cw.Package.Info().
-			Put(wpk.TIDlabel, wpk.TagString(fname))
+		cw.Package.SetInfo().
+			Put(wpk.TIDlabel, wpk.StrTag(fname))
+	}
+	if cw.Tagger, err = fsys.MakeTagger(datpath); err != nil {
+		return
 	}
 	return
 }
@@ -581,7 +598,7 @@ func (cw *CachePackage) GetImage(fpath string) (md *MediaData, err error) {
 	if ts, ok := cw.Tagset(fpath); ok {
 		var str string
 		var mime Mime_t
-		if str, ok = ts.String(wpk.TIDmime); !ok {
+		if str, ok = ts.TagStr(wpk.TIDmime); !ok {
 			return
 		}
 		if mime, ok = MimeVal[str]; !ok {
@@ -609,22 +626,22 @@ func (cw *CachePackage) GetImage(fpath string) (md *MediaData, err error) {
 
 // PutImage puts thumbnail to package.
 func (cw *CachePackage) PutImage(fpath string, md *MediaData) (err error) {
-	var ts *wpk.Tagset_t
+	var ts *wpk.TagsetRaw
 	if ts, err = cw.PackData(cw.WPF, bytes.NewReader(md.Data), fpath); err != nil {
 		return
 	}
-	ts.Put(wpk.TIDmime, wpk.TagString(MimeStr[md.Mime]))
+	ts.Put(wpk.TIDmime, wpk.StrTag(MimeStr[md.Mime]))
 	return
 }
 
 // PackInfo writes info to log about opened cache.
-func PackInfo(fname string, pack wpk.Packager) {
+func PackInfo(fname string, pkg *wpk.Package) {
 	var num, size int64
-	pack.Enum(func(fkey string, ts *wpk.Tagset_t) bool {
+	pkg.Enum(func(fkey string, ts *wpk.TagsetRaw) bool {
 		num++
 		return true
 	})
-	if ts, ok := pack.Tagset(""); ok {
+	if ts, ok := pkg.Tagset(wpk.InfoName); ok {
 		size = ts.Size()
 	}
 	Log.Infof("package '%s': cached %d files on %d bytes", fname, num, size)
@@ -634,12 +651,12 @@ func initpackages() (err error) {
 	if thumbpkg, err = InitCacheWriter(tmbfile); err != nil {
 		return
 	}
-	PackInfo(tmbfile, thumbpkg)
+	PackInfo(tmbfile, &thumbpkg.Package)
 
 	if tilespkg, err = InitCacheWriter(tilfile); err != nil {
 		return
 	}
-	PackInfo(tilfile, tilespkg)
+	PackInfo(tilfile, &tilespkg.Package)
 
 	return nil
 }

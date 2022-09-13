@@ -2,23 +2,23 @@
 set pldir=%~dp0..\frontend\plugin\
 mkdir %pldir%\images
 
-rem bootstrap 5.1.3
+rem bootstrap 5.2.0
 rem https://cdnjs.com/libraries/bootstrap
-curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.min.js --output %pldir%/bootstrap.min.js
-curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.min.js.map --output %pldir%/bootstrap.min.js.map
-curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css --output %pldir%/bootstrap.min.css
-curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css.map --output %pldir%/bootstrap.min.css.map
+curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.0/js/bootstrap.min.js --output %pldir%/bootstrap.min.js
+curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.0/js/bootstrap.min.js.map --output %pldir%/bootstrap.min.js.map
+curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.0/css/bootstrap.min.css --output %pldir%/bootstrap.min.css
+curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.0/css/bootstrap.min.css.map --output %pldir%/bootstrap.min.css.map
 
-rem popper 2.11.5
+rem popper 2.11.6
 rem https://cdnjs.com/libraries/popper.js
-curl https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.5/umd/popper.min.js --output %pldir%/popper.min.js
-curl https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.5/umd/popper.min.js.map --output %pldir%/popper.min.js.map
+curl https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.6/umd/popper.min.js --output %pldir%/popper.min.js
+curl https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.6/umd/popper.min.js.map --output %pldir%/popper.min.js.map
 
-rem Vue 3.2.33
+rem Vue 3.2.38
 rem https://cdnjs.com/libraries/vue
 rem https://unpkg.com/vue@next
-curl https://unpkg.com/vue@3.2.33/dist/vue.global.js --output %pldir%/vue.global.js
-curl https://unpkg.com/vue@3.2.33/dist/vue.global.prod.js --output %pldir%/vue.global.prod.js
+curl https://unpkg.com/vue@3.2.38/dist/vue.global.js --output %pldir%/vue.global.js
+curl https://unpkg.com/vue@3.2.38/dist/vue.global.prod.js --output %pldir%/vue.global.prod.js
 
 rem leaflet 1.8.0
 rem https://cdnjs.com/libraries/leaflet

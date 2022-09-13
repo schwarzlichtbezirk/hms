@@ -373,14 +373,8 @@ func pingAPI(w http.ResponseWriter, r *http.Request) {
 func reloadAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	_ = auth
 	var err error
-	var ret struct {
-		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
 
-		RecNumber int64 `json:"recnumber" yaml:"recnumber" xml:"recnumber"`
-		DataSize  int64 `json:"datasize" yaml:"datasize" xml:"datasize"`
-	}
-
-	if packager, err = openpackage(); err != nil {
+	if err = openpackage(); err != nil {
 		WriteError500(w, r, err, AECreloadload)
 		return
 	}
@@ -389,14 +383,7 @@ func reloadAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		return
 	}
 
-	packager.Enum(func(fkey string, ts *wpk.Tagset_t) bool {
-		ret.RecNumber++
-		return true
-	})
-	if ts, ok := packager.Tagset(""); ok {
-		ret.DataSize = ts.Size()
-	}
-	WriteOK(w, r, &ret)
+	WriteOK(w, r, nil)
 }
 
 // APIHANDLER
@@ -453,12 +440,12 @@ func cchinfAPI(w http.ResponseWriter, r *http.Request) {
 	}
 	var med stat
 	var jpg, png, gif stat
-	thumbpkg.Enum(func(fkey string, ts *wpk.Tagset_t) bool {
+	thumbpkg.Enum(func(fkey string, ts *wpk.TagsetRaw) bool {
 		var l = float64(ts.Size())
 		med.size1 += l
 		med.size2 += l * l
 		med.num++
-		if str, ok := ts.String(wpk.TIDmime); ok {
+		if str, ok := ts.TagStr(wpk.TIDmime); ok {
 			var s *stat
 			switch MimeVal[str] {
 			case MimeGif:

@@ -322,10 +322,11 @@ var routemain = []string{
 
 // Routes aliases.
 var routealias = map[string]string{
+	"/data/": ".",
 	"/devm/": devmsuff,
 	"/relm/": relmsuff,
-	"/plug/": plugsuff,
-	"/asst/": asstsuff,
+	"/plug/": "plugin",
+	"/asst/": "assets",
 }
 
 // Transaction locker, locks until handler will be done.
@@ -396,9 +397,8 @@ func RegisterRoutes(gmux *Router) {
 	}
 
 	// wpk-files sharing
-	gmux.PathPrefix("/data/").Handler(http.StripPrefix("/data/", http.FileServer(http.FS(packager))))
 	for alias, prefix := range routealias {
-		var sub, err = packager.Sub(prefix)
+		var sub, err = resfs.Sub(prefix)
 		if err != nil {
 			Log.Fatal(err)
 		}

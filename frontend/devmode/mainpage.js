@@ -453,6 +453,7 @@ const VueMainApp = {
 
 			// current opened folder data
 			flist: [], // list of files and subfolders in in current folder as is
+			skipped: 0, // number of skipped files in current folder
 			curscan: new Date(), // time of last scanning of current folder
 			curpuid: "", // current folder PUID
 			curpath: "", // current folder path and path state
@@ -712,6 +713,7 @@ const VueMainApp = {
 
 			// current path & state
 			this.curscan = new Date(Date.now());
+			this.skipped = 0;
 			this.curpuid = hist.puid;
 			this.curpath = "";
 			this.shrname = "";
@@ -734,6 +736,7 @@ const VueMainApp = {
 			hist.path = response.data.path;
 			// current path & state
 			this.curscan = new Date(Date.now());
+			this.skipped = response.data.skip;
 			this.curpuid = response.data.puid;
 			this.curpath = response.data.path;
 			this.shrname = response.data.shrname;

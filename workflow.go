@@ -30,8 +30,13 @@ var (
 	exitwg sync.WaitGroup
 )
 
-// Package root dir.
-var packager wpk.Packager
+const (
+	tidsz  = 2
+	tagsz  = 2
+	tssize = 2
+)
+
+var resfs wpk.Union // resources packages root dir.
 
 // Log is global static ring logger object.
 var Log = NewLogger(os.Stderr, LstdFlags, 300)
@@ -41,12 +46,30 @@ var Log = NewLogger(os.Stderr, LstdFlags, 300)
 ///////////////////////////////
 
 // openpackage opens hms-package.
-func openpackage() (pack wpk.Packager, err error) {
-	if cfg.AutoCert {
-		return mmap.OpenPackage(path.Join(PackPath, cfg.WPKName))
-	} else {
-		return bulk.OpenPackage(path.Join(PackPath, cfg.WPKName))
+func openpackage() (err error) {
+	for _, fname := range cfg.WPKName {
+		var fpath = path.Join(PackPath, fname)
+		var pkg *wpk.Package
+		if pkg, err = wpk.OpenPackage(fpath); err != nil {
+			return
+		}
+
+		var dpath string
+		if pkg.IsSplitted() {
+			dpath = wpk.MakeDataPath(fpath)
+		} else {
+			dpath = fpath
+		}
+
+		if cfg.WPKmmap {
+			pkg.Tagger, err = mmap.MakeTagger(dpath)
+		} else {
+			pkg.Tagger, err = bulk.MakeTagger(dpath)
+		}
+		PackInfo(fname, pkg)
+		resfs.List = append(resfs.List, pkg)
 	}
+	return
 }
 
 // hot templates reload, during server running
@@ -54,12 +77,12 @@ func loadtemplates() (err error) {
 	var ts, tc *template.Template
 	var load = func(tb *template.Template, pattern string) {
 		var tpl []string
-		if tpl, err = packager.Glob(pattern); err != nil {
+		if tpl, err = resfs.Glob(pattern); err != nil {
 			return
 		}
 		for _, key := range tpl {
 			var bcnt []byte
-			if bcnt, err = packager.ReadFile(key); err != nil {
+			if bcnt, err = resfs.ReadFile(key); err != nil {
 				return
 			}
 			var content = strings.TrimPrefix(string(bcnt), utf8bom) // remove UTF-8 format BOM header
@@ -176,10 +199,9 @@ func Init() {
 	}()
 
 	// load package with data files
-	if packager, err = openpackage(); err != nil {
+	if err = openpackage(); err != nil {
 		Log.Fatal("can not load wpk-package: " + err.Error())
 	}
-	PackInfo(cfg.WPKName, packager)
 
 	// insert components templates into pages
 	if err = loadtemplates(); err != nil {
@@ -432,7 +454,7 @@ func Shutdown() {
 	})
 
 	wg.Go(func() (err error) {
-		packager.Close()
+		resfs.Close()
 		return
 	})
 

@@ -56,7 +56,7 @@ images-prop:
   scan-threads-num: 2
 specification:
   # Name of wpk-file with program resources.
-  wpk-name: hms-full.wpk
+  wpk-name: ["hms-full.wpk"]
   # On 'true' use memory mapping technology for access to wpk-package nested files.
   # On 'false' use wpk-package loaded into one solid byte slice.
   wpk-mmap: false

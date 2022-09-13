@@ -415,9 +415,9 @@ func PathBase(syspath string) string {
 // DirProp is directory properties chunk.
 type DirProp struct {
 	// Directory scanning time in UNIX format, milliseconds.
-	Scan unix_t `json:"scan" yaml:"scan" xml:"scan"`
+	Scan unix_t `json:"scan,omitempty" yaml:"scan,omitempty" xml:"scan,omitempty"`
 	// Directory file groups counters.
-	FGrp FileGrp `json:"fgrp" yaml:"fgrp,flow" xml:"fgrp"`
+	FGrp FileGrp `json:"fgrp,omitempty" yaml:"fgrp,flow,omitempty" xml:"fgrp,omitempty"`
 }
 
 // DirKit is directory properties kit.

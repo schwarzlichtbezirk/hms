@@ -2,23 +2,23 @@
 pldir=$(dirname $0)/../frontend/plugin/
 mkdir -pv $pldir/images
 
-# bootstrap 5.1.3
+# bootstrap 5.2.0
 # https://cdnjs.com/libraries/bootstrap
-curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.min.js --output $pldir/bootstrap.min.js
-curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/js/bootstrap.min.js.map --output $pldir/bootstrap.min.js.map
-curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css --output $pldir/bootstrap.min.css
-curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.1.3/css/bootstrap.min.css.map --output $pldir/bootstrap.min.css.map
+curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.0/js/bootstrap.min.js --output $pldir/bootstrap.min.js
+curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.0/js/bootstrap.min.js.map --output $pldir/bootstrap.min.js.map
+curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.0/css/bootstrap.min.css --output $pldir/bootstrap.min.css
+curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.0/css/bootstrap.min.css.map --output $pldir/bootstrap.min.css.map
 
-# popper 2.11.5
+# popper 2.11.6
 # https://cdnjs.com/libraries/popper.js
-curl https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.5/umd/popper.min.js --output $pldir/popper.min.js
-curl https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.5/umd/popper.min.js.map --output $pldir/popper.min.js.map
+curl https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.6/umd/popper.min.js --output $pldir/popper.min.js
+curl https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.11.6/umd/popper.min.js.map --output $pldir/popper.min.js.map
 
-# Vue 3.2.33
+# Vue 3.2.38
 # https://cdnjs.com/libraries/vue
 # https://unpkg.com/vue@next
-curl https://unpkg.com/vue@3.2.33/dist/vue.global.js --output $pldir/vue.global.js
-curl https://unpkg.com/vue@3.2.33/dist/vue.global.prod.js --output $pldir/vue.global.prod.js
+curl https://unpkg.com/vue@3.2.38/dist/vue.global.js --output $pldir/vue.global.js
+curl https://unpkg.com/vue@3.2.38/dist/vue.global.prod.js --output $pldir/vue.global.prod.js
 
 # leaflet 1.8.0
 # https://cdnjs.com/libraries/leaflet

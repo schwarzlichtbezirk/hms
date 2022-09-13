@@ -197,7 +197,7 @@ func (tp *TmbProp) Tmb() *TmbProp {
 // Setup generates PUID (path unique identifier) and updates cached state.
 func (tp *TmbProp) Setup(syspath string) {
 	if ts, ok := thumbpkg.Tagset(syspath); ok {
-		if str, ok := ts.String(wpk.TIDmime); ok {
+		if str, ok := ts.TagStr(wpk.TIDmime); ok {
 			if strings.HasPrefix(str, "image/") {
 				tp.MTmbVal = GetMimeVal(str)
 			} else {
@@ -212,7 +212,7 @@ func (tp *TmbProp) Setup(syspath string) {
 	for _, tm := range tmset {
 		var tilepath = fmt.Sprintf("%s?%dx%d", syspath, tm*htcell, tm*vtcell)
 		if ts, ok := tilespkg.Tagset(tilepath); ok {
-			if str, ok := ts.String(wpk.TIDmime); ok {
+			if str, ok := ts.TagStr(wpk.TIDmime); ok {
 				if strings.HasPrefix(str, "image/") {
 					tp.SetTile(tm, GetMimeVal(str))
 				} else {

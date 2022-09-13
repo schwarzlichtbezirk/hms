@@ -23,11 +23,8 @@ const (
 )
 
 const (
-	asstsuff = "assets"  // relative path to assets folder
 	devmsuff = "devmode" // relative path to folder with development mode code files
 	relmsuff = "build"   // relative path to folder with compiled code files
-	plugsuff = "plugin"  // relative path to third party code
-	confsuff = "config"  // relative path to configuration files folder
 	tmplsuff = "tmpl"    // relative path to html templates folder
 )
 
@@ -78,7 +75,7 @@ type CfgImgProp struct {
 // CfgAppSets is settings for application-specific logic.
 type CfgAppSets struct {
 	// Name of wpk-file with program resources.
-	WPKName string `json:"wpk-name" yaml:"wpk-name" long:"wpk" description:"Name of wpk-file with program resources."`
+	WPKName []string `json:"wpk-name" yaml:"wpk-name,flow" long:"wpk" description:"Name of wpk-file with program resources."`
 	// Memory mapping technology for WPK, or load into one solid byte slice otherwise.
 	WPKmmap bool `json:"wpk-mmap" yaml:"wpk-mmap" long:"mmap" description:"Memory mapping technology for WPK, or load into one solid byte slice otherwise."`
 	// Maximum duration between two ajax-calls to think client is online.
@@ -137,7 +134,7 @@ var cfg = Config{ // inits default values:
 		ScanThreadsNum:   2,
 	},
 	CfgAppSets: CfgAppSets{
-		WPKName:          "hms-full.wpk",
+		WPKName:          []string{"hms-full.wpk"},
 		WPKmmap:          false,
 		OnlineTimeout:    time.Duration(3*60*1000) * time.Millisecond,
 		DefAccID:         1,
@@ -175,6 +172,7 @@ var ErrNoCongig = errors.New("no configuration path was found")
 
 // DetectConfigPath finds configuration path with existing configuration file at least.
 func DetectConfigPath() (retpath string, err error) {
+	var detectname = cfgfile
 	var ok bool
 	var fpath string
 	var exepath = path.Dir(ToSlash(os.Args[0]))
@@ -183,45 +181,45 @@ func DetectConfigPath() (retpath string, err error) {
 	if fpath, ok = os.LookupEnv("CONFIGPATH"); ok {
 		fpath = ToSlash(fpath)
 		// try to get access to full path
-		if retpath, ok = CheckPath(fpath, cfgfile); ok {
+		if retpath, ok = CheckPath(fpath, detectname); ok {
 			return
 		}
 		// try to find relative from executable path
-		if retpath, ok = CheckPath(path.Join(exepath, fpath), cfgfile); ok {
+		if retpath, ok = CheckPath(path.Join(exepath, fpath), detectname); ok {
 			return
 		}
 		Log.Infof("no access to pointed configuration path '%s'\n", fpath)
 	}
 
 	// try to get from config subdirectory on executable path
-	if retpath, ok = CheckPath(path.Join(exepath, cfgbase), cfgfile); ok {
+	if retpath, ok = CheckPath(path.Join(exepath, cfgbase), detectname); ok {
 		return
 	}
 	// try to find in executable path
-	if retpath, ok = CheckPath(exepath, cfgfile); ok {
+	if retpath, ok = CheckPath(exepath, detectname); ok {
 		return
 	}
 	// try to find in config subdirectory of current path
-	if retpath, ok = CheckPath(cfgbase, cfgfile); ok {
+	if retpath, ok = CheckPath(cfgbase, detectname); ok {
 		return
 	}
 	// try to find in current path
-	if retpath, ok = CheckPath(".", cfgfile); ok {
+	if retpath, ok = CheckPath(".", detectname); ok {
 		return
 	}
 	// check up current path is the git root path
-	if retpath, ok = CheckPath(cfgbase, cfgfile); ok {
+	if retpath, ok = CheckPath(cfgbase, detectname); ok {
 		return
 	}
 
 	// check up running in devcontainer workspace
-	if retpath, ok = CheckPath(path.Join("/workspaces", gitname, cfgbase), cfgfile); ok {
+	if retpath, ok = CheckPath(path.Join("/workspaces", gitname, cfgbase), detectname); ok {
 		return
 	}
 
 	// check up git source path
 	if fpath, ok = os.LookupEnv("GOPATH"); ok {
-		if retpath, ok = CheckPath(path.Join(ToSlash(fpath), "src", gitpath, cfgbase), cfgfile); ok {
+		if retpath, ok = CheckPath(path.Join(ToSlash(fpath), "src", gitpath, cfgbase), detectname); ok {
 			return
 		}
 	}
@@ -235,11 +233,11 @@ func DetectConfigPath() (retpath string, err error) {
 	if ok {
 		fpath = ToSlash(fpath)
 		// try to get from go bin config
-		if retpath, ok = CheckPath(path.Join(fpath, cfgbase), cfgfile); ok {
+		if retpath, ok = CheckPath(path.Join(fpath, cfgbase), detectname); ok {
 			return
 		}
 		// try to get from go bin root
-		if retpath, ok = CheckPath(fpath, cfgfile); ok {
+		if retpath, ok = CheckPath(fpath, detectname); ok {
 			return
 		}
 	}
@@ -257,6 +255,7 @@ var ErrNoPack = errors.New("no package path was found")
 
 // DetectConfigPath finds configuration path with existing configuration file at least.
 func DetectPackPath() (retpath string, err error) {
+	var detectname = cfg.WPKName[0]
 	var ok bool
 	var fpath string
 	var exepath = path.Dir(ToSlash(os.Args[0]))
@@ -265,32 +264,32 @@ func DetectPackPath() (retpath string, err error) {
 	if fpath, ok = os.LookupEnv("PACKPATH"); ok {
 		fpath = ToSlash(fpath)
 		// try to get access to full path
-		if retpath, ok = CheckPath(fpath, cfg.WPKName); ok {
+		if retpath, ok = CheckPath(fpath, detectname); ok {
 			return
 		}
 		// try to find relative from executable path
-		if retpath, ok = CheckPath(path.Join(exepath, fpath), cfg.WPKName); ok {
+		if retpath, ok = CheckPath(path.Join(exepath, fpath), detectname); ok {
 			return
 		}
 		Log.Infof("no access to pointed package path '%s'\n", fpath)
 	}
 
 	// try to find in executable path
-	if retpath, ok = CheckPath(exepath, cfg.WPKName); ok {
+	if retpath, ok = CheckPath(exepath, detectname); ok {
 		return
 	}
 	// try to find in current path
-	if retpath, ok = CheckPath(".", cfg.WPKName); ok {
+	if retpath, ok = CheckPath(".", detectname); ok {
 		return
 	}
 	// try to find at parental of cofiguration path
-	if retpath, ok = CheckPath(path.Join(ConfigPath, ".."), cfg.WPKName); ok {
+	if retpath, ok = CheckPath(path.Join(ConfigPath, ".."), detectname); ok {
 		return
 	}
 
 	// if GOBIN is present
 	if fpath, ok = os.LookupEnv("GOBIN"); ok {
-		if retpath, ok = CheckPath(ToSlash(fpath), cfg.WPKName); ok {
+		if retpath, ok = CheckPath(ToSlash(fpath), detectname); ok {
 			return
 		}
 	}
@@ -298,7 +297,7 @@ func DetectPackPath() (retpath string, err error) {
 	// if GOPATH is present
 	if fpath, ok = os.LookupEnv("GOPATH"); ok {
 		// try to get from go bin root
-		if retpath, ok = CheckPath(path.Join(ToSlash(fpath), "bin"), cfg.WPKName); ok {
+		if retpath, ok = CheckPath(path.Join(ToSlash(fpath), "bin"), detectname); ok {
 			return
 		}
 	}

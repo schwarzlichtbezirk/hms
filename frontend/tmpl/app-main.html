@@ -10,14 +10,18 @@
 					</ol>
 				</nav>
 				<template v-if="curpath">
-					<div v-if="shrname">
-						Shared at <span class="bg-stat">{{shrname}}</span> as
-						<span class="bg-stat"><a v-bind:href="curshorturl" target="_blank">{{curshorturl}}</a></span>
-					</div>
-					<div v-else>Folder does not shared</div>
 					<div class="small">
+						<template v-if="shrname">
+							Shared at <span class="bg-stat">{{shrname}}</span> as
+							<span class="bg-stat"><a v-bind:href="curshorturl" target="_blank">{{curshorturl}}</a></span>.
+						</template>
+						<template v-else>
+							Folder does not shared
+						</template>
 						Total <span class="bg-stat">{{pathcount}}</span> subfolders,
-						<span class="bg-stat">{{filecount}}</span> files on <span class="bg-stat">{{sumsize}}</span>, scanning time <span class="bg-stat">{{curscan.toLocaleTimeString()}}</span>.
+						<span class="bg-stat">{{filecount}}</span> files on <span class="bg-stat">{{sumsize}}</span>
+						<template v-if="skipped">, <span class="bg-stat">{{skipped}}</span> files skipped</template>
+						, scanning time <span class="bg-stat">{{curscan.toLocaleTimeString()}}</span>.
 					</div>
 				</template>
 			</div>
