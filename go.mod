@@ -36,6 +36,6 @@ require (
 	github.com/stretchr/testify v1.8.0 // indirect
 	github.com/ulikunitz/xz v0.5.10 // indirect
 	golang.org/x/net v0.0.0-20220909164309-bea034e7d591 // indirect
-	golang.org/x/sys v0.0.0-20220913120320-3275c407cedc // indirect
+	golang.org/x/sys v0.0.0-20220913175220-63ea55921009 // indirect
 	gopkg.in/djherbis/times.v1 v1.3.0 // indirect
 )

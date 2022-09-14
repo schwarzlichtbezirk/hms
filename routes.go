@@ -322,7 +322,7 @@ var routemain = []string{
 
 // Routes aliases.
 var routealias = map[string]string{
-	"/data/": ".",
+	"/fs/":   ".",
 	"/devm/": devmsuff,
 	"/relm/": relmsuff,
 	"/plug/": "plugin",

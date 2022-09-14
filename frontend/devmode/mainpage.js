@@ -1303,7 +1303,7 @@ const VueMainApp = {
 			eventHub.emit('ajax', +1);
 			try {
 				// load resources model at first
-				const response = await fetch("/data/assets/resmodel.json");
+				const response = await fetch("/fs/assets/resmodel.json");
 				if (!response.ok) {
 					throw new HttpError(response.status, { what: "can not load resources model file", when: Date.now(), code: 0 });
 				}

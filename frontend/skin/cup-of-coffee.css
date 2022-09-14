@@ -115,7 +115,7 @@ body {
 }
 
 .folder-head .breadcrumb, .card, .modal-content {
-	background-image: url("/data/skin/cup-of-coffee.jpg");
+	background-image: url("/fs/skin/cup-of-coffee.jpg");
 	background-position: center center;
 	background-repeat: no-repeat;
 	background-attachment: fixed;

@@ -3,104 +3,104 @@
 		{
 			"id": "daylight",
 			"name": "daylight",
-			"link": "/data/skin/daylight.css"
+			"link": "/fs/skin/daylight.css"
 		},
 		{
 			"id": "blue",
 			"name": "blue",
-			"link": "/data/skin/blue.css"
+			"link": "/fs/skin/blue.css"
 		},
 		{
 			"id": "dark",
 			"name": "dark",
-			"link": "/data/skin/dark.css"
+			"link": "/fs/skin/dark.css"
 		},
 		{
 			"id": "neon",
 			"name": "neon",
-			"link": "/data/skin/neon.css"
+			"link": "/fs/skin/neon.css"
 		},
 		{
 			"id": "cup-of-coffee",
 			"name": "cup of coffee",
-			"link": "/data/skin/cup-of-coffee.css"
+			"link": "/fs/skin/cup-of-coffee.css"
 		},
 		{
 			"id": "coffee-beans",
 			"name": "coffee beans",
-			"link": "/data/skin/coffee-beans.css"
+			"link": "/fs/skin/coffee-beans.css"
 		},
 		{
 			"id": "old-monitor",
 			"name": "old monitor",
-			"link": "/data/skin/old-monitor.css"
+			"link": "/fs/skin/old-monitor.css"
 		}
 	],
 	"iconlist": [
 		{
 			"id": "junior",
 			"name": "junior icons",
-			"link": "/data/icon/junior.json",
+			"link": "/fs/icon/junior.json",
 			"source": "https://iconarchive.com/show/junior-icons-by-treetog.html"
 		},
 		{
 			"id": "oxygen",
 			"name": "oxygen icons",
-			"link": "/data/icon/oxygen.json",
+			"link": "/fs/icon/oxygen.json",
 			"source": "https://iconarchive.com/show/oxygen-icons-by-oxygen-icons.org.html"
 		},
 		{
 			"id": "tulliana",
 			"name": "tulliana 2 icons",
-			"link": "/data/icon/tulliana.json",
+			"link": "/fs/icon/tulliana.json",
 			"source": "https://www.iconarchive.com/show/tulliana-2-icons-by-umut-pulat.html"
 		},
 		{
 			"id": "ubuntu",
 			"name": "ubuntu icons",
-			"link": "/data/icon/ubuntu.json",
+			"link": "/fs/icon/ubuntu.json",
 			"source": "https://iconarchive.com/show/fs-icons-by-franksouza183.html"
 		},
 		{
 			"id": "papirus",
 			"name": "papirus icons",
-			"link": "/data/icon/papirus.json",
+			"link": "/fs/icon/papirus.json",
 			"source": "https://iconarchive.com/show/papirus-mimetypes-icons-by-papirus-team.html"
 		},
 		{
 			"id": "chakram",
 			"name": "chakram 2 icons",
-			"link": "/data/icon/chakram.json",
+			"link": "/fs/icon/chakram.json",
 			"source": "https://iconarchive.com/show/chakram-2-icons-by-apathae.html"
 		},
 		{
 			"id": "senary",
 			"name": "senary icons",
-			"link": "/data/icon/senary.json",
+			"link": "/fs/icon/senary.json",
 			"source": "https://www.iconarchive.com/show/senary-icons-by-arrioch.html"
 		},
 		{
 			"id": "senary2",
 			"name": "senary v2 icons",
-			"link": "/data/icon/senary2.json",
+			"link": "/fs/icon/senary2.json",
 			"source": "https://www.iconarchive.com/show/senary-icons-by-arrioch.html"
 		},
 		{
 			"id": "delta",
 			"name": "delta icons",
-			"link": "/data/icon/delta.json",
+			"link": "/fs/icon/delta.json",
 			"source": "https://iconarchive.com/show/delta-icons-by-aroche.html"
 		},
 		{
 			"id": "whistlepuff",
 			"name": "whistlepuff icons",
-			"link": "/data/icon/whistlepuff.json",
+			"link": "/fs/icon/whistlepuff.json",
 			"source": "https://iconarchive.com/show/whistlepuff-icons-by-firstfear.html"
 		},
 		{
 			"id": "xrabbit",
 			"name": "xrabbit Icons",
-			"link": "/data/icon/xrabbit.json",
+			"link": "/fs/icon/xrabbit.json",
 			"source": "https://iconarchive.com/show/xrabbit-icons-by-flameia.html"
 		}
 	],

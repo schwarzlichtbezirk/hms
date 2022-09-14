@@ -118,7 +118,7 @@ body {
 }
 
 .folder-head .breadcrumb, .card, .modal-content {
-	background-image: url("/data/skin/nightglow-rainbow.jpg");
+	background-image: url("/fs/skin/nightglow-rainbow.jpg");
 	background-position: center center;
 	background-repeat: no-repeat;
 	background-attachment: fixed;

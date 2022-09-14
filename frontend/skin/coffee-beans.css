@@ -128,7 +128,7 @@ a, .btn-link {
 }
 
 .folder-head .breadcrumb, .card, .modal-content {
-	background-image: url("/data/skin/coffee-beans.jpg");
+	background-image: url("/fs/skin/coffee-beans.jpg");
 	background-position: center center;
 	background-repeat: no-repeat;
 	background-attachment: fixed;
