@@ -94,12 +94,16 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var syspath = path.Clean(strings.Join(chunks[3:], "/"))
-	if syspath[0] == '.' {
+	var fpath = strings.Join(chunks[3:], "/")
+	var syspath string
+	if syspath, err = UnfoldPath(fpath); err != nil {
+		WriteError400(w, r, err, AECmediabadpath)
+		return
+	}
+	if !fs.ValidPath(syspath) {
 		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECmediaroot)
 		return
 	}
-	syspath = UnfoldPath(syspath)
 
 	var puid, ok = syspathcache.PUID(syspath)
 	if !ok {
@@ -571,271 +575,6 @@ func ishomeAPI(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
-func ctgrAPI(w http.ResponseWriter, r *http.Request) {
-	var err error
-	var arg struct {
-		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
-
-		AID  ID_t   `json:"aid" yaml:"aid" xml:"aid,attr"`
-		PUID Puid_t `json:"puid" yaml:"puid" xml:"puid"`
-	}
-	var ret struct {
-		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
-
-		List []Pather `json:"list" yaml:"list" xml:"list>prop"`
-	}
-
-	// get arguments
-	if err = ParseBody(w, r, &arg); err != nil {
-		return
-	}
-	if arg.PUID == 0 {
-		WriteError400(w, r, ErrArgNoPuid, AECctgrnodata)
-		return
-	}
-
-	var catpath, ok = CatKeyPath[arg.PUID]
-	if !ok {
-		WriteError(w, r, http.StatusNotFound, ErrNoPath, AECctgrnopath)
-		return
-	}
-
-	var prf *Profile
-	if prf = prflist.ByID(arg.AID); prf == nil {
-		WriteError400(w, r, ErrNoAcc, AECctgrnoacc)
-		return
-	}
-	var auth *Profile
-	if auth, err = GetAuth(w, r); err != nil {
-		return
-	}
-
-	if auth != prf && !prf.IsShared(catpath) {
-		WriteError(w, r, http.StatusForbidden, ErrNotShared, AECctgrnoshr)
-		return
-	}
-	var catprop = func(puids []Puid_t) {
-		for _, puid := range puids {
-			if fpath, ok := syspathcache.Path(puid); ok {
-				if prop, err := propcache.Get(fpath); err == nil {
-					ret.List = append(ret.List, prop.(Pather))
-				}
-			}
-		}
-	}
-	switch arg.PUID {
-	case PUIDhome:
-		for puid := Puid_t(1); puid < PUIDreserved; puid++ {
-			if puid == PUIDhome {
-				continue
-			}
-			if fpath, ok := CatKeyPath[puid]; ok {
-				if auth == prf || prf.IsShared(fpath) {
-					if prop, err := propcache.Get(fpath); err == nil {
-						ret.List = append(ret.List, prop.(Pather))
-					}
-				}
-			}
-		}
-	case PUIDdrives:
-		ret.List = prf.ScanRoots()
-	case PUIDshares:
-		ret.List = prf.ScanShares()
-	case PUIDmedia:
-		catprop(dircache.Categories([]FG_t{FGvideo, FGaudio, FGimage}, 0.5))
-	case PUIDvideo:
-		catprop(dircache.Category(FGvideo, 0.5))
-	case PUIDaudio:
-		catprop(dircache.Category(FGaudio, 0.5))
-	case PUIDimage:
-		catprop(dircache.Category(FGimage, 0.5))
-	case PUIDbooks:
-		catprop(dircache.Category(FGbooks, 0.5))
-	case PUIDtexts:
-		catprop(dircache.Category(FGtexts, 0.5))
-	case PUIDmap:
-		var n = cfg.RangeSearchAny
-		gpscache.Range(func(puid Puid_t, gps *GpsInfo) bool {
-			if fpath, ok := syspathcache.Path(puid); ok {
-				if auth == prf || prf.IsShared(fpath) {
-					if prop, err := propcache.Get(fpath); err == nil {
-						ret.List = append(ret.List, prop.(Pather))
-						n--
-					}
-				}
-			}
-			return n > 0
-		})
-	default:
-		WriteError(w, r, http.StatusNotFound, ErrNotCat, AECctgrnotcat)
-		return
-	}
-
-	Log.Infof("id%d: navigate to %s", prf.ID, catpath)
-	usermsg <- UsrMsg{r, "path", arg.PUID}
-
-	WriteOK(w, r, &ret)
-}
-
-// APIHANDLER
-func folderAPI(w http.ResponseWriter, r *http.Request) {
-	var err error
-	var arg struct {
-		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
-
-		AID  ID_t   `json:"aid" yaml:"aid" xml:"aid,attr"`
-		PUID Puid_t `json:"puid,omitempty" yaml:"puid,omitempty" xml:"puid,omitempty"`
-		Path string `json:"path,omitempty" yaml:"path,omitempty" xml:"path,omitempty"`
-		Ext  string `json:"ext,omitempty" yaml:"ext,omitempty" xml:"ext,omitempty"`
-	}
-	var ret struct {
-		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
-
-		List []Pather `json:"list" yaml:"list" xml:"list>prop"`
-		Skip int      `json:"skip" yaml:"skip" xml:"skip"`
-		PUID Puid_t   `json:"puid" yaml:"puid" xml:"puid"`
-		Path string   `json:"path" yaml:"path" xml:"path"`
-		Name string   `json:"shrname" yaml:"shrname" xml:"shrname"`
-	}
-
-	// get arguments
-	if err = ParseBody(w, r, &arg); err != nil {
-		return
-	}
-	if arg.PUID == 0 && len(arg.Path) == 0 {
-		WriteError400(w, r, ErrArgNoPuid, AECfoldernodata)
-		return
-	}
-
-	var prf *Profile
-	if prf = prflist.ByID(arg.AID); prf == nil {
-		WriteError400(w, r, ErrNoAcc, AECfoldernoacc)
-		return
-	}
-	var auth *Profile
-	if auth, err = GetAuth(w, r); err != nil {
-		return
-	}
-
-	var syspath string
-	if len(arg.Path) > 0 {
-		syspath = path.Clean(ToSlash(arg.Path))
-		if syspath[0] == '.' {
-			WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECfolderroot)
-			return
-		}
-		syspath = UnfoldPath(syspath)
-		ret.PUID = syspathcache.Cache(syspath)
-	} else {
-		var ok bool
-		if syspath, ok = syspathcache.Path(arg.PUID); !ok {
-			WriteError(w, r, http.StatusNotFound, ErrNoPath, AECfoldernopath)
-			return
-		}
-		ret.PUID = arg.PUID
-	}
-
-	if prf.IsHidden(syspath) {
-		WriteError(w, r, http.StatusForbidden, ErrHidden, AECfolderhidden)
-		return
-	}
-
-	var shrpath, base, cg = prf.GetSharePath(syspath, auth == prf)
-	if cg.IsZero() {
-		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECfolderaccess)
-		return
-	}
-	ret.Path = shrpath
-	ret.Name = PathBase(base)
-
-	var fi fs.FileInfo
-	if fi, err = StatFile(syspath); err != nil {
-		WriteError500(w, r, err, AECfolderstat)
-		return
-	}
-
-	var ext = arg.Ext
-	if ext == "" {
-		ext = GetFileExt(syspath)
-	}
-
-	var t = time.Now()
-	if !fi.IsDir() && IsTypePlaylist(ext) {
-		var file io.ReadCloser
-		if file, err = OpenFile(syspath); err != nil {
-			WriteError500(w, r, err, AECfolderopen)
-			return
-		}
-		defer file.Close()
-
-		var pl Playlist
-		pl.Dest = path.Dir(syspath)
-		switch ext {
-		case ".m3u", ".m3u8":
-			if _, err = pl.ReadM3U(file); err != nil {
-				WriteError(w, r, http.StatusUnsupportedMediaType, err, AECfolderm3u)
-				return
-			}
-		case ".wpl":
-			if _, err = pl.ReadWPL(file); err != nil {
-				WriteError(w, r, http.StatusUnsupportedMediaType, err, AECfolderwpl)
-				return
-			}
-		case ".pls":
-			if _, err = pl.ReadPLS(file); err != nil {
-				WriteError(w, r, http.StatusUnsupportedMediaType, err, AECfolderpls)
-				return
-			}
-		case ".asx":
-			if _, err = pl.ReadASX(file); err != nil {
-				WriteError(w, r, http.StatusUnsupportedMediaType, err, AECfolderasx)
-				return
-			}
-		case ".xspf":
-			if _, err = pl.ReadXSPF(file); err != nil {
-				WriteError(w, r, http.StatusUnsupportedMediaType, err, AECfolderxspf)
-				return
-			}
-		default:
-			WriteError(w, r, http.StatusUnsupportedMediaType, ErrNotPlay, AECfolderformat)
-			return
-		}
-
-		var prop interface{}
-		for _, track := range pl.Tracks {
-			var fpath = ToSlash(track.Location)
-			if !prf.IsHidden(fpath) {
-				var cg = prf.PathAccess(fpath, auth == prf)
-				var grp = GetFileGroup(fpath)
-				if cg[grp] {
-					if prop, err = propcache.Get(fpath); err == nil {
-						ret.List = append(ret.List, prop.(Pather))
-						continue
-					}
-				}
-			}
-		}
-		ret.Skip = len(pl.Tracks) - len(ret.List)
-	} else {
-		if ret.List, ret.Skip, err = ScanDir(syspath, &cg, func(fpath string) bool {
-			return !prf.IsHidden(fpath)
-		}); err != nil {
-			if errors.Is(err, fs.ErrNotExist) {
-				WriteError(w, r, http.StatusNotFound, err, AECfolderabsent)
-			} else {
-				WriteError500(w, r, err, AECfolderfail)
-			}
-			return
-		}
-	}
-
-	Log.Infof("id%d: navigate to %s, items %d, timeout %s", prf.ID, syspath, len(ret.List), time.Since(t))
-	usermsg <- UsrMsg{r, "path", ret.PUID}
-
-	WriteOK(w, r, &ret)
-}
-
-// APIHANDLER
 func ispathAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var err error
 	var arg struct {
@@ -849,6 +588,10 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
+	if len(arg.Path) == 0 {
+		WriteError400(w, r, ErrArgNoPuid, AECispathnodata)
+		return
+	}
 
 	var prf *Profile
 	if prf = prflist.ByID(arg.AID); prf == nil {
@@ -860,12 +603,20 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		return
 	}
 
-	var syspath = path.Clean(ToSlash(arg.Path))
-	if syspath[0] == '.' {
-		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECispathroot)
-		return
+	var fpath = ToSlash(arg.Path)
+	var syspath string
+	if ok, _ := PathExists(fpath); ok {
+		syspath = path.Clean(fpath)
+	} else {
+		if syspath, err = UnfoldPath(fpath); err != nil {
+			WriteError400(w, r, err, AECfolderbadpath)
+			return
+		}
+		if !fs.ValidPath(syspath) {
+			WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECispathroot)
+			return
+		}
 	}
-	syspath = UnfoldPath(syspath)
 
 	if prf.IsHidden(syspath) {
 		WriteError(w, r, http.StatusForbidden, ErrHidden, AECispathhidden)
@@ -999,16 +750,25 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		return
 	}
 
-	var syspath = path.Clean(ToSlash(arg.Path))
-	if syspath[0] == '.' {
-		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECdrvaddroot)
-		return
+	var fpath = ToSlash(arg.Path)
+	var syspath string
+	if ok, _ := PathExists(fpath); ok {
+		syspath = path.Clean(fpath)
+	} else {
+		if syspath, err = UnfoldPath(fpath); err != nil {
+			WriteError400(w, r, err, AECdrvaddbadpath)
+			return
+		}
+		if !fs.ValidPath(syspath) {
+			WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECdrvaddroot)
+			return
+		}
 	}
+
 	// append slash to disk root to prevent open current dir on this disk
 	if strings.HasSuffix(syspath, ":") {
 		syspath += "/"
 	}
-	syspath = UnfoldPath(syspath)
 	if prf.RootIndex(syspath) >= 0 {
 		WriteOK(w, r, nil)
 		return

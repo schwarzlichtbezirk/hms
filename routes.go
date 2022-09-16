@@ -425,7 +425,6 @@ func RegisterRoutes(gmux *Router) {
 	api.Path("/auth/signin").HandlerFunc(signinAPI)
 	api.Path("/auth/refrsh").HandlerFunc(refrshAPI)
 	api.Path("/res/ishome").HandlerFunc(ishomeAPI)
-	api.Path("/res/ctgr").HandlerFunc(ctgrAPI)
 	api.Path("/res/folder").HandlerFunc(folderAPI)
 	api.Path("/res/ispath").HandlerFunc(AuthWrap(ispathAPI))
 	api.Path("/tile/chk").HandlerFunc(tilechkAPI)

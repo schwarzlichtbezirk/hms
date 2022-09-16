@@ -697,35 +697,10 @@ const VueMainApp = {
 			this.ishome = response.data.ishome;
 		},
 
-		async fetchcategory(hist) {
-			const response = await fetchajaxauth("POST", "/api/res/ctgr", {
-				aid: hist.aid, puid: hist.puid
-			});
-			traceajax(response);
-			if (!response.ok) {
-				throw new HttpError(response.status, response.data);
-			}
-
-			// update shared
-			if (hist.puid === PUID.shares && this.isadmin) {
-				this.shared = response.data.list ?? [];
-			}
-
-			// current path & state
-			this.curscan = new Date(Date.now());
-			this.skipped = 0;
-			this.curpuid = hist.puid;
-			this.curpath = "";
-			this.shrname = "";
-			document.title = `hms - ${this.curbasename}`;
-
-			this.newfolder(response.data.list);
-		},
-
 		// opens given folder cleary
 		async fetchfolder(hist) {
 			const response = await fetchajaxauth("POST", "/api/res/folder", {
-				aid: hist.aid, puid: hist.puid, path: hist.path
+				aid: hist.aid, path: hist.path ?? hist.puid
 			});
 			traceajax(response);
 			if (!response.ok) {
@@ -750,11 +725,7 @@ const VueMainApp = {
 				hist.puid = PUID.home;
 			}
 			await this.fetchscanbreak() // stop previous folder scanning
-			if (CID[hist.puid]) {
-				await this.fetchcategory(hist);
-			} else {
-				await this.fetchfolder(hist);
-			}
+			await this.fetchfolder(hist);
 			this.fetchscanstart(); // fetch at backround
 			this.seturl();
 		},
@@ -840,8 +811,8 @@ const VueMainApp = {
 		},
 
 		async fetchshared() {
-			const response = await fetchajaxauth("POST", "/api/res/ctgr", {
-				aid: this.aid, puid: PUID.shares
+			const response = await fetchajaxauth("POST", "/api/res/folder", {
+				aid: this.aid, path: PUID.shares
 			});
 			traceajax(response);
 			if (!response.ok) {
@@ -1470,7 +1441,7 @@ const appws = Vue.createApp(VueMainApp)
 	.component('list-item-tag', VueListItem)
 	.component('file-item-tag', VueFileItem)
 	.component('img-item-tag', VueImgItem)
-	.component('tile-item-tag', VueTileItem);
-const appvm = appws.mount('#app');
+	.component('tile-item-tag', VueTileItem)
+	.mount('#app');
 
 // The End.

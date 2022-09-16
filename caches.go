@@ -124,45 +124,6 @@ func (c *PathCache) Cache(fpath string) (puid Puid_t) {
 	return
 }
 
-var puidsym = (func() (t [256]bool) {
-	const encodeHex = "0123456789ABCDEFGHIJKLMNOPQRSTUV"
-	for _, c := range encodeHex {
-		t[c] = true
-	}
-	return
-})()
-
-// SplitPrefSuff splits given share path to share prefix and remained suffix.
-func SplitPrefSuff(shrpath string) (string, string) {
-	for i, c := range shrpath {
-		if c == '/' || c == '\\' {
-			return shrpath[:i], shrpath[i+1:]
-		} else if int(c) >= len(puidsym) || !puidsym[c] {
-			return "", shrpath
-		}
-	}
-	return shrpath, "" // root of share
-}
-
-// UnfoldPath brings any share path to system file path.
-func UnfoldPath(shrpath string) string {
-	var pref, suff = SplitPrefSuff(shrpath)
-	if pref == "" {
-		return shrpath
-	}
-
-	var puid Puid_t
-	if err := puid.Set(pref); err == nil {
-		if fpath, ok := syspathcache.Path(puid); ok {
-			if suff != "" { // prevent modify original path if suffix is absent
-				fpath = path.Join(fpath, suff)
-			}
-			return fpath
-		}
-	}
-	return shrpath
-}
-
 // Instance of unlimited cache with PUID<=>syspath pairs.
 var syspathcache = PathCache{
 	keypath: map[Puid_t]string{},

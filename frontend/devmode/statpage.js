@@ -443,7 +443,7 @@ const VueUser = {
 const appws = Vue.createApp(VueStatApp)
 	.component('catitem-tag', VueCatItem)
 	.component('pagination-tag', VuePagination)
-	.component('user-tag', VueUser);
-const appvm = appws.mount('#app');
+	.component('user-tag', VueUser)
+	.mount('#app');
 
 // The End.

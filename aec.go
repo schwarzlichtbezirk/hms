@@ -33,6 +33,7 @@ const (
 	AECmediabadhd
 	AECmediabadaccid
 	AECmedianoacc
+	AECmediabadpath
 	AECmediaroot
 	AECmedianopath
 	AECmediahidden
@@ -102,20 +103,16 @@ const (
 
 	// res/ctgr
 
-	AECctgrnodata
-	AECctgrnopath
-	AECctgrnoacc
-	AECctgrnoshr
-	AECctgrnotcat
-
 	// res/folder
 
 	AECfoldernodata
 	AECfoldernoacc
-	AECfolderroot
+	AECfolderbadpath
 	AECfoldernopath
 	AECfolderhidden
 	AECfolderaccess
+	AECfoldernoshr
+	AECfoldernotcat
 	AECfolderstat
 	AECfolderopen
 	AECfolderm3u
@@ -129,6 +126,7 @@ const (
 
 	// res/ispath
 
+	AECispathnodata
 	AECispathnoacc
 	AECispathdeny
 	AECispathroot
@@ -167,6 +165,7 @@ const (
 	AECdrvaddnodata
 	AECdrvaddnoacc
 	AECdrvadddeny
+	AECdrvaddbadpath
 	AECdrvaddroot
 	AECdrvaddfile
 
@@ -225,6 +224,8 @@ var (
 	ErrNoData   = errors.New("data is empty")
 	ErrArgUndef = errors.New("request content type is undefined")
 	ErrBadEnc   = errors.New("encoding format does not supported")
+	ErrNotSys   = errors.New("root PUID does not refers to file system path")
+	ErrPathOut  = errors.New("path cannot refers outside root PUID")
 
 	ErrNotFound  = errors.New("404 page not found")
 	ErrArgNoNum  = errors.New("'num' parameter not recognized")
