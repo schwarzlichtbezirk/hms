@@ -10,17 +10,6 @@ assert(cfg.deficonid, "default icon ID is absent")
 -- get frontend data directory
 local rootdir = path.join(scrdir, "..", "frontend").."/"
 
--- check up deployment
-if not checkfile(path.join(rootdir, "plugin")) then
-	error"plugins does not installed, run 'task/deploy-plugins' script"
-end
-if not checkfile(path.join(rootdir, "build/app.bundle.js")) then
-	error"frontend application bundle does not builded, run 'task/cc.base' script"
-end
-if not checkfile(path.join(rootdir, "build/main.bundle.js")) then
-	error"frontend pages bundle does not builded, run 'task/cc.page' script"
-end
-
 -- full map of skins identifiers to lists of files
 local fullskinmap = {
 	["daylight"] = {"daylight.css"},
@@ -177,11 +166,6 @@ if logdir then logfmt("writes %s package", pkg.pkgpath) end
 
 -- put some directories as is
 packdir("assets", rootdir.."assets", commonput)
-packdir("build", rootdir.."build", commonput)
-packdir("devmode", rootdir.."devmode", authput)
-packdir("plugin", rootdir.."plugin", commonput)
-packdir("tmpl", rootdir.."tmpl", commonput)
-packdir("task", scrdir, commonput)
 -- put skins
 for i, id in ipairs(cfg.skinset) do
 	for j, fname in ipairs(fullskinmap[id]) do
@@ -223,14 +207,6 @@ for id, fmtlst in pairs(cfg.iconset) do
 	pkg:putdata(kpath, content)
 	pkg:settag(kpath, "author", "schwarzlichtbezirk")
 	if logrec then logfile(kpath) end
-end
--- put sources
-for i, fpath in ipairs{path.glob(rootdir.."../*")} do
-	local has, isdir = checkfile(fpath)
-	if not isdir then
-		local fname = string.match(fpath, "/([%w%-%.]+)$")
-		authput("src/"..fname, fpath)
-	end
 end
 
 -- put modified resmodel.json
@@ -279,7 +255,7 @@ do
 	local f = assert(io.open(envfmt("${GOPATH}/bin/config/settings.yaml"), "rb"))
 	local content = f:read("*all")
 	f:close()
-	content = string.gsub(content, "wpk%-name:(%s+)[%w%-]+%.wpk", "wpk-name:%1"..cfg.info.label..".wpk")
+	content = string.gsub(content, "\"wpk%-full%.wpk\"", "\""..cfg.info.label..".wpk\"")
 	local f = assert(io.open(envfmt("${GOPATH}/bin/config/settings.yaml"), "wb+"))
 	f:write(content)
 	f:close()

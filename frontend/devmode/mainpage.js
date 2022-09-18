@@ -1426,7 +1426,7 @@ const VueAuth = {
 };
 
 // Create application view model
-const appws = Vue.createApp(VueMainApp)
+const appvm = Vue.createApp(VueMainApp)
 	.component('auth-tag', VueAuth)
 	.component('thumbslider-tag', VueThumbSlider)
 	.component('photoslider-tag', VuePhotoSlider)

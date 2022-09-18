@@ -37,4 +37,4 @@ cfg = {
 logrec = false
 logdir = false
 
-dofile(path.join(scrdir, "pack.lua"))
+dofile(path.join(scrdir, "pack-res.lua"))
