@@ -1,45 +1,35 @@
 body {
-	color: #e0a854;
-	background-color: #582c18;
+	color: #739008;
+	background-color: #122230;
 	font-family: Verdana, Geneva, sans-serif;
 }
 
 ::-webkit-scrollbar {
-	width: 0.60rem;
+	width: 0.80rem;
 }
 
 ::-webkit-scrollbar-track {
 	background: #510a86;
+	box-shadow: inset 0 0 0.40rem #343a40;
+	border-radius: 0.40rem;
 }
 
 ::-webkit-scrollbar-thumb {
 	background: #652991;
+	border-radius: 0.40rem;
 }
 
 	::-webkit-scrollbar-thumb:hover {
 		background: #723d98;
 	}
 
-a, .btn-link {
-	color: #B299CC;
-	text-decoration: none;
-}
-
-	a:hover, .btn-link:hover {
-		color: #9877BB;
-		text-decoration: underline;
-	}
-
-.breadcrumb-item.active {
-	color: Khaki;
-}
-
-.breadcrumb-item + .breadcrumb-item::before {
-	color: DarkKhaki;
+.menu-scrollable {
+	max-height: 20rem;
+	overflow-y: scroll;
 }
 
 .bg-tool {
-	background-color: #754b28;
+	background-color: #343a40;
 }
 
 	.bg-tool .navbar-toggler {
@@ -91,13 +81,13 @@ a, .btn-link {
 .toolbtn {
 	text-decoration: none;
 	padding: 0.25rem;
-	border-radius: 0.75rem;
+	border-radius: 50%;
 }
 
 .toolinp {
 	height: calc(1.5em + 0.50rem + 2px);
 	border: 1px solid rgba(255, 255, 255, 0.1);
-	border-radius: 0.75rem;
+	border-radius: 1.25rem;
 }
 
 
@@ -128,7 +118,7 @@ a, .btn-link {
 }
 
 .folder-head .breadcrumb, .card, .modal-content {
-	background-image: url("/fs/skin/coffee-beans.jpg");
+	background-image: url("/fs/skin/neon/nightglow-rainbow.jpg");
 	background-position: center center;
 	background-repeat: no-repeat;
 	background-attachment: fixed;
@@ -136,7 +126,7 @@ a, .btn-link {
 }
 
 .bg-stat {
-	background: rgba(141, 113, 71, 0.33); /* coffee with milk */
+	background: rgba(75, 0, 130, 0.5); /* Indigo */
 	padding: 0px 4px;
 }
 
@@ -176,7 +166,7 @@ a, .btn-link {
 
 		.bg-card button:hover, .bg-card button:focus {
 			color: rgba(255, 255, 255, 0.75);
-			background-color: rgba(175, 86, 4, 0.5); /* body 35%, #af5604 */
+			background-color: rgba(153, 102, 204, 0.5); /* RebeccaPurple 60% */
 		}
 
 		.bg-card button:disabled, bg-card button.disabled {
@@ -191,7 +181,7 @@ a, .btn-link {
 		}
 
 	.bg-card .dropdown-item.active, .bg-card .active > .dropdown-item {
-		background: rgba(128, 0, 128, 0.5); /* Purple */
+		background: rgba(106, 90, 205, 0.5); /* SlateBlue */
 	}
 
 .centerimg {
@@ -226,7 +216,7 @@ a, .btn-link {
 .itemfont {
 	line-height: 1.25;
 	font-size: 0.72rem;
-	color: PaleGoldenRod;
+	color: Aquamarine;
 }
 
 	.itemfont.tag {
@@ -241,30 +231,24 @@ a, .btn-link {
 }
 
 	.fileitem:hover, .listitem:hover {
-		background: rgba(184, 134, 11, 0.5); /* DarkGoldenRod */
-		border: 1px solid Indigo;
+		background: rgba(25, 25, 112, 0.5); /* MidnightBlue */
+		border: 1px solid DarkTurquoise;
 		cursor: pointer;
 	}
 
 	.fileitem.selected, .listitem.selected {
-		background: rgba(255, 215, 0, 0.5); /* Gold */
-		border: 1px solid RebeccaPurple;
-		box-shadow: 0px 0px 8px rgba(255, 255, 255, 0.5);
+		background: rgba(75, 0, 130, 0.5); /* Indigo */
+		border: 1px solid DarkTurquoise;
 	}
 
 		.fileitem.selected:hover, .listitem.selected:hover {
-			background: rgba(255, 232, 102, 0.5); /* Gold 70%, #ffe866 */
-			border: 1px solid RebeccaPurple;
-			box-shadow: 0px 0px 12px rgba(255, 255, 255, 0.5);
+			background: rgba(106, 90, 205, 0.5); /* SlateBlue */
+			border: 1px solid DarkTurquoise;
 		}
 
 	.fileitem > .tag, .listitem {
-		background: rgba(102, 51, 153, 0.33); /* RebeccaPurple */
+		background: rgba(102, 51, 153, 0.5); /* RebeccaPurple */
 	}
-
-		.fileitem:hover > .tag, .listitem:hover {
-			background: rgba(102, 51, 153, 0.67); /* RebeccaPurple */
-		}
 
 .imgitem {
 	z-index: auto;
@@ -273,20 +257,20 @@ a, .btn-link {
 	.imgitem:hover {
 		z-index: 1;
 		background: rgba(25, 25, 112, 0.5); /* MidnightBlue */
-		box-shadow: 0px 0px 12px Moccasin;
+		box-shadow: 0px 0px 12px DarkTurquoise;
 		cursor: pointer;
 	}
 
 	.imgitem.selected {
 		z-index: 1;
 		background: rgba(75, 0, 130, 0.5); /* Indigo */
-		box-shadow: 0px 0px 12px Coral;
+		box-shadow: 0px 0px 12px Azure;
 	}
 
 		.imgitem.selected:hover {
 			z-index: 1;
 			background: rgba(106, 90, 205, 0.5); /* SlateBlue */
-			box-shadow: 0px 0px 12px Tomato;
+			box-shadow: 0px 0px 12px Azure;
 		}
 
 	.imgitem .pict {
@@ -309,13 +293,12 @@ a, .btn-link {
 		right: 16px;
 		bottom: 16px;
 		display: block;
-		background: rgba(102, 51, 153, 0.33); /* RebeccaPurple */
+		background: rgba(102, 51, 153, 0.5); /* RebeccaPurple */
 		max-width: 112px;
 	}
 
 	.imgitem:hover > .tag {
-		color: LightGoldenRodYellow;
-		background: rgba(102, 51, 153, 0.67); /* RebeccaPurple */
+		color: Azure;
 	}
 
 .listitem {
@@ -368,7 +351,7 @@ a, .btn-link {
 }
 
 .listitem:hover .name {
-	color: LightGoldenRodYellow;
+	color: Azure;
 }
 
 .listitem .attr .key {
@@ -394,53 +377,53 @@ a, .btn-link {
 /* leaflet photo thumbnail marker */
 
 .photomarker img {
-	border: 3px solid MediumPurple;
+	border: 3px solid #c2adeb;
 	border-radius: 0.25rem;
 }
 
 /* leaflet popup */
 
 .leaflet-control-scale-line {
-	background-color: rgba(102, 51, 153, 0.5); /* RebeccaPurple */
+	background-color: rgba(147, 112, 219, 0.5); /* MediumPurple */
 	color: #ddd;
 }
 
 .leaflet-popup-content-wrapper, .leaflet-popup-tip,
 .leaflet-container .leaflet-control-attribution {
-	background-color: rgba(102, 51, 153, 0.75); /* RebeccaPurple */
+	background-color: rgba(147, 112, 219, 0.75); /* MediumPurple */
 	color: #ddd;
 }
 
 	.leaflet-popup-content-wrapper a,
 	.leaflet-container .leaflet-control-attribution a {
-		color: SpringGreen;
+		color: LawnGreen;
 	}
 
 		.leaflet-popup-content-wrapper a:hover,
 		.leaflet-container .leaflet-control-attribution a:hover {
-			color: MediumSpringGreen;
+			color: GreenYellow;
 		}
 
 	.leaflet-popup-content-wrapper .nav-tabs .nav-link.active,
 	.leaflet-popup-content-wrapper .nav-tabs .nav-item.show .nav-link {
-		color: PaleGreen;
-		background-color: rgba(128, 64, 191, 0.75);
+		color: LightGreen;
+		background-color: rgba(133, 92, 214, 0.75);
 		border-color: #dee2e6 #dee2e6 #fff;
 	}
 
 .leaflet-bar a, .leaflet-bar button {
-	background-color: rgba(102, 51, 153, 0.5); /* RebeccaPurple */
-	color: #ddd;
+	background-color: rgba(147, 112, 219, 0.5); /* MediumPurple */
+	color: #ccc;
 	font: bold 18px 'Lucida Console', Monaco, monospace; /* for vertical alignment as at zoom control */
 }
 
 	.leaflet-bar a:hover, .leaflet-bar button:hover {
-		background-color: rgba(102, 51, 153, 0.80);
+		background-color: rgba(147, 112, 219, 0.80);
 		color: #fff;
 	}
 
 	.leaflet-bar a.active, .leaflet-bar button.active {
-		background-color: rgba(102, 51, 153, 0.80);
+		background-color: rgba(147, 112, 219, 0.80);
 		color: #ccc;
 	}
 
@@ -448,8 +431,8 @@ a, .btn-link {
 	.leaflet-bar a:disabled, .leaflet-bar button:disabled {
 		cursor: default;
 		pointer-events: none;
-		background-color: rgba(102, 51, 153, 0.25);
-		color: #bbb;
+		background-color: rgba(147, 112, 219, 0.25);
+		color: #aaa;
 	}
 
 .photoinfo .thumb {
@@ -492,15 +475,15 @@ a, .btn-link {
 		padding: 2px;
 		height: 24px;
 		cursor: pointer;
-		background-color: Tan;
+		background-color: Violet;
 	}
 
 		.timescale > .progress > .current {
-			background-color: Sienna;
+			background-color: RebeccaPurple;
 		}
 
 		.timescale > .progress > .buffer {
-			background-color: Peru;
+			background-color: HotPink;
 		}
 
 		.timescale > .progress > .timer {
@@ -527,7 +510,7 @@ a, .btn-link {
 				width: 20px;
 				height: 20px;
 				border-radius: 50%;
-				background: RebeccaPurple;
+				background: Navy;
 			}
 
 .mp3range { /* input[type=range] */
@@ -544,26 +527,26 @@ a, .btn-link {
 		height: 8px;
 		border-radius: 4px;
 		cursor: pointer;
-		background-color: tan;
+		background-color: violet;
 	}
 
 	.mp3range::-webkit-slider-thumb {
-		box-shadow: inset 1px 1px 2px gold, inset -1px -1px 2px darkgoldenrod;
+		box-shadow: inset 1px 1px 2px plum, inset -1px -1px 2px darkviolet;
 		height: 20px;
-		width: 20px;
-		border-radius: 50%;
-		background-color: goldenrod;
+		width: 12px;
+		border-radius: 6px;
+		background-color: hotpink;
 		cursor: pointer;
 		-webkit-appearance: none;
 		margin-top: -6px;
 	}
 
 	.mp3range:hover::-webkit-slider-runnable-track {
-		background-color: rosybrown;
+		background-color: orchid;
 	}
 
 	.mp3range:focus::-webkit-slider-runnable-track {
-		background-color: #a97070;
+		background-color: mediumorchid;
 	}
 
 	.mp3range::-moz-range-track {
@@ -575,19 +558,19 @@ a, .btn-link {
 	}
 
 	.mp3range:hover::-moz-range-track {
-		background-color: rosybrown;
+		background-color: orchid;
 	}
 
 	.mp3range:focus::-moz-range-track {
-		background-color: #a97070;
+		background-color: mediumorchid;
 	}
 
 	.mp3range::-moz-range-thumb {
-		box-shadow: inset 1px 1px 2px gold, inset -1px -1px 2px darkgoldenrod;
+		box-shadow: inset 1px 1px 2px plum, inset -1px -1px 2px darkviolet;
 		height: 20px;
-		width: 20px;
-		border-radius: 50%;
-		background-color: goldenrod;
+		width: 12px;
+		border-radius: 6px;
+		background-color: hotpink;
 		cursor: pointer;
 	}
 
@@ -607,28 +590,28 @@ a, .btn-link {
 	}
 
 	.mp3range::-ms-fill-upper {
-		background-color: tan;
+		background-color: violet;
 	}
 
 	.mp3range::-ms-thumb {
-		box-shadow: inset 1px 1px 2px gold, inset -1px -1px 2px darkgoldenrod;
+		box-shadow: inset 1px 1px 2px plum, inset -1px -1px 2px darkviolet;
 		height: 20px;
-		width: 20px;
-		border-radius: 50%;
-		background-color: goldenrod;
+		width: 12px;
+		border-radius: 6px;
+		background-color: hotpink;
 		cursor: pointer;
 	}
 
 	.mp3range:focus::-ms-fill-lower {
-		background-color: tan;
+		background-color: violet;
 	}
 
 	.mp3range:hover::-ms-fill-upper {
-		background-color: rosybrown;
+		background-color: orchid;
 	}
 
 	.mp3range:focus::-ms-fill-upper {
-		background-color: #a97070;
+		background-color: mediumorchid;
 	}
 
 .range-label {
@@ -716,11 +699,11 @@ a, .btn-link {
 
 		.thumbslider .thumb:hover {
 			opacity: 1;
-			border: 0.25rem solid LemonChiffon;
+			border: 0.25rem solid Lavender;
 		}
 
 		.thumbslider .thumb.active {
 			z-index: 1036;
 			opacity: 1;
-			border: 0.25rem solid Gold;
+			border: 0.25rem solid Azure;
 		}

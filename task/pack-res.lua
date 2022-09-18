@@ -169,7 +169,7 @@ packdir("assets", rootdir.."assets", commonput)
 -- put skins
 for i, id in ipairs(cfg.skinset) do
 	for j, fname in ipairs(fullskinmap[id]) do
-		local kpath = "skin/"..fname
+		local kpath = path.join("skin", id, fname)
 		authput(kpath, rootdir..kpath)
 	end
 end

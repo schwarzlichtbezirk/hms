@@ -374,6 +374,19 @@ func (prf *Profile) GetSharePath(syspath string, isadmin bool) (shrpath string, 
 		return
 	}
 
+	for _, fpath := range CatKeyPath {
+		if syspath == fpath {
+			shrpath, base = fpath, fpath
+		}
+	}
+	if len(base) > 0 {
+		if isadmin {
+			cg.SetAll(true)
+		} else {
+			cg = prf.ctgrshare
+		}
+	}
+
 	shrpath = syspath
 	return
 }

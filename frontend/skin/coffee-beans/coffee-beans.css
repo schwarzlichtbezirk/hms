@@ -1,32 +1,45 @@
 body {
-	color: rgb(74, 26, 3);
-	background-color: #e4a44c;
+	color: #e0a854;
+	background-color: #582c18;
 	font-family: Verdana, Geneva, sans-serif;
 }
 
 ::-webkit-scrollbar {
-	width: 0.80rem;
+	width: 0.60rem;
 }
 
 ::-webkit-scrollbar-track {
-	background: #d99c48;
-	box-shadow: inset 0 0 0.40rem #b46a20;
-	border-radius: 0.40rem;
+	background: #510a86;
 }
 
 ::-webkit-scrollbar-thumb {
-	background: #bd5dd5;
-	box-shadow: inset 0 0 0.40rem #7700cc;
-	border-radius: 0.40rem;
+	background: #652991;
 }
 
 	::-webkit-scrollbar-thumb:hover {
-		background: #ad34cb;
+		background: #723d98;
 	}
 
+a, .btn-link {
+	color: #B299CC;
+	text-decoration: none;
+}
+
+	a:hover, .btn-link:hover {
+		color: #9877BB;
+		text-decoration: underline;
+	}
+
+.breadcrumb-item.active {
+	color: Khaki;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+	color: DarkKhaki;
+}
+
 .bg-tool {
-	color: Tan;
-	background-color: #b46a20;
+	background-color: #754b28;
 }
 
 	.bg-tool .navbar-toggler {
@@ -43,8 +56,8 @@ body {
 	}
 
 	.bg-tool .dropdown-header {
-		color: rgba(74, 26, 3, 0.5);
-		background-color: rgba(228, 164, 76, 0.15);
+		color: rgba(255, 255, 255, 0.5);
+		background-color: rgba(75, 0, 130, 0.15);
 	}
 
 	.bg-tool button,
@@ -115,7 +128,7 @@ body {
 }
 
 .folder-head .breadcrumb, .card, .modal-content {
-	background-image: url("/fs/skin/cup-of-coffee.jpg");
+	background-image: url("/fs/skin/coffee-beans/coffee-beans.jpg");
 	background-position: center center;
 	background-repeat: no-repeat;
 	background-attachment: fixed;
@@ -123,7 +136,7 @@ body {
 }
 
 .bg-stat {
-	background: rgba(102, 51, 153, 0.25); /* RebeccaPurple */
+	background: rgba(141, 113, 71, 0.33); /* coffee with milk */
 	padding: 0px 4px;
 }
 
@@ -163,7 +176,7 @@ body {
 
 		.bg-card button:hover, .bg-card button:focus {
 			color: rgba(255, 255, 255, 0.75);
-			background-color: rgba(153, 102, 204, 0.5); /* RebeccaPurple 60% */
+			background-color: rgba(175, 86, 4, 0.5); /* body 35%, #af5604 */
 		}
 
 		.bg-card button:disabled, bg-card button.disabled {
@@ -344,10 +357,6 @@ body {
 	height: 48px;
 }
 
-.listitem:hover .name {
-	color: LightGoldenRodYellow;
-}
-
 .listitem .name, .listitem .attr {
 	margin-left: 0.25rem;
 	margin-right: 0.25rem;
@@ -359,7 +368,7 @@ body {
 }
 
 .listitem:hover .name {
-	background: rgba(102, 51, 153, 0.67); /* RebeccaPurple */
+	color: LightGoldenRodYellow;
 }
 
 .listitem .attr .key {
@@ -385,53 +394,53 @@ body {
 /* leaflet photo thumbnail marker */
 
 .photomarker img {
-	border: 3px solid Thistle;
+	border: 3px solid MediumPurple;
 	border-radius: 0.25rem;
 }
 
 /* leaflet popup */
 
 .leaflet-control-scale-line {
-	background-color: rgba(188, 143, 143, 0.5); /* RosyBrown */
+	background-color: rgba(102, 51, 153, 0.5); /* RebeccaPurple */
 	color: #ddd;
 }
 
 .leaflet-popup-content-wrapper, .leaflet-popup-tip,
 .leaflet-container .leaflet-control-attribution {
-	background-color: rgba(188, 143, 143, 0.75); /* RosyBrown */
+	background-color: rgba(102, 51, 153, 0.75); /* RebeccaPurple */
 	color: #ddd;
 }
 
 	.leaflet-popup-content-wrapper a,
 	.leaflet-container .leaflet-control-attribution a {
-		color: NavajoWhite;
+		color: SpringGreen;
 	}
 
 		.leaflet-popup-content-wrapper a:hover,
 		.leaflet-container .leaflet-control-attribution a:hover {
-			color: Wheat;
+			color: MediumSpringGreen;
 		}
 
 	.leaflet-popup-content-wrapper .nav-tabs .nav-link.active,
 	.leaflet-popup-content-wrapper .nav-tabs .nav-item.show .nav-link {
-		color: Cornsilk;
-		background-color: rgba(179, 128, 128, 0.75);
+		color: PaleGreen;
+		background-color: rgba(128, 64, 191, 0.75);
 		border-color: #dee2e6 #dee2e6 #fff;
 	}
 
 .leaflet-bar a, .leaflet-bar button {
-	background-color: rgba(188, 143, 143, 0.5); /* RosyBrown */
+	background-color: rgba(102, 51, 153, 0.5); /* RebeccaPurple */
 	color: #ddd;
 	font: bold 18px 'Lucida Console', Monaco, monospace; /* for vertical alignment as at zoom control */
 }
 
 	.leaflet-bar a:hover, .leaflet-bar button:hover {
-		background-color: rgba(188, 143, 143, 0.75);
+		background-color: rgba(102, 51, 153, 0.80);
 		color: #fff;
 	}
 
 	.leaflet-bar a.active, .leaflet-bar button.active {
-		background-color: rgba(188, 143, 143, 0.75);
+		background-color: rgba(102, 51, 153, 0.80);
 		color: #ccc;
 	}
 
@@ -439,7 +448,7 @@ body {
 	.leaflet-bar a:disabled, .leaflet-bar button:disabled {
 		cursor: default;
 		pointer-events: none;
-		background-color: rgba(188, 143, 143, 0.25);
+		background-color: rgba(102, 51, 153, 0.25);
 		color: #bbb;
 	}
 
@@ -520,6 +529,107 @@ body {
 				border-radius: 50%;
 				background: RebeccaPurple;
 			}
+
+.mp3range { /* input[type=range] */
+	-webkit-appearance: none;
+	background-color: transparent;
+}
+
+	.mp3range:focus {
+		outline: none;
+	}
+
+	.mp3range::-webkit-slider-runnable-track {
+		width: 100%;
+		height: 8px;
+		border-radius: 4px;
+		cursor: pointer;
+		background-color: tan;
+	}
+
+	.mp3range::-webkit-slider-thumb {
+		box-shadow: inset 1px 1px 2px gold, inset -1px -1px 2px darkgoldenrod;
+		height: 20px;
+		width: 20px;
+		border-radius: 50%;
+		background-color: goldenrod;
+		cursor: pointer;
+		-webkit-appearance: none;
+		margin-top: -6px;
+	}
+
+	.mp3range:hover::-webkit-slider-runnable-track {
+		background-color: rosybrown;
+	}
+
+	.mp3range:focus::-webkit-slider-runnable-track {
+		background-color: #a97070;
+	}
+
+	.mp3range::-moz-range-track {
+		width: 100%;
+		height: 8px;
+		border-radius: 4px;
+		cursor: pointer;
+		background-color: violet;
+	}
+
+	.mp3range:hover::-moz-range-track {
+		background-color: rosybrown;
+	}
+
+	.mp3range:focus::-moz-range-track {
+		background-color: #a97070;
+	}
+
+	.mp3range::-moz-range-thumb {
+		box-shadow: inset 1px 1px 2px gold, inset -1px -1px 2px darkgoldenrod;
+		height: 20px;
+		width: 20px;
+		border-radius: 50%;
+		background-color: goldenrod;
+		cursor: pointer;
+	}
+
+	.mp3range::-ms-track {
+		width: 100%;
+		height: 8px;
+		border-radius: 4px;
+		cursor: pointer;
+		background: transparent;
+		border-color: transparent;
+		border-width: 16px 0;
+		color: transparent;
+	}
+
+	.mp3range::-ms-fill-lower {
+		background-color: rebeccapurple;
+	}
+
+	.mp3range::-ms-fill-upper {
+		background-color: tan;
+	}
+
+	.mp3range::-ms-thumb {
+		box-shadow: inset 1px 1px 2px gold, inset -1px -1px 2px darkgoldenrod;
+		height: 20px;
+		width: 20px;
+		border-radius: 50%;
+		background-color: goldenrod;
+		cursor: pointer;
+	}
+
+	.mp3range:focus::-ms-fill-lower {
+		background-color: tan;
+	}
+
+	.mp3range:hover::-ms-fill-upper {
+		background-color: rosybrown;
+	}
+
+	.mp3range:focus::-ms-fill-upper {
+		background-color: #a97070;
+	}
 
 .range-label {
 	width: 3.5rem;

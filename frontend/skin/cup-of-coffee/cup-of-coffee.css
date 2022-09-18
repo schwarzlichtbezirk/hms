@@ -1,6 +1,6 @@
 body {
-	color: #739008;
-	background-color: #122230;
+	color: rgb(74, 26, 3);
+	background-color: #e4a44c;
 	font-family: Verdana, Geneva, sans-serif;
 }
 
@@ -9,27 +9,24 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-	background: #510a86;
-	box-shadow: inset 0 0 0.40rem #343a40;
+	background: #d99c48;
+	box-shadow: inset 0 0 0.40rem #b46a20;
 	border-radius: 0.40rem;
 }
 
 ::-webkit-scrollbar-thumb {
-	background: #652991;
+	background: #bd5dd5;
+	box-shadow: inset 0 0 0.40rem #7700cc;
 	border-radius: 0.40rem;
 }
 
 	::-webkit-scrollbar-thumb:hover {
-		background: #723d98;
+		background: #ad34cb;
 	}
 
-.menu-scrollable {
-	max-height: 20rem;
-	overflow-y: scroll;
-}
-
 .bg-tool {
-	background-color: #343a40;
+	color: Tan;
+	background-color: #b46a20;
 }
 
 	.bg-tool .navbar-toggler {
@@ -46,8 +43,8 @@ body {
 	}
 
 	.bg-tool .dropdown-header {
-		color: rgba(255, 255, 255, 0.5);
-		background-color: rgba(75, 0, 130, 0.15);
+		color: rgba(74, 26, 3, 0.5);
+		background-color: rgba(228, 164, 76, 0.15);
 	}
 
 	.bg-tool button,
@@ -81,13 +78,13 @@ body {
 .toolbtn {
 	text-decoration: none;
 	padding: 0.25rem;
-	border-radius: 50%;
+	border-radius: 0.75rem;
 }
 
 .toolinp {
 	height: calc(1.5em + 0.50rem + 2px);
 	border: 1px solid rgba(255, 255, 255, 0.1);
-	border-radius: 1.25rem;
+	border-radius: 0.75rem;
 }
 
 
@@ -118,7 +115,7 @@ body {
 }
 
 .folder-head .breadcrumb, .card, .modal-content {
-	background-image: url("/fs/skin/nightglow-rainbow.jpg");
+	background-image: url("/fs/skin/cup-of-coffee/cup-of-coffee.jpg");
 	background-position: center center;
 	background-repeat: no-repeat;
 	background-attachment: fixed;
@@ -126,7 +123,7 @@ body {
 }
 
 .bg-stat {
-	background: rgba(75, 0, 130, 0.5); /* Indigo */
+	background: rgba(102, 51, 153, 0.25); /* RebeccaPurple */
 	padding: 0px 4px;
 }
 
@@ -181,7 +178,7 @@ body {
 		}
 
 	.bg-card .dropdown-item.active, .bg-card .active > .dropdown-item {
-		background: rgba(106, 90, 205, 0.5); /* SlateBlue */
+		background: rgba(128, 0, 128, 0.5); /* Purple */
 	}
 
 .centerimg {
@@ -216,7 +213,7 @@ body {
 .itemfont {
 	line-height: 1.25;
 	font-size: 0.72rem;
-	color: Aquamarine;
+	color: PaleGoldenRod;
 }
 
 	.itemfont.tag {
@@ -231,24 +228,30 @@ body {
 }
 
 	.fileitem:hover, .listitem:hover {
-		background: rgba(25, 25, 112, 0.5); /* MidnightBlue */
-		border: 1px solid DarkTurquoise;
+		background: rgba(184, 134, 11, 0.5); /* DarkGoldenRod */
+		border: 1px solid Indigo;
 		cursor: pointer;
 	}
 
 	.fileitem.selected, .listitem.selected {
-		background: rgba(75, 0, 130, 0.5); /* Indigo */
-		border: 1px solid DarkTurquoise;
+		background: rgba(255, 215, 0, 0.5); /* Gold */
+		border: 1px solid RebeccaPurple;
+		box-shadow: 0px 0px 8px rgba(255, 255, 255, 0.5);
 	}
 
 		.fileitem.selected:hover, .listitem.selected:hover {
-			background: rgba(106, 90, 205, 0.5); /* SlateBlue */
-			border: 1px solid DarkTurquoise;
+			background: rgba(255, 232, 102, 0.5); /* Gold 70%, #ffe866 */
+			border: 1px solid RebeccaPurple;
+			box-shadow: 0px 0px 12px rgba(255, 255, 255, 0.5);
 		}
 
 	.fileitem > .tag, .listitem {
-		background: rgba(102, 51, 153, 0.5); /* RebeccaPurple */
+		background: rgba(102, 51, 153, 0.33); /* RebeccaPurple */
 	}
+
+		.fileitem:hover > .tag, .listitem:hover {
+			background: rgba(102, 51, 153, 0.67); /* RebeccaPurple */
+		}
 
 .imgitem {
 	z-index: auto;
@@ -257,20 +260,20 @@ body {
 	.imgitem:hover {
 		z-index: 1;
 		background: rgba(25, 25, 112, 0.5); /* MidnightBlue */
-		box-shadow: 0px 0px 12px DarkTurquoise;
+		box-shadow: 0px 0px 12px Moccasin;
 		cursor: pointer;
 	}
 
 	.imgitem.selected {
 		z-index: 1;
 		background: rgba(75, 0, 130, 0.5); /* Indigo */
-		box-shadow: 0px 0px 12px Azure;
+		box-shadow: 0px 0px 12px Coral;
 	}
 
 		.imgitem.selected:hover {
 			z-index: 1;
 			background: rgba(106, 90, 205, 0.5); /* SlateBlue */
-			box-shadow: 0px 0px 12px Azure;
+			box-shadow: 0px 0px 12px Tomato;
 		}
 
 	.imgitem .pict {
@@ -293,12 +296,13 @@ body {
 		right: 16px;
 		bottom: 16px;
 		display: block;
-		background: rgba(102, 51, 153, 0.5); /* RebeccaPurple */
+		background: rgba(102, 51, 153, 0.33); /* RebeccaPurple */
 		max-width: 112px;
 	}
 
 	.imgitem:hover > .tag {
-		color: Azure;
+		color: LightGoldenRodYellow;
+		background: rgba(102, 51, 153, 0.67); /* RebeccaPurple */
 	}
 
 .listitem {
@@ -340,6 +344,10 @@ body {
 	height: 48px;
 }
 
+.listitem:hover .name {
+	color: LightGoldenRodYellow;
+}
+
 .listitem .name, .listitem .attr {
 	margin-left: 0.25rem;
 	margin-right: 0.25rem;
@@ -351,7 +359,7 @@ body {
 }
 
 .listitem:hover .name {
-	color: Azure;
+	background: rgba(102, 51, 153, 0.67); /* RebeccaPurple */
 }
 
 .listitem .attr .key {
@@ -377,53 +385,53 @@ body {
 /* leaflet photo thumbnail marker */
 
 .photomarker img {
-	border: 3px solid #c2adeb;
+	border: 3px solid Thistle;
 	border-radius: 0.25rem;
 }
 
 /* leaflet popup */
 
 .leaflet-control-scale-line {
-	background-color: rgba(147, 112, 219, 0.5); /* MediumPurple */
+	background-color: rgba(188, 143, 143, 0.5); /* RosyBrown */
 	color: #ddd;
 }
 
 .leaflet-popup-content-wrapper, .leaflet-popup-tip,
 .leaflet-container .leaflet-control-attribution {
-	background-color: rgba(147, 112, 219, 0.75); /* MediumPurple */
+	background-color: rgba(188, 143, 143, 0.75); /* RosyBrown */
 	color: #ddd;
 }
 
 	.leaflet-popup-content-wrapper a,
 	.leaflet-container .leaflet-control-attribution a {
-		color: LawnGreen;
+		color: NavajoWhite;
 	}
 
 		.leaflet-popup-content-wrapper a:hover,
 		.leaflet-container .leaflet-control-attribution a:hover {
-			color: GreenYellow;
+			color: Wheat;
 		}
 
 	.leaflet-popup-content-wrapper .nav-tabs .nav-link.active,
 	.leaflet-popup-content-wrapper .nav-tabs .nav-item.show .nav-link {
-		color: LightGreen;
-		background-color: rgba(133, 92, 214, 0.75);
+		color: Cornsilk;
+		background-color: rgba(179, 128, 128, 0.75);
 		border-color: #dee2e6 #dee2e6 #fff;
 	}
 
 .leaflet-bar a, .leaflet-bar button {
-	background-color: rgba(147, 112, 219, 0.5); /* MediumPurple */
-	color: #ccc;
+	background-color: rgba(188, 143, 143, 0.5); /* RosyBrown */
+	color: #ddd;
 	font: bold 18px 'Lucida Console', Monaco, monospace; /* for vertical alignment as at zoom control */
 }
 
 	.leaflet-bar a:hover, .leaflet-bar button:hover {
-		background-color: rgba(147, 112, 219, 0.80);
+		background-color: rgba(188, 143, 143, 0.75);
 		color: #fff;
 	}
 
 	.leaflet-bar a.active, .leaflet-bar button.active {
-		background-color: rgba(147, 112, 219, 0.80);
+		background-color: rgba(188, 143, 143, 0.75);
 		color: #ccc;
 	}
 
@@ -431,8 +439,8 @@ body {
 	.leaflet-bar a:disabled, .leaflet-bar button:disabled {
 		cursor: default;
 		pointer-events: none;
-		background-color: rgba(147, 112, 219, 0.25);
-		color: #aaa;
+		background-color: rgba(188, 143, 143, 0.25);
+		color: #bbb;
 	}
 
 .photoinfo .thumb {
@@ -475,15 +483,15 @@ body {
 		padding: 2px;
 		height: 24px;
 		cursor: pointer;
-		background-color: Violet;
+		background-color: Tan;
 	}
 
 		.timescale > .progress > .current {
-			background-color: RebeccaPurple;
+			background-color: Sienna;
 		}
 
 		.timescale > .progress > .buffer {
-			background-color: HotPink;
+			background-color: Peru;
 		}
 
 		.timescale > .progress > .timer {
@@ -510,109 +518,8 @@ body {
 				width: 20px;
 				height: 20px;
 				border-radius: 50%;
-				background: Navy;
+				background: RebeccaPurple;
 			}
-
-.mp3range { /* input[type=range] */
-	-webkit-appearance: none;
-	background-color: transparent;
-}
-
-	.mp3range:focus {
-		outline: none;
-	}
-
-	.mp3range::-webkit-slider-runnable-track {
-		width: 100%;
-		height: 8px;
-		border-radius: 4px;
-		cursor: pointer;
-		background-color: violet;
-	}
-
-	.mp3range::-webkit-slider-thumb {
-		box-shadow: inset 1px 1px 2px plum, inset -1px -1px 2px darkviolet;
-		height: 20px;
-		width: 12px;
-		border-radius: 6px;
-		background-color: hotpink;
-		cursor: pointer;
-		-webkit-appearance: none;
-		margin-top: -6px;
-	}
-
-	.mp3range:hover::-webkit-slider-runnable-track {
-		background-color: orchid;
-	}
-
-	.mp3range:focus::-webkit-slider-runnable-track {
-		background-color: mediumorchid;
-	}
-
-	.mp3range::-moz-range-track {
-		width: 100%;
-		height: 8px;
-		border-radius: 4px;
-		cursor: pointer;
-		background-color: violet;
-	}
-
-	.mp3range:hover::-moz-range-track {
-		background-color: orchid;
-	}
-
-	.mp3range:focus::-moz-range-track {
-		background-color: mediumorchid;
-	}
-
-	.mp3range::-moz-range-thumb {
-		box-shadow: inset 1px 1px 2px plum, inset -1px -1px 2px darkviolet;
-		height: 20px;
-		width: 12px;
-		border-radius: 6px;
-		background-color: hotpink;
-		cursor: pointer;
-	}
-
-	.mp3range::-ms-track {
-		width: 100%;
-		height: 8px;
-		border-radius: 4px;
-		cursor: pointer;
-		background: transparent;
-		border-color: transparent;
-		border-width: 16px 0;
-		color: transparent;
-	}
-
-	.mp3range::-ms-fill-lower {
-		background-color: rebeccapurple;
-	}
-
-	.mp3range::-ms-fill-upper {
-		background-color: violet;
-	}
-
-	.mp3range::-ms-thumb {
-		box-shadow: inset 1px 1px 2px plum, inset -1px -1px 2px darkviolet;
-		height: 20px;
-		width: 12px;
-		border-radius: 6px;
-		background-color: hotpink;
-		cursor: pointer;
-	}
-
-	.mp3range:focus::-ms-fill-lower {
-		background-color: violet;
-	}
-
-	.mp3range:hover::-ms-fill-upper {
-		background-color: orchid;
-	}
-
-	.mp3range:focus::-ms-fill-upper {
-		background-color: mediumorchid;
-	}
 
 .range-label {
 	width: 3.5rem;
@@ -699,11 +606,11 @@ body {
 
 		.thumbslider .thumb:hover {
 			opacity: 1;
-			border: 0.25rem solid Lavender;
+			border: 0.25rem solid LemonChiffon;
 		}
 
 		.thumbslider .thumb.active {
 			z-index: 1036;
 			opacity: 1;
-			border: 0.25rem solid Azure;
+			border: 0.25rem solid Gold;
 		}
