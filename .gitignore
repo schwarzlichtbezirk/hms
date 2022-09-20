@@ -19,3 +19,4 @@
 /frontend/build/*.bundle.js
 /frontend/build/*.bundle.js.map
 /frontend/plugin/*
+/frontend/skin/*.css

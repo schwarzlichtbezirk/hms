@@ -1,0 +1,66 @@
+
+.listitem {
+	width: 100%;
+}
+
+@media (min-width: 576px) {
+	.listitem {
+		width: 100%;
+	}
+}
+
+@media (min-width: 768px) {
+	.listitem {
+		width: 100%;
+	}
+}
+
+@media (min-width: 992px) {
+	.listitem {
+		width: 50%;
+	}
+}
+
+@media (min-width: 1200px) {
+	.listitem {
+		width: 33.33333333%;
+	}
+}
+
+@media (min-width: 1400px) {
+	.listitem {
+		width: 25%;
+	}
+}
+
+.listitem .pict, .listitem .label, .listitem .bars {
+	width: 48px;
+	height: 48px;
+}
+
+.listitem .name, .listitem .attr {
+	margin-left: 0.25rem;
+	margin-right: 0.25rem;
+}
+
+.listitem .name {
+	max-height: 48px;
+	overflow: hidden;
+}
+
+.listitem:hover .name {
+	color: #202020;
+}
+
+.listitem .attr .key {
+	font-style: italic;
+	margin-right: 0.25rem;
+}
+
+.listitem .attr .val {
+	font-style: normal;
+}
+
+.attr > div {
+	display: inline-block;
+}

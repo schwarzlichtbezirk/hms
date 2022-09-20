@@ -1,0 +1,54 @@
+
+.imgitem {
+	z-index: auto;
+}
+
+	.imgitem:hover {
+		z-index: 1;
+		box-shadow: 0px 0px 12px #99c9ef;
+		cursor: pointer;
+	}
+
+	.imgitem.selected {
+		z-index: 1;
+		box-shadow: 0px 0px 12px LightSkyBlue;
+	}
+
+		.imgitem.selected:hover {
+			z-index: 1;
+			box-shadow: 0px 0px 12px DodgerBlue;
+		}
+
+	.imgitem .pict {
+		max-width: 256px;
+		max-height: 256px;
+	}
+
+	.imgitem .label {
+		width: 100%;
+		max-width: 96px;
+	}
+
+	.imgitem .bars {
+		width: 100%;
+		max-width: 176px;
+	}
+
+	.imgitem > .tag {
+		position: absolute;
+		right: 16px;
+		bottom: 16px;
+		display: block;
+		background: rgba(144, 144, 144, 0.5);
+		max-width: 112px;
+	}
+
+	.imgitem:hover > .tag {
+		color: #303030;
+		background: #a0a0a0;
+	}
+
+	.imgitem.selected > .tag {
+		color: #202020;
+		background: #c0c0c0;
+	}

@@ -1,0 +1,48 @@
+
+.imgitem {
+	z-index: auto;
+}
+
+	.imgitem:hover {
+		z-index: 1;
+		box-shadow: 0px 0px 12px LawnGreen;
+		cursor: pointer;
+	}
+
+	.imgitem.selected {
+		z-index: 1;
+		box-shadow: 0px 0px 12px GreenYellow;
+	}
+
+		.imgitem.selected:hover {
+			z-index: 1;
+			box-shadow: 0px 0px 12px White;
+		}
+
+	.imgitem .pict {
+		max-width: 256px;
+		max-height: 256px;
+	}
+
+	.imgitem .label {
+		width: 100%;
+		max-width: 96px;
+	}
+
+	.imgitem .bars {
+		width: 100%;
+		max-width: 176px;
+	}
+
+	.imgitem > .tag {
+		position: absolute;
+		right: 16px;
+		bottom: 16px;
+		display: block;
+		background: rgba(0, 48, 0, 0.33);
+		max-width: 112px;
+	}
+
+	.imgitem:hover > .tag {
+		background: rgba(0, 48, 0, 0.67);
+	}

@@ -1,0 +1,85 @@
+
+body {
+	color: Black;
+	background-color: NavajoWhite;
+	font-family: Verdana, Geneva, sans-serif;
+}
+
+::-webkit-scrollbar {
+	width: 0.5rem;
+}
+
+::-webkit-scrollbar-track {
+	background: #3f444a;
+}
+
+::-webkit-scrollbar-thumb {
+	background: #53585d;
+}
+
+	::-webkit-scrollbar-thumb:hover {
+		background: #686b70;
+	}
+
+.bg-tool {
+	color: Tan;
+	background-color: #343a40;
+}
+
+	.bg-tool .navbar-toggler {
+		color: rgba(255, 255, 255, 0.5);
+		border-color: rgba(255, 255, 255, 0.1);
+	}
+
+	.bg-tool .navbar-toggler-icon {
+		background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 30 30' xmlns='http://www.w3.org/2000/svg'%3e%3cpath stroke='rgba(255, 255, 255, 0.5)' stroke-width='2' stroke-linecap='round' stroke-miterlimit='10' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+	}
+
+	.bg-tool .navbar-text {
+		color: rgba(255, 255, 255, 0.5);
+	}
+
+	.bg-tool .dropdown-header {
+		color: rgba(255, 255, 255, 0.3);
+		background-color: rgba(0, 0, 0, 0.15);
+	}
+
+	.bg-tool button,
+	.bg-tool input {
+		color: rgba(255, 255, 255, 0.5);
+	}
+
+		.bg-tool button:hover, .bg-tool button:focus,
+		.bg-tool input:hover, .bg-tool input:focus {
+			color: rgba(255, 255, 255, 0.75);
+			background-color: rgba(255, 255, 255, 0.15);
+		}
+
+		.bg-tool button:disabled, .bg-tool button.disabled,
+		.bg-tool input:disabled, .bg-tool input.disabled {
+			color: rgba(255, 255, 255, 0.25);
+			pointer-events: none;
+			cursor: default;
+		}
+
+		.bg-tool button.active,
+		.bg-tool input.active {
+			color: #fff;
+			background-color: rgba(255, 255, 255, 0.25); /*#676b70*/
+		}
+
+.bg-high {
+	background-color: rgba(255, 255, 255, 0.25);
+}
+
+.toolbtn {
+	text-decoration: none;
+	padding: 0.25rem;
+	border-radius: 0.25rem;
+}
+
+.toolinp {
+	height: calc(1.5em + 0.50rem + 2px);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	border-radius: 0.25rem;
+}

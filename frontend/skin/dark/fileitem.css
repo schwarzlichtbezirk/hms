@@ -1,0 +1,38 @@
+
+.fileitem, .listitem {
+	border: 1px solid transparent;
+	border-radius: 0.25rem;
+	padding: 0.25rem;
+}
+
+	.fileitem:hover, .listitem:hover {
+		background: #3f3f46;
+		border: 1px solid #5a5a60;
+		cursor: pointer;
+	}
+
+	.fileitem.selected, .listitem.selected {
+		background: #007acc;
+		border: 1px solid DodgerBlue;
+		box-shadow: 0px 0px 8px rgba(255, 255, 255, 0.5);
+	}
+
+		.fileitem.selected:hover, .listitem.selected:hover {
+			background: #1c97ea;
+			border: 1px solid DodgerBlue;
+			box-shadow: 0px 0px 12px rgba(255, 255, 255, 0.5);
+		}
+
+	.fileitem > .tag, .listitem {
+		background: #909090;
+	}
+
+		.fileitem:hover > .tag, .listitem:hover {
+			color: #303030;
+			background: #a0a0a0;
+		}
+
+		.fileitem.selected > .tag, .listitem.selected {
+			color: #202020;
+			background: #c0c0c0;
+		}

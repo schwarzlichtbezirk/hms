@@ -1,0 +1,88 @@
+
+/* Photo slider section */
+
+.imgbut {
+	color: rgba(255, 255, 255, 0.5);
+	border-radius: 0.5rem;
+	background-color: transparent;
+	text-align: center;
+	vertical-align: middle;
+	line-height: 1;
+	transition: 0.3s;
+}
+
+	.imgbut:hover,
+	.imgbut:focus {
+		color: rgba(255, 255, 255, 0.75);
+		background-color: rgba(255, 255, 255, 0.3);
+		text-decoration: none;
+		cursor: pointer;
+	}
+
+	.imgbut.btn-outline-light:hover,
+	.imgbut.btn-outline-light:focus {
+		color: rgba(255, 255, 255, 0.75);
+		background-color: rgba(248, 249, 250, 0.3);
+	}
+
+	.imgbut.btn-outline-danger:hover,
+	.imgbut.btn-outline-danger:focus {
+		color: rgba(255, 255, 255, 0.75);
+		background-color: rgba(220, 53, 69, 0.3);
+	}
+
+	.imgbut.disabled, .imgbut:disabled {
+		color: rgba(255, 255, 255, 0.25);
+		pointer-events: none;
+		cursor: default;
+	}
+
+	.imgbut.active {
+		color: #fff;
+	}
+
+	.imgbut.arrow {
+		padding: 4rem 0.75rem;
+	}
+
+	.imgbut.tool {
+		padding: 0.75rem;
+	}
+
+.btn-check + .imgbut.btn-outline-light {
+	border: 1px solid;
+}
+
+.btn-check:checked + .imgbut.btn-outline-light, .btn-check:active + .imgbut.btn-outline-light, .imgbut.btn-outline-light:active, .btn-outline-light.active, .imgbut.btn-outline-light.dropdown-toggle.show {
+	color: #000;
+	background-color: rgba(248, 249, 250, 0.67);
+	border-color: #f8f9fa;
+}
+
+.photothumbs {
+	background-color: silver;
+	border-radius: 0.25rem;
+}
+
+/* Thumbnail slider section */
+
+.thumbslider {
+	height: 80px;
+}
+
+	.thumbslider .thumb {
+		height: 100%;
+		opacity: 0.75;
+		border: 0.25rem solid Silver;
+	}
+
+		.thumbslider .thumb:hover {
+			opacity: 1;
+			border: 0.25rem solid SpringGreen;
+		}
+
+		.thumbslider .thumb.active {
+			z-index: 1036;
+			opacity: 1;
+			border: 0.25rem solid MediumSpringGreen;
+		}

@@ -3,37 +3,37 @@
 		{
 			"id": "daylight",
 			"name": "daylight",
-			"link": "/fs/skin/daylight/daylight.css"
+			"link": "/fs/skin/daylight.css"
 		},
 		{
 			"id": "blue",
 			"name": "blue",
-			"link": "/fs/skin/blue/blue.css"
+			"link": "/fs/skin/blue.css"
 		},
 		{
 			"id": "dark",
 			"name": "dark",
-			"link": "/fs/skin/dark/dark.css"
+			"link": "/fs/skin/dark.css"
 		},
 		{
 			"id": "neon",
 			"name": "neon",
-			"link": "/fs/skin/neon/neon.css"
+			"link": "/fs/skin/neon.css"
 		},
 		{
 			"id": "cup-of-coffee",
 			"name": "cup of coffee",
-			"link": "/fs/skin/cup-of-coffee/cup-of-coffee.css"
+			"link": "/fs/skin/cup-of-coffee.css"
 		},
 		{
 			"id": "coffee-beans",
 			"name": "coffee beans",
-			"link": "/fs/skin/coffee-beans/coffee-beans.css"
+			"link": "/fs/skin/coffee-beans.css"
 		},
 		{
 			"id": "old-monitor",
 			"name": "old monitor",
-			"link": "/fs/skin/old-monitor/old-monitor.css"
+			"link": "/fs/skin/old-monitor.css"
 		}
 	],
 	"iconlist": [

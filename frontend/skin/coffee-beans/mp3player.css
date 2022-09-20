@@ -1,0 +1,155 @@
+
+/* track progress bar */
+
+.timescale {
+	margin: 0 0.5rem;
+}
+
+	.timescale > .progress {
+		padding: 2px;
+		height: 24px;
+		cursor: pointer;
+		background-color: Tan;
+	}
+
+		.timescale > .progress > .current {
+			background-color: Sienna;
+		}
+
+		.timescale > .progress > .buffer {
+			background-color: Peru;
+		}
+
+		.timescale > .progress > .timer {
+			color: HoneyDew;
+		}
+
+		.timescale > .progress > .seeker {
+			-webkit-appearance: none;
+			width: 100%;
+			height: 100%;
+			background: rgba(48, 48, 48, 0.25);
+			outline: none;
+			opacity: 0;
+			-webkit-transition: .2s;
+			transition: opacity .2s;
+		}
+
+			.timescale > .progress > .seeker:hover {
+				opacity: 1;
+			}
+
+			.timescale > .progress > .seeker::-webkit-slider-thumb {
+				-webkit-appearance: none;
+				width: 20px;
+				height: 20px;
+				border-radius: 50%;
+				background: RebeccaPurple;
+			}
+
+.mp3range { /* input[type=range] */
+	-webkit-appearance: none;
+	background-color: transparent;
+}
+
+	.mp3range:focus {
+		outline: none;
+	}
+
+	.mp3range::-webkit-slider-runnable-track {
+		width: 100%;
+		height: 8px;
+		border-radius: 4px;
+		cursor: pointer;
+		background-color: tan;
+	}
+
+	.mp3range::-webkit-slider-thumb {
+		box-shadow: inset 1px 1px 2px gold, inset -1px -1px 2px darkgoldenrod;
+		height: 20px;
+		width: 20px;
+		border-radius: 50%;
+		background-color: goldenrod;
+		cursor: pointer;
+		-webkit-appearance: none;
+		margin-top: -6px;
+	}
+
+	.mp3range:hover::-webkit-slider-runnable-track {
+		background-color: rosybrown;
+	}
+
+	.mp3range:focus::-webkit-slider-runnable-track {
+		background-color: #a97070;
+	}
+
+	.mp3range::-moz-range-track {
+		width: 100%;
+		height: 8px;
+		border-radius: 4px;
+		cursor: pointer;
+		background-color: violet;
+	}
+
+	.mp3range:hover::-moz-range-track {
+		background-color: rosybrown;
+	}
+
+	.mp3range:focus::-moz-range-track {
+		background-color: #a97070;
+	}
+
+	.mp3range::-moz-range-thumb {
+		box-shadow: inset 1px 1px 2px gold, inset -1px -1px 2px darkgoldenrod;
+		height: 20px;
+		width: 20px;
+		border-radius: 50%;
+		background-color: goldenrod;
+		cursor: pointer;
+	}
+
+	.mp3range::-ms-track {
+		width: 100%;
+		height: 8px;
+		border-radius: 4px;
+		cursor: pointer;
+		background: transparent;
+		border-color: transparent;
+		border-width: 16px 0;
+		color: transparent;
+	}
+
+	.mp3range::-ms-fill-lower {
+		background-color: rebeccapurple;
+	}
+
+	.mp3range::-ms-fill-upper {
+		background-color: tan;
+	}
+
+	.mp3range::-ms-thumb {
+		box-shadow: inset 1px 1px 2px gold, inset -1px -1px 2px darkgoldenrod;
+		height: 20px;
+		width: 20px;
+		border-radius: 50%;
+		background-color: goldenrod;
+		cursor: pointer;
+	}
+
+	.mp3range:focus::-ms-fill-lower {
+		background-color: tan;
+	}
+
+	.mp3range:hover::-ms-fill-upper {
+		background-color: rosybrown;
+	}
+
+	.mp3range:focus::-ms-fill-upper {
+		background-color: #a97070;
+	}
+
+.range-label {
+	width: 3.5rem;
+	text-align: right;
+	white-space: nowrap;
+}

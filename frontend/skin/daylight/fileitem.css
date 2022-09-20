@@ -1,0 +1,25 @@
+
+.fileitem, .listitem {
+	border: 1px solid transparent;
+	padding: 0.25rem;
+}
+
+	.fileitem:hover, .listitem:hover {
+		background: Moccasin;
+		border: 1px solid DarkKhaki;
+		cursor: pointer;
+	}
+
+	.fileitem.selected, .listitem.selected {
+		background: PaleGoldenRod;
+		border: 1px solid DarkKhaki;
+	}
+
+		.fileitem.selected:hover, .listitem.selected:hover {
+			background: Khaki;
+			border: 1px solid DarkKhaki;
+		}
+
+	.fileitem > .tag, .listitem {
+		background: NavajoWhite;
+	}

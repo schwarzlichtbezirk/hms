@@ -1,0 +1,32 @@
+
+.fileitem, .listitem {
+	border: 1px solid transparent;
+	border-radius: 0;
+	padding: 0.25rem;
+}
+
+	.fileitem:hover, .listitem:hover {
+		background: ForestGreen;
+		border: 1px solid LimeGreen;
+		cursor: pointer;
+	}
+
+	.fileitem.selected, .listitem.selected {
+		background: SeaGreen;
+		border: 1px solid SpringGreen;
+		box-shadow: 0px 0px 8px rgba(255, 255, 255, 0.5);
+	}
+
+		.fileitem.selected:hover, .listitem.selected:hover {
+			background: MediumSeaGreen;
+			border: 1px solid SpringGreen;
+			box-shadow: 0px 0px 12px rgba(255, 255, 255, 0.5);
+		}
+
+	.fileitem > .tag, .listitem {
+		background: #003000;
+	}
+
+		.fileitem:hover > .tag, .listitem:hover {
+			background: #004800;
+		}

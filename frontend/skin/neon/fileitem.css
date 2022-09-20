@@ -1,0 +1,26 @@
+
+.fileitem, .listitem {
+	border: 1px solid transparent;
+	border-radius: 0.25rem;
+	padding: 0.25rem;
+}
+
+	.fileitem:hover, .listitem:hover {
+		background: rgba(25, 25, 112, 0.5); /* MidnightBlue */
+		border: 1px solid DarkTurquoise;
+		cursor: pointer;
+	}
+
+	.fileitem.selected, .listitem.selected {
+		background: rgba(75, 0, 130, 0.5); /* Indigo */
+		border: 1px solid DarkTurquoise;
+	}
+
+		.fileitem.selected:hover, .listitem.selected:hover {
+			background: rgba(106, 90, 205, 0.5); /* SlateBlue */
+			border: 1px solid DarkTurquoise;
+		}
+
+	.fileitem > .tag, .listitem {
+		background: rgba(102, 51, 153, 0.5); /* RebeccaPurple */
+	}

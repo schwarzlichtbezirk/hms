@@ -168,10 +168,9 @@ if logdir then logfmt("writes %s package", pkg.pkgpath) end
 packdir("assets", rootdir.."assets", commonput)
 -- put skins
 for i, id in ipairs(cfg.skinset) do
-	for j, fname in ipairs(fullskinmap[id]) do
-		local kpath = path.join("skin", id, fname)
-		authput(kpath, rootdir..kpath)
-	end
+	local kpath = path.join("skin", id)
+	packdir(kpath, rootdir..kpath, commonput)
+	authput(kpath..".css", rootdir..kpath..".css")
 end
 -- put icons
 for id, fmtlst in pairs(cfg.iconset) do

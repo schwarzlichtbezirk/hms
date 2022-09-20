@@ -1,0 +1,97 @@
+
+/* leaflet container */
+
+.photomap {
+	width: 100%;
+	height: 80vh;
+}
+
+/* leaflet photo thumbnail marker */
+
+.photomarker img {
+	border: 3px solid #c2adeb;
+	border-radius: 0.25rem;
+}
+
+/* leaflet popup */
+
+.leaflet-control-scale-line {
+	background-color: rgba(147, 112, 219, 0.5); /* MediumPurple */
+	color: #ddd;
+}
+
+.leaflet-popup-content-wrapper, .leaflet-popup-tip,
+.leaflet-container .leaflet-control-attribution {
+	background-color: rgba(147, 112, 219, 0.75); /* MediumPurple */
+	color: #ddd;
+}
+
+	.leaflet-popup-content-wrapper a,
+	.leaflet-container .leaflet-control-attribution a {
+		color: LawnGreen;
+	}
+
+		.leaflet-popup-content-wrapper a:hover,
+		.leaflet-container .leaflet-control-attribution a:hover {
+			color: GreenYellow;
+		}
+
+	.leaflet-popup-content-wrapper .nav-tabs .nav-link.active,
+	.leaflet-popup-content-wrapper .nav-tabs .nav-item.show .nav-link {
+		color: LightGreen;
+		background-color: rgba(133, 92, 214, 0.75);
+		border-color: #dee2e6 #dee2e6 #fff;
+	}
+
+.leaflet-bar a, .leaflet-bar button {
+	background-color: rgba(147, 112, 219, 0.5); /* MediumPurple */
+	color: #ccc;
+	font: bold 18px 'Lucida Console', Monaco, monospace; /* for vertical alignment as at zoom control */
+}
+
+	.leaflet-bar a:hover, .leaflet-bar button:hover {
+		background-color: rgba(147, 112, 219, 0.80);
+		color: #fff;
+	}
+
+	.leaflet-bar a.active, .leaflet-bar button.active {
+		background-color: rgba(147, 112, 219, 0.80);
+		color: #ccc;
+	}
+
+	.leaflet-bar a.leaflet-disabled, .leaflet-bar button.leaflet-disabled,
+	.leaflet-bar a:disabled, .leaflet-bar button:disabled {
+		cursor: default;
+		pointer-events: none;
+		background-color: rgba(147, 112, 219, 0.25);
+		color: #aaa;
+	}
+
+.photoinfo .thumb {
+	max-width: 256px;
+}
+
+	.photoinfo .thumb:hover {
+		cursor: pointer;
+	}
+
+.photoinfo .prop {
+	min-width: 192px;
+	max-height: 192px;
+	overflow-y: auto;
+}
+
+.photoinfo .latlng > div {
+	padding-left: 0.5rem;
+	padding-right: 0.5rem;
+}
+
+	.photoinfo .latlng > div > .name {
+		display: inline-block;
+		font-weight: bolder;
+	}
+
+	.photoinfo .latlng > div > .value {
+		display: inline-block;
+		font-weight: normal;
+	}
