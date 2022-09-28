@@ -268,7 +268,7 @@ const extfmtorder = [
 ];
 
 const getFileGroup = file => {
-	if (file.type) {
+	if (file.type !== FT.file) {
 		return FG.dir;
 	}
 	const ext = pathext(file.name);
@@ -526,7 +526,7 @@ const VueMainApp = {
 		uncached() {
 			const lst = [];
 			for (const file of this.flist) {
-				if (!file.type && !file.mtmb) {
+				if (file.type === FT.file && !file.mtmb) {
 					lst.push(file);
 				}
 			}
@@ -547,7 +547,7 @@ const VueMainApp = {
 		filecount() {
 			let n = 0
 			for (const file of this.flist) {
-				if (!file.type) {
+				if (file.type === FT.file) {
 					n++;
 				}
 			}
@@ -597,7 +597,7 @@ const VueMainApp = {
 		showpastego() {
 		},
 		clscopy() {
-			return { 'disabled': !this.selfile };
+			return { 'disabled': !this.selfile || this.selfile.type === FT.drv || this.selfile.type === FT.ctgr };
 		},
 		clspaste() {
 			const sel = this.copied ?? this.cuted;
@@ -626,10 +626,10 @@ const VueMainApp = {
 			};
 		},
 		clscut() {
-			return { 'disabled': !this.selfile };
+			return { 'disabled': !this.selfile || this.selfile.type === FT.drv || this.selfile.type === FT.ctgr };
 		},
 		clsdelete() {
-			return { 'disabled': !this.selfile };
+			return { 'disabled': !this.selfile || this.selfile.type === FT.drv || this.selfile.type === FT.ctgr };
 		},
 		hintpaste() {
 			return `paste: ${this.copied?.name ?? this.cuted?.name}`;
@@ -1174,11 +1174,11 @@ const VueMainApp = {
 			}
 		},
 		onopen(file) {
-			if (!file.type && !file.size) {
+			if (file.type === FT.file && !file.size) {
 				return;
 			}
 			const ext = pathext(file.name);
-			if (file.type || ext === ".iso" || extfmt.playlist[ext]) {
+			if (file.type !== FT.file || ext === ".iso" || extfmt.playlist[ext]) {
 				if (!file.latency || file.latency > 0) {
 					(async () => {
 						eventHub.emit('ajax', +1);
@@ -1438,6 +1438,7 @@ const appvm = Vue.createApp(VueMainApp)
 	.component('tile-card-tag', VueTileCard)
 	.component('map-card-tag', VueMapCard)
 	.component('icon-tag', VueIcon)
+	.component('iconmenu-tag', VueIconMenu)
 	.component('list-item-tag', VueListItem)
 	.component('file-item-tag', VueFileItem)
 	.component('img-item-tag', VueImgItem)

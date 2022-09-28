@@ -15,9 +15,9 @@ const isMainVideo = ext => ({
 	".mp4": true, ".webm": true
 })[ext];
 
-const imagefilter = file => !file.type && file.size && isMainImage(pathext(file.name));
-const audiofilter = file => !file.type && file.size && isMainAudio(pathext(file.name));
-const videofilter = file => !file.type && file.size && isMainVideo(pathext(file.name));
+const imagefilter = file => file.type === FT.file && file.size && isMainImage(pathext(file.name));
+const audiofilter = file => file.type === FT.file && file.size && isMainAudio(pathext(file.name));
+const videofilter = file => file.type === FT.file && file.size && isMainVideo(pathext(file.name));
 
 const iconwebp = file => {
 	const res = geticonpath(file);
@@ -30,9 +30,20 @@ const iconpng = file => {
 
 const filehint = file => {
 	const lst = [];
-	lst.push(file.name);
 	// Std properties
-	if (!file.type) {
+	if (file.type === FT.file) {
+		lst.push('size: ' + fmtitemsize(file.size ?? 0));
+	}
+	if (file.time) {
+		lst.push('time: ' + (new Date(file.time)).toLocaleString());
+	}
+	return lst;
+};
+
+const fileinfo = file => {
+	const lst = [];
+	// Std properties
+	if (file.type === FT.file) {
 		lst.push('size: ' + fmtitemsize(file.size ?? 0));
 	}
 	if (file.time) {
@@ -311,6 +322,75 @@ const VueIcon = {
 	unmounted() {
 		eventHub.off('iconset', this._iconset);
 		eventHub.off('thumbmode', this._thumbmode);
+	}
+};
+
+const VueIconMenu = {
+	template: '#iconmenu-tpl',
+	props: ["file"],
+	data() {
+		return {
+			popover: null
+		};
+	},
+	computed: {
+		infocontent() {
+			return fileinfo(this.file).join('<br>');
+		},
+		clsshared() {
+			return {
+				'active': this.file.shared,
+			};
+		},
+		showinfo() {
+			return this.file.type === FT.file;
+		},
+		showcopy() {
+			return this.file.type === FT.file || this.file.type === FT.dir;
+		},
+		showcut() {
+			return this.file.type === FT.file || this.file.type === FT.dir;
+		}
+	},
+	methods: {
+		oninfo() {
+			this.popover.update();
+		},
+		onlink() {
+			copyTextToClipboard(window.location.origin + fileurl(this.file));
+		},
+		onshare() {
+			(async () => {
+				eventHub.emit('ajax', +1);
+				try {
+					if (this.file.shared) { // should remove share
+						await this.$root.fetchsharedel(this.file);
+					} else { // should add share
+						await this.$root.fetchshareadd(this.file);
+					}
+				} catch (e) {
+					ajaxfail(e);
+				} finally {
+					eventHub.emit('ajax', -1);
+				}
+			})();
+		},
+		oncopy() {
+			this.$root.copied = this.file;
+			this.$root.cuted = null;
+		},
+		oncut() {
+			this.$root.cuted = this.file;
+			this.$root.copied = null;
+		}
+	},
+	mounted() {
+		if (this.file.type === FT.file) {
+			this.popover = new bootstrap.Popover(this.$refs.info, {
+				title: this.file.name,
+				html: true
+			});
+		}
 	}
 };
 

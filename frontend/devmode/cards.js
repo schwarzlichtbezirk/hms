@@ -632,7 +632,7 @@ const VueFileCard = {
 		filelist() {
 			const l = [];
 			for (const file of this.flist) {
-				if (!file.type) {
+				if (file.type === FT.file) {
 					l.push(file);
 				}
 			}
@@ -1058,7 +1058,7 @@ const VueTileCard = {
 		photolist() {
 			const res = [];
 			for (const file of this.flist) {
-				if (!file.type && (file.model || file.height || file.orientation)) {
+				if (file.type === FT.file && (file.model || file.height || file.orientation)) {
 					res.push(file);
 				}
 			}

@@ -44,6 +44,7 @@ java -jar %cs%^
 java -jar %cs%^
  skin/neon/page.css^
  skin/neon/card.css^
+ skin/neon/iconmenu.css^
  skin/neon/fileitem.css^
  skin/neon/imgitem.css^
  skin/neon/listitem.css^

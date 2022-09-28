@@ -317,8 +317,8 @@ type Pather interface {
 
 // PathProp is any path base properties.
 type PathProp struct {
-	NameVal string `json:"name,omitempty" yaml:"name,omitempty" xml:"name,omitempty"`
-	TypeVal FT_t   `json:"type,omitempty" yaml:"type,omitempty" xml:"type,omitempty"`
+	NameVal string `json:"name" yaml:"name" xml:"name"`
+	TypeVal FT_t   `json:"type" yaml:"type" xml:"type"` // do not omit empty
 }
 
 // Name is file name with extension without path.

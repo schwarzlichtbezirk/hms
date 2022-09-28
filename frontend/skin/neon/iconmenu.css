@@ -1,0 +1,61 @@
+
+.iconmenu {
+	display: flex;
+	border-radius: 0.25rem;
+}
+
+.iconmenu-list {
+	position: absolute;
+	z-index: 1000;
+	display: none;
+}
+
+.iconmenu > .iconbtn:hover + .iconmenu-list, .iconmenu-list:hover {
+	display: flex;
+}
+
+.iconmenu-list.d-flex ~ .iconbtn {
+	position: absolute;
+	z-index: 1000;
+}
+
+.iconbtn > .material-icons {
+	font-size: 1.50rem;
+}
+
+.iconbtn {
+	line-height: normal;
+	padding: 0.25rem;
+	color: Aquamarine;
+	background-color: rgba(128, 40, 224, 0.4);
+	border-color: rgb(64, 16, 128);
+}
+
+.iconbtn:hover {
+	color: #fff;
+	background-color: rgba(128, 40, 224, 0.66);
+	border-color: rgb(92, 24, 188);
+}
+
+.btn-check:focus + .iconbtn, .iconbtn:focus {
+	color: #fff;
+	background-color: rgba(128, 40, 224, 0.75);
+	border-color: rgb(92, 24, 188);
+	box-shadow: 0 0 0 0.25rem rgba(128, 40, 224, 0.5);
+}
+
+.btn-check:checked + .iconbtn, .btn-check:active + .iconbtn, .iconbtn:active, .iconbtn.active, .show > .iconbtn.dropdown-toggle {
+	color: #fff;
+	background-color: rgba(128, 40, 224, 0.6);
+	border-color: rgb(136, 70, 204);
+}
+
+.btn-check:checked + .iconbtn:focus, .btn-check:active + .iconbtn:focus, .iconbtn:active:focus, .iconbtn.active:focus, .show > .iconbtn.dropdown-toggle:focus {
+	box-shadow: 0 0 0 0.25rem rgba(128, 40, 224, 0.5);
+}
+
+.iconbtn:disabled, .iconbtn.disabled {
+	color: rgb(66, 132, 112);
+	background-color: rgba(66, 54, 80, 0.4);
+	border-color: rgb(40, 10, 80);
+}
