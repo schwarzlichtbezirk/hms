@@ -26,7 +26,7 @@
 .btn-icon {
 	line-height: normal;
 	padding: 0.25rem;
-	color: Aquamarine;
+	color: PaleGoldenRod;
 	background-color: rgba(128, 40, 224, 0.4);
 	border-color: rgb(64, 16, 128);
 }
@@ -55,7 +55,7 @@
 		}
 
 	.btn-icon:disabled, .btn-icon.disabled {
-		color: rgb(66, 132, 112);
+		color: rgb(130, 124, 48);
 		background-color: rgba(66, 54, 80, 0.4);
 		border-color: rgb(40, 10, 80);
 	}
@@ -66,4 +66,8 @@
 
 .fileitem:hover .iconmenu-band {
 	display: block;
+}
+
+.popover-header {
+	background: indigo;
 }

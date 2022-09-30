@@ -11,6 +11,7 @@ if not exist %cs% (
 java -jar %cs%^
  skin/daylight/page.css^
  skin/daylight/card.css^
+ skin/daylight/iconmenu.css^
  skin/daylight/fileitem.css^
  skin/daylight/imgitem.css^
  skin/daylight/listitem.css^
@@ -22,6 +23,7 @@ java -jar %cs%^
 java -jar %cs%^
  skin/blue/page.css^
  skin/blue/card.css^
+ skin/blue/iconmenu.css^
  skin/blue/fileitem.css^
  skin/blue/imgitem.css^
  skin/blue/listitem.css^
@@ -33,6 +35,7 @@ java -jar %cs%^
 java -jar %cs%^
  skin/dark/page.css^
  skin/dark/card.css^
+ skin/dark/iconmenu.css^
  skin/dark/fileitem.css^
  skin/dark/imgitem.css^
  skin/dark/listitem.css^
@@ -56,6 +59,7 @@ java -jar %cs%^
 java -jar %cs%^
  skin/cup-of-coffee/page.css^
  skin/cup-of-coffee/card.css^
+ skin/cup-of-coffee/iconmenu.css^
  skin/cup-of-coffee/fileitem.css^
  skin/cup-of-coffee/imgitem.css^
  skin/cup-of-coffee/listitem.css^
@@ -67,6 +71,7 @@ java -jar %cs%^
 java -jar %cs%^
  skin/coffee-beans/page.css^
  skin/coffee-beans/card.css^
+ skin/coffee-beans/iconmenu.css^
  skin/coffee-beans/fileitem.css^
  skin/coffee-beans/imgitem.css^
  skin/coffee-beans/listitem.css^
@@ -78,6 +83,7 @@ java -jar %cs%^
 java -jar %cs%^
  skin/old-monitor/page.css^
  skin/old-monitor/card.css^
+ skin/old-monitor/iconmenu.css^
  skin/old-monitor/fileitem.css^
  skin/old-monitor/imgitem.css^
  skin/old-monitor/listitem.css^

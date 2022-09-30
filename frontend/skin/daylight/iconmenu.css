@@ -26,38 +26,38 @@
 .btn-icon {
 	line-height: normal;
 	padding: 0.25rem;
-	color: Aquamarine;
-	background-color: rgba(128, 40, 224, 0.4);
-	border-color: rgb(64, 16, 128);
+	color: #444;
+	background-color: rgba(240, 230, 140, 0.5);
+	border-color: wheat;
 }
 
 	.btn-icon:hover {
-		color: #fff !important;
-		background-color: rgba(128, 40, 224, 0.66) !important;
-		border-color: rgb(92, 24, 188) !important;
+		color: black !important;
+		background-color: rgba(240, 230, 140, 0.66) !important;
+		border-color: tan !important;
 	}
 
 	.btn-check:focus + .btn-icon, .btn-icon:focus {
-		color: #fff;
-		background-color: rgba(128, 40, 224, 0.75);
-		border-color: rgb(92, 24, 188);
-		box-shadow: 0 0 0 0.25rem rgba(128, 40, 224, 0.5);
+		color: black;
+		background-color: rgba(240, 230, 140, 0.75);
+		border-color: tan;
+		box-shadow: 0 0 0 0.25rem rgba(210, 180, 140, 0.5);
 	}
 
 	.btn-check:checked + .btn-icon, .btn-check:active + .btn-icon, .btn-icon:active, .btn-icon.active, .show > .btn-icon.dropdown-toggle {
-		color: #fff;
-		background-color: rgba(128, 40, 224, 0.66);
-		border-color: rgb(136, 70, 204);
+		color: black;
+		background-color: rgba(240, 230, 140, 0.66);
+		border-color: tan;
 	}
 
 		.btn-check:checked + .btn-icon:focus, .btn-check:active + .btn-icon:focus, .btn-icon:active:focus, .btn-icon.active:focus, .show > .btn-icon.dropdown-toggle:focus {
-			box-shadow: 0 0 0 0.25rem rgba(128, 40, 224, 0.5);
+			box-shadow: 0 0 0 0.25rem rgba(210, 180, 140, 0.5);
 		}
 
 	.btn-icon:disabled, .btn-icon.disabled {
-		color: rgb(66, 132, 112);
-		background-color: rgba(66, 54, 80, 0.4);
-		border-color: rgb(40, 10, 80);
+		color: #555;
+		background-color: rgba(189, 183, 107, 0.4);
+		border-color: #444;
 	}
 
 .fileitem .iconmenu-band {

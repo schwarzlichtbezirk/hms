@@ -24,11 +24,3 @@
 	.fileitem > .tag, .listitem {
 		background: rgba(102, 51, 153, 0.5); /* RebeccaPurple */
 	}
-
-	.fileitem .iconmenu-band {
-		display: none;
-	}
-
-	.fileitem:hover .iconmenu-band {
-		display: block;
-	}

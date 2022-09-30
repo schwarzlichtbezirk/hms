@@ -26,38 +26,38 @@
 .btn-icon {
 	line-height: normal;
 	padding: 0.25rem;
-	color: Aquamarine;
-	background-color: rgba(128, 40, 224, 0.4);
-	border-color: rgb(64, 16, 128);
+	color: lightsteelblue;
+	background-color: rgba(70, 131, 180, 0.4);
+	border-color: dodgerblue;
 }
 
 	.btn-icon:hover {
 		color: #fff !important;
-		background-color: rgba(128, 40, 224, 0.66) !important;
-		border-color: rgb(92, 24, 188) !important;
+		background-color: rgba(70, 131, 180, 0.66) !important;
+		border-color: deepskyblue !important;
 	}
 
 	.btn-check:focus + .btn-icon, .btn-icon:focus {
 		color: #fff;
-		background-color: rgba(128, 40, 224, 0.75);
-		border-color: rgb(92, 24, 188);
-		box-shadow: 0 0 0 0.25rem rgba(128, 40, 224, 0.5);
+		background-color: rgba(70, 131, 180, 0.75);
+		border-color: deepskyblue;
+		box-shadow: 0 0 0 0.25rem rgba(65, 105, 225, 0.5);
 	}
 
 	.btn-check:checked + .btn-icon, .btn-check:active + .btn-icon, .btn-icon:active, .btn-icon.active, .show > .btn-icon.dropdown-toggle {
-		color: #fff;
-		background-color: rgba(128, 40, 224, 0.66);
-		border-color: rgb(136, 70, 204);
+		color: lightskyblue;
+		background-color: rgba(70, 131, 180, 0.6);
+		border-color: deepskyblue;
 	}
 
 		.btn-check:checked + .btn-icon:focus, .btn-check:active + .btn-icon:focus, .btn-icon:active:focus, .btn-icon.active:focus, .show > .btn-icon.dropdown-toggle:focus {
-			box-shadow: 0 0 0 0.25rem rgba(128, 40, 224, 0.5);
+			box-shadow: 0 0 0 0.25rem rgba(65, 105, 225, 0.5);
 		}
 
 	.btn-icon:disabled, .btn-icon.disabled {
-		color: rgb(66, 132, 112);
-		background-color: rgba(66, 54, 80, 0.4);
-		border-color: rgb(40, 10, 80);
+		color: cadetblue;
+		background-color: rgba(105, 105, 105, 0.4);
+		border-color: rgb(144, 144, 144);
 	}
 
 .fileitem .iconmenu-band {
@@ -66,4 +66,8 @@
 
 .fileitem:hover .iconmenu-band {
 	display: block;
+}
+
+.popover-header {
+	background-color: #5b7199;
 }
