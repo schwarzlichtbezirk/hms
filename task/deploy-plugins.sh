@@ -2,12 +2,12 @@
 pldir=$(dirname $0)/../frontend/plugin/
 mkdir -pv $pldir/images
 
-# bootstrap 5.2.1
+# bootstrap 5.2.0
 # https://cdnjs.com/libraries/bootstrap
-curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.1/js/bootstrap.min.js --output $pldir/bootstrap.min.js
-curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.1/js/bootstrap.min.js.map --output $pldir/bootstrap.min.js.map
-curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.1/css/bootstrap.min.css --output $pldir/bootstrap.min.css
-curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.1/css/bootstrap.min.css.map --output $pldir/bootstrap.min.css.map
+curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.0/js/bootstrap.min.js --output $pldir/bootstrap.min.js
+curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.0/js/bootstrap.min.js.map --output $pldir/bootstrap.min.js.map
+curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.0/css/bootstrap.min.css --output $pldir/bootstrap.min.css
+curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.2.0/css/bootstrap.min.css.map --output $pldir/bootstrap.min.css.map
 
 # popper 2.11.6
 # https://cdnjs.com/libraries/popper.js

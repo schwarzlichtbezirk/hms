@@ -124,6 +124,14 @@ const (
 	AECfolderabsent
 	AECfolderfail
 
+	// res/prop
+	AECpropnodata
+	AECpropnoacc
+	AECpropbadpath
+	AECprophidden
+	AECpropaccess
+	AECpropnoprop
+
 	// res/ispath
 
 	AECispathnodata

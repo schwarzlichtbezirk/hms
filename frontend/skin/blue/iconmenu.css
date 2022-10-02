@@ -32,9 +32,9 @@
 }
 
 	.btn-icon:hover {
-		color: #fff !important;
-		background-color: rgba(70, 131, 180, 0.66) !important;
-		border-color: deepskyblue !important;
+		color: #fff;
+		background-color: rgba(70, 131, 180, 0.66);
+		border-color: deepskyblue;
 	}
 
 	.btn-check:focus + .btn-icon, .btn-icon:focus {

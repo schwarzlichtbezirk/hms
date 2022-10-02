@@ -69,10 +69,18 @@ const fileinfo = file => {
 		lst.push('year: ' + file.year);
 	}
 	if (file.track && (file.track.number ?? file.track.total)) {
-		lst.push(`track: ${file.track.number ?? ''}/${file.track.total ?? ''}`);
+		if (file.track.number && file.track.total) {
+			lst.push(`track: ${file.track.number}/${file.track.total}`);
+		} else {
+			lst.push(`track: ${file.track.number ?? file.track.total}`);
+		}
 	}
 	if (file.disc && (file.disc.number ?? file.disc.total)) {
-		lst.push(`disc: ${file.disc.number ?? ''}/${file.disc.total ?? ''}`);
+		if (file.disc.number && file.disc.total) {
+			lst.push(`disc: ${file.disc.number}/${file.disc.total}`);
+		} else {
+			lst.push(`disc: ${file.disc.number ?? file.disc.total}`);
+		}
 	}
 	if (file.comment) {
 		lst.push('comment: ' + file.comment.substring(0, 80));
@@ -330,13 +338,11 @@ const VueIconMenu = {
 	props: ["file"],
 	data() {
 		return {
-			popover: null
+			popover: null,
+			scanned: false,
 		};
 	},
 	computed: {
-		infocontent() {
-			return fileinfo(this.file).join('<br>');
-		},
 		clsshared() {
 			return {
 				'active': this.file.shared,
@@ -350,8 +356,32 @@ const VueIconMenu = {
 		}
 	},
 	methods: {
+		scan() {
+			(async () => {
+				try {
+					const response = await fetchajaxauth("POST", "/api/res/prop", {
+						aid: this.$root.aid,
+						puid: this.file.puid
+					});
+					traceajax(response);
+					if (response.ok) {
+						extend(this.file, response.data.prop);
+						this.popover.setContent({
+							'.popover-body': fileinfo(this.file).join('<br>')
+						})
+						this.scanned = true;
+					} else {
+						const data = await response.json();
+						throw new HttpError(response.status, data);
+					}
+				} catch (e) {
+				}
+			})();
+		},
 		oninfo() {
-			this.popover.update();
+			if (!this.scanned) {
+				this.scan();
+			}
 		},
 		onlink() {
 			copyTextToClipboard(window.location.origin + fileurl(this.file));
@@ -412,6 +442,7 @@ const VueIconMenu = {
 		if (this.file.type === FT.file) {
 			this.popover = new bootstrap.Popover(this.$refs.info, {
 				title: this.file.name,
+				content: fileinfo(this.file).join('<br>'),
 				html: true
 			});
 		}

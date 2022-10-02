@@ -575,6 +575,72 @@ func ishomeAPI(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
+func propAPI(w http.ResponseWriter, r *http.Request) {
+	var err error
+	var arg struct {
+		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
+
+		AID  ID_t   `json:"aid" yaml:"aid" xml:"aid,attr"`
+		PUID Puid_t `json:"puid" yaml:"puid" xml:"puid,attr"`
+	}
+	var ret struct {
+		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
+
+		Path string `json:"path" yaml:"path" xml:"path"`
+		Name string `json:"shrname" yaml:"shrname" xml:"shrname"`
+		Prop Pather `json:"prop" yaml:"prop" xml:"prop"`
+	}
+
+	// get arguments
+	if err = ParseBody(w, r, &arg); err != nil {
+		return
+	}
+	if arg.PUID == 0 {
+		WriteError400(w, r, ErrArgNoPuid, AECpropnodata)
+		return
+	}
+
+	var prf *Profile
+	if prf = prflist.ByID(arg.AID); prf == nil {
+		WriteError400(w, r, ErrNoAcc, AECpropnoacc)
+		return
+	}
+	var auth *Profile
+	if auth, err = GetAuth(w, r); err != nil {
+		return
+	}
+
+	var syspath string
+	var ok bool
+	if syspath, ok = syspathcache.Path(arg.PUID); !ok {
+		WriteError400(w, r, ErrNoPath, AECpropbadpath)
+		return
+	}
+
+	if prf.IsHidden(syspath) {
+		WriteError(w, r, http.StatusForbidden, ErrHidden, AECprophidden)
+		return
+	}
+
+	var shrpath, base, cg = prf.GetSharePath(syspath, auth == prf)
+	if cg.IsZero() && syspath != CPshares {
+		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECpropaccess)
+		return
+	}
+	ret.Path = shrpath
+	ret.Name = PathBase(base)
+
+	var prop interface{}
+	if prop, err = propcache.Get(syspath); err != nil {
+		WriteError(w, r, http.StatusNotFound, err, AECpropnoprop)
+		return
+	}
+	ret.Prop = prop.(Pather)
+
+	WriteOK(w, r, &ret)
+}
+
+// APIHANDLER
 func ispathAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var err error
 	var arg struct {
