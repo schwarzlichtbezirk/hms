@@ -67,8 +67,8 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 
 		Paths []MapPath `json:"paths" yaml:"paths" xml:"paths>path"`
 		Limit int       `json:"limit,omitempty" yaml:"limit,omitempty" xml:"limit,omitempty"`
-		Time1 unix_t    `json:"time1,omitempty" yaml:"time1,omitempty" xml:"time1,omitempty"`
-		Time2 unix_t    `json:"time2,omitempty" yaml:"time2,omitempty" xml:"time2,omitempty"`
+		Time1 Unix_t    `json:"time1,omitempty" yaml:"time1,omitempty" xml:"time1,omitempty"`
+		Time2 Unix_t    `json:"time2,omitempty" yaml:"time2,omitempty" xml:"time2,omitempty"`
 	}
 	var ret struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`

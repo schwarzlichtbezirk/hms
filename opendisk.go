@@ -142,8 +142,8 @@ func StatFile(syspath string) (fi fs.FileInfo, err error) {
 // OpenDir returns directory files fs.FileInfo list. It scan file system path,
 // or looking for iso-disk in the given path, opens it, and scan files nested
 // into iso-disk local directory.
-func OpenDir(syspath string) (ret []fs.FileInfo, err error) {
-	var fpath = syspath
+func OpenDir(dir string) (ret []fs.FileInfo, err error) {
+	var fpath = dir
 	var file *os.File
 	for len(fpath) > 0 {
 		if file, err = os.Open(fpath); err == nil {
@@ -155,7 +155,7 @@ func OpenDir(syspath string) (ret []fs.FileInfo, err error) {
 		}
 		fpath = path.Dir(fpath)
 	}
-	if fpath == syspath { // primary filesystem directory
+	if fpath == dir { // primary filesystem directory
 		var fi fs.FileInfo
 		if fi, err = file.Stat(); err != nil {
 			return
@@ -174,10 +174,10 @@ func OpenDir(syspath string) (ret []fs.FileInfo, err error) {
 	}
 
 	var dpath string
-	if fpath == syspath {
+	if fpath == dir {
 		dpath = "/" // list root of disk
 	} else {
-		dpath = syspath[len(fpath):]
+		dpath = dir[len(fpath):]
 	}
 	switch disk := dv.(type) {
 	case *DiskISO:
@@ -189,9 +189,9 @@ func OpenDir(syspath string) (ret []fs.FileInfo, err error) {
 }
 
 // ScanDir returns file properties list for given file system directory, or directory in iso-disk.
-func ScanDir(syspath string, cg *CatGrp, filter func(string) bool) (ret []Pather, skip int, err error) {
+func ScanDir(dir string, cg *CatGrp, filter func(string) bool) (ret []Pather, skip int, err error) {
 	var files []fs.FileInfo
-	if files, err = OpenDir(syspath); err != nil {
+	if files, err = OpenDir(dir); err != nil {
 		return
 	}
 
@@ -200,7 +200,7 @@ func ScanDir(syspath string, cg *CatGrp, filter func(string) bool) (ret []Pather
 		if fi == nil {
 			continue
 		}
-		var fpath = path.Join(syspath, fi.Name())
+		var fpath = path.Join(dir, fi.Name())
 		if filter != nil && !filter(fpath) {
 			continue
 		}
@@ -219,7 +219,7 @@ func ScanDir(syspath string, cg *CatGrp, filter func(string) bool) (ret []Pather
 		fgrp[grp]++
 	}
 
-	if pv, err := propcache.Get(syspath); err == nil {
+	if pv, err := propcache.Get(dir); err == nil {
 		if dk, ok := pv.(*DirKit); ok {
 			dk.Scan = UnixJSNow()
 			dk.FGrp = fgrp

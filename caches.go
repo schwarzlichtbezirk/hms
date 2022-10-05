@@ -3,7 +3,6 @@ package hms
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"image"
 	"io"
 	"io/fs"
@@ -197,7 +196,7 @@ var dircache = DirCache{
 // GpsInfo describes GPS-data from the photos:
 // latitude, longitude, altitude and creation time.
 type GpsInfo struct {
-	DateTime  unix_t  `json:"time" yaml:"time"` // photo creation date/time in Unix milliseconds
+	DateTime  Unix_t  `json:"time" yaml:"time"` // photo creation date/time in Unix milliseconds
 	Latitude  float64 `json:"lat" yaml:"lat"`
 	Longitude float64 `json:"lon" yaml:"lon"`
 	Altitude  float32 `json:"alt,omitempty" yaml:"alt,omitempty"`
@@ -399,75 +398,6 @@ func initcaches() {
 		Build()
 }
 
-// MakeTile produces new tile object.
-func MakeTile(r io.Reader, wdh, hgt int, orientation int) (md *MediaData, err error) {
-	var ftype string
-	var src, dst image.Image
-	if src, ftype, err = image.Decode(r); err != nil {
-		if src == nil { // skip "short Huffman data" or others errors with partial results
-			return // can not decode file by any codec
-		}
-	}
-
-	switch orientation {
-	case OrientCwHorzReversed, OrientCw, OrientAcwHorzReversed, OrientAcw:
-		wdh, hgt = hgt, wdh
-	}
-	var fltlst = AddOrientFilter([]gift.Filter{
-		gift.ResizeToFill(wdh, hgt, gift.LinearResampling, gift.CenterAnchor),
-	}, orientation)
-	var filter = gift.New(fltlst...)
-	var img = image.NewRGBA(filter.Bounds(src.Bounds()))
-	if img.Pix == nil {
-		err = ErrImgNil
-		return // out of memory
-	}
-	filter.Draw(img, src)
-	dst = img
-
-	return ToNativeImg(dst, ftype)
-}
-
-// GetCachedTile tries to extract existing tile from cache, otherwise
-// makes new one and put it to cache.
-func GetCachedTile(syspath string, wdh, hgt int) (md *MediaData, err error) {
-	var tilepath = fmt.Sprintf("%s?%dx%d", syspath, wdh, hgt)
-
-	// try to extract tile from package
-	if md, err = tilespkg.GetImage(tilepath); err != nil || md != nil {
-		return
-	}
-
-	var r io.ReadCloser
-	if r, err = OpenFile(syspath); err != nil {
-		return // can not open file
-	}
-	defer r.Close()
-
-	var prop interface{}
-	if prop, err = propcache.Get(syspath); err != nil {
-		return // can not get properties
-	}
-	var fp = prop.(Pather)
-	if fp.Type() != FTfile {
-		err = ErrNotFile
-		return
-	}
-
-	var orientation = OrientNormal
-	if ek, ok := prop.(*ExifKit); ok {
-		orientation = ek.Orientation
-	}
-
-	if md, err = MakeTile(r, wdh, hgt, orientation); err != nil {
-		return
-	}
-
-	// push tile to package
-	err = tilespkg.PutImage(tilepath, md)
-	return
-}
-
 // CachePackage describes package cache functionality.
 // Package splitted in two files - tags table file and
 // cached images data file.
@@ -591,6 +521,9 @@ func (cw *CachePackage) PutImage(fpath string, md *MediaData) (err error) {
 	if ts, err = cw.PackData(cw.WPF, bytes.NewReader(md.Data), fpath); err != nil {
 		return
 	}
+	var now = time.Now()
+	ts.Put(wpk.TIDmtime, wpk.UnixTag(now))
+	ts.Put(wpk.TIDatime, wpk.UnixTag(now))
 	ts.Put(wpk.TIDmime, wpk.StrTag(MimeStr[md.Mime]))
 	return
 }

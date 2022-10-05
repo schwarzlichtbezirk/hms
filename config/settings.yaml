@@ -41,8 +41,6 @@ web-server: # See https://golang.org/pkg/net/http/#Server for details.
 images-prop:
   # Maximum size of image to make thumbnail.
   thumb-file-maxsize: 50397184 # 4096*3072*4 + 65536, 48M, max 4K image + 64K exif metadata
-  # Use JPEG thumbnails embedded into image.
-  use-embedded-tmb: false
   # Stretch big image embedded into mp3-file to fit into standard icon size.
   fit-embedded-tmb: false
   # Thumbnails width and height.

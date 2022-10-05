@@ -46,7 +46,7 @@ type AjaxErr struct {
 	// message with problem description
 	What jerr `json:"what" yaml:"what" xml:"what"`
 	// time of error rising, in milliseconds of UNIX format
-	When unix_t `json:"when" yaml:"when" xml:"when"`
+	When Unix_t `json:"when" yaml:"when" xml:"when"`
 	// unique API error code
 	Code int `json:"code,omitempty" yaml:"code,omitempty" xml:"code,omitempty"`
 	// URL with problem detailed description
@@ -407,8 +407,11 @@ func RegisterRoutes(gmux *Router) {
 
 	// file system sharing & converted media files
 	gacc.PathPrefix("/file/").HandlerFunc(fileHandler)
-	// cached thumbs and tiles
-	gacc.Path("/thumb/{puid}").HandlerFunc(thumbHandler)
+	// embedded thumbnails
+	gacc.Path("/etmb/{puid}").HandlerFunc(etmbHandler)
+	// cached thumbnails
+	gacc.Path("/mtmb/{puid}").HandlerFunc(mtmbHandler)
+	// cached tiles
 	gacc.Path("/tile/{puid}/{wdh:[0-9]+}x{hgt:[0-9]+}").HandlerFunc(tileHandler)
 
 	// API routes

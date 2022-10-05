@@ -58,6 +58,15 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
 
 	// get arguments
+	var vars = mux.Vars(r)
+	if vars == nil {
+		panic("bad route for URL " + r.URL.Path)
+	}
+	var aid uint64
+	if aid, err = strconv.ParseUint(vars["aid"], 10, 64); err != nil {
+		WriteError400(w, r, err, AECmedianoaid)
+		return
+	}
 	var media bool
 	if s := r.FormValue("media"); len(s) > 0 {
 		if media, err = strconv.ParseBool(s); err != nil {
@@ -77,10 +86,10 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 	if len(chunks) < 4 {
 		panic("bad route for URL " + r.URL.Path)
 	}
-
-	var aid uint64
-	if aid, err = strconv.ParseUint(chunks[1][2:], 10, 64); err != nil {
-		WriteError400(w, r, err, AECmediabadaccid)
+	var fpath = strings.Join(chunks[3:], "/")
+	var syspath string
+	if syspath, err = UnfoldPath(fpath); err != nil {
+		WriteError400(w, r, err, AECmediabadpath)
 		return
 	}
 
@@ -91,17 +100,6 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	var auth *Profile
 	if auth, err = GetAuth(w, r); err != nil {
-		return
-	}
-
-	var fpath = strings.Join(chunks[3:], "/")
-	var syspath string
-	if syspath, err = UnfoldPath(fpath); err != nil {
-		WriteError400(w, r, err, AECmediabadpath)
-		return
-	}
-	if !fs.ValidPath(syspath) {
-		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECmediaroot)
 		return
 	}
 
@@ -121,16 +119,6 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var prop interface{}
-	if prop, err = propcache.Get(syspath); err != nil {
-		WriteError(w, r, http.StatusNotFound, err, AECmedianoprop)
-		return
-	}
-	var fp = prop.(Pather)
-	if fp.Type() != FTfile {
-		WriteError(w, r, http.StatusUnsupportedMediaType, ErrNotFile, AECmedianofile)
-		return
-	}
 	var cg = prf.PathAccess(syspath, auth == prf)
 	var grp = GetFileGroup(syspath)
 	if !cg[grp] {
@@ -168,7 +156,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 				}
 			}()
 			w.Header().Set("Content-Type", MimeStr[md.Mime])
-			http.ServeContent(w, r, puid.String(), starttime, bytes.NewReader(md.Data))
+			http.ServeContent(w, r, syspath, starttime, bytes.NewReader(md.Data))
 			return
 		}
 	}
@@ -201,7 +189,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 				}
 			}()
 			w.Header().Set("Content-Type", MimeStr[md.Mime])
-			http.ServeContent(w, r, puid.String(), starttime, bytes.NewReader(md.Data))
+			http.ServeContent(w, r, syspath, starttime, bytes.NewReader(md.Data))
 			return
 		}
 	}
@@ -229,23 +217,32 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 	defer content.Close()
 
 	WriteStdHeader(w)
-	http.ServeContent(w, r, syspath, TimeJS(fp.Time()), content)
+	http.ServeContent(w, r, syspath, starttime, content)
 }
 
-// Hands out thumbnails for given files if them cached.
-func thumbHandler(w http.ResponseWriter, r *http.Request) {
+// Hands out embedded thumbnails for given files if any.
+func etmbHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
 
-	var chunks = mux.Vars(r)
-	if chunks == nil {
+	// get arguments
+	var vars = mux.Vars(r)
+	if vars == nil {
 		panic("bad route for URL " + r.URL.Path)
 	}
-
-	var aid, _ = strconv.ParseUint(chunks["aid"], 10, 64)
+	var aid uint64
+	if aid, err = strconv.ParseUint(vars["aid"], 10, 64); err != nil {
+		WriteError400(w, r, err, AECetmbnoaid)
+		return
+	}
+	var puid Puid_t
+	if err = puid.Set(vars["puid"]); err != nil {
+		WriteError400(w, r, err, AECetmbnopuid)
+		return
+	}
 
 	var prf *Profile
 	if prf = prflist.ByID(ID_t(aid)); prf == nil {
-		WriteError(w, r, http.StatusNotFound, ErrNoAcc, AECthumbnoacc)
+		WriteError(w, r, http.StatusNotFound, ErrNoAcc, AECetmbnoacc)
 		return
 	}
 	var auth *Profile
@@ -253,58 +250,119 @@ func thumbHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var puid Puid_t
-	if err = puid.Set(chunks["puid"]); err != nil {
-		WriteError400(w, r, err, AECthumbnopuid)
-		return
-	}
 	var syspath, ok = syspathcache.Path(puid)
 	if !ok {
-		WriteError(w, r, http.StatusNotFound, ErrNoPath, AECthumbnopath)
+		WriteError(w, r, http.StatusNotFound, ErrNoPath, AECetmbnopath)
 		return
 	}
 
 	if prf.IsHidden(syspath) {
-		WriteError(w, r, http.StatusForbidden, ErrHidden, AECthumbhidden)
+		WriteError(w, r, http.StatusForbidden, ErrHidden, AECetmbhidden)
 		return
 	}
 
-	var prop interface{}
-	if prop, err = propcache.Get(syspath); err != nil {
-		WriteError(w, r, http.StatusNotFound, err, AECthumbnoprop)
-		return
-	}
-	if prop.(Pather).Type() != FTfile {
-		WriteError(w, r, http.StatusUnsupportedMediaType, ErrNotFile, AECthumbnofile)
-		return
-	}
 	var cg = prf.PathAccess(syspath, auth == prf)
 	var grp = GetFileGroup(syspath)
 	if !cg[grp] {
-		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECthumbaccess)
+		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECetmbaccess)
 		return
 	}
 
 	var md *MediaData
-	if md, err = FindTmb(prop, syspath); err != nil {
-		Log.Infoln(syspath, err)
+	if md, err = ExtractTmb(syspath); err != nil {
 		WriteError(w, r, http.StatusNotFound, err, AECthumbabsent)
 		return
 	}
 	w.Header().Set("Content-Type", MimeStr[md.Mime])
-	http.ServeContent(w, r, puid.String(), starttime, bytes.NewReader(md.Data))
+	http.ServeContent(w, r, syspath, starttime, bytes.NewReader(md.Data))
+}
+
+// Hands out cached thumbnails for given files.
+func mtmbHandler(w http.ResponseWriter, r *http.Request) {
+	var err error
+
+	// get arguments
+	var vars = mux.Vars(r)
+	if vars == nil {
+		panic("bad route for URL " + r.URL.Path)
+	}
+	var aid uint64
+	if aid, err = strconv.ParseUint(vars["aid"], 10, 64); err != nil {
+		WriteError400(w, r, err, AECmtmbnoaid)
+		return
+	}
+	var puid Puid_t
+	if err = puid.Set(vars["puid"]); err != nil {
+		WriteError400(w, r, err, AECmtmbnopuid)
+		return
+	}
+
+	var prf *Profile
+	if prf = prflist.ByID(ID_t(aid)); prf == nil {
+		WriteError(w, r, http.StatusNotFound, ErrNoAcc, AECmtmbnoacc)
+		return
+	}
+	var auth *Profile
+	if auth, err = GetAuth(w, r); err != nil {
+		return
+	}
+
+	var syspath, ok = syspathcache.Path(puid)
+	if !ok {
+		WriteError(w, r, http.StatusNotFound, ErrNoPath, AECmtmbnopath)
+		return
+	}
+
+	if prf.IsHidden(syspath) {
+		WriteError(w, r, http.StatusForbidden, ErrHidden, AECmtmbhidden)
+		return
+	}
+
+	var cg = prf.PathAccess(syspath, auth == prf)
+	var grp = GetFileGroup(syspath)
+	if !cg[grp] {
+		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECmtmbaccess)
+		return
+	}
+
+	var md *MediaData
+	if md, err = thumbpkg.GetImage(syspath); err != nil {
+		WriteError500(w, r, err, AECmtmbnocnt)
+		return
+	}
+	if md == nil {
+		WriteError(w, r, http.StatusNoContent, err, AECmtmbbadcnt)
+		return
+	}
+	w.Header().Set("Content-Type", MimeStr[md.Mime])
+	http.ServeContent(w, r, syspath, starttime, bytes.NewReader(md.Data))
 }
 
 // Hands out thumbnails for given files if them cached.
 func tileHandler(w http.ResponseWriter, r *http.Request) {
 	var err error
 
-	var chunks = mux.Vars(r)
-	if chunks == nil {
+	// get arguments
+	var vars = mux.Vars(r)
+	if vars == nil {
 		panic("bad route for URL " + r.URL.Path)
 	}
-
-	var aid, _ = strconv.ParseUint(chunks["aid"], 10, 64)
+	var aid uint64
+	if aid, err = strconv.ParseUint(vars["aid"], 10, 64); err != nil {
+		WriteError400(w, r, err, AECtilenoaid)
+		return
+	}
+	var puid Puid_t
+	if err = puid.Set(vars["puid"]); err != nil {
+		WriteError400(w, r, err, AECtilenopuid)
+		return
+	}
+	var wdh, _ = strconv.Atoi(vars["wdh"])
+	var hgt, _ = strconv.Atoi(vars["hgt"])
+	if wdh == 0 || hgt == 0 {
+		WriteError400(w, r, ErrArgNoRes, AECtilebadres)
+		return
+	}
 
 	var prf *Profile
 	if prf = prflist.ByID(ID_t(aid)); prf == nil {
@@ -313,18 +371,6 @@ func tileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	var auth *Profile
 	if auth, err = GetAuth(w, r); err != nil {
-		return
-	}
-
-	var puid Puid_t
-	if err = puid.Set(chunks["puid"]); err != nil {
-		WriteError400(w, r, err, AECtilenopuid)
-		return
-	}
-	var wdh, _ = strconv.Atoi(chunks["wdh"])
-	var hgt, _ = strconv.Atoi(chunks["hgt"])
-	if wdh == 0 || hgt == 0 {
-		WriteError400(w, r, ErrArgNoRes, AECtilebadres)
 		return
 	}
 
@@ -339,16 +385,6 @@ func tileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var prop interface{}
-	if prop, err = propcache.Get(syspath); err != nil {
-		WriteError(w, r, http.StatusNotFound, err, AECtilenoprop)
-		return
-	}
-	var fp = prop.(Pather)
-	if fp.Type() != FTfile {
-		WriteError(w, r, http.StatusUnsupportedMediaType, ErrNotFile, AECtilenofile)
-		return
-	}
 	var cg = prf.PathAccess(syspath, auth == prf)
 	var grp = GetFileGroup(syspath)
 	if !cg[grp] {
@@ -362,7 +398,7 @@ func tileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Content-Type", MimeStr[md.Mime])
-	http.ServeContent(w, r, puid.String(), starttime, bytes.NewReader(md.Data))
+	http.ServeContent(w, r, syspath, starttime, bytes.NewReader(md.Data))
 }
 
 // APIHANDLER
@@ -678,8 +714,8 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 			WriteError400(w, r, err, AECfolderbadpath)
 			return
 		}
-		if !fs.ValidPath(syspath) {
-			WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECispathroot)
+		if ok, _ := PathExists(syspath); !ok {
+			WriteError(w, r, http.StatusNotFound, http.ErrMissingFile, AECispathmiss)
 			return
 		}
 	}
@@ -825,8 +861,8 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 			WriteError400(w, r, err, AECdrvaddbadpath)
 			return
 		}
-		if !fs.ValidPath(syspath) {
-			WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECdrvaddroot)
+		if ok, _ := PathExists(syspath); !ok {
+			WriteError(w, r, http.StatusNotFound, http.ErrMissingFile, AECdrvaddmiss)
 			return
 		}
 	}

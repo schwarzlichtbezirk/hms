@@ -35,7 +35,7 @@ var tmbpngenc = png.Encoder{
 // Error messages
 var (
 	ErrBadMedia = errors.New("media content is corrupted")
-	ErrNotThumb = errors.New("thumbnail content can not be created")
+	ErrNoThumb  = errors.New("music file without thumbnail")
 	ErrNotFile  = errors.New("property is not file")
 	ErrNotImg   = errors.New("file is not image")
 	ErrTooBig   = errors.New("file is too big")
@@ -118,6 +118,7 @@ func (pp *PuidProp) PUID() Puid_t {
 
 // TmbProp is thumbnails properties.
 type TmbProp struct {
+	ETmbVal Mime_t `json:"etmb" yaml:"etmb" xml:"etmb"`
 	MTmbVal Mime_t `json:"mtmb" yaml:"mtmb" xml:"mtmb"`
 	MT02Val Mime_t `json:"mt02,omitempty" yaml:"mt02,omitempty" xml:"mt02,omitempty"`
 	MT03Val Mime_t `json:"mt03,omitempty" yaml:"mt03,omitempty" xml:"mt03,omitempty"`
@@ -144,6 +145,7 @@ const (
 type TM_t int
 
 const (
+	tme  TM_t = -1
 	tm0  TM_t = 0
 	tm2  TM_t = 2
 	tm3  TM_t = 3
@@ -165,6 +167,7 @@ const (
 var tmset = [...]TM_t{2, 3, 4, 6, 8, 9, 10, 12, 15, 16, 18, 20, 24, 30, 36}
 
 var tmbdis = TmbProp{
+	ETmbVal: MimeDis,
 	MTmbVal: MimeDis,
 	MT02Val: MimeDis,
 	MT03Val: MimeDis,
@@ -196,6 +199,7 @@ func (tp *TmbProp) Tmb() *TmbProp {
 
 // Setup generates PUID (path unique identifier) and updates cached state.
 func (tp *TmbProp) Setup(syspath string) {
+	tp.ETmbVal = MimeDis // setup as default
 	if ts, ok := thumbpkg.Tagset(syspath); ok {
 		if str, ok := ts.TagStr(wpk.TIDmime); ok {
 			if strings.HasPrefix(str, "image/") {
@@ -231,37 +235,39 @@ func (tp *TmbProp) Setup(syspath string) {
 func (tp *TmbProp) Tile(tm TM_t) (mime Mime_t, ok bool) {
 	ok = true
 	switch tm {
-	case 0:
+	case tme:
+		mime = tp.ETmbVal
+	case tm0:
 		mime = tp.MTmbVal
-	case 2:
+	case tm2:
 		mime = tp.MT02Val
-	case 3:
+	case tm3:
 		mime = tp.MT03Val
-	case 4:
+	case tm4:
 		mime = tp.MT04Val
-	case 6:
+	case tm6:
 		mime = tp.MT06Val
-	case 8:
+	case tm8:
 		mime = tp.MT08Val
-	case 9:
+	case tm9:
 		mime = tp.MT09Val
-	case 10:
+	case tm10:
 		mime = tp.MT10Val
-	case 12:
+	case tm12:
 		mime = tp.MT12Val
-	case 15:
+	case tm15:
 		mime = tp.MT15Val
-	case 16:
+	case tm16:
 		mime = tp.MT16Val
-	case 18:
+	case tm18:
 		mime = tp.MT18Val
-	case 20:
+	case tm20:
 		mime = tp.MT20Val
-	case 24:
+	case tm24:
 		mime = tp.MT24Val
-	case 30:
+	case tm30:
 		mime = tp.MT30Val
-	case 36:
+	case tm36:
 		mime = tp.MT36Val
 	default:
 		ok = false
@@ -273,37 +279,39 @@ func (tp *TmbProp) Tile(tm TM_t) (mime Mime_t, ok bool) {
 func (tp *TmbProp) SetTile(tm TM_t, mime Mime_t) (ok bool) {
 	ok = true
 	switch tm {
-	case 0:
+	case tme:
+		tp.ETmbVal = mime
+	case tm0:
 		tp.MTmbVal = mime
-	case 2:
+	case tm2:
 		tp.MT02Val = mime
-	case 3:
+	case tm3:
 		tp.MT03Val = mime
-	case 4:
+	case tm4:
 		tp.MT04Val = mime
-	case 6:
+	case tm6:
 		tp.MT06Val = mime
-	case 8:
+	case tm8:
 		tp.MT08Val = mime
-	case 9:
+	case tm9:
 		tp.MT09Val = mime
-	case 10:
+	case tm10:
 		tp.MT10Val = mime
-	case 12:
+	case tm12:
 		tp.MT12Val = mime
-	case 15:
+	case tm15:
 		tp.MT15Val = mime
-	case 16:
+	case tm16:
 		tp.MT16Val = mime
-	case 18:
+	case tm18:
 		tp.MT18Val = mime
-	case 20:
+	case tm20:
 		tp.MT20Val = mime
-	case 24:
+	case tm24:
 		tp.MT24Val = mime
-	case 30:
+	case tm30:
 		tp.MT30Val = mime
-	case 36:
+	case tm36:
 		tp.MT36Val = mime
 	default:
 		ok = false
@@ -311,38 +319,27 @@ func (tp *TmbProp) SetTile(tm TM_t, mime Mime_t) (ok bool) {
 	return
 }
 
-// FindTmb finds thumbnail in embedded file tags, or build it if it possible.
-func FindTmb(prop interface{}, syspath string) (md *MediaData, err error) {
+// ExtractTmb extract thumbnail from embedded file tags.
+func ExtractTmb(syspath string) (md *MediaData, err error) {
+	var prop interface{}
+	if prop, err = propcache.Get(syspath); err != nil {
+		return
+	}
+
 	// try to extract from EXIF
-	var orientation = OrientNormal
 	if ek, ok := prop.(*ExifKit); ok { // skip non-EXIF properties
-		if cfg.UseEmbeddedTmb && ek.ThumbJpegLen > 0 {
+		if ek.thumb.Mime != MimeDis {
 			md = &ek.thumb
 			return // thumbnail from EXIF
 		}
-		orientation = ek.Orientation
 	}
 
 	// try to extract from ID3
-	if _, ok := prop.(*TagKit); ok { // skip non-ID3 properties
-		if md, err = GetTagTmb(syspath); err == nil {
-			return
+	if tk, ok := prop.(*TagKit); ok { // skip non-ID3 properties
+		if tk.thumb.Mime != MimeDis {
+			md = &tk.thumb
+			return // thumbnail from tags
 		}
-	}
-
-	// check all others are images
-	if GetFileGroup(prop.(Pather).Name()) != FGimage {
-		err = ErrNotImg
-		return // file is not image
-	}
-
-	if prop.(Pather).Size() > cfg.ThumbFileMaxSize {
-		err = ErrTooBig
-		return // file is too big
-	}
-
-	if md, err = GetCachedThumb(syspath, orientation); err != nil {
-		return
 	}
 	return
 }
@@ -377,46 +374,6 @@ func MakeThumb(r io.Reader, orientation int) (md *MediaData, err error) {
 	return ToNativeImg(dst, ftype)
 }
 
-// GetCachedThumb tries to extract existing thumbnail from cache, otherwise
-// makes new one and put it to cache.
-func GetCachedThumb(syspath string, orientation int) (md *MediaData, err error) {
-	// try to extract thumbnail from package
-	if md, err = thumbpkg.GetImage(syspath); err != nil || md != nil {
-		return
-	}
-
-	var r io.ReadCloser
-	if r, err = OpenFile(syspath); err != nil {
-		return // can not open file
-	}
-	defer r.Close()
-
-	if md, err = MakeThumb(r, orientation); err != nil {
-		return
-	}
-
-	// push thumbnail to package
-	err = thumbpkg.PutImage(syspath, md)
-	return
-}
-
-// GetCachedEmbThumb tries to extract existing thumbnail from cache, otherwise
-// reads image from the stream, makes new thumbnail and put it to cache.
-func GetCachedEmbThumb(r io.Reader, fkey string) (md *MediaData, err error) {
-	// try to extract thumbnail from package
-	if md, err = thumbpkg.GetImage(fkey); err != nil || md != nil {
-		return
-	}
-
-	if md, err = MakeThumb(r, OrientNormal); err != nil {
-		return
-	}
-
-	// push thumbnail to package
-	err = thumbpkg.PutImage(fkey, md)
-	return
-}
-
 // ToNativeImg converts Image to specified file format supported by browser.
 func ToNativeImg(m image.Image, ftype string) (md *MediaData, err error) {
 	var buf bytes.Buffer
@@ -445,6 +402,142 @@ func ToNativeImg(m image.Image, ftype string) (md *MediaData, err error) {
 	return
 }
 
+// GetCachedThumb tries to extract existing thumbnail from cache, otherwise
+// makes new one and put it to cache.
+func GetCachedThumb(syspath string) (md *MediaData, err error) {
+	// try to extract thumbnail from package
+	if md, err = thumbpkg.GetImage(syspath); err != nil || md != nil {
+		return
+	}
+
+	var prop interface{}
+	if prop, err = propcache.Get(syspath); err != nil {
+		return
+	}
+
+	if cfg.FitEmbeddedTmb {
+		if tk, ok := prop.(*TagKit); ok { // skip non-ID3 properties
+			if tk.thumb.Data == nil {
+				err = ErrNoThumb
+				return // music file without thumbnail
+			}
+			if md, err = MakeThumb(bytes.NewReader(tk.thumb.Data), OrientNormal); err != nil {
+				return
+			}
+			// push thumbnail to package
+			err = thumbpkg.PutImage(syspath, md)
+			return
+		}
+	}
+
+	// check that file is image
+	if GetFileGroup(syspath) != FGimage {
+		err = ErrNotImg
+		return // file is not image
+	}
+
+	if prop.(Pather).Size() > cfg.ThumbFileMaxSize {
+		err = ErrTooBig
+		return // file is too big
+	}
+
+	var r io.ReadCloser
+	if r, err = OpenFile(syspath); err != nil {
+		return // can not open file
+	}
+	defer r.Close()
+
+	// try to extract orientation from EXIF
+	var orientation = OrientNormal
+	if ek, ok := prop.(*ExifKit); ok { // skip non-EXIF properties
+		orientation = ek.Orientation
+	}
+
+	if md, err = MakeThumb(r, orientation); err != nil {
+		return
+	}
+
+	// push thumbnail to package
+	err = thumbpkg.PutImage(syspath, md)
+	return
+}
+
+// MakeTile produces new tile object.
+func MakeTile(r io.Reader, wdh, hgt int, orientation int) (md *MediaData, err error) {
+	var ftype string
+	var src, dst image.Image
+	if src, ftype, err = image.Decode(r); err != nil {
+		if src == nil { // skip "short Huffman data" or others errors with partial results
+			return // can not decode file by any codec
+		}
+	}
+
+	switch orientation {
+	case OrientCwHorzReversed, OrientCw, OrientAcwHorzReversed, OrientAcw:
+		wdh, hgt = hgt, wdh
+	}
+	var fltlst = AddOrientFilter([]gift.Filter{
+		gift.ResizeToFill(wdh, hgt, gift.LinearResampling, gift.CenterAnchor),
+	}, orientation)
+	var filter = gift.New(fltlst...)
+	var img = image.NewRGBA(filter.Bounds(src.Bounds()))
+	if img.Pix == nil {
+		err = ErrImgNil
+		return // out of memory
+	}
+	filter.Draw(img, src)
+	dst = img
+
+	return ToNativeImg(dst, ftype)
+}
+
+// GetCachedTile tries to extract existing tile from cache, otherwise
+// makes new one and put it to cache.
+func GetCachedTile(syspath string, wdh, hgt int) (md *MediaData, err error) {
+	var tilepath = fmt.Sprintf("%s?%dx%d", syspath, wdh, hgt)
+
+	// try to extract tile from package
+	if md, err = tilespkg.GetImage(tilepath); err != nil || md != nil {
+		return
+	}
+
+	var prop interface{}
+	if prop, err = propcache.Get(syspath); err != nil {
+		return // can not get properties
+	}
+
+	// check that file is image
+	if GetFileGroup(syspath) != FGimage {
+		err = ErrNotImg
+		return // file is not image
+	}
+
+	if prop.(Pather).Size() > cfg.ThumbFileMaxSize {
+		err = ErrTooBig
+		return // file is too big
+	}
+
+	var r io.ReadCloser
+	if r, err = OpenFile(syspath); err != nil {
+		return // can not open file
+	}
+	defer r.Close()
+
+	// try to extract orientation from EXIF
+	var orientation = OrientNormal
+	if ek, ok := prop.(*ExifKit); ok { // skip non-EXIF properties
+		orientation = ek.Orientation
+	}
+
+	if md, err = MakeTile(r, wdh, hgt, orientation); err != nil {
+		return
+	}
+
+	// push tile to package
+	err = tilespkg.PutImage(tilepath, md)
+	return
+}
+
 // Cacher provides function to perform image converting.
 type Cacher interface {
 	Cache()
@@ -467,7 +560,7 @@ func (fpath ThumbPath) Cache() {
 		}
 
 		var md *MediaData
-		if md, err = FindTmb(prop, string(fpath)); err != nil {
+		if md, err = GetCachedThumb(string(fpath)); err != nil {
 			tp.MTmbVal = MimeDis
 			return
 		}
@@ -495,6 +588,7 @@ func (tile TilePath) Cache() {
 		if mime, ok := tp.Tile(tm); ok && mime != MimeNil {
 			return // thumbnail already scanned
 		}
+
 		var md *MediaData
 		if md, err = GetCachedTile(tile.Path, tile.Wdh, tile.Hgt); err != nil {
 			tp.SetTile(tm, MimeDis)

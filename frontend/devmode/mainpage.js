@@ -726,7 +726,7 @@ const VueMainApp = {
 			}
 			await this.fetchscanbreak() // stop previous folder scanning
 			await this.fetchfolder(hist);
-			this.fetchscanstart(); // fetch at backround
+			await this.fetchscanstart(); // fetch at backround
 			this.seturl();
 		},
 
@@ -1073,7 +1073,7 @@ const VueMainApp = {
 						if (response.ok) {
 							// update folder settings
 							this.flist.push(response.data);
-							this.fetchscanstart(); // fetch at backround
+							await this.fetchscanstart(); // fetch at backround
 						} else {
 							throw new HttpError(response.status, response.data);
 						}
@@ -1095,7 +1095,7 @@ const VueMainApp = {
 								}
 							}
 							this.flist.push(response.data);
-							this.fetchscanstart(); // fetch at backround
+							await this.fetchscanstart(); // fetch at backround
 						} else {
 							throw new HttpError(response.status, response.data);
 						}
@@ -1155,7 +1155,7 @@ const VueMainApp = {
 					} else {
 						await this.fetchrangesearch(arg);
 					}
-					this.fetchscanstart(); // fetch at backround
+					await this.fetchscanstart(); // fetch at backround
 					this.seturl();
 				} catch (e) {
 					ajaxfail(e);

@@ -2,6 +2,7 @@ package hms
 
 import (
 	"fmt"
+	"io"
 	"io/fs"
 
 	"github.com/disintegration/gift"
@@ -62,7 +63,7 @@ type ExifProp struct {
 	Model        string  `json:"model,omitempty" yaml:"model,omitempty" xml:"model,omitempty"`
 	Make         string  `json:"make,omitempty" yaml:"make,omitempty" xml:"make,omitempty"`
 	Software     string  `json:"software,omitempty" yaml:"software,omitempty" xml:"software,omitempty"`
-	DateTime     unix_t  `json:"datetime,omitempty" yaml:"datetime,omitempty" xml:"datetime,omitempty"`
+	DateTime     Unix_t  `json:"datetime,omitempty" yaml:"datetime,omitempty" xml:"datetime,omitempty"`
 	Orientation  int     `json:"orientation,omitempty" yaml:"orientation,omitempty" xml:"orientation,omitempty"`
 	ExposureTime string  `json:"exposuretime,omitempty" yaml:"exposuretime,omitempty" xml:"exposuretime,omitempty"`
 	ExposureProg int     `json:"exposureprog,omitempty" yaml:"exposureprog,omitempty" xml:"exposureprog,omitempty"`
@@ -174,10 +175,6 @@ func (ep *ExifProp) Setup(x *exif.Exif) {
 	if t, err = x.Get(exif.ThumbJPEGInterchangeFormatLength); err == nil {
 		ep.ThumbJpegLen, _ = t.Int(0)
 	}
-	if pic, err = x.JpegThumbnail(); err == nil {
-		ep.thumb.Data = pic
-		ep.thumb.Mime = MimeJpeg
-	}
 	if lat, lon, err := x.LatLong(); err == nil {
 		ep.Latitude, ep.Longitude = lat, lon
 	}
@@ -193,6 +190,13 @@ func (ep *ExifProp) Setup(x *exif.Exif) {
 	if t, err = x.Get(exif.GPSSatelites); err == nil {
 		ep.Satellites, _ = t.StringVal()
 	}
+	// private
+	if pic, err = x.JpegThumbnail(); err == nil {
+		ep.thumb.Data = pic
+		ep.thumb.Mime = MimeJpeg
+	} else {
+		ep.thumb.Mime = MimeDis
+	}
 }
 
 // ExifKit is file with EXIF tags.
@@ -207,26 +211,30 @@ type ExifKit struct {
 func (ek *ExifKit) Setup(syspath string, fi fs.FileInfo) {
 	ek.FileProp.Setup(fi)
 	ek.PuidProp.Setup(syspath)
-
-	if file, err := OpenFile(syspath); err == nil {
-		defer file.Close()
-		if x, err := exif.Decode(file); err == nil {
-			ek.ExifProp.Setup(x)
-			if ek.Latitude != 0 && ek.Longitude != 0 {
-				defer func() {
-					gpscache.Store(ek.PUIDVal, &GpsInfo{
-						DateTime:  ek.DateTime,
-						Latitude:  ek.Latitude,
-						Longitude: ek.Longitude,
-						Altitude:  ek.Altitude,
-					})
-				}()
-			}
-		}
-	}
 	ek.TmbProp.Setup(syspath)
-	if cfg.UseEmbeddedTmb && ek.ThumbJpegLen > 0 {
-		ek.MTmbVal = MimeJpeg
+
+	var err error
+	var r io.ReadSeekCloser
+	if r, err = OpenFile(syspath); err != nil {
+		return
+	}
+	defer r.Close()
+
+	var x *exif.Exif
+	if x, err = exif.Decode(r); err != nil {
+		return
+	}
+
+	ek.ExifProp.Setup(x)
+	ek.ETmbVal = ek.thumb.Mime
+	// store to GPS cache
+	if ek.Latitude != 0 && ek.Longitude != 0 {
+		gpscache.Store(ek.PUIDVal, &GpsInfo{
+			DateTime:  ek.DateTime,
+			Latitude:  ek.Latitude,
+			Longitude: ek.Longitude,
+			Altitude:  ek.Altitude,
+		})
 	}
 }
 

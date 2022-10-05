@@ -104,10 +104,6 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 		WriteError400(w, r, err, AECfolderbadpath)
 		return
 	}
-	if !fs.ValidPath(syspath) {
-		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECfoldernopath)
-		return
-	}
 
 	if prf.IsHidden(syspath) {
 		WriteError(w, r, http.StatusForbidden, ErrHidden, AECfolderhidden)

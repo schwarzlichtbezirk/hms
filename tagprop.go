@@ -1,7 +1,6 @@
 package hms
 
 import (
-	"bytes"
 	"io"
 	"io/fs"
 
@@ -32,6 +31,8 @@ type TagProp struct {
 	Disc     TagEnum `json:"disc,omitempty" yaml:"disc,flow,omitempty" xml:"disc,omitempty"`
 	Lyrics   string  `json:"lyrics,omitempty" yaml:"lyrics,omitempty" xml:"lyrics,omitempty"`
 	Comment  string  `json:"comment,omitempty" yaml:"comment,omitempty" xml:"comment,omitempty"`
+	// private
+	thumb MediaData
 }
 
 // Setup fills fields from tags metadata.
@@ -46,6 +47,13 @@ func (tp *TagProp) Setup(m tag.Metadata) {
 	tp.Disc.Number, tp.Disc.Total = m.Disc()
 	tp.Lyrics = m.Lyrics()
 	tp.Comment = m.Comment()
+	// private
+	if pic := m.Picture(); pic != nil {
+		tp.thumb.Data = pic.Data
+		tp.thumb.Mime = GetMimeVal(pic.MIMEType)
+	} else {
+		tp.thumb.Mime = MimeDis
+	}
 }
 
 // TagKit is music file tags properties kit.
@@ -61,76 +69,22 @@ type TagKit struct {
 func (tk *TagKit) Setup(syspath string, fi fs.FileInfo) {
 	tk.FileProp.Setup(fi)
 	tk.PuidProp.Setup(syspath)
+	tk.TmbProp.Setup(syspath)
 
-	if file, err := OpenFile(syspath); err == nil {
-		defer file.Close()
-		if m, err := tag.ReadFrom(file); err == nil {
-			tk.TagProp.Setup(m)
-			if pic := m.Picture(); pic != nil {
-				if cfg.FitEmbeddedTmb {
-					var md *MediaData
-					if md, err = GetCachedEmbThumb(bytes.NewReader(pic.Data), syspath); err == nil {
-						tk.MTmbVal = md.Mime
-						return
-					}
-				} else {
-					tk.MTmbVal = GetMimeVal(pic.MIMEType)
-					return
-				}
-			}
-		}
+	var err error
+	var r io.ReadSeekCloser
+	if r, err = OpenFile(syspath); err != nil {
+		return
 	}
-	tk.TmbProp = tmbdis
-}
-
-// GetTagTmb extracts embedded thumbnail from image file.
-func GetTagTmb(syspath string) (md *MediaData, err error) {
-	var file io.ReadSeekCloser
-	if file, err = OpenFile(syspath); err != nil {
-		return // can not open file
-	}
-	defer file.Close()
+	defer r.Close()
 
 	var m tag.Metadata
-	if m, err = tag.ReadFrom(file); err != nil {
+	if m, err = tag.ReadFrom(r); err != nil {
 		return
 	}
-	var pic *tag.Picture
-	if pic = m.Picture(); pic == nil {
-		err = ErrNotThumb
-		return
-	}
-	if cfg.FitEmbeddedTmb {
-		return GetCachedEmbThumb(bytes.NewReader(pic.Data), syspath)
-	}
-	md = &MediaData{
-		Data: pic.Data,
-		Mime: GetMimeVal(pic.MIMEType),
-	}
-	return
-}
 
-// MakeProp is file properties factory.
-func MakeProp(syspath string, fi fs.FileInfo) Pather {
-	if fi.IsDir() {
-		var dk DirKit
-		dk.Setup(syspath)
-		return &dk
-	}
-	var ext = GetFileExt(syspath)
-	if IsTypeID3(ext) {
-		var tk TagKit
-		tk.Setup(syspath, fi)
-		return &tk
-	} else if IsTypeEXIF(ext) {
-		var ek ExifKit
-		ek.Setup(syspath, fi)
-		return &ek
-	} else {
-		var fk FileKit
-		fk.Setup(syspath, fi)
-		return &fk
-	}
+	tk.TagProp.Setup(m)
+	tk.ETmbVal = tk.thumb.Mime
 }
 
 // The End.

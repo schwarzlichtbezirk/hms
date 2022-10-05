@@ -29,16 +29,13 @@ const (
 
 	// file
 
+	AECmedianoaid
 	AECmediabadmedia
 	AECmediabadhd
-	AECmediabadaccid
-	AECmedianoacc
 	AECmediabadpath
-	AECmediaroot
+	AECmedianoacc
 	AECmedianopath
 	AECmediahidden
-	AECmedianoprop
-	AECmedianofile
 	AECmediaaccess
 	AECmediahdgone
 	AECmediahdfail
@@ -49,26 +46,35 @@ const (
 	AECmediafilegone
 	AECmediafileopen
 
-	// thumb
+	// etmb
 
-	AECthumbnoacc
-	AECthumbnopuid
-	AECthumbnopath
-	AECthumbhidden
-	AECthumbnoprop
-	AECthumbnofile
-	AECthumbaccess
+	AECetmbnoaid
+	AECetmbnopuid
+	AECetmbnoacc
+	AECetmbnopath
+	AECetmbhidden
+	AECetmbaccess
 	AECthumbabsent
+
+	// mtmb
+
+	AECmtmbnoaid
+	AECmtmbnopuid
+	AECmtmbnoacc
+	AECmtmbnopath
+	AECmtmbhidden
+	AECmtmbaccess
+	AECmtmbnocnt
+	AECmtmbbadcnt
 
 	// tile
 
-	AECtilenoacc
+	AECtilenoaid
 	AECtilenopuid
 	AECtilebadres
+	AECtilenoacc
 	AECtilenopath
 	AECtilehidden
-	AECtilenoprop
-	AECtilenofile
 	AECtileaccess
 	AECtilebadcnt
 
@@ -108,7 +114,7 @@ const (
 	AECfoldernodata
 	AECfoldernoacc
 	AECfolderbadpath
-	AECfoldernopath
+	AECispathmiss
 	AECfolderhidden
 	AECfolderaccess
 	AECfoldernoshr
@@ -137,7 +143,6 @@ const (
 	AECispathnodata
 	AECispathnoacc
 	AECispathdeny
-	AECispathroot
 	AECispathhidden
 
 	// tile/chk
@@ -174,7 +179,7 @@ const (
 	AECdrvaddnoacc
 	AECdrvadddeny
 	AECdrvaddbadpath
-	AECdrvaddroot
+	AECdrvaddmiss
 	AECdrvaddfile
 
 	// drive/del

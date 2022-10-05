@@ -17,8 +17,8 @@ type ID_t uint64
 // Puid_t represents integer form of path unique ID.
 type Puid_t uint64
 
-// unix_t is UNIX time in milliseconds.
-type unix_t uint64
+// Unix_t is UNIX time in milliseconds.
+type Unix_t uint64
 
 // Predefined PUIDs.
 const (
@@ -161,19 +161,19 @@ func (pt *Puid_t) Rand(bits int) {
 	*pt &= 0xffffffffffffffff >> (65 - bits) // throw one more bit to prevent string representation overflow
 }
 
-func (ut unix_t) Time() time.Time {
+func (ut Unix_t) Time() time.Time {
 	return time.Unix(int64(ut/1000), int64(ut%1000)*1000000)
 }
 
 const ExifDate = "2006-01-02 15:04:05.999"
 
 // MarshalJSON is JSON marshaler interface implementation.
-func (ut unix_t) MarshalJSON() ([]byte, error) {
+func (ut Unix_t) MarshalJSON() ([]byte, error) {
 	return json.Marshal(ut.Time().Format(ExifDate))
 }
 
 // UnmarshalJSON is JSON unmarshaler interface implementation.
-func (ut *unix_t) UnmarshalJSON(b []byte) (err error) {
+func (ut *Unix_t) UnmarshalJSON(b []byte) (err error) {
 	var s string
 	if err = json.Unmarshal(b, &s); err != nil {
 		return err
@@ -187,12 +187,12 @@ func (ut *unix_t) UnmarshalJSON(b []byte) (err error) {
 }
 
 // MarshalYAML is YAML marshaler interface implementation.
-func (ut unix_t) MarshalYAML() (interface{}, error) {
+func (ut Unix_t) MarshalYAML() (interface{}, error) {
 	return ut.Time().Format(ExifDate), nil
 }
 
 // UnmarshalYAML is YAML unmarshaler interface implementation.
-func (ut *unix_t) UnmarshalYAML(value *yaml.Node) (err error) {
+func (ut *Unix_t) UnmarshalYAML(value *yaml.Node) (err error) {
 	var t time.Time
 	if t, err = time.Parse(ExifDate, value.Value); err != nil {
 		return
@@ -202,12 +202,12 @@ func (ut *unix_t) UnmarshalYAML(value *yaml.Node) (err error) {
 }
 
 // MarshalXML is XML marshaler interface implementation.
-func (ut unix_t) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
+func (ut Unix_t) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	return e.EncodeElement(ut.Time().Format(ExifDate), start)
 }
 
 // UnmarshalXML is XML unmarshaler interface implementation.
-func (ut *unix_t) UnmarshalXML(d *xml.Decoder, start xml.StartElement) (err error) {
+func (ut *Unix_t) UnmarshalXML(d *xml.Decoder, start xml.StartElement) (err error) {
 	var s string
 	if err = d.DecodeElement(&s, &start); err != nil {
 		return err
@@ -221,17 +221,17 @@ func (ut *unix_t) UnmarshalXML(d *xml.Decoder, start xml.StartElement) (err erro
 }
 
 // UnixJS converts time to UNIX-time in milliseconds, compatible with javascript time format.
-func UnixJS(u time.Time) unix_t {
-	return unix_t(u.UnixMilli())
+func UnixJS(u time.Time) Unix_t {
+	return Unix_t(u.UnixMilli())
 }
 
 // UnixJSNow returns same result as Date.now() in javascript.
-func UnixJSNow() unix_t {
-	return unix_t(time.Now().UnixMilli())
+func UnixJSNow() Unix_t {
+	return Unix_t(time.Now().UnixMilli())
 }
 
 // TimeJS is backward conversion from javascript compatible Unix time
 // in milliseconds to golang structure.
-func TimeJS(ujs unix_t) time.Time {
+func TimeJS(ujs Unix_t) time.Time {
 	return time.Unix(int64(ujs/1000), int64(ujs%1000)*1000000)
 }

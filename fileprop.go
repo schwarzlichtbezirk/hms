@@ -312,7 +312,7 @@ type Pather interface {
 	Name() string // string identifier
 	Type() FT_t   // type identifier
 	Size() int64  // size in bytes
-	Time() unix_t // UNIX time in milliseconds
+	Time() Unix_t // UNIX time in milliseconds
 }
 
 // PathProp is any path base properties.
@@ -337,7 +337,7 @@ func (pp *PathProp) Size() int64 {
 }
 
 // Time is file creation time in UNIX format, milliseconds.
-func (pp *PathProp) Time() unix_t {
+func (pp *PathProp) Time() Unix_t {
 	return 0
 }
 
@@ -345,7 +345,7 @@ func (pp *PathProp) Time() unix_t {
 type FileProp struct {
 	PathProp `yaml:",inline"`
 	SizeVal  int64  `json:"size,omitempty" yaml:"size,omitempty" xml:"size,omitempty"`
-	TimeVal  unix_t `json:"time,omitempty" yaml:"time,omitempty" xml:"time,omitempty"`
+	TimeVal  Unix_t `json:"time,omitempty" yaml:"time,omitempty" xml:"time,omitempty"`
 }
 
 // Setup fills fields from fs.FileInfo structure. Do not looks for share.
@@ -362,7 +362,7 @@ func (fp *FileProp) Size() int64 {
 }
 
 // Time is file creation time in UNIX format, milliseconds.
-func (fp *FileProp) Time() unix_t {
+func (fp *FileProp) Time() Unix_t {
 	return fp.TimeVal
 }
 
@@ -415,7 +415,7 @@ func PathBase(syspath string) string {
 // DirProp is directory properties chunk.
 type DirProp struct {
 	// Directory scanning time in UNIX format, milliseconds.
-	Scan unix_t `json:"scan,omitempty" yaml:"scan,omitempty" xml:"scan,omitempty"`
+	Scan Unix_t `json:"scan,omitempty" yaml:"scan,omitempty" xml:"scan,omitempty"`
 	// Directory file groups counters.
 	FGrp FileGrp `json:"fgrp,omitempty" yaml:"fgrp,flow,omitempty" xml:"fgrp,omitempty"`
 }
@@ -477,6 +477,29 @@ func (ck *CatKit) Setup(puid Puid_t) {
 	ck.NameVal = CatNames[puid]
 	ck.TypeVal = FTctgr
 	ck.PUIDVal = puid
+}
+
+// MakeProp is file properties factory.
+func MakeProp(syspath string, fi fs.FileInfo) Pather {
+	if fi.IsDir() {
+		var dk DirKit
+		dk.Setup(syspath)
+		return &dk
+	}
+	var ext = GetFileExt(syspath)
+	if IsTypeID3(ext) {
+		var tk TagKit
+		tk.Setup(syspath, fi)
+		return &tk
+	} else if IsTypeEXIF(ext) {
+		var ek ExifKit
+		ek.Setup(syspath, fi)
+		return &ek
+	} else {
+		var fk FileKit
+		fk.Setup(syspath, fi)
+		return &fk
+	}
 }
 
 // The End.
