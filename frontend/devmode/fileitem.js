@@ -298,19 +298,28 @@ const VueIcon = {
 		fmtalt() {
 			return pathext(this.file.name);
 		},
-		isthumb() {
+		ismtmb() {
 			return Number(this.file.mtmb) > 0 && this.tm;
+		},
+		isetmb() {
+			return Number(this.file.etmb) > 0 && this.tm;
 		},
 		iconsrc() {
 			const _ = this.iconfmt; // force update field
 			const res = geticonpath(this.file);
 			return res.org || res.alt;
 		},
-		iconthumb() {
+		mtmbsrc() {
 			return `/id${this.$root.aid}/mtmb/${this.file.puid}`;
 		},
-		iconmime() {
-			return MimeStr[this.file.mtmb]
+		etmbsrc() {
+			return `/id${this.$root.aid}/etmb/${this.file.puid}`;
+		},
+		mtmbmime() {
+			return MimeStr[this.file.mtmb];
+		},
+		etmbmime() {
+			return MimeStr[this.file.etmb];
 		}
 	},
 	methods: {

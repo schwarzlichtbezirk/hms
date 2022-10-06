@@ -5,55 +5,10 @@ import (
 	"io"
 	"io/fs"
 
-	"github.com/disintegration/gift"
 	"github.com/rwcarlsen/goexif/exif"
 	"github.com/rwcarlsen/goexif/mknote"
 	"github.com/rwcarlsen/goexif/tiff"
 )
-
-// EXIF image orientation constants.
-const (
-	// orientation: normal
-	OrientNormal = 1
-	// orientation: horizontal reversed
-	OrientHorzReversed = 2
-	// orientation: flipped
-	OrientFlipped = 3
-	// orientation: flipped & horizontal reversed
-	OrientFlipHorzReversed = 4
-	// orientation: clockwise turned & horizontal reversed
-	OrientCwHorzReversed = 5
-	// orientation: clockwise turned
-	OrientCw = 6
-	// orientation: anticlockwise turned & horizontal reversed
-	OrientAcwHorzReversed = 7
-	// orientation: anticlockwise turned
-	OrientAcw = 8
-)
-
-// AddOrientFilter appends filters to bring image to normal orientation.
-func AddOrientFilter(flt []gift.Filter, orientation int) []gift.Filter {
-	switch orientation {
-	case OrientHorzReversed: // orientation: horizontal reversed
-		flt = append(flt, gift.FlipHorizontal())
-	case OrientFlipped: // orientation: flipped
-		flt = append(flt, gift.Rotate180())
-	case OrientFlipHorzReversed: // orientation: flipped & horizontal reversed
-		flt = append(flt, gift.Rotate180())
-		flt = append(flt, gift.FlipHorizontal())
-	case OrientCwHorzReversed: // orientation: clockwise turned & horizontal reversed
-		flt = append(flt, gift.Rotate270())
-		flt = append(flt, gift.FlipHorizontal())
-	case OrientCw: // clockwise turned
-		flt = append(flt, gift.Rotate270())
-	case OrientAcwHorzReversed: // orientation: anticlockwise turned & horizontal reversed
-		flt = append(flt, gift.Rotate90())
-		flt = append(flt, gift.FlipHorizontal())
-	case OrientAcw: // anticlockwise turned
-		flt = append(flt, gift.Rotate90())
-	}
-	return flt
-}
 
 // ExifProp is EXIF tags properties chunk.
 type ExifProp struct {

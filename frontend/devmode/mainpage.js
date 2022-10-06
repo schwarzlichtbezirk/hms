@@ -726,7 +726,7 @@ const VueMainApp = {
 			}
 			await this.fetchscanbreak() // stop previous folder scanning
 			await this.fetchfolder(hist);
-			await this.fetchscanstart(); // fetch at backround
+			this.fetchscanstart(); // fetch at backround
 			this.seturl();
 		},
 
@@ -945,6 +945,8 @@ const VueMainApp = {
 				}
 			}
 			this.$refs.mcard.addmarkers(gpslist);
+			// scroll page to top
+			this.$refs.page.scrollTop = 0;
 		},
 
 		onhome() {
@@ -1073,7 +1075,7 @@ const VueMainApp = {
 						if (response.ok) {
 							// update folder settings
 							this.flist.push(response.data);
-							await this.fetchscanstart(); // fetch at backround
+							this.fetchscanstart(); // fetch at backround
 						} else {
 							throw new HttpError(response.status, response.data);
 						}
@@ -1095,7 +1097,7 @@ const VueMainApp = {
 								}
 							}
 							this.flist.push(response.data);
-							await this.fetchscanstart(); // fetch at backround
+							this.fetchscanstart(); // fetch at backround
 						} else {
 							throw new HttpError(response.status, response.data);
 						}
@@ -1155,7 +1157,7 @@ const VueMainApp = {
 					} else {
 						await this.fetchrangesearch(arg);
 					}
-					await this.fetchscanstart(); // fetch at backround
+					this.fetchscanstart(); // fetch at backround
 					this.seturl();
 				} catch (e) {
 					ajaxfail(e);

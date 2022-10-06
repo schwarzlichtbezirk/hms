@@ -83,7 +83,7 @@ const fmttime = (tval, tmax) => {
 		return r > 0 ? "0".repeat(r) + vs : vs;
 	};
 	if (!Number.isFinite(tval)) {
-		return "unknown"
+		return "unknown";
 	} else if (tmax < 60) {
 		return lead0(tval, 2);
 	} else if (tmax < 3600) {
@@ -167,7 +167,7 @@ const makeeventhub = () => {
 						break;
 					}
 				}
-			};
+			}
 		},
 
 		listens: (name, f) => {
@@ -177,7 +177,7 @@ const makeeventhub = () => {
 				if ((ln === name || !name) && (lf === f || !f)) {
 					c++;
 				}
-			};
+			}
 			return c;
 		},
 

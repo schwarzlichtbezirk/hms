@@ -951,6 +951,12 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		Dst Puid_t `json:"dst" yaml:"dst" xml:"dst"`
 		Ovw bool   `json:"overwrite,omitempty" yaml:"overwrite,omitempty" xml:"overwrite,omitempty"`
 	}
+	var ret struct {
+		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
+
+		FT FT_t `json:"ft" yaml:"ft" xml:"ft"`
+	}
+	var isret bool
 
 	// get arguments
 	if err = ParseBody(w, r, &arg); err != nil {
@@ -984,7 +990,6 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	}
 	dstpath = path.Join(dstpath, path.Base(srcpath))
 
-	var prop Pather
 	// copies file or dir from source to destination
 	var filecopy func(srcpath, dstpath string) (err error)
 	filecopy = func(srcpath, dstpath string) (err error) {
@@ -1033,8 +1038,9 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 			}
 
 			// get returned dir properties now
-			if prop == nil {
-				prop = MakeProp(dstpath, fi)
+			if !isret {
+				ret.FT = FTdir
+				isret = true
 			}
 
 			// copy dir content
@@ -1064,13 +1070,9 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 			}
 
 			// get returned file properties at last
-			if prop == nil {
-				var fi fs.FileInfo
-				if fi, err = dst.Stat(); err != nil {
-					WriteError500(w, r, err, AECedtcopystatfile)
-					return
-				}
-				prop = MakeProp(dstpath, fi)
+			if !isret {
+				isret = true
+				ret.FT = FTfile
 			}
 		}
 		return
@@ -1079,7 +1081,7 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		return // error already written
 	}
 
-	WriteOK(w, r, prop)
+	WriteOK(w, r, &ret)
 }
 
 // APIHANDLER
