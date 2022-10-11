@@ -138,27 +138,27 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 				WriteError500(w, r, err, AECmediahdfail)
 				return
 			}
-		} else {
-			var md *MediaData
-			if md, ok = val.(*MediaData); !ok || md == nil {
-				WriteError500(w, r, ErrBadMedia, AECmediahdnocnt)
-				return
-			}
+		}
 
-			go func() {
-				if _, ok := r.Header["If-Range"]; !ok {
-					Log.Infof("id%d: media %s", prf.ID, PathBase(syspath))
-					// not partial content
-					usermsg <- UsrMsg{r, "file", puid}
-				} else {
-					// update statistics for partial content
-					userajax <- r
-				}
-			}()
-			w.Header().Set("Content-Type", MimeStr[md.Mime])
-			http.ServeContent(w, r, syspath, starttime, bytes.NewReader(md.Data))
+		var md *MediaData
+		if md, ok = val.(*MediaData); !ok || md == nil {
+			WriteError500(w, r, ErrBadMedia, AECmediahdnocnt)
 			return
 		}
+
+		go func() {
+			if _, ok := r.Header["If-Range"]; !ok {
+				Log.Infof("id%d: media-hd %s", prf.ID, PathBase(syspath))
+				// not partial content
+				usermsg <- UsrMsg{r, "file", puid}
+			} else {
+				// update statistics for partial content
+				userajax <- r
+			}
+		}()
+		w.Header().Set("Content-Type", MimeStr[md.Mime])
+		http.ServeContent(w, r, syspath, starttime, bytes.NewReader(md.Data))
+		return
 	}
 
 	if media && grp == FGimage {
@@ -171,27 +171,27 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 				WriteError(w, r, http.StatusNotFound, err, AECmediamedfail)
 				return
 			}
-		} else {
-			var md *MediaData
-			if md, ok = val.(*MediaData); !ok || md == nil {
-				WriteError500(w, r, ErrBadMedia, AECmediamednocnt)
-				return
-			}
+		}
 
-			go func() {
-				if _, ok := r.Header["If-Range"]; !ok {
-					Log.Infof("id%d: media %s", prf.ID, PathBase(syspath))
-					// not partial content
-					usermsg <- UsrMsg{r, "file", puid}
-				} else {
-					// update statistics for partial content
-					userajax <- r
-				}
-			}()
-			w.Header().Set("Content-Type", MimeStr[md.Mime])
-			http.ServeContent(w, r, syspath, starttime, bytes.NewReader(md.Data))
+		var md *MediaData
+		if md, ok = val.(*MediaData); !ok || md == nil {
+			WriteError500(w, r, ErrBadMedia, AECmediamednocnt)
 			return
 		}
+
+		go func() {
+			if _, ok := r.Header["If-Range"]; !ok {
+				Log.Infof("id%d: media %s", prf.ID, PathBase(syspath))
+				// not partial content
+				usermsg <- UsrMsg{r, "file", puid}
+			} else {
+				// update statistics for partial content
+				userajax <- r
+			}
+		}()
+		w.Header().Set("Content-Type", MimeStr[md.Mime])
+		http.ServeContent(w, r, syspath, starttime, bytes.NewReader(md.Data))
+		return
 	}
 
 	go func() {
@@ -599,10 +599,8 @@ func ishomeAPI(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 			if prf.IsShared(fpath) {
-				if _, err := propcache.Get(fpath); err == nil {
-					ret.IsHome = true
-					break
-				}
+				ret.IsHome = true
+				break
 			}
 		}
 	}

@@ -246,23 +246,23 @@ const VueCtgrCard = {
 		onunselect() {
 			eventHub.emit('select', null);
 		},
-		onshown(e) {
+		onexpand(e) {
 		},
-		onhidden(e) {
+		oncollapse(e) {
 		}
 	},
 	mounted() {
 		const el = document.getElementById('card' + this.iid);
 		if (el) {
-			el.addEventListener('shown.bs.collapse', this.onshown);
-			el.addEventListener('hidden.bs.collapse', this.onhidden);
+			el.addEventListener('shown.bs.collapse', this.onexpand);
+			el.addEventListener('hidden.bs.collapse', this.oncollapse);
 		}
 	},
 	unmounted() {
 		const el = document.getElementById('card' + this.iid);
 		if (el) {
-			el.removeEventListener('shown.bs.collapse', this.onshown);
-			el.removeEventListener('hidden.bs.collapse', this.onhidden);
+			el.removeEventListener('shown.bs.collapse', this.onexpand);
+			el.removeEventListener('hidden.bs.collapse', this.oncollapse);
 		}
 	}
 };
@@ -441,9 +441,9 @@ const VueDriveCard = {
 		onunselect() {
 			eventHub.emit('select', null);
 		},
-		onshown(e) {
+		onexpand(e) {
 		},
-		onhidden(e) {
+		oncollapse(e) {
 		},
 
 		authclosure(is) {
@@ -463,8 +463,8 @@ const VueDriveCard = {
 		{
 			const el = document.getElementById('card' + this.iid);
 			if (el) {
-				el.addEventListener('shown.bs.collapse', this.onshown);
-				el.addEventListener('hidden.bs.collapse', this.onhidden);
+				el.addEventListener('shown.bs.collapse', this.onexpand);
+				el.addEventListener('hidden.bs.collapse', this.oncollapse);
 			}
 		}
 
@@ -485,8 +485,8 @@ const VueDriveCard = {
 		{
 			const el = document.getElementById('card' + this.iid);
 			if (el) {
-				el.removeEventListener('shown.bs.collapse', this.onshown);
-				el.removeEventListener('hidden.bs.collapse', this.onhidden);
+				el.removeEventListener('shown.bs.collapse', this.onexpand);
+				el.removeEventListener('hidden.bs.collapse', this.oncollapse);
 			}
 		}
 
@@ -576,23 +576,23 @@ const VueDirCard = {
 		onunselect() {
 			eventHub.emit('select', null);
 		},
-		onshown(e) {
+		onexpand(e) {
 		},
-		onhidden(e) {
+		oncollapse(e) {
 		}
 	},
 	mounted() {
 		const el = document.getElementById('card' + this.iid);
 		if (el) {
-			el.addEventListener('shown.bs.collapse', this.onshown);
-			el.addEventListener('hidden.bs.collapse', this.onhidden);
+			el.addEventListener('shown.bs.collapse', this.onexpand);
+			el.addEventListener('hidden.bs.collapse', this.oncollapse);
 		}
 	},
 	unmounted() {
 		const el = document.getElementById('card' + this.iid);
 		if (el) {
-			el.removeEventListener('shown.bs.collapse', this.onshown);
-			el.removeEventListener('hidden.bs.collapse', this.onhidden);
+			el.removeEventListener('shown.bs.collapse', this.onexpand);
+			el.removeEventListener('hidden.bs.collapse', this.oncollapse);
 		}
 	}
 };
@@ -602,6 +602,7 @@ const VueFileCard = {
 	props: ["flist"],
 	data() {
 		return {
+			expanded: true,
 			sortorder: 1,
 			sortmode: 'byalpha',
 			listmode: 'smicon',
@@ -757,6 +758,104 @@ const VueFileCard = {
 		}
 	},
 	methods: {
+		async fetchscanstart(flist) {
+			// not cached thumbnails
+			const uncached = () => {
+				const lst = [];
+				for (const file of flist) {
+					if (file.type === FT.file && !file.mtmb) {
+						lst.push(file);
+					}
+				}
+				return lst;
+			}
+
+			const list = uncached().map(file => ({ puid: file.puid, tm: 0 }))
+			if (!list.length) {
+				return;
+			}
+			const response = await fetchjsonauth("POST", "/api/tile/scnstart", {
+				aid: this.$root.aid,
+				list: list,
+			});
+			traceajax(response);
+			if (!response.ok) {
+				throw new HttpError(response.status, response.data);
+			}
+
+			// cache folder thumnails
+			const curpuid = this.$root.puid;
+			while (curpuid === this.$root.puid) {
+				// check cached state loop
+				const list = uncached().map(file => file.puid)
+				if (!list.length) {
+					return;
+				}
+				const response = await fetchajaxauth("POST", "/api/tile/chk", {
+					list: list
+				});
+				traceajax(response);
+				if (!response.ok) {
+					throw new HttpError(response.status, response.data);
+				}
+
+				const gpslist = [];
+				for (const tp of response.data.tmbs) {
+					if (tp.mtmb) {
+						for (const file of flist) {
+							if (file.puid === tp.puid) {
+								file.mtmb = tp.mtmb; // Vue.set
+								// add gps-item
+								if (file.latitude && file.longitude && Number(file.mtmb) > 0) {
+									gpslist.push(file);
+								}
+								break;
+							}
+						}
+					}
+				}
+				// update map card
+				this.$root.$refs.mcard.addmarkers(gpslist);
+				// wait and run again
+				await new Promise(resolve => setTimeout(resolve, 1500));
+			}
+		},
+
+		async fetchscanbreak(flist) {
+			const list = [];
+			for (const file of flist) {
+				if (file.type === FT.file && !file.mtmb) {
+					list.push({ puid: file.puid, tm: 0 });
+				}
+			}
+			if (!list.length) {
+				return;
+			}
+
+			const response = await fetchjsonauth("POST", "/api/tile/scnbreak", {
+				aid: this.$root.aid,
+				list: list,
+			});
+			traceajax(response);
+			if (!response.ok) {
+				throw new HttpError(response.status, response.data);
+			}
+		},
+
+		onnewlist(curpuid, newlist, oldlist) {
+			(async () => {
+				eventHub.emit('ajax', +1);
+				try {
+					await this.fetchscanbreak(oldlist); // stop previous folder scanning
+					this.fetchscanstart(newlist); // fetch at backround
+				} catch (e) {
+					ajaxfail(e);
+				} finally {
+					eventHub.emit('ajax', -1);
+				}
+			})();
+		},
+
 		onorder() {
 			this.sortorder = -this.sortorder;
 		},
@@ -826,25 +925,46 @@ const VueFileCard = {
 		onaudioonly(val) {
 			this.audioonly = val;
 		},
-		onshown(e) {
+		onexpand(e) {
+			(async () => {
+				try {
+					this.expanded = true;
+					this.fetchscanstart(this.flist); // fetch at backround
+				} catch (e) {
+					ajaxfail(e);
+				}
+			})();
 		},
-		onhidden(e) {
+		oncollapse(e) {
+			(async () => {
+				try {
+					this.expanded = false;
+					await this.fetchscanbreak(this.flist);
+				} catch (e) {
+					ajaxfail(e);
+				}
+			})();
 		}
 	},
-	mounted() {
+	created() {
+		eventHub.on('newlist', this.onnewlist);
 		eventHub.on('audioonly', this.onaudioonly);
+	},
+	mounted() {
 		const el = document.getElementById('card' + this.iid);
 		if (el) {
-			el.addEventListener('shown.bs.collapse', this.onshown);
-			el.addEventListener('hidden.bs.collapse', this.onhidden);
+			el.addEventListener('shown.bs.collapse', this.onexpand);
+			el.addEventListener('hidden.bs.collapse', this.oncollapse);
 		}
 	},
 	unmounted() {
+		eventHub.off('newlist', this.onnewlist);
 		eventHub.off('audioonly', this.onaudioonly);
+
 		const el = document.getElementById('card' + this.iid);
 		if (el) {
-			el.removeEventListener('shown.bs.collapse', this.onshown);
-			el.removeEventListener('hidden.bs.collapse', this.onhidden);
+			el.removeEventListener('shown.bs.collapse', this.onexpand);
+			el.removeEventListener('hidden.bs.collapse', this.oncollapse);
 		}
 	}
 };
@@ -1180,23 +1300,23 @@ const VueTileCard = {
 			eventHub.emit('select', file);
 			eventHub.emit('open', file, this.photolist);
 		},
-		onshown(e) {
+		onexpand(e) {
 		},
-		onhidden(e) {
+		oncollapse(e) {
 		}
 	},
 	mounted() {
 		const el = document.getElementById('card' + this.iid);
 		if (el) {
-			el.addEventListener('shown.bs.collapse', this.onshown);
-			el.addEventListener('hidden.bs.collapse', this.onhidden);
+			el.addEventListener('shown.bs.collapse', this.onexpand);
+			el.addEventListener('hidden.bs.collapse', this.oncollapse);
 		}
 	},
 	unmounted() {
 		const el = document.getElementById('card' + this.iid);
 		if (el) {
-			el.removeEventListener('shown.bs.collapse', this.onshown);
-			el.removeEventListener('hidden.bs.collapse', this.onhidden);
+			el.removeEventListener('shown.bs.collapse', this.onexpand);
+			el.removeEventListener('hidden.bs.collapse', this.oncollapse);
 		}
 	}
 };
@@ -1361,24 +1481,32 @@ const VueMapCard = {
 	},
 	methods: {
 		// create new opened folder
-		new(keepmap) {
-			this.keepmap = keepmap;
-			if (this.gpslist.length > 0) {
-				// new empty list
-				this.gpslist = [];
-				// remove all markers from the cluster
-				if (this.markers) {
-					this.markers.clearLayers();
+		onnewlist(curpuid, newlist, oldlist) {
+			this.keepmap = curpuid === PUID.map;
+			// new empty list
+			this.gpslist = [];
+			// remove all markers from the cluster
+			if (this.markers) {
+				this.markers.clearLayers();
+			}
+			// remove previous track
+			this.phototrack.setLatLngs([]);
+			// remove all gpx-tracks
+			this.tracks.clearLayers();
+			// no any gpx on map
+			this.tracknum = 0;
+
+			// update map card with incoming files
+			const gpslist = [];
+			for (const file of newlist) {
+				if (file.latitude && file.longitude && Number(file.mtmb) > 0) {
+					gpslist.push(file);
 				}
-				// remove previous track
-				this.phototrack.setLatLngs([]);
+				if (pathext(file.name) === ".gpx") {
+					this.addgpx(file);
+				}
 			}
-			if (this.tracknum > 0) {
-				// remove all gpx-tracks
-				this.tracks.clearLayers();
-				// no any gpx on map
-				this.tracknum = 0;
-			}
+			this.addmarkers(gpslist);
 		},
 		// make tiles layer
 		// see: https://leaflet-extras.github.io/leaflet-providers/preview/
@@ -1713,16 +1841,19 @@ const VueMapCard = {
 				this.mapmode = mm.remove;
 			}
 		},
-		onshown(e) {
+		onexpand(e) {
 		},
-		onhidden(e) {
+		oncollapse(e) {
 		}
+	},
+	created() {
+		eventHub.on('newlist', this.onnewlist);
 	},
 	mounted() {
 		const el = document.getElementById('card' + this.iid);
 		if (el) {
-			el.addEventListener('shown.bs.collapse', this.onshown);
-			el.addEventListener('hidden.bs.collapse', this.onhidden);
+			el.addEventListener('shown.bs.collapse', this.onexpand);
+			el.addEventListener('hidden.bs.collapse', this.oncollapse);
 		}
 
 		this.tiles = this.maketiles('mapbox-hybrid');
@@ -1988,10 +2119,12 @@ const VueMapCard = {
 		});
 	},
 	unmounted() {
+		eventHub.off('newlist', this.onnewlist);
+
 		const el = document.getElementById('card' + this.iid);
 		if (el) {
-			el.removeEventListener('shown.bs.collapse', this.onshown);
-			el.removeEventListener('hidden.bs.collapse', this.onhidden);
+			el.removeEventListener('shown.bs.collapse', this.onexpand);
+			el.removeEventListener('hidden.bs.collapse', this.oncollapse);
 		}
 	}
 };

@@ -484,7 +484,7 @@ const VueMainApp = {
 			} else if (this.curpath) {
 				const arr = this.curpath.split('/');
 				const base = arr.pop() || arr.pop();
-				return !arr.length && this.shrname || base;
+				return arr.length ? base : this.shrname;
 			} else {
 				return "unknown";
 			}
@@ -518,17 +518,6 @@ const VueMainApp = {
 			}
 			if (lst.length) {
 				lst[0].name = this.shrname || lst[0].name;
-			}
-			return lst;
-		},
-
-		// not cached files
-		uncached() {
-			const lst = [];
-			for (const file of this.flist) {
-				if (file.type === FT.file && !file.mtmb) {
-					lst.push(file);
-				}
 			}
 			return lst;
 		},
@@ -710,24 +699,12 @@ const VueMainApp = {
 			hist.puid = response.data.puid;
 			hist.path = response.data.path;
 			// current path & state
-			this.curscan = new Date(Date.now());
 			this.skipped = response.data.skip;
 			this.curpuid = response.data.puid;
 			this.curpath = response.data.path;
 			this.shrname = response.data.shrname;
-			document.title = `hms - ${this.curbasename}`;
 
-			this.newfolder(response.data.list);
-		},
-
-		async fetchopenroute(hist) {
-			if (!hist.puid && !hist.path) {
-				hist.puid = PUID.home;
-			}
-			await this.fetchscanbreak() // stop previous folder scanning
-			await this.fetchfolder(hist);
-			this.fetchscanstart(); // fetch at backround
-			this.seturl();
+			await this.newfolder(response.data.list);
 		},
 
 		async fetchrangesearch(arg) {
@@ -738,76 +715,32 @@ const VueMainApp = {
 			}
 
 			// current path & state
-			this.curscan = new Date(Date.now());
+			this.skipped = 0;
 			this.curpuid = PUID.map;
 			this.curpath = "";
 			this.shrname = "";
+
+			await this.newfolder(response.data.list);
+		},
+
+		async newfolder(newlist) {
+			// clear current selected
+			eventHub.emit('select', null);
+
+			// update folder settings
+			const oldlist = this.flist;
+			this.flist = newlist ?? [];
+			this.updateshared();
+
+			// init followers
+			eventHub.emit('newlist', this.curpuid, newlist, oldlist);
+
+			// update page data
+			this.curscan = new Date(Date.now());
+			this.seturl();
 			document.title = `hms - ${this.curbasename}`;
-
-			this.newfolder(response.data.list);
-		},
-
-		async fetchscanstart() {
-			if (!this.uncached.length) {
-				return;
-			}
-
-			const response = await fetchjsonauth("POST", "/api/tile/scnstart", {
-				aid: this.aid,
-				list: this.uncached.map(file => ({ puid: file.puid })),
-			});
-			traceajax(response);
-			if (!response.ok) {
-				throw new HttpError(response.status, response.data);
-			}
-
-			// cache folder thumnails
-			const curpuid = this.puid;
-			while (curpuid === this.puid && this.uncached.length) {
-				// check cached state loop
-				const response = await fetchajaxauth("POST", "/api/tile/chk", {
-					list: this.uncached.map(file => file.puid)
-				});
-				traceajax(response);
-				if (!response.ok) {
-					throw new HttpError(response.status, response.data);
-				}
-
-				const gpslist = [];
-				for (const tp of response.data.tmbs) {
-					if (tp.mtmb) {
-						for (const file of this.flist) {
-							if (file.puid === tp.puid) {
-								file.mtmb = tp.mtmb; // Vue.set
-								// add gps-item
-								if (file.latitude && file.longitude && Number(file.mtmb) > 0) {
-									gpslist.push(file);
-								}
-								break;
-							}
-						}
-					}
-				}
-				// update map card
-				this.$refs.mcard.addmarkers(gpslist);
-				// wait and run again
-				await new Promise(resolve => setTimeout(resolve, 1500));
-			}
-		},
-
-		async fetchscanbreak() {
-			if (!this.uncached.length) {
-				return;
-			}
-
-			const response = await fetchjsonauth("POST", "/api/tile/scnbreak", {
-				aid: this.aid,
-				list: this.uncached.map(file => ({ puid: file.puid })),
-			});
-			traceajax(response);
-			if (!response.ok) {
-				throw new HttpError(response.status, response.data);
-			}
+			// scroll page to top
+			this.$refs.page.scrollTop = 0;
 		},
 
 		async fetchshared() {
@@ -924,38 +857,13 @@ const VueMainApp = {
 			this.histpos = this.histlist.length;
 		},
 
-		newfolder(list) {
-			// update folder settings
-			this.flist = list ?? [];
-			this.updateshared();
-
-			// clear current selected
-			eventHub.emit('select', null);
-
-			// init map card
-			this.$refs.mcard.new(this.curpuid === PUID.map);
-			// update map card
-			const gpslist = [];
-			for (const file of this.flist) {
-				if (file.latitude && file.longitude && Number(file.mtmb) > 0) {
-					gpslist.push(file);
-				}
-				if (pathext(file.name) === ".gpx") {
-					this.$refs.mcard.addgpx(file);
-				}
-			}
-			this.$refs.mcard.addmarkers(gpslist);
-			// scroll page to top
-			this.$refs.page.scrollTop = 0;
-		},
-
 		onhome() {
 			(async () => {
 				eventHub.emit('ajax', +1);
 				try {
 					// open route and push history step
 					const hist = { aid: this.aid, puid: PUID.home };
-					await this.fetchopenroute(hist);
+					await this.fetchfolder(hist);
 					this.pushhist(hist);
 				} catch (e) {
 					ajaxfail(e);
@@ -971,7 +879,7 @@ const VueMainApp = {
 				try {
 					this.histpos--;
 					const hist = this.histlist[this.histpos - 1];
-					await this.fetchopenroute(hist);
+					await this.fetchfolder(hist);
 				} catch (e) {
 					ajaxfail(e);
 				} finally {
@@ -986,7 +894,7 @@ const VueMainApp = {
 				try {
 					this.histpos++;
 					const hist = this.histlist[this.histpos - 1];
-					await this.fetchopenroute(hist);
+					await this.fetchfolder(hist);
 				} catch (e) {
 					ajaxfail(e);
 				} finally {
@@ -1004,7 +912,7 @@ const VueMainApp = {
 						? this.curpathway[this.curpathway.length - 1].path
 						: "";
 					const hist = { aid: this.aid, path: path };
-					await this.fetchopenroute(hist);
+					await this.fetchfolder(hist);
 					this.pushhist(hist);
 				} catch (e) {
 					ajaxfail(e);
@@ -1018,7 +926,7 @@ const VueMainApp = {
 			(async () => {
 				eventHub.emit('ajax', +1);
 				try {
-					await this.fetchopenroute({ aid: this.aid, puid: this.curpuid, path: this.curpath });
+					await this.fetchfolder({ aid: this.aid, puid: this.curpuid, path: this.curpath });
 					if (this.isadmin && this.curpuid !== PUID.shares) {
 						await this.fetchshared(); // get shares
 					}
@@ -1063,45 +971,28 @@ const VueMainApp = {
 		paste(ovw) {
 			(async () => {
 				try {
-					if (this.copied) {
-						const file = this.copied;
-						const response = await fetchajaxauth("POST", "/api/edit/copy", {
-							aid: this.$root.aid,
-							src: file.puid,
-							dst: this.curpuid,
-							overwrite: ovw
-						});
-						traceajax(response);
-						if (response.ok) {
-							// update folder settings
-							this.flist.push(response.data);
-							this.fetchscanstart(); // fetch at backround
-						} else {
-							throw new HttpError(response.status, response.data);
-						}
-					} else {
-						const file = this.cuted;
-						const response = await fetchajaxauth("POST", "/api/edit/rename", {
-							aid: this.$root.aid,
-							src: file.puid,
-							dst: this.curpuid,
-							overwrite: false
-						});
-						traceajax(response);
-						if (response.ok) {
-							// update folder settings
-							for (let i = 0; i < this.flist.length; i++) {
-								if (this.flist[i].puid === file.puid) {
-									this.flist.splice(i, 1);
-									break;
-								}
+					const file = this.copied || this.cuted;
+					const response = await fetchajaxauth("POST", "/api/edit/copy", {
+						aid: this.$root.aid,
+						src: file.puid,
+						dst: this.curpuid,
+						overwrite: ovw && !!this.copied
+					});
+					traceajax(response);
+					if (!response.ok) {
+						throw new HttpError(response.status, response.data);
+					}
+					// update folder settings
+					if (this.cuted) {
+						for (let i = 0; i < this.flist.length; i++) {
+							if (this.flist[i].puid === file.puid) {
+								this.flist.splice(i, 1);
+								break;
 							}
-							this.flist.push(response.data);
-							this.fetchscanstart(); // fetch at backround
-						} else {
-							throw new HttpError(response.status, response.data);
 						}
 					}
+					this.flist.push(response.data);
+					this.$refs.fcard.fetchscanstart(); // fetch at backround
 				} catch (e) {
 					ajaxfail(e);
 				}
@@ -1148,17 +1039,12 @@ const VueMainApp = {
 		rangesearch(arg) {
 			(async () => {
 				try {
-					await this.fetchscanbreak() // stop previous folder scanning
+					await this.fetchrangesearch(arg);
 					if (this.curpuid !== PUID.map) {
 						// open route and push history step
 						const hist = { aid: this.aid, puid: PUID.map };
-						await this.fetchrangesearch(arg);
 						this.pushhist(hist);
-					} else {
-						await this.fetchrangesearch(arg);
 					}
-					this.fetchscanstart(); // fetch at backround
-					this.seturl();
 				} catch (e) {
 					ajaxfail(e);
 				}
@@ -1186,12 +1072,8 @@ const VueMainApp = {
 						eventHub.emit('ajax', +1);
 						try {
 							// open route and push history step
-							const hist = {
-								aid: this.aid,
-								puid: file.puid,
-								path: file.path
-							};
-							await this.fetchopenroute(hist);
+							const hist = { aid: this.aid, puid: file.puid };
+							await this.fetchfolder(hist);
 							this.pushhist(hist);
 						} catch (e) {
 							ajaxfail(e);
@@ -1301,7 +1183,7 @@ const VueMainApp = {
 				}
 
 				// open route and push history step
-				await this.fetchopenroute(hist);
+				await this.fetchfolder(hist);
 				if (this.isadmin && hist.puid !== PUID.shares) {
 					await this.fetchshared(); // get shares
 				}
