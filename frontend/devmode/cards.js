@@ -602,6 +602,7 @@ const VueFileCard = {
 	props: ["flist"],
 	data() {
 		return {
+			flisthub: makeeventhub(),
 			expanded: true,
 			sortorder: 1,
 			sortmode: 'byalpha',
@@ -623,6 +624,12 @@ const VueFileCard = {
 		};
 	},
 	watch: {
+		flist: {
+			handler(newlist, oldlist) {
+				this.flisthub.emit(null, newlist, oldlist);
+				this.onnewlist(newlist, oldlist);
+			}
+		},
 		sortedlist: {
 			handler(val, oldval) {
 				eventHub.emit('playlist', val);
@@ -758,7 +765,7 @@ const VueFileCard = {
 		}
 	},
 	methods: {
-		async fetchscanstart(flist) {
+		async fetchscan(flist) {
 			// not cached thumbnails
 			const uncached = () => {
 				const lst = [];
@@ -770,55 +777,82 @@ const VueFileCard = {
 				return lst;
 			}
 
-			const list = uncached().map(file => ({ puid: file.puid, tm: 0 }))
-			if (!list.length) {
-				return;
-			}
-			const response = await fetchjsonauth("POST", "/api/tile/scnstart", {
-				aid: this.$root.aid,
-				list: list,
-			});
-			traceajax(response);
-			if (!response.ok) {
-				throw new HttpError(response.status, response.data);
-			}
-
-			// cache folder thumnails
-			const curpuid = this.$root.puid;
-			while (curpuid === this.$root.puid) {
-				// check cached state loop
-				const list = uncached().map(file => file.puid)
+			const app = this.$root;
+			const gen = (async function* () {
+				const list = uncached().map(file => ({ puid: file.puid, tm: 0 }))
 				if (!list.length) {
 					return;
 				}
-				const response = await fetchajaxauth("POST", "/api/tile/chk", {
-					list: list
+				const response = await fetchjsonauth("POST", "/api/tile/scnstart", {
+					aid: app.aid,
+					list: list,
 				});
 				traceajax(response);
 				if (!response.ok) {
 					throw new HttpError(response.status, response.data);
 				}
 
-				const gpslist = [];
-				for (const tp of response.data.tmbs) {
-					if (tp.mtmb) {
-						for (const file of flist) {
-							if (file.puid === tp.puid) {
-								file.mtmb = tp.mtmb; // Vue.set
-								// add gps-item
-								if (file.latitude && file.longitude && Number(file.mtmb) > 0) {
-									gpslist.push(file);
+				yield;
+
+				// cache folder thumnails
+				while (true) {
+					// check cached state loop
+					const list = uncached().map(file => file.puid)
+					if (!list.length) {
+						return;
+					}
+					const response = await fetchajaxauth("POST", "/api/tile/chk", {
+						list: list
+					});
+					traceajax(response);
+					if (!response.ok) {
+						throw new HttpError(response.status, response.data);
+					}
+
+					const gpslist = [];
+					for (const tp of response.data.tmbs) {
+						if (tp.mtmb) {
+							for (const file of flist) {
+								if (file.puid === tp.puid) {
+									file.mtmb = tp.mtmb; // Vue.set
+									// add gps-item
+									if (file.latitude && file.longitude && Number(file.mtmb) > 0) {
+										gpslist.push(file);
+									}
+									break;
 								}
-								break;
 							}
 						}
 					}
+					// update map card
+					app.$refs.mcard.addmarkers(gpslist);
+
+					yield;
 				}
-				// update map card
-				this.$root.$refs.mcard.addmarkers(gpslist);
-				// wait and run again
-				await new Promise(resolve => setTimeout(resolve, 1500));
+			})();
+
+			let stop = false;
+			const onnewlist = () => {
+				stop = true;
 			}
+
+			this.flisthub.on(null, onnewlist);
+			await (async () => {
+				while (true) {
+					const ret = await gen.next();
+					if (ret.done) {
+						return;
+					}
+					// waits before new checkup iteration
+					await new Promise(resolve => setTimeout(resolve, 1500));
+					// should be stopped after wait
+					if (stop || !this.expanded) {
+						await this.fetchscanbreak(flist);
+						return;
+					}
+				}
+			})()
+			this.flisthub.off(null, onnewlist);
 		},
 
 		async fetchscanbreak(flist) {
@@ -842,16 +876,12 @@ const VueFileCard = {
 			}
 		},
 
-		onnewlist(curpuid, newlist, oldlist) {
+		onnewlist(newlist, oldlist) {
 			(async () => {
-				eventHub.emit('ajax', +1);
 				try {
-					await this.fetchscanbreak(oldlist); // stop previous folder scanning
-					this.fetchscanstart(newlist); // fetch at backround
+					await this.fetchscan(newlist); // fetch at backround
 				} catch (e) {
 					ajaxfail(e);
-				} finally {
-					eventHub.emit('ajax', -1);
 				}
 			})();
 		},
@@ -929,7 +959,7 @@ const VueFileCard = {
 			(async () => {
 				try {
 					this.expanded = true;
-					this.fetchscanstart(this.flist); // fetch at backround
+					await this.fetchscan(this.flist); // fetch at backround
 				} catch (e) {
 					ajaxfail(e);
 				}
@@ -939,7 +969,6 @@ const VueFileCard = {
 			(async () => {
 				try {
 					this.expanded = false;
-					await this.fetchscanbreak(this.flist);
 				} catch (e) {
 					ajaxfail(e);
 				}
@@ -947,7 +976,6 @@ const VueFileCard = {
 		}
 	},
 	created() {
-		eventHub.on('newlist', this.onnewlist);
 		eventHub.on('audioonly', this.onaudioonly);
 	},
 	mounted() {
@@ -958,7 +986,6 @@ const VueFileCard = {
 		}
 	},
 	unmounted() {
-		eventHub.off('newlist', this.onnewlist);
 		eventHub.off('audioonly', this.onaudioonly);
 
 		const el = document.getElementById('card' + this.iid);
@@ -1348,6 +1375,11 @@ const VueMapCard = {
 		};
 	},
 	watch: {
+		flist: {
+			handler(newlist, oldlist) {
+				this.onnewlist(newlist, oldlist);
+			}
+		},
 		mapmode: {
 			handler(val, oldval) {
 				switch (val) {
@@ -1481,8 +1513,8 @@ const VueMapCard = {
 	},
 	methods: {
 		// create new opened folder
-		onnewlist(curpuid, newlist, oldlist) {
-			this.keepmap = curpuid === PUID.map;
+		onnewlist(newlist, oldlist) {
+			this.keepmap = this.$root.curpuid === PUID.map;
 			// new empty list
 			this.gpslist = [];
 			// remove all markers from the cluster
@@ -1847,7 +1879,6 @@ const VueMapCard = {
 		}
 	},
 	created() {
-		eventHub.on('newlist', this.onnewlist);
 	},
 	mounted() {
 		const el = document.getElementById('card' + this.iid);
@@ -2119,8 +2150,6 @@ const VueMapCard = {
 		});
 	},
 	unmounted() {
-		eventHub.off('newlist', this.onnewlist);
-
 		const el = document.getElementById('card' + this.iid);
 		if (el) {
 			el.removeEventListener('shown.bs.collapse', this.onexpand);

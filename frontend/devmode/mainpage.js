@@ -728,12 +728,8 @@ const VueMainApp = {
 			eventHub.emit('select', null);
 
 			// update folder settings
-			const oldlist = this.flist;
 			this.flist = newlist ?? [];
 			this.updateshared();
-
-			// init followers
-			eventHub.emit('newlist', this.curpuid, newlist, oldlist);
 
 			// update page data
 			this.curscan = new Date(Date.now());
@@ -992,7 +988,7 @@ const VueMainApp = {
 						}
 					}
 					this.flist.push(response.data);
-					this.$refs.fcard.fetchscanstart(); // fetch at backround
+					await this.$refs.fcard.fetchscan(); // fetch at backround
 				} catch (e) {
 					ajaxfail(e);
 				}

@@ -121,7 +121,7 @@ const makeeventhub = () => {
 			let i = listeners.length;
 			while (i > 0) {
 				const [ln, lf, lo] = listeners[--i];
-				if (ln === name) {
+				if (ln === name || !name) {
 					if (lo) { // check "once" before call to prevent loop
 						listeners.splice(i, 1);
 					}
