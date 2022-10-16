@@ -279,7 +279,6 @@ func WriteRet(w http.ResponseWriter, r *http.Request, status int, body interface
 	}
 	b, _ = json.Marshal(MakeAjaxErr(err, AECbadenc))
 	w.Write(b)
-	return
 }
 
 // WriteOK puts 200 status code and some data to response.

@@ -133,25 +133,6 @@ const (
 
 var tmset = [...]TM_t{2, 3, 4, 6, 8, 9, 10, 12, 15, 16, 18, 20, 24, 30, 36}
 
-var tmbdis = TmbProp{
-	ETmbVal: MimeDis,
-	MTmbVal: MimeDis,
-	MT02Val: MimeDis,
-	MT03Val: MimeDis,
-	MT04Val: MimeDis,
-	MT06Val: MimeDis,
-	MT08Val: MimeDis,
-	MT10Val: MimeDis,
-	MT12Val: MimeDis,
-	MT15Val: MimeDis,
-	MT16Val: MimeDis,
-	MT18Val: MimeDis,
-	MT20Val: MimeDis,
-	MT24Val: MimeDis,
-	MT30Val: MimeDis,
-	MT36Val: MimeDis,
-}
-
 // Thumber helps to cast some properties kit to TmbProp struct.
 type Thumber interface {
 	Tmb() *TmbProp            // returns self pointers for embedded structures
@@ -237,6 +218,7 @@ func (tp *TmbProp) Tile(tm TM_t) (mime Mime_t, ok bool) {
 	case tm36:
 		mime = tp.MT36Val
 	default:
+		mime = MimeDis
 		ok = false
 	}
 	return
@@ -288,20 +270,25 @@ func (tp *TmbProp) SetTile(tm TM_t, mime Mime_t) (ok bool) {
 
 // APIHANDLER
 func tilechkAPI(w http.ResponseWriter, r *http.Request) {
-	type TmbKit struct {
-		PuidProp `yaml:",inline"`
-		TmbProp  `yaml:",inline"`
+	type tiletm struct {
+		PUID Puid_t `json:"puid" yaml:"puid" xml:"puid,attr"`
+		TM   TM_t   `json:"tm,omitempty" yaml:"tm,omitempty" xml:"tm,omitempty,attr"`
+	}
+	type tilemime struct {
+		PUID Puid_t `json:"puid" yaml:"puid" xml:"puid,attr"`
+		TM   TM_t   `json:"tm,omitempty" yaml:"tm,omitempty" xml:"tm,omitempty,attr"`
+		Mime Mime_t `json:"mime,omitempty" yaml:"mime,omitempty" xml:"mime,omitempty,attr"`
 	}
 	var err error
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
-		List []Puid_t `json:"list" yaml:"list" xml:"list>puid"`
+		List []tiletm `json:"list" yaml:"list" xml:"list>puid"`
 	}
 	var ret struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
 
-		Tmbs []TmbKit `json:"tmbs" yaml:"tmbs" xml:"list>tmb"`
+		List []tilemime `json:"list" yaml:"list" xml:"list>tile"`
 	}
 
 	// get arguments
@@ -313,22 +300,18 @@ func tilechkAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for _, puid := range arg.List {
-		if syspath, ok := syspathcache.Path(puid); ok {
-			var tk TmbKit
-			tk.PUIDVal = puid
+	ret.List = make([]tilemime, len(arg.List))
+	for i, tm := range arg.List {
+		var mime = MimeDis
+		if syspath, ok := syspathcache.Path(tm.PUID); ok {
 			if prop, err := propcache.Get(syspath); err == nil {
 				if tmb, ok := prop.(Thumber); ok {
 					var tp = tmb.Tmb()
-					tk.TmbProp = *tp
-				} else {
-					tk.TmbProp = tmbdis
+					mime, _ = tp.Tile(tm.TM)
 				}
-			} else {
-				tk.TmbProp = tmbdis
 			}
-			ret.Tmbs = append(ret.Tmbs, tk)
 		}
+		ret.List[i].PUID, ret.List[i].TM, ret.List[i].Mime = tm.PUID, tm.TM, mime
 	}
 
 	WriteOK(w, r, &ret)

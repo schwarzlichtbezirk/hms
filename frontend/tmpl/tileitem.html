@@ -1,10 +1,12 @@
 
 <div class="tileitem" v-bind:title="fmttitle">
 	<picture>
-		<source v-bind:srcset="iconsrcsm" media="(max-width: 576px)">
-		<source v-bind:srcset="iconsrcmd" media="(max-width: 768px)">
-		<source v-bind:srcset="iconsrcxl" media="(max-width: 1280px)">
-		<source v-bind:srcset="iconsrchd">
+		<template v-if="istile">
+			<source v-bind:srcset="iconsrc">
+		</template>
+		<template v-else>
+			<source v-bind:srcset="iconblank">
+		</template>
 		<img class="centerimg w-100" v-bind:alt="fmtalt">
 	</picture>
 </div>

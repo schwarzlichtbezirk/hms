@@ -323,17 +323,19 @@ func initcaches() {
 
 			var orientation = OrientNormal
 			if ek, ok := prop.(*ExifKit); ok {
-				var wdh, hgt int
-				if ek.Width > ek.Height {
-					wdh, hgt = cfg.HDResolution[0], cfg.HDResolution[1]
-				} else {
-					wdh, hgt = cfg.HDResolution[1], cfg.HDResolution[0]
-				}
-				if ek.Width <= wdh && ek.Height <= hgt {
-					err = ErrNotHD
-					return // does not fit to HD
-				}
 				orientation = ek.Orientation
+				if ek.Width > 0 && ek.Height > 0 {
+					var wdh, hgt int
+					if ek.Width > ek.Height {
+						wdh, hgt = cfg.HDResolution[0], cfg.HDResolution[1]
+					} else {
+						wdh, hgt = cfg.HDResolution[1], cfg.HDResolution[0]
+					}
+					if ek.Width <= wdh && ek.Height <= hgt {
+						err = ErrNotHD
+						return // does not fit to HD
+					}
+				}
 			}
 
 			var file io.ReadCloser

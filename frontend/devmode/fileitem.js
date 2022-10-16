@@ -652,11 +652,53 @@ const VueImgItem = {
 	}
 };
 
+// media max-width multiplier
+let wdhmult = 0;
+(() => {
+	const mqlsm = window.matchMedia('(width <= 576px)');
+	const mqlmd = window.matchMedia('(576px < width <= 854px)');
+	const mqllg = window.matchMedia('(854px < width <= 1280px)');
+	const mqlhd = window.matchMedia('(width > 1280px)');
+	const hsm = e => {
+		if (e.matches) {
+			wdhmult = 2;
+			eventHub.emit('wdhmult', wdhmult);
+		}
+	};
+	const hmd = e => {
+		if (e.matches) {
+			wdhmult = 3;
+			eventHub.emit('wdhmult', wdhmult);
+		}
+	};
+	const hlg = e => {
+		if (e.matches) {
+			wdhmult = 4;
+			eventHub.emit('wdhmult', wdhmult);
+		}
+	};
+	const hhd = e => {
+		if (e.matches) {
+			wdhmult = 6;
+			eventHub.emit('wdhmult', wdhmult);
+		}
+	};
+	hsm(mqlsm);
+	hmd(mqlmd);
+	hlg(mqllg);
+	hhd(mqlhd);
+	mqlsm.addEventListener('change', hsm);
+	mqlmd.addEventListener('change', hmd);
+	mqllg.addEventListener('change', hlg);
+	mqlhd.addEventListener('change', hhd);
+})();
+
 const VueTileItem = {
 	template: '#tile-item-tpl',
 	props: ["file", "sx", "sy"],
 	data() {
 		return {
+			wdhmult: wdhmult,
 			iconfmt: [],
 			tm: true
 		};
@@ -665,20 +707,18 @@ const VueTileItem = {
 		fmtalt() {
 			return pathext(this.file.name);
 		},
+		istile() {
+			const fld = 'mt' + (this.wdhmult * this.sx < 10 ? '0' : '') + this.wdhmult * this.sx;
+			return Number(this.file[fld]) > 0;
+		},
 		fmttitle() {
 			return filehint(this.file).map(e => `${e[0]}: ${e[1]}`).join('\n');
 		},
-		iconsrcsm() {
-			return `/id${appvm.aid}/tile/${this.file.puid}/${48 * this.sx}x${36 * this.sy}`;
+		iconsrc() {
+			return `/id${appvm.aid}/tile/${this.file.puid}/${24 * this.wdhmult * this.sx}x${18 * this.wdhmult * this.sy}`;
 		},
-		iconsrcmd() {
-			return `/id${appvm.aid}/tile/${this.file.puid}/${72 * this.sx}x${54 * this.sy}`;
-		},
-		iconsrcxl() {
-			return `/id${appvm.aid}/tile/${this.file.puid}/${96 * this.sx}x${72 * this.sy}`;
-		},
-		iconsrchd() {
-			return `/id${appvm.aid}/tile/${this.file.puid}/${144 * this.sx}x${108 * this.sy}`;
+		iconblank() {
+			return `/asst/blank-tile/${24 * this.wdhmult * this.sx}x${18 * this.wdhmult * this.sy}.svg`;
 		}
 	},
 	methods: {
@@ -687,6 +727,9 @@ const VueTileItem = {
 		},
 		_thumbmode(tm) {
 			this.tm = tm;
+		},
+		_wdhmult(m) {
+			this.wdhmult = m;
 		}
 	},
 	created() {
@@ -694,10 +737,12 @@ const VueTileItem = {
 		this.tm = thumbmode;
 		eventHub.on('iconset', this._iconset);
 		eventHub.on('thumbmode', this._thumbmode);
+		eventHub.on('wdhmult', this._wdhmult);
 	},
 	unmounted() {
 		eventHub.off('iconset', this._iconset);
 		eventHub.off('thumbmode', this._thumbmode);
+		eventHub.off('wdhmult', this._wdhmult);
 	}
 };
 

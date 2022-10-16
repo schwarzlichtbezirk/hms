@@ -626,7 +626,7 @@ const VueFileCard = {
 	watch: {
 		flist: {
 			handler(newlist, oldlist) {
-				this.flisthub.emit(null, newlist, oldlist);
+				this.flisthub.emit(null);
 				this.onnewlist(newlist, oldlist);
 			}
 		},
@@ -771,20 +771,25 @@ const VueFileCard = {
 				const lst = [];
 				for (const file of flist) {
 					if (file.type === FT.file && !file.mtmb) {
-						lst.push(file);
+						lst.push({ puid: file.puid, tm: 0 });
 					}
 				}
 				return lst;
 			}
 
-			const app = this.$root;
+			let stop = false;
+			const onnewlist = () => {
+				stop = true;
+			}
+
+			const self = this;
 			const gen = (async function* () {
-				const list = uncached().map(file => ({ puid: file.puid, tm: 0 }))
+				const list = uncached();
 				if (!list.length) {
 					return;
 				}
 				const response = await fetchjsonauth("POST", "/api/tile/scnstart", {
-					aid: app.aid,
+					aid: self.$root.aid,
 					list: list,
 				});
 				traceajax(response);
@@ -797,8 +802,19 @@ const VueFileCard = {
 				// cache folder thumnails
 				while (true) {
 					// check cached state loop
-					const list = uncached().map(file => file.puid)
+					const list = uncached();
 					if (!list.length) {
+						return;
+					}
+					if (stop || !self.expanded) {
+						const response = await fetchjsonauth("POST", "/api/tile/scnbreak", {
+							aid: self.$root.aid,
+							list: list,
+						});
+						traceajax(response);
+						if (!response.ok) {
+							throw new HttpError(response.status, response.data);
+						}
 						return;
 					}
 					const response = await fetchajaxauth("POST", "/api/tile/chk", {
@@ -810,31 +826,24 @@ const VueFileCard = {
 					}
 
 					const gpslist = [];
-					for (const tp of response.data.tmbs) {
-						if (tp.mtmb) {
-							for (const file of flist) {
-								if (file.puid === tp.puid) {
-									file.mtmb = tp.mtmb; // Vue.set
-									// add gps-item
-									if (file.latitude && file.longitude && Number(file.mtmb) > 0) {
-										gpslist.push(file);
-									}
-									break;
+					for (const tp of response.data.list) {
+						for (const file of flist) {
+							if (file.puid === tp.puid) {
+								file.mtmb = tp.mime; // Vue.set
+								// add gps-item
+								if (file.latitude && file.longitude && Number(file.mtmb) > 0) {
+									gpslist.push(file);
 								}
+								break;
 							}
 						}
 					}
 					// update map card
-					app.$refs.mcard.addmarkers(gpslist);
+					self.$root.$refs.mcard.addmarkers(gpslist);
 
 					yield;
 				}
 			})();
-
-			let stop = false;
-			const onnewlist = () => {
-				stop = true;
-			}
 
 			this.flisthub.on(null, onnewlist);
 			await (async () => {
@@ -845,35 +854,9 @@ const VueFileCard = {
 					}
 					// waits before new checkup iteration
 					await new Promise(resolve => setTimeout(resolve, 1500));
-					// should be stopped after wait
-					if (stop || !this.expanded) {
-						await this.fetchscanbreak(flist);
-						return;
-					}
 				}
 			})()
 			this.flisthub.off(null, onnewlist);
-		},
-
-		async fetchscanbreak(flist) {
-			const list = [];
-			for (const file of flist) {
-				if (file.type === FT.file && !file.mtmb) {
-					list.push({ puid: file.puid, tm: 0 });
-				}
-			}
-			if (!list.length) {
-				return;
-			}
-
-			const response = await fetchjsonauth("POST", "/api/tile/scnbreak", {
-				aid: this.$root.aid,
-				list: list,
-			});
-			traceajax(response);
-			if (!response.ok) {
-				throw new HttpError(response.status, response.data);
-			}
 		},
 
 		onnewlist(newlist, oldlist) {
@@ -1166,6 +1149,8 @@ const VueTileCard = {
 	props: ["flist"],
 	data() {
 		return {
+			flisthub: makeeventhub(),
+			expanded: true,
 			sortorder: 1,
 			sortmode: 'byalpha',
 			tiles: [],
@@ -1175,29 +1160,9 @@ const VueTileCard = {
 		};
 	},
 	watch: {
-		photolist: {
-			handler(val, oldval) {
-				if (val.length === oldval.length) {
-					return; // list size not changed
-				}
-				const ret = maketileslide(val, tilemodetype[this.tilemode]);
-				this.tiles = ret.tiles;
-				this.sheet = ret.sheet;
-			},
-			deep: true
-		},
-		sortmode: {
-			handler(val, oldval) {
-				const ret = maketileslide(this.photolist, tilemodetype[this.tilemode]);
-				this.tiles = ret.tiles;
-				this.sheet = ret.sheet;
-			}
-		},
-		tilemode: {
-			handler(val, oldval) {
-				const ret = maketileslide(this.photolist, tilemodetype[val]);
-				this.tiles = ret.tiles;
-				this.sheet = ret.sheet;
+		flist: {
+			handler(newlist, oldlist) {
+				this.onrebuild();
 			}
 		}
 	},
@@ -1290,6 +1255,105 @@ const VueTileCard = {
 		}
 	},
 	methods: {
+		async fetchscan() {
+			// not cached tiles
+			const uncached = () => {
+				const lst = [];
+				for (const tile of this.tiles) {
+					const fld = 'mt' + (tile.sx * wdhmult < 10 ? '0' : '') + tile.sx * wdhmult;
+					if (tile.file.type === FT.file && !tile.file[fld]) {
+						lst.push({ puid: tile.file.puid, tm: tile.sx * wdhmult });
+					}
+				}
+				return lst;
+			}
+
+			let stop = false;
+			const onrebuild = () => {
+				stop = true;
+			}
+
+			const self = this;
+			const gen = (async function* () {
+				const list = uncached();
+				if (!list.length) {
+					return;
+				}
+				const response = await fetchjsonauth("POST", "/api/tile/scnstart", {
+					aid: self.$root.aid,
+					list: list,
+				});
+				traceajax(response);
+				if (!response.ok) {
+					throw new HttpError(response.status, response.data);
+				}
+
+				yield;
+
+				// cache folder tiles
+				while (true) {
+					// check cached state loop
+					const list = uncached();
+					if (!list.length) {
+						return;
+					}
+					if (stop || !self.expanded) {
+						const response = await fetchjsonauth("POST", "/api/tile/scnbreak", {
+							aid: self.$root.aid,
+							list: list,
+						});
+						traceajax(response);
+						if (!response.ok) {
+							throw new HttpError(response.status, response.data);
+						}
+						return;
+					}
+					const response = await fetchajaxauth("POST", "/api/tile/chk", {
+						list: list
+					});
+					traceajax(response);
+					if (!response.ok) {
+						throw new HttpError(response.status, response.data);
+					}
+
+					for (const tp of response.data.list) {
+						for (const tile of self.tiles) {
+							if (tile.file.puid === tp.puid) {
+								const fld = 'mt' + (tp.tm < 10 ? '0' : '') + tp.tm;
+								tile.file[fld] = tp.mime; // Vue.set
+								break;
+							}
+						}
+					}
+
+					yield;
+				}
+			})();
+
+			this.flisthub.on(null, onrebuild);
+			await (async () => {
+				while (true) {
+					const ret = await gen.next();
+					if (ret.done) {
+						return;
+					}
+					// waits before new checkup iteration
+					await new Promise(resolve => setTimeout(resolve, 1500));
+				}
+			})()
+			this.flisthub.off(null, onrebuild);
+		},
+
+		onwdhmult() {
+			(async () => {
+				try {
+					await this.fetchscan(); // fetch at backround
+				} catch (e) {
+					ajaxfail(e);
+				}
+			})();
+		},
+
 		onorder() {
 			this.sortorder = -this.sortorder;
 		},
@@ -1309,6 +1373,14 @@ const VueTileCard = {
 			const ret = maketileslide(this.photolist, tilemodetype[this.tilemode]);
 			this.tiles = ret.tiles;
 			this.sheet = ret.sheet;
+			this.flisthub.emit(null);
+			(async () => {
+				try {
+					await this.fetchscan(); // fetch at backround
+				} catch (e) {
+					ajaxfail(e);
+				}
+			})();
 		},
 		onmode246() {
 			this.tilemode = 'mode-246';
@@ -1328,9 +1400,27 @@ const VueTileCard = {
 			eventHub.emit('open', file, this.photolist);
 		},
 		onexpand(e) {
+			(async () => {
+				try {
+					this.expanded = true;
+					await this.fetchscan(); // fetch at backround
+				} catch (e) {
+					ajaxfail(e);
+				}
+			})();
 		},
 		oncollapse(e) {
+			(async () => {
+				try {
+					this.expanded = false;
+				} catch (e) {
+					ajaxfail(e);
+				}
+			})();
 		}
+	},
+	created() {
+		eventHub.on('wdhmult', this.onwdhmult);
 	},
 	mounted() {
 		const el = document.getElementById('card' + this.iid);
@@ -1340,6 +1430,8 @@ const VueTileCard = {
 		}
 	},
 	unmounted() {
+		eventHub.off('wdhmult', this.onwdhmult);
+
 		const el = document.getElementById('card' + this.iid);
 		if (el) {
 			el.removeEventListener('shown.bs.collapse', this.onexpand);
