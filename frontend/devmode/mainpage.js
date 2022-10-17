@@ -447,6 +447,9 @@ const VueMainApp = {
 			selfile: null, // current selected item
 			shared: [], // list of shared items
 
+			delfile: null, // file to delete
+			delensured: false, // deletion request
+
 			// history
 			histpos: 0, // position in history stack
 			histlist: [], // history stack
@@ -574,6 +577,24 @@ const VueMainApp = {
 				'active': this.selfile && this.selfile.shared,
 				'disabled': !this.selfile
 			};
+		},
+
+		delfilename() {
+			if (!this.delfile) {
+				return 'N/A';
+			}
+			return this.delfile.name;
+		},
+		deltypename() {
+			if (!this.delfile) {
+				return 'null';
+			}
+			switch (this.delfile.type) {
+				case FT.file: return 'file';
+				case FT.dir: return 'folder';
+				case FT.drv: return 'drive';
+				case FT.ctgr: return 'category';
+			}
 		},
 
 		textauthcaret() {
@@ -1004,19 +1025,30 @@ const VueMainApp = {
 			this.cuted = this.selfile;
 			this.copied = null;
 		},
+		ondelask() {
+			this.delfile = this.selfile;
+			if (this.delensured) {
+				this.ondelete();
+			} else {
+				const dlg = new bootstrap.Modal('#delask');
+				dlg.show();
+			}
+		},
 		ondelete() {
+			if (!this.delfile) {
+				return;
+			}
 			(async () => {
-				const file = this.selfile;
 				try {
 					const response = await fetchjsonauth("POST", "/api/edit/delete", {
 						aid: this.$root.aid,
-						puid: file.puid
+						puid: this.delfile.puid
 					});
 					traceajax(response);
 					if (response.ok) {
 						// update folder settings
 						for (let i = 0; i < this.flist.length; i++) {
-							if (this.flist[i].puid === file.puid) {
+							if (this.flist[i].puid === this.delfile.puid) {
 								this.flist.splice(i, 1);
 								break;
 							}
@@ -1028,7 +1060,10 @@ const VueMainApp = {
 				} catch (e) {
 					ajaxfail(e);
 				}
-				eventHub.emit('select', null);
+				if (this.delfile === this.selfile) {
+					eventHub.emit('select', null);
+				}
+				this.delfile = null;
 			})();
 		},
 

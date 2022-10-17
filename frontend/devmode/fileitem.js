@@ -420,32 +420,14 @@ const VueIconMenu = {
 			this.$root.cuted = this.file;
 			this.$root.copied = null;
 		},
-		ondel() {
-			(async () => {
-				const file = this.file;
-				try {
-					const response = await fetchjsonauth("POST", "/api/edit/delete", {
-						aid: this.$root.aid,
-						puid: file.puid
-					});
-					traceajax(response);
-					if (response.ok) {
-						// update folder settings
-						for (let i = 0; i < this.$root.flist.length; i++) {
-							if (this.$root.flist[i].puid === file.puid) {
-								this.$root.flist.splice(i, 1);
-								break;
-							}
-						}
-					} else {
-						const data = await response.json();
-						throw new HttpError(response.status, data);
-					}
-				} catch (e) {
-					ajaxfail(e);
-				}
-				eventHub.emit('select', null);
-			})();
+		ondelask() {
+			this.$root.delfile = this.file;
+			if (this.$root.delensured) {
+				this.$root.ondelete();
+			} else {
+				const dlg = new bootstrap.Modal('#delask');
+				dlg.show();
+			}
 		}
 	},
 	mounted() {

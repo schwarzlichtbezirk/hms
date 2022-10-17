@@ -47,7 +47,7 @@
 						<li><button class="btn toolbtn" v-on:click="onpaste" v-bind:class="clspaste" v-bind:title="hintpaste"><i class="material-icons">content_paste</i></button></li>
 						<li><button class="btn toolbtn" v-on:click="onpastego" v-bind:class="clspastego" v-bind:title="hintpastego"><i class="material-icons">content_paste_go</i></button></li>
 						<li><button class="btn toolbtn" v-on:click="oncut" v-bind:class="clscut" title="cut"><i class="material-icons">content_cut</i></button></li>
-						<li><button class="btn toolbtn" v-on:click="ondelete" v-bind:class="clsdelete" title="delete"><i class="material-icons">delete_outline</i></button></li>
+						<li><button class="btn toolbtn" v-on:click="ondelask" v-bind:class="clsdelete" title="delete"><i class="material-icons">delete_outline</i></button></li>
 					</ul>
 					<ul class="navbar-nav flex-row flex-wrap ms-auto">
 						<li class="btn-group">
@@ -90,8 +90,33 @@
 
 	<!-- Dialog managed by Bootstrap calls -->
 
-	<div class="modal fade" id="msgbox">
-		<div class="modal-dialog modal-dialog-centered">
+	<div class="modal fade" id="delask" tabindex="-1" role="dialog" aria-labelledby="delete ask" aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered" role="document">
+			<div class="modal-content">
+				<div class="rounded p-2 bg-tool fg-tool">
+					<figure class="text-center">
+						<blockquote class="blockquote">
+							<p>Are you sure to delete this {{deltypename}}?</p>
+						</blockquote>
+						<figcaption class="blockquote-footer">
+							<span class="bg-stat" title="deletion file name">{{delfilename}}</span>
+						</figcaption>
+					</figure>
+					<div class="d-flex flex-row align-items-center">
+						<button type="button" class="btn btn-primary mx-2" data-bs-dismiss="modal" v-on:click="ondelete">Delete</button>
+						<button type="button" class="btn btn-outline-primary mx-2" data-bs-dismiss="modal">Cancel</button>
+						<div class="form-check ms-auto mr-2">
+							<input v-model="delensured" class="form-check-input" type="checkbox" value="" id="delask-again">
+							<label class="form-check-label" for="delask-again">Do not ask it again</label>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="modal fade" id="msgbox" tabindex="-1" role="dialog" aria-labelledby="error message" aria-hidden="true">
+		<div class="modal-dialog modal-dialog-centered" role="document">
 			<div class="modal-content">
 				<div class="modal-header">
 					<h4 class="modal-title"></h4>
