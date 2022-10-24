@@ -20,6 +20,7 @@ cfg = {
 		tulliana = {"webp", "png"},
 		ubuntu = {"webp", "png"},
 		papirus = {"svg"},
+		paomedia = {"svg"},
 		chakram = {"avif", "webp", "jp2"},
 		senary = {"avif", "webp", "jp2"},
 		senary2 = {"avif", "webp", "jp2"},

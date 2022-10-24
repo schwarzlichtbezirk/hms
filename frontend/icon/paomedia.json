@@ -1,0 +1,89 @@
+{
+	"private": {
+		"blank": "/fs/icon/paomedia/file-blank",
+		"cid": {
+			"home": "/fs/icon/paomedia/cid-home",
+			"drives": "/fs/icon/paomedia/cid-drives",
+			"shares": "/fs/icon/paomedia/cid-shares",
+			"media": "/fs/icon/paomedia/cid-media",
+			"video": "/fs/icon/paomedia/cid-video",
+			"audio": "/fs/icon/paomedia/cid-audio",
+			"image": "/fs/icon/paomedia/cid-image",
+			"books": "/fs/icon/paomedia/cid-books",
+			"texts": "/fs/icon/paomedia/cid-texts",
+			"map": "/fs/icon/paomedia/cid-map",
+			"cid": "/fs/icon/paomedia/cid-puzzle"
+		},
+		"drive": {
+			"green": "/fs/icon/paomedia/drive-green",
+			"yellow": "/fs/icon/paomedia/drive-yellow",
+			"red": "/fs/icon/paomedia/drive-red",
+			"offline": "/fs/icon/paomedia/drive-off"
+		},
+		"folder": {
+			"other": "/fs/icon/paomedia/folder-common",
+			"video": "/fs/icon/paomedia/folder-video",
+			"audio": "/fs/icon/paomedia/folder-music",
+			"image": "/fs/icon/paomedia/folder-picture",
+			"books": "/fs/icon/paomedia/folder-document",
+			"texts": "/fs/icon/paomedia/folder-document",
+			"packs": "/fs/icon/paomedia/folder-house",
+			"dir": "/fs/icon/paomedia/folder-house",
+			"media": "/fs/icon/paomedia/folder-video",
+			"open": "/fs/icon/paomedia/folder-common",
+			"close": "/fs/icon/paomedia/folder-common"
+		},
+		"grp": {
+			"psd": "/fs/icon/paomedia/file-photoshop",
+			"exec": "/fs/icon/paomedia/file-exe",
+			"text": "/fs/icon/paomedia/file-text",
+			"config": "/fs/icon/paomedia/file-exe",
+			"code": "/fs/icon/paomedia/file-code",
+			"font": "/fs/icon/paomedia/file-font",
+			"archive": "/fs/icon/paomedia/file-zip",
+			"disk": "/fs/icon/paomedia/file-disk",
+			"package": "/fs/icon/paomedia/file-disk",
+			"image": "/fs/icon/paomedia/file-image",
+			"audio": "/fs/icon/paomedia/file-audio",
+			"video": "/fs/icon/paomedia/file-video"
+		},
+		"ext": {
+			".csv": "/fs/icon/paomedia/file-excel",
+			".xls": "/fs/icon/paomedia/file-excel",
+			".xlsx": "/fs/icon/paomedia/file-excel",
+			".xlt": "/fs/icon/paomedia/file-excel",
+			".xltx": "/fs/icon/paomedia/file-excel",
+			".doc": "/fs/icon/paomedia/file-msword",
+			".docx": "/fs/icon/paomedia/file-msword",
+			".dot": "/fs/icon/paomedia/file-msword",
+			".dotx": "/fs/icon/paomedia/file-msword",
+			".pps": "/fs/icon/paomedia/file-powerpoint",
+			".ppsx": "/fs/icon/paomedia/file-powerpoint",
+			".ppt": "/fs/icon/paomedia/file-powerpoint",
+			".pptx": "/fs/icon/paomedia/file-powerpoint",
+			".ai": "/fs/icon/paomedia/file-illustrator",
+			".svg": "/fs/icon/paomedia/file-illustrator",
+			".svgz": "/fs/icon/oxygen/file-illustrator",
+			".dwf": "/fs/icon/paomedia/file-illustrator",
+			".dxf": "/fs/icon/paomedia/file-illustrator",
+			".cdr": "/fs/icon/paomedia/file-illustrator",
+			".ind": "/fs/icon/paomedia/file-indesign",
+			".indd": "/fs/icon/paomedia/file-indesign",
+			".pek": "/fs/icon/paomedia/file-premiere",
+			".ppi": "/fs/icon/paomedia/file-premiere",
+			".plb": "/fs/icon/paomedia/file-premiere",
+			".mxf": "/fs/icon/paomedia/file-premiere",
+			".lnk": "/fs/icon/paomedia/file-link",
+			".url": "/fs/icon/paomedia/file-link"
+		}
+	},
+	"shared": {
+		"label": "/fs/icon/paomedia/thumbup",
+		"cid": {},
+		"drive": {},
+		"folder": {},
+		"grp": {},
+		"ext": {}
+	},
+	"iconfmt": []
+}

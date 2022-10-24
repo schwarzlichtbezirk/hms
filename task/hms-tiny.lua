@@ -13,12 +13,13 @@ cfg = {
 	},
 	-- list of icons collections IDs, see 'id' tags of 'iconlist' in 'resmodel.json' file
 	iconset = {
-		tulliana = {"webp"},
+		papirus = {"svg"},
+		paomedia = {"svg"},
 	},
 	-- default skin ID if nothing was selected
 	defskinid = "blue",
 	-- default icons collection ID if nothing was selected
-	deficonid = "tulliana",
+	deficonid = "papirus",
 }
 
 -- enable/disable progress log

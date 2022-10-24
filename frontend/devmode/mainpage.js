@@ -144,7 +144,6 @@ const extfmt = {
 	"component": {
 		".dll": 1, ".ocx": 1
 	},
-
 	"exec": {
 		".exe": 1, ".dll": 1, ".ocx": 1, ".bat": 1, ".cmd": 1, ".sh": 1
 	},
@@ -191,6 +190,12 @@ const extfmt = {
 	"office": {
 		".odt": 1, ".ods": 1, ".odp": 1, ".rtf": 1, ".abw": 1,
 		".doc": 1, ".docx": 1, ".xls": 1, ".xlsx": 1, ".ppt": 1, ".pptx": 1, ".vsd": 1
+	},
+
+	"font": {
+		".otf": 1, ".otc": 1, ".ttc": 1,
+		".pcf": 1, ".ttf": 1, ".tte": 1,
+		".woff": 1, ".woff2": 1, ".eot": 1,
 	},
 
 	"archive": {
@@ -262,7 +267,7 @@ const extfmtorder = [
 	"bitmap", "tiff", "jpeg", "jpeg2000", "psd",
 	"component", "exec",
 	"text", "html", "config", "datafmt", "script", "code",
-	"msoffice", "openoffice", "office",
+	"msoffice", "openoffice", "office", "font",
 	"archive", "disk", "package", "playlist",
 	"image", "audio", "video", "books", "texts", "packs"
 ];

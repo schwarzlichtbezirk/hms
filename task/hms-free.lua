@@ -18,6 +18,7 @@ cfg = {
 		oxygen = {"avif", "webp", "png"},
 		ubuntu = {"webp", "png"},
 		papirus = {"svg"},
+		paomedia = {"svg"},
 		tulliana = {"webp", "png"},
 	},
 	-- default skin ID if nothing was selected
