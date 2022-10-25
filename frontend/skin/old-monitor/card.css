@@ -91,9 +91,14 @@
 		background: rgba(255, 255, 255, 0.5);
 	}
 
-.centerimg {
+.imgscale {
 	object-position: center center;
 	object-fit: scale-down;
+}
+
+.imgcontain {
+	object-position: center center;
+	object-fit: contain;
 }
 
 .smimgw {

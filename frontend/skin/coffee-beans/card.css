@@ -93,9 +93,14 @@
 		background: rgba(128, 0, 128, 0.5); /* Purple */
 	}
 
-.centerimg {
+.imgscale {
 	object-position: center center;
 	object-fit: scale-down;
+}
+
+.imgcontain {
+	object-position: center center;
+	object-fit: contain;
 }
 
 .smimgw {

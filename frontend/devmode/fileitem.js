@@ -298,6 +298,14 @@ const VueIcon = {
 		fmtalt() {
 			return pathext(this.file.name);
 		},
+		clsicon() {
+			for (const fmt of this.iconfmt) {
+				if (fmt.mime === 'image/svg+xml') {
+					return this.clsimg + ' imgcontain';
+				}
+			}
+			return this.clsimg + ' imgscale';
+		},
 		ismtmb() {
 			return Number(this.file.mtmb) > 0 && this.tm;
 		},

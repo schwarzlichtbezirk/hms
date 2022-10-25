@@ -93,9 +93,14 @@
 		background: rgba(106, 90, 205, 0.5); /* SlateBlue */
 	}
 
-.centerimg {
+.imgscale {
 	object-position: center center;
 	object-fit: scale-down;
+}
+
+.imgcontain {
+	object-position: center center;
+	object-fit: contain;
 }
 
 .smimgw {
