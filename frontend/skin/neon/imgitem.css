@@ -22,11 +22,6 @@
 			box-shadow: 0px 0px 12px Azure;
 		}
 
-	.imgitem .pict {
-		max-width: 256px;
-		max-height: 256px;
-	}
-
 	.imgitem .label {
 		width: 100%;
 		max-width: 96px;

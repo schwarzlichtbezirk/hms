@@ -43,14 +43,14 @@ type ExifProp struct {
 	thumb MediaData
 }
 
-func ratfloat32(t *tiff.Tag) float32 {
+func RatFloat32(t *tiff.Tag) float32 {
 	if numer, denom, _ := t.Rat2(0); denom != 0 {
 		return float32(numer) / float32(denom)
 	}
 	return 0
 }
 
-func ratfloat64(t *tiff.Tag) float64 {
+func RatFloat64(t *tiff.Tag) float64 {
 	if numer, denom, _ := t.Rat2(0); denom != 0 {
 		return float64(numer) / float64(denom)
 	}
@@ -92,31 +92,31 @@ func (ep *ExifProp) Setup(x *exif.Exif) {
 		ep.ExposureProg, _ = t.Int(0)
 	}
 	if t, err = x.Get(exif.FNumber); err == nil {
-		ep.FNumber = ratfloat32(t)
+		ep.FNumber = RatFloat32(t)
 	}
 	if t, err = x.Get(exif.ISOSpeedRatings); err == nil {
 		ep.ISOSpeed, _ = t.Int(0)
 	}
 	if t, err = x.Get(exif.ShutterSpeedValue); err == nil {
-		ep.ShutterSpeed = ratfloat32(t)
+		ep.ShutterSpeed = RatFloat32(t)
 	}
 	if t, err = x.Get(exif.ApertureValue); err == nil {
-		ep.Aperture = ratfloat32(t)
+		ep.Aperture = RatFloat32(t)
 	}
 	if t, err = x.Get(exif.ExposureBiasValue); err == nil {
-		ep.ExposureBias = ratfloat32(t)
+		ep.ExposureBias = RatFloat32(t)
 	}
 	if t, err = x.Get(exif.LightSource); err == nil {
 		ep.LightSource, _ = t.Int(0)
 	}
 	if t, err = x.Get(exif.FocalLength); err == nil {
-		ep.Focal = ratfloat32(t)
+		ep.Focal = RatFloat32(t)
 	}
 	if t, err = x.Get(exif.FocalLengthIn35mmFilm); err == nil {
 		ep.Focal35mm, _ = t.Int(0)
 	}
 	if t, err = x.Get(exif.DigitalZoomRatio); err == nil {
-		ep.DigitalZoom = ratfloat32(t)
+		ep.DigitalZoom = RatFloat32(t)
 	}
 	if t, err = x.Get(exif.ImageLength); err == nil {
 		ep.Height, _ = t.Int(0)
@@ -134,7 +134,7 @@ func (ep *ExifProp) Setup(x *exif.Exif) {
 		ep.Latitude, ep.Longitude = lat, lon
 	}
 	if t, err = x.Get(exif.GPSAltitude); err == nil {
-		ep.Altitude = ratfloat32(t)
+		ep.Altitude = RatFloat32(t)
 		if t, err = x.Get(exif.GPSAltitudeRef); err == nil {
 			var ref, _ = t.Int(0)
 			if ref == 1 {

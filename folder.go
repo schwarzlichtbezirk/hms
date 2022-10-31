@@ -20,42 +20,37 @@ var puidsym = (func() (t [256]bool) {
 
 // UnfoldPath brings any share path to system file path.
 func UnfoldPath(shrpath string) (syspath string, err error) {
+	var pref, suff = shrpath, "."
 	for i, c := range shrpath {
 		if c == '/' || c == '\\' {
-			var puid Puid_t
-			if err = puid.Set(shrpath[:i]); err != nil {
-				return
-			}
-			if puid < PUIDreserved {
-				err = ErrNotSys
-				return
-			}
-			var suff = path.Clean(shrpath[i+1:])
+			pref, suff = shrpath[:i], path.Clean(shrpath[i+1:])
 			if !fs.ValidPath(suff) { // prevent to modify original path
 				err = ErrPathOut
 				return
 			}
-			var pref string
-			var ok bool
-			if pref, ok = syspathcache.Path(puid); !ok {
-				err = ErrNoPath
-				return
-			}
-			syspath = path.Join(pref, suff)
-			return
+			break
 		} else if int(c) >= len(puidsym) || !puidsym[c] {
 			syspath, err = shrpath, fs.ErrPermission
 			return
 		}
 	}
 	var puid Puid_t
-	if err = puid.Set(shrpath); err != nil {
+	if err = puid.Set(pref); err != nil {
 		return
 	}
 	var ok bool
-	if syspath, ok = syspathcache.Path(puid); !ok {
+	if pref, ok = syspathcache.Path(puid); !ok {
 		err = ErrNoPath
 		return
+	}
+	if suff != "." {
+		if puid < PUIDreserved {
+			err = ErrNotSys
+			return
+		}
+		syspath = path.Join(pref, suff)
+	} else {
+		syspath = pref
 	}
 	return // root of share
 }

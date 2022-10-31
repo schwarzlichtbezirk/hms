@@ -1,6 +1,6 @@
 
 <div class="imgitem position-relative" v-bind:class="itemview" v-bind:title="fmttitle">
-	<icon-tag v-bind:file="file" clsimg="pict" />
+	<icon-tag v-bind:file="file" size="lg" />
 	<picture v-if="label">
 		<template v-for="fmt in iconfmt">
 			<source v-bind:srcset="label+fmt.ext" v-bind:type="fmt.mime">

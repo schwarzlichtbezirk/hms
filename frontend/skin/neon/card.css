@@ -103,6 +103,46 @@
 	object-fit: contain;
 }
 
+.icon-pix-xs {
+	max-width: 48px;
+	max-height: 48px;
+}
+
+.icon-svg-xs {
+	width: 48px;
+	height: 48px;
+}
+
+.icon-pix-sm {
+	max-width: 96px;
+	max-height: 96px;
+}
+
+.icon-svg-sm {
+	width: 96px;
+	height: 96px;
+}
+
+.icon-pix-md {
+	max-width: 176px;
+	max-height: 176px;
+}
+
+.icon-svg-md {
+	width: 176px;
+	height: 176px;
+}
+
+.icon-pix-lg {
+	max-width: 256px;
+	max-height: 256px;
+}
+
+.icon-svg-lg {
+	width: 256px;
+	height: 256px;
+}
+
 .smimgw {
 	width: 96px;
 }

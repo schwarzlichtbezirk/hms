@@ -33,11 +33,6 @@
 	}
 }
 
-.listitem .pict, .listitem .label, .listitem .bars {
-	width: 48px;
-	height: 48px;
-}
-
 .listitem:hover .name {
 	color: LightGoldenRodYellow;
 }

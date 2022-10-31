@@ -1,16 +1,18 @@
 
 <div class="listitem itemfont d-flex flex-nowrap align-items-center" v-bind:class="itemview" v-bind:title="fmttitle">
-	<div class="position-relative">
-		<icon-tag v-bind:file="file" clsimg="pict" />
+	<div class="icon-svg-xs position-relative">
+		<div class="position-absolute top-50 start-50 translate-middle">
+			<icon-tag v-bind:file="file" size="xs" />
+		</div>
 		<picture v-if="label">
 			<template v-for="fmt in iconfmt">
 				<source v-bind:srcset="label+fmt.ext" v-bind:type="fmt.mime">
 			</template>
-			<img class="label position-absolute bottom-0 start-0" alt="shared">
+			<img v-bind:class="clsicon" class="label position-absolute top-50 start-50 translate-middle" alt="shared">
 		</picture>
-		<img v-if="file.playback" class="bars position-absolute top-50 start-50 translate-middle" src="/asst/equalizer-bars.gif" alt="play">
+		<img v-if="file.playback" class="bars icon-pix-xs position-absolute top-50 start-50 translate-middle" src="/asst/equalizer-bars.gif" alt="play">
 	</div>
-	<div class="name flex-grow-1">{{file.name}}</div>
+	<div class="name flex-grow-1 overflow-hidden">{{file.name}}</div>
 	<div v-if="!file.type" class="attr d-flex flex-column">
 		<div><span class="key">size</span><span class="val">{{filesize}}</span></div>
 		<div><span class="key">date</span><span class="val">{{filedate}}</span></div>

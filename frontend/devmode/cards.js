@@ -14,28 +14,28 @@ const sortmodehint = {
 };
 
 const listmodetag = {
-	lsicon: 'list-item-tag',
-	smicon: 'file-item-tag',
-	mdicon: 'file-item-tag',
-	lgicon: 'img-item-tag'
+	xs: 'list-item-tag',
+	sm: 'file-item-tag',
+	md: 'file-item-tag',
+	lg: 'img-item-tag'
 };
 const listmoderow = {
-	lsicon: 'align-items-start',
-	smicon: 'align-items-start',
-	mdicon: 'align-items-start',
-	lgicon: 'align-items-center'
+	xs: 'align-items-start',
+	sm: 'align-items-start',
+	md: 'align-items-start',
+	lg: 'align-items-center'
 };
 const listmodeicon = {
-	lsicon: 'format_align_justify',
-	smicon: 'view_comfy',
-	mdicon: 'view_module',
-	lgicon: 'widgets'
+	xs: 'format_align_justify',
+	sm: 'view_comfy',
+	md: 'view_module',
+	lg: 'widgets'
 };
 const listmodehint = {
-	lsicon: "list",
-	smicon: "small icons",
-	mdicon: "middle icons",
-	lgicon: "large icons"
+	xs: "list",
+	sm: "small icons",
+	md: "middle icons",
+	lg: "large icons"
 };
 
 const noderadius = 15;
@@ -186,7 +186,7 @@ const VueCtgrCard = {
 	props: ["flist"],
 	data() {
 		return {
-			listmode: "smicon",
+			listmode: 'sm',
 			iid: makestrid(10) // instance ID
 		};
 	},
@@ -225,16 +225,16 @@ const VueCtgrCard = {
 	},
 	methods: {
 		onlistmodels() {
-			this.listmode = 'lsicon';
+			this.listmode = 'xs';
 		},
 		onlistmodesm() {
-			this.listmode = 'smicon';
+			this.listmode = 'sm';
 		},
 		onlistmodemd() {
-			this.listmode = 'mdicon';
+			this.listmode = 'md';
 		},
 		onlistmodelg() {
-			this.listmode = 'lgicon';
+			this.listmode = 'lg';
 		},
 
 		onselect(file) {
@@ -279,7 +279,7 @@ const VueDriveCard = {
 			diskadd: null,
 
 			sortorder: 1,
-			listmode: "smicon",
+			listmode: 'sm',
 			iid: makestrid(10) // instance ID
 		};
 	},
@@ -350,16 +350,16 @@ const VueDriveCard = {
 			this.sortorder = -this.sortorder;
 		},
 		onlistmodels() {
-			this.listmode = 'lsicon';
+			this.listmode = 'xs';
 		},
 		onlistmodesm() {
-			this.listmode = 'smicon';
+			this.listmode = 'sm';
 		},
 		onlistmodemd() {
-			this.listmode = 'mdicon';
+			this.listmode = 'md';
 		},
 		onlistmodelg() {
-			this.listmode = 'lgicon';
+			this.listmode = 'lg';
 		},
 
 		ondiskadd() {
@@ -501,7 +501,7 @@ const VueDirCard = {
 	data() {
 		return {
 			sortorder: 1,
-			listmode: "smicon",
+			listmode: 'sm',
 			iid: makestrid(10) // instance ID
 		};
 	},
@@ -555,16 +555,16 @@ const VueDirCard = {
 			this.sortorder = -this.sortorder;
 		},
 		onlistmodels() {
-			this.listmode = 'lsicon';
+			this.listmode = 'xs';
 		},
 		onlistmodesm() {
-			this.listmode = 'smicon';
+			this.listmode = 'sm';
 		},
 		onlistmodemd() {
-			this.listmode = 'mdicon';
+			this.listmode = 'md';
 		},
 		onlistmodelg() {
-			this.listmode = 'lgicon';
+			this.listmode = 'lg';
 		},
 
 		onselect(file) {
@@ -606,7 +606,7 @@ const VueFileCard = {
 			expanded: true,
 			sortorder: 1,
 			sortmode: 'byalpha',
-			listmode: 'smicon',
+			listmode: 'sm',
 			thumbmode: true,
 			fgshow: [
 				false, // other
@@ -885,16 +885,16 @@ const VueFileCard = {
 			this.sortmode = 'unsorted';
 		},
 		onlistmodels() {
-			this.listmode = 'lsicon';
+			this.listmode = 'xs';
 		},
 		onlistmodesm() {
-			this.listmode = 'smicon';
+			this.listmode = 'sm';
 		},
 		onlistmodemd() {
-			this.listmode = 'mdicon';
+			this.listmode = 'md';
 		},
 		onlistmodelg() {
-			this.listmode = 'lgicon';
+			this.listmode = 'lg';
 		},
 		onthumbmode() {
 			this.thumbmode = thumbmode = !this.thumbmode;

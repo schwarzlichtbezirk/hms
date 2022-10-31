@@ -285,9 +285,29 @@ const fileinfo = file => {
 	return lst;
 };
 
+const iconpixsize = {
+	xs: 'icon-pix-xs imgscale',
+	sm: 'icon-pix-sm imgscale',
+	md: 'icon-pix-md imgscale',
+	lg: 'icon-pix-lg imgscale',
+};
+
+const iconsvgsize = {
+	xs: 'icon-svg-xs imgcontain',
+	sm: 'icon-svg-sm imgcontain',
+	md: 'icon-svg-md imgcontain',
+	lg: 'icon-svg-lg imgcontain',
+};
+
+const iconwdh = {
+	sm: 'smimgw',
+	md: 'mdimgw',
+	lg: 'lgimgw',
+};
+
 const VueIcon = {
 	template: '#icon-tpl',
-	props: ["file", "clsimg"],
+	props: ["file", "size"],
 	data() {
 		return {
 			iconfmt: [],
@@ -301,10 +321,11 @@ const VueIcon = {
 		clsicon() {
 			for (const fmt of this.iconfmt) {
 				if (fmt.mime === 'image/svg+xml') {
-					return this.clsimg + ' imgcontain';
+					return iconsvgsize[this.size];
+				} else {
+					return iconpixsize[this.size];
 				}
 			}
-			return this.clsimg + ' imgscale';
 		},
 		ismtmb() {
 			return Number(this.file.mtmb) > 0 && this.tm;
@@ -451,7 +472,7 @@ const VueIconMenu = {
 
 const VueListItem = {
 	template: '#list-item-tpl',
-	props: ["file", "size"],
+	props: ["file"],
 	data() {
 		return {
 			iconfmt: [],
@@ -471,25 +492,23 @@ const VueListItem = {
 					: iconmapping.private.label;
 			}
 		},
-		clsimgwdh() {
-			switch (this.size) {
-				case "smicon":
-					return "smimgw";
-				case "mdicon":
-					return "mdimgw";
-				case "lgicon":
-					return "lgimgw";
+		clsiconwdh() {
+			return iconwdh['xs'];
+		},
+		clsicon() {
+			for (const fmt of this.iconfmt) {
+				if (fmt.mime === 'image/svg+xml') {
+					return iconsvgsize['xs'];
+				} else {
+					return iconpixsize['xs'];
+				}
 			}
 		},
-		clsimage() {
-			switch (this.size) {
-				case "smicon":
-					return "smimgw smimgh";
-				case "mdicon":
-					return "mdimgw mdimgh";
-				case "lgicon":
-					return "lgimgw lgimgh";
-			}
+		clsiconsvg() {
+			return iconsvgsize['xs'];
+		},
+		clsiconpix() {
+			return iconpixsize['xs'];
 		},
 
 		// manage items classes
@@ -548,25 +567,23 @@ const VueFileItem = {
 					: iconmapping.private.label;
 			}
 		},
-		clsimgwdh() {
-			switch (this.size) {
-				case "smicon":
-					return "smimgw";
-				case "mdicon":
-					return "mdimgw";
-				case "lgicon":
-					return "lgimgw";
+		clsiconwdh() {
+			return iconwdh[this.size];
+		},
+		clsicon() {
+			for (const fmt of this.iconfmt) {
+				if (fmt.mime === 'image/svg+xml') {
+					return iconsvgsize[this.size];
+				} else {
+					return iconpixsize[this.size];
+				}
 			}
 		},
-		clsimage() {
-			switch (this.size) {
-				case "smicon":
-					return "smimgw smimgh";
-				case "mdicon":
-					return "mdimgw mdimgh";
-				case "lgicon":
-					return "lgimgw lgimgh";
-			}
+		clsiconsvg() {
+			return iconsvgsize[this.size];
+		},
+		clsiconpix() {
+			return iconpixsize[this.size];
 		},
 
 		// manage items classes

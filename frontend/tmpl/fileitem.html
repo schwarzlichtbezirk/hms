@@ -1,15 +1,19 @@
 
 <div class="fileitem d-flex flex-column" v-bind:class="itemview" v-bind:title="fmttitle">
-	<div class="position-relative">
-		<icon-tag v-bind:file="file" v-bind:clsimg="clsimage" />
+	<div v-bind:class="clsiconsvg" class="position-relative">
+		<div class="position-absolute top-50 start-50 translate-middle">
+			<icon-tag v-bind:file="file" v-bind:size="size" />
+		</div>
 		<picture v-if="label">
 			<template v-for="fmt in iconfmt">
 				<source v-bind:srcset="label+fmt.ext" v-bind:type="fmt.mime">
 			</template>
-			<img v-bind:class="clsimage" class="label position-absolute bottom-0 start-0" alt="shared">
+			<img v-bind:class="clsicon" class="label position-absolute top-50 start-50 translate-middle" alt="shared">
 		</picture>
-		<img v-if="file.playback" src="/asst/equalizer-bars.gif" v-bind:class="clsimage" class="bars position-absolute top-50 start-50 translate-middle" alt="play">
-		<div class="iconmenu-band position-absolute bottom-0 start-0"><iconmenu-tag v-bind:file="file" v-bind:key="file.puid"></iconmenu-tag></div>
+		<img v-if="file.playback" v-bind:class="clsiconpix" class="bars position-absolute top-50 start-50 translate-middle" src="/asst/equalizer-bars.gif" alt="play">
+		<div class="iconmenu-band position-absolute bottom-0 start-0">
+			<iconmenu-tag v-bind:file="file" v-bind:key="file.puid"></iconmenu-tag>
+		</div>
 	</div>
-	<div v-bind:class="clsimgwdh" class="tag itemfont overflow-hidden">{{file.name}}</div>
+	<div v-bind:class="clsiconwdh" class="tag itemfont overflow-hidden">{{file.name}}</div>
 </div>
