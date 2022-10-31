@@ -300,9 +300,9 @@ const iconsvgsize = {
 };
 
 const iconwdh = {
-	sm: 'smimgw',
-	md: 'mdimgw',
-	lg: 'lgimgw',
+	sm: 'icon-wdh-sm',
+	md: 'icon-wdh-md',
+	lg: 'icon-wdh-lg',
 };
 
 const VueIcon = {

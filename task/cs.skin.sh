@@ -11,6 +11,7 @@ fi
 java -jar $cs\
  skin/daylight/page.css\
  skin/daylight/card.css\
+ skin/daylight/icon.css\
  skin/daylight/iconmenu.css\
  skin/daylight/fileitem.css\
  skin/daylight/imgitem.css\
@@ -23,6 +24,7 @@ java -jar $cs\
 java -jar $cs\
  skin/blue/page.css\
  skin/blue/card.css\
+ skin/blue/icon.css\
  skin/blue/iconmenu.css\
  skin/blue/fileitem.css\
  skin/blue/imgitem.css\
@@ -35,6 +37,7 @@ java -jar $cs\
 java -jar $cs\
  skin/dark/page.css\
  skin/dark/card.css\
+ skin/dark/icon.css\
  skin/dark/iconmenu.css\
  skin/dark/fileitem.css\
  skin/dark/imgitem.css\
@@ -47,6 +50,7 @@ java -jar $cs\
 java -jar $cs\
  skin/neon/page.css\
  skin/neon/card.css\
+ skin/neon/icon.css\
  skin/neon/iconmenu.css\
  skin/neon/fileitem.css\
  skin/neon/imgitem.css\
@@ -59,6 +63,7 @@ java -jar $cs\
 java -jar $cs\
  skin/cup-of-coffee/page.css\
  skin/cup-of-coffee/card.css\
+ skin/cup-of-coffee/icon.css\
  skin/cup-of-coffee/iconmenu.css\
  skin/cup-of-coffee/fileitem.css\
  skin/cup-of-coffee/imgitem.css\
@@ -71,6 +76,7 @@ java -jar $cs\
 java -jar $cs\
  skin/coffee-beans/page.css\
  skin/coffee-beans/card.css\
+ skin/coffee-beans/icon.css\
  skin/coffee-beans/iconmenu.css\
  skin/coffee-beans/fileitem.css\
  skin/coffee-beans/imgitem.css\
@@ -83,6 +89,7 @@ java -jar $cs\
 java -jar $cs\
  skin/old-monitor/page.css\
  skin/old-monitor/card.css\
+ skin/old-monitor/icon.css\
  skin/old-monitor/iconmenu.css\
  skin/old-monitor/fileitem.css\
  skin/old-monitor/imgitem.css\

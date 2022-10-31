@@ -66,23 +66,18 @@
 
 /* Thumbnail slider section */
 
-.thumbslider {
-	height: 80px;
+.thumbslider .thumb {
+	opacity: 0.75;
+	border: 0.25rem solid Silver;
 }
 
-	.thumbslider .thumb {
-		height: 100%;
-		opacity: 0.75;
-		border: 0.25rem solid Silver;
+	.thumbslider .thumb:hover {
+		opacity: 1;
+		border: 0.25rem solid Wheat;
 	}
 
-		.thumbslider .thumb:hover {
-			opacity: 1;
-			border: 0.25rem solid Wheat;
-		}
-
-		.thumbslider .thumb.active {
-			z-index: 1036;
-			opacity: 1;
-			border: 0.25rem solid Ivory;
-		}
+	.thumbslider .thumb.active {
+		z-index: 1036;
+		opacity: 1;
+		border: 0.25rem solid Ivory;
+	}

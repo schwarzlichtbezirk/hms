@@ -60,29 +60,24 @@
 }
 
 .photothumbs {
-	background-color: silver;
+	background-color: #555;
 	border-radius: 0.25rem;
 }
 
 /* Thumbnail slider section */
 
-.thumbslider {
-	height: 80px;
+.thumbslider .thumb {
+	opacity: 0.75;
+	border: 0.25rem solid dimgray;
 }
 
-	.thumbslider .thumb {
-		height: 100%;
-		opacity: 0.75;
-		border: 0.25rem solid Silver;
+	.thumbslider .thumb:hover {
+		opacity: 1;
+		border: 0.25rem solid silver;
 	}
 
-		.thumbslider .thumb:hover {
-			opacity: 1;
-			border: 0.25rem solid SpringGreen;
-		}
-
-		.thumbslider .thumb.active {
-			z-index: 1036;
-			opacity: 1;
-			border: 0.25rem solid MediumSpringGreen;
-		}
+	.thumbslider .thumb.active {
+		z-index: 1036;
+		opacity: 1;
+		border: 0.25rem solid dodgerblue;
+	}

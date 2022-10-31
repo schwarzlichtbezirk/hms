@@ -3,7 +3,7 @@
 
 .imgbut {
 	color: rgba(255, 255, 255, 0.5);
-	border-radius: 0.5rem;
+	border-radius: 0;
 	background-color: transparent;
 	text-align: center;
 	vertical-align: middle;
@@ -60,29 +60,24 @@
 }
 
 .photothumbs {
-	background-color: silver;
-	border-radius: 0.25rem;
+	background-color: green;
+	border-radius: 0;
 }
 
 /* Thumbnail slider section */
 
-.thumbslider {
-	height: 80px;
+.thumbslider .thumb {
+	opacity: 0.75;
+	border: 0.25rem solid Silver;
 }
 
-	.thumbslider .thumb {
-		height: 100%;
-		opacity: 0.75;
-		border: 0.25rem solid Silver;
+	.thumbslider .thumb:hover {
+		opacity: 1;
+		border: 0.25rem solid SpringGreen;
 	}
 
-		.thumbslider .thumb:hover {
-			opacity: 1;
-			border: 0.25rem solid SpringGreen;
-		}
-
-		.thumbslider .thumb.active {
-			z-index: 1036;
-			opacity: 1;
-			border: 0.25rem solid MediumSpringGreen;
-		}
+	.thumbslider .thumb.active {
+		z-index: 1036;
+		opacity: 1;
+		border: 0.25rem solid MediumSpringGreen;
+	}

@@ -29,6 +29,7 @@
 	color: Lime;
 	background-color: rgba(0, 64, 0, 0.4);
 	border-color: rgb(16, 80, 16);
+	border-radius: 0;
 }
 
 	.btn-icon:hover {

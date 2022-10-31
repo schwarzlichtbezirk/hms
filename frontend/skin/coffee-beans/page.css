@@ -39,6 +39,11 @@ a, .btn-link {
 	color: DarkKhaki;
 }
 
+.menu-scrollable {
+	max-height: 20rem;
+	overflow-y: scroll;
+}
+
 .bg-tool {
 	background-color: #754b28;
 }

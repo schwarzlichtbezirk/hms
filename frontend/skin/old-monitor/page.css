@@ -40,6 +40,11 @@ a, .btn-link {
 	color: Green;
 }
 
+.menu-scrollable {
+	max-height: 20rem;
+	overflow-y: scroll;
+}
+
 .bg-tool {
 	background-color: #004c00;
 }

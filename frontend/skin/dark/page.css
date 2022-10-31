@@ -21,6 +21,11 @@ body {
 		background: #6e6e74;
 	}
 
+.menu-scrollable {
+	max-height: 20rem;
+	overflow-y: scroll;
+}
+
 .bg-tool {
 	background-color: #1b1b1c;
 }
