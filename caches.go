@@ -3,6 +3,7 @@ package hms
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"image"
 	"io"
 	"io/fs"
@@ -405,8 +406,8 @@ func initcaches() {
 // cached images data file.
 type CachePackage struct {
 	wpk.Package
-	WPT wpk.WriteSeekCloser // package tags part
-	WPF wpk.WriteSeekCloser // package files part
+	wpt wpk.WriteSeekCloser // package tags part
+	wpf wpk.WriteSeekCloser // package files part
 }
 
 // InitCacheWriter opens existing cache with given file name placed in
@@ -422,22 +423,22 @@ func InitCacheWriter(fname string) (cw *CachePackage, err error) {
 	}
 	defer func() {
 		if err != nil {
-			if cw.WPT != nil {
-				cw.WPT.Close()
-				cw.WPT = nil
+			if cw.wpt != nil {
+				cw.wpt.Close()
+				cw.wpt = nil
 			}
-			if cw.WPF != nil {
-				cw.WPF.Close()
-				cw.WPF = nil
+			if cw.wpf != nil {
+				cw.wpf.Close()
+				cw.wpf = nil
 			}
 		}
 	}()
 
 	var ok, _ = PathExists(pkgpath)
-	if cw.WPT, err = os.OpenFile(pkgpath, os.O_WRONLY|os.O_CREATE, 0755); err != nil {
+	if cw.wpt, err = os.OpenFile(pkgpath, os.O_WRONLY|os.O_CREATE, 0755); err != nil {
 		return
 	}
-	if cw.WPF, err = os.OpenFile(datpath, os.O_WRONLY|os.O_CREATE, 0755); err != nil {
+	if cw.wpf, err = os.OpenFile(datpath, os.O_WRONLY|os.O_CREATE, 0755); err != nil {
 		return
 	}
 	if ok {
@@ -451,7 +452,7 @@ func InitCacheWriter(fname string) (cw *CachePackage, err error) {
 			return
 		}
 
-		if err = cw.Append(cw.WPT, cw.WPF); err != nil {
+		if err = cw.Append(cw.wpt, cw.wpf); err != nil {
 			return
 		}
 	} else {
@@ -459,7 +460,7 @@ func InitCacheWriter(fname string) (cw *CachePackage, err error) {
 			tidsz, tagsz, tssize,
 		})
 
-		if err = cw.Begin(cw.WPT); err != nil {
+		if err = cw.Begin(cw.wpt, cw.wpf); err != nil {
 			return
 		}
 		cw.Package.SetInfo().
@@ -473,16 +474,16 @@ func InitCacheWriter(fname string) (cw *CachePackage, err error) {
 
 // Close saves actual tags table and closes opened cache.
 func (cw *CachePackage) Close() (err error) {
-	if et := cw.Sync(cw.WPT, cw.WPF); et != nil && err == nil {
+	if et := cw.Sync(cw.wpt, cw.wpf); et != nil && err == nil {
 		err = et
 	}
-	if et := cw.WPT.Close(); et != nil && err == nil {
+	if et := cw.wpt.Close(); et != nil && err == nil {
 		err = et
 	}
-	if et := cw.WPF.Close(); et != nil && err == nil {
+	if et := cw.wpf.Close(); et != nil && err == nil {
 		err = et
 	}
-	cw.WPT, cw.WPF = nil, nil
+	cw.wpt, cw.wpf = nil, nil
 	return
 }
 
@@ -520,7 +521,7 @@ func (cw *CachePackage) GetImage(fpath string) (md *MediaData, err error) {
 // PutImage puts thumbnail to package.
 func (cw *CachePackage) PutImage(fpath string, md *MediaData) (err error) {
 	var ts *wpk.TagsetRaw
-	if ts, err = cw.PackData(cw.WPF, bytes.NewReader(md.Data), fpath); err != nil {
+	if ts, err = cw.PackData(cw.wpf, bytes.NewReader(md.Data), fpath); err != nil {
 		return
 	}
 	var now = time.Now()
@@ -545,11 +546,13 @@ func PackInfo(fname string, pkg *wpk.Package) {
 
 func initpackages() (err error) {
 	if thumbpkg, err = InitCacheWriter(tmbfile); err != nil {
+		err = fmt.Errorf("inits thumbnails database: %w", err)
 		return
 	}
 	PackInfo(tmbfile, &thumbpkg.Package)
 
 	if tilespkg, err = InitCacheWriter(tilfile); err != nil {
+		err = fmt.Errorf("inits tiles database: %w", err)
 		return
 	}
 	PackInfo(tilfile, &tilespkg.Package)

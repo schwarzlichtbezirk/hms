@@ -64,8 +64,8 @@ github.com/rogpeppe/go-internal v1.6.1 h1:/FiVV8dS/e+YqF2JvO3yXRFbBLTIuSDkuC7aBO
 github.com/rogpeppe/go-internal v1.6.1/go.mod h1:xXDCJY+GAPziupqXw64V24skbSoqbTEfhy4qGm1nDQc=
 github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd h1:CmH9+J6ZSsIjUK3dcGsnCnO41eRBOnY12zwkn5qVwgc=
 github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd/go.mod h1:hPqNNc0+uJM6H+SuU8sEs5K5IQeKccPqeSjfgcKGgPk=
-github.com/schwarzlichtbezirk/wpk v1.4.0 h1:lpU5Qx7oPLV0Rb9wnkLtaNH15ygKeu9vNggkwe1Jj+s=
-github.com/schwarzlichtbezirk/wpk v1.4.0/go.mod h1:/4C38mew4XlS1OSlcymd6C/JgsBDZ1IINc4j8oH0fRY=
+github.com/schwarzlichtbezirk/wpk v1.4.1 h1:Tfjc21LDDi08pl4ONKf9aY+0+rDTIW5bN7OPXNOhBs4=
+github.com/schwarzlichtbezirk/wpk v1.4.1/go.mod h1:DYvZev70aBqDJTdLs8RVwZP5lWVmkLCM/We0oSTxy/M=
 github.com/sirupsen/logrus v1.7.0/go.mod h1:yWOB1SBYBC5VeMP7gHvWumXLIWorT60ONWic61uBYv0=
 github.com/sirupsen/logrus v1.9.0 h1:trlNQbNUG3OdDrDil03MCb1H2o9nJ1x4/5LYw7byDE0=
 github.com/sirupsen/logrus v1.9.0/go.mod h1:naHLuLoDiP4jHNo9R0sCBMtWGeIprob74mVsIT4qYEQ=
