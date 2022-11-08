@@ -123,6 +123,7 @@ func (s *scanner) Scan() {
 
 	func() {
 		for {
+		selector:
 			select {
 			case arg := <-s.put:
 				var found = false
@@ -152,6 +153,19 @@ func (s *scanner) Scan() {
 					args[i] <- arg
 				} else {
 					busy[i] = false
+					for _, b := range busy {
+						if b {
+							break selector
+						}
+					}
+					// sync file tags tables of caches
+					if err := thumbpkg.Sync(); err != nil {
+						Log.Infoln(err)
+					}
+					if err := tilespkg.Sync(); err != nil {
+						Log.Infoln(err)
+					}
+					Log.Infoln("caches synced")
 				}
 			case <-ctx.Done():
 				return

@@ -226,8 +226,8 @@ func (gc *GpsCache) Range(f func(Puid_t, *GpsInfo) bool) {
 
 var gpscache GpsCache
 
-// Prepares caches depends of previously loaded configuration.
-func initcaches() {
+// InitCaches prepares caches depends of previously loaded configuration.
+func InitCaches() {
 	// init properties cache
 	propcache = gcache.New(cfg.PropCacheMaxNum).
 		LRU().
@@ -401,6 +401,12 @@ func initcaches() {
 		Build()
 }
 
+const (
+	tidsz  = 2
+	tagsz  = 2
+	tssize = 2
+)
+
 // CachePackage describes package cache functionality.
 // Package splitted in two files - tags table file and
 // cached images data file.
@@ -472,9 +478,14 @@ func InitCacheWriter(fname string) (cw *CachePackage, err error) {
 	return
 }
 
+// Sync writes actual file tags table and true signature with settings.
+func (cw *CachePackage) Sync() error {
+	return cw.Package.Sync(cw.wpt, cw.wpf)
+}
+
 // Close saves actual tags table and closes opened cache.
 func (cw *CachePackage) Close() (err error) {
-	if et := cw.Sync(cw.wpt, cw.wpf); et != nil && err == nil {
+	if et := cw.Sync(); et != nil && err == nil {
 		err = et
 	}
 	if et := cw.wpt.Close(); et != nil && err == nil {
@@ -544,7 +555,8 @@ func PackInfo(fname string, pkg *wpk.Package) {
 	Log.Infof("package '%s': cached %d files on %d bytes", fname, num, size)
 }
 
-func initpackages() (err error) {
+// InitPackages opens all existing caches.
+func InitPackages() (err error) {
 	if thumbpkg, err = InitCacheWriter(tmbfile); err != nil {
 		err = fmt.Errorf("inits thumbnails database: %w", err)
 		return

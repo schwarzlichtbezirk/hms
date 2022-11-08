@@ -144,17 +144,19 @@ var cfg = Config{ // inits default values:
 	},
 }
 
-// compiled binary version, sets by compiler with command
-//    go build -ldflags="-X 'github.com/schwarzlichtbezirk/hms.buildvers=%buildvers%'"
-var buildvers string
+var (
+	// compiled binary version, sets by compiler with command
+	//    go build -ldflags="-X 'github.com/schwarzlichtbezirk/hms.BuildVers=%buildvers%'"
+	BuildVers string
 
-// compiled binary build date, sets by compiler with command
-//    go build -ldflags="-X 'github.com/schwarzlichtbezirk/hms.builddate=%date%'"
-var builddate string
+	// compiled binary build date, sets by compiler with command
+	//    go build -ldflags="-X 'github.com/schwarzlichtbezirk/hms.BuildDate=%date%'"
+	BuildDate string
 
-// compiled binary build time, sets by compiler with command
-//    go build -ldflags="-X 'github.com/schwarzlichtbezirk/hms.buildtime=%time%'"
-var buildtime string
+	// compiled binary build time, sets by compiler with command
+	//    go build -ldflags="-X 'github.com/schwarzlichtbezirk/hms.BuildTime=%time%'"
+	BuildTime string
+)
 
 // save server start time
 var starttime = time.Now()

@@ -9,6 +9,9 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// Log is global static ring logger object.
+var Log = NewLogger(os.Stderr, LstdFlags, 300)
+
 const utf8bom = "\xef\xbb\xbf"
 
 // WriteYaml writes "data" object to YAML-file with given file name.

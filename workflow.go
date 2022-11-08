@@ -1,23 +1,17 @@
 package hms
 
 import (
-	"bytes"
 	"context"
 	"crypto/tls"
 	"errors"
-	"html/template"
 	"net/http"
 	"os"
 	"os/signal"
 	"path"
-	"strings"
 	"sync"
 	"syscall"
 
 	"github.com/jessevdk/go-flags"
-	"github.com/schwarzlichtbezirk/wpk"
-	"github.com/schwarzlichtbezirk/wpk/bulk"
-	"github.com/schwarzlichtbezirk/wpk/mmap"
 	"golang.org/x/crypto/acme/autocert"
 	"golang.org/x/sync/errgroup"
 )
@@ -30,112 +24,13 @@ var (
 	exitwg sync.WaitGroup
 )
 
-const (
-	tidsz  = 2
-	tagsz  = 2
-	tssize = 2
-)
-
-var resfs wpk.Union // resources packages root dir.
-
-// Log is global static ring logger object.
-var Log = NewLogger(os.Stderr, LstdFlags, 300)
-
-///////////////////////////////
-// Startup opening functions //
-///////////////////////////////
-
-// openpackage opens hms-package.
-func openpackage() (err error) {
-	for _, fname := range cfg.WPKName {
-		var fpath = path.Join(PackPath, fname)
-		var pkg *wpk.Package
-		if pkg, err = wpk.OpenPackage(fpath); err != nil {
-			return
-		}
-
-		var dpath string
-		if pkg.IsSplitted() {
-			dpath = wpk.MakeDataPath(fpath)
-		} else {
-			dpath = fpath
-		}
-
-		if cfg.WPKmmap {
-			pkg.Tagger, err = mmap.MakeTagger(dpath)
-		} else {
-			pkg.Tagger, err = bulk.MakeTagger(dpath)
-		}
-		PackInfo(fname, pkg)
-		resfs.List = append(resfs.List, pkg)
-	}
-	return
-}
-
-// hot templates reload, during server running
-func loadtemplates() (err error) {
-	var ts, tc *template.Template
-	var load = func(tb *template.Template, pattern string) {
-		var tpl []string
-		if tpl, err = resfs.Glob(pattern); err != nil {
-			return
-		}
-		for _, key := range tpl {
-			var bcnt []byte
-			if bcnt, err = resfs.ReadFile(key); err != nil {
-				return
-			}
-			var content = strings.TrimPrefix(string(bcnt), utf8bom) // remove UTF-8 format BOM header
-			if _, err = tb.New(key).Parse(content); err != nil {
-				return
-			}
-		}
-	}
-
-	ts = template.New("storage").Delims("[=[", "]=]")
-	if load(ts, path.Join(tmplsuff, "*.html")); err != nil {
-		return
-	}
-
-	if tc, err = ts.Clone(); err != nil {
-		return
-	}
-	if load(tc, path.Join(devmsuff, "*.html")); err != nil {
-		return
-	}
-	for _, fname := range pagealias {
-		var buf bytes.Buffer
-		var fpath = path.Join(devmsuff, fname)
-		if err = tc.ExecuteTemplate(&buf, fpath, nil); err != nil {
-			return
-		}
-		pagecache[fpath] = buf.Bytes()
-	}
-
-	if tc, err = ts.Clone(); err != nil {
-		return
-	}
-	if load(tc, path.Join(relmsuff, "*.html")); err != nil {
-		return
-	}
-	for _, fname := range pagealias {
-		var buf bytes.Buffer
-		var fpath = path.Join(relmsuff, fname)
-		if err = tc.ExecuteTemplate(&buf, fpath, nil); err != nil {
-			return
-		}
-		pagecache[fpath] = buf.Bytes()
-	}
-	return
-}
-
 //////////////////////
 // Start web server //
 //////////////////////
 
 // Init performs global data initialization. Loads configuration files, initializes file cache.
 func Init() {
-	Log.Infof("version: %s, builton: %s %s\n", buildvers, builddate, buildtime)
+	Log.Infof("version: %s, builton: %s %s\n", BuildVers, BuildDate, BuildTime)
 
 	var err error
 
@@ -199,18 +94,18 @@ func Init() {
 	}()
 
 	// load package with data files
-	if err = openpackage(); err != nil {
+	if err = OpenPackage(); err != nil {
 		Log.Fatal("can not load wpk-package: " + err.Error())
 	}
 
 	// insert components templates into pages
-	if err = loadtemplates(); err != nil {
+	if err = LoadTemplates(); err != nil {
 		Log.Fatal(err)
 	}
 
 	// build caches with given sizes from settings
-	initcaches()
-	if err = initpackages(); err != nil {
+	InitCaches()
+	if err = InitPackages(); err != nil {
 		Log.Fatal(err)
 	}
 
@@ -454,7 +349,7 @@ func Shutdown() {
 	})
 
 	wg.Go(func() (err error) {
-		resfs.Close()
+		ResFS.Close()
 		return
 	})
 

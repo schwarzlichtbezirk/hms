@@ -414,11 +414,11 @@ func reloadAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	_ = auth
 	var err error
 
-	if err = openpackage(); err != nil {
+	if err = OpenPackage(); err != nil {
 		WriteError500(w, r, err, AECreloadload)
 		return
 	}
-	if err = loadtemplates(); err != nil {
+	if err = LoadTemplates(); err != nil {
 		WriteError500(w, r, err, AECreloadtmpl)
 		return
 	}
@@ -449,9 +449,9 @@ func memusgAPI(w http.ResponseWriter, r *http.Request) {
 	runtime.ReadMemStats(&mem)
 
 	var ret = XmlMap{
-		"buildvers":     buildvers,
-		"builddate":     builddate,
-		"buildtime":     buildtime,
+		"buildvers":     BuildVers,
+		"builddate":     BuildDate,
+		"buildtime":     BuildTime,
 		"running":       time.Since(starttime) / time.Millisecond,
 		"heapalloc":     mem.HeapAlloc,
 		"heapsys":       mem.HeapSys,
