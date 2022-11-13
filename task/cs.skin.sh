@@ -5,7 +5,7 @@ cs=~/tools/closure-stylesheets.jar
 if [ ! -f "$cs" ]; then
 	echo "closure-stylesheets does not found, downloading it into '~/tools' folder."
 	mkdir -pv ~/tools
-	curl https://github.com/google/closure-stylesheets/releases/download/v1.5.0/closure-stylesheets.jar --output $cs
+	wget -nc -O $cs https://github.com/google/closure-stylesheets/releases/download/v1.5.0/closure-stylesheets.jar
 fi
 
 java -jar $cs\

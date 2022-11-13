@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"path"
+	"path/filepath"
 	"time"
 )
 
@@ -163,6 +164,26 @@ var starttime = time.Now()
 
 const cfgbase = "config"
 
+var (
+	// Current path
+	curpath string
+	// Executable path
+	exepath string
+)
+
+func init() {
+	if str, err := filepath.Abs("."); err == nil {
+		curpath = path.Dir(ToSlash(str))
+	} else {
+		curpath = "."
+	}
+	if str, err := os.Executable(); err == nil {
+		exepath = path.Dir(ToSlash(str))
+	} else {
+		exepath = path.Dir(ToSlash(os.Args[0]))
+	}
+}
+
 // ConfigPath determines configuration path, depended on what directory is exist.
 var ConfigPath string
 
@@ -174,7 +195,6 @@ func DetectConfigPath() (retpath string, err error) {
 	var detectname = cfgfile
 	var ok bool
 	var fpath string
-	var exepath = path.Dir(ToSlash(os.Args[0]))
 
 	// try to get from environment setting
 	if fpath, ok = os.LookupEnv("CONFIGPATH"); ok {
@@ -198,30 +218,6 @@ func DetectConfigPath() (retpath string, err error) {
 	if retpath, ok = CheckPath(exepath, detectname); ok {
 		return
 	}
-	// try to find in config subdirectory of current path
-	if retpath, ok = CheckPath(cfgbase, detectname); ok {
-		return
-	}
-	// try to find in current path
-	if retpath, ok = CheckPath(".", detectname); ok {
-		return
-	}
-	// check up current path is the git root path
-	if retpath, ok = CheckPath(cfgbase, detectname); ok {
-		return
-	}
-
-	// check up running in devcontainer workspace
-	if retpath, ok = CheckPath(path.Join("/workspaces", gitname, cfgbase), detectname); ok {
-		return
-	}
-
-	// check up git source path
-	if fpath, ok = os.LookupEnv("GOPATH"); ok {
-		if retpath, ok = CheckPath(path.Join(ToSlash(fpath), "src", gitpath, cfgbase), detectname); ok {
-			return
-		}
-	}
 
 	// if GOBIN or GOPATH is present
 	if fpath, ok = os.LookupEnv("GOBIN"); !ok {
@@ -237,6 +233,31 @@ func DetectConfigPath() (retpath string, err error) {
 		}
 		// try to get from go bin root
 		if retpath, ok = CheckPath(fpath, detectname); ok {
+			return
+		}
+	}
+
+	// try to find in config subdirectory of current path
+	if retpath, ok = CheckPath(path.Join(curpath, cfgbase), detectname); ok {
+		return
+	}
+	// try to find in current path
+	if retpath, ok = CheckPath(curpath, detectname); ok {
+		return
+	}
+
+	// check up running from debugger
+	if retpath, ok = CheckPath(path.Join(exepath, "..", cfgbase), detectname); ok {
+		return
+	}
+	// check up running in devcontainer workspace
+	if retpath, ok = CheckPath(path.Join("/workspaces", gitname, cfgbase), detectname); ok {
+		return
+	}
+
+	// check up git source path
+	if fpath, ok = os.LookupEnv("GOPATH"); ok {
+		if retpath, ok = CheckPath(path.Join(ToSlash(fpath), "src", gitpath, cfgbase), detectname); ok {
 			return
 		}
 	}
@@ -257,7 +278,6 @@ func DetectPackPath() (retpath string, err error) {
 	var detectname = cfg.WPKName[0]
 	var ok bool
 	var fpath string
-	var exepath = path.Dir(ToSlash(os.Args[0]))
 
 	// try to get from environment setting
 	if fpath, ok = os.LookupEnv("PACKPATH"); ok {
@@ -278,7 +298,7 @@ func DetectPackPath() (retpath string, err error) {
 		return
 	}
 	// try to find in current path
-	if retpath, ok = CheckPath(".", detectname); ok {
+	if retpath, ok = CheckPath(curpath, detectname); ok {
 		return
 	}
 	// try to find at parental of cofiguration path
@@ -286,17 +306,16 @@ func DetectPackPath() (retpath string, err error) {
 		return
 	}
 
-	// if GOBIN is present
-	if fpath, ok = os.LookupEnv("GOBIN"); ok {
-		if retpath, ok = CheckPath(ToSlash(fpath), detectname); ok {
-			return
+	// if GOBIN or GOPATH is present
+	if fpath, ok = os.LookupEnv("GOBIN"); !ok {
+		if fpath, ok = os.LookupEnv("GOPATH"); ok {
+			fpath = path.Join(fpath, "bin")
 		}
 	}
-
-	// if GOPATH is present
-	if fpath, ok = os.LookupEnv("GOPATH"); ok {
+	if ok {
+		fpath = ToSlash(fpath)
 		// try to get from go bin root
-		if retpath, ok = CheckPath(path.Join(ToSlash(fpath), "bin"), detectname); ok {
+		if retpath, ok = CheckPath(fpath, detectname); ok {
 			return
 		}
 	}
@@ -313,7 +332,6 @@ var CachePath string
 func DetectCachePath() (retpath string, err error) {
 	var ok bool
 	var fpath string
-	var exepath = path.Dir(ToSlash(os.Args[0]))
 
 	// try to get from environment setting
 	if fpath, ok = os.LookupEnv("CACHEPATH"); ok {

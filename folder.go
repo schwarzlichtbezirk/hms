@@ -247,7 +247,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 		} else {
 			if ret.List, ret.Skip, err = ScanDir(syspath, &cg, func(fpath string) bool {
 				return !prf.IsHidden(fpath)
-			}); err != nil {
+			}); err != nil && len(ret.List) == 0 {
 				if errors.Is(err, fs.ErrNotExist) {
 					WriteError(w, r, http.StatusNotFound, err, AECfolderabsent)
 				} else {

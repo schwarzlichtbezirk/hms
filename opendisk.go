@@ -191,7 +191,7 @@ func OpenDir(dir string) (ret []fs.FileInfo, err error) {
 // ScanDir returns file properties list for given file system directory, or directory in iso-disk.
 func ScanDir(dir string, cg *CatGrp, filter func(string) bool) (ret []Pather, skip int, err error) {
 	var files []fs.FileInfo
-	if files, err = OpenDir(dir); err != nil {
+	if files, err = OpenDir(dir); err != nil && len(files) == 0 {
 		return
 	}
 

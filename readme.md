@@ -21,7 +21,7 @@ Compiled binaries can be downloaded in [Releases](https://github.com/schwarzlich
 At first, install [Golang](https://go.dev/dl/) of last version, and clone project:
 
 ```batch
-git clone github.com/schwarzlichtbezirk/hms
+git clone https://github.com/schwarzlichtbezirk/hms.git
 ```
 
 Then run some batch-files at `task` directory of project:
@@ -30,7 +30,7 @@ Then run some batch-files at `task` directory of project:
 
 2) `task/deploy-plugins.cmd` downloads js-plugins for frontend client. It can be run on every time when it needs to update plugins. And update script to actual versions of libraries.
 
-3) `task/cc.base.cmd` and `task/cc.page.cmd` to compile js-files to bundle. Batch-files expects that [Closure Compiler](https://developers.google.com/closure/compiler) is downloaded to path pointed in those batch-files. Java VM is needed for this.
+3) `task/cc.base.cmd` and `task/cc.page.cmd` to compile js-files to bundle. Batch-files expects that [Closure Compiler](https://developers.google.com/closure/compiler) is downloaded to path pointed in those batch-files. Java VM is needed for this. Compile `css`-files to bundle by `task/cs.skin.cmd`.
 
 4) `task/wpk.full.cmd` packs all resources to single file used by program. It can be run after any resources changes. New package can be compiled during program is running, if does NOT used memory mapping mode. `task/wpk.tiny.cmd` can be used instead to produce small cuted version of resources. If you want package with some other resources combination, you can write for this Lua-script same as, for example, `hms-free.lua` or `hms-tiny.lua`.
 

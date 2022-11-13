@@ -114,7 +114,6 @@ const (
 	AECfoldernodata
 	AECfoldernoacc
 	AECfolderbadpath
-	AECispathmiss
 	AECfolderhidden
 	AECfolderaccess
 	AECfoldernoshr
@@ -143,6 +142,8 @@ const (
 	AECispathnodata
 	AECispathnoacc
 	AECispathdeny
+	AECispathbadpath
+	AECispathmiss
 	AECispathhidden
 
 	// tile/chk

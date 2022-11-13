@@ -434,7 +434,8 @@ func srvinfAPI(w http.ResponseWriter, r *http.Request) {
 		"os":       runtime.GOOS,
 		"numcpu":   runtime.NumCPU(),
 		"maxprocs": runtime.GOMAXPROCS(0),
-		"exepath":  path.Dir(ToSlash(os.Args[0])),
+		"curpath":  curpath,
+		"exepath":  exepath,
 		"cfgpath":  ConfigPath,
 		"wpkpath":  PackPath,
 		"cchpath":  CachePath,
@@ -709,7 +710,7 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		syspath = path.Clean(fpath)
 	} else {
 		if syspath, err = UnfoldPath(fpath); err != nil {
-			WriteError400(w, r, err, AECfolderbadpath)
+			WriteError400(w, r, err, AECispathbadpath)
 			return
 		}
 		if ok, _ := PathExists(syspath); !ok {

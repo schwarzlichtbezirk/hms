@@ -4,6 +4,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 )
@@ -196,14 +197,35 @@ func (prf *Profile) RootIndex(fpath string) int {
 
 // FindRoots scan all available drives installed on local machine.
 func (prf *Profile) FindRoots() {
-	const windisks = "CDEFGHIJKLMNOPQRSTUVWXYZ"
-	for _, d := range windisks {
-		var root = string(d) + ":/" // let's disk roots will be slash-terminated always
-		if _, err := os.Stat(root); err == nil {
-			if prf.RootIndex(root) < 0 {
-				prf.mux.Lock()
-				prf.Roots = append(prf.Roots, root)
-				prf.mux.Unlock()
+	switch runtime.GOOS {
+	case "windows":
+		const windisks = "CDEFGHIJKLMNOPQRSTUVWXYZ"
+		for _, d := range windisks {
+			var root = string(d) + ":/" // let's disk roots will be slash-terminated always
+			if _, err := os.Stat(root); err == nil {
+				if prf.RootIndex(root) < 0 {
+					prf.mux.Lock()
+					prf.Roots = append(prf.Roots, root)
+					prf.mux.Unlock()
+				}
+			}
+		}
+	case "linux":
+		const mnt = "/mnt"
+		var files, err = os.ReadDir(mnt)
+		if err != nil {
+			return
+		}
+		for _, de := range files {
+			if name := de.Name(); name != "wsl" && de.IsDir() {
+				var root = filepath.Join(mnt, name)
+				if _, err := os.Stat(root); err == nil {
+					if prf.RootIndex(root) < 0 {
+						prf.mux.Lock()
+						prf.Roots = append(prf.Roots, root)
+						prf.mux.Unlock()
+					}
+				}
 			}
 		}
 	}
