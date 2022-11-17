@@ -4,6 +4,8 @@ import (
 	"context"
 	"runtime"
 	"sync"
+	"sync/atomic"
+	"time"
 )
 
 // Cacher provides function to perform image converting.
@@ -102,6 +104,7 @@ func (s *scanner) Scan() {
 	}
 
 	var queue []Cacher
+	var issync uint32 // prevents a series of calls
 
 	var wg sync.WaitGroup
 	wg.Add(thrnum)
@@ -158,14 +161,21 @@ func (s *scanner) Scan() {
 							break selector
 						}
 					}
-					// sync file tags tables of caches
-					if err := thumbpkg.Sync(); err != nil {
-						Log.Infoln(err)
+					if atomic.LoadUint32(&issync) == 0 {
+						atomic.StoreUint32(&issync, 1)
+						go func() {
+							defer atomic.StoreUint32(&issync, 0)
+							time.Sleep(500 * time.Millisecond)
+							// sync file tags tables of caches
+							if err := thumbpkg.Sync(); err != nil {
+								Log.Infoln(err)
+							}
+							if err := tilespkg.Sync(); err != nil {
+								Log.Infoln(err)
+							}
+							Log.Infoln("caches synced")
+						}()
 					}
-					if err := tilespkg.Sync(); err != nil {
-						Log.Infoln(err)
-					}
-					Log.Infoln("caches synced")
 				}
 			case <-ctx.Done():
 				return

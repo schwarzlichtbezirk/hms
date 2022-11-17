@@ -40,8 +40,6 @@ const (
 // CatGrp indicates access to each file group.
 type CatGrp [FGnum]bool
 
-var ToSlash = filepath.ToSlash
-
 // IsZero used to check whether an object is zero to determine whether
 // it should be omitted when marshaling to yaml.
 func (cg *CatGrp) IsZero() bool {
@@ -168,10 +166,22 @@ func (prf *Profile) IsHidden(fpath string) bool {
 	defer prf.mux.RUnlock()
 
 	var name = path.Base(kpath)
+patterns:
 	for _, pattern := range prf.Hidden {
 		if strings.HasPrefix(pattern, "**/") {
 			if matched, _ = path.Match(pattern[3:], name); matched {
 				break
+			}
+		} else if strings.HasPrefix(pattern, "?:/") {
+			for _, root := range prf.Roots {
+				if root[len(root)-1] != '/' {
+					root += "/"
+				}
+				if strings.HasPrefix(kpath, root) {
+					if matched, _ = path.Match(pattern[3:], kpath[len(root):]); matched {
+						break patterns
+					}
+				}
 			}
 		} else {
 			if matched, _ = path.Match(pattern, kpath); matched {
@@ -237,10 +247,10 @@ func (prf *Profile) ScanRoots() []Pather {
 	defer prf.mux.RUnlock()
 
 	var lst = make([]Pather, len(prf.Roots))
-	for i, fpath := range prf.Roots {
+	for i, root := range prf.Roots {
 		var dk DriveKit
-		dk.Setup(fpath)
-		dk.Scan(fpath)
+		dk.Setup(root)
+		dk.Scan(root)
 		lst[i] = &dk
 	}
 	return lst
@@ -318,8 +328,8 @@ func (prf *Profile) IsShared(syspath string) bool {
 func (prf *Profile) IsRooted(syspath string) bool {
 	prf.mux.RLock()
 	defer prf.mux.RUnlock()
-	for _, fpath := range prf.Roots {
-		if fpath == syspath {
+	for _, root := range prf.Roots {
+		if root == syspath {
 			return true
 		}
 	}
@@ -367,7 +377,7 @@ func (prf *Profile) GetSharePath(syspath string, isadmin bool) (shrpath string, 
 	defer prf.mux.RUnlock()
 
 	for _, fpath := range prf.Shares {
-		if strings.HasPrefix(syspath, fpath) {
+		if PathStarts(syspath, fpath) {
 			if len(fpath) > len(base) {
 				base = fpath
 			}
@@ -379,10 +389,10 @@ func (prf *Profile) GetSharePath(syspath string, isadmin bool) (shrpath string, 
 		return
 	}
 
-	for _, fpath := range prf.Roots {
-		if strings.HasPrefix(syspath, fpath) {
-			if len(fpath) > len(base) {
-				base = fpath
+	for _, root := range prf.Roots {
+		if PathStarts(syspath, root) {
+			if len(root) > len(base) {
+				base = root
 			}
 		}
 	}
@@ -419,13 +429,13 @@ func (prf *Profile) PathAccess(syspath string, isadmin bool) (cg CatGrp) {
 	defer prf.mux.RUnlock()
 
 	for _, fpath := range prf.Shares {
-		if strings.HasPrefix(syspath, fpath) {
+		if PathStarts(syspath, fpath) {
 			cg.SetAll(true)
 			return
 		}
 	}
-	for _, fpath := range prf.Roots {
-		if strings.HasPrefix(syspath, fpath) {
+	for _, root := range prf.Roots {
+		if PathStarts(syspath, root) {
 			if isadmin {
 				cg.SetAll(true)
 			} else {
@@ -443,12 +453,12 @@ func (prf *Profile) PathAdmin(syspath string) bool {
 	defer prf.mux.RUnlock()
 
 	for _, fpath := range prf.Shares {
-		if strings.HasPrefix(syspath, fpath) {
+		if PathStarts(syspath, fpath) {
 			return true
 		}
 	}
-	for _, fpath := range prf.Roots {
-		if strings.HasPrefix(syspath, fpath) {
+	for _, root := range prf.Roots {
+		if PathStarts(syspath, root) {
 			return true
 		}
 	}

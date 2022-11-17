@@ -708,6 +708,10 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var syspath string
 	if ok, _ := PathExists(fpath); ok {
 		syspath = path.Clean(fpath)
+		// append slash to disk root to prevent open current dir on this disk
+		if syspath[len(syspath)-1] == ':' { // syspath here is always have non zero length
+			syspath += "/"
+		}
 	} else {
 		if syspath, err = UnfoldPath(fpath); err != nil {
 			WriteError400(w, r, err, AECispathbadpath)
@@ -855,6 +859,10 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var syspath string
 	if ok, _ := PathExists(fpath); ok {
 		syspath = path.Clean(fpath)
+		// append slash to disk root to prevent open current dir on this disk
+		if syspath[len(syspath)-1] == ':' { // syspath here is always have non zero length
+			syspath += "/"
+		}
 	} else {
 		if syspath, err = UnfoldPath(fpath); err != nil {
 			WriteError400(w, r, err, AECdrvaddbadpath)
@@ -866,10 +874,11 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		}
 	}
 
-	// append slash to disk root to prevent open current dir on this disk
-	if strings.HasSuffix(syspath, ":") {
-		syspath += "/"
+	if prf.IsHidden(syspath) {
+		WriteError(w, r, http.StatusForbidden, ErrHidden, AECdrvaddhidden)
+		return
 	}
+
 	if prf.RootIndex(syspath) >= 0 {
 		WriteOK(w, r, nil)
 		return

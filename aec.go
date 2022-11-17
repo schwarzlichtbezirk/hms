@@ -181,6 +181,7 @@ const (
 	AECdrvadddeny
 	AECdrvaddbadpath
 	AECdrvaddmiss
+	AECdrvaddhidden
 	AECdrvaddfile
 
 	// drive/del

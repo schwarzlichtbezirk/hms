@@ -3,10 +3,12 @@ package hms
 import (
 	"encoding/xml"
 	"errors"
+	"fmt"
 	"io"
 	"io/fs"
 	"net/http"
 	"path"
+	"strings"
 	"time"
 )
 
@@ -20,39 +22,36 @@ var puidsym = (func() (t [256]bool) {
 
 // UnfoldPath brings any share path to system file path.
 func UnfoldPath(shrpath string) (syspath string, err error) {
+	shrpath = path.Clean(shrpath)
 	var pref, suff = shrpath, "."
-	for i, c := range shrpath {
-		if c == '/' || c == '\\' {
-			pref, suff = shrpath[:i], path.Clean(shrpath[i+1:])
-			if !fs.ValidPath(suff) { // prevent to modify original path
-				err = ErrPathOut
-				return
-			}
-			break
-		} else if int(c) >= len(puidsym) || !puidsym[c] {
-			syspath, err = shrpath, fs.ErrPermission
+	if i := strings.IndexRune(shrpath, '/'); i != -1 {
+		pref, suff = shrpath[:i], shrpath[i+1:]
+		if !fs.ValidPath(suff) { // prevent to modify original path
+			err = ErrPathOut
 			return
 		}
 	}
 	var puid Puid_t
-	if err = puid.Set(pref); err != nil {
-		return
-	}
 	var ok bool
-	if pref, ok = syspathcache.Path(puid); !ok {
-		err = ErrNoPath
-		return
-	}
-	if suff != "." {
-		if puid < PUIDreserved {
-			err = ErrNotSys
+	if puid, ok = CatPathKey[pref]; !ok {
+		if err = puid.Set(pref); err != nil {
+			err = fmt.Errorf("can not decode PUID value: %w", err)
 			return
 		}
-		syspath = path.Join(pref, suff)
-	} else {
-		syspath = pref
+		if pref, ok = syspathcache.Path(puid); !ok {
+			err = ErrNoPath
+			return
+		}
+	} else if suff != "." {
+		err = ErrNotSys
+		return
 	}
-	return // root of share
+	syspath = path.Join(pref, suff)
+	// append slash to disk root to prevent open current dir on this disk
+	if syspath[len(syspath)-1] == ':' { // syspath here is always have non zero length
+		syspath += "/"
+	}
+	return
 }
 
 // APIHANDLER

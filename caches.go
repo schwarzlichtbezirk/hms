@@ -58,6 +58,24 @@ var (
 	ErrNotDisk     = errors.New("file is not image of supported format")
 )
 
+// ToSlash brings filenames to true slashes.
+var ToSlash = wpk.ToSlash
+
+// PathStarts check up that given file path has given parental path.
+func PathStarts(fpath, prefix string) bool {
+	if len(fpath) < len(prefix) {
+		return false
+	}
+	if prefix == "" || prefix == "." || fpath == prefix {
+		return true
+	}
+	if fpath[:len(prefix)] == prefix &&
+		(prefix[len(prefix)-1] == '/' || fpath[len(prefix)] == '/') {
+		return true
+	}
+	return false
+}
+
 // PathCache is unlimited cache with puid/fpath and fpath/puid values.
 type PathCache struct {
 	keypath map[Puid_t]string // puid/path key/values
