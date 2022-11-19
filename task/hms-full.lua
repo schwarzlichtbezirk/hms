@@ -10,7 +10,7 @@ cfg = {
 	},
 	-- list of skins IDs, see 'id' tags of 'skinlist' in 'resmodel.json' file
 	skinset = {
-		"daylight", "blue", "dark", "neon",
+		"daylight", "light", "blue", "dark", "neon",
 		"cup-of-coffee", "coffee-beans", "old-monitor",
 	},
 	-- list of icons collections IDs, see 'id' tags of 'iconlist' in 'resmodel.json' file

@@ -13,6 +13,7 @@ local rootdir = path.join(scrdir, "..", "frontend").."/"
 -- full map of skins identifiers to lists of files
 local fullskinmap = {
 	["daylight"] = {"daylight.css"},
+	["light"] = {"light.css"},
 	["blue"] = {"blue.css"},
 	["dark"] = {"dark.css"},
 	["neon"] = {"neon.css", "nightglow-rainbow.jpg"},
@@ -22,7 +23,7 @@ local fullskinmap = {
 }
 -- full list of skins identifiers
 local fullskinset = {
-	"daylight", "blue", "dark", "neon", "cup-of-coffee", "coffee-beans", "old-monitor",
+	"daylight", "light", "blue", "dark", "neon", "cup-of-coffee", "coffee-beans", "old-monitor",
 }
 -- full list of icons identifiers
 local fulliconset = {

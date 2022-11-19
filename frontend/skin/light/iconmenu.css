@@ -1,0 +1,73 @@
+
+.iconmenu {
+	display: flex;
+	border-radius: 0.25rem;
+}
+
+.iconmenu-list {
+	position: absolute;
+	z-index: 1000;
+	display: none;
+}
+
+	.iconmenu > .btn-icon:hover + .iconmenu-list, .iconmenu-list:hover {
+		display: flex;
+	}
+
+	.iconmenu-list.d-flex ~ .btn-icon {
+		position: absolute;
+		z-index: 1000;
+	}
+
+.btn-icon > .material-icons {
+	font-size: 1.50rem;
+}
+
+.btn-icon {
+	line-height: normal;
+	padding: 0.25rem;
+	color: lightgrey;
+	background-color: rgba(64, 64, 64, 0.4);
+	border-color: dodgerblue;
+}
+
+	.btn-icon:hover {
+		color: #fff;
+		background-color: rgba(64, 64, 64, 0.66);
+		border-color: deepskyblue;
+	}
+
+	.btn-check:focus + .btn-icon, .btn-icon:focus {
+		color: #fff;
+		background-color: rgba(64, 64, 64, 0.75);
+		border-color: deepskyblue;
+		box-shadow: 0 0 0 0.25rem rgba(65, 105, 225, 0.5);
+	}
+
+	.btn-check:checked + .btn-icon, .btn-check:active + .btn-icon, .btn-icon:active, .btn-icon.active, .show > .btn-icon.dropdown-toggle {
+		color: lightskyblue;
+		background-color: rgba(64, 64, 64, 0.6);
+		border-color: deepskyblue;
+	}
+
+		.btn-check:checked + .btn-icon:focus, .btn-check:active + .btn-icon:focus, .btn-icon:active:focus, .btn-icon.active:focus, .show > .btn-icon.dropdown-toggle:focus {
+			box-shadow: 0 0 0 0.25rem rgba(65, 105, 225, 0.5);
+		}
+
+	.btn-icon:disabled, .btn-icon.disabled {
+		color: cadetblue;
+		background-color: rgba(105, 105, 105, 0.4);
+		border-color: rgb(144, 144, 144);
+	}
+
+.fileitem .iconmenu-band {
+	display: none;
+}
+
+.fileitem:hover .iconmenu-band {
+	display: block;
+}
+
+.popover-header {
+	background-color: #aaa;
+}

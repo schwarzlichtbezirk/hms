@@ -22,6 +22,19 @@ java -jar %cs%^
  -o skin/daylight.css
 
 java -jar %cs%^
+ skin/light/page.css^
+ skin/light/card.css^
+ skin/light/icon.css^
+ skin/light/iconmenu.css^
+ skin/light/fileitem.css^
+ skin/light/imgitem.css^
+ skin/light/listitem.css^
+ skin/light/map.css^
+ skin/light/mp3player.css^
+ skin/light/slider.css^
+ -o skin/light.css
+
+java -jar %cs%^
  skin/blue/page.css^
  skin/blue/card.css^
  skin/blue/icon.css^

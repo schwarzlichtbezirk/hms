@@ -6,6 +6,11 @@
 			"link": "/fs/skin/daylight.css"
 		},
 		{
+			"id": "light",
+			"name": "light",
+			"link": "/fs/skin/light.css"
+		},
+		{
 			"id": "blue",
 			"name": "blue",
 			"link": "/fs/skin/blue.css"
