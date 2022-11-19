@@ -41,9 +41,9 @@ const auth = {
 	signload() {
 		try {
 			const tok = JSON.parse(sessionStorage.getItem('token'));
-			this.token.access = tok.access;
-			this.token.refrsh = tok.refrsh;
-			this.login = sessionStorage.getItem('login') ?? "";
+			this.token.access = tok?.access;
+			this.token.refrsh = tok?.refrsh;
+			this.login = storageGetString('login', "");
 			eventHub.emit('auth', true);
 		} catch {
 			this.token.access = null;

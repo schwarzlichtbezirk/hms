@@ -713,17 +713,13 @@ const VueMainApp = {
 		},
 
 		// opens given folder cleary
-		async fetchfolder(hist) {
-			const response = await fetchajaxauth("POST", "/api/res/folder", {
-				aid: hist.aid, path: hist.path ?? hist.puid
-			});
+		async fetchfolder(arg) {
+			const response = await fetchajaxauth("POST", "/api/res/folder", arg);
 			traceajax(response);
 			if (!response.ok) {
 				throw new HttpError(response.status, response.data);
 			}
 
-			hist.puid = response.data.puid;
-			hist.path = response.data.path;
 			// current path & state
 			this.skipped = response.data.skip;
 			this.curpuid = response.data.puid;
@@ -884,7 +880,7 @@ const VueMainApp = {
 				eventHub.emit('ajax', +1);
 				try {
 					// open route and push history step
-					const hist = { aid: this.aid, puid: PUID.home };
+					const hist = { aid: this.aid, path: PUID.home };
 					await this.fetchfolder(hist);
 					this.pushhist(hist);
 				} catch (e) {
@@ -948,7 +944,7 @@ const VueMainApp = {
 			(async () => {
 				eventHub.emit('ajax', +1);
 				try {
-					await this.fetchfolder({ aid: this.aid, puid: this.curpuid, path: this.curpath });
+					await this.fetchfolder({ aid: this.aid, path: this.curpuid ?? this.curpath });
 					if (this.isadmin && this.curpuid !== PUID.shares) {
 						await this.fetchshared(); // get shares
 					}
@@ -1108,7 +1104,7 @@ const VueMainApp = {
 						eventHub.emit('ajax', +1);
 						try {
 							// open route and push history step
-							const hist = { aid: this.aid, puid: file.puid };
+							const hist = { aid: this.aid, path: file.puid ?? file.path };
 							await this.fetchfolder(hist);
 							this.pushhist(hist);
 						} catch (e) {
@@ -1178,15 +1174,14 @@ const VueMainApp = {
 		const route = chunks[0];
 		chunks.shift();
 		if (route === "ctgr") {
-			hist.puid = PUID[chunks[0]];
+			hist.path = PUID[chunks[0]];
 			chunks.shift();
 		} else if (route === "path") {
 			hist.path = chunks.join('/');
 		} else if (route === "main") {
-			hist.puid = PUID.home;
-		}
-		if (!hist.puid && !hist.path) {
-			hist.puid = PUID.home;
+			hist.path = PUID.home;
+		} else {
+			hist.path = PUID.home;
 		}
 
 		// load resources and open route
@@ -1201,7 +1196,7 @@ const VueMainApp = {
 				this.resmodel = resmodel = await response.json();
 
 				// set skin
-				const skinid = sessionStorage.getItem('skinid') ?? this.resmodel.defskinid;
+				const skinid = storageGetString('skinid', this.resmodel.defskinid);
 				for (const v of this.resmodel.skinlist) {
 					if (v.id === skinid) {
 						document.getElementById('skinmodel')?.setAttribute('href', v.link);
@@ -1210,7 +1205,7 @@ const VueMainApp = {
 				}
 
 				// load icons
-				const iconid = sessionStorage.getItem('iconid') ?? this.resmodel.deficonid;
+				const iconid = storageGetString('iconid', this.resmodel.deficonid);
 				for (const v of this.resmodel.iconlist) {
 					if (v.id === iconid) {
 						await this.fetchicons(v.link);

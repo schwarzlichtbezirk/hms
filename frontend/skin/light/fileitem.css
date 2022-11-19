@@ -14,13 +14,13 @@
 	.fileitem.selected, .listitem.selected {
 		background: LightSkyBlue;
 		border: 1px solid DodgerBlue;
-		box-shadow: 0px 0px 8px rgba(255, 255, 255, 0.5);
+		box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.5);
 	}
 
 		.fileitem.selected:hover, .listitem.selected:hover {
 			background: DeepSkyBlue;
 			border: 1px solid DodgerBlue;
-			box-shadow: 0px 0px 12px rgba(255, 255, 255, 0.5);
+			box-shadow: 0px 0px 12px rgba(0, 0, 0, 0.5);
 		}
 
 	.fileitem > .tag, .listitem {

@@ -108,6 +108,22 @@ const makestrid = length => {
 	return result;
 };
 
+const storageGetString = (id, def) => {
+	return sessionStorage.getItem(id) ?? def;
+};
+
+const storageGetNumber = (id, def) => {
+	const val = sessionStorage.getItem(id);
+	if (val !== null) return Number(val);
+	else return def;
+};
+
+const storageGetBoolean = (id, def) => {
+	const val = sessionStorage.getItem(id);
+	if (val !== null) return val === 'true';
+	else return def;
+};
+
 ///////////////////////
 // Events handle hub //
 ///////////////////////

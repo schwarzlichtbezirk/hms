@@ -226,15 +226,19 @@ const VueCtgrCard = {
 	methods: {
 		onlistmodels() {
 			this.listmode = 'xs';
+			sessionStorage.setItem("card.ctgr.listmode", this.listmode);
 		},
 		onlistmodesm() {
 			this.listmode = 'sm';
+			sessionStorage.setItem("card.ctgr.listmode", this.listmode);
 		},
 		onlistmodemd() {
 			this.listmode = 'md';
+			sessionStorage.setItem("card.ctgr.listmode", this.listmode);
 		},
 		onlistmodelg() {
 			this.listmode = 'lg';
+			sessionStorage.setItem("card.ctgr.listmode", this.listmode);
 		},
 
 		onselect(file) {
@@ -250,6 +254,9 @@ const VueCtgrCard = {
 		},
 		oncollapse(e) {
 		}
+	},
+	created() {
+		this.listmode = storageGetString("card.ctgr.listmode", 'sm');
 	},
 	mounted() {
 		const el = document.getElementById('card' + this.iid);
@@ -348,18 +355,23 @@ const VueDriveCard = {
 	methods: {
 		onorder() {
 			this.sortorder = -this.sortorder;
+			sessionStorage.setItem("card.drive.sortorder", this.sortorder);
 		},
 		onlistmodels() {
 			this.listmode = 'xs';
+			sessionStorage.setItem("card.drive.listmode", this.listmode);
 		},
 		onlistmodesm() {
 			this.listmode = 'sm';
+			sessionStorage.setItem("card.drive.listmode", this.listmode);
 		},
 		onlistmodemd() {
 			this.listmode = 'md';
+			sessionStorage.setItem("card.drive.listmode", this.listmode);
 		},
 		onlistmodelg() {
 			this.listmode = 'lg';
+			sessionStorage.setItem("card.drive.listmode", this.listmode);
 		},
 
 		ondiskadd() {
@@ -457,6 +469,10 @@ const VueDriveCard = {
 			}
 		}
 	},
+	created() {
+		this.sortorder = storageGetNumber("card.drive.sortorder", 1);
+		this.listmode = storageGetString("card.drive.listmode", 'sm');
+	},
 	mounted() {
 		eventHub.on('auth', this.authclosure);
 		eventHub.on('select', this.onanyselect);
@@ -553,18 +569,23 @@ const VueDirCard = {
 	methods: {
 		onorder() {
 			this.sortorder = -this.sortorder;
+			sessionStorage.setItem("card.dir.sortorder", this.sortorder);
 		},
 		onlistmodels() {
 			this.listmode = 'xs';
+			sessionStorage.setItem("card.dir.listmode", this.listmode);
 		},
 		onlistmodesm() {
 			this.listmode = 'sm';
+			sessionStorage.setItem("card.dir.listmode", this.listmode);
 		},
 		onlistmodemd() {
 			this.listmode = 'md';
+			sessionStorage.setItem("card.dir.listmode", this.listmode);
 		},
 		onlistmodelg() {
 			this.listmode = 'lg';
+			sessionStorage.setItem("card.dir.listmode", this.listmode);
 		},
 
 		onselect(file) {
@@ -580,6 +601,10 @@ const VueDirCard = {
 		},
 		oncollapse(e) {
 		}
+	},
+	created() {
+		this.sortorder = storageGetNumber("card.dir.sortorder", 1);
+		this.listmode = storageGetString("card.dir.listmode", 'sm');
 	},
 	mounted() {
 		const el = document.getElementById('card' + this.iid);
@@ -608,6 +633,7 @@ const VueFileCard = {
 			sortmode: 'byalpha',
 			listmode: 'sm',
 			thumbmode: true,
+			audioonly: false,
 			fgshow: [
 				false, // other
 				true, // video
@@ -618,7 +644,6 @@ const VueFileCard = {
 				true, // packs
 				true // dir
 			],
-			audioonly: false,
 
 			iid: makestrid(10) // instance ID
 		};
@@ -871,30 +896,39 @@ const VueFileCard = {
 
 		onorder() {
 			this.sortorder = -this.sortorder;
+			sessionStorage.setItem("card.file.sortorder", this.sortorder);
 		},
 		onsortalpha() {
 			this.sortmode = 'byalpha';
+			sessionStorage.setItem("card.file.sortmode", this.sortmode);
 		},
 		onsorttime() {
 			this.sortmode = 'bytime';
+			sessionStorage.setItem("card.file.sortmode", this.sortmode);
 		},
 		onsortsize() {
 			this.sortmode = 'bysize';
+			sessionStorage.setItem("card.file.sortmode", this.sortmode);
 		},
 		onsortunsorted() {
 			this.sortmode = 'unsorted';
+			sessionStorage.setItem("card.file.sortmode", this.sortmode);
 		},
 		onlistmodels() {
 			this.listmode = 'xs';
+			sessionStorage.setItem("card.file.listmode", this.listmode);
 		},
 		onlistmodesm() {
 			this.listmode = 'sm';
+			sessionStorage.setItem("card.file.listmode", this.listmode);
 		},
 		onlistmodemd() {
 			this.listmode = 'md';
+			sessionStorage.setItem("card.file.listmode", this.listmode);
 		},
 		onlistmodelg() {
 			this.listmode = 'lg';
+			sessionStorage.setItem("card.file.listmode", this.listmode);
 		},
 		onthumbmode() {
 			this.thumbmode = thumbmode = !this.thumbmode;
@@ -959,9 +993,12 @@ const VueFileCard = {
 		}
 	},
 	created() {
-		eventHub.on('audioonly', this.onaudioonly);
+		this.sortorder = storageGetNumber("card.file.sortorder", 1);
+		this.sortmode = storageGetString("card.file.sortmode", 'byalpha');
+		this.listmode = storageGetString("card.file.listmode", 'sm');
 	},
 	mounted() {
+		eventHub.on('audioonly', this.onaudioonly);
 		const el = document.getElementById('card' + this.iid);
 		if (el) {
 			el.addEventListener('shown.bs.collapse', this.onexpand);
@@ -970,7 +1007,6 @@ const VueFileCard = {
 	},
 	unmounted() {
 		eventHub.off('audioonly', this.onaudioonly);
-
 		const el = document.getElementById('card' + this.iid);
 		if (el) {
 			el.removeEventListener('shown.bs.collapse', this.onexpand);
@@ -1149,13 +1185,13 @@ const VueTileCard = {
 	props: ["flist"],
 	data() {
 		return {
-			flisthub: makeeventhub(),
 			expanded: true,
 			sortorder: 1,
 			sortmode: 'byalpha',
+			tilemode: 'mode-246',
 			tiles: [],
 			sheet: [],
-			tilemode: "mode-246",
+			flisthub: makeeventhub(),
 			iid: makestrid(10) // instance ID
 		};
 	},
@@ -1353,22 +1389,6 @@ const VueTileCard = {
 				}
 			})();
 		},
-
-		onorder() {
-			this.sortorder = -this.sortorder;
-		},
-		onsortalpha() {
-			this.sortmode = 'byalpha';
-		},
-		onsorttime() {
-			this.sortmode = 'bytime';
-		},
-		onsortsize() {
-			this.sortmode = 'bysize';
-		},
-		onsortunsorted() {
-			this.sortmode = 'unsorted';
-		},
 		onrebuild() {
 			const ret = maketileslide(this.photolist, tilemodetype[this.tilemode]);
 			this.tiles = ret.tiles;
@@ -1382,17 +1402,42 @@ const VueTileCard = {
 				}
 			})();
 		},
+
+		onorder() {
+			this.sortorder = -this.sortorder;
+			sessionStorage.setItem("card.tile.sortorder", this.sortorder);
+		},
+		onsortalpha() {
+			this.sortmode = 'byalpha';
+			sessionStorage.setItem("card.tile.sortmode", this.sortmode);
+		},
+		onsorttime() {
+			this.sortmode = 'bytime';
+			sessionStorage.setItem("card.tile.sortmode", this.sortmode);
+		},
+		onsortsize() {
+			this.sortmode = 'bysize';
+			sessionStorage.setItem("card.tile.sortmode", this.sortmode);
+		},
+		onsortunsorted() {
+			this.sortmode = 'unsorted';
+			sessionStorage.setItem("card.tile.sortmode", this.sortmode);
+		},
 		onmode246() {
 			this.tilemode = 'mode-246';
+			sessionStorage.setItem("card.tile.tilemode", this.tilemode);
 		},
 		onmode234() {
 			this.tilemode = 'mode-234';
+			sessionStorage.setItem("card.tile.tilemode", this.tilemode);
 		},
 		onmode26() {
 			this.tilemode = 'mode-26';
+			sessionStorage.setItem("card.tile.tilemode", this.tilemode);
 		},
 		onmode2346() {
 			this.tilemode = 'mode-2346';
+			sessionStorage.setItem("card.tile.tilemode", this.tilemode);
 		},
 
 		onopen(file) {
@@ -1420,9 +1465,12 @@ const VueTileCard = {
 		}
 	},
 	created() {
-		eventHub.on('wdhmult', this.onwdhmult);
+		this.sortorder = storageGetNumber("card.tile.sortorder", 1);
+		this.sortmode = storageGetString("card.tile.sortmode", 'byalpha');
+		this.tilemode = storageGetString("card.tile.tilemode", 'mode-246');
 	},
 	mounted() {
+		eventHub.on('wdhmult', this.onwdhmult);
 		const el = document.getElementById('card' + this.iid);
 		if (el) {
 			el.addEventListener('shown.bs.collapse', this.onexpand);
@@ -1447,7 +1495,7 @@ const VueMapCard = {
 		return {
 			isfullscreen: false,
 			styleid: 'mapbox-hybrid',
-			markermode: "thumb",
+			markermode: 'thumb',
 			showtrack: false,
 			tracknum: 0,
 			keepmap: false,
@@ -1635,7 +1683,10 @@ const VueMapCard = {
 		// make tiles layer
 		// see: https://leaflet-extras.github.io/leaflet-providers/preview/
 		maketiles(id) {
-			this.styleid = id;
+			if (this.styleid !== id) {
+				this.styleid = id;
+				sessionStorage.setItem("card.map.styleid", id);
+			}
 			switch (id) {
 				case 'mapbox-hybrid':
 					return L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token={accessToken}', {
@@ -1931,6 +1982,7 @@ const VueMapCard = {
 					this.markermode = 'marker';
 					break;
 			}
+			sessionStorage.setItem("card.map.markermode", this.markermode);
 			// recreate markers layers
 			const gpslist = this.gpslist;
 			this.gpslist = [];
@@ -1971,6 +2023,8 @@ const VueMapCard = {
 		}
 	},
 	created() {
+		this.styleid = storageGetString("card.map.styleid", 'mapbox-hybrid');
+		this.markermode = storageGetString("card.map.markermode", 'thumb');
 	},
 	mounted() {
 		const el = document.getElementById('card' + this.iid);
