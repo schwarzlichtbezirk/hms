@@ -5,7 +5,7 @@ const VuePlayer = {
 	data() {
 		return {
 			visible: false,
-			list: [],
+			sortedlist: [],
 			selfile: {},
 			volval: 100,
 			ratval: 6,
@@ -29,7 +29,7 @@ const VuePlayer = {
 		// list of files that can be played
 		playlist() {
 			const l = [];
-			for (const file of this.list) {
+			for (const file of this.sortedlist) {
 				if (audiofilter(file) || !this.audioonly && videofilter(file)) {
 					l.push(file);
 				}
@@ -114,7 +114,7 @@ const VuePlayer = {
 			}
 			this.selfile = file;
 
-			const media = new Audio(fileurl(file)); // API HTMLMediaElement, HTMLAudioElement
+			const media = new Audio(`/id${this.$root.aid}/file/${file.puid}`); // API HTMLMediaElement, HTMLAudioElement
 			media.volume = this.volval / 100;
 			media.playbackRate = this.ratevals[this.ratval];
 			media.loop = this.repeatmode === 1;
@@ -247,7 +247,7 @@ const VuePlayer = {
 			}
 		},
 		onrepeat() {
-			this.repeatmode = (this.repeatmode + 1) % (this.list ? 3 : 2);
+			this.repeatmode = (this.repeatmode + 1) % (this.sortedlist ? 3 : 2);
 			if (this.media) {
 				this.media.loop = this.repeatmode === 1;
 			}
@@ -301,23 +301,26 @@ const VuePlayer = {
 				this.popup(file);
 			}
 		},
-		onplaylist(list) {
-			this.list = list;
+		onsortedlist(list) {
+			this.sortedlist = list;
 		},
 		onaudioonly(val) {
 			this.audioonly = val;
 		}
 	},
 	created() {
+		this.onaudioonly = storageGetBoolean('audioonly', false);
+	},
+	mounted() {
 		eventHub.on('open', this.onopen);
 		eventHub.on('select', this.onselect);
-		eventHub.on('playlist', this.onplaylist);
+		eventHub.on('sortedlist', this.onsortedlist);
 		eventHub.on('audioonly', this.onaudioonly);
 	},
 	unmounted() {
 		eventHub.off('open', this.onopen);
 		eventHub.off('select', this.onselect);
-		eventHub.off('playlist', this.onplaylist);
+		eventHub.off('sortedlist', this.onsortedlist);
 		eventHub.off('audioonly', this.onaudioonly);
 	}
 };

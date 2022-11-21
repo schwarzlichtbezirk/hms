@@ -22,7 +22,7 @@ let iconmapping = {
 	},
 	iconfmt: []
 };
-let thumbmode = true;
+let thumbmode = storageGetBoolean("thumbmode", true);
 
 // Predefined PUIDs.
 const PUID = {
@@ -356,9 +356,6 @@ const geticonpath = file => {
 };
 
 const encode = uri => encodeURI(uri).replace('#', '%23').replace('&', '%26').replace('+', '%2B');
-
-const fileurl = file => `/id${appvm.aid}/file/${file.puid}`;
-const mediaurl = (file, media, hd) => `/id${appvm.aid}/file/${file.puid}?media=${media}&hd=${hd}`;
 
 const showmsgbox = (title, message, details) => {
 	const el = document.getElementById('msgbox');
@@ -960,7 +957,7 @@ const VueMainApp = {
 		},
 
 		onlink() {
-			copyTextToClipboard(window.location.origin + fileurl(this.selfile));
+			copyTextToClipboard(window.location.origin + `/id${this.aid}/file/${this.selfile.puid}`);
 		},
 		onshare() {
 			(async () => {
@@ -1115,7 +1112,7 @@ const VueMainApp = {
 					})();
 				}
 			} else if (extfmt.books[ext] || extfmt.texts[ext]) {
-				const url = mediaurl(file, 1, 0);
+				const url = `/id${this.aid}/file/${file.puid}?media=1&hd=0`;
 				window.open(url, file.name);
 			}
 		},
@@ -1135,12 +1132,6 @@ const VueMainApp = {
 		}
 	},
 	created() {
-		eventHub.on('auth', this.authclosure);
-		eventHub.on('ajax', viewpreloader);
-		eventHub.on('open', this.onopen);
-		eventHub.on('select', this.onselect);
-		eventHub.on('playback', this.onplayback);
-
 		auth.signload();
 		this.login = auth.login;
 		if (devmode && this.isauth) {
@@ -1149,6 +1140,12 @@ const VueMainApp = {
 		}
 	},
 	mounted() {
+		eventHub.on('auth', this.authclosure);
+		eventHub.on('ajax', viewpreloader);
+		eventHub.on('open', this.onopen);
+		eventHub.on('select', this.onselect);
+		eventHub.on('playback', this.onplayback);
+
 		const chunks = decodeURI(window.location.pathname).split('/');
 		// remove first empty element
 		chunks.shift();
@@ -1341,7 +1338,7 @@ const VueAuth = {
 };
 
 // Create application view model
-const appvm = Vue.createApp(VueMainApp)
+Vue.createApp(VueMainApp)
 	.component('auth-tag', VueAuth)
 	.component('thumbslider-tag', VueThumbSlider)
 	.component('photoslider-tag', VuePhotoSlider)

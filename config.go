@@ -173,7 +173,7 @@ var (
 
 func init() {
 	if str, err := filepath.Abs("."); err == nil {
-		curpath = path.Dir(ToSlash(str))
+		curpath = ToSlash(str)
 	} else {
 		curpath = "."
 	}

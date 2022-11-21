@@ -123,18 +123,7 @@ const closeFullscreen = () => {
 
 // leaflet html addons
 
-const makemarkericon = file => {
-	const res = geticonpath(file);
-	const icp = res.org || res.alt;
-	let src = "";
-	if (Number(file.mtmb) > 0 && thumbmode) {
-		src = `<source srcset="/id${appvm.aid}/mtmb/${file.puid}" type="${MimeStr[file.mtmb]}">`;
-	} else {
-		for (fmt of iconmapping.iconfmt) {
-			src += `<source srcset="${icp + fmt.ext}" type="${fmt.mime}">`;
-		}
-	}
-	return `
+const imagetmpl = src => `
 <div class="position-relative">
 	<picture>
 		${src}
@@ -142,20 +131,8 @@ const makemarkericon = file => {
 	</picture>
 </div>
 `;
-};
 
-const makemarkerpopup = file => {
-	const res = geticonpath(file);
-	const icp = res.org || res.alt;
-	let src = "";
-	if (Number(file.mtmb) > 0 && thumbmode) {
-		src = `<source srcset="/id${appvm.aid}/mtmb/${file.puid}" type="${MimeStr[file.mtmb]}">`;
-	} else {
-		for (fmt of iconmapping.iconfmt) {
-			src += `<source srcset="${icp + fmt.ext}" type="${fmt.mime}">`;
-		}
-	}
-	return `
+const photoinfotmpl = (file, src) => `
 <div class="photoinfo">
 	<ul class="nav nav-tabs" role="tablist">
 		<li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#pict">Thumbnail</a></li>
@@ -179,7 +156,6 @@ const makemarkerpopup = file => {
 	</div>
 </div>
 `;
-};
 
 const VueCtgrCard = {
 	template: '#ctgr-card-tpl',
@@ -657,7 +633,7 @@ const VueFileCard = {
 		},
 		sortedlist: {
 			handler(val, oldval) {
-				eventHub.emit('playlist', val);
+				eventHub.emit('sortedlist', val);
 			}
 		}
 	},
@@ -930,14 +906,17 @@ const VueFileCard = {
 			this.listmode = 'lg';
 			sessionStorage.setItem("card.file.listmode", this.listmode);
 		},
+
 		onthumbmode() {
-			this.thumbmode = thumbmode = !this.thumbmode;
+			thumbmode = !thumbmode;
+			sessionStorage.setItem('thumbmode', thumbmode);
 			eventHub.emit('thumbmode', thumbmode);
 		},
-
 		onheadset() {
+			sessionStorage.setItem('audioonly', !this.audioonly);
 			eventHub.emit('audioonly', !this.audioonly);
 		},
+
 		onaudio() {
 			this.fgshow[FG.audio] = !this.fgshow[FG.audio];
 		},
@@ -969,9 +948,7 @@ const VueFileCard = {
 		onunselect() {
 			eventHub.emit('select', null);
 		},
-		onaudioonly(val) {
-			this.audioonly = val;
-		},
+
 		onexpand(e) {
 			(async () => {
 				try {
@@ -990,15 +967,25 @@ const VueFileCard = {
 					ajaxfail(e);
 				}
 			})();
+		},
+
+		_thumbmode(val) {
+			this.thumbmode = val;
+		},
+		_audioonly(val) {
+			this.audioonly = val;
 		}
 	},
 	created() {
 		this.sortorder = storageGetNumber("card.file.sortorder", 1);
 		this.sortmode = storageGetString("card.file.sortmode", 'byalpha');
 		this.listmode = storageGetString("card.file.listmode", 'sm');
+		this.thumbmode = storageGetBoolean("thumbmode", true);
+		this.audioonly = storageGetBoolean('audioonly', false);
 	},
 	mounted() {
-		eventHub.on('audioonly', this.onaudioonly);
+		eventHub.on('thumbmode', this._thumbmode);
+		eventHub.on('audioonly', this._audioonly);
 		const el = document.getElementById('card' + this.iid);
 		if (el) {
 			el.addEventListener('shown.bs.collapse', this.onexpand);
@@ -1006,7 +993,8 @@ const VueFileCard = {
 		}
 	},
 	unmounted() {
-		eventHub.off('audioonly', this.onaudioonly);
+		eventHub.off('thumbmode', this._thumbmode);
+		eventHub.off('audioonly', this._audioonly);
 		const el = document.getElementById('card' + this.iid);
 		if (el) {
 			el.removeEventListener('shown.bs.collapse', this.onexpand);
@@ -1680,6 +1668,35 @@ const VueMapCard = {
 			}
 			this.addmarkers(gpslist);
 		},
+
+		makemarkericon(file) {
+			const res = geticonpath(file);
+			const icp = res.org || res.alt;
+			let src = "";
+			if (Number(file.mtmb) > 0 && thumbmode) {
+				src = `<source srcset="/id${this.$root.aid}/mtmb/${file.puid}" type="${MimeStr[file.mtmb]}">`;
+			} else {
+				for (fmt of iconmapping.iconfmt) {
+					src += `<source srcset="${icp + fmt.ext}" type="${fmt.mime}">`;
+				}
+			}
+			return imagetmpl(src);
+		},
+
+		makemarkerpopup(file) {
+			const res = geticonpath(file);
+			const icp = res.org || res.alt;
+			let src = "";
+			if (Number(file.mtmb) > 0 && thumbmode) {
+				src = `<source srcset="/id${this.$root.aid}/mtmb/${file.puid}" type="${MimeStr[file.mtmb]}">`;
+			} else {
+				for (fmt of iconmapping.iconfmt) {
+					src += `<source srcset="${icp + fmt.ext}" type="${fmt.mime}">`;
+				}
+			}
+			return photoinfotmpl(file, src);
+		},
+
 		// make tiles layer
 		// see: https://leaflet-extras.github.io/leaflet-providers/preview/
 		maketiles(id) {
@@ -1819,7 +1836,7 @@ const VueMapCard = {
 					};
 					if (this.markermode === 'thumb' && file.puid) {
 						opt.icon = L.divIcon({
-							html: makemarkericon(file),
+							html: this.makemarkericon(file),
 							className: "photomarker",
 							iconSize: [size, size],
 							iconAnchor: [size / 2, size / 2],
@@ -1828,7 +1845,7 @@ const VueMapCard = {
 					}
 
 					const template = document.createElement('template');
-					template.innerHTML = makemarkerpopup(file).trim();
+					template.innerHTML = this.makemarkerpopup(file).trim();
 					const popup = template.content.firstChild;
 					popup.querySelector(".photoinfo picture")?.addEventListener('click', () => {
 						eventHub.emit('open', file, this.gpslist);
@@ -1885,7 +1902,7 @@ const VueMapCard = {
 			(async () => {
 				eventHub.emit('ajax', +1);
 				try {
-					const response = await fetch(fileurl(file));
+					const response = await fetch(`/id${this.$root.aid}/file/${file.puid}`);
 					const body = await response.text();
 					const re = /lat="(\d+\.\d+)" lon="(\d+\.\d+)"/g;
 					const matches = body.matchAll(re);

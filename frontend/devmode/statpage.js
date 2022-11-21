@@ -184,10 +184,9 @@ const VueStatApp = {
 			this.usrlstpage = page;
 		}
 	},
-	created() {
-		eventHub.on('ajax', viewpreloader);
-	},
 	mounted() {
+		eventHub.on('ajax', viewpreloader);
+
 		(async () => {
 			try {
 				const response = await fetch("/api/stat/srvinf");

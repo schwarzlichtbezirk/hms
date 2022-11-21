@@ -429,16 +429,18 @@ func reloadAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 // APIHANDLER
 func srvinfAPI(w http.ResponseWriter, r *http.Request) {
 	var ret = XmlMap{
-		"started":  UnixJS(starttime),
-		"govers":   runtime.Version(),
-		"os":       runtime.GOOS,
-		"numcpu":   runtime.NumCPU(),
-		"maxprocs": runtime.GOMAXPROCS(0),
-		"curpath":  curpath,
-		"exepath":  exepath,
-		"cfgpath":  ConfigPath,
-		"wpkpath":  PackPath,
-		"cchpath":  CachePath,
+		"buildvers": BuildVers,
+		"builddate": BuildDate,
+		"started":   UnixJS(starttime),
+		"govers":    runtime.Version(),
+		"os":        runtime.GOOS,
+		"numcpu":    runtime.NumCPU(),
+		"maxprocs":  runtime.GOMAXPROCS(0),
+		"curpath":   curpath,
+		"exepath":   exepath,
+		"cfgpath":   ConfigPath,
+		"wpkpath":   PackPath,
+		"cchpath":   CachePath,
 	}
 
 	WriteOK(w, r, ret)

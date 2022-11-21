@@ -75,7 +75,7 @@ const VuePhotoSlider = {
 		},
 		// image url
 		selfileurl() {
-			return this.selfile && mediaurl(this.selfile, 1, this.hd);
+			return this.selfile && `/id${this.$root.aid}/file/${this.selfile}?media=1&hd=${this.hd}`;
 		},
 		// index of selected file
 		selfilepos() {
@@ -268,11 +268,10 @@ const VuePhotoSlider = {
 			}
 		}
 	},
-	created() {
+	mounted() {
 		eventHub.on('open', this.onopen);
 		eventHub.on('select', this.onselect);
-	},
-	mounted() {
+
 		this.dlg = new bootstrap.Modal(this.$el);
 		this.$el.addEventListener('shown.bs.modal', e => {
 		});

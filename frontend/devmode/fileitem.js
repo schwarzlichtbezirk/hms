@@ -362,6 +362,8 @@ const VueIcon = {
 	created() {
 		this.iconfmt = iconmapping.iconfmt;
 		this.tm = thumbmode;
+	},
+	mounted() {
 		eventHub.on('iconset', this._iconset);
 		eventHub.on('thumbmode', this._thumbmode);
 	},
@@ -423,7 +425,7 @@ const VueIconMenu = {
 			}
 		},
 		onlink() {
-			copyTextToClipboard(window.location.origin + fileurl(this.file));
+			copyTextToClipboard(window.location.origin + `/id${this.$root.aid}/file/${this.file.puid}`);
 		},
 		onshare() {
 			(async () => {
@@ -536,6 +538,8 @@ const VueListItem = {
 	created() {
 		this.iconfmt = iconmapping.iconfmt;
 		this.tm = thumbmode;
+	},
+	mounted() {
 		eventHub.on('iconset', this._iconset);
 		eventHub.on('thumbmode', this._thumbmode);
 	},
@@ -602,6 +606,8 @@ const VueFileItem = {
 	created() {
 		this.iconfmt = iconmapping.iconfmt;
 		this.tm = thumbmode;
+	},
+	mounted() {
 		eventHub.on('iconset', this._iconset);
 		eventHub.on('thumbmode', this._thumbmode);
 	},
@@ -650,6 +656,8 @@ const VueImgItem = {
 	created() {
 		this.iconfmt = iconmapping.iconfmt;
 		this.tm = thumbmode;
+	},
+	mounted() {
 		eventHub.on('iconset', this._iconset);
 		eventHub.on('thumbmode', this._thumbmode);
 	},
@@ -722,7 +730,7 @@ const VueTileItem = {
 			return filehint(this.file).map(e => `${e[0]}: ${e[1]}`).join('\n');
 		},
 		iconsrc() {
-			return `/id${appvm.aid}/tile/${this.file.puid}/${24 * this.wdhmult * this.sx}x${18 * this.wdhmult * this.sy}`;
+			return `/id${this.$root.aid}/tile/${this.file.puid}/${24 * this.wdhmult * this.sx}x${18 * this.wdhmult * this.sy}`;
 		},
 		iconblank() {
 			return `/asst/blank-tile/${24 * this.wdhmult * this.sx}x${18 * this.wdhmult * this.sy}.svg`;
@@ -742,6 +750,8 @@ const VueTileItem = {
 	created() {
 		this.iconfmt = iconmapping.iconfmt;
 		this.tm = thumbmode;
+	},
+	mounted() {
 		eventHub.on('iconset', this._iconset);
 		eventHub.on('thumbmode', this._thumbmode);
 		eventHub.on('wdhmult', this._wdhmult);

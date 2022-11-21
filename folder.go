@@ -12,14 +12,6 @@ import (
 	"time"
 )
 
-var puidsym = (func() (t [256]bool) {
-	const encodeHex = "0123456789ABCDEFGHIJKLMNOPQRSTUV"
-	for _, c := range encodeHex {
-		t[c] = true
-	}
-	return
-})()
-
 // UnfoldPath brings any share path to system file path.
 func UnfoldPath(shrpath string) (syspath string, err error) {
 	shrpath = path.Clean(shrpath)
