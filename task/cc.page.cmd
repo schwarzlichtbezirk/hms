@@ -1,8 +1,9 @@
 @echo off
-cd /d %~dp0../frontend
+call :realpath %~dp0..\frontend
+set wd=%retval%
 
 set cv=v20220202
-set cc=%~d0/tools/closure-compiler-%cv%.jar
+set cc=%~d0\tools\closure-compiler-%cv%.jar
 if not exist %cc% (
 	echo closure-compiler does not found, downloading it into '\tools' folder.
 	mkdir %~d0\tools
@@ -10,23 +11,29 @@ if not exist %cc% (
 )
 
 java -jar %cc%^
- --js devmode/relmode.js^
- --js devmode/common.js^
- --js devmode/request.js^
- --js devmode/fileitem.js^
- --js devmode/cards.js^
- --js devmode/mp3player.js^
- --js devmode/slider.js^
- --js devmode/mainpage.js^
+ --js %wd%\devmode\relmode.js^
+ --js %wd%\devmode\common.js^
+ --js %wd%\devmode\request.js^
+ --js %wd%\devmode\fileitem.js^
+ --js %wd%\devmode\cards.js^
+ --js %wd%\devmode\mp3player.js^
+ --js %wd%\devmode\slider.js^
+ --js %wd%\devmode\mainpage.js^
  --strict_mode_input^
- --js_output_file build/main.bundle.js^
- --create_source_map build/main.bundle.js.map
+ --js_output_file %wd%\build\main.bundle.js^
+ --create_source_map %wd%\build\main.bundle.js.map
 
 java -jar %cc%^
- --js devmode/relmode.js^
- --js devmode/common.js^
- --js devmode/request.js^
- --js devmode/statpage.js^
+ --js %wd%\devmode\relmode.js^
+ --js %wd%\devmode\common.js^
+ --js %wd%\devmode\request.js^
+ --js %wd%\devmode\statpage.js^
  --strict_mode_input^
- --js_output_file build/stat.bundle.js^
- --create_source_map build/stat.bundle.js.map
+ --js_output_file %wd%\build\stat.bundle.js^
+ --create_source_map %wd%\build\stat.bundle.js.map
+
+goto :eof
+
+:realpath
+set retval=%~f1
+goto :eof

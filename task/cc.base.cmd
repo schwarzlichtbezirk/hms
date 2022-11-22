@@ -1,8 +1,9 @@
 @echo off
-cd /d %~dp0../frontend
+call :realpath %~dp0..\frontend
+set wd=%retval%
 
 set cv=v20220202
-set cc=%~d0/tools/closure-compiler-%cv%.jar
+set cc=%~d0\tools\closure-compiler-%cv%.jar
 if not exist %cc% (
 	echo closure-compiler does not found, downloading it into '\tools' folder.
 	mkdir %~d0\tools
@@ -10,8 +11,14 @@ if not exist %cc% (
 )
 
 java -jar %cc%^
- --js plugin/leaflet.js^
- --js plugin/leaflet.markercluster.js^
- --js plugin/sha256.min.js^
+ --js %wd%\plugin\leaflet.js^
+ --js %wd%\plugin\leaflet.markercluster.js^
+ --js %wd%\plugin\sha256.min.js^
  --strict_mode_input^
- --js_output_file build/app.bundle.js
+ --js_output_file %wd%\build\app.bundle.js
+
+goto :eof
+
+:realpath
+set retval=%~f1
+goto :eof

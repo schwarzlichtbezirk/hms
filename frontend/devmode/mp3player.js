@@ -309,7 +309,7 @@ const VuePlayer = {
 		}
 	},
 	created() {
-		this.onaudioonly = storageGetBoolean('audioonly', false);
+		this.audioonly = storageGetBoolean('audioonly', false);
 	},
 	mounted() {
 		eventHub.on('open', this.onopen);
