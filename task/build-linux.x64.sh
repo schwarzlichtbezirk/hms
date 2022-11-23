@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/bin/bash -u
+
 wd=$(realpath -s "$(dirname "$0")/..")
 
 buildvers=$(git describe --tags)

@@ -1,11 +1,28 @@
-#!/bin/bash
+#!/bin/bash -u
+
+# define the working directory
 wd=$(realpath -s "$(dirname "$0")/../frontend")
 
+# find tools directory
+tmp=$wd
+while [ "$tmp" != "/" ]; do
+	if [ -d "$tmp/tools" ]; then
+		tooldir="$tmp/tools"
+		break
+	fi
+	tmp=$(realpath -s "$tmp/..")
+done
+unset tmp
+if [ -z "$tooldir" ]; then
+	tooldir="~/tools"
+	mkdir -pv "$tooldir"
+fi
+
+# check up closure-compiler existence
 cv=v20220202 # see https://mvnrepository.com/artifact/com.google.javascript/closure-compiler
-cc=~/tools/closure-compiler-$cv.jar
+cc="$tooldir/closure-compiler-$cv.jar"
 if [ ! -f "$cc" ]; then
-	echo "closure-compiler does not found, downloading it into '~/tools' folder."
-	mkdir -pv ~/tools
+	echo "closure-compiler does not found, downloading it into '$tooldir' folder."
 	curl -L --output $cc\
 	 https://repo1.maven.org/maven2/com/google/javascript/closure-compiler/$cv/closure-compiler-$cv.jar
 fi

@@ -16,6 +16,7 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+/frontend/assets/iconfont/material-icons.*
 /frontend/build/*.bundle.js
 /frontend/build/*.bundle.js.map
 /frontend/plugin/*

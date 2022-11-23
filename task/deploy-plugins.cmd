@@ -1,12 +1,6 @@
 @echo off
-set asstdir=%~dp0..\frontend\assets\
 set plugdir=%~dp0..\frontend\plugin\
 mkdir %plugdir%\images
-
-rem material-icons
-rem https://github.com/marella/material-icons
-curl https://github.com/marella/material-icons/raw/main/iconfont/material-icons.woff2 --output %asstdir%/material-icons.woff2
-curl https://github.com/marella/material-icons/raw/main/iconfont/material-icons.woff --output %asstdir%/material-icons.woff
 
 rem bootstrap 5.2.2
 rem https://cdnjs.com/libraries/bootstrap

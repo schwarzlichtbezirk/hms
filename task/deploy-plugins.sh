@@ -1,12 +1,7 @@
-#!/bin/bash
-asstdir=$(dirname $0)/../frontend/assets/
-plugdir=$(dirname $0)/../frontend/plugin/
-mkdir -pv $plugdir/images
+#!/bin/bash -u
 
-# material-icons
-# https://github.com/marella/material-icons
-curl https://github.com/marella/material-icons/raw/main/iconfont/material-icons.woff2 --output $asstdir/material-icons.woff2
-curl https://github.com/marella/material-icons/raw/main/iconfont/material-icons.woff --output $asstdir/material-icons.woff
+plugdir=$(dirname $0)/../frontend/plugin/
+mkdir -pv "$plugdir/images"
 
 # bootstrap 5.2.2
 # https://cdnjs.com/libraries/bootstrap

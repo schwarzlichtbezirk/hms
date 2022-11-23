@@ -1,2 +1,2 @@
-#!/bin/bash
+#!/bin/bash -u
 $GOPATH/bin/wpkbuild.exe $(dirname $0)/hms-tiny.lua
