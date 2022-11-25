@@ -69,13 +69,13 @@
 	}
 
 	.bg-card button {
-		text-decoration: none;
+		line-height: 1;
 		color: rgba(255, 255, 255, 0.5);
 	}
 
 		.bg-card button:hover, .bg-card button:focus {
 			color: rgba(255, 255, 255, 0.75);
-			background-color: rgba(153, 102, 204, 0.5); /* RebeccaPurple 60% */
+			background-color: rgba(153, 102, 204, 0.6); /* RebeccaPurple 60% */
 		}
 
 		.bg-card button:disabled, bg-card button.disabled {

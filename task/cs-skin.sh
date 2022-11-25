@@ -3,18 +3,18 @@
 # define the working directory
 wd=$(realpath -s "$(dirname "$0")/../frontend/skin")
 
-# find tools directory
+# find devtools directory
 tmp=$wd
 while [ "$tmp" != "/" ]; do
-	if [ -d "$tmp/tools" ]; then
-		tooldir="$tmp/tools"
+	if [ -d "$tmp/devtools" ]; then
+		tooldir="$tmp/devtools"
 		break
 	fi
 	tmp=$(realpath -s "$tmp/..")
 done
 unset tmp
 if [ -z "$tooldir" ]; then
-	tooldir="~/tools"
+	tooldir="~/devtools"
 	mkdir -pv "$tooldir"
 fi
 
@@ -22,7 +22,7 @@ fi
 cs="$tooldir/closure-stylesheets.jar"
 if [ ! -f "$cs" ]; then
 	echo "closure-stylesheets does not found, downloading it into '$tooldir' folder."
-	if hash wget 2>/dev/null; then
+	if [ hash wget 2>/dev/null ]; then
 		wget --no-clobber --no-check-certificate -O $cs\
 		 https://github.com/google/closure-stylesheets/releases/download/v1.5.0/closure-stylesheets.jar
 	else

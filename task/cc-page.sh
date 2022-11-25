@@ -3,18 +3,18 @@
 # define the working directory
 wd=$(realpath -s "$(dirname "$0")/../frontend")
 
-# find tools directory
+# find devtools directory
 tmp=$wd
 while [ "$tmp" != "/" ]; do
-	if [ -d "$tmp/tools" ]; then
-		tooldir="$tmp/tools"
+	if [ -d "$tmp/devtools" ]; then
+		tooldir="$tmp/devtools"
 		break
 	fi
 	tmp=$(realpath -s "$tmp/..")
 done
 unset tmp
 if [ -z "$tooldir" ]; then
-	tooldir="~/tools"
+	tooldir="~/devtools"
 	mkdir -pv "$tooldir"
 fi
 

@@ -2,11 +2,12 @@
 call :realpath %~dp0..\frontend\skin
 set wd=%retval%
 
-set cs=%~d0\tools\closure-stylesheets.jar
+set cs=%~d0\devtools\closure-stylesheets.jar
 if not exist %cs% (
-	echo closure-stylesheets does not found, downloading it into '\tools' folder.
-	mkdir %~d0\tools
-	curl https://github.com/google/closure-stylesheets/releases/download/v1.5.0/closure-stylesheets.jar --output %cs%
+	echo closure-stylesheets does not found, downloading it into '\devtools' folder.
+	mkdir %~d0\devtools
+	curl -L --output %cs%^
+	 https://github.com/google/closure-stylesheets/releases/download/v1.5.0/closure-stylesheets.jar
 )
 
 call :compileskin "daylight"
@@ -18,11 +19,11 @@ call :compileskin "cup-of-coffee"
 call :compileskin "coffee-beans"
 call :compileskin "old-monitor"
 
-goto :eof
+exit /b 0
 
 :realpath
 set retval=%~f1
-goto :eof
+exit /b
 
 :compileskin
 java -jar %cs%^
@@ -37,4 +38,4 @@ java -jar %cs%^
  %wd%\%~1\mp3player.css^
  %wd%\%~1\slider.css^
  -o %wd%\%~1.css
-goto :eof
+exit /b

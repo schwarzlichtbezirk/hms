@@ -115,7 +115,7 @@ packdir("task", scrdir, commonput)
 for i, fpath in ipairs{path.glob(rootdir.."../*")} do
 	local has, isdir = checkfile(fpath)
 	if not isdir then
-		local fname = string.match(fpath, "/([%w%-%.]+)$")
+		local fname = string.match(fpath, "([%w%-%.]+)$")
 		authput("src/"..fname, fpath)
 	end
 end

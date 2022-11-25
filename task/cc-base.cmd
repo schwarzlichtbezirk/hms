@@ -3,11 +3,12 @@ call :realpath %~dp0..\frontend
 set wd=%retval%
 
 set cv=v20220202
-set cc=%~d0\tools\closure-compiler-%cv%.jar
+set cc=%~d0\devtools\closure-compiler-%cv%.jar
 if not exist %cc% (
-	echo closure-compiler does not found, downloading it into '\tools' folder.
-	mkdir %~d0\tools
-	curl https://repo1.maven.org/maven2/com/google/javascript/closure-compiler/%cv%/closure-compiler-%cv%.jar --output %cc%
+	echo closure-compiler does not found, downloading it into '\devtools' folder.
+	mkdir %~d0\devtools
+	curl -L --output %cc%^
+	 https://repo1.maven.org/maven2/com/google/javascript/closure-compiler/%cv%/closure-compiler-%cv%.jar
 )
 
 java -jar %cc%^
@@ -17,8 +18,8 @@ java -jar %cc%^
  --strict_mode_input^
  --js_output_file %wd%\build\app.bundle.js
 
-goto :eof
+exit /b 0
 
 :realpath
 set retval=%~f1
-goto :eof
+exit /b

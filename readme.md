@@ -18,24 +18,32 @@ Compiled binaries can be downloaded in [Releases](https://github.com/schwarzlich
 
 # How to build
 
-At first, install [Golang](https://go.dev/dl/) of last version, and clone project:
+1. First of all install [Golang](https://go.dev/dl/) of last version. Requires that [GOPATH is set](https://golang.org/doc/code.html#GOPATH). Be sure that `PATH` environment variable contains `%GOPATH%/bin` chunk.
 
-```batch
+2. Install [Java RE](https://www.java.com/en/download/manual.jsp), its needed to run [Closure Compiler](https://developers.google.com/closure/compiler) and [Closure Stylesheets](https://github.com/google/closure-stylesheets/releases).
+
+3. Clone project, download dependencies, and run `deploy-all` script at `task` directory.
+
+4. Then run script to build executable, `build-win.x64.cmd` to build program for `Windows amd64` platform, or run `build-win.x86.cmd` to build program for `Windows x86` platform, or `build-linux.x64.sh` for `linux`-based platforms.
+
+```cmd
 git clone https://github.com/schwarzlichtbezirk/hms.git
 cd hms
+go mod download
+task\deploy-all.cmd
+task\build-win.x64.cmd
 ```
 
-Then run some batch-files at `task` directory of project:
+or
 
-1) `task\make-builder.cmd` installs `wpk` builder to `%GOPATH%\bin` folder. It can be done only once.
-
-2) `task\deploy-plugins.cmd` downloads js-plugins for frontend client. It can be run on every time when it needs to update plugins. And update script to actual versions of libraries.
-
-3) `task\cc.base.cmd` and `task\cc.page.cmd` to compile js-files to bundle. Batch-files uses [Closure Compiler](https://developers.google.com/closure/compiler) which expects for the Java VM is installed for this. Compile `css`-files to bundle by `task\cs.skin.cmd` (this batch uses [Closure Stylesheets](https://github.com/google/closure-stylesheets/releases)).
-
-4) `task\wpk.full.cmd` packs all resources to single file used by program. It can be run after any resources changes. New package can be compiled during program is running, if does NOT used memory mapping mode. `task\wpk.tiny.cmd` can be used instead to produce small cuted version of resources. If you want package with some other resources combination, you can write for this Lua-script same as, for example, `hms-free.lua` or `hms-tiny.lua`.
-
-5) `task\build.win.x64.cmd` to build program for `Windows amd64` platform, or run `build.win.x86.cmd` to build program for `Windows x86` platform.
+```sh
+git clone https://github.com/schwarzlichtbezirk/hms.git
+cd hms
+go mod download
+sudo chmod +x ./task/*.sh
+./task/deploy-all.sh
+./task/build-linux.x64.sh
+```
 
 # Packages variations
 
@@ -43,7 +51,7 @@ By default script `pack.lua` produces full package with all icons collections in
 
 To make full package with `webp` icons only, use `hms-all.lua` script:
 
-```batch
+```cmd
 %GOPATH%/bin/wpkbuild.exe %GOPATH%/src/github.com/schwarzlichtbezirk/hms/frontend/task/hms-all.lua
 ```
 
