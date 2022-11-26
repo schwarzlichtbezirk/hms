@@ -69,7 +69,7 @@
 	}
 
 	.bg-card button {
-		text-decoration: none;
+		line-height: 1;
 		color: rgba(255, 255, 255, 0.5);
 	}
 
@@ -91,6 +91,16 @@
 
 	.bg-card .dropdown-item.active, .bg-card .active > .dropdown-item {
 		background: rgba(128, 0, 128, 0.5); /* Purple */
+	}
+
+.dropdown-item {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+}
+
+	.dropdown-item > .material-icons {
+		padding-right: 0.5rem;
 	}
 
 .itemfont {

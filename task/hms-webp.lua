@@ -4,7 +4,7 @@
 cfg = {
 	-- package info
 	info = {
-		label = "hms-all",
+		label = "hms-webp",
 		link = "github.com/schwarzlichtbezirk/hms",
 	},
 	-- list of skins IDs, see 'id' tags of 'skinlist' in 'resmodel.json' file

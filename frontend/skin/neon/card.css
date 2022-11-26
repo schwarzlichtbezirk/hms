@@ -93,6 +93,16 @@
 		background: rgba(106, 90, 205, 0.5); /* SlateBlue */
 	}
 
+.dropdown-item {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+}
+
+	.dropdown-item > .material-icons {
+		padding-right: 0.5rem;
+	}
+
 .itemfont {
 	line-height: 1.25;
 	font-size: 0.72rem;

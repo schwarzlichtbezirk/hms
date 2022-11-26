@@ -47,15 +47,12 @@ sudo chmod +x ./task/*.sh
 
 # Packages variations
 
-By default script `pack.lua` produces full package with all icons collections in all supported formats: `webp`, `png`, and some icon sets with `jp2` for Safari browser, `avif` for Google-produced browsers. `webp` icons are more than 5x shorter than `png` and this format is supported by Android, Chrome, Opera, Edge, Firefox, but in some rarity used browsers it's can be needed `png` yet.
+Script `pack.lua` helps to build resources pack with given at another lua-script set of skins and icons. Available formats for each icons set can be seen at `fulliconset` table. You can provide several formats for each icons set with given subsequence that will be used as list of `<source>` tags in `<picture>`. In common case subsequence for formats can be followed: `avif`, `webp`, `jp2`, `png`, `gif`, `svg`. You can check on [caniuse.com](https://caniuse.com/) support of custom combination of formats. There is presents predefined scripts and tasks to build some resources combinations:
 
-To make full package with `webp` icons only, use `hms-all.lua` script:
-
-```cmd
-%GOPATH%/bin/wpkbuild.exe %GOPATH%/src/github.com/schwarzlichtbezirk/hms/frontend/task/hms-all.lua
-```
-
-To make package with minimal size, use `hms-tiny.lua` script. Script `hms-free.lua` produces package with icons, which have allowed commercial usage by their license.
+* `hms-full` - full set of skins and icons with all available formats, can be useful for old browsers without `webp` support.
+* `hms-tiny` - minimal set, with two `svg` icons set. Can be used on lightweight systems.
+* `hms-webp` - full set with `webp` and `svg` formats only, useful for modern browsers.
+* `hms-free` - set of icons with public license and allowed commercial usage.
 
 # Configuration
 

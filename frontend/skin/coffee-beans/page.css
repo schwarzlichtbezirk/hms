@@ -22,12 +22,12 @@ body {
 	}
 
 a, .btn-link {
-	color: #B299CC;
+	color: goldenrod;
 	text-decoration: none;
 }
 
 	a:hover, .btn-link:hover {
-		color: #9877BB;
+		color: gold;
 		text-decoration: underline;
 	}
 

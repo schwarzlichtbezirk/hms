@@ -24,6 +24,16 @@ body {
 		background: #723d98;
 	}
 
+a, .btn-link {
+	color: mediumpurple;
+	text-decoration: none;
+}
+
+	a:hover, .btn-link:hover {
+		color: #9966CC; /* Amethyst */
+		text-decoration: underline;
+	}
+
 .menu-scrollable {
 	max-height: 20rem;
 	overflow-y: scroll;

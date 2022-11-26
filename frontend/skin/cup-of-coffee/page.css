@@ -25,6 +25,24 @@ body {
 		background: #ad34cb;
 	}
 
+a, .btn-link {
+	color: darkviolet;
+	text-decoration: none;
+}
+
+	a:hover, .btn-link:hover {
+		color: blueviolet;
+		text-decoration: underline;
+	}
+
+.breadcrumb-item.active {
+	color: #7525c0;
+}
+
+.breadcrumb-item + .breadcrumb-item::before {
+	color: #9966CC; /* Amethyst */
+}
+
 .menu-scrollable {
 	max-height: 20rem;
 	overflow-y: scroll;

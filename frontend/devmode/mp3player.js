@@ -248,6 +248,7 @@ const VuePlayer = {
 		},
 		onrepeat() {
 			this.repeatmode = (this.repeatmode + 1) % (this.sortedlist ? 3 : 2);
+			sessionStorage.setItem('repeatmode', this.repeatmode);
 			if (this.media) {
 				this.media.loop = this.repeatmode === 1;
 			}
@@ -309,6 +310,7 @@ const VuePlayer = {
 		}
 	},
 	created() {
+		this.repeatmode = storageGetNumber('repeatmode', 0);
 		this.audioonly = storageGetBoolean('audioonly', false);
 	},
 	mounted() {
