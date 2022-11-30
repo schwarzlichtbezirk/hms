@@ -1,9 +1,0 @@
-﻿
-# Here is rewritable cache with key/path pairs list.
-# It's loads on server start, and saves before exit.
-# Each key is path unique ID encoded to base32 (RFC
-# 4648), values are associated directory properties.
-# Those cache is used for directories representation
-# and media groups representation. Count set format:
-# [misc, video, audio, image, books, txt, arch, dir]
-

@@ -102,14 +102,20 @@ func Init() {
 	if err = InitXorm(); err != nil {
 		Log.Fatal("can not init XORM: " + err.Error())
 	}
+	var pathcount, _ = xormEngine.Where("puid > ?", PUIDreserved-1).Count(&PathCacheItem{})
+	Log.Infof("found %d items at path cache", pathcount)
+	var dircount, _ = xormEngine.Count(&DirCacheItem{})
+	Log.Infof("found %d items at directories cache", dircount)
 
 	// insert components templates into pages
 	if err = LoadTemplates(); err != nil {
 		Log.Fatal(err)
 	}
 
-	// build caches with given sizes from settings
+	// build sqlite3 caches
 	InitCaches()
+
+	// init wpk caches
 	if err = InitPackages(); err != nil {
 		Log.Fatal(err)
 	}
@@ -120,10 +126,6 @@ func Init() {
 	} else {
 		// load directories file groups
 		Log.Infof("loaded %d items into path cache", len(syspathcache.keypath))
-		if err = dircache.ReadYaml(dirfile); err != nil {
-			Log.Infoln("error on directories cache file: " + err.Error())
-		}
-		Log.Infof("loaded %d items into directories cache", len(dircache.keydir))
 
 		// load GPS data of scanned photos
 		if err = gpscache.ReadYaml(gpsfile); err != nil {
@@ -301,13 +303,6 @@ func Shutdown() {
 			Log.Infoln("saving of directories cache and users list were missed for a reason path cache saving failure")
 			return
 		}
-
-		wg.Go(func() (err error) {
-			if err := dircache.WriteYaml(dirfile); err != nil {
-				Log.Infoln("error on directories cache file: " + err.Error())
-			}
-			return
-		})
 
 		wg.Go(func() (err error) {
 			if err := usercache.WriteYaml(usrfile); err != nil {

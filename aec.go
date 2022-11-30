@@ -118,6 +118,7 @@ const (
 	AECfolderaccess
 	AECfoldernoshr
 	AECfoldernotcat
+	AECfolderdircat
 	AECfolderstat
 	AECfolderopen
 	AECfolderm3u

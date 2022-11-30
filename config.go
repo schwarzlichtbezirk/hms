@@ -14,7 +14,7 @@ const (
 	cfgfile = "settings.yaml"
 
 	pthfile = "pathcache.yaml"
-	dirfile = "dircache.yaml"
+	dirfile = "dircache.sqlite"
 	gpsfile = "gpscache.yaml"
 	prffile = "profiles.yaml"
 	usrfile = "userlist.yaml"

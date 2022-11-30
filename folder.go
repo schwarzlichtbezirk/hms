@@ -139,17 +139,47 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 		case PUIDshares:
 			ret.List = prf.ScanShares()
 		case PUIDmedia:
-			catprop(dircache.Categories([]FG_t{FGvideo, FGaudio, FGimage}, 0.5))
+			var puids []Puid_t
+			if puids, err = DirCacheCat("video+audio+image", 0.5); err != nil {
+				WriteError500(w, r, err, AECfolderdircat)
+				return
+			}
+			catprop(puids)
 		case PUIDvideo:
-			catprop(dircache.Category(FGvideo, 0.5))
+			var puids []Puid_t
+			if puids, err = DirCacheCat("video", 0.5); err != nil {
+				WriteError500(w, r, err, AECfolderdircat)
+				return
+			}
+			catprop(puids)
 		case PUIDaudio:
-			catprop(dircache.Category(FGaudio, 0.5))
+			var puids []Puid_t
+			if puids, err = DirCacheCat("audio", 0.5); err != nil {
+				WriteError500(w, r, err, AECfolderdircat)
+				return
+			}
+			catprop(puids)
 		case PUIDimage:
-			catprop(dircache.Category(FGimage, 0.5))
+			var puids []Puid_t
+			if puids, err = DirCacheCat("image", 0.5); err != nil {
+				WriteError500(w, r, err, AECfolderdircat)
+				return
+			}
+			catprop(puids)
 		case PUIDbooks:
-			catprop(dircache.Category(FGbooks, 0.5))
+			var puids []Puid_t
+			if puids, err = DirCacheCat("books", 0.5); err != nil {
+				WriteError500(w, r, err, AECfolderdircat)
+				return
+			}
+			catprop(puids)
 		case PUIDtexts:
-			catprop(dircache.Category(FGtexts, 0.5))
+			var puids []Puid_t
+			if puids, err = DirCacheCat("texts", 0.5); err != nil {
+				WriteError500(w, r, err, AECfolderdircat)
+				return
+			}
+			catprop(puids)
 		case PUIDmap:
 			var n = cfg.RangeSearchAny
 			gpscache.Range(func(puid Puid_t, gps *GpsInfo) bool {

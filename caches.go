@@ -157,50 +157,27 @@ var syspathcache = PathCache{
 }
 
 type PathCacheItem struct {
-	Puid Puid_t `xorm:"'puid' pk"`
-	Path string
+	Puid Puid_t `xorm:"pk autoincr"`
+	Path string `xorm:"notnull unique index"`
 }
 
 func (c *PathCacheItem) TableName() string {
 	return "path_cache"
 }
 
+// DirCacheItem sqlite3 item of unlimited cache with puid/FileGroup values.
 type DirCacheItem struct {
-	Puid      Puid_t    `xorm:"'puid' pk"`
+	Puid      Puid_t    `xorm:"pk"`
 	Scan      time.Time `xorm:"updated"`
-	FileGroup `yaml:",inline"`
+	FileGroup `xorm:"extends" yaml:",inline"`
 }
 
 func (c *DirCacheItem) TableName() string {
 	return "dir_cache"
 }
 
-// DirCache is unlimited cache with puid/DirProp values.
-type DirCache struct {
-	keydir map[Puid_t]DirProp
-	mux    sync.RWMutex
-}
-
-// Get value from cache.
-func (c *DirCache) Get(puid Puid_t) (dp DirProp, ok bool) {
-	c.mux.RLock()
-	defer c.mux.RUnlock()
-	dp, ok = c.keydir[puid]
-	return
-}
-
-// Set value to cache.
-func (c *DirCache) Set(puid Puid_t, dp DirProp) {
-	c.mux.Lock()
-	defer c.mux.Unlock()
-	c.keydir[puid] = dp
-}
-
+// DirCacheGet returns value from directories cache.
 func DirCacheGet(puid Puid_t) (dp DirProp, ok bool) {
-	if dp, ok = dircache.Get(puid); ok {
-		return
-	}
-
 	var dc DirCacheItem
 	if ok, _ = xormEngine.ID(puid).Get(&dc); ok {
 		dp.Scan = UnixJS(dc.Scan)
@@ -216,9 +193,8 @@ func DirCacheGet(puid Puid_t) (dp DirProp, ok bool) {
 	return
 }
 
+// DirCacheSet puts value to directories cache.
 func DirCacheSet(puid Puid_t, dp DirProp) (err error) {
-	dircache.Set(puid, dp)
-
 	var dc = &DirCacheItem{
 		Puid: puid,
 		FileGroup: FileGroup{
@@ -235,10 +211,9 @@ func DirCacheSet(puid Puid_t, dp DirProp) (err error) {
 	switch xormDriverName {
 	case "sqlite3":
 		if _, err = xormEngine.InsertOne(dc); err != nil {
-			if errors.As(err, &sqlite3.Error{}) {
-				if serr := err.(*sqlite3.Error); serr.ExtendedCode == 1555 {
-					_, err = xormEngine.Update(dc)
-				}
+			var serr sqlite3.Error
+			if errors.As(err, &serr) && serr.ExtendedCode == 1555 {
+				_, err = xormEngine.Update(dc)
 			}
 		}
 	default:
@@ -249,47 +224,12 @@ func DirCacheSet(puid Puid_t, dp DirProp) (err error) {
 	return
 }
 
-// Category returns PUIDs list of directories where number
+// DirCacheCat returns PUIDs list of directories where number
 // of files of given category is more then given percent.
-func (c *DirCache) Category(ctgr FG_t, percent float64) (ret []Puid_t) {
-	c.mux.RLock()
-	defer c.mux.RUnlock()
-	for puid, dp := range c.keydir {
-		var sum uint
-		for _, v := range dp.FGrp {
-			sum += v
-		}
-		if sum > 0 && float64(dp.FGrp[ctgr])/float64(sum) > percent {
-			ret = append(ret, puid)
-		}
-	}
+func DirCacheCat(cat string, percent float64) (ret []Puid_t, err error) {
+	const categoryCond = "(%s)/(other+video+audio+image+books+texts+packs+dir) > %f"
+	xormEngine.Where(fmt.Sprintf(categoryCond, cat, percent)).Find(&ret)
 	return
-}
-
-// Categories return PUIDs list of directories where number
-// of files of any given categories is more then given percent.
-func (c *DirCache) Categories(cats []FG_t, percent float64) (ret []Puid_t) {
-	c.mux.RLock()
-	defer c.mux.RUnlock()
-	for puid, dp := range c.keydir {
-		var sum uint
-		for _, v := range dp.FGrp {
-			sum += v
-		}
-		var cs uint
-		for _, ci := range cats {
-			cs += dp.FGrp[ci]
-		}
-		if sum > 0 && float64(cs)/float64(sum) > percent {
-			ret = append(ret, puid)
-		}
-	}
-	return
-}
-
-// Instance of unlimited cache with puid/DirProp values.
-var dircache = DirCache{
-	keydir: map[Puid_t]DirProp{},
 }
 
 // GpsInfo describes GPS-data from the photos:
@@ -672,13 +612,30 @@ func InitPackages() (err error) {
 
 // InitXorm inits database caches engines.
 func InitXorm() (err error) {
-	if xormEngine, err = xorm.NewEngine(xormDriverName, path.Join(CachePath, "dircache.sqlite")); err != nil {
+	if xormEngine, err = xorm.NewEngine(xormDriverName, path.Join(CachePath, dirfile)); err != nil {
 		return
 	}
 	xormEngine.ShowSQL(true)
 	xormEngine.SetMapper(names.GonicMapper{})
 	if err = xormEngine.Sync(&PathCacheItem{}, &DirCacheItem{}); err != nil {
 		return
+	}
+
+	// fill path_cache with predefined items
+	var ok bool
+	if ok, err = xormEngine.IsTableEmpty(&PathCacheItem{}); ok && err == nil {
+		for puid, path := range CatKeyPath {
+			xormEngine.Insert(&PathCacheItem{
+				Puid: puid,
+				Path: path,
+			})
+		}
+		for puid := Puid_t(len(CatKeyPath) + 1); puid < PUIDreserved; puid++ {
+			xormEngine.Insert(&PathCacheItem{
+				Puid: puid,
+				Path: fmt.Sprintf("<reserved%d>", puid),
+			})
+		}
 	}
 	return
 }
