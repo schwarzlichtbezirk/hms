@@ -98,6 +98,11 @@ func Init() {
 		Log.Fatal("can not load wpk-package: " + err.Error())
 	}
 
+	// init database caches
+	if err = InitXorm(); err != nil {
+		Log.Fatal("can not init XORM: " + err.Error())
+	}
+
 	// insert components templates into pages
 	if err = LoadTemplates(); err != nil {
 		Log.Fatal(err)
@@ -345,6 +350,13 @@ func Shutdown() {
 
 	wg.Go(func() (err error) {
 		tilespkg.Close()
+		return
+	})
+
+	wg.Go(func() (err error) {
+		if xormEngine != nil {
+			xormEngine.Close()
+		}
 		return
 	})
 

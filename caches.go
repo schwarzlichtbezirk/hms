@@ -15,8 +15,12 @@ import (
 
 	"github.com/bluele/gcache"
 	"github.com/disintegration/gift"
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/mattn/go-sqlite3"
 	"github.com/schwarzlichtbezirk/wpk"
 	"github.com/schwarzlichtbezirk/wpk/fsys"
+	"xorm.io/xorm"
+	"xorm.io/xorm/names"
 )
 
 // gcaches
@@ -49,6 +53,10 @@ var (
 	// of path in format "full/path/to/file.ext?144x108".
 	tilespkg *CachePackage
 )
+
+const xormDriverName = "sqlite3"
+
+var xormEngine *xorm.Engine
 
 // Error messages
 var (
@@ -148,6 +156,25 @@ var syspathcache = PathCache{
 	pathkey: map[string]Puid_t{},
 }
 
+type PathCacheItem struct {
+	Puid Puid_t `xorm:"'puid' pk"`
+	Path string
+}
+
+func (c *PathCacheItem) TableName() string {
+	return "path_cache"
+}
+
+type DirCacheItem struct {
+	Puid      Puid_t    `xorm:"'puid' pk"`
+	Scan      time.Time `xorm:"updated"`
+	FileGroup `yaml:",inline"`
+}
+
+func (c *DirCacheItem) TableName() string {
+	return "dir_cache"
+}
+
 // DirCache is unlimited cache with puid/DirProp values.
 type DirCache struct {
 	keydir map[Puid_t]DirProp
@@ -169,13 +196,66 @@ func (c *DirCache) Set(puid Puid_t, dp DirProp) {
 	c.keydir[puid] = dp
 }
 
+func DirCacheGet(puid Puid_t) (dp DirProp, ok bool) {
+	if dp, ok = dircache.Get(puid); ok {
+		return
+	}
+
+	var dc DirCacheItem
+	if ok, _ = xormEngine.ID(puid).Get(&dc); ok {
+		dp.Scan = UnixJS(dc.Scan)
+		dp.FGrp[FGother] = dc.FGother
+		dp.FGrp[FGvideo] = dc.FGvideo
+		dp.FGrp[FGaudio] = dc.FGaudio
+		dp.FGrp[FGimage] = dc.FGimage
+		dp.FGrp[FGbooks] = dc.FGbooks
+		dp.FGrp[FGtexts] = dc.FGtexts
+		dp.FGrp[FGpacks] = dc.FGpacks
+		dp.FGrp[FGdir] = dc.FGdir
+	}
+	return
+}
+
+func DirCacheSet(puid Puid_t, dp DirProp) (err error) {
+	dircache.Set(puid, dp)
+
+	var dc = &DirCacheItem{
+		Puid: puid,
+		FileGroup: FileGroup{
+			FGother: dp.FGrp[FGother],
+			FGvideo: dp.FGrp[FGvideo],
+			FGaudio: dp.FGrp[FGaudio],
+			FGimage: dp.FGrp[FGimage],
+			FGbooks: dp.FGrp[FGbooks],
+			FGtexts: dp.FGrp[FGtexts],
+			FGpacks: dp.FGrp[FGpacks],
+			FGdir:   dp.FGrp[FGdir],
+		},
+	}
+	switch xormDriverName {
+	case "sqlite3":
+		if _, err = xormEngine.InsertOne(dc); err != nil {
+			if errors.As(err, &sqlite3.Error{}) {
+				if serr := err.(*sqlite3.Error); serr.ExtendedCode == 1555 {
+					_, err = xormEngine.Update(dc)
+				}
+			}
+		}
+	default:
+		if affected, _ := xormEngine.InsertOne(dc); affected == 0 {
+			_, err = xormEngine.Update(dc)
+		}
+	}
+	return
+}
+
 // Category returns PUIDs list of directories where number
 // of files of given category is more then given percent.
 func (c *DirCache) Category(ctgr FG_t, percent float64) (ret []Puid_t) {
 	c.mux.RLock()
 	defer c.mux.RUnlock()
 	for puid, dp := range c.keydir {
-		var sum int
+		var sum uint
 		for _, v := range dp.FGrp {
 			sum += v
 		}
@@ -192,11 +272,11 @@ func (c *DirCache) Categories(cats []FG_t, percent float64) (ret []Puid_t) {
 	c.mux.RLock()
 	defer c.mux.RUnlock()
 	for puid, dp := range c.keydir {
-		var sum int
+		var sum uint
 		for _, v := range dp.FGrp {
 			sum += v
 		}
-		var cs int
+		var cs uint
 		for _, ci := range cats {
 			cs += dp.FGrp[ci]
 		}
@@ -588,6 +668,19 @@ func InitPackages() (err error) {
 	PackInfo(tilfile, &tilespkg.Package)
 
 	return nil
+}
+
+// InitXorm inits database caches engines.
+func InitXorm() (err error) {
+	if xormEngine, err = xorm.NewEngine(xormDriverName, path.Join(CachePath, "dircache.sqlite")); err != nil {
+		return
+	}
+	xormEngine.ShowSQL(true)
+	xormEngine.SetMapper(names.GonicMapper{})
+	if err = xormEngine.Sync(&PathCacheItem{}, &DirCacheItem{}); err != nil {
+		return
+	}
+	return
 }
 
 // The End.

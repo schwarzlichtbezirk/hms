@@ -11,11 +11,12 @@ import (
 	"io"
 
 	"github.com/disintegration/gift"
+
+	_ "github.com/chai2010/webp"     // register WebP
 	_ "github.com/oov/psd"           // register PSD format
 	_ "github.com/spate/glimage/dds" // register DDS format
 	_ "golang.org/x/image/bmp"       // register BMP format
 	_ "golang.org/x/image/tiff"      // register TIFF format
-	_ "golang.org/x/image/webp"      // register WebP format
 
 	_ "github.com/ftrvxmtrx/tga" // put TGA to end, decoder does not register magic prefix
 )
@@ -191,7 +192,7 @@ func GetCachedThumb(syspath string) (md *MediaData, err error) {
 	}
 
 	// check that file is image
-	if GetFileGroup(syspath) != FGimage {
+	if IsTypeImage(GetFileExt(syspath)) {
 		err = ErrNotImg
 		return // file is not image
 	}
@@ -267,7 +268,7 @@ func GetCachedTile(syspath string, wdh, hgt int) (md *MediaData, err error) {
 	}
 
 	// check that file is image
-	if GetFileGroup(syspath) != FGimage {
+	if IsTypeImage(GetFileExt(syspath)) {
 		err = ErrNotImg
 		return // file is not image
 	}

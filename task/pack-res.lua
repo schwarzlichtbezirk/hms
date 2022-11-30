@@ -27,17 +27,17 @@ local fullskinset = {
 }
 -- full list of icons identifiers
 local fulliconset = {
-	junior = {"avif", "webp", "jp2"},
+	junior = {"avif", "webp", "jp2", "png"},
 	oxygen = {"avif", "webp", "png"},
 	tulliana = {"webp", "png"},
 	ubuntu = {"webp", "png"},
-	papirus = {"svg"},
-	chakram = {"avif", "webp", "jp2"},
-	senary = {"avif", "webp", "jp2"},
-	senary2 = {"avif", "webp", "jp2"},
-	delta = {"avif", "webp", "jp2"},
-	whistlepuff = {"avif", "webp", "gif"},
-	xrabbit = {"avif", "webp", "jp2"},
+	papirus = {"svg", "png"},
+	chakram = {"avif", "webp", "jp2", "png"},
+	senary = {"avif", "webp", "jp2", "png"},
+	senary2 = {"avif", "webp", "jp2", "png"},
+	delta = {"avif", "webp", "jp2", "png"},
+	whistlepuff = {"avif", "webp", "gif", "png"},
+	xrabbit = {"avif", "webp", "jp2", "png"},
 }
 -- iconfmt json bodies
 local iconfmtjson = {

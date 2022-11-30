@@ -89,6 +89,7 @@ var extgrp = map[string]FG_t{
 	".gif":  FGimage,
 	".png":  FGimage,
 	".webp": FGimage,
+	".avif": FGimage,
 	".psd":  FGimage,
 	".psb":  FGimage,
 	".jp2":  FGimage,
@@ -239,11 +240,22 @@ func GetFileGroup(fpath string) FG_t {
 	return extgrp[GetFileExt(fpath)]
 }
 
+// IsTypeImage checks that file is some image format.
+func IsTypeImage(ext string) bool {
+	switch ext {
+	case ".tga", ".bmp", ".dib", ".rle", ".dds", ".tif", ".tiff",
+		".jpg", ".jpe", ".jpeg", ".jfif", ".gif", ".png", ".avif", ".webp",
+		".psd", ".psb", ".jp2", ".jpg2", ".jpx", ".jpm", ".jxr":
+		return true
+	}
+	return false
+}
+
 // IsTypeNativeImg checks that image file is supported by any browser without format conversion.
 func IsTypeNativeImg(ext string) bool {
 	switch ext {
 	case ".jpg", ".jpe", ".jpeg", ".jfif",
-		".png", ".webp", ".gif":
+		".avif", ".webp", ".png", ".gif":
 		return true
 	}
 	return false
@@ -261,7 +273,7 @@ func IsTypeJPEG(ext string) bool {
 // IsTypeAlpha checks that file extension belongs to images with alpha channel.
 func IsTypeAlpha(ext string) bool {
 	switch ext {
-	case ".png", ".webp", ".gif",
+	case ".avif", ".webp", ".png", ".gif",
 		".dds", ".psd", ".psb":
 		return true
 	}
@@ -381,7 +393,28 @@ func (fk *FileKit) Setup(syspath string, fi fs.FileInfo) {
 }
 
 // FileGrp is files group alias.
-type FileGrp [FGnum]int
+type FileGrp [FGnum]uint
+
+type FileGroup struct {
+	FGother uint `xorm:"other" json:"other,omitempty" yaml:"other,omitempty" xml,omitempty,attr:"other"`
+	FGvideo uint `xorm:"video" json:"video,omitempty" yaml:"video,omitempty" xml,omitempty,attr:"video"`
+	FGaudio uint `xorm:"audio" json:"audio,omitempty" yaml:"audio,omitempty" xml,omitempty,attr:"audio"`
+	FGimage uint `xorm:"image" json:"image,omitempty" yaml:"image,omitempty" xml,omitempty,attr:"image"`
+	FGbooks uint `xorm:"books" json:"books,omitempty" yaml:"books,omitempty" xml,omitempty,attr:"books"`
+	FGtexts uint `xorm:"texts" json:"texts,omitempty" yaml:"texts,omitempty" xml,omitempty,attr:"texts"`
+	FGpacks uint `xorm:"packs" json:"packs,omitempty" yaml:"packs,omitempty" xml,omitempty,attr:"packs"`
+	FGdir   uint `xorm:"dir" json:"dir,omitempty" yaml:"dir,omitempty" xml,omitempty,attr:"dir"`
+}
+
+func (fg *FileGroup) Sum() uint {
+	return fg.FGother + fg.FGvideo + fg.FGaudio + fg.FGimage + fg.FGbooks + fg.FGtexts + fg.FGpacks + fg.FGdir
+}
+
+// IsZero used to check whether an object is zero to determine whether
+// it should be omitted when marshaling to yaml.
+func (fg *FileGroup) IsZero() bool {
+	return fg.Sum() == 0
+}
 
 // IsZero used to check whether an object is zero to determine whether
 // it should be omitted when marshaling to yaml.
@@ -432,7 +465,7 @@ func (dk *DirKit) Setup(syspath string) {
 	dk.NameVal = PathBase(syspath)
 	dk.TypeVal = FTdir
 	dk.PuidProp.Setup(syspath)
-	if dp, ok := dircache.Get(dk.PUIDVal); ok {
+	if dp, ok := DirCacheGet(dk.PUIDVal); ok {
 		dk.DirProp = dp
 	}
 }
