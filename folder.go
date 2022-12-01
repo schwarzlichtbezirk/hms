@@ -30,7 +30,7 @@ func UnfoldPath(shrpath string) (syspath string, err error) {
 			err = fmt.Errorf("can not decode PUID value: %w", err)
 			return
 		}
-		if pref, ok = syspathcache.Path(puid); !ok {
+		if pref, ok = PathCachePath(puid); !ok {
 			err = ErrNoPath
 			return
 		}
@@ -101,7 +101,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECfolderaccess)
 		return
 	}
-	ret.PUID = syspathcache.Cache(syspath)
+	ret.PUID = PathCacheSure(syspath)
 	ret.Path = shrpath
 	ret.Name = PathBase(base)
 
@@ -113,7 +113,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 		}
 		var catprop = func(puids []Puid_t) {
 			for _, puid := range puids {
-				if fpath, ok := syspathcache.Path(puid); ok {
+				if fpath, ok := PathCachePath(puid); ok {
 					if prop, err := propcache.Get(fpath); err == nil {
 						ret.List = append(ret.List, prop.(Pather))
 					}
@@ -183,7 +183,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 		case PUIDmap:
 			var n = cfg.RangeSearchAny
 			gpscache.Range(func(puid Puid_t, gps *GpsInfo) bool {
-				if fpath, ok := syspathcache.Path(puid); ok {
+				if fpath, ok := PathCachePath(puid); ok {
 					if auth == prf || prf.IsShared(fpath) {
 						if prop, err := propcache.Get(fpath); err == nil {
 							ret.List = append(ret.List, prop.(Pather))

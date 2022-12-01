@@ -34,7 +34,6 @@ const (
 	AECmediabadhd
 	AECmediabadpath
 	AECmedianoacc
-	AECmedianopath
 	AECmediahidden
 	AECmediaaccess
 	AECmediahdgone

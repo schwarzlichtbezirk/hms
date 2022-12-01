@@ -60,36 +60,6 @@ type YamlReadWriter interface {
 	WriteYaml(string) error
 }
 
-// ReadYaml reads content of PathCache structure from YAML-file
-// with given file name.
-func (pc *PathCache) ReadYaml(fname string) (err error) {
-	if err = ReadYaml(fname, &pc.keypath); err != nil {
-		return
-	}
-
-	pc.pathkey = make(map[string]Puid_t, len(pc.keypath))
-	for key, fpath := range pc.keypath {
-		pc.pathkey[fpath] = key
-	}
-	return
-}
-
-// WriteYaml writes content of PathCache object in YAML format
-// with header comment to file with given file name.
-func (pc *PathCache) WriteYaml(fname string) error {
-	const intro = `
-# Here is rewritable cache with key/path pairs list.
-# It's loads on server start, and saves before exit.
-# Each key is path unique ID encoded to base32 (RFC
-# 4648), values are associated paths. Those keys
-# used for files paths representations in URLs. You
-# can modify keys to any alphanumerical text that
-# should be unique.
-
-`
-	return WriteYaml(fname, intro, pc.keypath)
-}
-
 // ReadYaml reads content of GpsCache structure from YAML-file
 // with given file name.
 func (gc *GpsCache) ReadYaml(fname string) (err error) {
@@ -116,7 +86,7 @@ func (gc *GpsCache) ReadYaml(fname string) (err error) {
 				return
 			}
 		}
-		var puid = syspathcache.Cache(item.Path)
+		var puid = PathCacheSure(item.Path)
 		gc.Store(puid, item.GpsInfo)
 	}
 	return
@@ -149,7 +119,7 @@ func (gc *GpsCache) WriteYaml(fname string) (err error) {
 	}
 	var enc = yaml.NewEncoder(w)
 	gc.Range(func(puid Puid_t, gps *GpsInfo) bool {
-		if syspath, ok := syspathcache.Path(puid); ok {
+		if syspath, ok := PathCachePath(puid); ok {
 			if err = enc.Encode(&item{syspath, gps}); err != nil {
 				return false
 			}
@@ -192,11 +162,11 @@ func (pl *Profiles) ReadYaml(fname string) (err error) {
 			Log.Infof("loaded profile id%d, login='%s'", prf.ID, prf.Login)
 			// cache roots
 			for _, fpath := range prf.Roots {
-				syspathcache.Cache(fpath)
+				PathCacheSure(fpath)
 			}
 			// cache shares
 			for _, fpath := range prf.Shares {
-				syspathcache.Cache(fpath)
+				PathCacheSure(fpath)
 			}
 
 			// bring all hidden to lowercase

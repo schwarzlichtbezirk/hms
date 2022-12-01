@@ -392,9 +392,6 @@ func (fk *FileKit) Setup(syspath string, fi fs.FileInfo) {
 	fk.TmbProp.Setup(syspath)
 }
 
-// FileGrp is files group alias.
-type FileGrp [FGnum]uint
-
 type FileGroup struct {
 	FGother uint `xorm:"other" json:"other,omitempty" yaml:"other,omitempty" xml,omitempty,attr:"other"`
 	FGvideo uint `xorm:"video" json:"video,omitempty" yaml:"video,omitempty" xml,omitempty,attr:"video"`
@@ -406,6 +403,31 @@ type FileGroup struct {
 	FGdir   uint `xorm:"dir" json:"dir,omitempty" yaml:"dir,omitempty" xml,omitempty,attr:"dir"`
 }
 
+// Field returns pointer to field value with given identifier.
+func (fg *FileGroup) Field(id FG_t) *uint {
+	switch id {
+	case FGother:
+		return &fg.FGother
+	case FGvideo:
+		return &fg.FGvideo
+	case FGaudio:
+		return &fg.FGaudio
+	case FGimage:
+		return &fg.FGimage
+	case FGbooks:
+		return &fg.FGbooks
+	case FGtexts:
+		return &fg.FGtexts
+	case FGpacks:
+		return &fg.FGpacks
+	case FGdir:
+		return &fg.FGdir
+	default:
+		return nil
+	}
+}
+
+// Sum returns sum of all fields.
 func (fg *FileGroup) Sum() uint {
 	return fg.FGother + fg.FGvideo + fg.FGaudio + fg.FGimage + fg.FGbooks + fg.FGtexts + fg.FGpacks + fg.FGdir
 }
@@ -414,17 +436,6 @@ func (fg *FileGroup) Sum() uint {
 // it should be omitted when marshaling to yaml.
 func (fg *FileGroup) IsZero() bool {
 	return fg.Sum() == 0
-}
-
-// IsZero used to check whether an object is zero to determine whether
-// it should be omitted when marshaling to yaml.
-func (fg *FileGrp) IsZero() bool {
-	for _, v := range fg {
-		if v != 0 {
-			return false
-		}
-	}
-	return true
 }
 
 // PathBase returns safe base of path or CID as is.
@@ -450,7 +461,7 @@ type DirProp struct {
 	// Directory scanning time in UNIX format, milliseconds.
 	Scan Unix_t `json:"scan,omitempty" yaml:"scan,omitempty" xml:"scan,omitempty"`
 	// Directory file groups counters.
-	FGrp FileGrp `json:"fgrp,omitempty" yaml:"fgrp,flow,omitempty" xml:"fgrp,omitempty"`
+	FGrp FileGroup `xorm:"extends" json:"fgrp,omitempty" yaml:"fgrp,flow,omitempty" xml:"fgrp,omitempty"`
 }
 
 // DirKit is directory properties kit.

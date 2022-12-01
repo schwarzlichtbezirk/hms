@@ -120,25 +120,17 @@ func Init() {
 		Log.Fatal(err)
 	}
 
-	if err = syspathcache.ReadYaml(pthfile); err != nil {
-		Log.Infoln("error on path cache file: " + err.Error())
-		Log.Infoln("loading of directories cache and users list were missed for a reason path cache loading failure")
-	} else {
-		// load directories file groups
-		Log.Infof("loaded %d items into path cache", len(syspathcache.keypath))
-
-		// load GPS data of scanned photos
-		if err = gpscache.ReadYaml(gpsfile); err != nil {
-			Log.Infoln("error on GPS cache file: " + err.Error())
-		}
-		Log.Infof("loaded %d items into GPS cache", gpscache.Count())
-
-		// load previous users states
-		if err = usercache.ReadYaml(usrfile); err != nil {
-			Log.Infoln("error on users list file: " + err.Error())
-		}
-		Log.Infof("loaded %d items into users list", len(usercache.list))
+	// load GPS data of scanned photos
+	if err = gpscache.ReadYaml(gpsfile); err != nil {
+		Log.Infoln("error on GPS cache file: " + err.Error())
 	}
+	Log.Infof("loaded %d items into GPS cache", gpscache.Count())
+
+	// load previous users states
+	if err = usercache.ReadYaml(usrfile); err != nil {
+		Log.Infoln("error on users list file: " + err.Error())
+	}
+	Log.Infof("loaded %d items into users list", len(usercache.list))
 
 	// load profiles with roots, hidden and shares lists
 	if err = prflist.ReadYaml(prffile); err != nil {
@@ -298,18 +290,9 @@ func Shutdown() {
 	var wg errgroup.Group
 
 	wg.Go(func() (err error) {
-		if err1 := syspathcache.WriteYaml(pthfile); err1 != nil {
-			Log.Infoln("error on path cache file: " + err1.Error())
-			Log.Infoln("saving of directories cache and users list were missed for a reason path cache saving failure")
-			return
+		if err := usercache.WriteYaml(usrfile); err != nil {
+			Log.Infoln("error on users list file: " + err.Error())
 		}
-
-		wg.Go(func() (err error) {
-			if err := usercache.WriteYaml(usrfile); err != nil {
-				Log.Infoln("error on users list file: " + err.Error())
-			}
-			return
-		})
 		return
 	})
 

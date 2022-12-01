@@ -81,10 +81,6 @@ type CfgAppSets struct {
 	OnlineTimeout time.Duration `json:"online-timeout" yaml:"online-timeout" long:"ot" description:"Maximum duration between two ajax-calls to think client is online."`
 	// Default profile identifier for user on localhost.
 	DefAccID ID_t `json:"default-profile-id" yaml:"default-profile-id" long:"defaid" description:"Default profile identifier for user on localhost."`
-	// Initial length of path unique identifiers in base32 symbols, maximum is 12
-	// (x5 for length in bits).
-	// When the bottom pool arrives to 90%, length increases to next available value.
-	PUIDlen int `json:"puid-length" yaml:"puid-length" long:"puidlen" description:"Initial length of path unique identifiers in base32 symbols, maximum is 12 (x5 for length in bits). When the bottom pool arrives to 90%, length increases to next available value."`
 	// Maximum items number in files properties cache.
 	PropCacheMaxNum int `json:"prop-cache-maxnum" yaml:"prop-cache-maxnum" long:"pcmn" description:"Maximum items number in files properties cache."`
 	// Maximum items number in converted media files cache.
@@ -136,7 +132,6 @@ var cfg = Config{ // inits default values:
 		WPKmmap:          false,
 		OnlineTimeout:    time.Duration(3*60*1000) * time.Millisecond,
 		DefAccID:         1,
-		PUIDlen:          5,
 		PropCacheMaxNum:  32 * 1024,
 		MediaCacheMaxNum: 64,
 		DiskCacheExpire:  time.Duration(15) * time.Second,

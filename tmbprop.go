@@ -63,7 +63,7 @@ type PuidProp struct {
 }
 
 func (pp *PuidProp) Setup(syspath string) {
-	pp.PUIDVal = syspathcache.Cache(syspath)
+	pp.PUIDVal = PathCacheSure(syspath)
 }
 
 // PUID returns thumbnail key, it's full system path unique ID.
@@ -303,7 +303,7 @@ func tilechkAPI(w http.ResponseWriter, r *http.Request) {
 	ret.List = make([]tilemime, len(arg.List))
 	for i, tm := range arg.List {
 		var mime = MimeDis
-		if syspath, ok := syspathcache.Path(tm.PUID); ok {
+		if syspath, ok := PathCachePath(tm.PUID); ok {
 			if prop, err := propcache.Get(syspath); err == nil {
 				if tmb, ok := prop.(Thumber); ok {
 					var tp = tmb.Tmb()
@@ -351,7 +351,7 @@ func tilescnstartAPI(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, ttm := range arg.List {
-		if syspath, ok := syspathcache.Path(ttm.PUID); ok {
+		if syspath, ok := PathCachePath(ttm.PUID); ok {
 			if cg := prf.PathAccess(syspath, auth == prf); !cg.IsZero() {
 				if ttm.TM == tm0 {
 					ImgScanner.AddTmb(syspath)
@@ -399,7 +399,7 @@ func tilescnbreakAPI(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, ttm := range arg.List {
-		if syspath, ok := syspathcache.Path(ttm.PUID); ok {
+		if syspath, ok := PathCachePath(ttm.PUID); ok {
 			if cg := prf.PathAccess(syspath, auth == prf); !cg.IsZero() {
 				if ttm.TM == tm0 {
 					ImgScanner.RemoveTmb(syspath)

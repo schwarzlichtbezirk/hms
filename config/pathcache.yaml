@@ -1,9 +1,0 @@
-﻿
-# Here is rewritable cache with key/path pairs list.
-# It's loads on server start, and saves before exit.
-# Each key is path unique ID encoded to base32 (RFC
-# 4648), values are associated paths. Those keys
-# used for files paths representations in URLs. You
-# can modify keys to any alphanumerical text that
-# should be unique.
-

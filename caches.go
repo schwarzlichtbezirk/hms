@@ -84,78 +84,7 @@ func PathStarts(fpath, prefix string) bool {
 	return false
 }
 
-// PathCache is unlimited cache with puid/fpath and fpath/puid values.
-type PathCache struct {
-	keypath map[Puid_t]string // puid/path key/values
-	pathkey map[string]Puid_t // path/puid key/values
-	mux     sync.RWMutex
-}
-
-// PUID returns cached PUID for specified system path.
-func (c *PathCache) PUID(fpath string) (puid Puid_t, ok bool) {
-	puid, ok = CatPathKey[fpath]
-	if !ok {
-		c.mux.RLock()
-		puid, ok = c.pathkey[fpath]
-		c.mux.RUnlock()
-	}
-	return
-}
-
-// Path returns cached system path of specified PUID (path unique identifier).
-func (c *PathCache) Path(puid Puid_t) (fpath string, ok bool) {
-	if puid < PUIDreserved {
-		fpath, ok = CatKeyPath[puid]
-	} else {
-		c.mux.RLock()
-		fpath, ok = c.keypath[puid]
-		c.mux.RUnlock()
-	}
-	return
-}
-
-// MakePUID generates new path unique ID.
-func (c *PathCache) MakePUID() (puid Puid_t) {
-	c.mux.RLock()
-	defer c.mux.RUnlock()
-
-	var n = 0
-	for ok := true; puid < PUIDreserved || ok; _, ok = c.keypath[puid] {
-		if n == 10 {
-			cfg.PUIDlen++
-			if cfg.PUIDlen > 12 {
-				panic("PUID pool is exhausted")
-			}
-			n = 0
-		}
-		puid.Rand(cfg.PUIDlen * 5)
-		n++
-	}
-	return
-}
-
-// Cache returns cached PUID for specified system path, or make it and put into cache.
-func (c *PathCache) Cache(fpath string) (puid Puid_t) {
-	var ok bool
-	if puid, ok = c.PUID(fpath); ok {
-		return
-	}
-
-	puid = c.MakePUID()
-
-	c.mux.Lock()
-	defer c.mux.Unlock()
-	c.pathkey[fpath] = puid
-	c.keypath[puid] = fpath
-	return
-}
-
-// Instance of unlimited cache with PUID<=>syspath pairs.
-var syspathcache = PathCache{
-	keypath: map[Puid_t]string{},
-	pathkey: map[string]Puid_t{},
-}
-
+// DirCacheItem sqlite3 item of unlimited cache with puid/syspath values.
 type PathCacheItem struct {
 	Puid Puid_t `xorm:"pk autoincr"`
 	Path string `xorm:"notnull unique index"`
@@ -167,46 +96,92 @@ func (c *PathCacheItem) TableName() string {
 
 // DirCacheItem sqlite3 item of unlimited cache with puid/FileGroup values.
 type DirCacheItem struct {
-	Puid      Puid_t    `xorm:"pk"`
-	Scan      time.Time `xorm:"updated"`
-	FileGroup `xorm:"extends" yaml:",inline"`
+	Puid    Puid_t `xorm:"pk"`
+	DirProp `xorm:"extends"`
 }
 
 func (c *DirCacheItem) TableName() string {
 	return "dir_cache"
 }
 
+// GpsInfo describes GPS-data from the photos:
+// latitude, longitude, altitude and creation time.
+type GpsInfo struct {
+	DateTime  Unix_t  `xorm:"'time' index" json:"time" yaml:"time"` // photo creation date/time in Unix milliseconds
+	Latitude  float64 `xorm:"'lat'" json:"lat" yaml:"lat"`
+	Longitude float64 `xorm:"'lon'" json:"lon" yaml:"lon"`
+	Altitude  float32 `xorm:"'alt'" json:"alt,omitempty" yaml:"alt,omitempty"`
+}
+
+// DirCacheItem sqlite3 item of unlimited cache with puid/GpsInfo values.
+type GpsCacheItem struct {
+	Puid    Puid_t `xorm:"pk"`
+	GpsInfo `xorm:"extends"`
+}
+
+func (c *GpsCacheItem) TableName() string {
+	return "gps_cache"
+}
+
+// PathCachePUID returns cached PUID for specified system path.
+func PathCachePUID(fpath string) (puid Puid_t, ok bool) {
+	var err error
+	var pc PathCacheItem
+	if ok, err = xormEngine.Cols("puid").Where("path=?", fpath).Get(&pc); err != nil {
+		panic(err)
+	}
+	puid = pc.Puid
+	return
+}
+
+// PathCachePath returns cached system path of specified PUID (path unique identifier).
+func PathCachePath(puid Puid_t) (fpath string, ok bool) {
+	var err error
+	var pc PathCacheItem
+	if ok, err = xormEngine.Cols("path").ID(puid).Get(&pc); err != nil {
+		panic(err)
+	}
+	fpath = pc.Path
+	return
+}
+
+// PathCacheSure returns cached PUID for specified system path, or make it and put into cache.
+func PathCacheSure(fpath string) (puid Puid_t) {
+	var err error
+	var ok bool
+	var pc PathCacheItem
+	if ok, err = xormEngine.Cols("puid").Where("path=?", fpath).Get(&pc); err != nil {
+		panic(err)
+	}
+	if ok {
+		puid = pc.Puid
+		return
+	}
+
+	pc.Path = fpath
+	if _, err = xormEngine.InsertOne(&pc); err != nil {
+		panic(err)
+	}
+	puid = pc.Puid
+	return
+}
+
 // DirCacheGet returns value from directories cache.
 func DirCacheGet(puid Puid_t) (dp DirProp, ok bool) {
+	var err error
 	var dc DirCacheItem
-	if ok, _ = xormEngine.ID(puid).Get(&dc); ok {
-		dp.Scan = UnixJS(dc.Scan)
-		dp.FGrp[FGother] = dc.FGother
-		dp.FGrp[FGvideo] = dc.FGvideo
-		dp.FGrp[FGaudio] = dc.FGaudio
-		dp.FGrp[FGimage] = dc.FGimage
-		dp.FGrp[FGbooks] = dc.FGbooks
-		dp.FGrp[FGtexts] = dc.FGtexts
-		dp.FGrp[FGpacks] = dc.FGpacks
-		dp.FGrp[FGdir] = dc.FGdir
+	if ok, err = xormEngine.ID(puid).Get(&dc); err != nil {
+		panic(err)
 	}
+	dp = dc.DirProp
 	return
 }
 
 // DirCacheSet puts value to directories cache.
 func DirCacheSet(puid Puid_t, dp DirProp) (err error) {
 	var dc = &DirCacheItem{
-		Puid: puid,
-		FileGroup: FileGroup{
-			FGother: dp.FGrp[FGother],
-			FGvideo: dp.FGrp[FGvideo],
-			FGaudio: dp.FGrp[FGaudio],
-			FGimage: dp.FGrp[FGimage],
-			FGbooks: dp.FGrp[FGbooks],
-			FGtexts: dp.FGrp[FGtexts],
-			FGpacks: dp.FGrp[FGpacks],
-			FGdir:   dp.FGrp[FGdir],
-		},
+		Puid:    puid,
+		DirProp: dp,
 	}
 	switch xormDriverName {
 	case "sqlite3":
@@ -228,17 +203,8 @@ func DirCacheSet(puid Puid_t, dp DirProp) (err error) {
 // of files of given category is more then given percent.
 func DirCacheCat(cat string, percent float64) (ret []Puid_t, err error) {
 	const categoryCond = "(%s)/(other+video+audio+image+books+texts+packs+dir) > %f"
-	xormEngine.Where(fmt.Sprintf(categoryCond, cat, percent)).Find(&ret)
+	err = xormEngine.Where(fmt.Sprintf(categoryCond, cat, percent)).Find(&ret)
 	return
-}
-
-// GpsInfo describes GPS-data from the photos:
-// latitude, longitude, altitude and creation time.
-type GpsInfo struct {
-	DateTime  Unix_t  `json:"time" yaml:"time"` // photo creation date/time in Unix milliseconds
-	Latitude  float64 `json:"lat" yaml:"lat"`
-	Longitude float64 `json:"lon" yaml:"lon"`
-	Altitude  float32 `json:"alt,omitempty" yaml:"alt,omitempty"`
 }
 
 // GpsCache inherits sync.Map and encapsulates functionality for cache.
@@ -293,7 +259,7 @@ func InitCaches() {
 	mediacache = gcache.New(cfg.MediaCacheMaxNum).
 		LRU().
 		LoaderFunc(func(key interface{}) (ret interface{}, err error) {
-			var syspath, ok = syspathcache.Path(key.(Puid_t))
+			var syspath, ok = PathCachePath(key.(Puid_t))
 			if !ok {
 				err = ErrNoPUID
 				return // file path not found
@@ -344,7 +310,7 @@ func InitCaches() {
 	hdcache = gcache.New(cfg.MediaCacheMaxNum).
 		LRU().
 		LoaderFunc(func(key interface{}) (ret interface{}, err error) {
-			var syspath, ok = syspathcache.Path(key.(Puid_t))
+			var syspath, ok = PathCachePath(key.(Puid_t))
 			if !ok {
 				err = ErrNoPUID
 				return // file path not found
@@ -617,7 +583,7 @@ func InitXorm() (err error) {
 	}
 	xormEngine.ShowSQL(true)
 	xormEngine.SetMapper(names.GonicMapper{})
-	if err = xormEngine.Sync(&PathCacheItem{}, &DirCacheItem{}); err != nil {
+	if err = xormEngine.Sync(&PathCacheItem{}, &DirCacheItem{}, &GpsCacheItem{}); err != nil {
 		return
 	}
 

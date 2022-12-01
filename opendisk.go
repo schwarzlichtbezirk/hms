@@ -195,7 +195,7 @@ func ScanDir(dir string, cg *CatGrp, filter func(string) bool) (ret []Pather, sk
 		return
 	}
 
-	var fgrp = FileGrp{}
+	var fgrp FileGroup
 	for _, fi := range files {
 		if fi == nil {
 			continue
@@ -216,7 +216,7 @@ func ScanDir(dir string, cg *CatGrp, filter func(string) bool) (ret []Pather, sk
 			}
 			ret = append(ret, prop)
 		}
-		fgrp[grp]++
+		*fgrp.Field(grp)++
 	}
 
 	if pv, err := propcache.Get(dir); err == nil {

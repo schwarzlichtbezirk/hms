@@ -12,23 +12,23 @@ import (
 // HistItem is history item. Contains PUID of served file or
 // opened directory and UNIX-time in milliseconds of start of this event.
 type HistItem struct {
-	PUID Puid_t `json:"puid"`
-	Time Unix_t `json:"time"`
+	PUID Puid_t `json:"puid" yaml:"puid" xml:"puid,attr"`
+	Time Unix_t `json:"time" yaml:"time" xml:"time,attr"`
 }
 
 // User has vomplete information about user activity on server,
 // identified by remote address and user agent.
 type User struct {
-	Addr      string     `json:"addr" yaml:"addr"`            // remote address
-	UserAgent string     `json:"useragent" yaml:"user-agent"` // user agent
-	Lang      string     `json:"lang" yaml:"lang"`            // accept language
-	LastAjax  Unix_t     `json:"lastajax" yaml:"last-ajax"`   // last ajax-call UNIX-time in milliseconds
-	LastPage  Unix_t     `json:"lastpage" yaml:"last-page"`   // last page load UNIX-time in milliseconds
-	IsAuth    bool       `json:"isauth" yaml:"is-auth"`       // is user authorized
-	AuthID    ID_t       `json:"authid" yaml:"auth-id"`       // authorized ID
-	PrfID     ID_t       `json:"prfid" yaml:"prf-id"`         // page profile ID
-	Paths     []HistItem `json:"paths" yaml:"paths"`          // list of opened system paths
-	Files     []HistItem `json:"files" yaml:"files"`          // list of served files
+	Addr      string     `json:"addr" yaml:"addr" xml:"addr"`                   // remote address
+	UserAgent string     `json:"useragent" yaml:"user-agent" xml:"useragent"`   // user agent
+	Lang      string     `json:"lang" yaml:"lang" xml:"lang,attr"`              // accept language
+	LastAjax  Unix_t     `json:"lastajax" yaml:"last-ajax" xml:"lastajax,attr"` // last ajax-call UNIX-time in milliseconds
+	LastPage  Unix_t     `json:"lastpage" yaml:"last-page" xml:"lastpage,attr"` // last page load UNIX-time in milliseconds
+	IsAuth    bool       `json:"isauth" yaml:"is-auth" xml:"isauth,attr"`       // is user authorized
+	AuthID    ID_t       `json:"authid" yaml:"auth-id" xml:"authid,attr"`       // authorized ID
+	PrfID     ID_t       `json:"prfid" yaml:"prf-id" xml:"prfid,attr"`          // page profile ID
+	Paths     []HistItem `json:"paths" yaml:"paths" xml:"paths"`                // list of opened system paths
+	Files     []HistItem `json:"files" yaml:"files" xml:"files"`                // list of served files
 
 	// private parsed user agent data
 	ua uas.UserAgent
@@ -175,11 +175,11 @@ func usrlstAPI(w http.ResponseWriter, r *http.Request) {
 		ui.UA = user.ua
 		ui.Lang = user.Lang
 		if len(user.Paths) > 0 {
-			var fpath, _ = syspathcache.Path(user.Paths[len(user.Paths)-1].PUID)
+			var fpath, _ = PathCachePath(user.Paths[len(user.Paths)-1].PUID)
 			ui.Path = PathBase(fpath)
 		}
 		if len(user.Files) > 0 {
-			var fpath, _ = syspathcache.Path(user.Files[len(user.Files)-1].PUID)
+			var fpath, _ = PathCachePath(user.Files[len(user.Files)-1].PUID)
 			ui.File = PathBase(fpath)
 		}
 		ui.Online = user.LastAjax > ot

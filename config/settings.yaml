@@ -62,8 +62,6 @@ specification:
   online-timeout: 180s # 3 minutes
   # Default profile identifier for user on localhost.
   default-profile-id: 1
-  # Initial length of path unique identifiers in base32 symbols, maximum is 12 (x5 for length in bits).
-  puid-length: 5
   # Maximum items number in files properties cache.
   prop-cache-maxnum: 32768
   # Maximum items number in converted media files memory cache.

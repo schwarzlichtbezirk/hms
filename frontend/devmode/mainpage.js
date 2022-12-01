@@ -309,28 +309,28 @@ const geticonpath = file => {
 			if (file.scan) {
 				let fnum = 0;
 				const fg = file.fgrp;
-				for (const n of fg) {
-					fnum += n;
+				for (const n in fg) {
+					fnum += fg[n];
 				}
 				if (!fnum) {
 					return { org: org.folder.open, alt: alt.folder.open };
-				} else if (fg[FG.other] / fnum > 0.5) {
+				} else if (fg.other / fnum > 0.5) {
 					return { org: org.folder.other, alt: alt.folder.other };
-				} else if (fg[FG.video] / fnum > 0.5) {
+				} else if (fg.video / fnum > 0.5) {
 					return { org: org.folder.video, alt: alt.folder.video };
-				} else if (fg[FG.audio] / fnum > 0.5) {
+				} else if (fg.audio / fnum > 0.5) {
 					return { org: org.folder.audio, alt: alt.folder.audio };
-				} else if (fg[FG.image] / fnum > 0.5) {
+				} else if (fg.image / fnum > 0.5) {
 					return { org: org.folder.image, alt: alt.folder.image };
-				} else if (fg[FG.books] / fnum > 0.5) {
+				} else if (fg.books / fnum > 0.5) {
 					return { org: org.folder.books, alt: alt.folder.books };
-				} else if (fg[FG.texts] / fnum > 0.5) {
+				} else if (fg.texts / fnum > 0.5) {
 					return { org: org.folder.texts, alt: alt.folder.texts };
-				} else if (fg[FG.packs] / fnum > 0.5) {
+				} else if (fg.packs / fnum > 0.5) {
 					return { org: org.folder.packs, alt: alt.folder.packs };
-				} else if (fg[FG.dir] / fnum > 0.5) {
+				} else if (fg.dir / fnum > 0.5) {
 					return { org: org.folder.dir, alt: alt.folder.dir };
-				} else if ((fg[FG.audio] + fg[FG.video] + fg[FG.image]) / fnum > 0.5) {
+				} else if ((fg.audio + fg.video + fg.image) / fnum > 0.5) {
 					return { org: org.folder.media, alt: alt.folder.media };
 				} else {
 					return { org: org.folder.open, alt: alt.folder.open };
