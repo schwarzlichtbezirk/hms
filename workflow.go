@@ -102,10 +102,20 @@ func Init() {
 	if err = InitXorm(); err != nil {
 		Log.Fatal("can not init XORM: " + err.Error())
 	}
-	var pathcount, _ = xormEngine.Where("puid > ?", PUIDreserved-1).Count(&PathCacheItem{})
-	Log.Infof("found %d items at path cache", pathcount)
+	var pathcount, _ = xormEngine.Where("puid > ?", PUIDcache-1).Count(&PathCacheItem{})
+	Log.Infof("found %d items at system path cache", pathcount)
 	var dircount, _ = xormEngine.Count(&DirCacheItem{})
 	Log.Infof("found %d items at directories cache", dircount)
+	var exifcount, _ = xormEngine.Count(&ExifCacheItem{})
+	Log.Infof("found %d items at EXIF cache", exifcount)
+	var tagcount, _ = xormEngine.Count(&TagCacheItem{})
+	Log.Infof("found %d items at ID3-tags cache", tagcount)
+
+	// load GPS cache
+	if err = gpscache.Load(); err != nil {
+		Log.Fatal("GPS table loading failure: " + err.Error())
+	}
+	Log.Infof("loaded %d items into GPS cache", gpscache.Count())
 
 	// insert components templates into pages
 	if err = LoadTemplates(); err != nil {
@@ -119,12 +129,6 @@ func Init() {
 	if err = InitPackages(); err != nil {
 		Log.Fatal(err)
 	}
-
-	// load GPS data of scanned photos
-	if err = gpscache.ReadYaml(gpsfile); err != nil {
-		Log.Infoln("error on GPS cache file: " + err.Error())
-	}
-	Log.Infof("loaded %d items into GPS cache", gpscache.Count())
 
 	// load previous users states
 	if err = usercache.ReadYaml(usrfile); err != nil {
@@ -292,13 +296,6 @@ func Shutdown() {
 	wg.Go(func() (err error) {
 		if err := usercache.WriteYaml(usrfile); err != nil {
 			Log.Infoln("error on users list file: " + err.Error())
-		}
-		return
-	})
-
-	wg.Go(func() (err error) {
-		if err := gpscache.WriteYaml(gpsfile); err != nil {
-			Log.Infoln("error on GPS cache file: " + err.Error())
 		}
 		return
 	})

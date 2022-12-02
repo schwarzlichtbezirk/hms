@@ -466,7 +466,7 @@ func memusgAPI(w http.ResponseWriter, r *http.Request) {
 
 // APIHANDLER
 func cchinfAPI(w http.ResponseWriter, r *http.Request) {
-	var pathcount, _ = xormEngine.Where("puid > ?", PUIDreserved-1).Count(&PathCacheItem{})
+	var pathcount, _ = xormEngine.Where("puid > ?", PUIDcache-1).Count(&PathCacheItem{})
 	var propcount = propcache.Len(false)
 
 	type stat struct {

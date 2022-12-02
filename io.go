@@ -86,7 +86,7 @@ func (gc *GpsCache) ReadYaml(fname string) (err error) {
 				return
 			}
 		}
-		var puid = PathCacheSure(item.Path)
+		var puid, _ = PathCachePUID(item.Path)
 		gc.Store(puid, item.GpsInfo)
 	}
 	return

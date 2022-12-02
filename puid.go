@@ -33,7 +33,7 @@ const (
 	PUIDtexts  Puid_t = 9
 	PUIDmap    Puid_t = 10
 
-	PUIDreserved = 32
+	PUIDcache = 32 // first PUID of file system paths
 )
 
 // Categories paths constants.

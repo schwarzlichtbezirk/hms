@@ -68,18 +68,18 @@ const fileinfo = file => {
 	if (file.year) {
 		lst.push(['year', file.year]);
 	}
-	if (file.track && (file.track.number ?? file.track.total)) {
-		if (file.track.number && file.track.total) {
-			lst.push(['track', `${file.track.number}/${file.track.total}`]);
+	if (file.tracknum ?? file.tracksum) {
+		if (file.tracksum) {
+			lst.push(['track', `${file.tracknum}/${file.tracksum}`]);
 		} else {
-			lst.push(['track', file.track.number ?? file.track.total]);
+			lst.push(['track', file.tracknum ?? file.tracksum]);
 		}
 	}
-	if (file.disc && (file.disc.number ?? file.disc.total)) {
-		if (file.disc.number && file.disc.total) {
-			lst.push(['disc', `${file.disc.number}/${file.disc.total}`]);
+	if (file.discnum ?? file.discsum) {
+		if (file.discsum) {
+			lst.push(['disc', `${file.discnum}/${file.discsum}`]);
 		} else {
-			lst.push(['disc', file.disc.number ?? file.disc.total]);
+			lst.push(['disc', file.discnum ?? file.discsum]);
 		}
 	}
 	if (file.comment) {

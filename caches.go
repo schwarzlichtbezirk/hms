@@ -15,7 +15,6 @@ import (
 
 	"github.com/bluele/gcache"
 	"github.com/disintegration/gift"
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/mattn/go-sqlite3"
 	"github.com/schwarzlichtbezirk/wpk"
 	"github.com/schwarzlichtbezirk/wpk/fsys"
@@ -84,10 +83,36 @@ func PathStarts(fpath, prefix string) bool {
 	return false
 }
 
+// UpsertOne insert struct to database table,
+// or update if some one already present with given identifier.
+func UpsertOne(val interface{}) (err error) {
+	switch xormDriverName {
+	case "sqlite3":
+		if _, err = xormEngine.InsertOne(val); err != nil {
+			var serr sqlite3.Error
+			if errors.As(err, &serr) && serr.ExtendedCode == 1555 {
+				_, err = xormEngine.Update(val)
+			}
+		}
+	default:
+		if affected, _ := xormEngine.InsertOne(val); affected == 0 {
+			_, err = xormEngine.Update(val)
+		}
+	}
+	return
+}
+
+type PathInfo struct {
+	Path string `xorm:"notnull unique index"`
+	Type FT_t   `xorm:"default 0"`
+	Size int64  `xorm:"default 0"`
+	Time Unix_t `xorm:"default 0"`
+}
+
 // DirCacheItem sqlite3 item of unlimited cache with puid/syspath values.
 type PathCacheItem struct {
-	Puid Puid_t `xorm:"pk autoincr"`
-	Path string `xorm:"notnull unique index"`
+	Puid     Puid_t `xorm:"pk autoincr"`
+	PathInfo `xorm:"extends"`
 }
 
 func (c *PathCacheItem) TableName() string {
@@ -104,23 +129,24 @@ func (c *DirCacheItem) TableName() string {
 	return "dir_cache"
 }
 
-// GpsInfo describes GPS-data from the photos:
-// latitude, longitude, altitude and creation time.
-type GpsInfo struct {
-	DateTime  Unix_t  `xorm:"'time' index" json:"time" yaml:"time"` // photo creation date/time in Unix milliseconds
-	Latitude  float64 `xorm:"'lat'" json:"lat" yaml:"lat"`
-	Longitude float64 `xorm:"'lon'" json:"lon" yaml:"lon"`
-	Altitude  float32 `xorm:"'alt'" json:"alt,omitempty" yaml:"alt,omitempty"`
+// DirCacheItem sqlite3 item of unlimited cache with puid/ExifProp values.
+type ExifCacheItem struct {
+	Puid     Puid_t `xorm:"pk"`
+	ExifProp `xorm:"extends"`
 }
 
-// DirCacheItem sqlite3 item of unlimited cache with puid/GpsInfo values.
-type GpsCacheItem struct {
+func (c *ExifCacheItem) TableName() string {
+	return "exif_cache"
+}
+
+// TagCacheItem sqlite3 item of unlimited cache with puid/TagProp values.
+type TagCacheItem struct {
 	Puid    Puid_t `xorm:"pk"`
-	GpsInfo `xorm:"extends"`
+	TagProp `xorm:"extends"`
 }
 
-func (c *GpsCacheItem) TableName() string {
-	return "gps_cache"
+func (c *TagCacheItem) TableName() string {
+	return "tag_cache"
 }
 
 // PathCachePUID returns cached PUID for specified system path.
@@ -178,25 +204,45 @@ func DirCacheGet(puid Puid_t) (dp DirProp, ok bool) {
 }
 
 // DirCacheSet puts value to directories cache.
-func DirCacheSet(puid Puid_t, dp DirProp) (err error) {
-	var dc = &DirCacheItem{
-		Puid:    puid,
-		DirProp: dp,
+func DirCacheSet(dc *DirCacheItem) (err error) {
+	return UpsertOne(dc)
+}
+
+// ExifCacheGet returns value from EXIF cache.
+func ExifCacheGet(puid Puid_t) (ep ExifProp, ok bool) {
+	var err error
+	var ec ExifCacheItem
+	if ok, err = xormEngine.ID(puid).Get(&ec); err != nil {
+		panic(err)
 	}
-	switch xormDriverName {
-	case "sqlite3":
-		if _, err = xormEngine.InsertOne(dc); err != nil {
-			var serr sqlite3.Error
-			if errors.As(err, &serr) && serr.ExtendedCode == 1555 {
-				_, err = xormEngine.Update(dc)
-			}
-		}
-	default:
-		if affected, _ := xormEngine.InsertOne(dc); affected == 0 {
-			_, err = xormEngine.Update(dc)
-		}
-	}
+	ep = ec.ExifProp
 	return
+}
+
+// ExifCacheSet puts value to EXIF cache.
+func ExifCacheSet(ec *ExifCacheItem) error {
+	if ec.Latitude != 0 {
+		var gi GpsInfo
+		gi.FromProp(&ec.ExifProp)
+		gpscache.Store(ec.Puid, gi)
+	}
+	return UpsertOne(ec)
+}
+
+// TagCacheGet returns value from tags cache.
+func TagCacheGet(puid Puid_t) (tp TagProp, ok bool) {
+	var err error
+	var tc TagCacheItem
+	if ok, err = xormEngine.ID(puid).Get(&tc); err != nil {
+		panic(err)
+	}
+	tp = tc.TagProp
+	return
+}
+
+// TagCacheSet puts value to tags cache.
+func TagCacheSet(tc *TagCacheItem) error {
+	return UpsertOne(tc)
 }
 
 // DirCacheCat returns PUIDs list of directories where number
@@ -205,6 +251,22 @@ func DirCacheCat(cat string, percent float64) (ret []Puid_t, err error) {
 	const categoryCond = "(%s)/(other+video+audio+image+books+texts+packs+dir) > %f"
 	err = xormEngine.Where(fmt.Sprintf(categoryCond, cat, percent)).Find(&ret)
 	return
+}
+
+// GpsInfo describes GPS-data from the photos:
+// latitude, longitude, altitude and creation time.
+type GpsInfo struct {
+	DateTime  Unix_t  `xorm:"'time' index default 0" json:"time" yaml:"time"` // photo creation date/time in Unix milliseconds
+	Latitude  float64 `xorm:"'lat'" json:"lat" yaml:"lat"`
+	Longitude float64 `xorm:"'lon'" json:"lon" yaml:"lon"`
+	Altitude  float32 `xorm:"'alt' default 0" json:"alt,omitempty" yaml:"alt,omitempty"`
+}
+
+func (gi *GpsInfo) FromProp(ep *ExifProp) {
+	gi.DateTime = ep.DateTime
+	gi.Latitude = ep.Latitude
+	gi.Longitude = ep.Longitude
+	gi.Altitude = ep.Altitude
 }
 
 // GpsCache inherits sync.Map and encapsulates functionality for cache.
@@ -226,6 +288,28 @@ func (gc *GpsCache) Range(f func(Puid_t, *GpsInfo) bool) {
 	gc.Map.Range(func(key, value interface{}) bool {
 		return f(key.(Puid_t), value.(*GpsInfo))
 	})
+}
+
+// Load gets all items with GPS information from EXIF stirage.
+func (gc *GpsCache) Load() (err error) {
+	const limit = 256
+	var offset int
+	for {
+		var chunk []ExifCacheItem
+		if err = xormEngine.Where("latitude != 0").Cols("datetime", "latitude", "longitude", "altitude").Limit(limit, offset).Find(&chunk); err != nil {
+			return
+		}
+		offset += limit
+		for _, ec := range chunk {
+			var gi GpsInfo
+			gi.FromProp(&ec.ExifProp)
+			gc.Store(ec.Puid, gi)
+		}
+		if limit > len(chunk) {
+			break
+		}
+	}
+	return
 }
 
 var gpscache GpsCache
@@ -583,24 +667,33 @@ func InitXorm() (err error) {
 	}
 	xormEngine.ShowSQL(true)
 	xormEngine.SetMapper(names.GonicMapper{})
-	if err = xormEngine.Sync(&PathCacheItem{}, &DirCacheItem{}, &GpsCacheItem{}); err != nil {
+	if err = xormEngine.Sync(&PathCacheItem{}, &DirCacheItem{}, &ExifCacheItem{}, &TagCacheItem{}); err != nil {
 		return
 	}
 
 	// fill path_cache with predefined items
 	var ok bool
-	if ok, err = xormEngine.IsTableEmpty(&PathCacheItem{}); ok && err == nil {
+	if ok, err = xormEngine.IsTableEmpty(&PathCacheItem{}); err != nil {
+		return
+	}
+	if ok {
+		var ctgr = make([]PathCacheItem, PUIDcache-1)
 		for puid, path := range CatKeyPath {
-			xormEngine.Insert(&PathCacheItem{
-				Puid: puid,
+			ctgr[puid-1].Puid = puid
+			ctgr[puid-1].PathInfo = PathInfo{
 				Path: path,
-			})
+				Type: FTctgr,
+			}
 		}
-		for puid := Puid_t(len(CatKeyPath) + 1); puid < PUIDreserved; puid++ {
-			xormEngine.Insert(&PathCacheItem{
-				Puid: puid,
+		for puid := Puid_t(len(CatKeyPath) + 1); puid < PUIDcache; puid++ {
+			ctgr[puid-1].Puid = puid
+			ctgr[puid-1].PathInfo = PathInfo{
 				Path: fmt.Sprintf("<reserved%d>", puid),
-			})
+				Type: FTctgr,
+			}
+		}
+		if _, err = xormEngine.Insert(&ctgr); err != nil {
+			return
 		}
 	}
 	return

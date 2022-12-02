@@ -223,7 +223,10 @@ func ScanDir(dir string, cg *CatGrp, filter func(string) bool) (ret []Pather, sk
 		if dk, ok := pv.(*DirKit); ok {
 			dk.Scan = UnixJSNow()
 			dk.FGrp = fgrp
-			_ = DirCacheSet(dk.PUIDVal, dk.DirProp)
+			_ = DirCacheSet(&DirCacheItem{
+				Puid:    dk.PUIDVal,
+				DirProp: dk.DirProp,
+			})
 		}
 	}
 	skip = len(files) - len(ret)

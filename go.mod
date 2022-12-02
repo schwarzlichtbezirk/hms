@@ -12,7 +12,6 @@ require (
 	github.com/disintegration/gift v1.2.1
 	github.com/diskfs/go-diskfs v1.2.0
 	github.com/ftrvxmtrx/tga v0.0.0-20150524081124-bd8e8d5be13a
-	github.com/go-sql-driver/mysql v1.6.0
 	github.com/google/uuid v1.3.0
 	github.com/gorilla/mux v1.8.0
 	github.com/jessevdk/go-flags v1.5.0

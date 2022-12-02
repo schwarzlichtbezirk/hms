@@ -106,7 +106,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 	ret.Name = PathBase(base)
 
 	var t = time.Now()
-	if ret.PUID < PUIDreserved {
+	if ret.PUID < PUIDcache {
 		if auth != prf && !prf.IsShared(syspath) {
 			WriteError(w, r, http.StatusForbidden, ErrNotShared, AECfoldernoshr)
 			return
@@ -122,7 +122,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 		}
 		switch ret.PUID {
 		case PUIDhome:
-			for puid := Puid_t(1); puid < PUIDreserved; puid++ {
+			for puid := Puid_t(1); puid < PUIDcache; puid++ {
 				if puid == PUIDhome {
 					continue
 				}

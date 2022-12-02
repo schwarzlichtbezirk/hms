@@ -355,9 +355,9 @@ func (pp *PathProp) Time() Unix_t {
 
 // FileProp is common file properties chunk.
 type FileProp struct {
-	PathProp `yaml:",inline"`
-	SizeVal  int64  `json:"size,omitempty" yaml:"size,omitempty" xml:"size,omitempty"`
-	TimeVal  Unix_t `json:"time,omitempty" yaml:"time,omitempty" xml:"time,omitempty"`
+	PathProp `xorm:"extends" yaml:",inline"`
+	SizeVal  int64  `xorm:"default 0" json:"size,omitempty" yaml:"size,omitempty" xml:"size,omitempty"`
+	TimeVal  Unix_t `xorm:"default 0" json:"time,omitempty" yaml:"time,omitempty" xml:"time,omitempty"`
 }
 
 // Setup fills fields from fs.FileInfo structure. Do not looks for share.
