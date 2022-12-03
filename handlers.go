@@ -87,8 +87,10 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 		panic("bad route for URL " + r.URL.Path)
 	}
 	var fpath = strings.Join(chunks[3:], "/")
+
 	var syspath string
-	if syspath, err = UnfoldPath(fpath); err != nil {
+	var puid Puid_t
+	if syspath, puid, err = UnfoldPath(fpath); err != nil {
 		WriteError400(w, r, err, AECmediabadpath)
 		return
 	}
@@ -120,7 +122,6 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var puid = PathCacheSure(syspath)
 	var val interface{}
 	if hd && grp == FGimage {
 		if val, err = hdcache.Get(puid); err != nil {
@@ -266,7 +267,11 @@ func etmbHandler(w http.ResponseWriter, r *http.Request) {
 
 	var md *MediaData
 	if md, err = ExtractTmb(syspath); err != nil {
-		WriteError(w, r, http.StatusNotFound, err, AECthumbabsent)
+		WriteError(w, r, http.StatusNotFound, err, AECetmbbadcnt)
+		return
+	}
+	if md == nil {
+		WriteError(w, r, http.StatusNoContent, ErrNotFound, AECetmbnocnt)
 		return
 	}
 	w.Header().Set("Content-Type", MimeStr[md.Mime])
@@ -323,11 +328,11 @@ func mtmbHandler(w http.ResponseWriter, r *http.Request) {
 
 	var md *MediaData
 	if md, err = thumbpkg.GetImage(syspath); err != nil {
-		WriteError500(w, r, err, AECmtmbnocnt)
+		WriteError500(w, r, err, AECmtmbbadcnt)
 		return
 	}
 	if md == nil {
-		WriteError(w, r, http.StatusNoContent, err, AECmtmbbadcnt)
+		WriteError(w, r, http.StatusNoContent, ErrNotFound, AECmtmbnocnt)
 		return
 	}
 	w.Header().Set("Content-Type", MimeStr[md.Mime])
@@ -708,7 +713,7 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 			syspath += "/"
 		}
 	} else {
-		if syspath, err = UnfoldPath(fpath); err != nil {
+		if syspath, _, err = UnfoldPath(fpath); err != nil {
 			WriteError400(w, r, err, AECispathbadpath)
 			return
 		}
@@ -859,7 +864,7 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 			syspath += "/"
 		}
 	} else {
-		if syspath, err = UnfoldPath(fpath); err != nil {
+		if syspath, _, err = UnfoldPath(fpath); err != nil {
 			WriteError400(w, r, err, AECdrvaddbadpath)
 			return
 		}

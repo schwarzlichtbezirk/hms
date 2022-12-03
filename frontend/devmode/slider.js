@@ -75,7 +75,7 @@ const VuePhotoSlider = {
 		},
 		// image url
 		selfileurl() {
-			return this.selfile && `/id${this.$root.aid}/file/${this.selfile}?media=1&hd=${this.hd}`;
+			return this.selfile && `/id${this.$root.aid}/file/${this.selfile.puid}?media=1&hd=${this.hd}`;
 		},
 		// index of selected file
 		selfilepos() {

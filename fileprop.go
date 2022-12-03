@@ -458,10 +458,9 @@ func PathBase(syspath string) string {
 
 // DirProp is directory properties chunk.
 type DirProp struct {
-	// Directory scanning time in UNIX format, milliseconds.
-	Scan Unix_t `json:"scan,omitempty" yaml:"scan,omitempty" xml:"scan,omitempty"`
-	// Directory file groups counters.
-	FGrp FileGroup `xorm:"extends" json:"fgrp,omitempty" yaml:"fgrp,flow,omitempty" xml:"fgrp,omitempty"`
+	Scan    Unix_t    `json:"scan,omitempty" yaml:"scan,omitempty" xml:"scan,omitempty"`                     // directory scanning time in UNIX format, milliseconds.
+	FGrp    FileGroup `xorm:"extends" json:"fgrp,omitempty" yaml:"fgrp,flow,omitempty" xml:"fgrp,omitempty"` // directory file groups counters.
+	Latency int       `json:"latency,omitempty" yaml:"latency,omitempty" xml:"latency,omitempty"`            // drive connection latency in ms, or -1 on error
 }
 
 // DirKit is directory properties kit.
@@ -485,7 +484,7 @@ func (dk *DirKit) Setup(syspath string) {
 type DriveKit struct {
 	PathProp `yaml:",inline"`
 	PuidProp `yaml:",inline"`
-	Latency  int `json:"latency,omitempty" yaml:"latency,omitempty" xml:"latency,omitempty"` // drive connection latency in ms, or -1 on error
+	DirProp  `yaml:",inline"`
 }
 
 // Setup fills fields with given path. Do not looks for share.
@@ -493,6 +492,9 @@ func (dk *DriveKit) Setup(syspath string) {
 	dk.NameVal = PathBase(syspath)
 	dk.TypeVal = FTdrv
 	dk.PuidProp.Setup(syspath)
+	if dp, ok := DirCacheGet(dk.PUIDVal); ok {
+		dk.DirProp = dp
+	}
 }
 
 // Scan drive to check its latency.

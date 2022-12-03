@@ -53,7 +53,8 @@ const (
 	AECetmbnopath
 	AECetmbhidden
 	AECetmbaccess
-	AECthumbabsent
+	AECetmbbadcnt
+	AECetmbnocnt
 
 	// mtmb
 
@@ -63,8 +64,8 @@ const (
 	AECmtmbnopath
 	AECmtmbhidden
 	AECmtmbaccess
-	AECmtmbnocnt
 	AECmtmbbadcnt
+	AECmtmbnocnt
 
 	// tile
 
@@ -243,7 +244,7 @@ var (
 	ErrNotSys   = errors.New("root PUID does not refers to file system path")
 	ErrPathOut  = errors.New("path cannot refers outside root PUID")
 
-	ErrNotFound  = errors.New("404 page not found")
+	ErrNotFound  = errors.New("resource not found")
 	ErrArgNoNum  = errors.New("'num' parameter not recognized")
 	ErrArgNoHD   = errors.New("'hd' parameter not recognized")
 	ErrArgNoPuid = errors.New("'puid' argument required")

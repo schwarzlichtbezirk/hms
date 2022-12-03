@@ -8,6 +8,7 @@ import (
 	"path"
 	"strings"
 	"sync"
+	"time"
 
 	diskfs "github.com/diskfs/go-diskfs"
 	"github.com/diskfs/go-diskfs/disk"
@@ -195,6 +196,8 @@ func ScanDir(dir string, cg *CatGrp, filter func(string) bool) (ret []Pather, sk
 		return
 	}
 
+	var t1 = time.Now()
+
 	var fgrp FileGroup
 	for _, fi := range files {
 		if fi == nil {
@@ -219,10 +222,13 @@ func ScanDir(dir string, cg *CatGrp, filter func(string) bool) (ret []Pather, sk
 		*fgrp.Field(grp)++
 	}
 
+	var latency = int(time.Until(t1) / 1000000)
+
 	if pv, err := propcache.Get(dir); err == nil {
 		if dk, ok := pv.(*DirKit); ok {
 			dk.Scan = UnixJSNow()
 			dk.FGrp = fgrp
+			dk.Latency = latency
 			_ = DirCacheSet(&DirCacheItem{
 				Puid:    dk.PUIDVal,
 				DirProp: dk.DirProp,

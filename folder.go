@@ -13,7 +13,7 @@ import (
 )
 
 // UnfoldPath brings any share path to system file path.
-func UnfoldPath(shrpath string) (syspath string, err error) {
+func UnfoldPath(shrpath string) (syspath string, puid Puid_t, err error) {
 	shrpath = path.Clean(shrpath)
 	var pref, suff = shrpath, "."
 	if i := strings.IndexRune(shrpath, '/'); i != -1 {
@@ -23,7 +23,6 @@ func UnfoldPath(shrpath string) (syspath string, err error) {
 			return
 		}
 	}
-	var puid Puid_t
 	var ok bool
 	if puid, ok = CatPathKey[pref]; !ok {
 		if err = puid.Set(pref); err != nil {
@@ -33,6 +32,9 @@ func UnfoldPath(shrpath string) (syspath string, err error) {
 		if pref, ok = PathCachePath(puid); !ok {
 			err = ErrNoPath
 			return
+		}
+		if suff != "." {
+			puid = PathCacheSure(syspath)
 		}
 	} else if suff != "." {
 		err = ErrNotSys
@@ -86,7 +88,8 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var syspath string
-	if syspath, err = UnfoldPath(ToSlash(arg.Path)); err != nil {
+	var puid Puid_t
+	if syspath, puid, err = UnfoldPath(ToSlash(arg.Path)); err != nil {
 		WriteError400(w, r, err, AECfolderbadpath)
 		return
 	}
@@ -101,7 +104,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECfolderaccess)
 		return
 	}
-	ret.PUID = PathCacheSure(syspath)
+	ret.PUID = puid
 	ret.Path = shrpath
 	ret.Name = PathBase(base)
 

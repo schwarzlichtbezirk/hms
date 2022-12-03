@@ -192,7 +192,7 @@ func GetCachedThumb(syspath string) (md *MediaData, err error) {
 	}
 
 	// check that file is image
-	if IsTypeImage(GetFileExt(syspath)) {
+	if !IsTypeImage(GetFileExt(syspath)) {
 		err = ErrNotImg
 		return // file is not image
 	}
@@ -268,7 +268,7 @@ func GetCachedTile(syspath string, wdh, hgt int) (md *MediaData, err error) {
 	}
 
 	// check that file is image
-	if IsTypeImage(GetFileExt(syspath)) {
+	if !IsTypeImage(GetFileExt(syspath)) {
 		err = ErrNotImg
 		return // file is not image
 	}
