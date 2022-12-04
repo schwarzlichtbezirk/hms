@@ -223,7 +223,7 @@ func ScanDir(dir string, cg *CatGrp, prf *Profile) (ret []Pather, skip int, err 
 	}
 	skip = len(files) - len(ret)
 
-	var latency = int(time.Until(t1) / 1000000)
+	var latency = int(time.Until(t1) / time.Millisecond)
 
 	var puid, _ = PathCachePUID(dir)
 	if err = DirCacheSet(&DirCacheItem{

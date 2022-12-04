@@ -13,6 +13,30 @@ type Cacher interface {
 	Cache()
 }
 
+// EmbedPath is path to get embedded JPEG thumbnail.
+type EmbedPath string
+
+func (fpath EmbedPath) Cache() {
+	var err error
+	var prop interface{}
+	if prop, err = propcache.Get(string(fpath)); err != nil {
+		return // can not get properties
+	}
+	if tmb, ok := prop.(Thumber); ok {
+		var tp = tmb.Tmb()
+		if tp.ETmbVal != MimeNil {
+			return // thumbnail already scanned
+		}
+
+		var md *MediaData
+		if md, err = ExtractTmb(string(fpath)); err != nil {
+			tp.ETmbVal = MimeDis
+			return
+		}
+		tp.ETmbVal = md.Mime
+	}
+}
+
 // ThumbPath is thumbnail path type for cache processing.
 type ThumbPath string
 
@@ -196,22 +220,32 @@ func (s *scanner) Stop() (ctx context.Context) {
 	return
 }
 
-// AddTmb adds PUID to queue to make thumbnails.
+// AddEmbed adds system path to queue to extract embedded thumbnail.
+func (s *scanner) AddEmbed(syspath string) {
+	s.put <- EmbedPath(syspath)
+}
+
+// RemoveEmbed removes system path for embedded thumbnail from queue.
+func (s *scanner) RemoveEmbed(syspath string) {
+	s.del <- EmbedPath(syspath)
+}
+
+// AddTmb adds system path to queue to render thumbnail.
 func (s *scanner) AddTmb(syspath string) {
 	s.put <- ThumbPath(syspath)
 }
 
-// Remove list of PUIDs from thumbnails queue.
+// RemoveTmb removes system path for thumbnail render from queue.
 func (s *scanner) RemoveTmb(syspath string) {
 	s.del <- ThumbPath(syspath)
 }
 
-// AddTile adds PUID to queue to make tile with given tile multiplier.
+// AddTile adds system path to queue to render tile with given tile multiplier.
 func (s *scanner) AddTile(syspath string, tm TM_t) {
 	s.put <- TilePath{syspath, int(tm * htcell), int(tm * vtcell)}
 }
 
-// Remove list of PUIDs from thumbnails queue.
+// RemoveTmb removes system path for tile render from queue.
 func (s *scanner) RemoveTile(syspath string, tm TM_t) {
 	s.del <- TilePath{syspath, int(tm * htcell), int(tm * vtcell)}
 }

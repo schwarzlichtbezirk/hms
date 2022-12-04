@@ -229,9 +229,3 @@ func UnixJS(u time.Time) Unix_t {
 func UnixJSNow() Unix_t {
 	return Unix_t(time.Now().UnixMilli())
 }
-
-// TimeJS is backward conversion from javascript compatible Unix time
-// in milliseconds to golang structure.
-func TimeJS(ujs Unix_t) time.Time {
-	return time.Unix(int64(ujs/1000), int64(ujs%1000)*1000000)
-}

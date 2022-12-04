@@ -256,6 +256,18 @@ func (prf *Profile) ScanRoots() []Pather {
 	return lst
 }
 
+// IsRoot checks whether file path is disk root path.
+func (prf *Profile) IsRoot(fpath string) bool {
+	prf.mux.RLock()
+	defer prf.mux.RUnlock()
+	for _, root := range prf.Roots {
+		if fpath == root {
+			return true
+		}
+	}
+	return false
+}
+
 // ScanShares scan actual shares from shares list.
 func (prf *Profile) ScanShares() []Pather {
 	prf.mux.RLock()

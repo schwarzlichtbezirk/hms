@@ -768,14 +768,21 @@ const VueFileCard = {
 	methods: {
 		async fetchscan(flist) {
 			// not cached thumbnails
-			const uncached = () => {
-				const lst = [];
-				for (const file of flist) {
-					if (file.type === FT.file && !file.mtmb) {
-						lst.push({ puid: file.puid, tm: 0 });
-					}
+			const uncached = [];
+			// get embedded thumbnails at first
+			for (const file of flist) {
+				if (file.type === FT.file && !file.etmb && !file.mtmb) {
+					uncached.push({ puid: file.puid, tm: -1 });
 				}
-				return lst;
+			}
+			// then get rendered thumbnails
+			for (const file of flist) {
+				if (file.type === FT.file && !file.mtmb) {
+					uncached.push({ puid: file.puid, tm: 0 });
+				}
+			}
+			if (!uncached.length) {
+				return;
 			}
 
 			let stop = false;
@@ -785,13 +792,9 @@ const VueFileCard = {
 
 			const self = this;
 			const gen = (async function* () {
-				const list = uncached();
-				if (!list.length) {
-					return;
-				}
 				const response = await fetchjsonauth("POST", "/api/tile/scnstart", {
 					aid: self.$root.aid,
-					list: list,
+					list: uncached,
 				});
 				traceajax(response);
 				if (!response.ok) {
@@ -802,15 +805,10 @@ const VueFileCard = {
 
 				// cache folder thumnails
 				while (true) {
-					// check cached state loop
-					const list = uncached();
-					if (!list.length) {
-						return;
-					}
 					if (stop || !self.expanded) {
 						const response = await fetchjsonauth("POST", "/api/tile/scnbreak", {
 							aid: self.$root.aid,
-							list: list,
+							list: uncached,
 						});
 						traceajax(response);
 						if (!response.ok) {
@@ -819,7 +817,7 @@ const VueFileCard = {
 						return;
 					}
 					const response = await fetchajaxauth("POST", "/api/tile/chk", {
-						list: list
+						list: uncached
 					});
 					traceajax(response);
 					if (!response.ok) {
@@ -827,20 +825,33 @@ const VueFileCard = {
 					}
 
 					const gpslist = [];
+					uncached.splice(0); // refill uncached
 					for (const tp of response.data.list) {
-						for (const file of flist) {
-							if (file.puid === tp.puid) {
-								file.mtmb = tp.mime; // Vue.set
-								// add gps-item
-								if (file.latitude && file.longitude && Number(file.mtmb) > 0) {
-									gpslist.push(file);
+						if (tp.mime) {
+							for (const file of flist) {
+								if (file.puid === tp.puid) {
+									if (tp.tm == -1) {
+										file.etmb = tp.mime; // Vue.set
+									} else {
+										file.mtmb = tp.mime; // Vue.set
+									}
+									// add gps-item
+									if (file.latitude && file.longitude && Number(file.mtmb) > 0) {
+										gpslist.push(file);
+									}
+									break;
 								}
-								break;
 							}
+						} else {
+							uncached.push(tp)
 						}
 					}
 					// update map card
 					self.$root.$refs.mcard.addmarkers(gpslist);
+					// check cached state loop
+					if (!uncached.length) {
+						return;
+					}
 
 					yield;
 				}
@@ -1281,15 +1292,15 @@ const VueTileCard = {
 	methods: {
 		async fetchscan() {
 			// not cached tiles
-			const uncached = () => {
-				const lst = [];
-				for (const tile of this.tiles) {
-					const fld = 'mt' + (tile.sx * wdhmult < 10 ? '0' : '') + tile.sx * wdhmult;
-					if (tile.file.type === FT.file && !tile.file[fld]) {
-						lst.push({ puid: tile.file.puid, tm: tile.sx * wdhmult });
-					}
+			const uncached = [];
+			for (const tile of this.tiles) {
+				const fld = 'mt' + (tile.sx * wdhmult < 10 ? '0' : '') + tile.sx * wdhmult;
+				if (tile.file.type === FT.file && !tile.file[fld]) {
+					uncached.push({ puid: tile.file.puid, tm: tile.sx * wdhmult });
 				}
-				return lst;
+			}
+			if (!uncached.length) {
+				return;
 			}
 
 			let stop = false;
@@ -1299,13 +1310,9 @@ const VueTileCard = {
 
 			const self = this;
 			const gen = (async function* () {
-				const list = uncached();
-				if (!list.length) {
-					return;
-				}
 				const response = await fetchjsonauth("POST", "/api/tile/scnstart", {
 					aid: self.$root.aid,
-					list: list,
+					list: uncached,
 				});
 				traceajax(response);
 				if (!response.ok) {
@@ -1316,15 +1323,10 @@ const VueTileCard = {
 
 				// cache folder tiles
 				while (true) {
-					// check cached state loop
-					const list = uncached();
-					if (!list.length) {
-						return;
-					}
 					if (stop || !self.expanded) {
 						const response = await fetchjsonauth("POST", "/api/tile/scnbreak", {
 							aid: self.$root.aid,
-							list: list,
+							list: uncached,
 						});
 						traceajax(response);
 						if (!response.ok) {
@@ -1333,21 +1335,30 @@ const VueTileCard = {
 						return;
 					}
 					const response = await fetchajaxauth("POST", "/api/tile/chk", {
-						list: list
+						list: uncached
 					});
 					traceajax(response);
 					if (!response.ok) {
 						throw new HttpError(response.status, response.data);
 					}
 
+					uncached.splice(0); // refill uncached
 					for (const tp of response.data.list) {
-						for (const tile of self.tiles) {
-							if (tile.file.puid === tp.puid) {
-								const fld = 'mt' + (tp.tm < 10 ? '0' : '') + tp.tm;
-								tile.file[fld] = tp.mime; // Vue.set
-								break;
+						if (tp.mime) {
+							for (const tile of self.tiles) {
+								if (tile.file.puid === tp.puid) {
+									const fld = 'mt' + (tp.tm < 10 ? '0' : '') + tp.tm;
+									tile.file[fld] = tp.mime; // Vue.set
+									break;
+								}
 							}
+						} else {
+							uncached.push(tp)
 						}
+					}
+					// check cached state loop
+					if (!uncached.length) {
+						return;
 					}
 
 					yield;

@@ -272,11 +272,11 @@ func (tp *TmbProp) SetTile(tm TM_t, mime Mime_t) (ok bool) {
 func tilechkAPI(w http.ResponseWriter, r *http.Request) {
 	type tiletm struct {
 		PUID Puid_t `json:"puid" yaml:"puid" xml:"puid,attr"`
-		TM   TM_t   `json:"tm,omitempty" yaml:"tm,omitempty" xml:"tm,omitempty,attr"`
+		TM   TM_t   `json:"tm" yaml:"tm" xml:"tm,omitempty,attr"`
 	}
 	type tilemime struct {
 		PUID Puid_t `json:"puid" yaml:"puid" xml:"puid,attr"`
-		TM   TM_t   `json:"tm,omitempty" yaml:"tm,omitempty" xml:"tm,omitempty,attr"`
+		TM   TM_t   `json:"tm" yaml:"tm" xml:"tm,omitempty,attr"`
 		Mime Mime_t `json:"mime,omitempty" yaml:"mime,omitempty" xml:"mime,omitempty,attr"`
 	}
 	var err error
@@ -353,7 +353,9 @@ func tilescnstartAPI(w http.ResponseWriter, r *http.Request) {
 	for _, ttm := range arg.List {
 		if syspath, ok := PathCachePath(ttm.PUID); ok {
 			if cg := prf.PathAccess(syspath, auth == prf); !cg.IsZero() {
-				if ttm.TM == tm0 {
+				if ttm.TM == tme {
+					ImgScanner.AddEmbed(syspath)
+				} else if ttm.TM == tm0 {
 					ImgScanner.AddTmb(syspath)
 				} else {
 					ImgScanner.AddTile(syspath, ttm.TM)
@@ -401,7 +403,9 @@ func tilescnbreakAPI(w http.ResponseWriter, r *http.Request) {
 	for _, ttm := range arg.List {
 		if syspath, ok := PathCachePath(ttm.PUID); ok {
 			if cg := prf.PathAccess(syspath, auth == prf); !cg.IsZero() {
-				if ttm.TM == tm0 {
+				if ttm.TM == tme {
+					ImgScanner.RemoveEmbed(syspath)
+				} else if ttm.TM == tm0 {
 					ImgScanner.RemoveTmb(syspath)
 				} else {
 					ImgScanner.RemoveTile(syspath, ttm.TM)
