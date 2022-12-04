@@ -9,15 +9,15 @@
 	<button class="navbar-toggler" type="button" data-bs-toggle="collapse" v-bind:data-bs-target="'#nav'+iid">
 		<span class="navbar-toggler-icon"></span>
 	</button>
-	<div class="collapse navbar-collapse mw-100" v-bind:id="'nav'+iid">
-		<div class="timescale text-truncate text-center flex-grow-1 d-flex flex-column">
+	<div class="collapse navbar-collapse" v-bind:id="'nav'+iid">
+		<div class="timescale overflow-hidden text-center flex-grow-1 flex-shrink-1 d-flex flex-column">
 			<div class="progress position-relative">
 				<div class="current progress-bar" v-bind:style="stlbarcur" v-bind:aria-valuenow="timecur" aria-valuemin="0" v-bind:aria-valuemax="timeend"></div>
 				<div class="buffer progress-bar" v-bind:style="stlbarbuf" v-bind:aria-valuenow="timebuf" aria-valuemin="0" v-bind:aria-valuemax="timeend"></div>
-				<div class="timer d-inline-block position-absolute top-50 start-50 translate-middle">{{fmttimecur}}<span class="mx-2">/</span>{{fmttimeend}}</div>
+				<div class="timer d-inline position-absolute top-50 start-50 translate-middle">{{fmttimecur}}<span class="mx-2">/</span>{{fmttimeend}}</div>
 				<input class="seeker position-absolute top-50 start-50 translate-middle" min="0" type="range" v-bind:max="timeend" v-bind:value="timecur" v-bind:disabled="!ready" v-on:change="onseekerchange" v-on:input="onseekerinput">
 			</div>
-			<div class="d-inline-block">{{fmttrackinfo}}</div>
+			<div class="trackinfo">{{fmttrackinfo}}</div>
 		</div>
 		<ul class="navbar-nav flex-row flex-md-column justify-content-around">
 			<li class="d-flex flex-nowrap align-items-baseline" title="volume">

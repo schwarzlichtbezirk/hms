@@ -46,6 +46,10 @@
 				background: SaddleBrown;
 			}
 
+	.timescale > .trackinfo {
+		max-height: 5.2ex;
+	}
+
 .range-label {
 	width: 3.5rem;
 	text-align: right;

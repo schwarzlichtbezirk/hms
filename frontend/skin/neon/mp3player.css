@@ -47,6 +47,10 @@
 				background: Navy;
 			}
 
+	.timescale > .trackinfo {
+		max-height: 5.2ex;
+	}
+
 .mp3range { /* input[type=range] */
 	-webkit-appearance: none;
 	background-color: transparent;

@@ -190,7 +190,7 @@ func OpenDir(dir string) (ret []fs.FileInfo, err error) {
 }
 
 // ScanDir returns file properties list for given file system directory, or directory in iso-disk.
-func ScanDir(dir string, cg *CatGrp, filter func(string) bool) (ret []Pather, skip int, err error) {
+func ScanDir(dir string, cg *CatGrp, prf *Profile) (ret []Pather, skip int, err error) {
 	var files []fs.FileInfo
 	if files, err = OpenDir(dir); err != nil && len(files) == 0 {
 		return
@@ -204,7 +204,7 @@ func ScanDir(dir string, cg *CatGrp, filter func(string) bool) (ret []Pather, sk
 			continue
 		}
 		var fpath = path.Join(dir, fi.Name())
-		if filter != nil && !filter(fpath) {
+		if prf.IsHidden(fpath) {
 			continue
 		}
 		var grp = GetFileGroup(fpath)
@@ -221,21 +221,21 @@ func ScanDir(dir string, cg *CatGrp, filter func(string) bool) (ret []Pather, sk
 		}
 		*fgrp.Field(grp)++
 	}
+	skip = len(files) - len(ret)
 
 	var latency = int(time.Until(t1) / 1000000)
 
-	if pv, err := propcache.Get(dir); err == nil {
-		if dk, ok := pv.(*DirKit); ok {
-			dk.Scan = UnixJSNow()
-			dk.FGrp = fgrp
-			dk.Latency = latency
-			_ = DirCacheSet(&DirCacheItem{
-				Puid:    dk.PUIDVal,
-				DirProp: dk.DirProp,
-			})
-		}
+	var puid, _ = PathCachePUID(dir)
+	if err = DirCacheSet(&DirCacheItem{
+		Puid: puid,
+		DirProp: DirProp{
+			Scan:    UnixJSNow(),
+			FGrp:    fgrp,
+			Latency: latency,
+		},
+	}); err != nil {
+		return
 	}
-	skip = len(files) - len(ret)
 
 	return
 }

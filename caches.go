@@ -109,6 +109,17 @@ type PathInfo struct {
 	Time Unix_t `xorm:"default 0"`
 }
 
+// Setup sets size and time from file info.
+func (pi *PathInfo) Setup(fi fs.FileInfo) {
+	pi.Size = fi.Size()
+	pi.Time = UnixJS(fi.ModTime())
+}
+
+// IsDiff returns true whether struct differs from file info.
+func (pi *PathInfo) IsDiff(fi fs.FileInfo) bool {
+	return pi.Size != fi.Size() || pi.Time != UnixJS(fi.ModTime())
+}
+
 // DirCacheItem sqlite3 item of unlimited cache with puid/syspath values.
 type PathCacheItem struct {
 	Puid     Puid_t `xorm:"pk autoincr"`
@@ -256,10 +267,10 @@ func DirCacheCat(cat string, percent float64) (ret []Puid_t, err error) {
 // GpsInfo describes GPS-data from the photos:
 // latitude, longitude, altitude and creation time.
 type GpsInfo struct {
-	DateTime  Unix_t  `xorm:"'time' index default 0" json:"time" yaml:"time"` // photo creation date/time in Unix milliseconds
-	Latitude  float64 `xorm:"'lat'" json:"lat" yaml:"lat"`
-	Longitude float64 `xorm:"'lon'" json:"lon" yaml:"lon"`
-	Altitude  float32 `xorm:"'alt' default 0" json:"alt,omitempty" yaml:"alt,omitempty"`
+	DateTime  Unix_t  `json:"time" yaml:"time" xml:"time,attr"` // photo creation date/time in Unix milliseconds
+	Latitude  float64 `json:"lat" yaml:"lat" xml:"lat,attr"`
+	Longitude float64 `json:"lon" yaml:"lon" xml:"lon,attr"`
+	Altitude  float32 `json:"alt,omitempty" yaml:"alt,omitempty" xml:"alt,omitempty,attr"`
 }
 
 func (gi *GpsInfo) FromProp(ep *ExifProp) {

@@ -109,7 +109,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 	ret.Name = PathBase(base)
 
 	var t = time.Now()
-	if ret.PUID < PUIDcache {
+	if puid < PUIDcache {
 		if auth != prf && !prf.IsShared(syspath) {
 			WriteError(w, r, http.StatusForbidden, ErrNotShared, AECfoldernoshr)
 			return
@@ -123,7 +123,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 		}
-		switch ret.PUID {
+		switch puid {
 		case PUIDhome:
 			for puid := Puid_t(1); puid < PUIDcache; puid++ {
 				if puid == PUIDhome {
@@ -212,7 +212,16 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 			ext = GetFileExt(syspath)
 		}
 
-		if !fi.IsDir() && IsTypePlaylist(ext) {
+		if fi.IsDir() {
+			if ret.List, ret.Skip, err = ScanDir(syspath, &cg, prf); err != nil && len(ret.List) == 0 {
+				if errors.Is(err, fs.ErrNotExist) {
+					WriteError(w, r, http.StatusNotFound, err, AECfolderabsent)
+				} else {
+					WriteError500(w, r, err, AECfolderfail)
+				}
+				return
+			}
+		} else if IsTypePlaylist(ext) {
 			var file io.ReadCloser
 			if file, err = OpenFile(syspath); err != nil {
 				WriteError500(w, r, err, AECfolderopen)
@@ -268,22 +277,11 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 			ret.Skip = len(pl.Tracks) - len(ret.List)
-		} else {
-			if ret.List, ret.Skip, err = ScanDir(syspath, &cg, func(fpath string) bool {
-				return !prf.IsHidden(fpath)
-			}); err != nil && len(ret.List) == 0 {
-				if errors.Is(err, fs.ErrNotExist) {
-					WriteError(w, r, http.StatusNotFound, err, AECfolderabsent)
-				} else {
-					WriteError500(w, r, err, AECfolderfail)
-				}
-				return
-			}
 		}
 	}
 
 	Log.Infof("id%d: navigate to %s, items %d, timeout %s", prf.ID, syspath, len(ret.List), time.Since(t))
-	usermsg <- UsrMsg{r, "path", ret.PUID}
+	usermsg <- UsrMsg{r, "path", puid}
 
 	WriteOK(w, r, &ret)
 }
