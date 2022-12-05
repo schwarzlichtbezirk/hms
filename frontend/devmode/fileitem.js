@@ -515,6 +515,9 @@ const VueListItem = {
 		},
 
 		// manage items classes
+		isfile() {
+			return this.file.type === FT.file;
+		},
 		itemview() {
 			return { 'selected': this.file.selected };
 		},

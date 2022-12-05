@@ -100,10 +100,11 @@ const MimeVal = {
 
 // File types
 const FT = {
-	file: 0,
-	dir: 1,
-	drv: 2,
-	ctgr: 3
+	unk: 0, // unknown file type
+	file: 1,
+	dir: 2,
+	drv: 3,
+	ctgr: 4
 };
 
 // File groups
@@ -338,7 +339,7 @@ const geticonpath = file => {
 			} else {
 				return { org: org.folder.close, alt: alt.folder.close };
 			}
-		default: // file types
+		case FT.file:
 			const ext = pathext(file.name);
 			const find = t => {
 				for (const k of extfmtorder) {

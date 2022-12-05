@@ -281,7 +281,7 @@ const VuePlayer = {
 		},
 
 		onopen(file) {
-			if (file.type || !file.size) {
+			if (file.type != FT.file || !file.size) {
 				return;
 			}
 			if (audiofilter(file) || videofilter(file)) {

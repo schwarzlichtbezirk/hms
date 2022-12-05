@@ -13,10 +13,11 @@ type FT_t int
 
 // File types.
 const (
-	FTfile FT_t = 0
-	FTdir  FT_t = 1
-	FTdrv  FT_t = 2
-	FTctgr FT_t = 3
+	FTunk  FT_t = 0 // unknown file type
+	FTfile FT_t = 1
+	FTdir  FT_t = 2
+	FTdrv  FT_t = 3
+	FTctgr FT_t = 4
 )
 
 // FG_t is enum type for file groups.
@@ -465,7 +466,7 @@ type DirProp struct {
 
 // DirKit is directory properties kit.
 type DirKit struct {
-	PathProp `yaml:",inline"`
+	FileProp `yaml:",inline"`
 	PuidProp `yaml:",inline"`
 	DirProp  `yaml:",inline"`
 }
@@ -482,7 +483,7 @@ func (dk *DirKit) Setup(syspath string) {
 
 // DriveKit is drive properties kit.
 type DriveKit struct {
-	PathProp `yaml:",inline"`
+	FileProp `yaml:",inline"`
 	PuidProp `yaml:",inline"`
 	DirProp  `yaml:",inline"`
 }

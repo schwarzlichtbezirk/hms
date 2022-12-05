@@ -1,6 +1,7 @@
 package hms
 
 import (
+	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
@@ -266,6 +267,16 @@ func (prf *Profile) IsRoot(fpath string) bool {
 		}
 	}
 	return false
+}
+
+func (prf *Profile) PathType(fpath string, fi fs.FileInfo) FT_t {
+	if !fi.IsDir() {
+		return FTfile
+	}
+	if prf.IsRoot(fpath) {
+		return FTdrv
+	}
+	return FTdir
 }
 
 // ScanShares scan actual shares from shares list.

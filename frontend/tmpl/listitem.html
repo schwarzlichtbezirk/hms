@@ -13,8 +13,8 @@
 		<img v-if="file.playback" class="bars icon-pix-xs position-absolute top-50 start-50 translate-middle" src="/asst/equalizer-bars.gif" alt="play">
 	</div>
 	<div class="name flex-grow-1 overflow-hidden">{{file.name}}</div>
-	<div v-if="!file.type" class="attr d-flex flex-column">
-		<div><span class="key">size</span><span class="val">{{filesize}}</span></div>
+	<div class="attr d-flex flex-column">
+		<div v-if="isfile"><span class="key">size</span><span class="val">{{filesize}}</span></div>
 		<div><span class="key">date</span><span class="val">{{filedate}}</span></div>
 		<div><span class="key">time</span><span class="val">{{filetime}}</span></div>
 	</div>

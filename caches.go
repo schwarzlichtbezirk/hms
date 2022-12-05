@@ -15,11 +15,12 @@ import (
 
 	"github.com/bluele/gcache"
 	"github.com/disintegration/gift"
-	"github.com/mattn/go-sqlite3"
 	"github.com/schwarzlichtbezirk/wpk"
 	"github.com/schwarzlichtbezirk/wpk/fsys"
 	"xorm.io/xorm"
 	"xorm.io/xorm/names"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 // gcaches
@@ -83,41 +84,11 @@ func PathStarts(fpath, prefix string) bool {
 	return false
 }
 
-// UpsertOne insert struct to database table,
-// or update if some one already present with given identifier.
-func UpsertOne(val interface{}) (err error) {
-	switch xormDriverName {
-	case "sqlite3":
-		if _, err = xormEngine.InsertOne(val); err != nil {
-			var serr sqlite3.Error
-			if errors.As(err, &serr) && serr.ExtendedCode == 1555 {
-				_, err = xormEngine.Update(val)
-			}
-		}
-	default:
-		if affected, _ := xormEngine.InsertOne(val); affected == 0 {
-			_, err = xormEngine.Update(val)
-		}
-	}
-	return
-}
-
 type PathInfo struct {
 	Path string `xorm:"notnull unique index"`
 	Type FT_t   `xorm:"default 0"`
 	Size int64  `xorm:"default 0"`
 	Time Unix_t `xorm:"default 0"`
-}
-
-// Setup sets size and time from file info.
-func (pi *PathInfo) Setup(fi fs.FileInfo) {
-	pi.Size = fi.Size()
-	pi.Time = UnixJS(fi.ModTime())
-}
-
-// IsDiff returns true whether struct differs from file info.
-func (pi *PathInfo) IsDiff(fi fs.FileInfo) bool {
-	return pi.Size != fi.Size() || pi.Time != UnixJS(fi.ModTime())
 }
 
 // DirCacheItem sqlite3 item of unlimited cache with puid/syspath values.
@@ -166,46 +137,79 @@ func (c *TagCacheItem) TableName() string {
 	return "tag_cache"
 }
 
+var (
+	puidpath = map[Puid_t]string{}
+	pathpuid = map[string]Puid_t{}
+	ppmux    sync.RWMutex
+)
+
 // PathCachePUID returns cached PUID for specified system path.
 func PathCachePUID(fpath string) (puid Puid_t, ok bool) {
-	var err error
-	var pc PathCacheItem
-	if ok, err = xormEngine.Cols("puid").Where("path=?", fpath).Get(&pc); err != nil {
-		panic(err)
+	// get cached
+	ppmux.RLock()
+	puid, ok = pathpuid[fpath]
+	ppmux.RUnlock()
+	if ok {
+		return
 	}
-	puid = pc.Puid
-	return
-}
 
-// PathCachePath returns cached system path of specified PUID (path unique identifier).
-func PathCachePath(puid Puid_t) (fpath string, ok bool) {
 	var err error
-	var pc PathCacheItem
-	if ok, err = xormEngine.Cols("path").ID(puid).Get(&pc); err != nil {
-		panic(err)
-	}
-	fpath = pc.Path
-	return
-}
-
-// PathCacheSure returns cached PUID for specified system path, or make it and put into cache.
-func PathCacheSure(fpath string) (puid Puid_t) {
-	var err error
-	var ok bool
 	var pc PathCacheItem
 	if ok, err = xormEngine.Cols("puid").Where("path=?", fpath).Get(&pc); err != nil {
 		panic(err)
 	}
 	if ok {
 		puid = pc.Puid
+		// put to cache
+		ppmux.Lock()
+		pathpuid[fpath] = puid
+		ppmux.Unlock()
+	}
+	return
+}
+
+// PathCachePath returns cached system path of specified PUID (path unique identifier).
+func PathCachePath(puid Puid_t) (fpath string, ok bool) {
+	// get cached
+	ppmux.RLock()
+	fpath, ok = puidpath[puid]
+	ppmux.RUnlock()
+	if ok {
 		return
 	}
 
+	var err error
+	var pc PathCacheItem
+	if ok, err = xormEngine.Cols("path").ID(puid).Get(&pc); err != nil {
+		panic(err)
+	}
+	if ok {
+		fpath = pc.Path
+		// put to cache
+		ppmux.Lock()
+		puidpath[puid] = fpath
+		ppmux.Unlock()
+	}
+	return
+}
+
+// PathCacheSure returns cached PUID for specified system path, or make it and put into cache.
+func PathCacheSure(fpath string) (puid Puid_t) {
+	var ok bool
+	if puid, ok = PathCachePUID(fpath); ok {
+		return
+	}
+
+	var pc PathCacheItem
 	pc.Path = fpath
-	if _, err = xormEngine.InsertOne(&pc); err != nil {
+	if _, err := xormEngine.InsertOne(&pc); err != nil {
 		panic(err)
 	}
 	puid = pc.Puid
+	// put to cache
+	ppmux.Lock()
+	pathpuid[fpath] = puid
+	ppmux.Unlock()
 	return
 }
 
