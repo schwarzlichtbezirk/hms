@@ -140,6 +140,12 @@ func (c *DirCacheItem) TableName() string {
 	return "dir_cache"
 }
 
+type DirCacheKit struct {
+	Puid     Puid_t `xorm:"pk"`
+	PathInfo `xorm:"extends"`
+	DirProp  `xorm:"extends"`
+}
+
 // DirCacheItem sqlite3 item of unlimited cache with puid/ExifProp values.
 type ExifCacheItem struct {
 	Puid     Puid_t `xorm:"pk"`
@@ -214,30 +220,28 @@ func DirCacheGet(puid Puid_t) (dp DirProp, ok bool) {
 	return
 }
 
-// DirCacheSet puts value to directories cache.
-func DirCacheSet(dc *DirCacheItem) (err error) {
-	return UpsertOne(dc)
-}
-
 // ExifCacheGet returns value from EXIF cache.
 func ExifCacheGet(puid Puid_t) (ep ExifProp, ok bool) {
 	var err error
-	var ec ExifCacheItem
-	if ok, err = xormEngine.ID(puid).Get(&ec); err != nil {
+	var eci ExifCacheItem
+	if ok, err = xormEngine.ID(puid).Get(&eci); err != nil {
 		panic(err)
 	}
-	ep = ec.ExifProp
+	ep = eci.ExifProp
 	return
 }
 
 // ExifCacheSet puts value to EXIF cache.
-func ExifCacheSet(ec *ExifCacheItem) error {
-	if ec.Latitude != 0 {
+func ExifCacheSet(eci *ExifCacheItem) (err error) {
+	if eci.Latitude != 0 {
 		var gi GpsInfo
-		gi.FromProp(&ec.ExifProp)
-		gpscache.Store(ec.Puid, gi)
+		gi.FromProp(&eci.ExifProp)
+		gpscache.Store(eci.Puid, gi)
 	}
-	return UpsertOne(ec)
+	if affected, _ := xormEngine.InsertOne(&eci); affected == 0 {
+		_, err = xormEngine.ID(eci.Puid).AllCols().Omit("puid").Update(&eci)
+	}
+	return
 }
 
 // TagCacheGet returns value from tags cache.
@@ -249,11 +253,6 @@ func TagCacheGet(puid Puid_t) (tp TagProp, ok bool) {
 	}
 	tp = tc.TagProp
 	return
-}
-
-// TagCacheSet puts value to tags cache.
-func TagCacheSet(tc *TagCacheItem) error {
-	return UpsertOne(tc)
 }
 
 // DirCacheCat returns PUIDs list of directories where number

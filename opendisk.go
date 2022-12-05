@@ -1,6 +1,7 @@
 package hms
 
 import (
+	"database/sql"
 	"errors"
 	"io"
 	"io/fs"
@@ -189,6 +190,10 @@ func OpenDir(dir string) (ret []fs.FileInfo, err error) {
 	panic("not released disk type present")
 }
 
+const sqlUpserPath = `
+INSERT INTO path_cache (path,type,size,time) VALUES (?,?,?,?)
+  ON CONFLICT(path) DO UPDATE SET type=?,size=?,time=?`
+
 // ScanDir returns file properties list for given file system directory, or directory in iso-disk.
 func ScanDir(dir string, cg *CatGrp, prf *Profile) (ret []Pather, skip int, err error) {
 	var files []fs.FileInfo
@@ -196,9 +201,16 @@ func ScanDir(dir string, cg *CatGrp, prf *Profile) (ret []Pather, skip int, err 
 		return
 	}
 
+	// start of scanning
 	var t1 = time.Now()
 
+	/////////////////////////////
+	// define files to display //
+	/////////////////////////////
+
 	var fgrp FileGroup
+	var vfiles []fs.FileInfo
+	var vpaths []string
 	for _, fi := range files {
 		if fi == nil {
 			continue
@@ -208,34 +220,169 @@ func ScanDir(dir string, cg *CatGrp, prf *Profile) (ret []Pather, skip int, err 
 			continue
 		}
 		var grp = GetFileGroup(fpath)
-		if cg[grp] {
-			var prop Pather
-			if propcache.Has(fpath) {
-				var pv, _ = propcache.Get(fpath)
-				prop = pv.(Pather)
-			} else {
-				prop = MakeProp(fpath, fi)
-				propcache.Set(fpath, prop)
-			}
-			ret = append(ret, prop)
+		if fi.IsDir() {
+			grp = FGdir
+		}
+		if !cg[grp] {
+			continue
 		}
 		*fgrp.Field(grp)++
+		vfiles = append(vfiles, fi)
+		vpaths = append(vpaths, fpath)
 	}
-	skip = len(files) - len(ret)
+	skip = len(files) - len(vfiles)
 
-	var latency = int(time.Until(t1) / time.Millisecond)
+	////////////////////////////
+	// define items to upsert //
+	////////////////////////////
 
-	var puid, _ = PathCachePUID(dir)
-	if err = DirCacheSet(&DirCacheItem{
-		Puid: puid,
-		DirProp: DirProp{
-			Scan:    UnixJSNow(),
-			FGrp:    fgrp,
-			Latency: latency,
-		},
-	}); err != nil {
+	var vpci []PathCacheItem
+	if err = xormEngine.In("path", vpaths).Find(&vpci); err != nil {
 		return
 	}
+	var inspci, updpci, constpci []*PathCacheItem
+	for i, fi := range vfiles {
+		var fpath = vpaths[i]
+		var ins = true
+		for _, pci := range vpci {
+			if pci.Path == fpath {
+				if pci.IsDiff(fi) {
+					if fi.IsDir() {
+						if prf.IsRoot(fpath) {
+							pci.Type = FTdrv
+						} else {
+							pci.Type = FTdir
+						}
+					} else {
+						pci.Type = FTfile
+					}
+					pci.Setup(fi)
+					updpci = append(updpci, &pci)
+				} else {
+					constpci = append(constpci, &pci)
+				}
+				ins = false
+				break
+			}
+		}
+		if ins {
+			var pci PathCacheItem
+			pci.Path = fpath
+			if fi.IsDir() {
+				if prf.IsRoot(fpath) {
+					pci.Type = FTdrv
+				} else {
+					pci.Type = FTdir
+				}
+			} else {
+				pci.Type = FTfile
+			}
+			pci.PathInfo.Setup(fi)
+			inspci = append(inspci, &pci)
+		}
+	}
+
+	// insert new items
+	if len(inspci) > 0 {
+		for _, pci := range inspci {
+			if _, err = xormEngine.InsertOne(pci); err != nil {
+				return
+			}
+		}
+	}
+
+	// update changed items
+	if len(updpci) > 0 {
+		for _, pci := range updpci {
+			if _, err = xormEngine.ID(pci.Puid).Cols("type", "size", "time").Update(pci); err != nil {
+				return
+			}
+		}
+	}
+
+	_ = constpci // nothing to do with unchanged items
+
+	///////////////////////
+	// get PUIDs for all //
+	///////////////////////
+
+	var puidmap = map[string]Puid_t{}
+	for _, pci := range vpci {
+		puidmap[pci.Path] = pci.Puid
+	}
+	for _, pci := range inspci {
+		puidmap[pci.Path] = pci.Puid
+	}
+
+	/////////////////////
+	// format response //
+	/////////////////////
+
+	for i, fi := range vfiles {
+		var fpath = vpaths[i]
+		if fi.IsDir() {
+			var dk DirKit
+			dk.NameVal = PathBase(fpath)
+			dk.TypeVal = FTdir
+			if prf.IsRoot(fpath) {
+				dk.TypeVal = FTdrv
+			}
+			dk.PUIDVal = puidmap[fpath]
+			if dp, ok := DirCacheGet(dk.PUIDVal); ok {
+				dk.DirProp = dp
+			}
+			ret = append(ret, &dk)
+		} else {
+			var fk FileKit
+			fk.FileProp.Setup(fi)
+			fk.PUIDVal = puidmap[fpath]
+			fk.TmbProp.Setup(fpath)
+			ret = append(ret, &fk)
+		}
+	}
+
+	// end of scanning
+	var latency = int(time.Since(t1) / time.Millisecond)
+
+	go func() {
+		var fi fs.FileInfo
+		if fi, err = StatFile(dir); err != nil {
+			return
+		}
+
+		var pci PathCacheItem
+		pci.Path = dir
+		if prf.IsRoot(dir) {
+			pci.Type = FTdrv
+		} else {
+			pci.Type = FTdir
+		}
+		pci.PathInfo.Setup(fi)
+
+		var res sql.Result
+		res, err = xormEngine.Exec(sqlUpserPath,
+			pci.Path, pci.Type, pci.Size, pci.Time,
+			pci.Type, pci.Size, pci.Time)
+		var ins, _ = res.LastInsertId()
+		var aff, _ = res.RowsAffected()
+		_ = aff
+
+		var puid = Puid_t(ins)
+		if puid == 0 {
+			puid, _ = PathCachePUID(dir)
+		}
+		var dci = DirCacheItem{
+			Puid: puid,
+			DirProp: DirProp{
+				Scan:    UnixJSNow(),
+				FGrp:    fgrp,
+				Latency: latency,
+			},
+		}
+		if affected, _ := xormEngine.InsertOne(&dci); affected == 0 {
+			_, err = xormEngine.ID(puid).AllCols().Omit("puid").Update(&dci)
+		}
+	}()
 
 	return
 }

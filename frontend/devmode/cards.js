@@ -1205,7 +1205,8 @@ const VueTileCard = {
 		photolist() {
 			const res = [];
 			for (const file of this.flist) {
-				if (file.type === FT.file && (file.model || file.height || file.orientation)) {
+				const ext = pathext(file.name);
+				if (file.size > 512*1024 && (ext === ".jpg" || ext === ".webp")) {
 					res.push(file);
 				}
 			}

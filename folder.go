@@ -33,9 +33,6 @@ func UnfoldPath(shrpath string) (syspath string, puid Puid_t, err error) {
 			err = ErrNoPath
 			return
 		}
-		if suff != "." {
-			puid = PathCacheSure(syspath)
-		}
 	} else if suff != "." {
 		err = ErrNotSys
 		return
@@ -44,6 +41,10 @@ func UnfoldPath(shrpath string) (syspath string, puid Puid_t, err error) {
 	// append slash to disk root to prevent open current dir on this disk
 	if syspath[len(syspath)-1] == ':' { // syspath here is always have non zero length
 		syspath += "/"
+	}
+	// get PUID if it not have
+	if suff != "." {
+		puid = PathCacheSure(syspath)
 	}
 	return
 }

@@ -31,6 +31,7 @@ const iconpng = file => {
 const filehint = file => {
 	const lst = [];
 	// Std properties
+	lst.push(['name', file.name.length > 31 ? file.name.substring(0, 32) + "..." : file.name]);
 	if (file.type === FT.file) {
 		lst.push(['size', fmtitemsize(file.size ?? 0)]);
 	}

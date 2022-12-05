@@ -147,7 +147,7 @@ func (tp *TmbProp) Tmb() *TmbProp {
 
 // Setup generates PUID (path unique identifier) and updates cached state.
 func (tp *TmbProp) Setup(syspath string) {
-	tp.ETmbVal = MimeDis // setup as default
+	tp.ETmbVal = MimeNil // setup as default
 	if ts, ok := thumbpkg.Tagset(syspath); ok {
 		if str, ok := ts.TagStr(wpk.TIDmime); ok {
 			if strings.HasPrefix(str, "image/") {

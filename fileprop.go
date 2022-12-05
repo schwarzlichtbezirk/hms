@@ -393,14 +393,14 @@ func (fk *FileKit) Setup(syspath string, fi fs.FileInfo) {
 }
 
 type FileGroup struct {
-	FGother uint `xorm:"other" json:"other,omitempty" yaml:"other,omitempty" xml,omitempty,attr:"other"`
-	FGvideo uint `xorm:"video" json:"video,omitempty" yaml:"video,omitempty" xml,omitempty,attr:"video"`
-	FGaudio uint `xorm:"audio" json:"audio,omitempty" yaml:"audio,omitempty" xml,omitempty,attr:"audio"`
-	FGimage uint `xorm:"image" json:"image,omitempty" yaml:"image,omitempty" xml,omitempty,attr:"image"`
-	FGbooks uint `xorm:"books" json:"books,omitempty" yaml:"books,omitempty" xml,omitempty,attr:"books"`
-	FGtexts uint `xorm:"texts" json:"texts,omitempty" yaml:"texts,omitempty" xml,omitempty,attr:"texts"`
-	FGpacks uint `xorm:"packs" json:"packs,omitempty" yaml:"packs,omitempty" xml,omitempty,attr:"packs"`
-	FGdir   uint `xorm:"dir" json:"dir,omitempty" yaml:"dir,omitempty" xml,omitempty,attr:"dir"`
+	FGother uint `xorm:"'other' default 0" json:"other,omitempty" yaml:"other,omitempty" xml,omitempty,attr:"other"`
+	FGvideo uint `xorm:"'video' default 0" json:"video,omitempty" yaml:"video,omitempty" xml,omitempty,attr:"video"`
+	FGaudio uint `xorm:"'audio' default 0" json:"audio,omitempty" yaml:"audio,omitempty" xml,omitempty,attr:"audio"`
+	FGimage uint `xorm:"'image' default 0" json:"image,omitempty" yaml:"image,omitempty" xml,omitempty,attr:"image"`
+	FGbooks uint `xorm:"'books' default 0" json:"books,omitempty" yaml:"books,omitempty" xml,omitempty,attr:"books"`
+	FGtexts uint `xorm:"'texts' default 0" json:"texts,omitempty" yaml:"texts,omitempty" xml,omitempty,attr:"texts"`
+	FGpacks uint `xorm:"'packs' default 0" json:"packs,omitempty" yaml:"packs,omitempty" xml,omitempty,attr:"packs"`
+	FGdir   uint `xorm:"'dir' default 0" json:"dir,omitempty" yaml:"dir,omitempty" xml,omitempty,attr:"dir"`
 }
 
 // Field returns pointer to field value with given identifier.
@@ -458,9 +458,9 @@ func PathBase(syspath string) string {
 
 // DirProp is directory properties chunk.
 type DirProp struct {
-	Scan    Unix_t    `json:"scan,omitempty" yaml:"scan,omitempty" xml:"scan,omitempty"`                     // directory scanning time in UNIX format, milliseconds.
-	FGrp    FileGroup `xorm:"extends" json:"fgrp,omitempty" yaml:"fgrp,flow,omitempty" xml:"fgrp,omitempty"` // directory file groups counters.
-	Latency int       `json:"latency,omitempty" yaml:"latency,omitempty" xml:"latency,omitempty"`            // drive connection latency in ms, or -1 on error
+	Scan    Unix_t    `json:"scan,omitempty" yaml:"scan,omitempty" xml:"scan,omitempty"`                           // directory scanning time in UNIX format, milliseconds.
+	FGrp    FileGroup `xorm:"extends" json:"fgrp,omitempty" yaml:"fgrp,flow,omitempty" xml:"fgrp,omitempty"`       // directory file groups counters.
+	Latency int       `xorm:"default 0" json:"latency,omitempty" yaml:"latency,omitempty" xml:"latency,omitempty"` // drive connection latency in ms, or -1 on error
 }
 
 // DirKit is directory properties kit.
@@ -505,7 +505,7 @@ func (dk *DriveKit) Scan(syspath string) error {
 		err = ErrNotDir
 	}
 	if err == nil {
-		dk.Latency = int(time.Until(t1) / time.Millisecond)
+		dk.Latency = int(time.Since(t1) / time.Millisecond)
 	} else {
 		dk.Latency = -1
 	}

@@ -29,7 +29,7 @@ func (fpath EmbedPath) Cache() {
 		}
 
 		var md *MediaData
-		if md, err = ExtractTmb(string(fpath)); err != nil {
+		if md, err = ExtractTmb(string(fpath)); err != nil || md == nil {
 			tp.ETmbVal = MimeDis
 			return
 		}
