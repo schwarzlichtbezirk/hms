@@ -29,7 +29,7 @@ func UnfoldPath(shrpath string) (syspath string, puid Puid_t, err error) {
 			err = fmt.Errorf("can not decode PUID value: %w", err)
 			return
 		}
-		if pref, ok = PathCachePath(puid); !ok {
+		if pref, ok = PathStorePath(puid); !ok {
 			err = ErrNoPath
 			return
 		}
@@ -44,7 +44,7 @@ func UnfoldPath(shrpath string) (syspath string, puid Puid_t, err error) {
 	}
 	// get PUID if it not have
 	if suff != "." {
-		puid = PathCacheSure(syspath)
+		puid = PathStoreCache(syspath)
 	}
 	return
 }
@@ -117,7 +117,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 		}
 		var catprop = func(puids []Puid_t) {
 			for _, puid := range puids {
-				if fpath, ok := PathCachePath(puid); ok {
+				if fpath, ok := PathStorePath(puid); ok {
 					if prop, err := propcache.Get(fpath); err == nil {
 						ret.List = append(ret.List, prop.(Pather))
 					}
@@ -144,42 +144,42 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 			ret.List = prf.ScanShares()
 		case PUIDmedia:
 			var puids []Puid_t
-			if puids, err = DirCacheCat("video+audio+image", 0.5); err != nil {
+			if puids, err = DirStoreCat("video+audio+image", 0.5); err != nil {
 				WriteError500(w, r, err, AECfolderdircat)
 				return
 			}
 			catprop(puids)
 		case PUIDvideo:
 			var puids []Puid_t
-			if puids, err = DirCacheCat("video", 0.5); err != nil {
+			if puids, err = DirStoreCat("video", 0.5); err != nil {
 				WriteError500(w, r, err, AECfolderdircat)
 				return
 			}
 			catprop(puids)
 		case PUIDaudio:
 			var puids []Puid_t
-			if puids, err = DirCacheCat("audio", 0.5); err != nil {
+			if puids, err = DirStoreCat("audio", 0.5); err != nil {
 				WriteError500(w, r, err, AECfolderdircat)
 				return
 			}
 			catprop(puids)
 		case PUIDimage:
 			var puids []Puid_t
-			if puids, err = DirCacheCat("image", 0.5); err != nil {
+			if puids, err = DirStoreCat("image", 0.5); err != nil {
 				WriteError500(w, r, err, AECfolderdircat)
 				return
 			}
 			catprop(puids)
 		case PUIDbooks:
 			var puids []Puid_t
-			if puids, err = DirCacheCat("books", 0.5); err != nil {
+			if puids, err = DirStoreCat("books", 0.5); err != nil {
 				WriteError500(w, r, err, AECfolderdircat)
 				return
 			}
 			catprop(puids)
 		case PUIDtexts:
 			var puids []Puid_t
-			if puids, err = DirCacheCat("texts", 0.5); err != nil {
+			if puids, err = DirStoreCat("texts", 0.5); err != nil {
 				WriteError500(w, r, err, AECfolderdircat)
 				return
 			}
@@ -187,7 +187,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 		case PUIDmap:
 			var n = cfg.RangeSearchAny
 			gpscache.Range(func(puid Puid_t, gps *GpsInfo) bool {
-				if fpath, ok := PathCachePath(puid); ok {
+				if fpath, ok := PathStorePath(puid); ok {
 					if auth == prf || prf.IsShared(fpath) {
 						if prop, err := propcache.Get(fpath); err == nil {
 							ret.List = append(ret.List, prop.(Pather))

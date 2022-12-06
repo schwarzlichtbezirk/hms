@@ -803,6 +803,8 @@ const VueFileCard = {
 
 				yield;
 
+				let ul = uncached.length;
+				let uc = 0;
 				// cache folder thumnails
 				while (true) {
 					if (stop || !self.expanded) {
@@ -851,6 +853,16 @@ const VueFileCard = {
 					// check cached state loop
 					if (!uncached.length) {
 						return;
+					}
+					// check for some files remains uncached
+					if (uncached.length >= ul) {
+						uc++;
+						if (uc > 9) {
+							return;
+						}
+					} else {
+						ul = uncached.length;
+						uc = 0;
 					}
 
 					yield;

@@ -86,7 +86,7 @@ func (gc *GpsCache) ReadYaml(fname string) (err error) {
 				return
 			}
 		}
-		var puid, _ = PathCachePUID(item.Path)
+		var puid, _ = PathStorePUID(item.Path)
 		gc.Store(puid, item.GpsInfo)
 	}
 	return
@@ -119,7 +119,7 @@ func (gc *GpsCache) WriteYaml(fname string) (err error) {
 	}
 	var enc = yaml.NewEncoder(w)
 	gc.Range(func(puid Puid_t, gps *GpsInfo) bool {
-		if syspath, ok := PathCachePath(puid); ok {
+		if syspath, ok := PathStorePath(puid); ok {
 			if err = enc.Encode(&item{syspath, gps}); err != nil {
 				return false
 			}
@@ -162,11 +162,11 @@ func (pl *Profiles) ReadYaml(fname string) (err error) {
 			Log.Infof("loaded profile id%d, login='%s'", prf.ID, prf.Login)
 			// cache roots
 			for _, fpath := range prf.Roots {
-				PathCacheSure(fpath)
+				PathStoreCache(fpath)
 			}
 			// cache shares
 			for _, fpath := range prf.Shares {
-				PathCacheSure(fpath)
+				PathStoreCache(fpath)
 			}
 
 			// bring all hidden to lowercase

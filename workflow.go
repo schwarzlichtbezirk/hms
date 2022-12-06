@@ -102,13 +102,13 @@ func Init() {
 	if err = InitXorm(); err != nil {
 		Log.Fatal("can not init XORM: " + err.Error())
 	}
-	var pathcount, _ = xormEngine.Where("puid > ?", PUIDcache-1).Count(&PathCacheItem{})
+	var pathcount, _ = xormEngine.Where("puid > ?", PUIDcache-1).Count(&PathStore{})
 	Log.Infof("found %d items at system path cache", pathcount)
-	var dircount, _ = xormEngine.Count(&DirCacheItem{})
+	var dircount, _ = xormEngine.Count(&DirStore{})
 	Log.Infof("found %d items at directories cache", dircount)
-	var exifcount, _ = xormEngine.Count(&ExifCacheItem{})
+	var exifcount, _ = xormEngine.Count(&ExifStore{})
 	Log.Infof("found %d items at EXIF cache", exifcount)
-	var tagcount, _ = xormEngine.Count(&TagCacheItem{})
+	var tagcount, _ = xormEngine.Count(&TagStore{})
 	Log.Infof("found %d items at ID3-tags cache", tagcount)
 
 	// load GPS cache

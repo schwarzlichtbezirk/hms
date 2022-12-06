@@ -120,6 +120,9 @@ func (s *scanner) Scan() {
 	if thrnum == 0 {
 		thrnum = runtime.GOMAXPROCS(0)
 	}
+	if devmode { // only one thread under the debugger
+		thrnum = 1
+	}
 	var busy = make([]bool, thrnum)
 	var free = make(chan int)
 	var args = make([]chan Cacher, thrnum)

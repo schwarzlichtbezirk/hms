@@ -63,7 +63,7 @@ type PuidProp struct {
 }
 
 func (pp *PuidProp) Setup(syspath string) {
-	pp.PUIDVal = PathCacheSure(syspath)
+	pp.PUIDVal = PathStoreCache(syspath)
 }
 
 // PUID returns thumbnail key, it's full system path unique ID.
@@ -147,7 +147,7 @@ func (tp *TmbProp) Tmb() *TmbProp {
 
 // Setup generates PUID (path unique identifier) and updates cached state.
 func (tp *TmbProp) Setup(syspath string) {
-	tp.ETmbVal = MimeNil // setup as default
+	tp.ETmbVal = MimeDis // setup as default on case tags scanning failure
 	if ts, ok := thumbpkg.Tagset(syspath); ok {
 		if str, ok := ts.TagStr(wpk.TIDmime); ok {
 			if strings.HasPrefix(str, "image/") {
@@ -303,7 +303,7 @@ func tilechkAPI(w http.ResponseWriter, r *http.Request) {
 	ret.List = make([]tilemime, len(arg.List))
 	for i, tm := range arg.List {
 		var mime = MimeDis
-		if syspath, ok := PathCachePath(tm.PUID); ok {
+		if syspath, ok := PathStorePath(tm.PUID); ok {
 			if prop, err := propcache.Get(syspath); err == nil {
 				if tmb, ok := prop.(Thumber); ok {
 					var tp = tmb.Tmb()
@@ -351,7 +351,7 @@ func tilescnstartAPI(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, ttm := range arg.List {
-		if syspath, ok := PathCachePath(ttm.PUID); ok {
+		if syspath, ok := PathStorePath(ttm.PUID); ok {
 			if cg := prf.PathAccess(syspath, auth == prf); !cg.IsZero() {
 				if ttm.TM == tme {
 					ImgScanner.AddEmbed(syspath)
@@ -401,7 +401,7 @@ func tilescnbreakAPI(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, ttm := range arg.List {
-		if syspath, ok := PathCachePath(ttm.PUID); ok {
+		if syspath, ok := PathStorePath(ttm.PUID); ok {
 			if cg := prf.PathAccess(syspath, auth == prf); !cg.IsZero() {
 				if ttm.TM == tme {
 					ImgScanner.RemoveEmbed(syspath)

@@ -476,7 +476,7 @@ func (dk *DirKit) Setup(syspath string) {
 	dk.NameVal = PathBase(syspath)
 	dk.TypeVal = FTdir
 	dk.PuidProp.Setup(syspath)
-	if dp, ok := DirCacheGet(dk.PUIDVal); ok {
+	if dp, ok := DirStoreGet(dk.PUIDVal); ok {
 		dk.DirProp = dp
 	}
 }
@@ -493,7 +493,7 @@ func (dk *DriveKit) Setup(syspath string) {
 	dk.NameVal = PathBase(syspath)
 	dk.TypeVal = FTdrv
 	dk.PuidProp.Setup(syspath)
-	if dp, ok := DirCacheGet(dk.PUIDVal); ok {
+	if dp, ok := DirStoreGet(dk.PUIDVal); ok {
 		dk.DirProp = dp
 	}
 }

@@ -210,7 +210,7 @@ func (prf *Profile) RootIndex(fpath string) int {
 func (prf *Profile) FindRoots() {
 	switch runtime.GOOS {
 	case "windows":
-		const windisks = "CDEFGHIJKLMNOPQRSTUVWXYZ"
+		const windisks = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 		for _, d := range windisks {
 			var root = string(d) + ":/" // let's disk roots will be slash-terminated always
 			if _, err := os.Stat(root); err == nil {
@@ -364,7 +364,7 @@ func (prf *Profile) AddShare(syspath string) bool {
 	prf.mux.Lock()
 	defer prf.mux.Unlock()
 
-	var puid = PathCacheSure(syspath)
+	var puid = PathStoreCache(syspath)
 	if _, ok := prf.puidshare[puid]; !ok {
 		prf.Shares = append(prf.Shares, syspath)
 		prf.sharepuid[syspath] = puid
@@ -407,7 +407,7 @@ func (prf *Profile) GetSharePath(syspath string, isadmin bool) (shrpath string, 
 		}
 	}
 	if len(base) > 0 {
-		shrpath = path.Join(PathCacheSure(base).String(), syspath[len(base):])
+		shrpath = path.Join(PathStoreCache(base).String(), syspath[len(base):])
 		cg.SetAll(true)
 		return
 	}
@@ -420,7 +420,7 @@ func (prf *Profile) GetSharePath(syspath string, isadmin bool) (shrpath string, 
 		}
 	}
 	if len(base) > 0 {
-		shrpath = path.Join(PathCacheSure(base).String(), syspath[len(base):])
+		shrpath = path.Join(PathStoreCache(base).String(), syspath[len(base):])
 		if isadmin {
 			cg.SetAll(true)
 		} else {

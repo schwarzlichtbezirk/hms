@@ -247,7 +247,7 @@ func etmbHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var syspath, ok = PathCachePath(puid)
+	var syspath, ok = PathStorePath(puid)
 	if !ok {
 		WriteError(w, r, http.StatusNotFound, ErrNoPath, AECetmbnopath)
 		return
@@ -308,7 +308,7 @@ func mtmbHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var syspath, ok = PathCachePath(puid)
+	var syspath, ok = PathStorePath(puid)
 	if !ok {
 		WriteError(w, r, http.StatusNotFound, ErrNoPath, AECmtmbnopath)
 		return
@@ -375,7 +375,7 @@ func tileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var syspath, ok = PathCachePath(puid)
+	var syspath, ok = PathStorePath(puid)
 	if !ok {
 		WriteError(w, r, http.StatusNotFound, ErrNoPath, AECtilenopath)
 		return
@@ -471,7 +471,7 @@ func memusgAPI(w http.ResponseWriter, r *http.Request) {
 
 // APIHANDLER
 func cchinfAPI(w http.ResponseWriter, r *http.Request) {
-	var pathcount, _ = xormEngine.Where("puid > ?", PUIDcache-1).Count(&PathCacheItem{})
+	var pathcount, _ = xormEngine.Where("puid > ?", PUIDcache-1).Count(&PathStore{})
 	var propcount = propcache.Len(false)
 
 	type stat struct {
@@ -647,7 +647,7 @@ func propAPI(w http.ResponseWriter, r *http.Request) {
 
 	var syspath string
 	var ok bool
-	if syspath, ok = PathCachePath(arg.PUID); !ok {
+	if syspath, ok = PathStorePath(arg.PUID); !ok {
 		WriteError400(w, r, ErrNoPath, AECpropbadpath)
 		return
 	}
@@ -770,7 +770,7 @@ func shraddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		return
 	}
 
-	var syspath, ok = PathCachePath(arg.PUID)
+	var syspath, ok = PathStorePath(arg.PUID)
 	if !ok {
 		WriteError(w, r, http.StatusNotFound, ErrNoPath, AECshraddnopath)
 	}
@@ -932,7 +932,7 @@ func drvdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		return
 	}
 
-	var syspath, ok = PathCachePath(arg.PUID)
+	var syspath, ok = PathStorePath(arg.PUID)
 	if !ok {
 		WriteError(w, r, http.StatusNotFound, ErrNoPath, AECdrvdelnopath)
 	}
@@ -988,11 +988,11 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	// get source and destination filenames
 	var srcpath, dstpath string
 	var ok bool
-	if srcpath, ok = PathCachePath(arg.Src); !ok {
+	if srcpath, ok = PathStorePath(arg.Src); !ok {
 		WriteError(w, r, http.StatusNotFound, ErrNoPath, AECedtcopynopath)
 		return
 	}
-	if dstpath, ok = PathCachePath(arg.Dst); !ok {
+	if dstpath, ok = PathStorePath(arg.Dst); !ok {
 		WriteError(w, r, http.StatusNotFound, ErrNoPath, AECedtcopynodest)
 		return
 	}
@@ -1126,11 +1126,11 @@ func edtrenameAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	// get source and destination filenames
 	var srcpath, dstpath string
 	var ok bool
-	if srcpath, ok = PathCachePath(arg.Src); !ok {
+	if srcpath, ok = PathStorePath(arg.Src); !ok {
 		WriteError(w, r, http.StatusNotFound, ErrNoPath, AECedtrennopath)
 		return
 	}
-	if dstpath, ok = PathCachePath(arg.Dst); !ok {
+	if dstpath, ok = PathStorePath(arg.Dst); !ok {
 		WriteError(w, r, http.StatusNotFound, ErrNoPath, AECedtrennodest)
 		return
 	}
@@ -1201,7 +1201,7 @@ func edtdeleteAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		return
 	}
 
-	var syspath, ok = PathCachePath(arg.PUID)
+	var syspath, ok = PathStorePath(arg.PUID)
 	if !ok {
 		WriteError(w, r, http.StatusNotFound, ErrNoPath, AECedtdelnopath)
 	}

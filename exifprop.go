@@ -183,7 +183,7 @@ func (ek *ExifKit) Setup(syspath string, fi fs.FileInfo) {
 	ek.ExifProp.Setup(x)
 	ek.ETmbVal = ek.thumb.Mime
 
-	ExifCacheSet(&ExifCacheItem{
+	ExifStoreSet(&ExifStore{
 		Puid:     ek.PUIDVal,
 		ExifProp: ek.ExifProp,
 	})

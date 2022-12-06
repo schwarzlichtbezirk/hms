@@ -91,51 +91,35 @@ type PathInfo struct {
 	Time Unix_t `xorm:"default 0"`
 }
 
-// DirCacheItem sqlite3 item of unlimited cache with puid/syspath values.
-type PathCacheItem struct {
+// PathStore sqlite3 item of unlimited cache with puid/syspath values.
+type PathStore struct {
 	Puid     Puid_t `xorm:"pk autoincr"`
 	PathInfo `xorm:"extends"`
 }
 
-func (c *PathCacheItem) TableName() string {
-	return "path_cache"
-}
-
-// DirCacheItem sqlite3 item of unlimited cache with puid/FileGroup values.
-type DirCacheItem struct {
+// DirStore sqlite3 item of unlimited cache with puid/FileGroup values.
+type DirStore struct {
 	Puid    Puid_t `xorm:"pk"`
 	DirProp `xorm:"extends"`
 }
 
-func (c *DirCacheItem) TableName() string {
-	return "dir_cache"
-}
-
-type DirCacheKit struct {
-	Puid     Puid_t `xorm:"pk"`
-	PathInfo `xorm:"extends"`
-	DirProp  `xorm:"extends"`
-}
-
-// DirCacheItem sqlite3 item of unlimited cache with puid/ExifProp values.
-type ExifCacheItem struct {
+// ExifStore sqlite3 item of unlimited cache with puid/ExifProp values.
+type ExifStore struct {
 	Puid     Puid_t `xorm:"pk"`
 	ExifProp `xorm:"extends"`
 }
 
-func (c *ExifCacheItem) TableName() string {
-	return "exif_cache"
-}
-
-// TagCacheItem sqlite3 item of unlimited cache with puid/TagProp values.
-type TagCacheItem struct {
+// TagStore sqlite3 item of unlimited cache with puid/TagProp values.
+type TagStore struct {
 	Puid    Puid_t `xorm:"pk"`
 	TagProp `xorm:"extends"`
 }
 
-func (c *TagCacheItem) TableName() string {
-	return "tag_cache"
-}
+type (
+	DirCache  Cache[Puid_t, DirProp]
+	ExifCache Cache[Puid_t, ExifProp]
+	TagCache  Cache[Puid_t, TagProp]
+)
 
 var (
 	puidpath = map[Puid_t]string{}
@@ -143,8 +127,8 @@ var (
 	ppmux    sync.RWMutex
 )
 
-// PathCachePUID returns cached PUID for specified system path.
-func PathCachePUID(fpath string) (puid Puid_t, ok bool) {
+// PathStorePUID returns cached PUID for specified system path.
+func PathStorePUID(fpath string) (puid Puid_t, ok bool) {
 	// get cached
 	ppmux.RLock()
 	puid, ok = pathpuid[fpath]
@@ -154,7 +138,7 @@ func PathCachePUID(fpath string) (puid Puid_t, ok bool) {
 	}
 
 	var err error
-	var pc PathCacheItem
+	var pc PathStore
 	if ok, err = xormEngine.Cols("puid").Where("path=?", fpath).Get(&pc); err != nil {
 		panic(err)
 	}
@@ -168,8 +152,8 @@ func PathCachePUID(fpath string) (puid Puid_t, ok bool) {
 	return
 }
 
-// PathCachePath returns cached system path of specified PUID (path unique identifier).
-func PathCachePath(puid Puid_t) (fpath string, ok bool) {
+// PathStorePath returns cached system path of specified PUID (path unique identifier).
+func PathStorePath(puid Puid_t) (fpath string, ok bool) {
 	// get cached
 	ppmux.RLock()
 	fpath, ok = puidpath[puid]
@@ -179,7 +163,7 @@ func PathCachePath(puid Puid_t) (fpath string, ok bool) {
 	}
 
 	var err error
-	var pc PathCacheItem
+	var pc PathStore
 	if ok, err = xormEngine.Cols("path").ID(puid).Get(&pc); err != nil {
 		panic(err)
 	}
@@ -193,14 +177,14 @@ func PathCachePath(puid Puid_t) (fpath string, ok bool) {
 	return
 }
 
-// PathCacheSure returns cached PUID for specified system path, or make it and put into cache.
-func PathCacheSure(fpath string) (puid Puid_t) {
+// PathStoreCache returns cached PUID for specified system path, or make it and put into cache.
+func PathStoreCache(fpath string) (puid Puid_t) {
 	var ok bool
-	if puid, ok = PathCachePUID(fpath); ok {
+	if puid, ok = PathStorePUID(fpath); ok {
 		return
 	}
 
-	var pc PathCacheItem
+	var pc PathStore
 	pc.Path = fpath
 	if _, err := xormEngine.InsertOne(&pc); err != nil {
 		panic(err)
@@ -213,55 +197,63 @@ func PathCacheSure(fpath string) (puid Puid_t) {
 	return
 }
 
-// DirCacheGet returns value from directories cache.
-func DirCacheGet(puid Puid_t) (dp DirProp, ok bool) {
+// DirStoreGet returns value from directories cache.
+func DirStoreGet(puid Puid_t) (dp DirProp, ok bool) {
 	var err error
-	var dc DirCacheItem
-	if ok, err = xormEngine.ID(puid).Get(&dc); err != nil {
+	var ds DirStore
+	if ok, err = xormEngine.ID(puid).Get(&ds); err != nil {
 		panic(err)
 	}
-	dp = dc.DirProp
+	dp = ds.DirProp
 	return
 }
 
-// ExifCacheGet returns value from EXIF cache.
-func ExifCacheGet(puid Puid_t) (ep ExifProp, ok bool) {
+// ExifStoreGet returns value from EXIF cache.
+func ExifStoreGet(puid Puid_t) (ep ExifProp, ok bool) {
 	var err error
-	var eci ExifCacheItem
-	if ok, err = xormEngine.ID(puid).Get(&eci); err != nil {
+	var es ExifStore
+	if ok, err = xormEngine.ID(puid).Get(&es); err != nil {
 		panic(err)
 	}
-	ep = eci.ExifProp
+	ep = es.ExifProp
 	return
 }
 
-// ExifCacheSet puts value to EXIF cache.
-func ExifCacheSet(eci *ExifCacheItem) (err error) {
-	if eci.Latitude != 0 {
+// ExifStoreSet puts value to EXIF cache.
+func ExifStoreSet(es *ExifStore) (err error) {
+	if es.Latitude != 0 {
 		var gi GpsInfo
-		gi.FromProp(&eci.ExifProp)
-		gpscache.Store(eci.Puid, gi)
+		gi.FromProp(&es.ExifProp)
+		gpscache.Store(es.Puid, gi)
 	}
-	if affected, _ := xormEngine.InsertOne(&eci); affected == 0 {
-		_, err = xormEngine.ID(eci.Puid).AllCols().Omit("puid").Update(&eci)
+	if affected, _ := xormEngine.InsertOne(&es); affected == 0 {
+		_, err = xormEngine.ID(es.Puid).AllCols().Omit("puid").Update(&es)
 	}
 	return
 }
 
-// TagCacheGet returns value from tags cache.
-func TagCacheGet(puid Puid_t) (tp TagProp, ok bool) {
+// TagStoreGet returns value from tags cache.
+func TagStoreGet(puid Puid_t) (tp TagProp, ok bool) {
 	var err error
-	var tc TagCacheItem
-	if ok, err = xormEngine.ID(puid).Get(&tc); err != nil {
+	var ts TagStore
+	if ok, err = xormEngine.ID(puid).Get(&ts); err != nil {
 		panic(err)
 	}
-	tp = tc.TagProp
+	tp = ts.TagProp
 	return
 }
 
-// DirCacheCat returns PUIDs list of directories where number
+// TagStoreSet puts value to tags cache.
+func TagStoreSet(ts *TagStore) (err error) {
+	if affected, _ := xormEngine.InsertOne(&ts); affected == 0 {
+		_, err = xormEngine.ID(ts.Puid).AllCols().Omit("puid").Update(&ts)
+	}
+	return
+}
+
+// DirStoreCat returns PUIDs list of directories where number
 // of files of given category is more then given percent.
-func DirCacheCat(cat string, percent float64) (ret []Puid_t, err error) {
+func DirStoreCat(cat string, percent float64) (ret []Puid_t, err error) {
 	const categoryCond = "(%s)/(other+video+audio+image+books+texts+packs+dir) > %f"
 	err = xormEngine.Where(fmt.Sprintf(categoryCond, cat, percent)).Find(&ret)
 	return
@@ -309,7 +301,7 @@ func (gc *GpsCache) Load() (err error) {
 	const limit = 256
 	var offset int
 	for {
-		var chunk []ExifCacheItem
+		var chunk []ExifStore
 		if err = xormEngine.Where("latitude != 0").Cols("datetime", "latitude", "longitude", "altitude").Limit(limit, offset).Find(&chunk); err != nil {
 			return
 		}
@@ -357,7 +349,7 @@ func InitCaches() {
 	mediacache = gcache.New(cfg.MediaCacheMaxNum).
 		LRU().
 		LoaderFunc(func(key interface{}) (ret interface{}, err error) {
-			var syspath, ok = PathCachePath(key.(Puid_t))
+			var syspath, ok = PathStorePath(key.(Puid_t))
 			if !ok {
 				err = ErrNoPUID
 				return // file path not found
@@ -408,7 +400,7 @@ func InitCaches() {
 	hdcache = gcache.New(cfg.MediaCacheMaxNum).
 		LRU().
 		LoaderFunc(func(key interface{}) (ret interface{}, err error) {
-			var syspath, ok = PathCachePath(key.(Puid_t))
+			var syspath, ok = PathStorePath(key.(Puid_t))
 			if !ok {
 				err = ErrNoPUID
 				return // file path not found
@@ -681,17 +673,17 @@ func InitXorm() (err error) {
 	}
 	xormEngine.ShowSQL(true)
 	xormEngine.SetMapper(names.GonicMapper{})
-	if err = xormEngine.Sync(&PathCacheItem{}, &DirCacheItem{}, &ExifCacheItem{}, &TagCacheItem{}); err != nil {
+	if err = xormEngine.Sync(&PathStore{}, &DirStore{}, &ExifStore{}, &TagStore{}); err != nil {
 		return
 	}
 
-	// fill path_cache with predefined items
+	// fill path_store with predefined items
 	var ok bool
-	if ok, err = xormEngine.IsTableEmpty(&PathCacheItem{}); err != nil {
+	if ok, err = xormEngine.IsTableEmpty(&PathStore{}); err != nil {
 		return
 	}
 	if ok {
-		var ctgr = make([]PathCacheItem, PUIDcache-1)
+		var ctgr = make([]PathStore, PUIDcache-1)
 		for puid, path := range CatKeyPath {
 			ctgr[puid-1].Puid = puid
 			ctgr[puid-1].PathInfo = PathInfo{

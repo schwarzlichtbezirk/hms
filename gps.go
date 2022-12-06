@@ -121,7 +121,7 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 			inc = !mp.Eject
 		}
 		if inc {
-			if fpath, ok := PathCachePath(puid); ok {
+			if fpath, ok := PathStorePath(puid); ok {
 				if prop, err := propcache.Get(fpath); err == nil {
 					ret.List = append(ret.List, prop.(Pather))
 				}

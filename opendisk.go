@@ -192,7 +192,7 @@ func OpenDir(dir string) (ret []fs.FileInfo, err error) {
 }
 
 const sqlUpserPath = `
-INSERT INTO path_cache (path,type,size,time) VALUES (?,?,?,?)
+INSERT INTO path_store (path,type,size,time) VALUES (?,?,?,?)
   ON CONFLICT(path) DO UPDATE SET type=?,size=?,time=?`
 
 // ScanDir returns file properties list for given file system directory, or directory in iso-disk.
@@ -237,17 +237,18 @@ func ScanDir(dir string, cg *CatGrp, prf *Profile) (ret []Pather, skip int, err 
 	// define items to upsert //
 	////////////////////////////
 
-	var vpci []PathCacheItem
-	var inspci, updpci, constpci []*PathCacheItem
+	var vps []PathStore
+	var insps, updps, constps []*PathStore
+	var inspaths []string
 	_, err = xormEngine.Transaction(func(session *xorm.Session) (res interface{}, err error) {
-		if err = xormEngine.In("path", vpaths).Find(&vpci); err != nil {
+		if err = xormEngine.In("path", vpaths).Find(&vps); err != nil {
 			return
 		}
 		for i, fi := range vfiles {
 			var fpath = vpaths[i]
 			var ins = true
-			for _, pci := range vpci {
-				if pci.Path == fpath {
+			for _, ps := range vps {
+				if ps.Path == fpath {
 					var sizeval = fi.Size()
 					var timeval = UnixJS(fi.ModTime())
 					var typeval = prf.PathType(fpath, fi)
@@ -260,20 +261,20 @@ func ScanDir(dir string, cg *CatGrp, prf *Profile) (ret []Pather, skip int, err 
 					} else {
 						typeval = FTfile
 					}
-					if pci.Type != typeval || pci.Size != sizeval || pci.Time != timeval {
-						pci.Type = typeval
-						pci.Size = sizeval
-						pci.Time = timeval
-						updpci = append(updpci, &pci)
+					if ps.Type != typeval || ps.Size != sizeval || ps.Time != timeval {
+						ps.Type = typeval
+						ps.Size = sizeval
+						ps.Time = timeval
+						updps = append(updps, &ps)
 					} else {
-						constpci = append(constpci, &pci)
+						constps = append(constps, &ps)
 					}
 					ins = false
 					break
 				}
 			}
 			if ins {
-				inspci = append(inspci, &PathCacheItem{
+				insps = append(insps, &PathStore{
 					PathInfo: PathInfo{
 						Path: fpath,
 						Type: prf.PathType(fpath, fi),
@@ -281,25 +282,28 @@ func ScanDir(dir string, cg *CatGrp, prf *Profile) (ret []Pather, skip int, err 
 						Time: UnixJS(fi.ModTime()),
 					},
 				})
+				inspaths = append(inspaths, fpath)
 			}
 		}
 
 		// insert new items
-		if len(inspci) > 0 {
-			for _, pci := range inspci {
-				if _, err = xormEngine.InsertOne(pci); err != nil {
-					return
-				}
+		if len(insps) > 0 {
+			if _, err = xormEngine.Insert(insps); err != nil {
+				return
+			}
+			insps = nil
+			if err = xormEngine.Table("path_store").In("path", inspaths).Find(&insps); err != nil {
+				return
 			}
 		}
 		return
 	})
 
 	// update changed items
-	if len(updpci) > 0 {
+	if len(updps) > 0 {
 		go xormEngine.Transaction(func(session *xorm.Session) (res interface{}, err error) {
-			for _, pci := range updpci {
-				if _, err = xormEngine.ID(pci.Puid).Cols("type", "size", "time").Update(pci); err != nil {
+			for _, ps := range updps {
+				if _, err = xormEngine.ID(ps.Puid).Cols("type", "size", "time").Update(ps); err != nil {
 					return
 				}
 			}
@@ -307,7 +311,7 @@ func ScanDir(dir string, cg *CatGrp, prf *Profile) (ret []Pather, skip int, err 
 		})
 	}
 
-	_ = constpci // nothing to do with unchanged items
+	_ = constps // nothing to do with unchanged items
 
 	/////////////////////////
 	// cache PUIDs for all //
@@ -315,15 +319,15 @@ func ScanDir(dir string, cg *CatGrp, prf *Profile) (ret []Pather, skip int, err 
 
 	var pathmap = map[string]Puid_t{}
 	ppmux.Lock()
-	for _, pci := range vpci {
-		pathmap[pci.Path] = pci.Puid
-		puidpath[pci.Puid] = pci.Path
-		pathpuid[pci.Path] = pci.Puid
+	for _, ps := range vps {
+		pathmap[ps.Path] = ps.Puid
+		puidpath[ps.Puid] = ps.Path
+		pathpuid[ps.Path] = ps.Puid
 	}
-	for _, pci := range inspci {
-		pathmap[pci.Path] = pci.Puid
-		puidpath[pci.Puid] = pci.Path
-		pathpuid[pci.Path] = pci.Puid
+	for _, ps := range insps {
+		pathmap[ps.Path] = ps.Puid
+		puidpath[ps.Puid] = ps.Path
+		pathpuid[ps.Path] = ps.Puid
 	}
 	ppmux.Unlock()
 
@@ -336,13 +340,13 @@ func ScanDir(dir string, cg *CatGrp, prf *Profile) (ret []Pather, skip int, err 
 		if fi.IsDir() {
 			var dk DirKit
 			dk.FileProp.Setup(fi)
-			if prf.IsRoot(dir) {
+			if prf.IsRoot(fpath) {
 				dk.TypeVal = FTdrv
 			} else {
 				dk.TypeVal = FTdir
 			}
 			dk.PUIDVal = pathmap[fpath]
-			if dp, ok := DirCacheGet(dk.PUIDVal); ok {
+			if dp, ok := DirStoreGet(dk.PUIDVal); ok {
 				dk.DirProp = dp
 			}
 			ret = append(ret, &dk)
@@ -364,29 +368,26 @@ func ScanDir(dir string, cg *CatGrp, prf *Profile) (ret []Pather, skip int, err 
 			return
 		}
 
-		var pci PathCacheItem
-		pci.Path = dir
+		var ps PathStore
+		ps.Path = dir
 		if prf.IsRoot(dir) {
-			pci.Type = FTdrv
+			ps.Type = FTdrv
 		} else {
-			pci.Type = FTdir
+			ps.Type = FTdir
 		}
-		pci.Size = fi.Size()
-		pci.Time = UnixJS(fi.ModTime())
+		ps.Size = fi.Size()
+		ps.Time = UnixJS(fi.ModTime())
 
 		var res sql.Result
 		res, err = xormEngine.Exec(sqlUpserPath,
-			pci.Path, pci.Type, pci.Size, pci.Time,
-			pci.Type, pci.Size, pci.Time)
-		var ins, _ = res.LastInsertId()
-		var aff, _ = res.RowsAffected()
-		_ = aff
-
-		var puid = Puid_t(ins)
+			ps.Path, ps.Type, ps.Size, ps.Time,
+			ps.Type, ps.Size, ps.Time)
+		var insid, _ = res.LastInsertId()
+		var puid = Puid_t(insid)
 		if puid == 0 {
-			puid, _ = PathCachePUID(dir)
+			puid, _ = PathStorePUID(dir)
 		}
-		var dci = DirCacheItem{
+		var ds = DirStore{
 			Puid: puid,
 			DirProp: DirProp{
 				Scan:    UnixJSNow(),
@@ -394,8 +395,8 @@ func ScanDir(dir string, cg *CatGrp, prf *Profile) (ret []Pather, skip int, err 
 				Latency: latency,
 			},
 		}
-		if affected, _ := xormEngine.InsertOne(&dci); affected == 0 {
-			_, err = xormEngine.ID(puid).AllCols().Omit("puid").Update(&dci)
+		if affected, _ := xormEngine.InsertOne(&ds); affected == 0 {
+			_, err = xormEngine.ID(puid).AllCols().Omit("puid").Update(&ds)
 		}
 	}()
 

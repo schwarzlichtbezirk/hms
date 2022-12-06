@@ -5,6 +5,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -162,6 +163,8 @@ var (
 	curpath string
 	// Executable path
 	exepath string
+	// developer mode, running at debugger
+	devmode bool
 )
 
 func init() {
@@ -174,6 +177,9 @@ func init() {
 		exepath = path.Dir(ToSlash(str))
 	} else {
 		exepath = path.Dir(ToSlash(os.Args[0]))
+	}
+	if ok, _ := PathExists(path.Join(exepath, "hms.go")); ok && strings.HasSuffix(exepath, "hms/cmd") {
+		devmode = true
 	}
 }
 
@@ -240,7 +246,8 @@ func DetectConfigPath() (retpath string, err error) {
 	}
 
 	// check up running from debugger
-	if retpath, ok = CheckPath(path.Join(exepath, "..", cfgbase), detectname); ok {
+	if devmode {
+		retpath = path.Join(exepath, "..", cfgbase)
 		return
 	}
 	// check up running in devcontainer workspace

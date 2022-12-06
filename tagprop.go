@@ -76,14 +76,10 @@ func (tk *TagKit) Setup(syspath string, fi fs.FileInfo) {
 	tk.TagProp.Setup(m)
 	tk.ETmbVal = tk.thumb.Mime
 
-	var tci = TagCacheItem{
+	TagStoreSet(&TagStore{
 		Puid:    tk.PUIDVal,
 		TagProp: tk.TagProp,
-	}
-	if affected, _ := xormEngine.InsertOne(&tci); affected == 0 {
-		_, err = xormEngine.ID(tk.PUIDVal).AllCols().Omit("puid").Update(&tci)
-	}
-	_ = err
+	})
 }
 
 // The End.
