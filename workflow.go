@@ -14,6 +14,7 @@ import (
 	"github.com/jessevdk/go-flags"
 	"golang.org/x/crypto/acme/autocert"
 	"golang.org/x/sync/errgroup"
+	"xorm.io/xorm"
 )
 
 var (
@@ -102,14 +103,17 @@ func Init() {
 	if err = InitXorm(); err != nil {
 		Log.Fatal("can not init XORM: " + err.Error())
 	}
-	var pathcount, _ = xormEngine.Where("puid > ?", PUIDcache-1).Count(&PathStore{})
-	Log.Infof("found %d items at system path cache", pathcount)
-	var dircount, _ = xormEngine.Count(&DirStore{})
-	Log.Infof("found %d items at directories cache", dircount)
-	var exifcount, _ = xormEngine.Count(&ExifStore{})
-	Log.Infof("found %d items at EXIF cache", exifcount)
-	var tagcount, _ = xormEngine.Count(&TagStore{})
-	Log.Infof("found %d items at ID3-tags cache", tagcount)
+	Session(xormEngine, func(session *xorm.Session) (res interface{}, err error) {
+		var pathcount, _ = session.Where("puid > ?", PUIDcache-1).Count(&PathStore{})
+		Log.Infof("found %d items at system path cache", pathcount)
+		var dircount, _ = session.Count(&DirStore{})
+		Log.Infof("found %d items at directories cache", dircount)
+		var exifcount, _ = session.Count(&ExifStore{})
+		Log.Infof("found %d items at EXIF cache", exifcount)
+		var tagcount, _ = session.Count(&TagStore{})
+		Log.Infof("found %d items at ID3-tags cache", tagcount)
+		return
+	})
 
 	// load GPS cache
 	if err = gpscache.Load(); err != nil {

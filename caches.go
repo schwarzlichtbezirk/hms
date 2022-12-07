@@ -84,6 +84,13 @@ func PathStarts(fpath, prefix string) bool {
 	return false
 }
 
+// Session execute sql wrapped in a single session.
+func Session(engine *xorm.Engine, f func(*xorm.Session) (interface{}, error)) (interface{}, error) {
+	session := engine.NewSession()
+	defer session.Close()
+	return f(session)
+}
+
 type PathInfo struct {
 	Path string `xorm:"notnull unique index"`
 	Type FT_t   `xorm:"default 0"`
@@ -125,6 +132,8 @@ var (
 	puidpath = map[Puid_t]string{}
 	pathpuid = map[string]Puid_t{}
 	ppmux    sync.RWMutex
+
+	dircache = NewCache[Puid_t, DirProp](0)
 )
 
 // PathStorePUID returns cached PUID for specified system path.
@@ -673,35 +682,39 @@ func InitXorm() (err error) {
 	}
 	xormEngine.ShowSQL(true)
 	xormEngine.SetMapper(names.GonicMapper{})
-	if err = xormEngine.Sync(&PathStore{}, &DirStore{}, &ExifStore{}, &TagStore{}); err != nil {
-		return
-	}
 
-	// fill path_store with predefined items
-	var ok bool
-	if ok, err = xormEngine.IsTableEmpty(&PathStore{}); err != nil {
-		return
-	}
-	if ok {
-		var ctgr = make([]PathStore, PUIDcache-1)
-		for puid, path := range CatKeyPath {
-			ctgr[puid-1].Puid = puid
-			ctgr[puid-1].PathInfo = PathInfo{
-				Path: path,
-				Type: FTctgr,
-			}
-		}
-		for puid := Puid_t(len(CatKeyPath) + 1); puid < PUIDcache; puid++ {
-			ctgr[puid-1].Puid = puid
-			ctgr[puid-1].PathInfo = PathInfo{
-				Path: fmt.Sprintf("<reserved%d>", puid),
-				Type: FTctgr,
-			}
-		}
-		if _, err = xormEngine.Insert(&ctgr); err != nil {
+	_, err = Session(xormEngine, func(session *xorm.Session) (res interface{}, err error) {
+		if err = session.Sync(&PathStore{}, &DirStore{}, &ExifStore{}, &TagStore{}); err != nil {
 			return
 		}
-	}
+
+		// fill path_store with predefined items
+		var ok bool
+		if ok, err = session.IsTableEmpty(&PathStore{}); err != nil {
+			return
+		}
+		if ok {
+			var ctgr = make([]PathStore, PUIDcache-1)
+			for puid, path := range CatKeyPath {
+				ctgr[puid-1].Puid = puid
+				ctgr[puid-1].PathInfo = PathInfo{
+					Path: path,
+					Type: FTctgr,
+				}
+			}
+			for puid := Puid_t(len(CatKeyPath) + 1); puid < PUIDcache; puid++ {
+				ctgr[puid-1].Puid = puid
+				ctgr[puid-1].PathInfo = PathInfo{
+					Path: fmt.Sprintf("<reserved%d>", puid),
+					Type: FTctgr,
+				}
+			}
+			if _, err = session.Insert(&ctgr); err != nil {
+				return
+			}
+		}
+		return
+	})
 	return
 }
 

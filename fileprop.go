@@ -2,7 +2,6 @@ package hms
 
 import (
 	"io/fs"
-	"os"
 	"path"
 	"strings"
 	"time"
@@ -499,10 +498,9 @@ func (dk *DriveKit) Setup(syspath string) {
 }
 
 // Scan drive to check its latency.
-func (dk *DriveKit) Scan(syspath string) error {
+func (dk *DriveKit) StatDir(syspath string) (fi fs.FileInfo, err error) {
 	var t1 = time.Now()
-	var fi, err = os.Stat(syspath)
-	if err == nil && !fi.IsDir() {
+	if fi, err = StatFile(syspath); err == nil && !fi.IsDir() {
 		err = ErrNotDir
 	}
 	if err == nil {
@@ -510,7 +508,7 @@ func (dk *DriveKit) Scan(syspath string) error {
 	} else {
 		dk.Latency = -1
 	}
-	return err
+	return
 }
 
 // CatKit is category properties kit.

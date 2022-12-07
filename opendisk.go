@@ -202,9 +202,6 @@ func ScanDir(dir string, cg *CatGrp, prf *Profile) (ret []Pather, skip int, err 
 		return
 	}
 
-	// start of scanning
-	var t1 = time.Now()
-
 	/////////////////////////////
 	// define files to display //
 	/////////////////////////////
@@ -237,17 +234,17 @@ func ScanDir(dir string, cg *CatGrp, prf *Profile) (ret []Pather, skip int, err 
 	// define items to upsert //
 	////////////////////////////
 
-	var vps []PathStore
-	var insps, updps, constps []*PathStore
-	var inspaths []string
-	_, err = xormEngine.Transaction(func(session *xorm.Session) (res interface{}, err error) {
-		if err = xormEngine.In("path", vpaths).Find(&vps); err != nil {
+	var oldps, newps []PathStore
+	var updateps, constps []*PathStore
+	if _, err = xormEngine.Transaction(func(session *xorm.Session) (res interface{}, err error) {
+		var newpaths []string
+		if err = session.In("path", vpaths).Find(&oldps); err != nil {
 			return
 		}
 		for i, fi := range vfiles {
 			var fpath = vpaths[i]
 			var ins = true
-			for _, ps := range vps {
+			for _, ps := range oldps {
 				if ps.Path == fpath {
 					var sizeval = fi.Size()
 					var timeval = UnixJS(fi.ModTime())
@@ -265,7 +262,7 @@ func ScanDir(dir string, cg *CatGrp, prf *Profile) (ret []Pather, skip int, err 
 						ps.Type = typeval
 						ps.Size = sizeval
 						ps.Time = timeval
-						updps = append(updps, &ps)
+						updateps = append(updateps, &ps)
 					} else {
 						constps = append(constps, &ps)
 					}
@@ -274,7 +271,7 @@ func ScanDir(dir string, cg *CatGrp, prf *Profile) (ret []Pather, skip int, err 
 				}
 			}
 			if ins {
-				insps = append(insps, &PathStore{
+				newps = append(newps, PathStore{
 					PathInfo: PathInfo{
 						Path: fpath,
 						Type: prf.PathType(fpath, fi),
@@ -282,28 +279,34 @@ func ScanDir(dir string, cg *CatGrp, prf *Profile) (ret []Pather, skip int, err 
 						Time: UnixJS(fi.ModTime()),
 					},
 				})
-				inspaths = append(inspaths, fpath)
+				newpaths = append(newpaths, fpath)
 			}
 		}
 
 		// insert new items
-		if len(insps) > 0 {
-			if _, err = xormEngine.Insert(insps); err != nil {
+		if len(newps) > 0 {
+			if _, err = session.Insert(newps); err != nil {
+				session.Rollback()
 				return
 			}
-			insps = nil
-			if err = xormEngine.Table("path_store").In("path", inspaths).Find(&insps); err != nil {
+			newps = nil
+			if err = session.Table("path_store").In("path", newpaths).Find(&newps); err != nil {
+				session.Rollback()
 				return
 			}
 		}
+
+		_ = constps // nothing to do with unchanged items
 		return
-	})
+	}); err != nil {
+		return
+	}
 
 	// update changed items
-	if len(updps) > 0 {
+	if len(updateps) > 0 {
 		go xormEngine.Transaction(func(session *xorm.Session) (res interface{}, err error) {
-			for _, ps := range updps {
-				if _, err = xormEngine.ID(ps.Puid).Cols("type", "size", "time").Update(ps); err != nil {
+			for _, ps := range updateps {
+				if _, err = session.ID(ps.Puid).Cols("type", "size", "time").Update(ps); err != nil {
 					return
 				}
 			}
@@ -311,25 +314,49 @@ func ScanDir(dir string, cg *CatGrp, prf *Profile) (ret []Pather, skip int, err 
 		})
 	}
 
-	_ = constps // nothing to do with unchanged items
-
 	/////////////////////////
 	// cache PUIDs for all //
 	/////////////////////////
 
 	var pathmap = map[string]Puid_t{}
 	ppmux.Lock()
-	for _, ps := range vps {
+	for _, ps := range oldps {
 		pathmap[ps.Path] = ps.Puid
 		puidpath[ps.Puid] = ps.Path
 		pathpuid[ps.Path] = ps.Puid
 	}
-	for _, ps := range insps {
+	for _, ps := range newps {
 		pathmap[ps.Path] = ps.Puid
 		puidpath[ps.Puid] = ps.Path
 		pathpuid[ps.Path] = ps.Puid
 	}
 	ppmux.Unlock()
+
+	//////////////////////////
+	// cache dir properties //
+	//////////////////////////
+
+	{
+		var dsids []Puid_t
+		for i, fi := range vfiles {
+			if fi.IsDir() {
+				var fpath = vpaths[i]
+				var puid = pathmap[fpath]
+				if _, ok := dircache.Get(puid); !ok {
+					dsids = append(dsids, puid)
+				}
+			}
+		}
+		if len(dsids) > 0 {
+			var dss []DirStore
+			if err = xormEngine.Table("dir_store").In("puid", dsids).Find(&dss); err != nil {
+				return
+			}
+			for _, ds := range dss {
+				dircache.Set(ds.Puid, ds.DirProp)
+			}
+		}
+	}
 
 	/////////////////////
 	// format response //
@@ -337,6 +364,7 @@ func ScanDir(dir string, cg *CatGrp, prf *Profile) (ret []Pather, skip int, err 
 
 	for i, fi := range vfiles {
 		var fpath = vpaths[i]
+		var puid = pathmap[fpath]
 		if fi.IsDir() {
 			var dk DirKit
 			dk.FileProp.Setup(fi)
@@ -345,28 +373,27 @@ func ScanDir(dir string, cg *CatGrp, prf *Profile) (ret []Pather, skip int, err 
 			} else {
 				dk.TypeVal = FTdir
 			}
-			dk.PUIDVal = pathmap[fpath]
-			if dp, ok := DirStoreGet(dk.PUIDVal); ok {
+			dk.PUIDVal = puid
+			if dp, ok := dircache.Get(puid); ok {
 				dk.DirProp = dp
 			}
 			ret = append(ret, &dk)
 		} else {
 			var fk FileKit
 			fk.FileProp.Setup(fi)
-			fk.PUIDVal = pathmap[fpath]
+			fk.PUIDVal = puid
 			fk.TmbProp.Setup(fpath)
 			ret = append(ret, &fk)
 		}
 	}
 
-	// end of scanning
-	var latency = int(time.Since(t1) / time.Millisecond)
-
-	go func() {
+	go xormEngine.Transaction(func(session *xorm.Session) (res interface{}, err error) {
+		var t1 = time.Now()
 		var fi fs.FileInfo
 		if fi, err = StatFile(dir); err != nil {
 			return
 		}
+		var latency = int(time.Since(t1) / time.Millisecond)
 
 		var ps PathStore
 		ps.Path = dir
@@ -378,11 +405,11 @@ func ScanDir(dir string, cg *CatGrp, prf *Profile) (ret []Pather, skip int, err 
 		ps.Size = fi.Size()
 		ps.Time = UnixJS(fi.ModTime())
 
-		var res sql.Result
-		res, err = xormEngine.Exec(sqlUpserPath,
+		var r sql.Result
+		r, err = session.Exec(sqlUpserPath,
 			ps.Path, ps.Type, ps.Size, ps.Time,
 			ps.Type, ps.Size, ps.Time)
-		var insid, _ = res.LastInsertId()
+		var insid, _ = r.LastInsertId()
 		var puid = Puid_t(insid)
 		if puid == 0 {
 			puid, _ = PathStorePUID(dir)
@@ -395,10 +422,11 @@ func ScanDir(dir string, cg *CatGrp, prf *Profile) (ret []Pather, skip int, err 
 				Latency: latency,
 			},
 		}
-		if affected, _ := xormEngine.InsertOne(&ds); affected == 0 {
-			_, err = xormEngine.ID(puid).AllCols().Omit("puid").Update(&ds)
+		if affected, _ := session.InsertOne(&ds); affected == 0 {
+			_, err = session.ID(puid).AllCols().Omit("puid").Update(&ds)
 		}
-	}()
+		return
+	})
 
 	return
 }

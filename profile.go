@@ -251,7 +251,7 @@ func (prf *Profile) ScanRoots() []Pather {
 	for i, root := range prf.Roots {
 		var dk DriveKit
 		dk.Setup(root)
-		dk.Scan(root)
+		dk.StatDir(root)
 		lst[i] = &dk
 	}
 	return lst

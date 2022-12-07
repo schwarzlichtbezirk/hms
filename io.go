@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"gopkg.in/yaml.v3"
+	"xorm.io/xorm"
 )
 
 // Log is global static ring logger object.
@@ -158,25 +159,28 @@ func (pl *Profiles) ReadYaml(fname string) (err error) {
 	}
 
 	if len(pl.list) > 0 {
-		for _, prf := range pl.list {
-			Log.Infof("loaded profile id%d, login='%s'", prf.ID, prf.Login)
-			// cache roots
-			for _, fpath := range prf.Roots {
-				PathStoreCache(fpath)
-			}
-			// cache shares
-			for _, fpath := range prf.Shares {
-				PathStoreCache(fpath)
-			}
+		Session(xormEngine, func(session *xorm.Session) (res interface{}, err error) {
+			for _, prf := range pl.list {
+				Log.Infof("loaded profile id%d, login='%s'", prf.ID, prf.Login)
+				// cache roots
+				for _, fpath := range prf.Roots {
+					PathStoreCache(fpath)
+				}
+				// cache shares
+				for _, fpath := range prf.Shares {
+					PathStoreCache(fpath)
+				}
 
-			// bring all hidden to lowercase
-			for i, fpath := range prf.Hidden {
-				prf.Hidden[i] = strings.ToLower(ToSlash(fpath))
-			}
+				// bring all hidden to lowercase
+				for i, fpath := range prf.Hidden {
+					prf.Hidden[i] = strings.ToLower(ToSlash(fpath))
+				}
 
-			// build shares tables
-			prf.UpdateShares()
-		}
+				// build shares tables
+				prf.UpdateShares()
+			}
+			return
+		})
 
 		// check up default profile
 		if prf := pl.ByID(cfg.DefAccID); prf != nil {

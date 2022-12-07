@@ -886,7 +886,7 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 
 	var dk DriveKit
 	dk.Setup(syspath)
-	if err = dk.Scan(syspath); err != nil {
+	if _, err = dk.StatDir(syspath); err != nil {
 		WriteError400(w, r, err, AECdrvaddfile)
 		return
 	}
