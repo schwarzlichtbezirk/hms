@@ -218,7 +218,7 @@ const (
 	AECedtrennodest
 	AECedtrenover
 	AECedtrenmove
-	AECedtrenstat
+	AECedtrenprop
 
 	// edit/del
 

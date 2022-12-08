@@ -118,4 +118,66 @@ func (c *Cache[K, T]) tolimit() {
 	}
 }
 
+type Bimap[K comparable, T comparable] struct {
+	direct  map[K]T
+	reverse map[T]K
+	mux     sync.RWMutex
+}
+
+func NewBimap[K comparable, T comparable]() *Bimap[K, T] {
+	return &Bimap[K, T]{
+		direct:  map[K]T{},
+		reverse: map[T]K{},
+	}
+}
+
+func (m *Bimap[K, T]) Len() int {
+	m.mux.RLock()
+	defer m.mux.RUnlock()
+	return len(m.direct)
+}
+
+func (m *Bimap[K, T]) GetDir(key K) (val T, ok bool) {
+	m.mux.RLock()
+	val, ok = m.direct[key]
+	m.mux.RUnlock()
+	return
+}
+
+func (m *Bimap[K, T]) GetRev(val T) (key K, ok bool) {
+	m.mux.RLock()
+	key, ok = m.reverse[val]
+	m.mux.RUnlock()
+	return
+}
+
+func (m *Bimap[K, T]) Set(key K, val T) {
+	m.mux.Lock()
+	m.direct[key] = val
+	m.reverse[val] = key
+	m.mux.Unlock()
+}
+
+func (m *Bimap[K, T]) DeleteDir(key K) (ok bool) {
+	var val T
+	m.mux.Lock()
+	if val, ok = m.direct[key]; ok {
+		delete(m.direct, key)
+		delete(m.reverse, val)
+	}
+	m.mux.Unlock()
+	return
+}
+
+func (m *Bimap[K, T]) DeleteRev(val T) (ok bool) {
+	var key K
+	m.mux.Lock()
+	if key, ok = m.reverse[val]; ok {
+		delete(m.direct, key)
+		delete(m.reverse, val)
+	}
+	m.mux.Unlock()
+	return
+}
+
 // The End.

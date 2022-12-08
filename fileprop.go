@@ -475,7 +475,9 @@ func (dk *DirKit) Setup(syspath string) {
 	dk.NameVal = PathBase(syspath)
 	dk.TypeVal = FTdir
 	dk.PuidProp.Setup(syspath)
-	if dp, ok := DirStoreGet(dk.PUIDVal); ok {
+	var session = xormEngine.NewSession()
+	defer session.Close()
+	if dp, ok := DirStoreGet(session, dk.PUIDVal); ok {
 		dk.DirProp = dp
 	}
 }
@@ -492,7 +494,9 @@ func (dk *DriveKit) Setup(syspath string) {
 	dk.NameVal = PathBase(syspath)
 	dk.TypeVal = FTdrv
 	dk.PuidProp.Setup(syspath)
-	if dp, ok := DirStoreGet(dk.PUIDVal); ok {
+	var session = xormEngine.NewSession()
+	defer session.Close()
+	if dp, ok := DirStoreGet(session, dk.PUIDVal); ok {
 		dk.DirProp = dp
 	}
 }

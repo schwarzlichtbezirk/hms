@@ -955,9 +955,9 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
 		AID ID_t   `json:"aid" yaml:"aid" xml:"aid,attr"`
-		Src Puid_t `json:"src" yaml:"src" xml:"src"`
-		Dst Puid_t `json:"dst" yaml:"dst" xml:"dst"`
-		Ovw bool   `json:"overwrite,omitempty" yaml:"overwrite,omitempty" xml:"overwrite,omitempty"`
+		Src string `json:"src" yaml:"src" xml:"src"`
+		Dst string `json:"dst" yaml:"dst" xml:"dst"`
+		Ovw bool   `json:"overwrite,omitempty" yaml:"overwrite,omitempty" xml:"overwrite,omitempty,attr"`
 	}
 	var ret struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
@@ -970,7 +970,7 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
-	if arg.Src == 0 || arg.Dst == 0 {
+	if arg.Src == "" || arg.Dst == "" {
 		WriteError400(w, r, ErrArgNoPuid, AECedtcopynodata)
 		return
 	}
@@ -987,13 +987,12 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 
 	// get source and destination filenames
 	var srcpath, dstpath string
-	var ok bool
-	if srcpath, ok = PathStorePath(arg.Src); !ok {
-		WriteError(w, r, http.StatusNotFound, ErrNoPath, AECedtcopynopath)
+	if srcpath, _, err = UnfoldPath(arg.Src); err != nil {
+		WriteError(w, r, http.StatusNotFound, err, AECedtcopynopath)
 		return
 	}
-	if dstpath, ok = PathStorePath(arg.Dst); !ok {
-		WriteError(w, r, http.StatusNotFound, ErrNoPath, AECedtcopynodest)
+	if dstpath, _, err = UnfoldPath(arg.Dst); err != nil {
+		WriteError(w, r, http.StatusNotFound, err, AECedtcopynodest)
 		return
 	}
 	dstpath = path.Join(dstpath, path.Base(srcpath))
@@ -1099,16 +1098,16 @@ func edtrenameAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
 		AID ID_t   `json:"aid" yaml:"aid" xml:"aid,attr"`
-		Src Puid_t `json:"src" yaml:"src" xml:"src"`
-		Dst Puid_t `json:"dst" yaml:"dst" xml:"dst"`
-		Ovw bool   `json:"overwrite,omitempty" yaml:"overwrite,omitempty" xml:"overwrite,omitempty"`
+		Src string `json:"src" yaml:"src" xml:"src"`
+		Dst string `json:"dst" yaml:"dst" xml:"dst"`
+		Ovw bool   `json:"overwrite,omitempty" yaml:"overwrite,omitempty" xml:"overwrite,omitempty,attr"`
 	}
 
 	// get arguments
 	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
-	if arg.Src == 0 || arg.Dst == 0 {
+	if arg.Src == "" || arg.Dst == "" {
 		WriteError400(w, r, ErrArgNoPuid, AECedtrennodata)
 		return
 	}
@@ -1125,13 +1124,12 @@ func edtrenameAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 
 	// get source and destination filenames
 	var srcpath, dstpath string
-	var ok bool
-	if srcpath, ok = PathStorePath(arg.Src); !ok {
-		WriteError(w, r, http.StatusNotFound, ErrNoPath, AECedtrennopath)
+	if srcpath, _, err = UnfoldPath(arg.Src); err != nil {
+		WriteError(w, r, http.StatusNotFound, err, AECedtrennopath)
 		return
 	}
-	if dstpath, ok = PathStorePath(arg.Dst); !ok {
-		WriteError(w, r, http.StatusNotFound, ErrNoPath, AECedtrennodest)
+	if dstpath, _, err = UnfoldPath(arg.Dst); err != nil {
+		WriteError(w, r, http.StatusNotFound, err, AECedtrennodest)
 		return
 	}
 	dstpath = path.Join(dstpath, path.Base(srcpath))
@@ -1162,12 +1160,11 @@ func edtrenameAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	}
 
 	// get returned file properties at last
-	var fi fs.FileInfo
-	if fi, err = os.Stat(dstpath); err != nil {
-		WriteError500(w, r, err, AECedtrenstat)
+	var prop interface{}
+	if prop, err = propcache.Get(dstpath); err != nil {
+		WriteError500(w, r, err, AECedtrenprop)
 		return
 	}
-	var prop = MakeProp(dstpath, fi)
 
 	WriteOK(w, r, prop)
 }

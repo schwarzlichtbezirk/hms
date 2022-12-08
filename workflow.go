@@ -14,7 +14,6 @@ import (
 	"github.com/jessevdk/go-flags"
 	"golang.org/x/crypto/acme/autocert"
 	"golang.org/x/sync/errgroup"
-	"xorm.io/xorm"
 )
 
 var (
@@ -103,7 +102,7 @@ func Init() {
 	if err = InitXorm(); err != nil {
 		Log.Fatal("can not init XORM: " + err.Error())
 	}
-	Session(xormEngine, func(session *xorm.Session) (res interface{}, err error) {
+	SqlSession(xormEngine, func(session *Session) (res interface{}, err error) {
 		var pathcount, _ = session.Where("puid > ?", PUIDcache-1).Count(&PathStore{})
 		Log.Infof("found %d items at system path cache", pathcount)
 		var dircount, _ = session.Count(&DirStore{})

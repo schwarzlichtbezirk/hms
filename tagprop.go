@@ -76,7 +76,10 @@ func (tk *TagKit) Setup(syspath string, fi fs.FileInfo) {
 	tk.TagProp.Setup(m)
 	tk.ETmbVal = tk.thumb.Mime
 
-	TagStoreSet(&TagStore{
+	var session = xormEngine.NewSession()
+	defer session.Close()
+
+	TagStoreSet(session, &TagStore{
 		Puid:    tk.PUIDVal,
 		TagProp: tk.TagProp,
 	})

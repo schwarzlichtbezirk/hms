@@ -154,6 +154,22 @@ func (ep *ExifProp) Setup(x *exif.Exif) {
 	}
 }
 
+func (ep *ExifProp) Extract(syspath string) (err error) {
+	var r io.ReadSeekCloser
+	if r, err = OpenFile(syspath); err != nil {
+		return
+	}
+	defer r.Close()
+
+	var x *exif.Exif
+	if x, err = exif.Decode(r); err != nil {
+		return
+	}
+
+	ep.Setup(x)
+	return
+}
+
 // ExifKit is file with EXIF tags.
 type ExifKit struct {
 	FileProp `yaml:",inline"`
@@ -168,22 +184,15 @@ func (ek *ExifKit) Setup(syspath string, fi fs.FileInfo) {
 	ek.PuidProp.Setup(syspath)
 	ek.TmbProp.Setup(syspath)
 
-	var err error
-	var r io.ReadSeekCloser
-	if r, err = OpenFile(syspath); err != nil {
+	if err := ek.Extract(syspath); err != nil {
 		return
 	}
-	defer r.Close()
-
-	var x *exif.Exif
-	if x, err = exif.Decode(r); err != nil {
-		return
-	}
-
-	ek.ExifProp.Setup(x)
 	ek.ETmbVal = ek.thumb.Mime
 
-	ExifStoreSet(&ExifStore{
+	var session = xormEngine.NewSession()
+	defer session.Close()
+
+	ExifStoreSet(session, &ExifStore{
 		Puid:     ek.PUIDVal,
 		ExifProp: ek.ExifProp,
 	})

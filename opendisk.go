@@ -16,7 +16,6 @@ import (
 	"github.com/diskfs/go-diskfs/filesystem"
 	"github.com/diskfs/go-diskfs/filesystem/iso9660"
 	"golang.org/x/text/encoding/charmap"
-	"xorm.io/xorm"
 )
 
 // DiskISO is iso-disk structure representation for quick access to nested files.
@@ -236,7 +235,7 @@ func ScanDir(dir string, cg *CatGrp, prf *Profile) (ret []Pather, skip int, err 
 
 	var oldps, newps []PathStore
 	var updateps, constps []*PathStore
-	if _, err = xormEngine.Transaction(func(session *xorm.Session) (res interface{}, err error) {
+	if _, err = xormEngine.Transaction(func(session *Session) (res interface{}, err error) {
 		var newpaths []string
 		if err = session.In("path", vpaths).Find(&oldps); err != nil {
 			return
@@ -304,7 +303,7 @@ func ScanDir(dir string, cg *CatGrp, prf *Profile) (ret []Pather, skip int, err 
 
 	// update changed items
 	if len(updateps) > 0 {
-		go xormEngine.Transaction(func(session *xorm.Session) (res interface{}, err error) {
+		go xormEngine.Transaction(func(session *Session) (res interface{}, err error) {
 			for _, ps := range updateps {
 				if _, err = session.ID(ps.Puid).Cols("type", "size", "time").Update(ps); err != nil {
 					return
@@ -318,19 +317,12 @@ func ScanDir(dir string, cg *CatGrp, prf *Profile) (ret []Pather, skip int, err 
 	// cache PUIDs for all //
 	/////////////////////////
 
-	var pathmap = map[string]Puid_t{}
-	ppmux.Lock()
 	for _, ps := range oldps {
-		pathmap[ps.Path] = ps.Puid
-		puidpath[ps.Puid] = ps.Path
-		pathpuid[ps.Path] = ps.Puid
+		pathcache.Set(ps.Puid, ps.Path)
 	}
 	for _, ps := range newps {
-		pathmap[ps.Path] = ps.Puid
-		puidpath[ps.Puid] = ps.Path
-		pathpuid[ps.Path] = ps.Puid
+		pathcache.Set(ps.Puid, ps.Path)
 	}
-	ppmux.Unlock()
 
 	//////////////////////////
 	// cache dir properties //
@@ -341,7 +333,7 @@ func ScanDir(dir string, cg *CatGrp, prf *Profile) (ret []Pather, skip int, err 
 		for i, fi := range vfiles {
 			if fi.IsDir() {
 				var fpath = vpaths[i]
-				var puid = pathmap[fpath]
+				var puid, _ = pathcache.GetRev(fpath)
 				if _, ok := dircache.Get(puid); !ok {
 					dsids = append(dsids, puid)
 				}
@@ -364,7 +356,7 @@ func ScanDir(dir string, cg *CatGrp, prf *Profile) (ret []Pather, skip int, err 
 
 	for i, fi := range vfiles {
 		var fpath = vpaths[i]
-		var puid = pathmap[fpath]
+		var puid, _ = pathcache.GetRev(fpath)
 		if fi.IsDir() {
 			var dk DirKit
 			dk.FileProp.Setup(fi)
@@ -387,7 +379,7 @@ func ScanDir(dir string, cg *CatGrp, prf *Profile) (ret []Pather, skip int, err 
 		}
 	}
 
-	go xormEngine.Transaction(func(session *xorm.Session) (res interface{}, err error) {
+	go xormEngine.Transaction(func(session *Session) (res interface{}, err error) {
 		var t1 = time.Now()
 		var fi fs.FileInfo
 		if fi, err = StatFile(dir); err != nil {

@@ -84,8 +84,10 @@ func PathStarts(fpath, prefix string) bool {
 	return false
 }
 
-// Session execute sql wrapped in a single session.
-func Session(engine *xorm.Engine, f func(*xorm.Session) (interface{}, error)) (interface{}, error) {
+type Session = xorm.Session
+
+// SqlSession execute sql wrapped in a single session.
+func SqlSession(engine *xorm.Engine, f func(*Session) (interface{}, error)) (interface{}, error) {
 	session := engine.NewSession()
 	defer session.Close()
 	return f(session)
@@ -122,27 +124,18 @@ type TagStore struct {
 	TagProp `xorm:"extends"`
 }
 
-type (
-	DirCache  Cache[Puid_t, DirProp]
-	ExifCache Cache[Puid_t, ExifProp]
-	TagCache  Cache[Puid_t, TagProp]
-)
-
 var (
-	puidpath = map[Puid_t]string{}
-	pathpuid = map[string]Puid_t{}
-	ppmux    sync.RWMutex
-
-	dircache = NewCache[Puid_t, DirProp](0)
+	pathcache = NewBimap[Puid_t, string]()
+	filecache = NewCache[Puid_t, PathInfo](0)
+	dircache  = NewCache[Puid_t, DirProp](0)
+	exifcache = NewCache[Puid_t, ExifProp](0)
+	tagcache  = NewCache[Puid_t, TagProp](0)
 )
 
 // PathStorePUID returns cached PUID for specified system path.
 func PathStorePUID(fpath string) (puid Puid_t, ok bool) {
 	// get cached
-	ppmux.RLock()
-	puid, ok = pathpuid[fpath]
-	ppmux.RUnlock()
-	if ok {
+	if puid, ok = pathcache.GetRev(fpath); ok {
 		return
 	}
 
@@ -154,9 +147,7 @@ func PathStorePUID(fpath string) (puid Puid_t, ok bool) {
 	if ok {
 		puid = pc.Puid
 		// put to cache
-		ppmux.Lock()
-		pathpuid[fpath] = puid
-		ppmux.Unlock()
+		pathcache.Set(puid, fpath)
 	}
 	return
 }
@@ -164,10 +155,7 @@ func PathStorePUID(fpath string) (puid Puid_t, ok bool) {
 // PathStorePath returns cached system path of specified PUID (path unique identifier).
 func PathStorePath(puid Puid_t) (fpath string, ok bool) {
 	// get cached
-	ppmux.RLock()
-	fpath, ok = puidpath[puid]
-	ppmux.RUnlock()
-	if ok {
+	if fpath, ok = pathcache.GetDir(puid); ok {
 		return
 	}
 
@@ -179,9 +167,7 @@ func PathStorePath(puid Puid_t) (fpath string, ok bool) {
 	if ok {
 		fpath = pc.Path
 		// put to cache
-		ppmux.Lock()
-		puidpath[puid] = fpath
-		ppmux.Unlock()
+		pathcache.Set(puid, fpath)
 	}
 	return
 }
@@ -200,62 +186,90 @@ func PathStoreCache(fpath string) (puid Puid_t) {
 	}
 	puid = pc.Puid
 	// put to cache
-	ppmux.Lock()
-	pathpuid[fpath] = puid
-	ppmux.Unlock()
+	pathcache.Set(puid, fpath)
 	return
 }
 
 // DirStoreGet returns value from directories cache.
-func DirStoreGet(puid Puid_t) (dp DirProp, ok bool) {
-	var err error
-	var ds DirStore
-	if ok, err = xormEngine.ID(puid).Get(&ds); err != nil {
-		panic(err)
+func DirStoreGet(session *Session, puid Puid_t) (dp DirProp, ok bool) {
+	// try to get from memory cache
+	if dp, ok = dircache.Get(puid); ok {
+		return
 	}
-	dp = ds.DirProp
+	// try to get from database
+	var ds DirStore
+	if ok, _ = session.ID(puid).Get(&ds); ok { // skip errors
+		dp = ds.DirProp
+		dircache.Set(puid, dp) // update cache
+	}
+	return
+}
+
+// DirStoreSet puts value to tags cache.
+func DirStoreSet(session *Session, ds *DirStore) (err error) {
+	// set to memory cache
+	dircache.Set(ds.Puid, ds.DirProp)
+	// set to database
+	if affected, _ := session.InsertOne(&ds); affected == 0 {
+		_, err = session.ID(ds.Puid).AllCols().Omit("puid").Update(&ds)
+	}
 	return
 }
 
 // ExifStoreGet returns value from EXIF cache.
-func ExifStoreGet(puid Puid_t) (ep ExifProp, ok bool) {
-	var err error
-	var es ExifStore
-	if ok, err = xormEngine.ID(puid).Get(&es); err != nil {
-		panic(err)
+func ExifStoreGet(session *Session, puid Puid_t) (ep ExifProp, ok bool) {
+	// try to get from memory cache
+	if ep, ok = exifcache.Get(puid); ok {
+		return
 	}
-	ep = es.ExifProp
+	// try to get from database
+	var es ExifStore
+	if ok, _ = session.ID(puid).Get(&es); ok { // skip errors
+		ep = es.ExifProp
+		exifcache.Set(puid, ep) // update cache
+	}
 	return
 }
 
 // ExifStoreSet puts value to EXIF cache.
-func ExifStoreSet(es *ExifStore) (err error) {
+func ExifStoreSet(session *Session, es *ExifStore) (err error) {
+	// set to GPS cache
 	if es.Latitude != 0 {
 		var gi GpsInfo
 		gi.FromProp(&es.ExifProp)
 		gpscache.Store(es.Puid, gi)
 	}
-	if affected, _ := xormEngine.InsertOne(&es); affected == 0 {
-		_, err = xormEngine.ID(es.Puid).AllCols().Omit("puid").Update(&es)
+	// set to memory cache
+	exifcache.Set(es.Puid, es.ExifProp)
+	// set to database
+	if affected, _ := session.InsertOne(&es); affected == 0 {
+		_, err = session.ID(es.Puid).AllCols().Omit("puid").Update(&es)
 	}
 	return
 }
 
 // TagStoreGet returns value from tags cache.
-func TagStoreGet(puid Puid_t) (tp TagProp, ok bool) {
-	var err error
-	var ts TagStore
-	if ok, err = xormEngine.ID(puid).Get(&ts); err != nil {
-		panic(err)
+func TagStoreGet(session *Session, puid Puid_t) (tp TagProp, ok bool) {
+	// try to get from memory cache
+	if tp, ok = tagcache.Get(puid); ok {
+		return
 	}
-	tp = ts.TagProp
+	// try to get from database
+	var ts TagStore
+	if ok, _ = session.ID(puid).Get(&ts); ok { // skip errors
+		tp = ts.TagProp
+		tagcache.Set(puid, tp) // update cache
+	}
 	return
 }
 
 // TagStoreSet puts value to tags cache.
-func TagStoreSet(ts *TagStore) (err error) {
-	if affected, _ := xormEngine.InsertOne(&ts); affected == 0 {
-		_, err = xormEngine.ID(ts.Puid).AllCols().Omit("puid").Update(&ts)
+func TagStoreSet(session *Session, ts *TagStore) (err error) {
+	// set to memory cache
+	tagcache.Set(ts.Puid, ts.TagProp)
+	// set to database
+	if affected, _ := session.InsertOne(&ts); affected == 0 {
+		_, err = session.ID(ts.Puid).AllCols().Omit("puid").Update(&ts)
 	}
 	return
 }
@@ -683,7 +697,7 @@ func InitXorm() (err error) {
 	xormEngine.ShowSQL(true)
 	xormEngine.SetMapper(names.GonicMapper{})
 
-	_, err = Session(xormEngine, func(session *xorm.Session) (res interface{}, err error) {
+	_, err = SqlSession(xormEngine, func(session *Session) (res interface{}, err error) {
 		if err = session.Sync(&PathStore{}, &DirStore{}, &ExifStore{}, &TagStore{}); err != nil {
 			return
 		}
