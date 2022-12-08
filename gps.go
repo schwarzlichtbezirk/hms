@@ -106,6 +106,9 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		arg.Limit = cfg.RangeSearchLimit
 	}
 
+	var session = xormEngine.NewSession()
+	defer session.Close()
+
 	gpscache.Range(func(puid Puid_t, gps *GpsInfo) bool {
 		var inc bool
 		for _, mp := range arg.Paths {
@@ -121,10 +124,9 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 			inc = !mp.Eject
 		}
 		if inc {
-			if fpath, ok := PathStorePath(puid); ok {
-				if prop, err := propcache.Get(fpath); err == nil {
-					ret.List = append(ret.List, prop.(Pather))
-				}
+			var fpath, _ = pathcache.GetDir(puid)
+			if prop, err := propcache.Get(fpath); err == nil {
+				ret.List = append(ret.List, prop.(Pather))
 			}
 		}
 		return arg.Limit == 0 || len(ret.List) < arg.Limit

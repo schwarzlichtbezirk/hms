@@ -102,7 +102,7 @@ func Init() {
 	if err = InitXorm(); err != nil {
 		Log.Fatal("can not init XORM: " + err.Error())
 	}
-	SqlSession(xormEngine, func(session *Session) (res interface{}, err error) {
+	SqlSession(func(session *Session) (res interface{}, err error) {
 		var pathcount, _ = session.Where("puid > ?", PUIDcache-1).Count(&PathStore{})
 		Log.Infof("found %d items at system path cache", pathcount)
 		var dircount, _ = session.Count(&DirStore{})
@@ -114,9 +114,13 @@ func Init() {
 		return
 	})
 
-	// load GPS cache
-	if err = gpscache.Load(); err != nil {
-		Log.Fatal("GPS table loading failure: " + err.Error())
+	// load path and GPS caches
+	if err = LoadPathCache(); err != nil {
+		Log.Fatal("path cache loading failure: " + err.Error())
+	}
+	Log.Infof("loaded %d items into path cache", pathcache.Len())
+	if err = LoadGpsCache(); err != nil {
+		Log.Fatal("GPS cache loading failure: " + err.Error())
 	}
 	Log.Infof("loaded %d items into GPS cache", gpscache.Count())
 

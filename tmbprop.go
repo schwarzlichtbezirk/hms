@@ -63,7 +63,9 @@ type PuidProp struct {
 }
 
 func (pp *PuidProp) Setup(syspath string) {
-	pp.PUIDVal = PathStoreCache(syspath)
+	var session = xormEngine.NewSession()
+	defer session.Close()
+	pp.PUIDVal = PathStoreCache(session, syspath)
 }
 
 // PUID returns thumbnail key, it's full system path unique ID.
@@ -300,10 +302,13 @@ func tilechkAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var session = xormEngine.NewSession()
+	defer session.Close()
+
 	ret.List = make([]tilemime, len(arg.List))
 	for i, tm := range arg.List {
 		var mime = MimeDis
-		if syspath, ok := PathStorePath(tm.PUID); ok {
+		if syspath, ok := PathStorePath(session, tm.PUID); ok {
 			if prop, err := propcache.Get(syspath); err == nil {
 				if tmb, ok := prop.(Thumber); ok {
 					var tp = tmb.Tmb()
@@ -340,6 +345,9 @@ func tilescnstartAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var session = xormEngine.NewSession()
+	defer session.Close()
+
 	var prf *Profile
 	if prf = prflist.ByID(arg.AID); prf == nil {
 		WriteError400(w, r, ErrNoAcc, AECscnstartnoacc)
@@ -351,7 +359,7 @@ func tilescnstartAPI(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, ttm := range arg.List {
-		if syspath, ok := PathStorePath(ttm.PUID); ok {
+		if syspath, ok := PathStorePath(session, ttm.PUID); ok {
 			if cg := prf.PathAccess(syspath, auth == prf); !cg.IsZero() {
 				if ttm.TM == tme {
 					ImgScanner.AddEmbed(syspath)
@@ -390,6 +398,9 @@ func tilescnbreakAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var session = xormEngine.NewSession()
+	defer session.Close()
+
 	var prf *Profile
 	if prf = prflist.ByID(arg.AID); prf == nil {
 		WriteError400(w, r, ErrNoAcc, AECscnbreaknoacc)
@@ -401,7 +412,7 @@ func tilescnbreakAPI(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, ttm := range arg.List {
-		if syspath, ok := PathStorePath(ttm.PUID); ok {
+		if syspath, ok := PathStorePath(session, ttm.PUID); ok {
 			if cg := prf.PathAccess(syspath, auth == prf); !cg.IsZero() {
 				if ttm.TM == tme {
 					ImgScanner.RemoveEmbed(syspath)

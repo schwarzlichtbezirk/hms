@@ -13,7 +13,7 @@ import (
 )
 
 // UnfoldPath brings any share path to system file path.
-func UnfoldPath(shrpath string) (syspath string, puid Puid_t, err error) {
+func UnfoldPath(session *Session, shrpath string) (syspath string, puid Puid_t, err error) {
 	shrpath = path.Clean(shrpath)
 	var pref, suff = shrpath, "."
 	if i := strings.IndexRune(shrpath, '/'); i != -1 {
@@ -29,7 +29,7 @@ func UnfoldPath(shrpath string) (syspath string, puid Puid_t, err error) {
 			err = fmt.Errorf("can not decode PUID value: %w", err)
 			return
 		}
-		if pref, ok = PathStorePath(puid); !ok {
+		if pref, ok = PathStorePath(session, puid); !ok {
 			err = ErrNoPath
 			return
 		}
@@ -44,7 +44,7 @@ func UnfoldPath(shrpath string) (syspath string, puid Puid_t, err error) {
 	}
 	// get PUID if it not have
 	if suff != "." {
-		puid = PathStoreCache(syspath)
+		puid = PathStoreCache(session, syspath)
 	}
 	return
 }
@@ -78,6 +78,9 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var session = xormEngine.NewSession()
+	defer session.Close()
+
 	var prf *Profile
 	if prf = prflist.ByID(arg.AID); prf == nil {
 		WriteError400(w, r, ErrNoAcc, AECfoldernoacc)
@@ -90,7 +93,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 
 	var syspath string
 	var puid Puid_t
-	if syspath, puid, err = UnfoldPath(ToSlash(arg.Path)); err != nil {
+	if syspath, puid, err = UnfoldPath(session, ToSlash(arg.Path)); err != nil {
 		WriteError400(w, r, err, AECfolderbadpath)
 		return
 	}
@@ -100,7 +103,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var shrpath, base, cg = prf.GetSharePath(syspath, auth == prf)
+	var shrpath, base, cg = prf.GetSharePath(session, syspath, auth == prf)
 	if cg.IsZero() && syspath != CPshares {
 		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECfolderaccess)
 		return
@@ -117,7 +120,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 		}
 		var catprop = func(puids []Puid_t) {
 			for _, puid := range puids {
-				if fpath, ok := PathStorePath(puid); ok {
+				if fpath, ok := PathStorePath(session, puid); ok {
 					if prop, err := propcache.Get(fpath); err == nil {
 						ret.List = append(ret.List, prop.(Pather))
 					}
@@ -187,7 +190,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 		case PUIDmap:
 			var n = cfg.RangeSearchAny
 			gpscache.Range(func(puid Puid_t, gps *GpsInfo) bool {
-				if fpath, ok := PathStorePath(puid); ok {
+				if fpath, ok := pathcache.GetDir(puid); ok {
 					if auth == prf || prf.IsShared(fpath) {
 						if prop, err := propcache.Get(fpath); err == nil {
 							ret.List = append(ret.List, prop.(Pather))
@@ -214,7 +217,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if fi.IsDir() {
-			if ret.List, ret.Skip, err = ScanDir(syspath, &cg, prf); err != nil && len(ret.List) == 0 {
+			if ret.List, ret.Skip, err = ScanDir(prf, syspath, &cg); err != nil && len(ret.List) == 0 {
 				if errors.Is(err, fs.ErrNotExist) {
 					WriteError(w, r, http.StatusNotFound, err, AECfolderabsent)
 				} else {

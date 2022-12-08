@@ -329,8 +329,8 @@ type Pather interface {
 
 // PathProp is any path base properties.
 type PathProp struct {
-	NameVal string `json:"name" yaml:"name" xml:"name"`
-	TypeVal FT_t   `json:"type" yaml:"type" xml:"type"` // do not omit empty
+	NameVal string `xorm:"'name'" json:"name" yaml:"name" xml:"name"`
+	TypeVal FT_t   `xorm:"'type'" json:"type" yaml:"type" xml:"type"` // do not omit empty
 }
 
 // Name is file name with extension without path.
@@ -356,8 +356,8 @@ func (pp *PathProp) Time() Unix_t {
 // FileProp is common file properties chunk.
 type FileProp struct {
 	PathProp `xorm:"extends" yaml:",inline"`
-	SizeVal  int64  `xorm:"default 0" json:"size,omitempty" yaml:"size,omitempty" xml:"size,omitempty"`
-	TimeVal  Unix_t `xorm:"default 0" json:"time,omitempty" yaml:"time,omitempty" xml:"time,omitempty"`
+	SizeVal  int64  `xorm:"'size' default 0" json:"size,omitempty" yaml:"size,omitempty" xml:"size,omitempty"`
+	TimeVal  Unix_t `xorm:"'time' default 0" json:"time,omitempty" yaml:"time,omitempty" xml:"time,omitempty"`
 }
 
 // Setup fills fields from fs.FileInfo structure. Do not looks for share.
@@ -458,7 +458,7 @@ func PathBase(syspath string) string {
 
 // DirProp is directory properties chunk.
 type DirProp struct {
-	Scan    Unix_t    `json:"scan,omitempty" yaml:"scan,omitempty" xml:"scan,omitempty"`                           // directory scanning time in UNIX format, milliseconds.
+	Scan    Unix_t    `xorm:"default 0" json:"scan,omitempty" yaml:"scan,omitempty" xml:"scan,omitempty"`          // directory scanning time in UNIX format, milliseconds.
 	FGrp    FileGroup `xorm:"extends" json:"fgrp,omitempty" yaml:"fgrp,flow,omitempty" xml:"fgrp,omitempty"`       // directory file groups counters.
 	Latency int       `xorm:"default 0" json:"latency,omitempty" yaml:"latency,omitempty" xml:"latency,omitempty"` // drive connection latency in ms, or -1 on error
 }

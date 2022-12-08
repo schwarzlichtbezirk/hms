@@ -60,76 +60,6 @@ type YamlReadWriter interface {
 	WriteYaml(string) error
 }
 
-// ReadYaml reads content of GpsCache structure from YAML-file
-// with given file name.
-func (gc *GpsCache) ReadYaml(fname string) (err error) {
-	var r io.ReadCloser
-	if r, err = os.Open(path.Join(ConfigPath, fname)); err != nil {
-		return
-	}
-	defer r.Close()
-
-	type item struct {
-		Path     string `json:"path" yaml:"path" xml:"path"`
-		*GpsInfo `yaml:",inline"`
-	}
-	var dec = yaml.NewDecoder(r)
-	for {
-		var item item
-		if err = dec.Decode(&item); err != nil {
-			if err == io.EOF {
-				if item.Path == "" {
-					err = nil
-					break
-				}
-			} else {
-				return
-			}
-		}
-		var puid, _ = PathStorePUID(item.Path)
-		gc.Store(puid, item.GpsInfo)
-	}
-	return
-}
-
-// WriteYaml writes content of GpsCache object in YAML format
-// with header comment to file with given file name.
-func (gc *GpsCache) WriteYaml(fname string) (err error) {
-	const intro = `
-# Contains GPS-coordinates and creation
-# time from EXIF-data of scanned photos.
-
-`
-	var w io.WriteCloser
-	if w, err = os.OpenFile(path.Join(ConfigPath, fname), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644); err != nil {
-		return
-	}
-	defer w.Close()
-
-	if _, err = w.Write(s2b(utf8bom)); err != nil {
-		return
-	}
-	if _, err = w.Write(s2b(intro)); err != nil {
-		return
-	}
-
-	type item struct {
-		Path     string `json:"path" yaml:"path" xml:"path"`
-		*GpsInfo `yaml:",inline"`
-	}
-	var enc = yaml.NewEncoder(w)
-	gc.Range(func(puid Puid_t, gps *GpsInfo) bool {
-		if syspath, ok := PathStorePath(puid); ok {
-			if err = enc.Encode(&item{syspath, gps}); err != nil {
-				return false
-			}
-		}
-		return true
-	})
-	enc.Close()
-	return
-}
-
 // ReadYaml reads content of Config structure from YAML-file
 // with given file name.
 func (cfg *Config) ReadYaml(fname string) (err error) {
@@ -158,16 +88,16 @@ func (pl *Profiles) ReadYaml(fname string) (err error) {
 	}
 
 	if len(pl.list) > 0 {
-		SqlSession(xormEngine, func(session *Session) (res interface{}, err error) {
+		SqlSession(func(session *Session) (res interface{}, err error) {
 			for _, prf := range pl.list {
 				Log.Infof("loaded profile id%d, login='%s'", prf.ID, prf.Login)
 				// cache roots
 				for _, fpath := range prf.Roots {
-					PathStoreCache(fpath)
+					PathStoreCache(session, fpath)
 				}
 				// cache shares
 				for _, fpath := range prf.Shares {
-					PathStoreCache(fpath)
+					PathStoreCache(session, fpath)
 				}
 
 				// bring all hidden to lowercase

@@ -87,23 +87,21 @@ func PathStarts(fpath, prefix string) bool {
 type Session = xorm.Session
 
 // SqlSession execute sql wrapped in a single session.
-func SqlSession(engine *xorm.Engine, f func(*Session) (interface{}, error)) (interface{}, error) {
-	session := engine.NewSession()
+func SqlSession(f func(*Session) (interface{}, error)) (interface{}, error) {
+	var session = xormEngine.NewSession()
 	defer session.Close()
 	return f(session)
 }
 
-type PathInfo struct {
+type PathStore struct {
+	Puid Puid_t `xorm:"pk autoincr"`
 	Path string `xorm:"notnull unique index"`
-	Type FT_t   `xorm:"default 0"`
-	Size int64  `xorm:"default 0"`
-	Time Unix_t `xorm:"default 0"`
 }
 
 // PathStore sqlite3 item of unlimited cache with puid/syspath values.
-type PathStore struct {
-	Puid     Puid_t `xorm:"pk autoincr"`
-	PathInfo `xorm:"extends"`
+type FileStore struct {
+	Puid     Puid_t `xorm:"pk"`
+	FileProp `xorm:"extends"`
 }
 
 // DirStore sqlite3 item of unlimited cache with puid/FileGroup values.
@@ -126,67 +124,85 @@ type TagStore struct {
 
 var (
 	pathcache = NewBimap[Puid_t, string]()
-	filecache = NewCache[Puid_t, PathInfo](0)
+	filecache = NewCache[Puid_t, FileProp](0)
 	dircache  = NewCache[Puid_t, DirProp](0)
 	exifcache = NewCache[Puid_t, ExifProp](0)
 	tagcache  = NewCache[Puid_t, TagProp](0)
 )
 
 // PathStorePUID returns cached PUID for specified system path.
-func PathStorePUID(fpath string) (puid Puid_t, ok bool) {
-	// get cached
+func PathStorePUID(session *Session, fpath string) (puid Puid_t, ok bool) {
+	// try to get from memory cache
 	if puid, ok = pathcache.GetRev(fpath); ok {
 		return
 	}
-
-	var err error
-	var pc PathStore
-	if ok, err = xormEngine.Cols("puid").Where("path=?", fpath).Get(&pc); err != nil {
-		panic(err)
-	}
-	if ok {
-		puid = pc.Puid
-		// put to cache
-		pathcache.Set(puid, fpath)
+	// try to get from database
+	var ps PathStore
+	if ok, _ = session.Cols("puid").Where("path=?", fpath).Get(&ps); ok { // skip errors
+		puid = ps.Puid
+		pathcache.Set(puid, fpath) // update cache
 	}
 	return
 }
 
 // PathStorePath returns cached system path of specified PUID (path unique identifier).
-func PathStorePath(puid Puid_t) (fpath string, ok bool) {
-	// get cached
+func PathStorePath(session *Session, puid Puid_t) (fpath string, ok bool) {
+	// try to get from memory cache
 	if fpath, ok = pathcache.GetDir(puid); ok {
 		return
 	}
-
-	var err error
-	var pc PathStore
-	if ok, err = xormEngine.Cols("path").ID(puid).Get(&pc); err != nil {
-		panic(err)
-	}
-	if ok {
-		fpath = pc.Path
-		// put to cache
-		pathcache.Set(puid, fpath)
+	// try to get from database
+	var ps PathStore
+	if ok, _ = session.Cols("path").ID(puid).Get(&ps); ok { // skip errors
+		fpath = ps.Path
+		pathcache.Set(puid, fpath) // update cache
 	}
 	return
 }
 
 // PathStoreCache returns cached PUID for specified system path, or make it and put into cache.
-func PathStoreCache(fpath string) (puid Puid_t) {
+func PathStoreCache(session *Session, fpath string) (puid Puid_t) {
 	var ok bool
-	if puid, ok = PathStorePUID(fpath); ok {
+	if puid, ok = PathStorePUID(session, fpath); ok {
 		return
 	}
 
-	var pc PathStore
-	pc.Path = fpath
-	if _, err := xormEngine.InsertOne(&pc); err != nil {
+	// set to database
+	var ps = PathStore{
+		Path: fpath,
+	}
+	if _, err := session.InsertOne(&ps); err != nil {
 		panic(err)
 	}
-	puid = pc.Puid
-	// put to cache
+	puid = ps.Puid
+	// set to memory cache
 	pathcache.Set(puid, fpath)
+	return
+}
+
+// DirStoreGet returns value from files properties cache.
+func FileStoreGet(session *Session, puid Puid_t) (fp FileProp, ok bool) {
+	// try to get from memory cache
+	if fp, ok = filecache.Get(puid); ok {
+		return
+	}
+	// try to get from database
+	var fs FileStore
+	if ok, _ = session.ID(puid).Get(&fs); ok { // skip errors
+		fp = fs.FileProp
+		filecache.Set(puid, fp) // update cache
+	}
+	return
+}
+
+// FileStoreSet puts value to files properties cache.
+func FileStoreSet(session *Session, fs *FileStore) (err error) {
+	// set to memory cache
+	filecache.Set(fs.Puid, fs.FileProp)
+	// set to database
+	if affected, _ := session.InsertOne(&fs); affected == 0 {
+		_, err = session.ID(fs.Puid).AllCols().Omit("puid").Update(&fs)
+	}
 	return
 }
 
@@ -205,7 +221,7 @@ func DirStoreGet(session *Session, puid Puid_t) (dp DirProp, ok bool) {
 	return
 }
 
-// DirStoreSet puts value to tags cache.
+// DirStoreSet puts value to directories cache.
 func DirStoreSet(session *Session, ds *DirStore) (err error) {
 	// set to memory cache
 	dircache.Set(ds.Puid, ds.DirProp)
@@ -319,28 +335,6 @@ func (gc *GpsCache) Range(f func(Puid_t, *GpsInfo) bool) {
 	})
 }
 
-// Load gets all items with GPS information from EXIF stirage.
-func (gc *GpsCache) Load() (err error) {
-	const limit = 256
-	var offset int
-	for {
-		var chunk []ExifStore
-		if err = xormEngine.Where("latitude != 0").Cols("datetime", "latitude", "longitude", "altitude").Limit(limit, offset).Find(&chunk); err != nil {
-			return
-		}
-		offset += limit
-		for _, ec := range chunk {
-			var gi GpsInfo
-			gi.FromProp(&ec.ExifProp)
-			gc.Store(ec.Puid, gi)
-		}
-		if limit > len(chunk) {
-			break
-		}
-	}
-	return
-}
-
 var gpscache GpsCache
 
 // InitCaches prepares caches depends of previously loaded configuration.
@@ -372,7 +366,7 @@ func InitCaches() {
 	mediacache = gcache.New(cfg.MediaCacheMaxNum).
 		LRU().
 		LoaderFunc(func(key interface{}) (ret interface{}, err error) {
-			var syspath, ok = PathStorePath(key.(Puid_t))
+			var syspath, ok = pathcache.GetDir(key.(Puid_t))
 			if !ok {
 				err = ErrNoPUID
 				return // file path not found
@@ -423,7 +417,7 @@ func InitCaches() {
 	hdcache = gcache.New(cfg.MediaCacheMaxNum).
 		LRU().
 		LoaderFunc(func(key interface{}) (ret interface{}, err error) {
-			var syspath, ok = PathStorePath(key.(Puid_t))
+			var syspath, ok = pathcache.GetDir(key.(Puid_t))
 			if !ok {
 				err = ErrNoPUID
 				return // file path not found
@@ -697,38 +691,99 @@ func InitXorm() (err error) {
 	xormEngine.ShowSQL(true)
 	xormEngine.SetMapper(names.GonicMapper{})
 
-	_, err = SqlSession(xormEngine, func(session *Session) (res interface{}, err error) {
-		if err = session.Sync(&PathStore{}, &DirStore{}, &ExifStore{}, &TagStore{}); err != nil {
+	_, err = SqlSession(func(session *Session) (res interface{}, err error) {
+		if err = session.Sync(&PathStore{}, &FileStore{}, &DirStore{}, &ExifStore{}, &TagStore{}); err != nil {
 			return
 		}
 
-		// fill path_store with predefined items
+		// fill path_store & file_store with predefined items
 		var ok bool
 		if ok, err = session.IsTableEmpty(&PathStore{}); err != nil {
 			return
 		}
 		if ok {
-			var ctgr = make([]PathStore, PUIDcache-1)
+			var ctgrpath = make([]PathStore, PUIDcache-1)
+			var ctgrfile = make([]FileStore, PUIDcache-1)
 			for puid, path := range CatKeyPath {
-				ctgr[puid-1].Puid = puid
-				ctgr[puid-1].PathInfo = PathInfo{
-					Path: path,
-					Type: FTctgr,
+				ctgrpath[puid-1].Puid = puid
+				ctgrpath[puid-1].Path = path
+				ctgrfile[puid-1].Puid = puid
+				ctgrfile[puid-1].FileProp = FileProp{
+					PathProp: PathProp{
+						NameVal: path,
+						TypeVal: FTctgr,
+					},
 				}
 			}
 			for puid := Puid_t(len(CatKeyPath) + 1); puid < PUIDcache; puid++ {
-				ctgr[puid-1].Puid = puid
-				ctgr[puid-1].PathInfo = PathInfo{
-					Path: fmt.Sprintf("<reserved%d>", puid),
-					Type: FTctgr,
+				var path = fmt.Sprintf("<reserved%d>", puid)
+				ctgrpath[puid-1].Puid = puid
+				ctgrpath[puid-1].Path = path
+				ctgrfile[puid-1].Puid = puid
+				ctgrfile[puid-1].FileProp = FileProp{
+					PathProp: PathProp{
+						NameVal: path,
+						TypeVal: FTctgr,
+					},
 				}
 			}
-			if _, err = session.Insert(&ctgr); err != nil {
+			if _, err = session.Insert(&ctgrpath); err != nil {
+				return
+			}
+			if _, err = session.Insert(&ctgrfile); err != nil {
 				return
 			}
 		}
 		return
 	})
+	return
+}
+
+// LoadPathCache loads whole path table from database into cache.
+func LoadPathCache() (err error) {
+	var session = xormEngine.NewSession()
+	defer session.Close()
+
+	const limit = 256
+	var offset int
+	for {
+		var chunk []PathStore
+		if err = session.Limit(limit, offset).Find(&chunk); err != nil {
+			return
+		}
+		offset += limit
+		for _, ps := range chunk {
+			pathcache.Set(ps.Puid, ps.Path)
+		}
+		if limit > len(chunk) {
+			break
+		}
+	}
+	return
+}
+
+// LoadGpsCache loads all items with GPS information from EXIF table of storage into cache.
+func LoadGpsCache() (err error) {
+	var session = xormEngine.NewSession()
+	defer session.Close()
+
+	const limit = 256
+	var offset int
+	for {
+		var chunk []ExifStore
+		if err = session.Where("latitude != 0").Cols("datetime", "latitude", "longitude", "altitude").Limit(limit, offset).Find(&chunk); err != nil {
+			return
+		}
+		offset += limit
+		for _, ec := range chunk {
+			var gi GpsInfo
+			gi.FromProp(&ec.ExifProp)
+			gpscache.Store(ec.Puid, gi)
+		}
+		if limit > len(chunk) {
+			break
+		}
+	}
 	return
 }
 

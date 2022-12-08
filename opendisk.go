@@ -1,7 +1,6 @@
 package hms
 
 import (
-	"database/sql"
 	"errors"
 	"io"
 	"io/fs"
@@ -190,23 +189,23 @@ func OpenDir(dir string) (ret []fs.FileInfo, err error) {
 	panic("not released disk type present")
 }
 
-const sqlUpserPath = `
-INSERT INTO path_store (path,type,size,time) VALUES (?,?,?,?)
-  ON CONFLICT(path) DO UPDATE SET type=?,size=?,time=?`
-
 // ScanDir returns file properties list for given file system directory, or directory in iso-disk.
-func ScanDir(dir string, cg *CatGrp, prf *Profile) (ret []Pather, skip int, err error) {
+func ScanDir(prf *Profile, dir string, cg *CatGrp) (ret []Pather, skip int, err error) {
 	var files []fs.FileInfo
 	if files, err = OpenDir(dir); err != nil && len(files) == 0 {
 		return
 	}
+
+	var session = xormEngine.NewSession()
+	defer session.Close()
 
 	/////////////////////////////
 	// define files to display //
 	/////////////////////////////
 
 	var fgrp FileGroup
-	var vfiles []fs.FileInfo
+	var vfiles = map[Puid_t]fs.FileInfo{}
+	var vpuids []Puid_t
 	var vpaths []string
 	for _, fi := range files {
 		if fi == nil {
@@ -224,88 +223,72 @@ func ScanDir(dir string, cg *CatGrp, prf *Profile) (ret []Pather, skip int, err 
 			continue
 		}
 		*fgrp.Field(grp)++
-		vfiles = append(vfiles, fi)
+
+		var puid = PathStoreCache(session, fpath)
+		vfiles[puid] = fi
+		vpuids = append(vpuids, puid)
 		vpaths = append(vpaths, fpath)
 	}
 	skip = len(files) - len(vfiles)
 
 	////////////////////////////
-	// define items to upsert //
+	// define files to upsert //
 	////////////////////////////
 
-	var oldps, newps []PathStore
-	var updateps, constps []*PathStore
-	if _, err = xormEngine.Transaction(func(session *Session) (res interface{}, err error) {
-		var newpaths []string
-		if err = session.In("path", vpaths).Find(&oldps); err != nil {
-			return
-		}
-		for i, fi := range vfiles {
-			var fpath = vpaths[i]
-			var ins = true
-			for _, ps := range oldps {
-				if ps.Path == fpath {
-					var sizeval = fi.Size()
-					var timeval = UnixJS(fi.ModTime())
-					var typeval = prf.PathType(fpath, fi)
-					if fi.IsDir() {
-						if prf.IsRoot(fpath) {
-							typeval = FTdrv
-						} else {
-							typeval = FTdir
-						}
-					} else {
-						typeval = FTfile
-					}
-					if ps.Type != typeval || ps.Size != sizeval || ps.Time != timeval {
-						ps.Type = typeval
-						ps.Size = sizeval
-						ps.Time = timeval
-						updateps = append(updateps, &ps)
-					} else {
-						constps = append(constps, &ps)
-					}
-					ins = false
-					break
-				}
-			}
-			if ins {
-				newps = append(newps, PathStore{
-					PathInfo: PathInfo{
-						Path: fpath,
-						Type: prf.PathType(fpath, fi),
-						Size: fi.Size(),
-						Time: UnixJS(fi.ModTime()),
-					},
-				})
-				newpaths = append(newpaths, fpath)
-			}
-		}
-
-		// insert new items
-		if len(newps) > 0 {
-			if _, err = session.Insert(newps); err != nil {
-				session.Rollback()
-				return
-			}
-			newps = nil
-			if err = session.Table("path_store").In("path", newpaths).Find(&newps); err != nil {
-				session.Rollback()
-				return
-			}
-		}
-
-		_ = constps // nothing to do with unchanged items
-		return
-	}); err != nil {
+	var oldfs, newfs []FileStore
+	var updateps, constps []*FileStore
+	if err = session.In("puid", vpuids).Find(&oldfs); err != nil {
 		return
 	}
+	for i, puid := range vpuids {
+		var fpath = vpaths[i]
+		var fi = vfiles[puid]
+		var found = false
+		for _, fs := range oldfs {
+			if fs.Puid == puid {
+				var sizeval = fi.Size()
+				var timeval = UnixJS(fi.ModTime())
+				var typeval = prf.PathType(fpath, fi)
+				if fs.TypeVal != typeval || fs.SizeVal != sizeval || fs.TimeVal != timeval {
+					fs.TypeVal = typeval
+					fs.SizeVal = sizeval
+					fs.TimeVal = timeval
+					updateps = append(updateps, &fs)
+				} else {
+					constps = append(constps, &fs)
+				}
+				found = true
+			}
+		}
+		if !found {
+			newfs = append(newfs, FileStore{
+				Puid: puid,
+				FileProp: FileProp{
+					PathProp: PathProp{
+						NameVal: fi.Name(),
+						TypeVal: prf.PathType(fpath, fi),
+					},
+					SizeVal: fi.Size(),
+					TimeVal: UnixJS(fi.ModTime()),
+				},
+			})
+		}
+	}
+
+	// insert new items
+	if len(newfs) > 0 {
+		if _, err = session.Insert(newfs); err != nil {
+			return
+		}
+	}
+
+	_ = constps // nothing to do with unchanged items
 
 	// update changed items
 	if len(updateps) > 0 {
 		go xormEngine.Transaction(func(session *Session) (res interface{}, err error) {
-			for _, ps := range updateps {
-				if _, err = session.ID(ps.Puid).Cols("type", "size", "time").Update(ps); err != nil {
+			for _, fs := range updateps {
+				if _, err = session.ID(fs.Puid).Cols("type", "size", "time").Update(fs); err != nil {
 					return
 				}
 			}
@@ -313,35 +296,20 @@ func ScanDir(dir string, cg *CatGrp, prf *Profile) (ret []Pather, skip int, err 
 		})
 	}
 
-	/////////////////////////
-	// cache PUIDs for all //
-	/////////////////////////
-
-	for _, ps := range oldps {
-		pathcache.Set(ps.Puid, ps.Path)
-	}
-	for _, ps := range newps {
-		pathcache.Set(ps.Puid, ps.Path)
-	}
-
-	//////////////////////////
-	// cache dir properties //
-	//////////////////////////
+	//////////////////////
+	// update dir cache //
+	//////////////////////
 
 	{
-		var dsids []Puid_t
-		for i, fi := range vfiles {
-			if fi.IsDir() {
-				var fpath = vpaths[i]
-				var puid, _ = pathcache.GetRev(fpath)
-				if _, ok := dircache.Get(puid); !ok {
-					dsids = append(dsids, puid)
-				}
+		var idds []Puid_t
+		for _, puid := range vpuids {
+			if _, ok := dircache.Get(puid); !ok {
+				idds = append(idds, puid)
 			}
 		}
-		if len(dsids) > 0 {
+		if len(idds) > 0 {
 			var dss []DirStore
-			if err = xormEngine.Table("dir_store").In("puid", dsids).Find(&dss); err != nil {
+			if err = session.In("puid", idds).Find(&dss); err != nil {
 				return
 			}
 			for _, ds := range dss {
@@ -354,17 +322,13 @@ func ScanDir(dir string, cg *CatGrp, prf *Profile) (ret []Pather, skip int, err 
 	// format response //
 	/////////////////////
 
-	for i, fi := range vfiles {
+	for i, puid := range vpuids {
 		var fpath = vpaths[i]
-		var puid, _ = pathcache.GetRev(fpath)
+		var fi = vfiles[puid]
 		if fi.IsDir() {
 			var dk DirKit
 			dk.FileProp.Setup(fi)
-			if prf.IsRoot(fpath) {
-				dk.TypeVal = FTdrv
-			} else {
-				dk.TypeVal = FTdir
-			}
+			dk.TypeVal = prf.PathType(fpath, fi)
 			dk.PUIDVal = puid
 			if dp, ok := dircache.Get(puid); ok {
 				dk.DirProp = dp
@@ -387,36 +351,26 @@ func ScanDir(dir string, cg *CatGrp, prf *Profile) (ret []Pather, skip int, err 
 		}
 		var latency = int(time.Since(t1) / time.Millisecond)
 
-		var ps PathStore
-		ps.Path = dir
-		if prf.IsRoot(dir) {
-			ps.Type = FTdrv
-		} else {
-			ps.Type = FTdir
-		}
-		ps.Size = fi.Size()
-		ps.Time = UnixJS(fi.ModTime())
-
-		var r sql.Result
-		r, err = session.Exec(sqlUpserPath,
-			ps.Path, ps.Type, ps.Size, ps.Time,
-			ps.Type, ps.Size, ps.Time)
-		var insid, _ = r.LastInsertId()
-		var puid = Puid_t(insid)
-		if puid == 0 {
-			puid, _ = PathStorePUID(dir)
-		}
-		var ds = DirStore{
+		var puid = PathStoreCache(session, dir)
+		FileStoreSet(session, &FileStore{
+			Puid: puid,
+			FileProp: FileProp{
+				PathProp: PathProp{
+					NameVal: fi.Name(),
+					TypeVal: prf.PathType(dir, fi),
+				},
+				SizeVal: fi.Size(),
+				TimeVal: UnixJS(fi.ModTime()),
+			},
+		})
+		DirStoreSet(session, &DirStore{
 			Puid: puid,
 			DirProp: DirProp{
 				Scan:    UnixJSNow(),
 				FGrp:    fgrp,
 				Latency: latency,
 			},
-		}
-		if affected, _ := session.InsertOne(&ds); affected == 0 {
-			_, err = session.ID(puid).AllCols().Omit("puid").Update(&ds)
-		}
+		})
 		return
 	})
 

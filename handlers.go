@@ -88,9 +88,12 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	var fpath = strings.Join(chunks[3:], "/")
 
+	var session = xormEngine.NewSession()
+	defer session.Close()
+
 	var syspath string
 	var puid Puid_t
-	if syspath, puid, err = UnfoldPath(fpath); err != nil {
+	if syspath, puid, err = UnfoldPath(session, fpath); err != nil {
 		WriteError400(w, r, err, AECmediabadpath)
 		return
 	}
@@ -237,6 +240,9 @@ func etmbHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var session = xormEngine.NewSession()
+	defer session.Close()
+
 	var prf *Profile
 	if prf = prflist.ByID(ID_t(aid)); prf == nil {
 		WriteError(w, r, http.StatusNotFound, ErrNoAcc, AECetmbnoacc)
@@ -247,7 +253,7 @@ func etmbHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var syspath, ok = PathStorePath(puid)
+	var syspath, ok = PathStorePath(session, puid)
 	if !ok {
 		WriteError(w, r, http.StatusNotFound, ErrNoPath, AECetmbnopath)
 		return
@@ -298,6 +304,9 @@ func mtmbHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var session = xormEngine.NewSession()
+	defer session.Close()
+
 	var prf *Profile
 	if prf = prflist.ByID(ID_t(aid)); prf == nil {
 		WriteError(w, r, http.StatusNotFound, ErrNoAcc, AECmtmbnoacc)
@@ -308,7 +317,7 @@ func mtmbHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var syspath, ok = PathStorePath(puid)
+	var syspath, ok = PathStorePath(session, puid)
 	if !ok {
 		WriteError(w, r, http.StatusNotFound, ErrNoPath, AECmtmbnopath)
 		return
@@ -365,6 +374,9 @@ func tileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var session = xormEngine.NewSession()
+	defer session.Close()
+
 	var prf *Profile
 	if prf = prflist.ByID(ID_t(aid)); prf == nil {
 		WriteError(w, r, http.StatusNotFound, ErrNoAcc, AECtilenoacc)
@@ -375,7 +387,7 @@ func tileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var syspath, ok = PathStorePath(puid)
+	var syspath, ok = PathStorePath(session, puid)
 	if !ok {
 		WriteError(w, r, http.StatusNotFound, ErrNoPath, AECtilenopath)
 		return
@@ -635,6 +647,9 @@ func propAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var session = xormEngine.NewSession()
+	defer session.Close()
+
 	var prf *Profile
 	if prf = prflist.ByID(arg.AID); prf == nil {
 		WriteError400(w, r, ErrNoAcc, AECpropnoacc)
@@ -647,7 +662,7 @@ func propAPI(w http.ResponseWriter, r *http.Request) {
 
 	var syspath string
 	var ok bool
-	if syspath, ok = PathStorePath(arg.PUID); !ok {
+	if syspath, ok = PathStorePath(session, arg.PUID); !ok {
 		WriteError400(w, r, ErrNoPath, AECpropbadpath)
 		return
 	}
@@ -657,7 +672,7 @@ func propAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var shrpath, base, cg = prf.GetSharePath(syspath, auth == prf)
+	var shrpath, base, cg = prf.GetSharePath(session, syspath, auth == prf)
 	if cg.IsZero() && syspath != CPshares {
 		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECpropaccess)
 		return
@@ -694,6 +709,9 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		return
 	}
 
+	var session = xormEngine.NewSession()
+	defer session.Close()
+
 	var prf *Profile
 	if prf = prflist.ByID(arg.AID); prf == nil {
 		WriteError400(w, r, ErrNoAcc, AECispathnoacc)
@@ -713,7 +731,7 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 			syspath += "/"
 		}
 	} else {
-		if syspath, _, err = UnfoldPath(fpath); err != nil {
+		if syspath, _, err = UnfoldPath(session, fpath); err != nil {
 			WriteError400(w, r, err, AECispathbadpath)
 			return
 		}
@@ -760,6 +778,9 @@ func shraddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		return
 	}
 
+	var session = xormEngine.NewSession()
+	defer session.Close()
+
 	var prf *Profile
 	if prf = prflist.ByID(arg.AID); prf == nil {
 		WriteError400(w, r, ErrNoAcc, AECshraddnoacc)
@@ -770,7 +791,7 @@ func shraddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		return
 	}
 
-	var syspath, ok = PathStorePath(arg.PUID)
+	var syspath, ok = PathStorePath(session, arg.PUID)
 	if !ok {
 		WriteError(w, r, http.StatusNotFound, ErrNoPath, AECshraddnopath)
 	}
@@ -779,7 +800,7 @@ func shraddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		return
 	}
 
-	ret.Shared = prf.AddShare(syspath)
+	ret.Shared = prf.AddShare(session, syspath)
 	Log.Infof("id%d: add share '%s' as %s", prf.ID, syspath, arg.PUID)
 
 	WriteOK(w, r, &ret)
@@ -845,6 +866,9 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		return
 	}
 
+	var session = xormEngine.NewSession()
+	defer session.Close()
+
 	var prf *Profile
 	if prf = prflist.ByID(arg.AID); prf == nil {
 		WriteError400(w, r, ErrNoAcc, AECdrvaddnoacc)
@@ -864,7 +888,7 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 			syspath += "/"
 		}
 	} else {
-		if syspath, _, err = UnfoldPath(fpath); err != nil {
+		if syspath, _, err = UnfoldPath(session, fpath); err != nil {
 			WriteError400(w, r, err, AECdrvaddbadpath)
 			return
 		}
@@ -922,6 +946,9 @@ func drvdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		return
 	}
 
+	var session = xormEngine.NewSession()
+	defer session.Close()
+
 	var prf *Profile
 	if prf = prflist.ByID(arg.AID); prf == nil {
 		WriteError400(w, r, ErrNoAcc, AECdrvdelnoacc)
@@ -932,7 +959,7 @@ func drvdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		return
 	}
 
-	var syspath, ok = PathStorePath(arg.PUID)
+	var syspath, ok = PathStorePath(session, arg.PUID)
 	if !ok {
 		WriteError(w, r, http.StatusNotFound, ErrNoPath, AECdrvdelnopath)
 	}
@@ -975,6 +1002,9 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		return
 	}
 
+	var session = xormEngine.NewSession()
+	defer session.Close()
+
 	var prf *Profile
 	if prf = prflist.ByID(arg.AID); prf == nil {
 		WriteError400(w, r, ErrNoAcc, AECedtcopynoacc)
@@ -987,11 +1017,11 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 
 	// get source and destination filenames
 	var srcpath, dstpath string
-	if srcpath, _, err = UnfoldPath(arg.Src); err != nil {
+	if srcpath, _, err = UnfoldPath(session, arg.Src); err != nil {
 		WriteError(w, r, http.StatusNotFound, err, AECedtcopynopath)
 		return
 	}
-	if dstpath, _, err = UnfoldPath(arg.Dst); err != nil {
+	if dstpath, _, err = UnfoldPath(session, arg.Dst); err != nil {
 		WriteError(w, r, http.StatusNotFound, err, AECedtcopynodest)
 		return
 	}
@@ -1112,6 +1142,9 @@ func edtrenameAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		return
 	}
 
+	var session = xormEngine.NewSession()
+	defer session.Close()
+
 	var prf *Profile
 	if prf = prflist.ByID(arg.AID); prf == nil {
 		WriteError400(w, r, ErrNoAcc, AECedtrennoacc)
@@ -1124,11 +1157,11 @@ func edtrenameAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 
 	// get source and destination filenames
 	var srcpath, dstpath string
-	if srcpath, _, err = UnfoldPath(arg.Src); err != nil {
+	if srcpath, _, err = UnfoldPath(session, arg.Src); err != nil {
 		WriteError(w, r, http.StatusNotFound, err, AECedtrennopath)
 		return
 	}
-	if dstpath, _, err = UnfoldPath(arg.Dst); err != nil {
+	if dstpath, _, err = UnfoldPath(session, arg.Dst); err != nil {
 		WriteError(w, r, http.StatusNotFound, err, AECedtrennodest)
 		return
 	}
@@ -1188,6 +1221,9 @@ func edtdeleteAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		return
 	}
 
+	var session = xormEngine.NewSession()
+	defer session.Close()
+
 	var prf *Profile
 	if prf = prflist.ByID(arg.AID); prf == nil {
 		WriteError400(w, r, ErrNoAcc, AECedtdelnoacc)
@@ -1198,7 +1234,7 @@ func edtdeleteAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		return
 	}
 
-	var syspath, ok = PathStorePath(arg.PUID)
+	var syspath, ok = PathStorePath(session, arg.PUID)
 	if !ok {
 		WriteError(w, r, http.StatusNotFound, ErrNoPath, AECedtdelnopath)
 	}

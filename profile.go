@@ -360,11 +360,11 @@ func (prf *Profile) IsRooted(syspath string) bool {
 }
 
 // AddShare adds share with given path unigue identifier.
-func (prf *Profile) AddShare(syspath string) bool {
+func (prf *Profile) AddShare(session *Session, syspath string) bool {
 	prf.mux.Lock()
 	defer prf.mux.Unlock()
 
-	var puid = PathStoreCache(syspath)
+	var puid = PathStoreCache(session, syspath)
 	if _, ok := prf.puidshare[puid]; !ok {
 		prf.Shares = append(prf.Shares, syspath)
 		prf.sharepuid[syspath] = puid
@@ -395,7 +395,7 @@ func (prf *Profile) DelShare(puid Puid_t) bool {
 }
 
 // GetSharePath brings system path to largest share path.
-func (prf *Profile) GetSharePath(syspath string, isadmin bool) (shrpath string, base string, cg CatGrp) {
+func (prf *Profile) GetSharePath(session *Session, syspath string, isadmin bool) (shrpath string, base string, cg CatGrp) {
 	prf.mux.RLock()
 	defer prf.mux.RUnlock()
 
@@ -407,7 +407,7 @@ func (prf *Profile) GetSharePath(syspath string, isadmin bool) (shrpath string, 
 		}
 	}
 	if len(base) > 0 {
-		shrpath = path.Join(PathStoreCache(base).String(), syspath[len(base):])
+		shrpath = path.Join(PathStoreCache(session, base).String(), syspath[len(base):])
 		cg.SetAll(true)
 		return
 	}
@@ -420,7 +420,7 @@ func (prf *Profile) GetSharePath(syspath string, isadmin bool) (shrpath string, 
 		}
 	}
 	if len(base) > 0 {
-		shrpath = path.Join(PathStoreCache(base).String(), syspath[len(base):])
+		shrpath = path.Join(PathStoreCache(session, base).String(), syspath[len(base):])
 		if isadmin {
 			cg.SetAll(true)
 		} else {

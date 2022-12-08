@@ -14,8 +14,8 @@ const (
 	gitpath = "github.com/schwarzlichtbezirk/" + gitname
 	cfgfile = "settings.yaml"
 
-	dirfile = "dircache.sqlite"
 	prffile = "profiles.yaml"
+	dirfile = "storage.sqlite"
 	usrfile = "userlist.yaml"
 
 	tmbfile = "thumb.wpt"
