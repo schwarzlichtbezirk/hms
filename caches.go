@@ -137,9 +137,9 @@ func PathStorePUID(session *Session, fpath string) (puid Puid_t, ok bool) {
 		return
 	}
 	// try to get from database
-	var ps PathStore
-	if ok, _ = session.Cols("puid").Where("path=?", fpath).Get(&ps); ok { // skip errors
-		puid = ps.Puid
+	var val uint64
+	if ok, _ = session.Table("path_store").Cols("puid").Where("path=?", fpath).Get(&val); ok { // skip errors
+		puid = Puid_t(val)
 		pathcache.Set(puid, fpath) // update cache
 	}
 	return
@@ -152,9 +152,7 @@ func PathStorePath(session *Session, puid Puid_t) (fpath string, ok bool) {
 		return
 	}
 	// try to get from database
-	var ps PathStore
-	if ok, _ = session.Cols("path").ID(puid).Get(&ps); ok { // skip errors
-		fpath = ps.Path
+	if ok, _ = session.Table("path_store").Cols("path").Where("puid=?", puid).Get(&fpath); ok { // skip errors
 		pathcache.Set(puid, fpath) // update cache
 	}
 	return
@@ -200,8 +198,8 @@ func FileStoreSet(session *Session, fs *FileStore) (err error) {
 	// set to memory cache
 	filecache.Set(fs.Puid, fs.FileProp)
 	// set to database
-	if affected, _ := session.InsertOne(&fs); affected == 0 {
-		_, err = session.ID(fs.Puid).AllCols().Omit("puid").Update(&fs)
+	if affected, _ := session.InsertOne(fs); affected == 0 {
+		_, err = session.ID(fs.Puid).AllCols().Omit("puid").Update(fs)
 	}
 	return
 }
@@ -226,8 +224,8 @@ func DirStoreSet(session *Session, ds *DirStore) (err error) {
 	// set to memory cache
 	dircache.Set(ds.Puid, ds.DirProp)
 	// set to database
-	if affected, _ := session.InsertOne(&ds); affected == 0 {
-		_, err = session.ID(ds.Puid).AllCols().Omit("puid").Update(&ds)
+	if affected, _ := session.InsertOne(ds); affected == 0 {
+		_, err = session.ID(ds.Puid).AllCols().Omit("puid").Update(ds)
 	}
 	return
 }
@@ -258,8 +256,8 @@ func ExifStoreSet(session *Session, es *ExifStore) (err error) {
 	// set to memory cache
 	exifcache.Set(es.Puid, es.ExifProp)
 	// set to database
-	if affected, _ := session.InsertOne(&es); affected == 0 {
-		_, err = session.ID(es.Puid).AllCols().Omit("puid").Update(&es)
+	if affected, _ := session.InsertOne(es); affected == 0 {
+		_, err = session.ID(es.Puid).AllCols().Omit("puid").Update(es)
 	}
 	return
 }
@@ -284,17 +282,17 @@ func TagStoreSet(session *Session, ts *TagStore) (err error) {
 	// set to memory cache
 	tagcache.Set(ts.Puid, ts.TagProp)
 	// set to database
-	if affected, _ := session.InsertOne(&ts); affected == 0 {
-		_, err = session.ID(ts.Puid).AllCols().Omit("puid").Update(&ts)
+	if affected, _ := session.InsertOne(ts); affected == 0 {
+		_, err = session.ID(ts.Puid).AllCols().Omit("puid").Update(ts)
 	}
 	return
 }
 
 // DirStoreCat returns PUIDs list of directories where number
 // of files of given category is more then given percent.
-func DirStoreCat(cat string, percent float64) (ret []Puid_t, err error) {
+func DirStoreCat(session *Session, cat string, percent float64) (ret []Puid_t, err error) {
 	const categoryCond = "(%s)/(other+video+audio+image+books+texts+packs+dir) > %f"
-	err = xormEngine.Where(fmt.Sprintf(categoryCond, cat, percent)).Find(&ret)
+	err = session.Table("dir_store").Cols("puid").Where(fmt.Sprintf(categoryCond, cat, percent)).Find(&ret)
 	return
 }
 

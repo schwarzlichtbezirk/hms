@@ -245,6 +245,7 @@ func ScanDir(prf *Profile, dir string, cg *CatGrp) (ret []Pather, skip int, err 
 		var fi = vfiles[puid]
 		var found = false
 		for _, fs := range oldfs {
+			var fs = fs // localize
 			if fs.Puid == puid {
 				var sizeval = fi.Size()
 				var timeval = UnixJS(fi.ModTime())
@@ -258,6 +259,7 @@ func ScanDir(prf *Profile, dir string, cg *CatGrp) (ret []Pather, skip int, err 
 					constps = append(constps, &fs)
 				}
 				found = true
+				break
 			}
 		}
 		if !found {

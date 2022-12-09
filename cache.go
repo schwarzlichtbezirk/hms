@@ -24,17 +24,20 @@ func NewCache[K comparable, T any](limit int) *Cache[K, T] {
 }
 
 func (c *Cache[K, T]) Get(key K) (ret T, ok bool) {
-	var i int
+	var n int
 
 	c.mux.Lock()
 	defer c.mux.Unlock()
 
-	i, ok = c.m[key]
+	n, ok = c.m[key]
 	if ok {
-		var cell = c.s[i]
+		var cell = c.s[n]
 		ret = cell.value
-		copy(c.s[i:], c.s[i+1:])
+		copy(c.s[n:], c.s[n+1:])
 		c.s[len(c.s)-1] = cell
+		for i := n; i < len(c.s); i++ {
+			c.m[c.s[i].key] = i
+		}
 	}
 	return
 }
@@ -43,13 +46,17 @@ func (c *Cache[K, T]) Set(key K, val T) {
 	c.mux.Lock()
 	defer c.mux.Unlock()
 
-	var i, ok = c.m[key]
+	var n, ok = c.m[key]
 	if ok {
-		var cell = c.s[i]
+		var cell = c.s[n]
 		cell.value = val
-		copy(c.s[i:], c.s[i+1:])
+		copy(c.s[n:], c.s[n+1:])
 		c.s[len(c.s)-1] = cell
+		for i := n; i < len(c.s); i++ {
+			c.m[c.s[i].key] = i
+		}
 	} else {
+		c.m[key] = len(c.s)
 		c.s = append(c.s, kvcell[K, T]{
 			key:   key,
 			value: val,

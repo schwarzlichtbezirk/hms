@@ -147,42 +147,42 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 			ret.List = prf.ScanShares()
 		case PUIDmedia:
 			var puids []Puid_t
-			if puids, err = DirStoreCat("video+audio+image", 0.5); err != nil {
+			if puids, err = DirStoreCat(session, "video+audio+image", 0.5); err != nil {
 				WriteError500(w, r, err, AECfolderdircat)
 				return
 			}
 			catprop(puids)
 		case PUIDvideo:
 			var puids []Puid_t
-			if puids, err = DirStoreCat("video", 0.5); err != nil {
+			if puids, err = DirStoreCat(session, "video", 0.5); err != nil {
 				WriteError500(w, r, err, AECfolderdircat)
 				return
 			}
 			catprop(puids)
 		case PUIDaudio:
 			var puids []Puid_t
-			if puids, err = DirStoreCat("audio", 0.5); err != nil {
+			if puids, err = DirStoreCat(session, "audio", 0.5); err != nil {
 				WriteError500(w, r, err, AECfolderdircat)
 				return
 			}
 			catprop(puids)
 		case PUIDimage:
 			var puids []Puid_t
-			if puids, err = DirStoreCat("image", 0.5); err != nil {
+			if puids, err = DirStoreCat(session, "image", 0.5); err != nil {
 				WriteError500(w, r, err, AECfolderdircat)
 				return
 			}
 			catprop(puids)
 		case PUIDbooks:
 			var puids []Puid_t
-			if puids, err = DirStoreCat("books", 0.5); err != nil {
+			if puids, err = DirStoreCat(session, "books", 0.5); err != nil {
 				WriteError500(w, r, err, AECfolderdircat)
 				return
 			}
 			catprop(puids)
 		case PUIDtexts:
 			var puids []Puid_t
-			if puids, err = DirStoreCat("texts", 0.5); err != nil {
+			if puids, err = DirStoreCat(session, "texts", 0.5); err != nil {
 				WriteError500(w, r, err, AECfolderdircat)
 				return
 			}
