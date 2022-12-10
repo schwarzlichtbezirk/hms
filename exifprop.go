@@ -179,18 +179,15 @@ type ExifKit struct {
 }
 
 // Setup fills fields with given path.
-func (ek *ExifKit) Setup(syspath string, fi fs.FileInfo) {
+func (ek *ExifKit) Setup(session *Session, syspath string, fi fs.FileInfo) {
 	ek.FileProp.Setup(fi)
-	ek.PuidProp.Setup(syspath)
+	ek.PuidProp.Setup(session, syspath)
 	ek.TmbProp.Setup(syspath)
 
 	if err := ek.Extract(syspath); err != nil {
 		return
 	}
 	ek.ETmbVal = ek.thumb.Mime
-
-	var session = xormEngine.NewSession()
-	defer session.Close()
 
 	ExifStoreSet(session, &ExifStore{
 		Puid:     ek.PUIDVal,

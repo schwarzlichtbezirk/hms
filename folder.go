@@ -142,7 +142,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 		case PUIDdrives:
-			ret.List = prf.ScanRoots()
+			ret.List = prf.ScanRoots(session)
 		case PUIDshares:
 			ret.List = prf.ScanShares()
 		case PUIDmedia:

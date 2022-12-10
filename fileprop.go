@@ -386,9 +386,9 @@ type FileKit struct {
 }
 
 // Setup calls nested structures setups.
-func (fk *FileKit) Setup(syspath string, fi fs.FileInfo) {
+func (fk *FileKit) Setup(session *Session, syspath string, fi fs.FileInfo) {
 	fk.FileProp.Setup(fi)
-	fk.PuidProp.Setup(syspath)
+	fk.PuidProp.Setup(session, syspath)
 	fk.TmbProp.Setup(syspath)
 }
 
@@ -471,12 +471,10 @@ type DirKit struct {
 }
 
 // Setup fills fields with given path. Do not looks for share.
-func (dk *DirKit) Setup(syspath string) {
+func (dk *DirKit) Setup(session *Session, syspath string) {
 	dk.NameVal = PathBase(syspath)
 	dk.TypeVal = FTdir
-	dk.PuidProp.Setup(syspath)
-	var session = xormEngine.NewSession()
-	defer session.Close()
+	dk.PuidProp.Setup(session, syspath)
 	if dp, ok := DirStoreGet(session, dk.PUIDVal); ok {
 		dk.DirProp = dp
 	}
@@ -490,12 +488,10 @@ type DriveKit struct {
 }
 
 // Setup fills fields with given path. Do not looks for share.
-func (dk *DriveKit) Setup(syspath string) {
+func (dk *DriveKit) Setup(session *Session, syspath string) {
 	dk.NameVal = PathBase(syspath)
 	dk.TypeVal = FTdrv
-	dk.PuidProp.Setup(syspath)
-	var session = xormEngine.NewSession()
-	defer session.Close()
+	dk.PuidProp.Setup(session, syspath)
 	if dp, ok := DirStoreGet(session, dk.PUIDVal); ok {
 		dk.DirProp = dp
 	}
@@ -530,23 +526,26 @@ func (ck *CatKit) Setup(puid Puid_t) {
 
 // MakeProp is file properties factory.
 func MakeProp(syspath string, fi fs.FileInfo) Pather {
+	var session = xormEngine.NewSession()
+	defer session.Close()
+
 	if fi.IsDir() {
 		var dk DirKit
-		dk.Setup(syspath)
+		dk.Setup(session, syspath)
 		return &dk
 	}
 	var ext = GetFileExt(syspath)
 	if IsTypeID3(ext) {
 		var tk TagKit
-		tk.Setup(syspath, fi)
+		tk.Setup(session, syspath, fi)
 		return &tk
 	} else if IsTypeEXIF(ext) {
 		var ek ExifKit
-		ek.Setup(syspath, fi)
+		ek.Setup(session, syspath, fi)
 		return &ek
 	} else {
 		var fk FileKit
-		fk.Setup(syspath, fi)
+		fk.Setup(session, syspath, fi)
 		return &fk
 	}
 }

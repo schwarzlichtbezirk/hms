@@ -204,9 +204,10 @@ func ScanDir(prf *Profile, dir string, cg *CatGrp) (ret []Pather, skip int, err 
 	/////////////////////////////
 
 	var fgrp FileGroup
-	var vfiles = map[Puid_t]fs.FileInfo{}
-	var vpuids []Puid_t
-	var vpaths []string
+	var vfiles []fs.FileInfo // verified file infos
+	var vpuids []Puid_t      // verified PUIDs
+	var vpaths []string      // verified paths
+	var dpaths []string      // database paths
 	for _, fi := range files {
 		if fi == nil {
 			continue
@@ -224,12 +225,53 @@ func ScanDir(prf *Profile, dir string, cg *CatGrp) (ret []Pather, skip int, err 
 		}
 		*fgrp.Field(grp)++
 
-		var puid = PathStoreCache(session, fpath)
-		vfiles[puid] = fi
-		vpuids = append(vpuids, puid)
+		if _, ok := pathcache.GetRev(fpath); !ok {
+			dpaths = append(dpaths, fpath)
+		}
+		vfiles = append(vfiles, fi)
 		vpaths = append(vpaths, fpath)
 	}
 	skip = len(files) - len(vfiles)
+
+	if len(dpaths) > 0 {
+		var nps []PathStore
+		// get not cached paths from database
+		nps = nil
+		if err = session.In("path", dpaths).Find(&nps); err != nil {
+			return
+		}
+		for _, ps := range nps {
+			pathcache.Set(ps.Puid, ps.Path)
+		}
+		// insert new paths into database
+		nps = nil
+		var npaths []string // new paths
+		for _, fpath := range dpaths {
+			if _, ok := pathcache.GetRev(fpath); !ok {
+				nps = append(nps, PathStore{
+					Path: fpath,
+				})
+				npaths = append(npaths, fpath)
+			}
+		}
+		if _, err = session.Insert(nps); err != nil {
+			return
+		}
+		// get PUIDs of inserted paths
+		nps = nil
+		if err = session.In("path", npaths).Find(&nps); err != nil {
+			return
+		}
+		for _, ps := range nps {
+			pathcache.Set(ps.Puid, ps.Path)
+		}
+	}
+
+	// make vpuids array
+	for _, fpath := range vpaths {
+		var puid, _ = pathcache.GetRev(fpath)
+		vpuids = append(vpuids, puid)
+	}
 
 	////////////////////////////
 	// define files to upsert //
@@ -242,7 +284,7 @@ func ScanDir(prf *Profile, dir string, cg *CatGrp) (ret []Pather, skip int, err 
 	}
 	for i, puid := range vpuids {
 		var fpath = vpaths[i]
-		var fi = vfiles[puid]
+		var fi = vfiles[i]
 		var found = false
 		for _, fs := range oldfs {
 			var fs = fs // localize
@@ -302,21 +344,25 @@ func ScanDir(prf *Profile, dir string, cg *CatGrp) (ret []Pather, skip int, err 
 	// update dir cache //
 	//////////////////////
 
-	{
-		var idds []Puid_t
-		for _, puid := range vpuids {
-			if _, ok := dircache.Get(puid); !ok {
+	var dpmap = map[Puid_t]DirProp{}
+	var idds []Puid_t
+	for i, puid := range vpuids {
+		if fi := vfiles[i]; fi.IsDir() {
+			if dp, ok := dircache.Get(puid); ok {
+				dpmap[puid] = dp
+			} else {
 				idds = append(idds, puid)
 			}
 		}
-		if len(idds) > 0 {
-			var dss []DirStore
-			if err = session.In("puid", idds).Find(&dss); err != nil {
-				return
-			}
-			for _, ds := range dss {
-				dircache.Set(ds.Puid, ds.DirProp)
-			}
+	}
+	if len(idds) > 0 {
+		var dss []DirStore
+		if err = session.In("puid", idds).Find(&dss); err != nil {
+			return
+		}
+		for _, ds := range dss {
+			dpmap[ds.Puid] = ds.DirProp
+			dircache.Set(ds.Puid, ds.DirProp)
 		}
 	}
 
@@ -326,13 +372,13 @@ func ScanDir(prf *Profile, dir string, cg *CatGrp) (ret []Pather, skip int, err 
 
 	for i, puid := range vpuids {
 		var fpath = vpaths[i]
-		var fi = vfiles[puid]
+		var fi = vfiles[i]
 		if fi.IsDir() {
 			var dk DirKit
 			dk.FileProp.Setup(fi)
 			dk.TypeVal = prf.PathType(fpath, fi)
 			dk.PUIDVal = puid
-			if dp, ok := dircache.Get(puid); ok {
+			if dp, ok := dpmap[puid]; ok {
 				dk.DirProp = dp
 			}
 			ret = append(ret, &dk)

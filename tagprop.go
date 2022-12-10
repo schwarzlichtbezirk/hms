@@ -56,9 +56,9 @@ type TagKit struct {
 
 // Setup fills fields with given path.
 // Puts into the cache nested at the tags thumbnail if it present.
-func (tk *TagKit) Setup(syspath string, fi fs.FileInfo) {
+func (tk *TagKit) Setup(session *Session, syspath string, fi fs.FileInfo) {
 	tk.FileProp.Setup(fi)
-	tk.PuidProp.Setup(syspath)
+	tk.PuidProp.Setup(session, syspath)
 	tk.TmbProp.Setup(syspath)
 
 	var err error
@@ -75,9 +75,6 @@ func (tk *TagKit) Setup(syspath string, fi fs.FileInfo) {
 
 	tk.TagProp.Setup(m)
 	tk.ETmbVal = tk.thumb.Mime
-
-	var session = xormEngine.NewSession()
-	defer session.Close()
 
 	TagStoreSet(session, &TagStore{
 		Puid:    tk.PUIDVal,

@@ -283,6 +283,20 @@ func Run(gmux *Router) {
 
 // WaitExit waits until all server threads will be stopped and all transactions will be done.
 func WaitExit() {
+	if len(cfg.PortHTTP) > 0 {
+		var suff string
+		var has80 bool
+		for _, port := range cfg.PortHTTP {
+			if port == ":80" {
+				has80 = true
+				break
+			}
+		}
+		if !has80 {
+			suff = cfg.PortHTTP[0]
+		}
+		Log.Infof("hint: Open http://localhost%[1]s page in browser to view the player. If you want to stop the server, press 'Ctrl+C' for graceful network shutdown. Use http://localhost%[1]s/stat for server state monitoring.\n", suff)
+	}
 	// wait for exit signal
 	<-exitctx.Done()
 	Log.Infoln("shutting down begin")

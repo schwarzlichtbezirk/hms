@@ -243,40 +243,18 @@ func (prf *Profile) FindRoots() {
 }
 
 // ScanRoots scan drives from roots list.
-func (prf *Profile) ScanRoots() []Pather {
+func (prf *Profile) ScanRoots(session *Session) []Pather {
 	prf.mux.RLock()
 	defer prf.mux.RUnlock()
 
 	var lst = make([]Pather, len(prf.Roots))
 	for i, root := range prf.Roots {
 		var dk DriveKit
-		dk.Setup(root)
+		dk.Setup(session, root)
 		dk.StatDir(root)
 		lst[i] = &dk
 	}
 	return lst
-}
-
-// IsRoot checks whether file path is disk root path.
-func (prf *Profile) IsRoot(fpath string) bool {
-	prf.mux.RLock()
-	defer prf.mux.RUnlock()
-	for _, root := range prf.Roots {
-		if fpath == root {
-			return true
-		}
-	}
-	return false
-}
-
-func (prf *Profile) PathType(fpath string, fi fs.FileInfo) FT_t {
-	if !fi.IsDir() {
-		return FTfile
-	}
-	if prf.IsRoot(fpath) {
-		return FTdrv
-	}
-	return FTdir
 }
 
 // ScanShares scan actual shares from shares list.
@@ -347,8 +325,8 @@ func (prf *Profile) IsShared(syspath string) bool {
 	return false
 }
 
-// IsRooted checks that syspath is become in any root.
-func (prf *Profile) IsRooted(syspath string) bool {
+// IsRoot checks whether file path is disk root path.
+func (prf *Profile) IsRoot(syspath string) bool {
 	prf.mux.RLock()
 	defer prf.mux.RUnlock()
 	for _, root := range prf.Roots {
@@ -357,6 +335,16 @@ func (prf *Profile) IsRooted(syspath string) bool {
 		}
 	}
 	return false
+}
+
+func (prf *Profile) PathType(fpath string, fi fs.FileInfo) FT_t {
+	if !fi.IsDir() {
+		return FTfile
+	}
+	if prf.IsRoot(fpath) {
+		return FTdrv
+	}
+	return FTdir
 }
 
 // AddShare adds share with given path unigue identifier.

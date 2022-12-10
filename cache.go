@@ -10,17 +10,38 @@ type kvcell[K comparable, T any] struct {
 }
 
 type Cache[K comparable, T any] struct {
-	s     []kvcell[K, T]
-	m     map[K]int
-	mux   sync.Mutex
-	limit int
+	s   []kvcell[K, T]
+	m   map[K]int
+	mux sync.Mutex
 }
 
-func NewCache[K comparable, T any](limit int) *Cache[K, T] {
+func NewCache[K comparable, T any]() *Cache[K, T] {
 	return &Cache[K, T]{
-		m:     map[K]int{},
-		limit: limit,
+		m: map[K]int{},
 	}
+}
+
+func (c *Cache[K, T]) Len() int {
+	c.mux.Lock()
+	defer c.mux.Unlock()
+	return len(c.s)
+}
+
+func (c *Cache[K, T]) Has(key K) (ok bool) {
+	c.mux.Lock()
+	defer c.mux.Unlock()
+	_, ok = c.m[key]
+	return
+}
+
+func (c *Cache[K, T]) Peek(key K) (ret T, ok bool) {
+	c.mux.Lock()
+	defer c.mux.Unlock()
+	var n int
+	if n, ok = c.m[key]; ok {
+		ret = c.s[n].value
+	}
+	return
 }
 
 func (c *Cache[K, T]) Get(key K) (ret T, ok bool) {
@@ -42,6 +63,22 @@ func (c *Cache[K, T]) Get(key K) (ret T, ok bool) {
 	return
 }
 
+func (c *Cache[K, T]) Push(key K, val T) {
+	c.mux.Lock()
+	defer c.mux.Unlock()
+
+	var n, ok = c.m[key]
+	if ok {
+		c.s[n].value = val
+	} else {
+		c.m[key] = len(c.s)
+		c.s = append(c.s, kvcell[K, T]{
+			key:   key,
+			value: val,
+		})
+	}
+}
+
 func (c *Cache[K, T]) Set(key K, val T) {
 	c.mux.Lock()
 	defer c.mux.Unlock()
@@ -61,7 +98,6 @@ func (c *Cache[K, T]) Set(key K, val T) {
 			key:   key,
 			value: val,
 		})
-		c.tolimit()
 	}
 }
 
@@ -82,7 +118,10 @@ func (c *Cache[K, T]) Free(n int) {
 	c.mux.Lock()
 	defer c.mux.Unlock()
 
-	if n < 0 || n >= len(c.s) {
+	if n <= 0 {
+		return
+	}
+	if n >= len(c.s) {
 		c.s = nil
 		c.m = map[K]int{}
 		return
@@ -94,35 +133,24 @@ func (c *Cache[K, T]) Free(n int) {
 	c.s = c.s[n:]
 }
 
-func (c *Cache[K, T]) Len() int {
+func (c *Cache[K, T]) ToLimit(limit int) {
 	c.mux.Lock()
 	defer c.mux.Unlock()
-	return len(c.s)
-}
 
-func (c *Cache[K, T]) Limit() int {
-	c.mux.Lock()
-	defer c.mux.Unlock()
-	return c.limit
-}
-
-func (c *Cache[K, T]) SetLimit(limit int) {
-	c.mux.Lock()
-	defer c.mux.Unlock()
-	c.limit = limit
-	c.tolimit()
-}
-
-func (c *Cache[K, T]) tolimit() {
-	if c.limit > 0 {
-		var n = len(c.s) - c.limit
-		if n > 0 {
-			for i := 0; i < n; i++ {
-				delete(c.m, c.s[i].key)
-			}
-			c.s = c.s[n:]
-		}
+	if limit >= len(c.s) {
+		return
 	}
+	if limit <= 0 {
+		c.s = nil
+		c.m = map[K]int{}
+		return
+	}
+
+	var n = len(c.s) - limit
+	for i := 0; i < n; i++ {
+		delete(c.m, c.s[i].key)
+	}
+	c.s = c.s[n:]
 }
 
 type Bimap[K comparable, T comparable] struct {

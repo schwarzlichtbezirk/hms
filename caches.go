@@ -124,10 +124,10 @@ type TagStore struct {
 
 var (
 	pathcache = NewBimap[Puid_t, string]()
-	filecache = NewCache[Puid_t, FileProp](0)
-	dircache  = NewCache[Puid_t, DirProp](0)
-	exifcache = NewCache[Puid_t, ExifProp](0)
-	tagcache  = NewCache[Puid_t, TagProp](0)
+	filecache = NewCache[Puid_t, FileProp]()
+	dircache  = NewCache[Puid_t, DirProp]()
+	exifcache = NewCache[Puid_t, ExifProp]()
+	tagcache  = NewCache[Puid_t, TagProp]()
 )
 
 // PathStorePUID returns cached PUID for specified system path.
@@ -178,7 +178,7 @@ func PathStoreCache(session *Session, fpath string) (puid Puid_t) {
 	return
 }
 
-// DirStoreGet returns value from files properties cache.
+// FileStoreGet returns value from files properties cache.
 func FileStoreGet(session *Session, puid Puid_t) (fp FileProp, ok bool) {
 	// try to get from memory cache
 	if fp, ok = filecache.Get(puid); ok {

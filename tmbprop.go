@@ -62,9 +62,7 @@ type PuidProp struct {
 	PUIDVal Puid_t `json:"puid" yaml:"puid" xml:"puid"`
 }
 
-func (pp *PuidProp) Setup(syspath string) {
-	var session = xormEngine.NewSession()
-	defer session.Close()
+func (pp *PuidProp) Setup(session *Session, syspath string) {
 	pp.PUIDVal = PathStoreCache(session, syspath)
 }
 
