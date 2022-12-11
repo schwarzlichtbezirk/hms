@@ -118,7 +118,14 @@ const (
 	AECfolderaccess
 	AECfoldernoshr
 	AECfoldernotcat
-	AECfolderdircat
+	AECfolderdrives
+	AECfoldershares
+	AECfoldermedia
+	AECfoldervideo
+	AECfolderaudio
+	AECfolderimage
+	AECfolderbooks
+	AECfoldertexts
 	AECfoldermapget
 	AECfolderstat
 	AECfolderopen

@@ -700,6 +700,7 @@ func InitXorm() (err error) {
 			return
 		}
 		if ok {
+			var tinit = UnixJSNow()
 			var ctgrpath = make([]PathStore, PUIDcache-1)
 			var ctgrfile = make([]FileStore, PUIDcache-1)
 			for puid, path := range CatKeyPath {
@@ -708,21 +709,22 @@ func InitXorm() (err error) {
 				ctgrfile[puid-1].Puid = puid
 				ctgrfile[puid-1].FileProp = FileProp{
 					PathProp: PathProp{
-						NameVal: path,
+						NameVal: CatNames[puid],
 						TypeVal: FTctgr,
 					},
+					TimeVal: tinit,
 				}
 			}
 			for puid := Puid_t(len(CatKeyPath) + 1); puid < PUIDcache; puid++ {
-				var path = fmt.Sprintf("<reserved%d>", puid)
 				ctgrpath[puid-1].Puid = puid
-				ctgrpath[puid-1].Path = path
+				ctgrpath[puid-1].Path = fmt.Sprintf("<reserved%d>", puid)
 				ctgrfile[puid-1].Puid = puid
 				ctgrfile[puid-1].FileProp = FileProp{
 					PathProp: PathProp{
-						NameVal: path,
+						NameVal: fmt.Sprintf("reserved #%d", puid),
 						TypeVal: FTctgr,
 					},
+					TimeVal: tinit,
 				}
 			}
 			if _, err = session.Insert(&ctgrpath); err != nil {

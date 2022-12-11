@@ -448,7 +448,7 @@ func PathBase(syspath string) string {
 	if syspath[0] == '<' && syspath[pos2-1] == '>' {
 		return syspath
 	}
-	if syspath[pos2-1] == '/' || syspath[pos2-1] == '\\' {
+	if syspath[pos2-1] == '/' {
 		pos2--
 	}
 	for pos1 = pos2; pos1 > 0 && syspath[pos1-1] != '/' && syspath[pos1-1] != '\\'; pos1-- {

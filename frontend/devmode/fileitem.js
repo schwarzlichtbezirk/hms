@@ -38,6 +38,33 @@ const filehint = file => {
 	if (file.time) {
 		lst.push(['time', (new Date(file.time)).toLocaleString()]);
 	}
+	// Dir properties
+	if (file.fgrp) {
+		if (file.fgrp.video) {
+			lst.push(['video', file.fgrp.video]);
+		}
+		if (file.fgrp.audio) {
+			lst.push(['audio', file.fgrp.audio]);
+		}
+		if (file.fgrp.image) {
+			lst.push(['image', file.fgrp.image]);
+		}
+		if (file.fgrp.books) {
+			lst.push(['books', file.fgrp.video]);
+		}
+		if (file.fgrp.texts) {
+			lst.push(['texts', file.fgrp.texts]);
+		}
+		if (file.fgrp.packs) {
+			lst.push(['packs', file.fgrp.packs]);
+		}
+		if (file.fgrp.other) {
+			lst.push(['other', file.fgrp.other]);
+		}
+		if (file.fgrp.dir) {
+			lst.push(['directories', file.fgrp.dir]);
+		}
+	}
 	return lst;
 };
 
@@ -102,61 +129,57 @@ const fileinfo = file => {
 	if (file.datetime) {
 		lst.push(['photo taken', (new Date(file.datetime)).toLocaleString()]);
 	}
-	if (file.orientation) {
-		switch (file.orientation) {
-			case 1:
-				lst.push(['orientation', 'normal']);
-				break;
-			case 2:
-				lst.push(['orientation', 'horizontal reversed']);
-				break;
-			case 3:
-				lst.push(['orientation', 'flipped']);
-				break;
-			case 4:
-				lst.push(['orientation', 'flipped & horizontal reversed']);
-				break;
-			case 5:
-				lst.push(['orientation', 'clockwise turned & horizontal reversed']);
-				break;
-			case 6:
-				lst.push(['orientation', 'clockwise turned']);
-				break;
-			case 7:
-				lst.push(['orientation', 'anticlockwise turned & horizontal reversed']);
-				break;
-			case 8:
-				lst.push(['orientation', 'anticlockwise turned']);
-				break;
-		}
+	switch (file.orientation) {
+		case 1:
+			lst.push(['orientation', 'normal']);
+			break;
+		case 2:
+			lst.push(['orientation', 'horizontal reversed']);
+			break;
+		case 3:
+			lst.push(['orientation', 'flipped']);
+			break;
+		case 4:
+			lst.push(['orientation', 'flipped & horizontal reversed']);
+			break;
+		case 5:
+			lst.push(['orientation', 'clockwise turned & horizontal reversed']);
+			break;
+		case 6:
+			lst.push(['orientation', 'clockwise turned']);
+			break;
+		case 7:
+			lst.push(['orientation', 'anticlockwise turned & horizontal reversed']);
+			break;
+		case 8:
+			lst.push(['orientation', 'anticlockwise turned']);
+			break;
 	}
-	if (file.exposureprog) {
-		switch (file.exposureprog) {
-			case 1:
-				lst.push(['exposure program', 'manual']);
-				break;
-			case 2:
-				lst.push(['exposure program', 'normal program']);
-				break;
-			case 3:
-				lst.push(['exposure program', 'aperture priority']);
-				break;
-			case 4:
-				lst.push(['exposure program', 'shutter priority']);
-				break;
-			case 5:
-				lst.push(['exposure program', 'creative program (depth of field)']);
-				break;
-			case 6:
-				lst.push(['exposure program', 'action program (fast shutter speed)']);
-				break;
-			case 7:
-				lst.push(['exposure program', 'portrait mode (background out of focus)']);
-				break;
-			case 8:
-				lst.push(['exposure program', 'landscape mode (background in focus)']);
-				break;
-		}
+	switch (file.exposureprog) {
+		case 1:
+			lst.push(['exposure program', 'manual']);
+			break;
+		case 2:
+			lst.push(['exposure program', 'normal program']);
+			break;
+		case 3:
+			lst.push(['exposure program', 'aperture priority']);
+			break;
+		case 4:
+			lst.push(['exposure program', 'shutter priority']);
+			break;
+		case 5:
+			lst.push(['exposure program', 'creative program (depth of field)']);
+			break;
+		case 6:
+			lst.push(['exposure program', 'action program (fast shutter speed)']);
+			break;
+		case 7:
+			lst.push(['exposure program', 'portrait mode (background out of focus)']);
+			break;
+		case 8:
+			lst.push(['exposure program', 'landscape mode (background in focus)']);
+			break;
 	}
 	if (file.exposuretime) {
 		lst.push(['exposure time', `${file.exposuretime} sec`]);
@@ -176,75 +199,73 @@ const fileinfo = file => {
 	if (file.exposurebias) {
 		lst.push(['exposure bias', file.exposurebias]);
 	}
-	if (file.lightsource) {
-		switch (file.lightsource) {
-			case 1:
-				lst.push(['light source', 'daylight']);
-				break;
-			case 2:
-				lst.push(['light source', 'fluorescent']);
-				break;
-			case 3:
-				lst.push(['light source', 'tungsten (incandescent light)']);
-				break;
-			case 4:
-				lst.push(['light source', 'flash']);
-				break;
-			case 9:
-				lst.push(['light source', 'fine weather']);
-				break;
-			case 10:
-				lst.push(['light source', 'cloudy weather']);
-				break;
-			case 11:
-				lst.push(['light source', 'shade']);
-				break;
-			case 12:
-				lst.push(['light source', 'daylight fluorescent (D 5700-7100K)']);
-				break;
-			case 13:
-				lst.push(['light source', 'day white fluorescent (N 4600-5700K)']);
-				break;
-			case 14:
-				lst.push(['light source', 'cool white fluorescent (W 3800-4600K)']);
-				break;
-			case 15:
-				lst.push(['light source', 'white fluorescent (WW 3250-3800K)']);
-				break;
-			case 16:
-				lst.push(['light source', 'warm white fluorescent (L 2600-3250K)']);
-				break;
-			case 17:
-				lst.push(['light source', 'standard light A']);
-				break;
-			case 18:
-				lst.push(['light source', 'standard light B']);
-				break;
-			case 19:
-				lst.push(['light source', 'standard light C']);
-				break;
-			case 20:
-				lst.push(['light source', 'D55']);
-				break;
-			case 21:
-				lst.push(['light source', 'D65']);
-				break;
-			case 22:
-				lst.push(['light source', 'D75']);
-				break;
-			case 23:
-				lst.push(['light source', 'D50']);
-				break;
-			case 24:
-				lst.push(['light source', 'ISO studio tungsten']);
-				break;
-			case 255:
-				lst.push(['light source', 'other light source']);
-				break;
-			default:
-				lst.push(['light source', `light code #${file.lightsource}`]);
-				break;
-		}
+	switch (file.lightsource) {
+		case 1:
+			lst.push(['light source', 'daylight']);
+			break;
+		case 2:
+			lst.push(['light source', 'fluorescent']);
+			break;
+		case 3:
+			lst.push(['light source', 'tungsten (incandescent light)']);
+			break;
+		case 4:
+			lst.push(['light source', 'flash']);
+			break;
+		case 9:
+			lst.push(['light source', 'fine weather']);
+			break;
+		case 10:
+			lst.push(['light source', 'cloudy weather']);
+			break;
+		case 11:
+			lst.push(['light source', 'shade']);
+			break;
+		case 12:
+			lst.push(['light source', 'daylight fluorescent (D 5700-7100K)']);
+			break;
+		case 13:
+			lst.push(['light source', 'day white fluorescent (N 4600-5700K)']);
+			break;
+		case 14:
+			lst.push(['light source', 'cool white fluorescent (W 3800-4600K)']);
+			break;
+		case 15:
+			lst.push(['light source', 'white fluorescent (WW 3250-3800K)']);
+			break;
+		case 16:
+			lst.push(['light source', 'warm white fluorescent (L 2600-3250K)']);
+			break;
+		case 17:
+			lst.push(['light source', 'standard light A']);
+			break;
+		case 18:
+			lst.push(['light source', 'standard light B']);
+			break;
+		case 19:
+			lst.push(['light source', 'standard light C']);
+			break;
+		case 20:
+			lst.push(['light source', 'D55']);
+			break;
+		case 21:
+			lst.push(['light source', 'D65']);
+			break;
+		case 22:
+			lst.push(['light source', 'D75']);
+			break;
+		case 23:
+			lst.push(['light source', 'D50']);
+			break;
+		case 24:
+			lst.push(['light source', 'ISO studio tungsten']);
+			break;
+		case 255:
+			lst.push(['light source', 'other light source']);
+			break;
+		default:
+			lst.push(['light source', `light code #${file.lightsource}`]);
+			break;
 	}
 	if (file.focal) {
 		lst.push(['focal length', `${file.focal} mm`]);

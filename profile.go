@@ -158,6 +158,20 @@ func (prf *Profile) SetDefaultHidden() {
 	copy(prf.Hidden, DefHidden)
 }
 
+// PathType returns type of file by given path.
+func (prf *Profile) PathType(fpath string, fi fs.FileInfo) FT_t {
+	if len(fpath) > 1 && fpath[0] == '<' && fpath[len(fpath)-1] == '>' {
+		return FTctgr
+	}
+	if prf.IsRoot(fpath) {
+		return FTdrv
+	}
+	if fi != nil && fi.IsDir() {
+		return FTdir
+	}
+	return FTfile
+}
+
 // IsHidden do check up that file path is in hidden list.
 func (prf *Profile) IsHidden(fpath string) bool {
 	var matched bool
@@ -191,6 +205,30 @@ patterns:
 		}
 	}
 	return matched
+}
+
+// IsRoot checks whether file path is disk root path.
+func (prf *Profile) IsRoot(syspath string) bool {
+	prf.mux.RLock()
+	defer prf.mux.RUnlock()
+	for _, root := range prf.Roots {
+		if root == syspath {
+			return true
+		}
+	}
+	return false
+}
+
+// IsShared checks that syspath is become in any share.
+func (prf *Profile) IsShared(syspath string) bool {
+	prf.mux.RLock()
+	defer prf.mux.RUnlock()
+	for _, fpath := range prf.Shares {
+		if fpath == syspath {
+			return true
+		}
+	}
+	return false
 }
 
 // RootIndex returns index of given path in roots list or -1 if not found.
@@ -243,32 +281,23 @@ func (prf *Profile) FindRoots() {
 }
 
 // ScanRoots scan drives from roots list.
-func (prf *Profile) ScanRoots(session *Session) []Pather {
+func (prf *Profile) ScanRoots() ([]Pather, error) {
 	prf.mux.RLock()
-	defer prf.mux.RUnlock()
+	var vfiles = make([]string, len(prf.Roots))
+	copy(vfiles, prf.Roots)
+	prf.mux.RUnlock()
 
-	var lst = make([]Pather, len(prf.Roots))
-	for i, root := range prf.Roots {
-		var dk DriveKit
-		dk.Setup(session, root)
-		dk.StatDir(root)
-		lst[i] = &dk
-	}
-	return lst
+	return ScanFileNameList(prf, vfiles)
 }
 
 // ScanShares scan actual shares from shares list.
-func (prf *Profile) ScanShares() []Pather {
+func (prf *Profile) ScanShares() ([]Pather, error) {
 	prf.mux.RLock()
-	defer prf.mux.RUnlock()
+	var vfiles = make([]string, len(prf.Shares))
+	copy(vfiles, prf.Shares)
+	prf.mux.RUnlock()
 
-	var lst []Pather
-	for _, fpath := range prf.Shares {
-		if prop, err := propcache.Get(fpath); err == nil {
-			lst = append(lst, prop.(Pather))
-		}
-	}
-	return lst
+	return ScanFileNameList(prf, vfiles)
 }
 
 // Private function to update profile shares private data.
@@ -311,40 +340,6 @@ func (prf *Profile) UpdateShares() {
 		}
 	}
 	prf.updateGrp()
-}
-
-// IsShared checks that syspath is become in any share.
-func (prf *Profile) IsShared(syspath string) bool {
-	prf.mux.RLock()
-	defer prf.mux.RUnlock()
-	for _, fpath := range prf.Shares {
-		if fpath == syspath {
-			return true
-		}
-	}
-	return false
-}
-
-// IsRoot checks whether file path is disk root path.
-func (prf *Profile) IsRoot(syspath string) bool {
-	prf.mux.RLock()
-	defer prf.mux.RUnlock()
-	for _, root := range prf.Roots {
-		if root == syspath {
-			return true
-		}
-	}
-	return false
-}
-
-func (prf *Profile) PathType(fpath string, fi fs.FileInfo) FT_t {
-	if !fi.IsDir() {
-		return FTfile
-	}
-	if prf.IsRoot(fpath) {
-		return FTdrv
-	}
-	return FTdir
 }
 
 // AddShare adds share with given path unigue identifier.
