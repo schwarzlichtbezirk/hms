@@ -12,6 +12,15 @@ import (
 	"time"
 )
 
+var catcolumn = map[Puid_t]string{
+	PUIDmedia: "video+audio+image",
+	PUIDvideo: "video",
+	PUIDaudio: "audio",
+	PUIDimage: "image",
+	PUIDbooks: "books",
+	PUIDtexts: "texts",
+}
+
 // UnfoldPath brings any share path to system file path.
 func UnfoldPath(session *Session, shrpath string) (syspath string, puid Puid_t, err error) {
 	shrpath = path.Clean(shrpath)
@@ -118,15 +127,6 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 			WriteError(w, r, http.StatusForbidden, ErrNotShared, AECfoldernoshr)
 			return
 		}
-		var catprop = func(puids []Puid_t) {
-			for _, puid := range puids {
-				if fpath, ok := PathStorePath(session, puid); ok {
-					if prop, err := propcache.Get(fpath); err == nil {
-						ret.List = append(ret.List, prop.(Pather))
-					}
-				}
-			}
-		}
 		switch puid {
 		case PUIDhome:
 			var vfiles []string
@@ -140,62 +140,32 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 					}
 				}
 			}
-			if ret.List, err = ScanFileNameList(prf, vfiles); err != nil {
+			var lstp DirProp
+			if ret.List, lstp, err = ScanFileNameList(prf, session, vfiles); err != nil {
 				WriteError500(w, r, err, AECfolderhome)
 				return
 			}
+			go func() {
+				DirStoreSet(session, &DirStore{
+					Puid: puid,
+					Prop: lstp,
+				})
+			}()
 		case PUIDdrives:
-			if ret.List, err = prf.ScanRoots(); err != nil {
+			if ret.List, err = prf.ScanRoots(session); err != nil {
 				WriteError500(w, r, err, AECfolderdrives)
 				return
 			}
 		case PUIDshares:
-			if ret.List, err = prf.ScanShares(); err != nil {
+			if ret.List, err = prf.ScanShares(session); err != nil {
 				WriteError500(w, r, err, AECfoldershares)
 				return
 			}
-		case PUIDmedia:
-			var puids []Puid_t
-			if puids, err = DirStoreCat(session, "video+audio+image", 0.5); err != nil {
+		case PUIDmedia, PUIDvideo, PUIDaudio, PUIDimage, PUIDbooks, PUIDtexts:
+			if ret.List, err = ScanCat(prf, session, puid, catcolumn[puid], 0.5); err != nil {
 				WriteError500(w, r, err, AECfoldermedia)
 				return
 			}
-			catprop(puids)
-		case PUIDvideo:
-			var puids []Puid_t
-			if puids, err = DirStoreCat(session, "video", 0.5); err != nil {
-				WriteError500(w, r, err, AECfoldervideo)
-				return
-			}
-			catprop(puids)
-		case PUIDaudio:
-			var puids []Puid_t
-			if puids, err = DirStoreCat(session, "audio", 0.5); err != nil {
-				WriteError500(w, r, err, AECfolderaudio)
-				return
-			}
-			catprop(puids)
-		case PUIDimage:
-			var puids []Puid_t
-			if puids, err = DirStoreCat(session, "image", 0.5); err != nil {
-				WriteError500(w, r, err, AECfolderimage)
-				return
-			}
-			catprop(puids)
-		case PUIDbooks:
-			var puids []Puid_t
-			if puids, err = DirStoreCat(session, "books", 0.5); err != nil {
-				WriteError500(w, r, err, AECfolderbooks)
-				return
-			}
-			catprop(puids)
-		case PUIDtexts:
-			var puids []Puid_t
-			if puids, err = DirStoreCat(session, "texts", 0.5); err != nil {
-				WriteError500(w, r, err, AECfoldertexts)
-				return
-			}
-			catprop(puids)
 		case PUIDmap:
 			var n = cfg.RangeSearchAny
 			gpscache.Range(func(puid Puid_t, gps *GpsInfo) bool {
@@ -226,7 +196,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if fi.IsDir() {
-			if ret.List, ret.Skip, err = ScanDir(prf, syspath, &cg); err != nil && len(ret.List) == 0 {
+			if ret.List, ret.Skip, err = ScanDir(prf, session, syspath, &cg); err != nil && len(ret.List) == 0 {
 				if errors.Is(err, fs.ErrNotExist) {
 					WriteError(w, r, http.StatusNotFound, err, AECfolderabsent)
 				} else {

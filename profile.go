@@ -172,6 +172,13 @@ func (prf *Profile) PathType(fpath string, fi fs.FileInfo) FT_t {
 	return FTfile
 }
 
+func (prf *Profile) GetPathGroup(fpath string, fi fs.FileInfo) (grp FG_t) {
+	if prf.PathType(fpath, fi) != FTfile {
+		return FGdir
+	}
+	return GetFileGroup(fpath)
+}
+
 // IsHidden do check up that file path is in hidden list.
 func (prf *Profile) IsHidden(fpath string) bool {
 	var matched bool
@@ -281,23 +288,49 @@ func (prf *Profile) FindRoots() {
 }
 
 // ScanRoots scan drives from roots list.
-func (prf *Profile) ScanRoots() ([]Pather, error) {
+func (prf *Profile) ScanRoots(session *Session) (ret []Pather, err error) {
 	prf.mux.RLock()
 	var vfiles = make([]string, len(prf.Roots))
 	copy(vfiles, prf.Roots)
 	prf.mux.RUnlock()
 
-	return ScanFileNameList(prf, vfiles)
+	var dp DirProp
+	if ret, dp, err = ScanFileNameList(prf, session, vfiles); err != nil {
+		return
+	}
+
+	go SqlSession(func(session *Session) (res any, err error) {
+		DirStoreSet(session, &DirStore{
+			Puid: PUIDdrives,
+			Prop: dp,
+		})
+		return
+	})
+
+	return
 }
 
 // ScanShares scan actual shares from shares list.
-func (prf *Profile) ScanShares() ([]Pather, error) {
+func (prf *Profile) ScanShares(session *Session) (ret []Pather, err error) {
 	prf.mux.RLock()
 	var vfiles = make([]string, len(prf.Shares))
 	copy(vfiles, prf.Shares)
 	prf.mux.RUnlock()
 
-	return ScanFileNameList(prf, vfiles)
+	var dp DirProp
+	if ret, dp, err = ScanFileNameList(prf, session, vfiles); err != nil {
+		return
+	}
+
+	go SqlSession(func(session *Session) (res any, err error) {
+		DirStoreSet(session, &DirStore{
+			Puid: PUIDshares,
+			Prop: dp,
+		})
+		return
+	})
+
+	return
 }
 
 // Private function to update profile shares private data.

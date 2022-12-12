@@ -278,19 +278,6 @@ func TagStoreSet(session *Session, ts *TagStore) (err error) {
 	return
 }
 
-// DirStoreCat returns PUIDs list of directories where number
-// of files of given category is more then given percent.
-func DirStoreCat(session *Session, cat string, percent float64) (ret []Puid_t, err error) {
-	const categoryCond = "(%s)/(other+video+audio+image+books+texts+packs+dir) > %f"
-	var vals []uint64
-	err = session.Table("dir_store").Cols("puid").Where(fmt.Sprintf(categoryCond, cat, percent)).Find(&vals)
-	ret = make([]Puid_t, len(vals))
-	for i, v := range vals {
-		ret[i] = Puid_t(v)
-	}
-	return
-}
-
 // GpsInfo describes GPS-data from the photos:
 // latitude, longitude, altitude and creation time.
 type GpsInfo struct {
