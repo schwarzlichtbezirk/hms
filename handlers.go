@@ -146,7 +146,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 
 			go func() {
 				if _, ok := r.Header["If-Range"]; !ok {
-					Log.Infof("id%d: media-hd %s", prf.ID, PathBase(syspath))
+					Log.Infof("id%d: media-hd %s", prf.ID, path.Base(syspath))
 					// not partial content
 					usermsg <- UsrMsg{r, "file", puid}
 				} else {
@@ -180,7 +180,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 
 			go func() {
 				if _, ok := r.Header["If-Range"]; !ok {
-					Log.Infof("id%d: media %s", prf.ID, PathBase(syspath))
+					Log.Infof("id%d: media %s", prf.ID, path.Base(syspath))
 					// not partial content
 					usermsg <- UsrMsg{r, "file", puid}
 				} else {
@@ -196,7 +196,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 
 	go func() {
 		if _, ok := r.Header["If-Range"]; !ok {
-			Log.Infof("id%d: serve %s", prf.ID, PathBase(syspath))
+			Log.Infof("id%d: serve %s", prf.ID, path.Base(syspath))
 			// not partial content
 			usermsg <- UsrMsg{r, "file", puid}
 		} else {
@@ -678,7 +678,7 @@ func propAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ret.Path = shrpath
-	ret.Name = PathBase(base)
+	ret.Name = path.Base(base)
 
 	var prop interface{}
 	if prop, err = propcache.Get(syspath); err != nil {

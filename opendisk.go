@@ -272,10 +272,10 @@ func ScanFileInfoList(prf *Profile, vfiles []fs.FileInfo, vpaths []string) (ret 
 					var sizeval = fi.Size()
 					var timeval = UnixJS(fi.ModTime())
 					var typeval = prf.PathType(fpath, fi)
-					if fs.TypeVal != typeval || fs.SizeVal != sizeval || fs.TimeVal != timeval {
-						fs.TypeVal = typeval
-						fs.SizeVal = sizeval
-						fs.TimeVal = timeval
+					if fs.Prop.TypeVal != typeval || fs.Prop.SizeVal != sizeval || fs.Prop.TimeVal != timeval {
+						fs.Prop.TypeVal = typeval
+						fs.Prop.SizeVal = sizeval
+						fs.Prop.TimeVal = timeval
 						updfs = append(updfs, fs)
 					}
 				}
@@ -285,13 +285,13 @@ func ScanFileInfoList(prf *Profile, vfiles []fs.FileInfo, vpaths []string) (ret 
 		}
 		if !found {
 			fs.Puid = puid
-			fs.PathProp = PathProp{
-				NameVal: PathBase(fpath),
+			fs.Prop.PathProp = PathProp{
+				NameVal: path.Base(fpath),
 				TypeVal: prf.PathType(fpath, fi),
 			}
 			if fi != nil {
-				fs.SizeVal = fi.Size()
-				fs.TimeVal = UnixJS(fi.ModTime())
+				fs.Prop.SizeVal = fi.Size()
+				fs.Prop.TimeVal = UnixJS(fi.ModTime())
 			}
 			newfs = append(newfs, fs)
 		}
@@ -324,7 +324,7 @@ func ScanFileInfoList(prf *Profile, vfiles []fs.FileInfo, vpaths []string) (ret 
 	var dpmap = map[Puid_t]DirProp{}
 	var idds []Puid_t
 	for _, fs := range vfs {
-		if fs.TypeVal != FTfile {
+		if fs.Prop.TypeVal != FTfile {
 			if dp, ok := dircache.Get(fs.Puid); ok {
 				dpmap[fs.Puid] = dp
 			} else {
@@ -338,8 +338,8 @@ func ScanFileInfoList(prf *Profile, vfiles []fs.FileInfo, vpaths []string) (ret 
 			return
 		}
 		for _, ds := range dss {
-			dpmap[ds.Puid] = ds.DirProp
-			dircache.Set(ds.Puid, ds.DirProp)
+			dpmap[ds.Puid] = ds.Prop
+			dircache.Set(ds.Puid, ds.Prop)
 		}
 	}
 
@@ -348,9 +348,9 @@ func ScanFileInfoList(prf *Profile, vfiles []fs.FileInfo, vpaths []string) (ret 
 	/////////////////////
 
 	for i, fs := range vfs {
-		if fs.TypeVal != FTfile {
+		if fs.Prop.TypeVal != FTfile {
 			var dk DirKit
-			dk.FileProp = fs.FileProp
+			dk.FileProp = fs.Prop
 			dk.PUIDVal = fs.Puid
 			if dp, ok := dpmap[fs.Puid]; ok {
 				dk.DirProp = dp
@@ -361,7 +361,7 @@ func ScanFileInfoList(prf *Profile, vfiles []fs.FileInfo, vpaths []string) (ret 
 			ret = append(ret, &dk)
 		} else {
 			var fk FileKit
-			fk.FileProp = fs.FileProp
+			fk.FileProp = fs.Prop
 			fk.PUIDVal = fs.Puid
 			//fk.TmbProp.Setup(fpath)
 			ret = append(ret, &fk)
@@ -373,6 +373,8 @@ func ScanFileInfoList(prf *Profile, vfiles []fs.FileInfo, vpaths []string) (ret 
 
 // ScanDir returns file properties list for given file system directory, or directory in iso-disk.
 func ScanDir(prf *Profile, dir string, cg *CatGrp) (ret []Pather, skip int, err error) {
+	var tscan = time.Now()
+
 	var files []fs.FileInfo
 	if files, err = OpenDir(dir); err != nil && len(files) == 0 {
 		return
@@ -411,29 +413,13 @@ func ScanDir(prf *Profile, dir string, cg *CatGrp) (ret []Pather, skip int, err 
 		return
 	}
 
-	go xormEngine.Transaction(func(session *Session) (res interface{}, err error) {
-		var tscan = time.Now()
-		var fi fs.FileInfo
-		if fi, err = StatFile(dir); err != nil {
-			return
-		}
-		var latency = int(time.Since(tscan) / time.Millisecond)
+	var latency = int(time.Since(tscan) / time.Millisecond)
 
+	go xormEngine.Transaction(func(session *Session) (res interface{}, err error) {
 		var puid = PathStoreCache(session, dir)
-		FileStoreSet(session, &FileStore{
-			Puid: puid,
-			FileProp: FileProp{
-				PathProp: PathProp{
-					NameVal: fi.Name(),
-					TypeVal: prf.PathType(dir, fi),
-				},
-				SizeVal: fi.Size(),
-				TimeVal: UnixJS(fi.ModTime()),
-			},
-		})
 		DirStoreSet(session, &DirStore{
 			Puid: puid,
-			DirProp: DirProp{
+			Prop: DirProp{
 				Scan:    UnixJS(tscan),
 				FGrp:    fgrp,
 				Latency: latency,

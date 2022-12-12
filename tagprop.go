@@ -77,8 +77,8 @@ func (tk *TagKit) Setup(session *Session, syspath string, fi fs.FileInfo) {
 	tk.ETmbVal = tk.thumb.Mime
 
 	TagStoreSet(session, &TagStore{
-		Puid:    tk.PUIDVal,
-		TagProp: tk.TagProp,
+		Puid: tk.PUIDVal,
+		Prop: tk.TagProp,
 	})
 }
 

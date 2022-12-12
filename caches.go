@@ -93,34 +93,24 @@ func SqlSession(f func(*Session) (interface{}, error)) (interface{}, error) {
 	return f(session)
 }
 
+// PathStore sqlite3 item of unlimited cache with puid/syspath values.
 type PathStore struct {
 	Puid Puid_t `xorm:"pk autoincr"`
 	Path string `xorm:"notnull unique index"`
 }
 
-// PathStore sqlite3 item of unlimited cache with puid/syspath values.
-type FileStore struct {
-	Puid     Puid_t `xorm:"pk"`
-	FileProp `xorm:"extends"`
+// Store is struct of sqlite3 item for cache with puid/T values.
+type Store[T any] struct {
+	Puid Puid_t `xorm:"pk"`
+	Prop T      `xorm:"extends"`
 }
 
-// DirStore sqlite3 item of unlimited cache with puid/FileGroup values.
-type DirStore struct {
-	Puid    Puid_t `xorm:"pk"`
-	DirProp `xorm:"extends"`
-}
-
-// ExifStore sqlite3 item of unlimited cache with puid/ExifProp values.
-type ExifStore struct {
-	Puid     Puid_t `xorm:"pk"`
-	ExifProp `xorm:"extends"`
-}
-
-// TagStore sqlite3 item of unlimited cache with puid/TagProp values.
-type TagStore struct {
-	Puid    Puid_t `xorm:"pk"`
-	TagProp `xorm:"extends"`
-}
+type (
+	FileStore Store[FileProp]
+	DirStore  Store[DirProp]
+	ExifStore Store[ExifProp]
+	TagStore  Store[TagProp]
+)
 
 var (
 	pathcache = NewBimap[Puid_t, string]()
@@ -187,7 +177,7 @@ func FileStoreGet(session *Session, puid Puid_t) (fp FileProp, ok bool) {
 	// try to get from database
 	var fs FileStore
 	if ok, _ = session.ID(puid).Get(&fs); ok { // skip errors
-		fp = fs.FileProp
+		fp = fs.Prop
 		filecache.Set(puid, fp) // update cache
 	}
 	return
@@ -196,7 +186,7 @@ func FileStoreGet(session *Session, puid Puid_t) (fp FileProp, ok bool) {
 // FileStoreSet puts value to files properties cache.
 func FileStoreSet(session *Session, fs *FileStore) (err error) {
 	// set to memory cache
-	filecache.Set(fs.Puid, fs.FileProp)
+	filecache.Set(fs.Puid, fs.Prop)
 	// set to database
 	if affected, _ := session.InsertOne(fs); affected == 0 {
 		_, err = session.ID(fs.Puid).AllCols().Omit("puid").Update(fs)
@@ -213,7 +203,7 @@ func DirStoreGet(session *Session, puid Puid_t) (dp DirProp, ok bool) {
 	// try to get from database
 	var ds DirStore
 	if ok, _ = session.ID(puid).Get(&ds); ok { // skip errors
-		dp = ds.DirProp
+		dp = ds.Prop
 		dircache.Set(puid, dp) // update cache
 	}
 	return
@@ -222,7 +212,7 @@ func DirStoreGet(session *Session, puid Puid_t) (dp DirProp, ok bool) {
 // DirStoreSet puts value to directories cache.
 func DirStoreSet(session *Session, ds *DirStore) (err error) {
 	// set to memory cache
-	dircache.Set(ds.Puid, ds.DirProp)
+	dircache.Set(ds.Puid, ds.Prop)
 	// set to database
 	if affected, _ := session.InsertOne(ds); affected == 0 {
 		_, err = session.ID(ds.Puid).AllCols().Omit("puid").Update(ds)
@@ -239,7 +229,7 @@ func ExifStoreGet(session *Session, puid Puid_t) (ep ExifProp, ok bool) {
 	// try to get from database
 	var es ExifStore
 	if ok, _ = session.ID(puid).Get(&es); ok { // skip errors
-		ep = es.ExifProp
+		ep = es.Prop
 		exifcache.Set(puid, ep) // update cache
 	}
 	return
@@ -248,13 +238,13 @@ func ExifStoreGet(session *Session, puid Puid_t) (ep ExifProp, ok bool) {
 // ExifStoreSet puts value to EXIF cache.
 func ExifStoreSet(session *Session, es *ExifStore) (err error) {
 	// set to GPS cache
-	if es.Latitude != 0 {
+	if es.Prop.Latitude != 0 {
 		var gi GpsInfo
-		gi.FromProp(&es.ExifProp)
+		gi.FromProp(&es.Prop)
 		gpscache.Store(es.Puid, gi)
 	}
 	// set to memory cache
-	exifcache.Set(es.Puid, es.ExifProp)
+	exifcache.Set(es.Puid, es.Prop)
 	// set to database
 	if affected, _ := session.InsertOne(es); affected == 0 {
 		_, err = session.ID(es.Puid).AllCols().Omit("puid").Update(es)
@@ -271,7 +261,7 @@ func TagStoreGet(session *Session, puid Puid_t) (tp TagProp, ok bool) {
 	// try to get from database
 	var ts TagStore
 	if ok, _ = session.ID(puid).Get(&ts); ok { // skip errors
-		tp = ts.TagProp
+		tp = ts.Prop
 		tagcache.Set(puid, tp) // update cache
 	}
 	return
@@ -280,7 +270,7 @@ func TagStoreGet(session *Session, puid Puid_t) (tp TagProp, ok bool) {
 // TagStoreSet puts value to tags cache.
 func TagStoreSet(session *Session, ts *TagStore) (err error) {
 	// set to memory cache
-	tagcache.Set(ts.Puid, ts.TagProp)
+	tagcache.Set(ts.Puid, ts.Prop)
 	// set to database
 	if affected, _ := session.InsertOne(ts); affected == 0 {
 		_, err = session.ID(ts.Puid).AllCols().Omit("puid").Update(ts)
@@ -707,7 +697,7 @@ func InitXorm() (err error) {
 				ctgrpath[puid-1].Puid = puid
 				ctgrpath[puid-1].Path = path
 				ctgrfile[puid-1].Puid = puid
-				ctgrfile[puid-1].FileProp = FileProp{
+				ctgrfile[puid-1].Prop = FileProp{
 					PathProp: PathProp{
 						NameVal: CatNames[puid],
 						TypeVal: FTctgr,
@@ -719,7 +709,7 @@ func InitXorm() (err error) {
 				ctgrpath[puid-1].Puid = puid
 				ctgrpath[puid-1].Path = fmt.Sprintf("<reserved%d>", puid)
 				ctgrfile[puid-1].Puid = puid
-				ctgrfile[puid-1].FileProp = FileProp{
+				ctgrfile[puid-1].Prop = FileProp{
 					PathProp: PathProp{
 						NameVal: fmt.Sprintf("reserved #%d", puid),
 						TypeVal: FTctgr,
@@ -777,7 +767,7 @@ func LoadGpsCache() (err error) {
 		offset += limit
 		for _, ec := range chunk {
 			var gi GpsInfo
-			gi.FromProp(&ec.ExifProp)
+			gi.FromProp(&ec.Prop)
 			gpscache.Store(ec.Puid, gi)
 		}
 		if limit > len(chunk) {

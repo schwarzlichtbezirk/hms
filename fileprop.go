@@ -362,7 +362,7 @@ type FileProp struct {
 
 // Setup fills fields from fs.FileInfo structure. Do not looks for share.
 func (fp *FileProp) Setup(fi fs.FileInfo) {
-	fp.NameVal = fi.Name()
+	fp.NameVal = path.Clean(fi.Name())
 	fp.TypeVal = FTfile
 	fp.SizeVal = fi.Size()
 	fp.TimeVal = UnixJS(fi.ModTime())
@@ -438,24 +438,6 @@ func (fg *FileGroup) IsZero() bool {
 	return fg.Sum() == 0
 }
 
-// PathBase returns safe base of path or CID as is.
-func PathBase(syspath string) string {
-	var pos1 int
-	var pos2 = len(syspath)
-	if pos2 == 0 {
-		return ""
-	}
-	if syspath[0] == '<' && syspath[pos2-1] == '>' {
-		return syspath
-	}
-	if syspath[pos2-1] == '/' {
-		pos2--
-	}
-	for pos1 = pos2; pos1 > 0 && syspath[pos1-1] != '/' && syspath[pos1-1] != '\\'; pos1-- {
-	}
-	return syspath[pos1:pos2]
-}
-
 // DirProp is directory properties chunk.
 type DirProp struct {
 	Scan    Unix_t    `xorm:"default 0" json:"scan,omitempty" yaml:"scan,omitempty" xml:"scan,omitempty"`          // directory scanning time in UNIX format, milliseconds.
@@ -472,7 +454,7 @@ type DirKit struct {
 
 // Setup fills fields with given path. Do not looks for share.
 func (dk *DirKit) Setup(session *Session, syspath string) {
-	dk.NameVal = PathBase(syspath)
+	dk.NameVal = path.Base(syspath)
 	dk.TypeVal = FTdir
 	dk.PuidProp.Setup(session, syspath)
 	if dp, ok := DirStoreGet(session, dk.PUIDVal); ok {
@@ -489,7 +471,7 @@ type DriveKit struct {
 
 // Setup fills fields with given path. Do not looks for share.
 func (dk *DriveKit) Setup(session *Session, syspath string) {
-	dk.NameVal = PathBase(syspath)
+	dk.NameVal = path.Base(syspath)
 	dk.TypeVal = FTdrv
 	dk.PuidProp.Setup(session, syspath)
 	if dp, ok := DirStoreGet(session, dk.PUIDVal); ok {

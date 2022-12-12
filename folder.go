@@ -110,7 +110,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 	}
 	ret.PUID = puid
 	ret.Path = shrpath
-	ret.Name = PathBase(base)
+	ret.Name = path.Base(base)
 
 	var t = time.Now()
 	if puid < PUIDcache {

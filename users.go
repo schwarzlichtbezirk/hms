@@ -3,6 +3,7 @@ package hms
 import (
 	"encoding/xml"
 	"net/http"
+	"path"
 	"time"
 
 	uas "github.com/avct/uasurfer"
@@ -179,11 +180,11 @@ func usrlstAPI(w http.ResponseWriter, r *http.Request) {
 		ui.Lang = user.Lang
 		if len(user.Paths) > 0 {
 			var fpath, _ = PathStorePath(session, user.Paths[len(user.Paths)-1].PUID)
-			ui.Path = PathBase(fpath)
+			ui.Path = path.Base(fpath)
 		}
 		if len(user.Files) > 0 {
 			var fpath, _ = PathStorePath(session, user.Files[len(user.Files)-1].PUID)
-			ui.File = PathBase(fpath)
+			ui.File = path.Base(fpath)
 		}
 		ui.Online = user.LastAjax > ot
 		ui.IsAuth = user.IsAuth

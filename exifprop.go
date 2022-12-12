@@ -190,8 +190,8 @@ func (ek *ExifKit) Setup(session *Session, syspath string, fi fs.FileInfo) {
 	ek.ETmbVal = ek.thumb.Mime
 
 	ExifStoreSet(session, &ExifStore{
-		Puid:     ek.PUIDVal,
-		ExifProp: ek.ExifProp,
+		Puid: ek.PUIDVal,
+		Prop: ek.ExifProp,
 	})
 }
 
