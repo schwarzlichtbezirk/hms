@@ -127,7 +127,7 @@ func (pt *Puid_t) UnmarshalJSON(b []byte) error {
 }
 
 // MarshalYAML is YAML marshaler interface implementation.
-func (pt Puid_t) MarshalYAML() (interface{}, error) {
+func (pt Puid_t) MarshalYAML() (any, error) {
 	return pt.String(), nil
 }
 
@@ -187,7 +187,7 @@ func (ut *Unix_t) UnmarshalJSON(b []byte) (err error) {
 }
 
 // MarshalYAML is YAML marshaler interface implementation.
-func (ut Unix_t) MarshalYAML() (interface{}, error) {
+func (ut Unix_t) MarshalYAML() (any, error) {
 	return ut.Time().Format(ExifDate), nil
 }
 

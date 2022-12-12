@@ -90,7 +90,7 @@ var usercache = UserCache{
 type UsrMsg struct {
 	r   *http.Request
 	msg string
-	val interface{}
+	val any
 }
 
 var (

@@ -102,8 +102,8 @@ func Init() {
 	if err = InitXorm(); err != nil {
 		Log.Fatal("can not init XORM: " + err.Error())
 	}
-	SqlSession(func(session *Session) (res interface{}, err error) {
-		var pathcount, _ = session.Where("puid > ?", PUIDcache-1).Count(&PathStore{})
+	SqlSession(func(session *Session) (res any, err error) {
+		var pathcount, _ = session.Count(&PathStore{})
 		Log.Infof("found %d items at system path cache", pathcount)
 		var dircount, _ = session.Count(&DirStore{})
 		Log.Infof("found %d items at directories cache", dircount)

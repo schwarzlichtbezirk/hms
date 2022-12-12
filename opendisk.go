@@ -98,7 +98,7 @@ func OpenFile(syspath string) (r io.ReadSeekCloser, err error) {
 		r = nil
 	}
 
-	var dv interface{}
+	var dv any
 	if dv, operr = diskcache.Get(fpath); operr != nil {
 		if !errors.Is(operr, ErrNotDisk) {
 			err = operr
@@ -166,7 +166,7 @@ func OpenDir(dir string) (ret []fs.FileInfo, err error) {
 		}
 	}
 
-	var dv interface{}
+	var dv any
 	if dv, err = diskcache.Get(fpath); err != nil {
 		return
 	}
@@ -299,7 +299,7 @@ func ScanFileInfoList(prf *Profile, vfiles []fs.FileInfo, vpaths []string) (ret 
 	}
 
 	if len(newfs) > 0 || len(updfs) > 0 {
-		go xormEngine.Transaction(func(session *Session) (res interface{}, err error) {
+		go xormEngine.Transaction(func(session *Session) (res any, err error) {
 			// insert new items
 			if len(newfs) > 0 {
 				if _, err = session.Insert(newfs); err != nil {
@@ -355,7 +355,7 @@ func ScanFileInfoList(prf *Profile, vfiles []fs.FileInfo, vpaths []string) (ret 
 			if dp, ok := dpmap[fs.Puid]; ok {
 				dk.DirProp = dp
 			}
-			if vfiles[i] == nil {
+			if vfiles[i] == nil && dk.TypeVal != FTctgr {
 				dk.Latency = -1
 			}
 			ret = append(ret, &dk)
@@ -415,7 +415,7 @@ func ScanDir(prf *Profile, dir string, cg *CatGrp) (ret []Pather, skip int, err 
 
 	var latency = int(time.Since(tscan) / time.Millisecond)
 
-	go xormEngine.Transaction(func(session *Session) (res interface{}, err error) {
+	go xormEngine.Transaction(func(session *Session) (res any, err error) {
 		var puid = PathStoreCache(session, dir)
 		DirStoreSet(session, &DirStore{
 			Puid: puid,

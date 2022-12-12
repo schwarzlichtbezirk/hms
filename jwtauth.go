@@ -108,7 +108,7 @@ func GetAuth(w http.ResponseWriter, r *http.Request) (auth *Profile, err error) 
 		for _, val := range pool {
 			if strings.HasPrefix(strings.ToLower(val), "bearer ") {
 				bearer = true
-				if _, err = jwt.ParseWithClaims(val[7:], &claims, func(*jwt.Token) (interface{}, error) {
+				if _, err = jwt.ParseWithClaims(val[7:], &claims, func(*jwt.Token) (any, error) {
 					if claims.AID > 0 {
 						return []byte(cfg.AccessKey), nil
 					} else {
@@ -232,7 +232,7 @@ func refrshAPI(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var claims Claims
-	if _, err = jwt.ParseWithClaims(arg.Refrsh, &claims, func(token *jwt.Token) (interface{}, error) {
+	if _, err = jwt.ParseWithClaims(arg.Refrsh, &claims, func(token *jwt.Token) (any, error) {
 		return []byte(cfg.RefreshKey), nil
 	}); err != nil {
 		WriteError400(w, r, err, AECrefrshparse)

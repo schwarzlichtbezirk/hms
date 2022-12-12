@@ -118,6 +118,7 @@ const (
 	AECfolderaccess
 	AECfoldernoshr
 	AECfoldernotcat
+	AECfolderhome
 	AECfolderdrives
 	AECfoldershares
 	AECfoldermedia

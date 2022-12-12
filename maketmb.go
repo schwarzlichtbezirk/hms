@@ -82,7 +82,7 @@ var (
 
 // ExtractTmb extract thumbnail from embedded file tags.
 func ExtractTmb(syspath string) (md *MediaData, err error) {
-	var prop interface{}
+	var prop any
 	if prop, err = propcache.Get(syspath); err != nil {
 		return
 	}
@@ -171,7 +171,7 @@ func GetCachedThumb(syspath string) (md *MediaData, err error) {
 		return
 	}
 
-	var prop interface{}
+	var prop any
 	if prop, err = propcache.Get(syspath); err != nil {
 		return
 	}
@@ -262,7 +262,7 @@ func GetCachedTile(syspath string, wdh, hgt int) (md *MediaData, err error) {
 		return
 	}
 
-	var prop interface{}
+	var prop any
 	if prop, err = propcache.Get(syspath); err != nil {
 		return // can not get properties
 	}

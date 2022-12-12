@@ -38,7 +38,7 @@ func (err *jerr) MarshalJSON() ([]byte, error) {
 }
 
 // MarshalYAML is YAML marshaler interface implementation to stream errors on Ajax.
-func (err *jerr) MarshalYAML() (interface{}, error) {
+func (err *jerr) MarshalYAML() (any, error) {
 	return err.Error(), nil
 }
 
@@ -105,11 +105,11 @@ func MakeErrPanic(what error, code int, stack string) *ErrPanic {
 	}
 }
 
-type XmlMap map[string]interface{}
+type XmlMap map[string]any
 
 type xmlMapEntry struct {
 	XMLName xml.Name
-	Value   interface{} `xml:",chardata"`
+	Value   any `xml:",chardata"`
 }
 
 // MarshalXML marshals the map to XML, with each key in the map being a
@@ -177,7 +177,7 @@ const (
 var serverlabel = fmt.Sprintf("hms/%s (%s)", BuildVers, runtime.GOOS)
 
 // ParseBody fetch and unmarshal request argument.
-func ParseBody(w http.ResponseWriter, r *http.Request, arg interface{}) (err error) {
+func ParseBody(w http.ResponseWriter, r *http.Request, arg any) (err error) {
 	if jb, _ := io.ReadAll(r.Body); len(jb) > 0 {
 		var ctype = r.Header.Get("Content-Type")
 		if pos := strings.IndexByte(ctype, ';'); pos != -1 {
@@ -224,7 +224,7 @@ func WriteHTMLHeader(w http.ResponseWriter) {
 }
 
 // WriteRet writes to response given status code and marshaled body.
-func WriteRet(w http.ResponseWriter, r *http.Request, status int, body interface{}) {
+func WriteRet(w http.ResponseWriter, r *http.Request, status int, body any) {
 	if body == nil {
 		w.WriteHeader(status)
 		WriteStdHeader(w)
@@ -288,7 +288,7 @@ func WriteRet(w http.ResponseWriter, r *http.Request, status int, body interface
 }
 
 // WriteOK puts 200 status code and some data to response.
-func WriteOK(w http.ResponseWriter, r *http.Request, body interface{}) {
+func WriteOK(w http.ResponseWriter, r *http.Request, body any) {
 	WriteRet(w, r, http.StatusOK, body)
 }
 

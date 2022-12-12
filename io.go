@@ -16,7 +16,7 @@ const utf8bom = "\xef\xbb\xbf"
 
 // WriteYaml writes "data" object to YAML-file with given file name.
 // File writes in UTF-8 format with BOM, and "intro" comment.
-func WriteYaml(fname, intro string, data interface{}) (err error) {
+func WriteYaml(fname, intro string, data any) (err error) {
 	var w io.WriteCloser
 	if w, err = os.OpenFile(path.Join(ConfigPath, fname), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644); err != nil {
 		return
@@ -42,7 +42,7 @@ func WriteYaml(fname, intro string, data interface{}) (err error) {
 
 // ReadYaml reads "data" object from YAML-file
 // with given file name.
-func ReadYaml(fname string, data interface{}) (err error) {
+func ReadYaml(fname string, data any) (err error) {
 	var body []byte
 	if body, err = os.ReadFile(path.Join(ConfigPath, fname)); err != nil {
 		return
@@ -88,7 +88,7 @@ func (pl *Profiles) ReadYaml(fname string) (err error) {
 	}
 
 	if len(pl.list) > 0 {
-		SqlSession(func(session *Session) (res interface{}, err error) {
+		SqlSession(func(session *Session) (res any, err error) {
 			for _, prf := range pl.list {
 				Log.Infof("loaded profile id%d, login='%s'", prf.ID, prf.Login)
 				// cache roots

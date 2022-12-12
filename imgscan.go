@@ -18,7 +18,7 @@ type EmbedPath string
 
 func (fpath EmbedPath) Cache() {
 	var err error
-	var prop interface{}
+	var prop any
 	if prop, err = propcache.Get(string(fpath)); err != nil {
 		return // can not get properties
 	}
@@ -43,7 +43,7 @@ type ThumbPath string
 // Cache is Cacher implementation for ThumbPath type.
 func (fpath ThumbPath) Cache() {
 	var err error
-	var prop interface{}
+	var prop any
 	if prop, err = propcache.Get(string(fpath)); err != nil {
 		return // can not get properties
 	}
@@ -72,7 +72,7 @@ type TilePath struct {
 // Cache is Cacher implementation for TilePath type.
 func (tile TilePath) Cache() {
 	var err error
-	var prop interface{}
+	var prop any
 	if prop, err = propcache.Get(tile.Path); err != nil {
 		return // can not get properties
 	}

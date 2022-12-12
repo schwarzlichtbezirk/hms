@@ -129,17 +129,20 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 		}
 		switch puid {
 		case PUIDhome:
+			var vfiles []string
 			for puid := Puid_t(1); puid < PUIDcache; puid++ {
 				if puid == PUIDhome {
 					continue
 				}
 				if fpath, ok := CatKeyPath[puid]; ok {
 					if auth == prf || prf.IsShared(fpath) {
-						if prop, err := propcache.Get(fpath); err == nil {
-							ret.List = append(ret.List, prop.(Pather))
-						}
+						vfiles = append(vfiles, fpath)
 					}
 				}
+			}
+			if ret.List, err = ScanFileNameList(prf, vfiles); err != nil {
+				WriteError500(w, r, err, AECfolderhome)
+				return
 			}
 		case PUIDdrives:
 			if ret.List, err = prf.ScanRoots(); err != nil {
@@ -272,7 +275,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			var prop interface{}
+			var prop any
 			for _, track := range pl.Tracks {
 				var fpath = ToSlash(track.Location)
 				if !prf.IsHidden(fpath) {

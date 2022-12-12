@@ -87,7 +87,7 @@ func PathStarts(fpath, prefix string) bool {
 type Session = xorm.Session
 
 // SqlSession execute sql wrapped in a single session.
-func SqlSession(f func(*Session) (interface{}, error)) (interface{}, error) {
+func SqlSession(f func(*Session) (any, error)) (any, error) {
 	var session = xormEngine.NewSession()
 	defer session.Close()
 	return f(session)
@@ -282,7 +282,12 @@ func TagStoreSet(session *Session, ts *TagStore) (err error) {
 // of files of given category is more then given percent.
 func DirStoreCat(session *Session, cat string, percent float64) (ret []Puid_t, err error) {
 	const categoryCond = "(%s)/(other+video+audio+image+books+texts+packs+dir) > %f"
-	err = session.Table("dir_store").Cols("puid").Where(fmt.Sprintf(categoryCond, cat, percent)).Find(&ret)
+	var vals []uint64
+	err = session.Table("dir_store").Cols("puid").Where(fmt.Sprintf(categoryCond, cat, percent)).Find(&vals)
+	ret = make([]Puid_t, len(vals))
+	for i, v := range vals {
+		ret[i] = Puid_t(v)
+	}
 	return
 }
 
@@ -309,7 +314,7 @@ type GpsCache struct {
 
 // Count returns number of entries in the map.
 func (gc *GpsCache) Count() (n int) {
-	gc.Map.Range(func(key interface{}, value interface{}) bool {
+	gc.Map.Range(func(key any, value any) bool {
 		n++
 		return true
 	})
@@ -318,7 +323,7 @@ func (gc *GpsCache) Count() (n int) {
 
 // Range calls given closure for each GpsInfo in the map.
 func (gc *GpsCache) Range(f func(Puid_t, *GpsInfo) bool) {
-	gc.Map.Range(func(key, value interface{}) bool {
+	gc.Map.Range(func(key, value any) bool {
 		return f(key.(Puid_t), value.(*GpsInfo))
 	})
 }
@@ -330,7 +335,7 @@ func InitCaches() {
 	// init properties cache
 	propcache = gcache.New(cfg.PropCacheMaxNum).
 		LRU().
-		LoaderFunc(func(key interface{}) (ret interface{}, err error) {
+		LoaderFunc(func(key any) (ret any, err error) {
 			var syspath = key.(string)
 			if puid, ok := CatPathKey[syspath]; ok {
 				var ck CatKit
@@ -353,14 +358,14 @@ func InitCaches() {
 	// init converted media files cache
 	mediacache = gcache.New(cfg.MediaCacheMaxNum).
 		LRU().
-		LoaderFunc(func(key interface{}) (ret interface{}, err error) {
+		LoaderFunc(func(key any) (ret any, err error) {
 			var syspath, ok = pathcache.GetDir(key.(Puid_t))
 			if !ok {
 				err = ErrNoPUID
 				return // file path not found
 			}
 
-			var prop interface{}
+			var prop any
 			if prop, err = propcache.Get(syspath); err != nil {
 				return // can not get properties
 			}
@@ -404,14 +409,14 @@ func InitCaches() {
 	// init converted media files cache
 	hdcache = gcache.New(cfg.MediaCacheMaxNum).
 		LRU().
-		LoaderFunc(func(key interface{}) (ret interface{}, err error) {
+		LoaderFunc(func(key any) (ret any, err error) {
 			var syspath, ok = pathcache.GetDir(key.(Puid_t))
 			if !ok {
 				err = ErrNoPUID
 				return // file path not found
 			}
 
-			var prop interface{}
+			var prop any
 			if prop, err = propcache.Get(syspath); err != nil {
 				return // can not get properties
 			}
@@ -483,7 +488,7 @@ func InitCaches() {
 	diskcache = gcache.New(0).
 		Simple().
 		Expiration(cfg.DiskCacheExpire).
-		LoaderFunc(func(key interface{}) (ret interface{}, err error) {
+		LoaderFunc(func(key any) (ret any, err error) {
 			var ext = strings.ToLower(path.Ext(key.(string)))
 			if ext == ".iso" {
 				return NewDiskISO(key.(string))
@@ -491,10 +496,10 @@ func InitCaches() {
 			err = ErrNotDisk
 			return
 		}).
-		EvictedFunc(func(_, value interface{}) {
+		EvictedFunc(func(_, value any) {
 			value.(io.Closer).Close()
 		}).
-		PurgeVisitorFunc(func(_, value interface{}) {
+		PurgeVisitorFunc(func(_, value any) {
 			value.(io.Closer).Close()
 		}).
 		Build()
@@ -679,7 +684,7 @@ func InitXorm() (err error) {
 	xormEngine.ShowSQL(true)
 	xormEngine.SetMapper(names.GonicMapper{})
 
-	_, err = SqlSession(func(session *Session) (res interface{}, err error) {
+	_, err = SqlSession(func(session *Session) (res any, err error) {
 		if err = session.Sync(&PathStore{}, &FileStore{}, &DirStore{}, &ExifStore{}, &TagStore{}); err != nil {
 			return
 		}

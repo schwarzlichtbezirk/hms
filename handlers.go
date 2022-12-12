@@ -125,7 +125,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var val interface{}
+	var val any
 	if hd && grp == FGimage {
 		if val, err = hdcache.Get(puid); err != nil {
 			if errors.Is(err, fs.ErrNotExist) {
@@ -680,7 +680,7 @@ func propAPI(w http.ResponseWriter, r *http.Request) {
 	ret.Path = shrpath
 	ret.Name = path.Base(base)
 
-	var prop interface{}
+	var prop any
 	if prop, err = propcache.Get(syspath); err != nil {
 		WriteError(w, r, http.StatusNotFound, err, AECpropnoprop)
 		return
@@ -746,7 +746,7 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		return
 	}
 
-	var prop interface{}
+	var prop any
 	if prop, err = propcache.Get(syspath); err != nil {
 		var ptr *FileProp
 		prop = ptr // write "null" as reply
@@ -1193,7 +1193,7 @@ func edtrenameAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	}
 
 	// get returned file properties at last
-	var prop interface{}
+	var prop any
 	if prop, err = propcache.Get(dstpath); err != nil {
 		WriteError500(w, r, err, AECedtrenprop)
 		return
