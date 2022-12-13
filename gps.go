@@ -73,7 +73,7 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var ret struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
 
-		List []Pather `json:"list" yaml:"list" xml:"list>prop"`
+		List []any `json:"list" yaml:"list" xml:"list>prop"`
 	}
 
 	// get arguments
@@ -126,7 +126,7 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		if inc {
 			var fpath, _ = pathcache.GetDir(puid)
 			if prop, err := propcache.Get(fpath); err == nil {
-				ret.List = append(ret.List, prop.(Pather))
+				ret.List = append(ret.List, prop)
 			}
 		}
 		return arg.Limit == 0 || len(ret.List) < arg.Limit

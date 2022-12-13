@@ -313,63 +313,59 @@ func IsTypePlaylist(ext string) bool {
 	return false
 }
 
-// Pather is path properties interface.
-type Pather interface {
-	Name() string // string identifier
-	Type() FT_t   // type identifier
-	Size() int64  // size in bytes
-	Time() Unix_t // UNIX time in milliseconds
+func GetPropSize(p any) (int64, bool) {
+	switch v := p.(type) {
+	case *FileKit:
+		return v.Size, true
+	case *DirKit:
+		return v.Size, true
+	case *DriveKit:
+		return v.Size, true
+	case *ExifKit:
+		return v.Size, true
+	case *TagKit:
+		return v.Size, true
+	default:
+		return 0, false
+	}
+}
+
+func GetPropType(p any) (FT_t, bool) {
+	switch v := p.(type) {
+	case *FileKit:
+		return v.Type, true
+	case *DirKit:
+		return v.Type, true
+	case *DriveKit:
+		return v.Type, true
+	case *ExifKit:
+		return v.Type, true
+	case *TagKit:
+		return v.Type, true
+	default:
+		return 0, false
+	}
 }
 
 // PathProp is any path base properties.
 type PathProp struct {
-	NameVal string `xorm:"'name'" json:"name" yaml:"name" xml:"name"`
-	TypeVal FT_t   `xorm:"'type'" json:"type" yaml:"type" xml:"type"` // do not omit empty
-}
-
-// Name is file name with extension without path.
-func (pp *PathProp) Name() string {
-	return pp.NameVal
-}
-
-// Type is enumerated file type.
-func (pp *PathProp) Type() FT_t {
-	return pp.TypeVal
-}
-
-// Size is file size in bytes.
-func (pp *PathProp) Size() int64 {
-	return 0
-}
-
-// Time is file creation time in UNIX format, milliseconds.
-func (pp *PathProp) Time() Unix_t {
-	return 0
+	Name string `xorm:"'name'" json:"name" yaml:"name" xml:"name"`
+	Type FT_t   `xorm:"'type'" json:"type" yaml:"type" xml:"type"` // do not omit empty
 }
 
 // FileProp is common file properties chunk.
 type FileProp struct {
 	PathProp `xorm:"extends" yaml:",inline"`
-	SizeVal  int64  `xorm:"'size' default 0" json:"size,omitempty" yaml:"size,omitempty" xml:"size,omitempty"`
-	TimeVal  Unix_t `xorm:"'time' default 0" json:"time,omitempty" yaml:"time,omitempty" xml:"time,omitempty"`
+	Size     int64  `xorm:"'size' default 0" json:"size,omitempty" yaml:"size,omitempty" xml:"size,omitempty"`
+	Time     Unix_t `xorm:"'time' default 0" json:"time,omitempty" yaml:"time,omitempty" xml:"time,omitempty"`
 }
 
 // Setup fills fields from fs.FileInfo structure. Do not looks for share.
 func (fp *FileProp) Setup(fi fs.FileInfo) {
-	fp.NameVal = path.Clean(fi.Name())
-	fp.TypeVal = FTfile
-	fp.SizeVal = fi.Size()
-	fp.TimeVal = UnixJS(fi.ModTime())
-}
-
-// Size is file size in bytes.
-func (fp *FileProp) Size() int64 {
-	return fp.SizeVal
-}
-
-// Time is file creation time in UNIX format, milliseconds.
-func (fp *FileProp) Time() Unix_t {
-	return fp.TimeVal
+	fp.Name = path.Clean(fi.Name())
+	fp.Type = FTfile
+	fp.Size = fi.Size()
+	fp.Time = UnixJS(fi.ModTime())
 }
 
 // FileKit is common files properties kit.
@@ -448,8 +444,8 @@ type DirKit struct {
 
 // Setup fills fields with given path. Do not looks for share.
 func (dk *DirKit) Setup(session *Session, syspath string) {
-	dk.NameVal = path.Base(syspath)
-	dk.TypeVal = FTdir
+	dk.Name = path.Base(syspath)
+	dk.Type = FTdir
 	dk.PuidProp.Setup(session, syspath)
 	if dp, ok := DirStoreGet(session, dk.PUIDVal); ok {
 		dk.DirProp = dp
@@ -465,8 +461,8 @@ type DriveKit struct {
 
 // Setup fills fields with given path. Do not looks for share.
 func (dk *DriveKit) Setup(session *Session, syspath string) {
-	dk.NameVal = path.Base(syspath)
-	dk.TypeVal = FTdrv
+	dk.Name = path.Base(syspath)
+	dk.Type = FTdrv
 	dk.PuidProp.Setup(session, syspath)
 	if dp, ok := DirStoreGet(session, dk.PUIDVal); ok {
 		dk.DirProp = dp
@@ -487,21 +483,8 @@ func (dk *DriveKit) StatDir(syspath string) (fi fs.FileInfo, err error) {
 	return
 }
 
-// CatKit is category properties kit.
-type CatKit struct {
-	PathProp `yaml:",inline"`
-	PuidProp `yaml:",inline"`
-}
-
-// Setup fills fields with given path. Do not looks for share.
-func (ck *CatKit) Setup(puid Puid_t) {
-	ck.NameVal = CatNames[puid]
-	ck.TypeVal = FTctgr
-	ck.PUIDVal = puid
-}
-
 // MakeProp is file properties factory.
-func MakeProp(syspath string, fi fs.FileInfo) Pather {
+func MakeProp(syspath string, fi fs.FileInfo) any {
 	var session = xormEngine.NewSession()
 	defer session.Close()
 

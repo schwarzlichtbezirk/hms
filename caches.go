@@ -324,12 +324,6 @@ func InitCaches() {
 		LRU().
 		LoaderFunc(func(key any) (ret any, err error) {
 			var syspath = key.(string)
-			if puid, ok := CatPathKey[syspath]; ok {
-				var ck CatKit
-				ck.Setup(puid)
-				ret = &ck
-				return
-			}
 			var fi fs.FileInfo
 			if fi, err = StatFile(syspath); err != nil {
 				return
@@ -356,13 +350,12 @@ func InitCaches() {
 			if prop, err = propcache.Get(syspath); err != nil {
 				return // can not get properties
 			}
-			var fp = prop.(Pather)
-			if fp.Type() != FTfile {
+			if t, ok := GetPropType(prop); ok && t != FTfile {
 				err = ErrNotFile
 				return
 			}
 
-			var ext = GetFileExt(fp.Name())
+			var ext = GetFileExt(syspath)
 			switch {
 			case IsTypeNativeImg(ext):
 				err = ErrUncacheable
@@ -407,8 +400,7 @@ func InitCaches() {
 			if prop, err = propcache.Get(syspath); err != nil {
 				return // can not get properties
 			}
-			var fp = prop.(Pather)
-			if fp.Type() != FTfile {
+			if t, ok := GetPropType(prop); ok && t != FTfile {
 				err = ErrNotFile
 				return
 			}
@@ -691,10 +683,10 @@ func InitXorm() (err error) {
 				ctgrfile[puid-1].Puid = puid
 				ctgrfile[puid-1].Prop = FileProp{
 					PathProp: PathProp{
-						NameVal: CatNames[puid],
-						TypeVal: FTctgr,
+						Name: CatNames[puid],
+						Type: FTctgr,
 					},
-					TimeVal: tinit,
+					Time: tinit,
 				}
 			}
 			for puid := Puid_t(len(CatKeyPath) + 1); puid < PUIDcache; puid++ {
@@ -703,10 +695,10 @@ func InitXorm() (err error) {
 				ctgrfile[puid-1].Puid = puid
 				ctgrfile[puid-1].Prop = FileProp{
 					PathProp: PathProp{
-						NameVal: fmt.Sprintf("reserved #%d", puid),
-						TypeVal: FTctgr,
+						Name: fmt.Sprintf("reserved #%d", puid),
+						Type: FTctgr,
 					},
-					TimeVal: tinit,
+					Time: tinit,
 				}
 			}
 			if _, err = session.Insert(&ctgrpath); err != nil {

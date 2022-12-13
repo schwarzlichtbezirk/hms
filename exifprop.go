@@ -43,6 +43,20 @@ type ExifProp struct {
 	thumb MediaData
 }
 
+// IsZero used to check whether an object is zero to determine whether
+// it should be omitted when marshaling to yaml.
+func (ep *ExifProp) IsZero() bool {
+	return ep.Width == 0 && ep.Height == 0 && ep.Model == "" &&
+		ep.Make == "" && ep.Software == "" && ep.DateTime == 0 &&
+		ep.Orientation == 0 && ep.ExposureTime == "" && ep.ExposureProg == 0 &&
+		ep.FNumber == 0 && ep.ISOSpeed == 0 && ep.ShutterSpeed == 0 &&
+		ep.Aperture == 0 && ep.ExposureBias == 0 && ep.LightSource == 0 &&
+		ep.Focal == 0 && ep.Focal35mm == 0 && ep.DigitalZoom == 0 &&
+		ep.Flash == 0 && ep.UniqueID == "" && ep.ThumbJpegLen == 0 &&
+		ep.Latitude == 0 && ep.Longitude == 0 && ep.Altitude == 0 &&
+		ep.Satellites == ""
+}
+
 func RatFloat32(t *tiff.Tag) float32 {
 	if numer, denom, _ := t.Rat2(0); denom != 0 {
 		return float32(numer) / float32(denom)
@@ -189,10 +203,12 @@ func (ek *ExifKit) Setup(session *Session, syspath string, fi fs.FileInfo) {
 	}
 	ek.ETmbVal = ek.thumb.Mime
 
-	ExifStoreSet(session, &ExifStore{
-		Puid: ek.PUIDVal,
-		Prop: ek.ExifProp,
-	})
+	if !ek.ExifProp.IsZero() {
+		ExifStoreSet(session, &ExifStore{
+			Puid: ek.PUIDVal,
+			Prop: ek.ExifProp,
+		})
+	}
 }
 
 func exifparsers() {

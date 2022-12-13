@@ -635,7 +635,7 @@ func propAPI(w http.ResponseWriter, r *http.Request) {
 
 		Path string `json:"path" yaml:"path" xml:"path"`
 		Name string `json:"shrname" yaml:"shrname" xml:"shrname"`
-		Prop Pather `json:"prop" yaml:"prop" xml:"prop"`
+		Prop any    `json:"prop" yaml:"prop" xml:"prop"`
 	}
 
 	// get arguments
@@ -685,7 +685,7 @@ func propAPI(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, r, http.StatusNotFound, err, AECpropnoprop)
 		return
 	}
-	ret.Prop = prop.(Pather)
+	ret.Prop = prop
 
 	WriteOK(w, r, &ret)
 }

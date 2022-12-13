@@ -197,7 +197,7 @@ func GetCachedThumb(syspath string) (md *MediaData, err error) {
 		return // file is not image
 	}
 
-	if prop.(Pather).Size() > cfg.ThumbFileMaxSize {
+	if size, ok := GetPropSize(prop); ok && size > cfg.ThumbFileMaxSize {
 		err = ErrTooBig
 		return // file is too big
 	}
@@ -273,7 +273,7 @@ func GetCachedTile(syspath string, wdh, hgt int) (md *MediaData, err error) {
 		return // file is not image
 	}
 
-	if prop.(Pather).Size() > cfg.ThumbFileMaxSize {
+	if size, ok := GetPropSize(prop); ok && size > cfg.ThumbFileMaxSize {
 		err = ErrTooBig
 		return // file is too big
 	}

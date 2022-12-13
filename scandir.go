@@ -9,7 +9,7 @@ import (
 
 // ScanFileNameList returns file properties list for given list of
 // full file system paths. File paths can be in different folders.
-func ScanFileNameList(prf *Profile, session *Session, vpaths []string) (ret []Pather, lstp DirProp, err error) {
+func ScanFileNameList(prf *Profile, session *Session, vpaths []string) (ret []any, lstp DirProp, err error) {
 	var files = make([]fs.FileInfo, len(vpaths))
 	for i, fpath := range vpaths {
 		var fi, _ = StatFile(fpath)
@@ -23,7 +23,7 @@ func ScanFileNameList(prf *Profile, session *Session, vpaths []string) (ret []Pa
 // []fs.FileInfo and associated list of full file system paths.
 // Elements of []fs.FileInfo list can be nil in case if file is
 // unavailable, or if it categoty item.
-func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpaths []string) (ret []Pather, lstp DirProp, err error) {
+func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpaths []string) (ret []any, lstp DirProp, err error) {
 	var tscan = time.Now()
 
 	var dpaths []string // database paths
@@ -97,10 +97,10 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 					var sizeval = fi.Size()
 					var timeval = UnixJS(fi.ModTime())
 					var typeval = prf.PathType(fpath, fi)
-					if fs.Prop.TypeVal != typeval || fs.Prop.SizeVal != sizeval || fs.Prop.TimeVal != timeval {
-						fs.Prop.TypeVal = typeval
-						fs.Prop.SizeVal = sizeval
-						fs.Prop.TimeVal = timeval
+					if fs.Prop.Type != typeval || fs.Prop.Size != sizeval || fs.Prop.Time != timeval {
+						fs.Prop.Type = typeval
+						fs.Prop.Size = sizeval
+						fs.Prop.Time = timeval
 						updfs = append(updfs, fs)
 					}
 				}
@@ -111,12 +111,12 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 		if !found {
 			fs.Puid = puid
 			fs.Prop.PathProp = PathProp{
-				NameVal: path.Base(fpath),
-				TypeVal: prf.PathType(fpath, fi),
+				Name: path.Base(fpath),
+				Type: prf.PathType(fpath, fi),
 			}
 			if fi != nil {
-				fs.Prop.SizeVal = fi.Size()
-				fs.Prop.TimeVal = UnixJS(fi.ModTime())
+				fs.Prop.Size = fi.Size()
+				fs.Prop.Time = UnixJS(fi.ModTime())
 			}
 			newfs = append(newfs, fs)
 		}
@@ -149,7 +149,7 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 	var dpmap = map[Puid_t]DirProp{}
 	var idds []Puid_t
 	for _, fs := range vfs {
-		if fs.Prop.TypeVal != FTfile {
+		if fs.Prop.Type != FTfile {
 			if dp, ok := dircache.Get(fs.Puid); ok {
 				dpmap[fs.Puid] = dp
 			} else {
@@ -173,14 +173,14 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 	/////////////////////
 
 	for i, fs := range vfs {
-		if fs.Prop.TypeVal != FTfile {
+		if fs.Prop.Type != FTfile {
 			var dk DirKit
 			dk.FileProp = fs.Prop
 			dk.PUIDVal = fs.Puid
 			if dp, ok := dpmap[fs.Puid]; ok {
 				dk.DirProp = dp
 			}
-			if vfiles[i] == nil && dk.TypeVal != FTctgr {
+			if vfiles[i] == nil && dk.Type != FTctgr {
 				dk.Latency = -1
 			}
 			ret = append(ret, &dk)
@@ -200,7 +200,7 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 
 // ScanDir returns file properties list for given file system directory,
 // or directory in iso-disk.
-func ScanDir(prf *Profile, session *Session, dir string, cg *CatGrp) (ret []Pather, skip int, err error) {
+func ScanDir(prf *Profile, session *Session, dir string, cg *CatGrp) (ret []any, skip int, err error) {
 	var files []fs.FileInfo
 	if files, err = OpenDir(dir); err != nil && len(files) == 0 {
 		return
@@ -249,7 +249,7 @@ func ScanDir(prf *Profile, session *Session, dir string, cg *CatGrp) (ret []Path
 
 // ScanCat returns file properties list where number of files
 // of given category is more then given percent.
-func ScanCat(prf *Profile, session *Session, puid Puid_t, cat string, percent float64) (ret []Pather, err error) {
+func ScanCat(prf *Profile, session *Session, puid Puid_t, cat string, percent float64) (ret []any, err error) {
 	const categoryCond = "(%s)/(other+video+audio+image+books+texts+packs) > %f"
 	var dss []DirStore
 	if err = session.Where(fmt.Sprintf(categoryCond, cat, percent)).Find(&dss); err != nil {

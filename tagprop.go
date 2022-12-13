@@ -25,6 +25,16 @@ type TagProp struct {
 	thumb MediaData
 }
 
+// IsZero used to check whether an object is zero to determine whether
+// it should be omitted when marshaling to yaml.
+func (tp *TagProp) IsZero() bool {
+	return tp.Title == "" && tp.Album == "" && tp.Artist == "" &&
+		tp.Composer == "" && tp.Genre == "" && tp.Year == 0 &&
+		tp.TrackNum == 0 && tp.TrackSum == 0 &&
+		tp.DiscNum == 0 && tp.DiscSum == 0 &&
+		tp.Lyrics == "" && tp.Comment == ""
+}
+
 // Setup fills fields from tags metadata.
 func (tp *TagProp) Setup(m tag.Metadata) {
 	tp.Title = m.Title()
@@ -46,6 +56,22 @@ func (tp *TagProp) Setup(m tag.Metadata) {
 	}
 }
 
+func (tp *TagProp) Extract(syspath string) (err error) {
+	var r io.ReadSeekCloser
+	if r, err = OpenFile(syspath); err != nil {
+		return
+	}
+	defer r.Close()
+
+	var m tag.Metadata
+	if m, err = tag.ReadFrom(r); err != nil {
+		return
+	}
+
+	tp.Setup(m)
+	return
+}
+
 // TagKit is music file tags properties kit.
 type TagKit struct {
 	FileProp `yaml:",inline"`
@@ -61,25 +87,17 @@ func (tk *TagKit) Setup(session *Session, syspath string, fi fs.FileInfo) {
 	tk.PuidProp.Setup(session, syspath)
 	tk.TmbProp.Setup(syspath)
 
-	var err error
-	var r io.ReadSeekCloser
-	if r, err = OpenFile(syspath); err != nil {
+	if err := tk.Extract(syspath); err != nil {
 		return
 	}
-	defer r.Close()
-
-	var m tag.Metadata
-	if m, err = tag.ReadFrom(r); err != nil {
-		return
-	}
-
-	tk.TagProp.Setup(m)
 	tk.ETmbVal = tk.thumb.Mime
 
-	TagStoreSet(session, &TagStore{
-		Puid: tk.PUIDVal,
-		Prop: tk.TagProp,
-	})
+	if !tk.TagProp.IsZero() {
+		TagStoreSet(session, &TagStore{
+			Puid: tk.PUIDVal,
+			Prop: tk.TagProp,
+		})
+	}
 }
 
 // The End.

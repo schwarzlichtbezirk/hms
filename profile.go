@@ -288,7 +288,7 @@ func (prf *Profile) FindRoots() {
 }
 
 // ScanRoots scan drives from roots list.
-func (prf *Profile) ScanRoots(session *Session) (ret []Pather, err error) {
+func (prf *Profile) ScanRoots(session *Session) (ret []any, err error) {
 	prf.mux.RLock()
 	var vfiles = make([]string, len(prf.Roots))
 	copy(vfiles, prf.Roots)
@@ -311,7 +311,7 @@ func (prf *Profile) ScanRoots(session *Session) (ret []Pather, err error) {
 }
 
 // ScanShares scan actual shares from shares list.
-func (prf *Profile) ScanShares(session *Session) (ret []Pather, err error) {
+func (prf *Profile) ScanShares(session *Session) (ret []any, err error) {
 	prf.mux.RLock()
 	var vfiles = make([]string, len(prf.Shares))
 	copy(vfiles, prf.Shares)
@@ -363,7 +363,11 @@ func (prf *Profile) UpdateShares() {
 	prf.puidshare = map[Puid_t]string{}
 	for _, shr := range prf.Shares {
 		var syspath = shr
-		if prop, err := propcache.Get(syspath); err == nil {
+		if puid, ok := CatPathKey[syspath]; ok {
+			prf.sharepuid[syspath] = puid
+			prf.puidshare[puid] = syspath
+			Log.Infof("id%d: shared '%s' as %s", prf.ID, syspath, puid)
+		} else if prop, err := propcache.Get(syspath); err == nil {
 			var puid = prop.(Puider).PUID()
 			prf.sharepuid[syspath] = puid
 			prf.puidshare[puid] = syspath
