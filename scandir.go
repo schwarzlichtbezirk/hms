@@ -110,10 +110,8 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 		}
 		if !found {
 			fs.Puid = puid
-			fs.Prop.PathProp = PathProp{
-				Name: path.Base(fpath),
-				Type: prf.PathType(fpath, fi),
-			}
+			fs.Prop.Name = path.Base(fpath)
+			fs.Prop.Type = prf.PathType(fpath, fi)
 			if fi != nil {
 				fs.Prop.Size = fi.Size()
 				fs.Prop.Time = UnixJS(fi.ModTime())
@@ -176,7 +174,7 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 		if fs.Prop.Type != FTfile {
 			var dk DirKit
 			dk.FileProp = fs.Prop
-			dk.PUIDVal = fs.Puid
+			dk.PUID = fs.Puid
 			if dp, ok := dpmap[fs.Puid]; ok {
 				dk.DirProp = dp
 			}
@@ -187,7 +185,7 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 		} else {
 			var fk FileKit
 			fk.FileProp = fs.Prop
-			fk.PUIDVal = fs.Puid
+			fk.PUID = fs.Puid
 			ret = append(ret, &fk)
 		}
 	}

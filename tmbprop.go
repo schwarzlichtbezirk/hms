@@ -52,23 +52,13 @@ type MediaData struct {
 	Mime Mime_t
 }
 
-// Puider helps to get PUID from some properties kit.
-type Puider interface {
-	PUID() Puid_t // path unique ID encoded to hex-base32
-}
-
 // PuidProp encapsulated path unique ID value for some properties kit.
 type PuidProp struct {
-	PUIDVal Puid_t `json:"puid" yaml:"puid" xml:"puid"`
+	PUID Puid_t `xorm:"'puid'" json:"puid" yaml:"puid" xml:"puid"`
 }
 
 func (pp *PuidProp) Setup(session *Session, syspath string) {
-	pp.PUIDVal = PathStoreCache(session, syspath)
-}
-
-// PUID returns thumbnail key, it's full system path unique ID.
-func (pp *PuidProp) PUID() Puid_t {
-	return pp.PUIDVal
+	pp.PUID = PathStoreCache(session, syspath)
 }
 
 // Tiles multipliers:

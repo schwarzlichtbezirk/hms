@@ -186,10 +186,10 @@ func (ep *ExifProp) Extract(syspath string) (err error) {
 
 // ExifKit is file with EXIF tags.
 type ExifKit struct {
-	FileProp `yaml:",inline"`
-	PuidProp `yaml:",inline"`
-	TmbProp  `yaml:",inline"`
-	ExifProp `yaml:",inline"`
+	PuidProp `xorm:"extends" yaml:",inline"`
+	FileProp `xorm:"extends" yaml:",inline"`
+	TmbProp  `xorm:"extends" yaml:",inline"`
+	ExifProp `xorm:"extends" yaml:",inline"`
 }
 
 // Setup fills fields with given path.
@@ -205,7 +205,7 @@ func (ek *ExifKit) Setup(session *Session, syspath string, fi fs.FileInfo) {
 
 	if !ek.ExifProp.IsZero() {
 		ExifStoreSet(session, &ExifStore{
-			Puid: ek.PUIDVal,
+			Puid: ek.PUID,
 			Prop: ek.ExifProp,
 		})
 	}

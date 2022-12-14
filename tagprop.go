@@ -74,10 +74,10 @@ func (tp *TagProp) Extract(syspath string) (err error) {
 
 // TagKit is music file tags properties kit.
 type TagKit struct {
-	FileProp `yaml:",inline"`
-	PuidProp `yaml:",inline"`
-	TmbProp  `yaml:",inline"`
-	TagProp  `yaml:",inline"`
+	PuidProp `xorm:"extends" yaml:",inline"`
+	FileProp `xorm:"extends" yaml:",inline"`
+	TmbProp  `xorm:"extends" yaml:",inline"`
+	TagProp  `xorm:"extends" yaml:",inline"`
 }
 
 // Setup fills fields with given path.
@@ -94,7 +94,7 @@ func (tk *TagKit) Setup(session *Session, syspath string, fi fs.FileInfo) {
 
 	if !tk.TagProp.IsZero() {
 		TagStoreSet(session, &TagStore{
-			Puid: tk.PUIDVal,
+			Puid: tk.PUID,
 			Prop: tk.TagProp,
 		})
 	}

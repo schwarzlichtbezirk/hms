@@ -682,10 +682,8 @@ func InitXorm() (err error) {
 				ctgrpath[puid-1].Path = path
 				ctgrfile[puid-1].Puid = puid
 				ctgrfile[puid-1].Prop = FileProp{
-					PathProp: PathProp{
-						Name: CatNames[puid],
-						Type: FTctgr,
-					},
+					Name: CatNames[puid],
+					Type: FTctgr,
 					Time: tinit,
 				}
 			}
@@ -694,10 +692,8 @@ func InitXorm() (err error) {
 				ctgrpath[puid-1].Path = fmt.Sprintf("<reserved%d>", puid)
 				ctgrfile[puid-1].Puid = puid
 				ctgrfile[puid-1].Prop = FileProp{
-					PathProp: PathProp{
-						Name: fmt.Sprintf("reserved #%d", puid),
-						Type: FTctgr,
-					},
+					Name: fmt.Sprintf("reserved #%d", puid),
+					Type: FTctgr,
 					Time: tinit,
 				}
 			}

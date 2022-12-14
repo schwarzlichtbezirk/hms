@@ -881,14 +881,16 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 
 	var fpath = ToSlash(arg.Path)
 	var syspath string
+	var puid Puid_t
 	if ok, _ := PathExists(fpath); ok {
 		syspath = path.Clean(fpath)
 		// append slash to disk root to prevent open current dir on this disk
 		if syspath[len(syspath)-1] == ':' { // syspath here is always have non zero length
 			syspath += "/"
 		}
+		puid = PathStoreCache(session, syspath)
 	} else {
-		if syspath, _, err = UnfoldPath(session, fpath); err != nil {
+		if syspath, puid, err = UnfoldPath(session, fpath); err != nil {
 			WriteError400(w, r, err, AECdrvaddbadpath)
 			return
 		}
@@ -908,18 +910,16 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		return
 	}
 
-	var dk DriveKit
-	dk.Setup(session, syspath)
-	if _, err = dk.StatDir(syspath); err != nil {
-		WriteError400(w, r, err, AECdrvaddfile)
-		return
-	}
+	var fk FileKit
+	fk.Name = path.Base(syspath)
+	fk.Type = FTdrv
+	fk.PUID = puid
 
 	prf.mux.Lock()
 	prf.Roots = append(prf.Roots, syspath)
 	prf.mux.Unlock()
 
-	WriteOK(w, r, dk)
+	WriteOK(w, r, &fk)
 }
 
 // APIHANDLER
