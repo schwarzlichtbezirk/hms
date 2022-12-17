@@ -14,11 +14,11 @@ type Mime_t int16
 const (
 	MimeDis  Mime_t = -1 // file can not be cached for thumbnails.
 	MimeNil  Mime_t = 0  // file is not cached for thumbnails, have indeterminate state.
-	MimeUnk  Mime_t = 1
-	MimeGif  Mime_t = 2
-	MimePng  Mime_t = 3
-	MimeJpeg Mime_t = 4
-	MimeWebp Mime_t = 5
+	MimeUnk  Mime_t = 1  // image/*
+	MimeGif  Mime_t = 2  // image/gif
+	MimePng  Mime_t = 3  // image/png
+	MimeJpeg Mime_t = 4  // image/jpeg
+	MimeWebp Mime_t = 5  // image/webp
 )
 
 var MimeStr = map[Mime_t]string{
@@ -52,15 +52,6 @@ type MediaData struct {
 	Mime Mime_t
 }
 
-// PuidProp encapsulated path unique ID value for some properties kit.
-type PuidProp struct {
-	PUID Puid_t `xorm:"'puid'" json:"puid" yaml:"puid" xml:"puid"`
-}
-
-func (pp *PuidProp) Setup(session *Session, syspath string) {
-	pp.PUID = PathStoreCache(session, syspath)
-}
-
 // Tiles multipliers:
 //  576px: 2,  4,  6,  8, 10, 12
 //  768px: 3,  6,  9, 12, 15, 18
@@ -73,8 +64,8 @@ func (pp *PuidProp) Setup(session *Session, syspath string) {
 // 1280px:  96, 192, 288, 384, 480, 576
 // 1920px: 144, 288, 432, 576, 720, 864
 
-// TmbProp is thumbnails properties.
-type TmbProp struct {
+// TileProp is thumbnails properties.
+type TileProp struct {
 	ETmbVal Mime_t `json:"etmb" yaml:"etmb" xml:"etmb"`
 	MTmbVal Mime_t `json:"mtmb" yaml:"mtmb" xml:"mtmb"`
 	MT02Val Mime_t `json:"mt02,omitempty" yaml:"mt02,omitempty" xml:"mt02,omitempty"`
@@ -121,56 +112,45 @@ const (
 	tm36 TM_t = 36
 )
 
-var tmset = [...]TM_t{2, 3, 4, 6, 8, 9, 10, 12, 15, 16, 18, 20, 24, 30, 36}
-
-// Thumber helps to cast some properties kit to TmbProp struct.
-type Thumber interface {
-	Tmb() *TmbProp            // returns self pointers for embedded structures
-	Tile(TM_t) (Mime_t, bool) // tile MIME type, -1 - can not make thumbnail; 0 - not cached; >=1 - cached
-	SetTile(TM_t, Mime_t) bool
-}
-
-// Tmb is Thumber interface implementation.
-func (tp *TmbProp) Tmb() *TmbProp {
-	return tp
-}
-
-// Setup generates PUID (path unique identifier) and updates cached state.
-func (tp *TmbProp) Setup(syspath string) {
-	tp.ETmbVal = MimeDis // setup as default on case tags scanning failure
+// CachedThumbMime returns MIME type of rendered thumbnail in package,
+// or MimeNil if it not present.
+func CachedThumbMime(syspath string) Mime_t {
 	if ts, ok := thumbpkg.Tagset(syspath); ok {
 		if str, ok := ts.TagStr(wpk.TIDmime); ok {
 			if strings.HasPrefix(str, "image/") {
-				tp.MTmbVal = GetMimeVal(str)
+				return GetMimeVal(str)
 			} else {
-				tp.MTmbVal = MimeDis
+				return MimeDis
 			}
 		} else {
-			tp.MTmbVal = MimeUnk
+			return MimeUnk
 		}
 	} else {
-		tp.MTmbVal = MimeNil
+		return MimeNil
 	}
-	for _, tm := range tmset {
-		var tilepath = fmt.Sprintf("%s?%dx%d", syspath, tm*htcell, tm*vtcell)
-		if ts, ok := tilespkg.Tagset(tilepath); ok {
-			if str, ok := ts.TagStr(wpk.TIDmime); ok {
-				if strings.HasPrefix(str, "image/") {
-					tp.SetTile(tm, GetMimeVal(str))
-				} else {
-					tp.SetTile(tm, MimeDis)
-				}
+}
+
+// CachedTileMime returns MIME type of rendered tile in package with
+// given tile multiplier, or MimeNil if it not present.
+func CachedTileMime(syspath string, tm TM_t) Mime_t {
+	var tilepath = fmt.Sprintf("%s?%dx%d", syspath, tm*htcell, tm*vtcell)
+	if ts, ok := tilespkg.Tagset(tilepath); ok {
+		if str, ok := ts.TagStr(wpk.TIDmime); ok {
+			if strings.HasPrefix(str, "image/") {
+				return GetMimeVal(str)
 			} else {
-				tp.SetTile(tm, MimeUnk)
+				return MimeDis
 			}
 		} else {
-			tp.SetTile(tm, MimeNil)
+			return MimeUnk
 		}
+	} else {
+		return MimeNil
 	}
 }
 
 // Tile returns image MIME type with given tile multiplier.
-func (tp *TmbProp) Tile(tm TM_t) (mime Mime_t, ok bool) {
+func (tp *TileProp) Tile(tm TM_t) (mime Mime_t, ok bool) {
 	ok = true
 	switch tm {
 	case tme:
@@ -214,8 +194,9 @@ func (tp *TmbProp) Tile(tm TM_t) (mime Mime_t, ok bool) {
 	return
 }
 
-// SetTile updates image state to given value for tile with given tile multiplier.
-func (tp *TmbProp) SetTile(tm TM_t, mime Mime_t) (ok bool) {
+// SetTile updates image state to given value for tile with
+// given tile multiplier.
+func (tp *TileProp) SetTile(tm TM_t, mime Mime_t) (ok bool) {
 	ok = true
 	switch tm {
 	case tme:
@@ -273,6 +254,7 @@ func tilechkAPI(w http.ResponseWriter, r *http.Request) {
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
+		AID  ID_t     `json:"aid" yaml:"aid" xml:"aid,attr"`
 		List []tiletm `json:"list" yaml:"list" xml:"list>puid"`
 	}
 	var ret struct {
@@ -293,18 +275,29 @@ func tilechkAPI(w http.ResponseWriter, r *http.Request) {
 	var session = xormEngine.NewSession()
 	defer session.Close()
 
+	var prf *Profile
+	if prf = prflist.ByID(arg.AID); prf == nil {
+		WriteError400(w, r, ErrNoAcc, AECscnstartnoacc)
+		return
+	}
+	var auth *Profile
+	if auth, err = GetAuth(w, r); err != nil {
+		return
+	}
+
 	ret.List = make([]tilemime, len(arg.List))
-	for i, tm := range arg.List {
-		var mime = MimeDis
-		if syspath, ok := PathStorePath(session, tm.PUID); ok {
-			if prop, err := propcache.Get(syspath); err == nil {
-				if tmb, ok := prop.(Thumber); ok {
-					var tp = tmb.Tmb()
-					mime, _ = tp.Tile(tm.TM)
+	for i, ttm := range arg.List {
+		var mime = MimeDis // disable if no access
+		if syspath, ok := PathStorePath(session, ttm.PUID); ok {
+			if cg := prf.PathAccess(syspath, auth == prf); !cg.IsZero() {
+				if tp, ok := tilecache.Peek(ttm.PUID); ok {
+					mime, _ = tp.Tile(ttm.TM)
+				} else {
+					mime = MimeNil // not cached yet
 				}
 			}
 		}
-		ret.List[i].PUID, ret.List[i].TM, ret.List[i].Mime = tm.PUID, tm.TM, mime
+		ret.List[i].PUID, ret.List[i].TM, ret.List[i].Mime = ttm.PUID, ttm.TM, mime
 	}
 
 	WriteOK(w, r, &ret)
@@ -349,13 +342,7 @@ func tilescnstartAPI(w http.ResponseWriter, r *http.Request) {
 	for _, ttm := range arg.List {
 		if syspath, ok := PathStorePath(session, ttm.PUID); ok {
 			if cg := prf.PathAccess(syspath, auth == prf); !cg.IsZero() {
-				if ttm.TM == tme {
-					ImgScanner.AddEmbed(syspath)
-				} else if ttm.TM == tm0 {
-					ImgScanner.AddTmb(syspath)
-				} else {
-					ImgScanner.AddTile(syspath, ttm.TM)
-				}
+				ImgScanner.AddTile(syspath, ttm.TM)
 			}
 		}
 	}
@@ -402,13 +389,7 @@ func tilescnbreakAPI(w http.ResponseWriter, r *http.Request) {
 	for _, ttm := range arg.List {
 		if syspath, ok := PathStorePath(session, ttm.PUID); ok {
 			if cg := prf.PathAccess(syspath, auth == prf); !cg.IsZero() {
-				if ttm.TM == tme {
-					ImgScanner.RemoveEmbed(syspath)
-				} else if ttm.TM == tm0 {
-					ImgScanner.RemoveTmb(syspath)
-				} else {
-					ImgScanner.RemoveTile(syspath, ttm.TM)
-				}
+				ImgScanner.RemoveTile(syspath, ttm.TM)
 			}
 		}
 	}

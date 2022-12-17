@@ -21,8 +21,6 @@ type TagProp struct {
 	DiscSum  int    `xorm:"'discsum'" json:"discsum,omitempty" yaml:"discsum,flow,omitempty" xml:"discsum,omitempty,attr"`
 	Lyrics   string `json:"lyrics,omitempty" yaml:"lyrics,omitempty" xml:"lyrics,omitempty"`
 	Comment  string `json:"comment,omitempty" yaml:"comment,omitempty" xml:"comment,omitempty"`
-	// private
-	thumb MediaData
 }
 
 // IsZero used to check whether an object is zero to determine whether
@@ -47,13 +45,6 @@ func (tp *TagProp) Setup(m tag.Metadata) {
 	tp.DiscNum, tp.DiscSum = m.Disc()
 	tp.Lyrics = m.Lyrics()
 	tp.Comment = m.Comment()
-	// private
-	if pic := m.Picture(); pic != nil {
-		tp.thumb.Data = pic.Data
-		tp.thumb.Mime = GetMimeVal(pic.MIMEType)
-	} else {
-		tp.thumb.Mime = MimeDis
-	}
 }
 
 func (tp *TagProp) Extract(syspath string) (err error) {
@@ -72,11 +63,41 @@ func (tp *TagProp) Extract(syspath string) (err error) {
 	return
 }
 
+func ExtractThumbID3(syspath string) (md MediaData, err error) {
+	// disable thumbnail if it not found
+	defer func() {
+		if md.Mime == MimeNil {
+			md.Mime = MimeDis
+		}
+	}()
+
+	var r io.ReadSeekCloser
+	if r, err = OpenFile(syspath); err != nil {
+		return
+	}
+	defer r.Close()
+
+	var m tag.Metadata
+	if m, err = tag.ReadFrom(r); err != nil {
+		return
+	}
+
+	var pic *tag.Picture
+	if pic = m.Picture(); pic == nil {
+		err = ErrNoThumb
+		return
+	}
+
+	md.Data = pic.Data
+	md.Mime = GetMimeVal(pic.MIMEType)
+	return
+}
+
 // TagKit is music file tags properties kit.
 type TagKit struct {
 	PuidProp `xorm:"extends" yaml:",inline"`
 	FileProp `xorm:"extends" yaml:",inline"`
-	TmbProp  `xorm:"extends" yaml:",inline"`
+	TileProp `xorm:"extends" yaml:",inline"`
 	TagProp  `xorm:"extends" yaml:",inline"`
 }
 
@@ -85,19 +106,8 @@ type TagKit struct {
 func (tk *TagKit) Setup(session *Session, syspath string, fi fs.FileInfo) {
 	tk.FileProp.Setup(fi)
 	tk.PuidProp.Setup(session, syspath)
-	tk.TmbProp.Setup(syspath)
-
-	if err := tk.Extract(syspath); err != nil {
-		return
-	}
-	tk.ETmbVal = tk.thumb.Mime
-
-	if !tk.TagProp.IsZero() {
-		TagStoreSet(session, &TagStore{
-			Puid: tk.PUID,
-			Prop: tk.TagProp,
-		})
-	}
+	tk.TileProp, _ = tilecache.Peek(tk.PUID)
+	tk.TagProp, _ = TagStoreGet(session, tk.PUID)
 }
 
 // The End.

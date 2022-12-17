@@ -367,8 +367,7 @@ func (prf *Profile) UpdateShares() {
 			prf.sharepuid[syspath] = puid
 			prf.puidshare[puid] = syspath
 			Log.Infof("id%d: shared '%s' as %s", prf.ID, syspath, puid)
-		} else if prop, err := propcache.Get(syspath); err == nil {
-			var puid, _ = GetPropPUID(prop)
+		} else if puid, ok := pathcache.GetRev(syspath); ok {
 			prf.sharepuid[syspath] = puid
 			prf.puidshare[puid] = syspath
 			Log.Infof("id%d: shared '%s' as %s", prf.ID, syspath, puid)

@@ -9,6 +9,7 @@ import (
 	"image/jpeg"
 	"image/png"
 	"io"
+	"io/fs"
 
 	"github.com/disintegration/gift"
 
@@ -73,40 +74,40 @@ var tmbpngenc = png.Encoder{
 // Error messages
 var (
 	ErrBadMedia = errors.New("media content is corrupted")
-	ErrNoThumb  = errors.New("music file without thumbnail")
+	ErrNoThumb  = errors.New("embedded thumbnail is not found")
 	ErrNotFile  = errors.New("property is not file")
 	ErrNotImg   = errors.New("file is not image")
 	ErrTooBig   = errors.New("file is too big")
 	ErrImgNil   = errors.New("can not allocate image")
 )
 
-// ExtractTmb extract thumbnail from embedded file tags.
-func ExtractTmb(syspath string) (md *MediaData, err error) {
-	var prop any
-	if prop, err = propcache.Get(syspath); err != nil {
+// ExtractThmub extract thumbnail from embedded file tags.
+func ExtractThmub(session *Session, syspath string) (md MediaData, err error) {
+	var puid = PathStoreCache(session, syspath)
+	var ok bool
+	if md, ok = tmbcache.Peek(puid); ok {
 		return
 	}
 
-	// try to extract from EXIF
-	if ek, ok := prop.(*ExifKit); ok { // skip non-EXIF properties
-		if ek.thumb.Mime != MimeDis {
-			md = &ek.thumb
-			return // thumbnail from EXIF
-		}
+	var ext = GetFileExt(syspath)
+	if IsTypeID3(ext) {
+		md, err = ExtractThumbID3(syspath)
+	} else if IsTypeEXIF(ext) {
+		md, err = ExtractThumbEXIF(syspath)
+	} else {
+		md.Mime = MimeDis
+		err = ErrNoThumb
 	}
 
-	// try to extract from ID3
-	if tk, ok := prop.(*TagKit); ok { // skip non-ID3 properties
-		if tk.thumb.Mime != MimeDis {
-			md = &tk.thumb
-			return // thumbnail from tags
-		}
+	// push successful result to cache, err != nil, md.Mime != MimeDis
+	if err != nil {
+		tmbcache.Push(puid, md)
 	}
 	return
 }
 
 // MakeThumb produces new thumbnail object.
-func MakeThumb(r io.Reader, orientation int) (md *MediaData, err error) {
+func MakeThumb(r io.Reader, orientation int) (md MediaData, err error) {
 	// create sized image for thumbnail
 	var ftype string
 	var src, dst image.Image
@@ -136,7 +137,7 @@ func MakeThumb(r io.Reader, orientation int) (md *MediaData, err error) {
 }
 
 // ToNativeImg converts Image to specified file format supported by browser.
-func ToNativeImg(m image.Image, ftype string) (md *MediaData, err error) {
+func ToNativeImg(m image.Image, ftype string) (md MediaData, err error) {
 	var buf bytes.Buffer
 	var mime Mime_t
 	switch ftype {
@@ -156,48 +157,54 @@ func ToNativeImg(m image.Image, ftype string) (md *MediaData, err error) {
 		}
 		mime = MimeJpeg
 	}
-	md = &MediaData{
-		Data: buf.Bytes(),
-		Mime: mime,
-	}
+	md.Data = buf.Bytes()
+	md.Mime = mime
 	return
 }
 
-// GetCachedThumb tries to extract existing thumbnail from cache, otherwise
+// CacheThumb tries to extract existing thumbnail from cache, otherwise
 // makes new one and put it to cache.
-func GetCachedThumb(syspath string) (md *MediaData, err error) {
+func CacheThumb(session *Session, syspath string) (md MediaData, err error) {
 	// try to extract thumbnail from package
-	if md, err = thumbpkg.GetImage(syspath); err != nil || md != nil {
+	if md, err = thumbpkg.GetImage(syspath); err != nil || md.Mime != MimeNil {
 		return
 	}
 
-	var prop any
-	if prop, err = propcache.Get(syspath); err != nil {
+	var fi fs.FileInfo
+	if fi, err = StatFile(syspath); err != nil {
+		return
+	}
+	if fi.IsDir() {
+		err = ErrNotFile // file is directory
 		return
 	}
 
-	if cfg.FitEmbeddedTmb {
-		if tk, ok := prop.(*TagKit); ok { // skip non-ID3 properties
-			if tk.thumb.Data == nil {
-				err = ErrNoThumb
-				return // music file without thumbnail
+	var ext = GetFileExt(syspath)
+	if IsTypeID3(ext) {
+		if cfg.FitEmbeddedTmb {
+			var mdtag MediaData
+			if mdtag, err = ExtractThumbID3(syspath); err != nil {
+				return
 			}
-			if md, err = MakeThumb(bytes.NewReader(tk.thumb.Data), OrientNormal); err != nil {
+			if md, err = MakeThumb(bytes.NewReader(mdtag.Data), OrientNormal); err != nil {
 				return
 			}
 			// push thumbnail to package
 			err = thumbpkg.PutImage(syspath, md)
 			return
+		} else {
+			err = ErrNotImg
+			return // file is not image
 		}
 	}
 
 	// check that file is image
-	if !IsTypeImage(GetFileExt(syspath)) {
+	if !IsTypeImage(ext) {
 		err = ErrNotImg
 		return // file is not image
 	}
 
-	if size, ok := GetPropSize(prop); ok && size > cfg.ThumbFileMaxSize {
+	if fi.Size() > cfg.ThumbFileMaxSize {
 		err = ErrTooBig
 		return // file is too big
 	}
@@ -210,8 +217,11 @@ func GetCachedThumb(syspath string) (md *MediaData, err error) {
 
 	// try to extract orientation from EXIF
 	var orientation = OrientNormal
-	if ek, ok := prop.(*ExifKit); ok { // skip non-EXIF properties
-		orientation = ek.Orientation
+	var puid = PathStoreCache(session, syspath)
+	if ep, ok := ExifStoreGet(session, puid); ok { // skip non-EXIF properties
+		if ep.Orientation > 0 {
+			orientation = ep.Orientation
+		}
 	}
 
 	if md, err = MakeThumb(r, orientation); err != nil {
@@ -224,7 +234,7 @@ func GetCachedThumb(syspath string) (md *MediaData, err error) {
 }
 
 // MakeTile produces new tile object.
-func MakeTile(r io.Reader, wdh, hgt int, orientation int) (md *MediaData, err error) {
+func MakeTile(r io.Reader, wdh, hgt int, orientation int) (md MediaData, err error) {
 	var ftype string
 	var src, dst image.Image
 	if src, ftype, err = image.Decode(r); err != nil {
@@ -252,28 +262,34 @@ func MakeTile(r io.Reader, wdh, hgt int, orientation int) (md *MediaData, err er
 	return ToNativeImg(dst, ftype)
 }
 
-// GetCachedTile tries to extract existing tile from cache, otherwise
+// CacheTile tries to extract existing tile from cache, otherwise
 // makes new one and put it to cache.
-func GetCachedTile(syspath string, wdh, hgt int) (md *MediaData, err error) {
+func CacheTile(session *Session, syspath string, wdh, hgt int) (md MediaData, err error) {
 	var tilepath = fmt.Sprintf("%s?%dx%d", syspath, wdh, hgt)
 
 	// try to extract tile from package
-	if md, err = tilespkg.GetImage(tilepath); err != nil || md != nil {
+	if md, err = tilespkg.GetImage(tilepath); err != nil || md.Mime != MimeNil {
 		return
 	}
 
-	var prop any
-	if prop, err = propcache.Get(syspath); err != nil {
-		return // can not get properties
+	var fi fs.FileInfo
+	if fi, err = StatFile(syspath); err != nil {
+		return
+	}
+	if fi.IsDir() {
+		err = ErrNotFile // file is directory
+		return
 	}
 
+	var ext = GetFileExt(syspath)
+
 	// check that file is image
-	if !IsTypeImage(GetFileExt(syspath)) {
+	if !IsTypeImage(ext) {
 		err = ErrNotImg
 		return // file is not image
 	}
 
-	if size, ok := GetPropSize(prop); ok && size > cfg.ThumbFileMaxSize {
+	if fi.Size() > cfg.ThumbFileMaxSize {
 		err = ErrTooBig
 		return // file is too big
 	}
@@ -286,8 +302,11 @@ func GetCachedTile(syspath string, wdh, hgt int) (md *MediaData, err error) {
 
 	// try to extract orientation from EXIF
 	var orientation = OrientNormal
-	if ek, ok := prop.(*ExifKit); ok { // skip non-EXIF properties
-		orientation = ek.Orientation
+	var puid = PathStoreCache(session, syspath)
+	if ep, ok := ExifStoreGet(session, puid); ok { // skip non-EXIF properties
+		if ep.Orientation > 0 {
+			orientation = ep.Orientation
+		}
 	}
 
 	if md, err = MakeTile(r, wdh, hgt, orientation); err != nil {

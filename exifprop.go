@@ -39,8 +39,6 @@ type ExifProp struct {
 	Longitude  float64 `xorm:"'longitude'" json:"longitude,omitempty" yaml:"longitude,omitempty" xml:"longitude,omitempty"`
 	Altitude   float32 `xorm:"'altitude'" json:"altitude,omitempty" yaml:"altitude,omitempty" xml:"altitude,omitempty"`
 	Satellites string  `xorm:"'satellites'" json:"satellites,omitempty" yaml:"satellites,omitempty" xml:"satellites,omitempty"`
-	// private
-	thumb MediaData
 }
 
 // IsZero used to check whether an object is zero to determine whether
@@ -75,7 +73,6 @@ func RatFloat64(t *tiff.Tag) float64 {
 func (ep *ExifProp) Setup(x *exif.Exif) {
 	var err error
 	var t *tiff.Tag
-	var pic []byte
 
 	if t, err = x.Get(exif.PixelXDimension); err == nil {
 		ep.Width, _ = t.Int(0)
@@ -159,13 +156,6 @@ func (ep *ExifProp) Setup(x *exif.Exif) {
 	if t, err = x.Get(exif.GPSSatelites); err == nil {
 		ep.Satellites, _ = t.StringVal()
 	}
-	// private
-	if pic, err = x.JpegThumbnail(); err == nil {
-		ep.thumb.Data = pic
-		ep.thumb.Mime = MimeJpeg
-	} else {
-		ep.thumb.Mime = MimeDis
-	}
 }
 
 func (ep *ExifProp) Extract(syspath string) (err error) {
@@ -184,11 +174,41 @@ func (ep *ExifProp) Extract(syspath string) (err error) {
 	return
 }
 
+func ExtractThumbEXIF(syspath string) (md MediaData, err error) {
+	// disable thumbnail if it not found
+	defer func() {
+		if md.Mime == MimeNil {
+			md.Mime = MimeDis
+		}
+	}()
+
+	var r io.ReadSeekCloser
+	if r, err = OpenFile(syspath); err != nil {
+		return
+	}
+	defer r.Close()
+
+	var x *exif.Exif
+	if x, err = exif.Decode(r); err != nil {
+		return
+	}
+
+	var pic []byte
+	if pic, err = x.JpegThumbnail(); err != nil {
+		err = ErrNoThumb // set err to 'no thumbnail'
+		return
+	}
+
+	md.Data = pic
+	md.Mime = MimeJpeg
+	return
+}
+
 // ExifKit is file with EXIF tags.
 type ExifKit struct {
 	PuidProp `xorm:"extends" yaml:",inline"`
 	FileProp `xorm:"extends" yaml:",inline"`
-	TmbProp  `xorm:"extends" yaml:",inline"`
+	TileProp `xorm:"extends" yaml:",inline"`
 	ExifProp `xorm:"extends" yaml:",inline"`
 }
 
@@ -196,24 +216,13 @@ type ExifKit struct {
 func (ek *ExifKit) Setup(session *Session, syspath string, fi fs.FileInfo) {
 	ek.FileProp.Setup(fi)
 	ek.PuidProp.Setup(session, syspath)
-	ek.TmbProp.Setup(syspath)
-
-	if err := ek.Extract(syspath); err != nil {
-		return
-	}
-	ek.ETmbVal = ek.thumb.Mime
-
-	if !ek.ExifProp.IsZero() {
-		ExifStoreSet(session, &ExifStore{
-			Puid: ek.PUID,
-			Prop: ek.ExifProp,
-		})
-	}
+	ek.TileProp, _ = tilecache.Peek(ek.PUID)
+	ek.ExifProp, _ = ExifStoreGet(session, ek.PUID)
 }
 
 func exifparsers() {
-	// Optionally register camera makenote data parsing - currently Nikon and
-	// Canon are supported.
+	// Optionally register camera makenote data parsing - currently
+	// Nikon and Canon are supported.
 	exif.RegisterParsers(mknote.All...)
 }
 

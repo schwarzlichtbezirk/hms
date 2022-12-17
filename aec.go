@@ -54,7 +54,7 @@ const (
 	AECetmbhidden
 	AECetmbaccess
 	AECetmbbadcnt
-	AECetmbnocnt
+	AECetmbnotmb
 
 	// mtmb
 
@@ -77,6 +77,7 @@ const (
 	AECtilehidden
 	AECtileaccess
 	AECtilebadcnt
+	AECtilenocnt
 
 	// reload
 

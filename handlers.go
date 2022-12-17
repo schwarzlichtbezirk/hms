@@ -271,14 +271,15 @@ func etmbHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var md *MediaData
-	if md, err = ExtractTmb(syspath); err != nil {
-		WriteError(w, r, http.StatusNotFound, err, AECetmbbadcnt)
-		return
-	}
-	if md == nil {
-		WriteError(w, r, http.StatusNoContent, ErrNotFound, AECetmbnocnt)
-		return
+	var md MediaData
+	if md, err = ExtractThmub(session, syspath); err != nil {
+		if errors.Is(err, ErrNoThumb) {
+			WriteError(w, r, http.StatusNoContent, ErrNoThumb, AECetmbnotmb)
+			return
+		} else {
+			WriteError500(w, r, err, AECetmbbadcnt)
+			return
+		}
 	}
 	w.Header().Set("Content-Type", MimeStr[md.Mime])
 	http.ServeContent(w, r, syspath, starttime, bytes.NewReader(md.Data))
@@ -335,12 +336,12 @@ func mtmbHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var md *MediaData
+	var md MediaData
 	if md, err = thumbpkg.GetImage(syspath); err != nil {
 		WriteError500(w, r, err, AECmtmbbadcnt)
 		return
 	}
-	if md == nil {
+	if md.Mime == MimeNil {
 		WriteError(w, r, http.StatusNoContent, ErrNotFound, AECmtmbnocnt)
 		return
 	}
@@ -405,9 +406,14 @@ func tileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var md *MediaData
-	if md, err = GetCachedTile(syspath, wdh, hgt); err != nil {
+	var tilepath = fmt.Sprintf("%s?%dx%d", syspath, wdh, hgt)
+	var md MediaData
+	if md, err = tilespkg.GetImage(tilepath); err != nil {
 		WriteError500(w, r, err, AECtilebadcnt)
+		return
+	}
+	if md.Mime == MimeNil {
+		WriteError(w, r, http.StatusNoContent, ErrNotFound, AECtilenocnt)
 		return
 	}
 	w.Header().Set("Content-Type", MimeStr[md.Mime])

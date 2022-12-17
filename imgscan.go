@@ -17,24 +17,18 @@ type Cacher interface {
 type EmbedPath string
 
 func (fpath EmbedPath) Cache() {
-	var err error
-	var prop any
-	if prop, err = propcache.Get(string(fpath)); err != nil {
-		return // can not get properties
-	}
-	if tmb, ok := prop.(Thumber); ok {
-		var tp = tmb.Tmb()
-		if tp.ETmbVal != MimeNil {
-			return // thumbnail already scanned
-		}
+	var session = xormEngine.NewSession()
+	defer session.Close()
 
-		var md *MediaData
-		if md, err = ExtractTmb(string(fpath)); err != nil || md == nil {
-			tp.ETmbVal = MimeDis
-			return
-		}
-		tp.ETmbVal = md.Mime
+	var puid = PathStoreCache(session, string(fpath))
+	var tp, _ = tilecache.Peek(puid)
+	var err error
+	var md MediaData
+	if md, err = ExtractThmub(session, string(fpath)); err != nil {
+		md.Mime = MimeDis
 	}
+	tp.SetTile(tme, md.Mime)
+	tilecache.Push(puid, tp)
 }
 
 // ThumbPath is thumbnail path type for cache processing.
@@ -42,24 +36,18 @@ type ThumbPath string
 
 // Cache is Cacher implementation for ThumbPath type.
 func (fpath ThumbPath) Cache() {
-	var err error
-	var prop any
-	if prop, err = propcache.Get(string(fpath)); err != nil {
-		return // can not get properties
-	}
-	if tmb, ok := prop.(Thumber); ok {
-		var tp = tmb.Tmb()
-		if tp.MTmbVal != MimeNil {
-			return // thumbnail already scanned
-		}
+	var session = xormEngine.NewSession()
+	defer session.Close()
 
-		var md *MediaData
-		if md, err = GetCachedThumb(string(fpath)); err != nil {
-			tp.MTmbVal = MimeDis
-			return
-		}
-		tp.MTmbVal = md.Mime
+	var puid = PathStoreCache(session, string(fpath))
+	var tp, _ = tilecache.Peek(puid)
+	var err error
+	var md MediaData
+	if md, err = CacheThumb(session, string(fpath)); err != nil {
+		md.Mime = MimeDis
 	}
+	tp.SetTile(tm0, md.Mime)
+	tilecache.Push(puid, tp)
 }
 
 // TilePath is tile path type for cache processing.
@@ -71,25 +59,19 @@ type TilePath struct {
 
 // Cache is Cacher implementation for TilePath type.
 func (tile TilePath) Cache() {
-	var err error
-	var prop any
-	if prop, err = propcache.Get(tile.Path); err != nil {
-		return // can not get properties
-	}
-	if tmb, ok := prop.(Thumber); ok {
-		var tp = tmb.Tmb()
-		var tm = TM_t(tile.Wdh / htcell)
-		if mime, ok := tp.Tile(tm); ok && mime != MimeNil {
-			return // thumbnail already scanned
-		}
+	var session = xormEngine.NewSession()
+	defer session.Close()
 
-		var md *MediaData
-		if md, err = GetCachedTile(tile.Path, tile.Wdh, tile.Hgt); err != nil {
-			tp.SetTile(tm, MimeDis)
-			return
-		}
-		tp.SetTile(tm, md.Mime)
+	var puid = PathStoreCache(session, tile.Path)
+	var tp, _ = tilecache.Peek(puid)
+	var err error
+	var md MediaData
+	if md, err = CacheTile(session, tile.Path, tile.Wdh, tile.Hgt); err != nil {
+		md.Mime = MimeDis
 	}
+	var tm = TM_t(tile.Wdh / htcell)
+	tp.SetTile(tm, md.Mime)
+	tilecache.Push(puid, tp)
 }
 
 // ImgScanner is singleton for thumbnails producing
@@ -223,34 +205,30 @@ func (s *scanner) Stop() (ctx context.Context) {
 	return
 }
 
-// AddEmbed adds system path to queue to extract embedded thumbnail.
-func (s *scanner) AddEmbed(syspath string) {
-	s.put <- EmbedPath(syspath)
-}
-
-// RemoveEmbed removes system path for embedded thumbnail from queue.
-func (s *scanner) RemoveEmbed(syspath string) {
-	s.del <- EmbedPath(syspath)
-}
-
-// AddTmb adds system path to queue to render thumbnail.
-func (s *scanner) AddTmb(syspath string) {
-	s.put <- ThumbPath(syspath)
-}
-
-// RemoveTmb removes system path for thumbnail render from queue.
-func (s *scanner) RemoveTmb(syspath string) {
-	s.del <- ThumbPath(syspath)
-}
-
-// AddTile adds system path to queue to render tile with given tile multiplier.
+// AddTile adds system path to queue to extract embedded thumbnail
+// (on tm == tme), or to render thumbnail from image source (on tm == tm0),
+// or to render tile with given tile multiplier (on any other tm case).
 func (s *scanner) AddTile(syspath string, tm TM_t) {
-	s.put <- TilePath{syspath, int(tm * htcell), int(tm * vtcell)}
+	if tm == tme {
+		s.put <- EmbedPath(syspath)
+	} else if tm == tm0 {
+		s.put <- ThumbPath(syspath)
+	} else {
+		s.put <- TilePath{syspath, int(tm * htcell), int(tm * vtcell)}
+	}
 }
 
-// RemoveTmb removes system path for tile render from queue.
+// RemoveTmb removes system path for embedded thumbnail from queue
+// (on tm == tme), or for thumbnail render (on tm == tm0), or for
+// tile render from queue (on any other tm case).
 func (s *scanner) RemoveTile(syspath string, tm TM_t) {
-	s.del <- TilePath{syspath, int(tm * htcell), int(tm * vtcell)}
+	if tm == tme {
+		s.del <- EmbedPath(syspath)
+	} else if tm == tm0 {
+		s.del <- ThumbPath(syspath)
+	} else {
+		s.del <- TilePath{syspath, int(tm * htcell), int(tm * vtcell)}
+	}
 }
 
 // The End.

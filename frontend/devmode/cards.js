@@ -819,6 +819,7 @@ const VueFileCard = {
 						return;
 					}
 					const response = await fetchajaxauth("POST", "/api/tile/chk", {
+						aid: self.$root.aid,
 						list: uncached
 					});
 					traceajax(response);
@@ -1348,6 +1349,7 @@ const VueTileCard = {
 						return;
 					}
 					const response = await fetchajaxauth("POST", "/api/tile/chk", {
+						aid: self.$root.aid,
 						list: uncached
 					});
 					traceajax(response);

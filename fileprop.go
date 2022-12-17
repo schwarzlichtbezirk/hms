@@ -5,21 +5,6 @@ import (
 	"path"
 )
 
-func GetPropPUID(p any) (Puid_t, bool) {
-	switch v := p.(type) {
-	case *FileKit:
-		return v.PUID, true
-	case *DirKit:
-		return v.PUID, true
-	case *ExifKit:
-		return v.PUID, true
-	case *TagKit:
-		return v.PUID, true
-	default:
-		return 0, false
-	}
-}
-
 func GetPropSize(p any) (int64, bool) {
 	switch v := p.(type) {
 	case *FileKit:
@@ -66,18 +51,27 @@ func (fp *FileProp) Setup(fi fs.FileInfo) {
 	fp.Time = UnixJS(fi.ModTime())
 }
 
+// PuidProp encapsulated path unique ID value for some properties kit.
+type PuidProp struct {
+	PUID Puid_t `xorm:"'puid'" json:"puid" yaml:"puid" xml:"puid"`
+}
+
+func (pp *PuidProp) Setup(session *Session, syspath string) {
+	pp.PUID = PathStoreCache(session, syspath)
+}
+
 // FileKit is common files properties kit.
 type FileKit struct {
 	PuidProp `xorm:"extends" yaml:",inline"`
 	FileProp `xorm:"extends" yaml:",inline"`
-	TmbProp  `xorm:"extends" yaml:",inline"`
+	TileProp `xorm:"extends" yaml:",inline"`
 }
 
 // Setup calls nested structures setups.
 func (fk *FileKit) Setup(session *Session, syspath string, fi fs.FileInfo) {
 	fk.FileProp.Setup(fi)
 	fk.PuidProp.Setup(session, syspath)
-	fk.TmbProp.Setup(syspath)
+	fk.TileProp, _ = tilecache.Peek(fk.PUID)
 }
 
 type FileGroup struct {
