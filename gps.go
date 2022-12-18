@@ -2,6 +2,7 @@ package hms
 
 import (
 	"encoding/xml"
+	"io/fs"
 	"math"
 	"net/http"
 )
@@ -65,6 +66,7 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
+		AID   ID_t      `json:"aid" yaml:"aid" xml:"aid,attr"`
 		Paths []MapPath `json:"paths" yaml:"paths" xml:"paths>path"`
 		Limit int       `json:"limit,omitempty" yaml:"limit,omitempty" xml:"limit,omitempty"`
 		Time1 Unix_t    `json:"time1,omitempty" yaml:"time1,omitempty" xml:"time1,omitempty"`
@@ -109,7 +111,15 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var session = xormEngine.NewSession()
 	defer session.Close()
 
-	gpscache.Range(func(puid Puid_t, gps *GpsInfo) bool {
+	var prf *Profile
+	if prf = prflist.ByID(arg.AID); prf == nil {
+		WriteError400(w, r, ErrNoAcc, AECgpsrangenoacc)
+		return
+	}
+
+	var vfiles []fs.FileInfo // verified file infos
+	var vpaths []string      // verified paths
+	gpscache.Range(func(puid Puid_t, gps GpsInfo) bool {
 		var inc bool
 		for _, mp := range arg.Paths {
 			if !mp.Contains(gps.Latitude, gps.Longitude) {
@@ -125,12 +135,21 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		}
 		if inc {
 			var fpath, _ = pathcache.GetDir(puid)
-			if prop, err := propcache.Get(fpath); err == nil {
-				ret.List = append(ret.List, prop)
+			if !prf.IsHidden(fpath) {
+				if fi, _ := StatFile(fpath); fi != nil {
+					if prf.PathAccess(fpath, auth == prf) {
+						vfiles = append(vfiles, fi)
+						vpaths = append(vpaths, fpath)
+					}
+				}
 			}
 		}
 		return arg.Limit == 0 || len(ret.List) < arg.Limit
 	})
+	if ret.List, _, err = ScanFileInfoList(prf, session, vfiles, vpaths); err != nil {
+		WriteError500(w, r, err, AECgpsrangelist)
+		return
+	}
 
 	WriteOK(w, r, &ret)
 }

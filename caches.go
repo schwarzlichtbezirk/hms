@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"image"
 	"io"
-	"io/fs"
 	"os"
 	"path"
 	"strings"
@@ -25,10 +24,6 @@ import (
 
 // gcaches
 var (
-	// Files properties cache.
-	// Key - system path, value - file property struct.
-	propcache gcache.Cache
-
 	// Public keys cache for authorization.
 	pubkeycache gcache.Cache
 
@@ -348,9 +343,15 @@ func (gc *GpsCache) Count() (n int) {
 }
 
 // Range calls given closure for each GpsInfo in the map.
-func (gc *GpsCache) Range(f func(Puid_t, *GpsInfo) bool) {
+func (gc *GpsCache) Range(f func(Puid_t, GpsInfo) bool) {
 	gc.Map.Range(func(key, value any) bool {
-		return f(key.(Puid_t), value.(*GpsInfo))
+		var puid, okk = key.(Puid_t)
+		var gps, okv = value.(GpsInfo)
+		if okk && okv {
+			return f(puid, gps)
+		} else {
+			return true
+		}
 	})
 }
 
@@ -358,20 +359,6 @@ var gpscache GpsCache
 
 // InitCaches prepares caches depends of previously loaded configuration.
 func InitCaches() {
-	// init properties cache
-	propcache = gcache.New(cfg.PropCacheMaxNum).
-		LRU().
-		LoaderFunc(func(key any) (ret any, err error) {
-			var syspath = key.(string)
-			var fi fs.FileInfo
-			if fi, err = StatFile(syspath); err != nil {
-				return
-			}
-			ret = MakeProp(syspath, fi)
-			return
-		}).
-		Build()
-
 	// init public keys cache
 	pubkeycache = gcache.New(10).LRU().Expiration(15 * time.Second).Build()
 
@@ -383,15 +370,6 @@ func InitCaches() {
 			if !ok {
 				err = ErrNoPUID
 				return // file path not found
-			}
-
-			var prop any
-			if prop, err = propcache.Get(syspath); err != nil {
-				return // can not get properties
-			}
-			if t, ok := GetPropType(prop); ok && t != FTfile {
-				err = ErrNotFile
-				return
 			}
 
 			var ext = GetFileExt(syspath)
@@ -429,32 +407,29 @@ func InitCaches() {
 	hdcache = gcache.New(cfg.MediaCacheMaxNum).
 		LRU().
 		LoaderFunc(func(key any) (ret any, err error) {
-			var syspath, ok = pathcache.GetDir(key.(Puid_t))
+			var session = xormEngine.NewSession()
+			defer session.Close()
+
+			var puid = key.(Puid_t)
+			var syspath, ok = pathcache.GetDir(puid)
 			if !ok {
 				err = ErrNoPUID
 				return // file path not found
 			}
 
-			var prop any
-			if prop, err = propcache.Get(syspath); err != nil {
-				return // can not get properties
-			}
-			if t, ok := GetPropType(prop); ok && t != FTfile {
-				err = ErrNotFile
-				return
-			}
-
 			var orientation = OrientNormal
-			if ek, ok := prop.(*ExifKit); ok {
-				orientation = ek.Orientation
-				if ek.Width > 0 && ek.Height > 0 {
+			if ep, ok := ExifStoreGet(session, puid); ok { // skip non-EXIF properties
+				if ep.Orientation > 0 {
+					orientation = ep.Orientation
+				}
+				if ep.Width > 0 && ep.Height > 0 {
 					var wdh, hgt int
-					if ek.Width > ek.Height {
+					if ep.Width > ep.Height {
 						wdh, hgt = cfg.HDResolution[0], cfg.HDResolution[1]
 					} else {
 						wdh, hgt = cfg.HDResolution[1], cfg.HDResolution[0]
 					}
-					if ek.Width <= wdh && ek.Height <= hgt {
+					if ep.Width <= wdh && ep.Height <= hgt {
 						err = ErrNotHD
 						return // does not fit to HD
 					}
@@ -778,7 +753,7 @@ func LoadGpsCache() (err error) {
 	var offset int
 	for {
 		var chunk []ExifStore
-		if err = session.Where("latitude != 0").Cols("datetime", "latitude", "longitude", "altitude").Limit(limit, offset).Find(&chunk); err != nil {
+		if err = session.Where("latitude != 0").Cols("puid", "datetime", "latitude", "longitude", "altitude").Limit(limit, offset).Find(&chunk); err != nil {
 			return
 		}
 		offset += limit

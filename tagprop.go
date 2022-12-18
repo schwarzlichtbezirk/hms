@@ -104,8 +104,8 @@ type TagKit struct {
 // Setup fills fields with given path.
 // Puts into the cache nested at the tags thumbnail if it present.
 func (tk *TagKit) Setup(session *Session, syspath string, fi fs.FileInfo) {
-	tk.FileProp.Setup(fi)
 	tk.PuidProp.Setup(session, syspath)
+	tk.FileProp.Setup(fi)
 	tk.TileProp, _ = tilecache.Peek(tk.PUID)
 	tk.TagProp, _ = TagStoreGet(session, tk.PUID)
 }

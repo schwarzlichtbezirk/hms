@@ -214,8 +214,8 @@ type ExifKit struct {
 
 // Setup fills fields with given path.
 func (ek *ExifKit) Setup(session *Session, syspath string, fi fs.FileInfo) {
-	ek.FileProp.Setup(fi)
 	ek.PuidProp.Setup(session, syspath)
+	ek.FileProp.Setup(fi)
 	ek.TileProp, _ = tilecache.Peek(ek.PUID)
 	ek.ExifProp, _ = ExifStoreGet(session, ek.PUID)
 }

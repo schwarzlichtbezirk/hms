@@ -2142,7 +2142,10 @@ const VueMapCard = {
 		};
 
 		const postmsg = () => {
-			const arg = { paths: [] };
+			const arg = {
+				aid: self.$root.aid,
+				paths: []
+			};
 			for (const layer of mappaths.getLayers()) {
 				arg.paths.push({
 					shape: "circle",

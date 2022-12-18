@@ -289,7 +289,7 @@ func tilechkAPI(w http.ResponseWriter, r *http.Request) {
 	for i, ttm := range arg.List {
 		var mime = MimeDis // disable if no access
 		if syspath, ok := PathStorePath(session, ttm.PUID); ok {
-			if cg := prf.PathAccess(syspath, auth == prf); !cg.IsZero() {
+			if prf.PathAccess(syspath, auth == prf) {
 				if tp, ok := tilecache.Peek(ttm.PUID); ok {
 					mime, _ = tp.Tile(ttm.TM)
 				} else {
@@ -341,7 +341,7 @@ func tilescnstartAPI(w http.ResponseWriter, r *http.Request) {
 
 	for _, ttm := range arg.List {
 		if syspath, ok := PathStorePath(session, ttm.PUID); ok {
-			if cg := prf.PathAccess(syspath, auth == prf); !cg.IsZero() {
+			if prf.PathAccess(syspath, auth == prf) {
 				ImgScanner.AddTile(syspath, ttm.TM)
 			}
 		}
@@ -388,7 +388,7 @@ func tilescnbreakAPI(w http.ResponseWriter, r *http.Request) {
 
 	for _, ttm := range arg.List {
 		if syspath, ok := PathStorePath(session, ttm.PUID); ok {
-			if cg := prf.PathAccess(syspath, auth == prf); !cg.IsZero() {
+			if prf.PathAccess(syspath, auth == prf) {
 				ImgScanner.RemoveTile(syspath, ttm.TM)
 			}
 		}

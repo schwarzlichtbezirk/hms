@@ -466,27 +466,27 @@ func (prf *Profile) GetSharePath(session *Session, syspath string, isadmin bool)
 }
 
 // PathAccess returns file group access state for given file path.
-func (prf *Profile) PathAccess(syspath string, isadmin bool) (cg CatGrp) {
+func (prf *Profile) PathAccess(syspath string, isadmin bool) bool {
 	prf.mux.RLock()
 	defer prf.mux.RUnlock()
 
 	for _, fpath := range prf.Shares {
 		if PathStarts(syspath, fpath) {
-			cg.SetAll(true)
-			return
+			return true
 		}
 	}
 	for _, root := range prf.Roots {
 		if PathStarts(syspath, root) {
 			if isadmin {
-				cg.SetAll(true)
+				return true
 			} else {
-				cg = prf.ctgrshare
+				var cg = prf.ctgrshare
+				var grp = GetFileGroup(syspath)
+				return cg[grp]
 			}
-			return
 		}
 	}
-	return
+	return false
 }
 
 // PathAdmin returns whether profile has admin access to file path or category path.

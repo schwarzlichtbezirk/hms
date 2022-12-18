@@ -167,18 +167,27 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		case PUIDmap:
-			var n = cfg.RangeSearchAny
-			gpscache.Range(func(puid Puid_t, gps *GpsInfo) bool {
+			var n = 0
+			var vfiles []fs.FileInfo // verified file infos
+			var vpaths []string      // verified paths
+			gpscache.Range(func(puid Puid_t, gps GpsInfo) bool {
 				if fpath, ok := pathcache.GetDir(puid); ok {
-					if auth == prf || prf.IsShared(fpath) {
-						if prop, err := propcache.Get(fpath); err == nil {
-							ret.List = append(ret.List, prop)
-							n--
+					if !prf.IsHidden(fpath) {
+						if fi, _ := StatFile(fpath); fi != nil {
+							if prf.PathAccess(fpath, auth == prf) {
+								vfiles = append(vfiles, fi)
+								vpaths = append(vpaths, fpath)
+								n++
+							}
 						}
 					}
 				}
-				return n > 0
+				return cfg.RangeSearchAny <= 0 || n < cfg.RangeSearchAny
 			})
+			if ret.List, _, err = ScanFileInfoList(prf, session, vfiles, vpaths); err != nil {
+				WriteError500(w, r, err, AECfoldermap)
+				return
+			}
 		default:
 			WriteError(w, r, http.StatusNotFound, ErrNotCat, AECfoldernotcat)
 			return
@@ -245,19 +254,22 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			var prop any
+			var vfiles []fs.FileInfo // verified file infos
+			var vpaths []string      // verified paths
 			for _, track := range pl.Tracks {
 				var fpath = ToSlash(track.Location)
 				if !prf.IsHidden(fpath) {
-					var cg = prf.PathAccess(fpath, auth == prf)
-					var grp = GetFileGroup(fpath)
-					if cg[grp] {
-						if prop, err = propcache.Get(fpath); err == nil {
-							ret.List = append(ret.List, prop)
-							continue
+					if fi, _ := StatFile(fpath); fi != nil {
+						if prf.PathAccess(fpath, auth == prf) {
+							vfiles = append(vfiles, fi)
+							vpaths = append(vpaths, fpath)
 						}
 					}
 				}
+			}
+			if ret.List, _, err = ScanFileInfoList(prf, session, vfiles, vpaths); err != nil {
+				WriteError500(w, r, err, AECfoldertracks)
+				return
 			}
 			ret.Skip = len(pl.Tracks) - len(ret.List)
 		}

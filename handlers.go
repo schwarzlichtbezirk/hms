@@ -118,14 +118,13 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var cg = prf.PathAccess(syspath, auth == prf)
-	var grp = GetFileGroup(syspath)
-	if !cg[grp] {
+	if !prf.PathAccess(syspath, auth == prf) {
 		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECmediaaccess)
 		return
 	}
 
 	var val any
+	var grp = GetFileGroup(syspath)
 	if hd && grp == FGimage {
 		if val, err = hdcache.Get(puid); err != nil {
 			if errors.Is(err, fs.ErrNotExist) {
@@ -264,9 +263,7 @@ func etmbHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var cg = prf.PathAccess(syspath, auth == prf)
-	var grp = GetFileGroup(syspath)
-	if !cg[grp] {
+	if !prf.PathAccess(syspath, auth == prf) {
 		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECetmbaccess)
 		return
 	}
@@ -329,9 +326,7 @@ func mtmbHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var cg = prf.PathAccess(syspath, auth == prf)
-	var grp = GetFileGroup(syspath)
-	if !cg[grp] {
+	if !prf.PathAccess(syspath, auth == prf) {
 		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECmtmbaccess)
 		return
 	}
@@ -399,9 +394,7 @@ func tileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var cg = prf.PathAccess(syspath, auth == prf)
-	var grp = GetFileGroup(syspath)
-	if !cg[grp] {
+	if !prf.PathAccess(syspath, auth == prf) {
 		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECtileaccess)
 		return
 	}
@@ -489,8 +482,14 @@ func memusgAPI(w http.ResponseWriter, r *http.Request) {
 
 // APIHANDLER
 func cchinfAPI(w http.ResponseWriter, r *http.Request) {
-	var pathcount, _ = xormEngine.Where("puid > ?", PUIDcache-1).Count(&PathStore{})
-	var propcount = propcache.Len(false)
+	var session = xormEngine.NewSession()
+	defer session.Close()
+
+	var pathcount, _ = xormEngine.Count(&PathStore{})
+	var dircount, _ = session.Count(&DirStore{})
+	var exifcount, _ = session.Count(&ExifStore{})
+	var tagcount, _ = session.Count(&TagStore{})
+	var gpscount = gpscache.Count()
 
 	type stat struct {
 		size1 float64
@@ -524,8 +523,11 @@ func cchinfAPI(w http.ResponseWriter, r *http.Request) {
 	})
 
 	var ret = XmlMap{
-		"pathcchnum":  pathcount,
-		"propcchnum":  propcount,
+		"pathcount":   pathcount,
+		"dircount":    dircount,
+		"exifcount":   exifcount,
+		"tagcount":    tagcount,
+		"gpscount":    gpscount,
 		"tmbcchnum":   gif.num + png.num + jpg.num,
 		"tmbcchsize1": gif.size1 + png.size1 + jpg.size1,
 		"tmbcchsize2": gif.size2 + png.size2 + jpg.size2,
@@ -686,12 +688,12 @@ func propAPI(w http.ResponseWriter, r *http.Request) {
 	ret.Path = shrpath
 	ret.Name = path.Base(base)
 
-	var prop any
-	if prop, err = propcache.Get(syspath); err != nil {
-		WriteError(w, r, http.StatusNotFound, err, AECpropnoprop)
+	var fi fs.FileInfo
+	if fi, err = StatFile(syspath); err != nil {
+		WriteError500(w, r, err, AECpropbadstat)
 		return
 	}
-	ret.Prop = prop
+	ret.Prop = MakeProp(session, syspath, fi)
 
 	WriteOK(w, r, &ret)
 }
@@ -730,7 +732,8 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 
 	var fpath = ToSlash(arg.Path)
 	var syspath string
-	if ok, _ := PathExists(fpath); ok {
+	var fi fs.FileInfo
+	if fi, _ = StatFile(fpath); fi != nil {
 		syspath = path.Clean(fpath)
 		// append slash to disk root to prevent open current dir on this disk
 		if syspath[len(syspath)-1] == ':' { // syspath here is always have non zero length
@@ -741,7 +744,7 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 			WriteError400(w, r, err, AECispathbadpath)
 			return
 		}
-		if ok, _ := PathExists(syspath); !ok {
+		if fi, err = StatFile(syspath); err != nil {
 			WriteError(w, r, http.StatusNotFound, http.ErrMissingFile, AECispathmiss)
 			return
 		}
@@ -752,12 +755,9 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		return
 	}
 
-	var prop any
-	if prop, err = propcache.Get(syspath); err != nil {
-		var ptr *FileProp
-		prop = ptr // write "null" as reply
-	}
-	WriteOK(w, r, prop)
+	var fk FileKit
+	fk.Setup(session, syspath, fi)
+	WriteOK(w, r, &fk)
 }
 
 // APIHANDLER
@@ -888,7 +888,8 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var fpath = ToSlash(arg.Path)
 	var syspath string
 	var puid Puid_t
-	if ok, _ := PathExists(fpath); ok {
+	var fi fs.FileInfo
+	if fi, _ = StatFile(fpath); fi != nil {
 		syspath = path.Clean(fpath)
 		// append slash to disk root to prevent open current dir on this disk
 		if syspath[len(syspath)-1] == ':' { // syspath here is always have non zero length
@@ -900,7 +901,7 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 			WriteError400(w, r, err, AECdrvaddbadpath)
 			return
 		}
-		if ok, _ := PathExists(syspath); !ok {
+		if fi, err = StatFile(syspath); err != nil {
 			WriteError(w, r, http.StatusNotFound, http.ErrMissingFile, AECdrvaddmiss)
 			return
 		}
@@ -917,9 +918,11 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	}
 
 	var fk FileKit
+	fk.PUID = puid
 	fk.Name = path.Base(syspath)
 	fk.Type = FTdrv
-	fk.PUID = puid
+	fk.Size = fi.Size()
+	fk.Time = UnixJS(fi.ModTime())
 
 	prf.mux.Lock()
 	prf.Roots = append(prf.Roots, syspath)
@@ -1199,11 +1202,12 @@ func edtrenameAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	}
 
 	// get returned file properties at last
-	var prop any
-	if prop, err = propcache.Get(dstpath); err != nil {
-		WriteError500(w, r, err, AECedtrenprop)
+	var fi fs.FileInfo
+	if fi, err = StatFile(dstpath); err != nil {
+		WriteError500(w, r, err, AECedtrenstat)
 		return
 	}
+	var prop = MakeProp(session, dstpath, fi)
 
 	WriteOK(w, r, prop)
 }

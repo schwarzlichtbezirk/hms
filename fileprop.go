@@ -45,7 +45,7 @@ type FileProp struct {
 
 // Setup fills fields from fs.FileInfo structure. Do not looks for share.
 func (fp *FileProp) Setup(fi fs.FileInfo) {
-	fp.Name = path.Clean(fi.Name())
+	fp.Name = fi.Name()
 	fp.Type = FTfile
 	fp.Size = fi.Size()
 	fp.Time = UnixJS(fi.ModTime())
@@ -69,8 +69,8 @@ type FileKit struct {
 
 // Setup calls nested structures setups.
 func (fk *FileKit) Setup(session *Session, syspath string, fi fs.FileInfo) {
-	fk.FileProp.Setup(fi)
 	fk.PuidProp.Setup(session, syspath)
+	fk.FileProp.Setup(fi)
 	fk.TileProp, _ = tilecache.Peek(fk.PUID)
 }
 
@@ -135,23 +135,20 @@ type DirKit struct {
 }
 
 // Setup fills fields with given path. Do not looks for share.
-func (dk *DirKit) Setup(session *Session, syspath string) {
+func (dk *DirKit) Setup(session *Session, syspath string, fi fs.FileInfo) {
+	dk.PuidProp.Setup(session, syspath)
 	dk.Name = path.Base(syspath)
 	dk.Type = FTdir
-	dk.PuidProp.Setup(session, syspath)
-	if dp, ok := DirStoreGet(session, dk.PUID); ok {
-		dk.DirProp = dp
-	}
+	dk.Size = fi.Size()
+	dk.Time = UnixJS(fi.ModTime())
+	dk.DirProp, _ = DirStoreGet(session, dk.PUID)
 }
 
 // MakeProp is file properties factory.
-func MakeProp(syspath string, fi fs.FileInfo) any {
-	var session = xormEngine.NewSession()
-	defer session.Close()
-
+func MakeProp(session *Session, syspath string, fi fs.FileInfo) any {
 	if fi.IsDir() {
 		var dk DirKit
-		dk.Setup(session, syspath)
+		dk.Setup(session, syspath, fi)
 		return &dk
 	}
 	var ext = GetFileExt(syspath)

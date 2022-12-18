@@ -118,13 +118,15 @@ const (
 	AECfolderhidden
 	AECfolderaccess
 	AECfoldernoshr
-	AECfoldernotcat
 	AECfolderhome
 	AECfolderdrives
 	AECfoldershares
 	AECfoldermedia
-	AECfoldermapget
+	AECfoldermap
+	AECfoldernotcat
 	AECfolderstat
+	AECfolderabsent
+	AECfolderfail
 	AECfolderopen
 	AECfolderm3u
 	AECfolderwpl
@@ -132,8 +134,7 @@ const (
 	AECfolderasx
 	AECfolderxspf
 	AECfolderformat
-	AECfolderabsent
-	AECfolderfail
+	AECfoldertracks
 
 	// res/prop
 	AECpropnodata
@@ -141,7 +142,7 @@ const (
 	AECpropbadpath
 	AECprophidden
 	AECpropaccess
-	AECpropnoprop
+	AECpropbadstat
 
 	// res/ispath
 
@@ -221,7 +222,7 @@ const (
 	AECedtrennodest
 	AECedtrenover
 	AECedtrenmove
-	AECedtrenprop
+	AECedtrenstat
 
 	// edit/del
 
@@ -236,6 +237,8 @@ const (
 	AECgpsrangeshppoly
 	AECgpsrangeshprect
 	AECgpsrangeshpbad
+	AECgpsrangenoacc
+	AECgpsrangelist
 )
 
 // HTTP error messages
