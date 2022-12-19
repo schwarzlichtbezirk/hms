@@ -117,14 +117,14 @@ const (
 	AECfolderbadpath
 	AECfolderhidden
 	AECfolderaccess
+	AECfolderstat
 	AECfoldernoshr
 	AECfolderhome
 	AECfolderdrives
 	AECfoldershares
 	AECfoldermedia
 	AECfoldermap
-	AECfoldernotcat
-	AECfolderstat
+	AECfoldernocat
 	AECfolderabsent
 	AECfolderfail
 	AECfolderopen
@@ -261,7 +261,7 @@ var (
 	ErrNotShared = errors.New("access to specified resource does not shared")
 	ErrHidden    = errors.New("access to specified file path is disabled")
 	ErrNoAccess  = errors.New("profile has no access to specified file path")
-	ErrNotCat    = errors.New("only categories can be accepted")
+	ErrNoCat     = errors.New("specified category does not found")
 	ErrNotPlay   = errors.New("file can not be read as playlist")
 	ErrFileOver  = errors.New("to many files with same names contains")
 	ErrShapeCirc = errors.New("circle must contains 1 coordinates point")

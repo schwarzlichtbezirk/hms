@@ -123,10 +123,10 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var val any
 	var grp = GetFileGroup(syspath)
 	if hd && grp == FGimage {
-		if val, err = hdcache.Get(puid); err != nil {
+		var md MediaData
+		if md, err = HdCacheGet(session, puid); err != nil {
 			if errors.Is(err, fs.ErrNotExist) {
 				WriteError(w, r, http.StatusGone, err, AECmediahdgone)
 				return
@@ -136,9 +136,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		} else {
-			var md *MediaData
-			var ok bool
-			if md, ok = val.(*MediaData); !ok || md == nil {
+			if md.Mime == MimeNil {
 				WriteError500(w, r, ErrBadMedia, AECmediahdnocnt)
 				return
 			}
@@ -160,7 +158,8 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if media && grp == FGimage {
-		if val, err = mediacache.Get(puid); err != nil {
+		var md MediaData
+		if md, err = MediaCacheGet(session, puid); err != nil {
 			if errors.Is(err, fs.ErrNotExist) {
 				WriteError(w, r, http.StatusGone, err, AECmediamedgone)
 				return
@@ -170,9 +169,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		} else {
-			var md *MediaData
-			var ok bool
-			if md, ok = val.(*MediaData); !ok || md == nil {
+			if md.Mime == MimeNil {
 				WriteError500(w, r, ErrBadMedia, AECmediamednocnt)
 				return
 			}
@@ -485,7 +482,8 @@ func cchinfAPI(w http.ResponseWriter, r *http.Request) {
 	var session = xormEngine.NewSession()
 	defer session.Close()
 
-	var pathcount, _ = xormEngine.Count(&PathStore{})
+	var pathcount, _ = session.Count(&PathStore{})
+	var filecount, _ = session.Count(&FileStore{})
 	var dircount, _ = session.Count(&DirStore{})
 	var exifcount, _ = session.Count(&ExifStore{})
 	var tagcount, _ = session.Count(&TagStore{})
@@ -524,6 +522,7 @@ func cchinfAPI(w http.ResponseWriter, r *http.Request) {
 
 	var ret = XmlMap{
 		"pathcount":   pathcount,
+		"filecount":   filecount,
 		"dircount":    dircount,
 		"exifcount":   exifcount,
 		"tagcount":    tagcount,

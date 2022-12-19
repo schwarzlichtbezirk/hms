@@ -147,12 +147,10 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 	var dpmap = map[Puid_t]DirProp{}
 	var idds []Puid_t
 	for _, fs := range vfs {
-		if fs.Prop.Type != FTfile {
-			if dp, ok := dircache.Get(fs.Puid); ok {
-				dpmap[fs.Puid] = dp
-			} else {
-				idds = append(idds, fs.Puid)
-			}
+		if dp, ok := dircache.Get(fs.Puid); ok {
+			dpmap[fs.Puid] = dp
+		} else { // get directories, ISO-files and playlists as folder properties
+			idds = append(idds, fs.Puid)
 		}
 	}
 	if len(idds) > 0 {
@@ -201,7 +199,7 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 // or directory in iso-disk.
 func ScanDir(prf *Profile, session *Session, dir string, cg *CatGrp) (ret []any, skip int, err error) {
 	var files []fs.FileInfo
-	if files, err = OpenDir(dir); err != nil && len(files) == 0 {
+	if files, err = ReadDir(dir); err != nil && len(files) == 0 {
 		return
 	}
 

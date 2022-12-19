@@ -311,4 +311,13 @@ func IsTypePlaylist(ext string) bool {
 	return false
 }
 
+// IsTypeISO checks that file extension is ISO-disk.
+func IsTypeISO(ext string) bool {
+	switch ext {
+	case ".iso":
+		return true
+	}
+	return false
+}
+
 // The End.

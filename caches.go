@@ -8,7 +8,6 @@ import (
 	"io"
 	"os"
 	"path"
-	"strings"
 	"sync"
 	"time"
 
@@ -26,14 +25,6 @@ import (
 var (
 	// Public keys cache for authorization.
 	pubkeycache gcache.Cache
-
-	// Converted media files cache.
-	// Key - path unique ID, value - media file in MediaData.
-	mediacache gcache.Cache
-
-	// Photos compressed to HD resolution.
-	// Key - path unique ID, value - media file in MediaData.
-	hdcache gcache.Cache
 
 	// Opened disks cache.
 	// Key - ISO image system path, value - disk data.
@@ -116,6 +107,9 @@ var (
 
 	tmbcache  = NewCache[Puid_t, MediaData]() // FIFO cache with files embedded thumbnails.
 	tilecache = NewCache[Puid_t, TileProp]()  // FIFO cache with set of available tiles.
+
+	mediacache = NewCache[Puid_t, MediaData]() // FIFO cache with processed media files.
+	hdcache    = NewCache[Puid_t, MediaData]() // FIFO cache with converted to HD resolution images.
 )
 
 // PathStorePUID returns cached PUID for specified system path.
@@ -357,134 +351,137 @@ func (gc *GpsCache) Range(f func(Puid_t, GpsInfo) bool) {
 
 var gpscache GpsCache
 
+func MediaCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
+	var ok bool
+	if md, ok = mediacache.Peek(puid); ok {
+		return
+	}
+
+	var syspath string
+	if syspath, ok = PathStorePath(session, puid); !ok {
+		err = ErrNoPUID
+		return // file path not found
+	}
+
+	var ext = GetFileExt(syspath)
+	switch {
+	case IsTypeNativeImg(ext):
+		err = ErrUncacheable
+		return // uncacheable type
+	case IsTypeNonalpha(ext):
+	case IsTypeAlpha(ext):
+	default:
+		err = ErrUncacheable
+		return // uncacheable type
+	}
+
+	var file io.ReadCloser
+	if file, err = OpenFile(syspath); err != nil {
+		return // can not open file
+	}
+	defer file.Close()
+
+	var ftype string
+	var src image.Image
+	if src, ftype, err = image.Decode(file); err != nil {
+		if src == nil { // skip "short Huffman data" or others errors with partial results
+			return // can not decode file by any codec
+		}
+	}
+
+	md, err = ToNativeImg(src, ftype)
+	mediacache.Push(puid, md)
+	mediacache.ToLimit(cfg.MediaCacheMaxNum)
+	return
+}
+
+func HdCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
+	var ok bool
+	if md, ok = hdcache.Peek(puid); ok {
+		return
+	}
+
+	var syspath string
+	if syspath, ok = PathStorePath(session, puid); !ok {
+		err = ErrNoPUID
+		return // file path not found
+	}
+
+	var orientation = OrientNormal
+	if ep, ok := ExifStoreGet(session, puid); ok { // skip non-EXIF properties
+		if ep.Orientation > 0 {
+			orientation = ep.Orientation
+		}
+		if ep.Width > 0 && ep.Height > 0 {
+			var wdh, hgt int
+			if ep.Width > ep.Height {
+				wdh, hgt = cfg.HDResolution[0], cfg.HDResolution[1]
+			} else {
+				wdh, hgt = cfg.HDResolution[1], cfg.HDResolution[0]
+			}
+			if ep.Width <= wdh && ep.Height <= hgt {
+				err = ErrNotHD
+				return // does not fit to HD
+			}
+		}
+	}
+
+	var file io.ReadCloser
+	if file, err = OpenFile(syspath); err != nil {
+		return // can not open file
+	}
+	defer file.Close()
+
+	var ftype string
+	var src, dst image.Image
+	if src, ftype, err = image.Decode(file); err != nil {
+		if src == nil { // skip "short Huffman data" or others errors with partial results
+			return // can not decode file by any codec
+		}
+	}
+
+	var wdh, hgt int
+	if src.Bounds().Dx() > src.Bounds().Dy() {
+		wdh, hgt = cfg.HDResolution[0], cfg.HDResolution[1]
+	} else {
+		wdh, hgt = cfg.HDResolution[1], cfg.HDResolution[0]
+	}
+
+	if src.Bounds().In(image.Rect(0, 0, wdh, hgt)) {
+		err = ErrNotHD
+		return // does not fit to HD
+	}
+
+	var fltlst = AddOrientFilter([]gift.Filter{
+		gift.ResizeToFit(wdh, hgt, gift.LinearResampling),
+	}, orientation)
+	var filter = gift.New(fltlst...)
+	var img = image.NewRGBA(filter.Bounds(src.Bounds()))
+	if img.Pix == nil {
+		err = ErrImgNil
+		return // out of memory
+	}
+	filter.Draw(img, src)
+	dst = img
+
+	md, err = ToNativeImg(dst, ftype)
+	hdcache.Push(puid, md)
+	hdcache.ToLimit(cfg.MediaCacheMaxNum)
+	return
+}
+
 // InitCaches prepares caches depends of previously loaded configuration.
 func InitCaches() {
 	// init public keys cache
 	pubkeycache = gcache.New(10).LRU().Expiration(15 * time.Second).Build()
 
-	// init converted media files cache
-	mediacache = gcache.New(cfg.MediaCacheMaxNum).
-		LRU().
-		LoaderFunc(func(key any) (ret any, err error) {
-			var syspath, ok = pathcache.GetDir(key.(Puid_t))
-			if !ok {
-				err = ErrNoPUID
-				return // file path not found
-			}
-
-			var ext = GetFileExt(syspath)
-			switch {
-			case IsTypeNativeImg(ext):
-				err = ErrUncacheable
-				return // uncacheable type
-			case IsTypeNonalpha(ext):
-			case IsTypeAlpha(ext):
-			default:
-				err = ErrUncacheable
-				return // uncacheable type
-			}
-
-			var file io.ReadCloser
-			if file, err = OpenFile(syspath); err != nil {
-				return // can not open file
-			}
-			defer file.Close()
-
-			var ftype string
-			var src image.Image
-			if src, ftype, err = image.Decode(file); err != nil {
-				if src == nil { // skip "short Huffman data" or others errors with partial results
-					return // can not decode file by any codec
-				}
-			}
-
-			ret, err = ToNativeImg(src, ftype)
-			return
-		}).
-		Build()
-
-	// init converted media files cache
-	hdcache = gcache.New(cfg.MediaCacheMaxNum).
-		LRU().
-		LoaderFunc(func(key any) (ret any, err error) {
-			var session = xormEngine.NewSession()
-			defer session.Close()
-
-			var puid = key.(Puid_t)
-			var syspath, ok = pathcache.GetDir(puid)
-			if !ok {
-				err = ErrNoPUID
-				return // file path not found
-			}
-
-			var orientation = OrientNormal
-			if ep, ok := ExifStoreGet(session, puid); ok { // skip non-EXIF properties
-				if ep.Orientation > 0 {
-					orientation = ep.Orientation
-				}
-				if ep.Width > 0 && ep.Height > 0 {
-					var wdh, hgt int
-					if ep.Width > ep.Height {
-						wdh, hgt = cfg.HDResolution[0], cfg.HDResolution[1]
-					} else {
-						wdh, hgt = cfg.HDResolution[1], cfg.HDResolution[0]
-					}
-					if ep.Width <= wdh && ep.Height <= hgt {
-						err = ErrNotHD
-						return // does not fit to HD
-					}
-				}
-			}
-
-			var file io.ReadCloser
-			if file, err = OpenFile(syspath); err != nil {
-				return // can not open file
-			}
-			defer file.Close()
-
-			var ftype string
-			var src, dst image.Image
-			if src, ftype, err = image.Decode(file); err != nil {
-				if src == nil { // skip "short Huffman data" or others errors with partial results
-					return // can not decode file by any codec
-				}
-			}
-
-			var wdh, hgt int
-			if src.Bounds().Dx() > src.Bounds().Dy() {
-				wdh, hgt = cfg.HDResolution[0], cfg.HDResolution[1]
-			} else {
-				wdh, hgt = cfg.HDResolution[1], cfg.HDResolution[0]
-			}
-
-			if src.Bounds().In(image.Rect(0, 0, wdh, hgt)) {
-				err = ErrNotHD
-				return // does not fit to HD
-			}
-
-			var fltlst = AddOrientFilter([]gift.Filter{
-				gift.ResizeToFit(wdh, hgt, gift.LinearResampling),
-			}, orientation)
-			var filter = gift.New(fltlst...)
-			var img = image.NewRGBA(filter.Bounds(src.Bounds()))
-			if img.Pix == nil {
-				err = ErrImgNil
-				return // out of memory
-			}
-			filter.Draw(img, src)
-			dst = img
-
-			return ToNativeImg(dst, ftype)
-		}).
-		Build()
-
 	diskcache = gcache.New(0).
 		Simple().
 		Expiration(cfg.DiskCacheExpire).
 		LoaderFunc(func(key any) (ret any, err error) {
-			var ext = strings.ToLower(path.Ext(key.(string)))
+			var ext = GetFileExt(key.(string))
 			if ext == ".iso" {
-				return NewDiskISO(key.(string))
+				return NewDiskFS(key.(string))
 			}
 			err = ErrNotDisk
 			return
