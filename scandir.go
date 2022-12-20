@@ -169,21 +169,19 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 	/////////////////////
 
 	for i, fs := range vfs {
-		if fs.Prop.Type != FTfile {
+		if dp, ok := dpmap[fs.Puid]; ok {
 			var dk DirKit
-			dk.FileProp = fs.Prop
 			dk.PUID = fs.Puid
-			if dp, ok := dpmap[fs.Puid]; ok {
-				dk.DirProp = dp
-			}
+			dk.FileProp = fs.Prop
+			dk.DirProp = dp
 			if vfiles[i] == nil && dk.Type != FTctgr {
 				dk.Latency = -1
 			}
 			ret = append(ret, &dk)
 		} else {
 			var fk FileKit
-			fk.FileProp = fs.Prop
 			fk.PUID = fs.Puid
+			fk.FileProp = fs.Prop
 			fk.TileProp, _ = tilecache.Peek(fs.Puid)
 			ret = append(ret, &fk)
 		}

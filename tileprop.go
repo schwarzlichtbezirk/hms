@@ -39,8 +39,22 @@ var MimeVal = map[string]Mime_t{
 	"image/webp": MimeWebp,
 }
 
-func GetMimeVal(str string) Mime_t {
-	if mime, ok := MimeVal[str]; ok {
+var MimeExt = map[string]Mime_t{
+	"gif":  MimeGif,
+	"png":  MimePng,
+	"jpg":  MimeJpeg,
+	"jpeg": MimeJpeg,
+	"webp": MimeWebp,
+}
+
+func GetMimeVal(mime, ext string) Mime_t {
+	if mime, ok := MimeVal[mime]; ok {
+		return mime
+	}
+	if mime, ok := MimeExt[strings.ToLower(ext)]; ok {
+		return mime
+	}
+	if mime, ok := MimeExt[strings.ToLower(mime)]; ok {
 		return mime
 	}
 	return MimeUnk
@@ -118,7 +132,7 @@ func CachedThumbMime(syspath string) Mime_t {
 	if ts, ok := thumbpkg.Tagset(syspath); ok {
 		if str, ok := ts.TagStr(wpk.TIDmime); ok {
 			if strings.HasPrefix(str, "image/") {
-				return GetMimeVal(str)
+				return MimeVal[str]
 			} else {
 				return MimeDis
 			}
@@ -137,7 +151,7 @@ func CachedTileMime(syspath string, tm TM_t) Mime_t {
 	if ts, ok := tilespkg.Tagset(tilepath); ok {
 		if str, ok := ts.TagStr(wpk.TIDmime); ok {
 			if strings.HasPrefix(str, "image/") {
-				return GetMimeVal(str)
+				return MimeVal[str]
 			} else {
 				return MimeDis
 			}

@@ -335,7 +335,11 @@ func Shutdown() {
 	})
 
 	wg.Go(func() (err error) {
-		diskcache.Purge()
+		diskcache.Enum(func(fpath string, cell ExpireCell[DiskFS]) bool {
+			cell.Wait.Stop()
+			cell.Data.Close()
+			return true
+		})
 		return
 	})
 

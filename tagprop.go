@@ -89,7 +89,7 @@ func ExtractThumbID3(syspath string) (md MediaData, err error) {
 	}
 
 	md.Data = pic.Data
-	md.Mime = GetMimeVal(pic.MIMEType)
+	md.Mime = GetMimeVal(pic.MIMEType, pic.Ext)
 	return
 }
 

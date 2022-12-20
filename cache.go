@@ -101,6 +101,24 @@ func (c *Cache[K, T]) Set(key K, val T) {
 	}
 }
 
+func (c *Cache[K, T]) Remove(key K) (ok bool) {
+	var n int
+
+	c.mux.Lock()
+	defer c.mux.Unlock()
+
+	n, ok = c.m[key]
+	if ok {
+		delete(c.m, key)
+		copy(c.s[n:], c.s[n+1:])
+		c.s = c.s[:len(c.s)-1]
+		for i := n; i < len(c.s); i++ {
+			c.m[c.s[i].key] = i
+		}
+	}
+	return
+}
+
 func (c *Cache[K, T]) Enum(f func(K, T) bool) {
 	var s = make([]kvcell[K, T], len(c.s))
 	c.mux.Lock()

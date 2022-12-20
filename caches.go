@@ -25,10 +25,6 @@ import (
 var (
 	// Public keys cache for authorization.
 	pubkeycache gcache.Cache
-
-	// Opened disks cache.
-	// Key - ISO image system path, value - disk data.
-	diskcache gcache.Cache
 )
 
 // package caches
@@ -79,6 +75,11 @@ func SqlSession(f func(*Session) (any, error)) (any, error) {
 	return f(session)
 }
 
+type ExpireCell[T any] struct {
+	Data *T
+	Wait *time.Timer
+}
+
 // PathStore sqlite3 item of unlimited cache with puid/syspath values.
 type PathStore struct {
 	Puid Puid_t `xorm:"pk autoincr"`
@@ -110,6 +111,7 @@ var (
 
 	mediacache = NewCache[Puid_t, MediaData]() // FIFO cache with processed media files.
 	hdcache    = NewCache[Puid_t, MediaData]() // FIFO cache with converted to HD resolution images.
+	diskcache  = NewCache[string, ExpireCell[DiskFS]]()
 )
 
 // PathStorePUID returns cached PUID for specified system path.
@@ -315,6 +317,7 @@ type GpsInfo struct {
 	Altitude  float32 `json:"alt,omitempty" yaml:"alt,omitempty" xml:"alt,omitempty,attr"`
 }
 
+// FromProp fills fields with values from ExifProp.
 func (gi *GpsInfo) FromProp(ep *ExifProp) {
 	gi.DateTime = ep.DateTime
 	gi.Latitude = ep.Latitude
@@ -351,6 +354,8 @@ func (gc *GpsCache) Range(f func(Puid_t, GpsInfo) bool) {
 
 var gpscache GpsCache
 
+// MediaCacheGet returns media file with given PUID converted to acceptable
+// for browser format, with media cache usage.
 func MediaCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 	var ok bool
 	if md, ok = mediacache.Peek(puid); ok {
@@ -395,6 +400,8 @@ func MediaCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 	return
 }
 
+// HdCacheGet returns image with given PUID converted to HD resolution,
+// with HD-images cache usage.
 func HdCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 	var ok bool
 	if md, ok = hdcache.Peek(puid); ok {
@@ -470,29 +477,37 @@ func HdCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 	return
 }
 
+func DiskCacheGet(syspath string) (disk *DiskFS, err error) {
+	var cell ExpireCell[DiskFS]
+	var ok bool
+
+	if cell, ok = diskcache.Get(syspath); ok {
+		cell.Wait.Reset(cfg.DiskCacheExpire)
+		disk = cell.Data
+		return
+	}
+	var ext = GetFileExt(syspath)
+	if !IsTypeISO(ext) {
+		err = ErrNotDisk
+		return
+	}
+	if disk, err = NewDiskFS(syspath); err != nil {
+		return
+	}
+
+	cell.Data = disk
+	cell.Wait = time.AfterFunc(cfg.DiskCacheExpire, func() {
+		diskcache.Remove(syspath)
+		cell.Data.Close()
+	})
+	diskcache.Set(syspath, cell)
+	return
+}
+
 // InitCaches prepares caches depends of previously loaded configuration.
 func InitCaches() {
 	// init public keys cache
 	pubkeycache = gcache.New(10).LRU().Expiration(15 * time.Second).Build()
-
-	diskcache = gcache.New(0).
-		Simple().
-		Expiration(cfg.DiskCacheExpire).
-		LoaderFunc(func(key any) (ret any, err error) {
-			var ext = GetFileExt(key.(string))
-			if ext == ".iso" {
-				return NewDiskFS(key.(string))
-			}
-			err = ErrNotDisk
-			return
-		}).
-		EvictedFunc(func(_, value any) {
-			value.(io.Closer).Close()
-		}).
-		PurgeVisitorFunc(func(_, value any) {
-			value.(io.Closer).Close()
-		}).
-		Build()
 }
 
 const (

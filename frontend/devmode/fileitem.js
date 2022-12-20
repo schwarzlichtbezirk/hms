@@ -40,6 +40,9 @@ const filehint = file => {
 	}
 	// Dir properties
 	if (file.fgrp) {
+		if (file.fgrp.dir) {
+			lst.push(['directories', file.fgrp.dir]);
+		}
 		if (file.fgrp.video) {
 			lst.push(['video', file.fgrp.video]);
 		}
@@ -60,9 +63,6 @@ const filehint = file => {
 		}
 		if (file.fgrp.other) {
 			lst.push(['other', file.fgrp.other]);
-		}
-		if (file.fgrp.dir) {
-			lst.push(['directories', file.fgrp.dir]);
 		}
 	}
 	return lst;

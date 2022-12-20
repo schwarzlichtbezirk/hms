@@ -8,7 +8,7 @@ import (
 	"path"
 	"sync"
 
-	diskfs "github.com/diskfs/go-diskfs"
+	"github.com/diskfs/go-diskfs"
 	"github.com/diskfs/go-diskfs/disk"
 	"github.com/diskfs/go-diskfs/filesystem"
 	"github.com/diskfs/go-diskfs/filesystem/iso9660"
@@ -32,6 +32,7 @@ func NewDiskFS(fpath string) (d *DiskFS, err error) {
 	}
 	d.file = disk.File
 	if d.fs, err = disk.GetFilesystem(0); err != nil { // assuming it is the whole disk, so partition = 0
+		disk.File.Close()
 		return
 	}
 	return
@@ -58,8 +59,11 @@ func (d *DiskFS) OpenFile(fpath string) (r io.ReadSeekCloser, err error) {
 	d.mux.Lock()
 	defer d.mux.Unlock()
 
-	var enc = charmap.Windows1251.NewEncoder()
-	fpath, _ = enc.String(fpath)
+	var _, isiso = d.fs.(*iso9660.FileSystem)
+	if isiso {
+		var enc = charmap.Windows1251.NewEncoder()
+		fpath, _ = enc.String(fpath)
+	}
 
 	var file filesystem.File
 	if file, err = d.fs.OpenFile(fpath, os.O_RDONLY); err != nil {
@@ -101,53 +105,64 @@ func OpenFile(syspath string) (r io.ReadSeekCloser, err error) {
 	}
 	file.Close()
 
-	var dv any
-	if dv, operr = diskcache.Get(basepath); operr != nil {
-		if !errors.Is(operr, ErrNotDisk) {
-			err = operr
-		}
-		return
-	}
-	if err = diskcache.Set(basepath, dv); err != nil { // update expiration time
+	var disk *DiskFS
+	if disk, err = DiskCacheGet(basepath); err != nil {
 		return
 	}
 
 	var diskpath = syspath[len(basepath):]
-	switch disk := dv.(type) {
-	case *DiskFS:
-		return disk.OpenFile(diskpath)
-	}
-	panic("not released disk type present")
+	return disk.OpenFile(diskpath)
 }
 
 // StatFile returns fs.FileInfo of file in file system, or file nested in disk image.
 func StatFile(syspath string) (fi fs.FileInfo, err error) {
-	var file io.ReadSeekCloser
-	if file, err = OpenFile(syspath); err != nil {
-		return // can not open file
-	}
-	defer file.Close()
-
-	switch file := file.(type) {
-	case *os.File:
+	var file *os.File
+	if file, err = os.Open(syspath); err == nil { // primary filesystem file
+		defer file.Close()
 		return file.Stat()
-	case filesystem.File:
-		switch df := file.(type) {
-		case *iso9660.File:
-			return &FileInfoISO{df}, nil
-		default:
-			panic("not released disk type present")
-		}
-	case *nopCloserReadSeek:
-		switch df := file.ReadSeeker.(type) {
-		case *iso9660.File:
-			return &FileInfoISO{df}, nil
-		default:
-			panic("not released disk type present")
-		}
-	default:
-		panic("not released disk type present")
 	}
+
+	// looking for nested file
+	var basepath = syspath
+	var operr = err
+	for errors.Is(operr, fs.ErrNotExist) && basepath != "." && basepath != "/" {
+		basepath = path.Dir(basepath)
+		file, operr = os.Open(basepath)
+	}
+	if operr != nil {
+		err = operr
+		return
+	}
+	file.Close()
+
+	var disk *DiskFS
+	if disk, err = DiskCacheGet(basepath); err != nil {
+		return
+	}
+
+	var diskpath = syspath[len(basepath):]
+	var _, isiso = disk.fs.(*iso9660.FileSystem)
+	if isiso {
+		var enc = charmap.Windows1251.NewEncoder()
+		diskpath, _ = enc.String(diskpath)
+	}
+
+	var list []fs.FileInfo
+	if list, err = disk.fs.ReadDir(path.Dir(diskpath)); err != nil {
+		return
+	}
+
+	var finame = path.Base(diskpath)
+	for _, fi = range list {
+		if fi.Name() == finame {
+			if isiso {
+				return &FileInfoISO{fi}, nil
+			} else {
+				return fi, nil
+			}
+		}
+	}
+	return nil, ErrNotFound
 }
 
 // ReadDir returns directory files fs.FileInfo list. It scan file system path,
@@ -179,14 +194,8 @@ func ReadDir(dir string) (ret []fs.FileInfo, err error) {
 	}
 	file.Close()
 
-	var dv any
-	if dv, operr = diskcache.Get(basepath); operr != nil {
-		if !errors.Is(operr, ErrNotDisk) {
-			err = operr
-		}
-		return
-	}
-	if err = diskcache.Set(basepath, dv); err != nil { // update expiration time
+	var disk *DiskFS
+	if disk, err = DiskCacheGet(basepath); err != nil {
 		return
 	}
 
@@ -196,19 +205,20 @@ func ReadDir(dir string) (ret []fs.FileInfo, err error) {
 	} else {
 		diskpath = dir[len(basepath):]
 	}
-	switch disk := dv.(type) {
-	case *DiskFS:
+	var _, isiso = disk.fs.(*iso9660.FileSystem)
+	if isiso {
 		var enc = charmap.Windows1251.NewEncoder()
 		diskpath, _ = enc.String(diskpath)
-		if ret, err = disk.fs.ReadDir(diskpath); err != nil {
-			return
-		}
+	}
+	if ret, err = disk.fs.ReadDir(diskpath); err != nil {
+		return
+	}
+	if isiso {
 		for i, fi := range ret {
 			ret[i] = &FileInfoISO{fi}
 		}
-		return
 	}
-	panic("not released disk type present")
+	return
 }
 
 // The End.

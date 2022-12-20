@@ -121,8 +121,6 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 	ret.Path = shrpath
 	ret.Name = path.Base(base)
 
-	//StatFile(syspath)
-
 	var ft FT_t
 	if fp, ok := FileStoreGet(session, puid); ok {
 		ft = fp.Type
@@ -145,12 +143,14 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 		switch puid {
 		case PUIDhome:
 			var vfiles []string
-			for puid, fpath := range CatKeyPath {
+			for puid := Puid_t(1); puid < PUIDcache; puid++ {
 				if puid == PUIDhome {
 					continue
 				}
-				if auth == prf || prf.IsShared(fpath) {
-					vfiles = append(vfiles, fpath)
+				if fpath, ok := CatKeyPath[puid]; ok {
+					if auth == prf || prf.IsShared(fpath) {
+						vfiles = append(vfiles, fpath)
+					}
 				}
 			}
 			var lstp DirProp
