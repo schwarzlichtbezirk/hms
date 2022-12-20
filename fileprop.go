@@ -71,7 +71,9 @@ type FileKit struct {
 func (fk *FileKit) Setup(session *Session, syspath string, fi fs.FileInfo) {
 	fk.PuidProp.Setup(session, syspath)
 	fk.FileProp.Setup(fi)
-	fk.TileProp, _ = tilecache.Peek(fk.PUID)
+	if tp, ok := tilecache.Peek(fk.PUID); ok {
+		fk.TileProp = *tp
+	}
 }
 
 type FileGroup struct {

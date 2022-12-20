@@ -106,7 +106,9 @@ type TagKit struct {
 func (tk *TagKit) Setup(session *Session, syspath string, fi fs.FileInfo) {
 	tk.PuidProp.Setup(session, syspath)
 	tk.FileProp.Setup(fi)
-	tk.TileProp, _ = tilecache.Peek(tk.PUID)
+	if tp, ok := tilecache.Peek(tk.PUID); ok {
+		tk.TileProp = *tp
+	}
 	tk.TagProp, _ = TagStoreGet(session, tk.PUID)
 }
 

@@ -21,11 +21,15 @@ func (fpath EmbedPath) Cache() {
 	defer session.Close()
 
 	var puid = PathStoreCache(session, string(fpath))
-	var tp, _ = tilecache.Peek(puid)
 	var err error
 	var md MediaData
 	if md, err = ExtractThmub(session, string(fpath)); err != nil {
 		md.Mime = MimeDis
+	}
+
+	var tp, ok = tilecache.Peek(puid)
+	if !ok {
+		tp = &TileProp{}
 	}
 	tp.SetTile(tme, md.Mime)
 	tilecache.Push(puid, tp)
@@ -40,11 +44,15 @@ func (fpath ThumbPath) Cache() {
 	defer session.Close()
 
 	var puid = PathStoreCache(session, string(fpath))
-	var tp, _ = tilecache.Peek(puid)
 	var err error
 	var md MediaData
 	if md, err = CacheThumb(session, string(fpath)); err != nil {
 		md.Mime = MimeDis
+	}
+
+	var tp, ok = tilecache.Peek(puid)
+	if !ok {
+		tp = &TileProp{}
 	}
 	tp.SetTile(tm0, md.Mime)
 	tilecache.Push(puid, tp)
@@ -63,11 +71,15 @@ func (tile TilePath) Cache() {
 	defer session.Close()
 
 	var puid = PathStoreCache(session, tile.Path)
-	var tp, _ = tilecache.Peek(puid)
 	var err error
 	var md MediaData
 	if md, err = CacheTile(session, tile.Path, tile.Wdh, tile.Hgt); err != nil {
 		md.Mime = MimeDis
+	}
+
+	var tp, ok = tilecache.Peek(puid)
+	if !ok {
+		tp = &TileProp{}
 	}
 	var tm = TM_t(tile.Wdh / htcell)
 	tp.SetTile(tm, md.Mime)

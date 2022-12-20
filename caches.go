@@ -107,11 +107,12 @@ var (
 	tagcache  = NewCache[Puid_t, TagProp]()  // FIFO cache for ID3 tags.
 
 	tmbcache  = NewCache[Puid_t, MediaData]() // FIFO cache with files embedded thumbnails.
-	tilecache = NewCache[Puid_t, TileProp]()  // FIFO cache with set of available tiles.
+	tilecache = NewCache[Puid_t, *TileProp]() // FIFO cache with set of available tiles.
 
 	mediacache = NewCache[Puid_t, MediaData]() // FIFO cache with processed media files.
 	hdcache    = NewCache[Puid_t, MediaData]() // FIFO cache with converted to HD resolution images.
-	diskcache  = NewCache[string, ExpireCell[DiskFS]]()
+
+	diskcache = NewCache[string, ExpireCell[DiskFS]]() // LRU cache with temporary opened ISO disks.
 )
 
 // PathStorePUID returns cached PUID for specified system path.

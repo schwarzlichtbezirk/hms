@@ -182,7 +182,9 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 			var fk FileKit
 			fk.PUID = fs.Puid
 			fk.FileProp = fs.Prop
-			fk.TileProp, _ = tilecache.Peek(fs.Puid)
+			if tp, ok := tilecache.Peek(fk.PUID); ok {
+				fk.TileProp = *tp
+			}
 			ret = append(ret, &fk)
 		}
 	}

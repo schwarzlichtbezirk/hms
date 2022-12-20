@@ -216,7 +216,9 @@ type ExifKit struct {
 func (ek *ExifKit) Setup(session *Session, syspath string, fi fs.FileInfo) {
 	ek.PuidProp.Setup(session, syspath)
 	ek.FileProp.Setup(fi)
-	ek.TileProp, _ = tilecache.Peek(ek.PUID)
+	if tp, ok := tilecache.Peek(ek.PUID); ok {
+		ek.TileProp = *tp
+	}
 	ek.ExifProp, _ = ExifStoreGet(session, ek.PUID)
 }
 
