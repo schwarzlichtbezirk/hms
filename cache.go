@@ -5,13 +5,14 @@ import (
 )
 
 type kvcell[K comparable, T any] struct {
-	key   K
-	value T
+	key K
+	val T
 }
 
 type Cache[K comparable, T any] struct {
 	s   []kvcell[K, T]
 	m   map[K]int
+	ef  func(K, T)
 	mux sync.Mutex
 }
 
@@ -19,6 +20,12 @@ func NewCache[K comparable, T any]() *Cache[K, T] {
 	return &Cache[K, T]{
 		m: map[K]int{},
 	}
+}
+
+func (c *Cache[K, T]) OnRemove(ef func(K, T)) {
+	c.mux.Lock()
+	defer c.mux.Unlock()
+	c.ef = ef
 }
 
 func (c *Cache[K, T]) Len() int {
@@ -39,7 +46,7 @@ func (c *Cache[K, T]) Peek(key K) (ret T, ok bool) {
 	defer c.mux.Unlock()
 	var n int
 	if n, ok = c.m[key]; ok {
-		ret = c.s[n].value
+		ret = c.s[n].val
 	}
 	return
 }
@@ -53,7 +60,7 @@ func (c *Cache[K, T]) Get(key K) (ret T, ok bool) {
 	n, ok = c.m[key]
 	if ok {
 		var cell = c.s[n]
-		ret = cell.value
+		ret = cell.val
 		copy(c.s[n:], c.s[n+1:])
 		c.s[len(c.s)-1] = cell
 		for i := n; i < len(c.s); i++ {
@@ -69,12 +76,12 @@ func (c *Cache[K, T]) Push(key K, val T) {
 
 	var n, ok = c.m[key]
 	if ok {
-		c.s[n].value = val
+		c.s[n].val = val
 	} else {
 		c.m[key] = len(c.s)
 		c.s = append(c.s, kvcell[K, T]{
-			key:   key,
-			value: val,
+			key: key,
+			val: val,
 		})
 	}
 }
@@ -86,7 +93,7 @@ func (c *Cache[K, T]) Set(key K, val T) {
 	var n, ok = c.m[key]
 	if ok {
 		var cell = c.s[n]
-		cell.value = val
+		cell.val = val
 		copy(c.s[n:], c.s[n+1:])
 		c.s[len(c.s)-1] = cell
 		for i := n; i < len(c.s); i++ {
@@ -95,8 +102,8 @@ func (c *Cache[K, T]) Set(key K, val T) {
 	} else {
 		c.m[key] = len(c.s)
 		c.s = append(c.s, kvcell[K, T]{
-			key:   key,
-			value: val,
+			key: key,
+			val: val,
 		})
 	}
 }
@@ -109,6 +116,10 @@ func (c *Cache[K, T]) Remove(key K) (ok bool) {
 
 	n, ok = c.m[key]
 	if ok {
+		var cell = c.s[n]
+		if c.ef != nil {
+			c.ef(cell.key, cell.val)
+		}
 		delete(c.m, key)
 		copy(c.s[n:], c.s[n+1:])
 		c.s = c.s[:len(c.s)-1]
@@ -126,7 +137,7 @@ func (c *Cache[K, T]) Enum(f func(K, T) bool) {
 	c.mux.Unlock()
 
 	for _, cell := range s {
-		if !f(cell.key, cell.value) {
+		if !f(cell.key, cell.val) {
 			return
 		}
 	}
@@ -140,13 +151,25 @@ func (c *Cache[K, T]) Free(n int) {
 		return
 	}
 	if n >= len(c.s) {
-		c.s = nil
+		if c.ef != nil {
+			for _, cell := range c.s {
+				c.ef(cell.key, cell.val)
+			}
+		}
 		c.m = map[K]int{}
+		c.s = nil
 		return
 	}
 
-	for i := 0; i < n; i++ {
-		delete(c.m, c.s[i].key)
+	if c.ef != nil {
+		for i := 0; i < n; i++ {
+			c.ef(c.s[i].key, c.s[i].val)
+			delete(c.m, c.s[i].key)
+		}
+	} else {
+		for i := 0; i < n; i++ {
+			delete(c.m, c.s[i].key)
+		}
 	}
 	c.s = c.s[n:]
 }
@@ -159,14 +182,26 @@ func (c *Cache[K, T]) ToLimit(limit int) {
 		return
 	}
 	if limit <= 0 {
-		c.s = nil
+		if c.ef != nil {
+			for _, cell := range c.s {
+				c.ef(cell.key, cell.val)
+			}
+		}
 		c.m = map[K]int{}
+		c.s = nil
 		return
 	}
 
 	var n = len(c.s) - limit
-	for i := 0; i < n; i++ {
-		delete(c.m, c.s[i].key)
+	if c.ef != nil {
+		for i := 0; i < n; i++ {
+			c.ef(c.s[i].key, c.s[i].val)
+			delete(c.m, c.s[i].key)
+		}
+	} else {
+		for i := 0; i < n; i++ {
+			delete(c.m, c.s[i].key)
+		}
 	}
 	c.s = c.s[n:]
 }

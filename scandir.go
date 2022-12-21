@@ -146,11 +146,11 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 
 	var dpmap = map[Puid_t]DirProp{}
 	var idds []Puid_t
-	for _, fs := range vfs {
-		if dp, ok := dircache.Get(fs.Puid); ok {
-			dpmap[fs.Puid] = dp
+	for _, puid := range vpuids {
+		if dp, ok := dircache.Get(puid); ok {
+			dpmap[puid] = dp
 		} else { // get directories, ISO-files and playlists as folder properties
-			idds = append(idds, fs.Puid)
+			idds = append(idds, puid)
 		}
 	}
 	if len(idds) > 0 {

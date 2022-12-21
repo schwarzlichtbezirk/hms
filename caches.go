@@ -11,7 +11,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/bluele/gcache"
 	"github.com/disintegration/gift"
 	"github.com/schwarzlichtbezirk/wpk"
 	"github.com/schwarzlichtbezirk/wpk/fsys"
@@ -19,12 +18,6 @@ import (
 	"xorm.io/xorm/names"
 
 	_ "github.com/mattn/go-sqlite3"
-)
-
-// gcaches
-var (
-	// Public keys cache for authorization.
-	pubkeycache gcache.Cache
 )
 
 // package caches
@@ -75,7 +68,7 @@ func SqlSession(f func(*Session) (any, error)) (any, error) {
 	return f(session)
 }
 
-type ExpireCell[T any] struct {
+type TempCell[T any] struct {
 	Data *T
 	Wait *time.Timer
 }
@@ -112,7 +105,8 @@ var (
 	mediacache = NewCache[Puid_t, MediaData]() // FIFO cache with processed media files.
 	hdcache    = NewCache[Puid_t, MediaData]() // FIFO cache with converted to HD resolution images.
 
-	diskcache = NewCache[string, ExpireCell[DiskFS]]() // LRU cache with temporary opened ISO disks.
+	diskcache = NewCache[string, TempCell[DiskFS]]()     // LRU cache with temporary opened ISO disks.
+	pubkcache = NewCache[[32]byte, TempCell[struct{}]]() // LRU cache with public keys.
 )
 
 // PathStorePUID returns cached PUID for specified system path.
@@ -479,7 +473,7 @@ func HdCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 }
 
 func DiskCacheGet(syspath string) (disk *DiskFS, err error) {
-	var cell ExpireCell[DiskFS]
+	var cell TempCell[DiskFS]
 	var ok bool
 
 	if cell, ok = diskcache.Get(syspath); ok {
@@ -499,16 +493,17 @@ func DiskCacheGet(syspath string) (disk *DiskFS, err error) {
 	cell.Data = disk
 	cell.Wait = time.AfterFunc(cfg.DiskCacheExpire, func() {
 		diskcache.Remove(syspath)
-		cell.Data.Close()
 	})
 	diskcache.Set(syspath, cell)
 	return
 }
 
-// InitCaches prepares caches depends of previously loaded configuration.
+// InitCaches prepares caches.
 func InitCaches() {
-	// init public keys cache
-	pubkeycache = gcache.New(10).LRU().Expiration(15 * time.Second).Build()
+	diskcache.OnRemove(func(syspath string, cell TempCell[DiskFS]) {
+		cell.Wait.Stop()
+		cell.Data.Close()
+	})
 }
 
 const (

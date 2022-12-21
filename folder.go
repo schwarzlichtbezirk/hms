@@ -121,21 +121,8 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 	ret.Path = shrpath
 	ret.Name = path.Base(base)
 
-	var ft FT_t
-	if fp, ok := FileStoreGet(session, puid); ok {
-		ft = fp.Type
-	} else {
-		WriteError500(w, r, ErrNotFound, AECfolderstat)
-		return
-	}
-
-	var ext = arg.Ext
-	if ext == "" && ft == FTfile {
-		ext = GetFileExt(syspath)
-	}
-
 	var t = time.Now()
-	if ft == FTctgr {
+	if puid < PUIDcache {
 		if auth != prf && !prf.IsShared(syspath) {
 			WriteError(w, r, http.StatusForbidden, ErrNotShared, AECfoldernoshr)
 			return
@@ -205,74 +192,87 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 			WriteError(w, r, http.StatusNotFound, ErrNoCat, AECfoldernocat)
 			return
 		}
-	} else if ft > FTfile || IsTypeISO(ext) {
-		if ret.List, ret.Skip, err = ScanDir(prf, session, syspath, &cg); err != nil && len(ret.List) == 0 {
-			if errors.Is(err, fs.ErrNotExist) {
-				WriteError(w, r, http.StatusNotFound, err, AECfolderabsent)
-			} else {
-				WriteError500(w, r, err, AECfolderfail)
-			}
-			return
-		}
-	} else if IsTypePlaylist(ext) {
-		var file io.ReadCloser
-		if file, err = OpenFile(syspath); err != nil {
-			WriteError500(w, r, err, AECfolderopen)
-			return
-		}
-		defer file.Close()
-
-		var pl Playlist
-		pl.Dest = path.Dir(syspath)
-		switch ext {
-		case ".m3u", ".m3u8":
-			if _, err = pl.ReadM3U(file); err != nil {
-				WriteError(w, r, http.StatusUnsupportedMediaType, err, AECfolderm3u)
-				return
-			}
-		case ".wpl":
-			if _, err = pl.ReadWPL(file); err != nil {
-				WriteError(w, r, http.StatusUnsupportedMediaType, err, AECfolderwpl)
-				return
-			}
-		case ".pls":
-			if _, err = pl.ReadPLS(file); err != nil {
-				WriteError(w, r, http.StatusUnsupportedMediaType, err, AECfolderpls)
-				return
-			}
-		case ".asx":
-			if _, err = pl.ReadASX(file); err != nil {
-				WriteError(w, r, http.StatusUnsupportedMediaType, err, AECfolderasx)
-				return
-			}
-		case ".xspf":
-			if _, err = pl.ReadXSPF(file); err != nil {
-				WriteError(w, r, http.StatusUnsupportedMediaType, err, AECfolderxspf)
-				return
-			}
-		default:
-			WriteError(w, r, http.StatusUnsupportedMediaType, ErrNotPlay, AECfolderformat)
+	} else {
+		var fi fs.FileInfo
+		if fi, err = StatFile(syspath); err != nil {
+			WriteError500(w, r, err, AECfolderstat)
 			return
 		}
 
-		var vfiles []fs.FileInfo // verified file infos
-		var vpaths []string      // verified paths
-		for _, track := range pl.Tracks {
-			var fpath = ToSlash(track.Location)
-			if !prf.IsHidden(fpath) {
-				if fi, _ := StatFile(fpath); fi != nil {
-					if prf.PathAccess(fpath, auth == prf) {
-						vfiles = append(vfiles, fi)
-						vpaths = append(vpaths, fpath)
+		var ext = arg.Ext
+		if ext == "" && !fi.IsDir() {
+			ext = GetFileExt(syspath)
+		}
+
+		if fi.IsDir() || IsTypeISO(ext) {
+			if ret.List, ret.Skip, err = ScanDir(prf, session, syspath, &cg); err != nil && len(ret.List) == 0 {
+				if errors.Is(err, fs.ErrNotExist) {
+					WriteError(w, r, http.StatusNotFound, err, AECfolderabsent)
+				} else {
+					WriteError500(w, r, err, AECfolderfail)
+				}
+				return
+			}
+		} else if IsTypePlaylist(ext) {
+			var file io.ReadCloser
+			if file, err = OpenFile(syspath); err != nil {
+				WriteError500(w, r, err, AECfolderopen)
+				return
+			}
+			defer file.Close()
+
+			var pl Playlist
+			pl.Dest = path.Dir(syspath)
+			switch ext {
+			case ".m3u", ".m3u8":
+				if _, err = pl.ReadM3U(file); err != nil {
+					WriteError(w, r, http.StatusUnsupportedMediaType, err, AECfolderm3u)
+					return
+				}
+			case ".wpl":
+				if _, err = pl.ReadWPL(file); err != nil {
+					WriteError(w, r, http.StatusUnsupportedMediaType, err, AECfolderwpl)
+					return
+				}
+			case ".pls":
+				if _, err = pl.ReadPLS(file); err != nil {
+					WriteError(w, r, http.StatusUnsupportedMediaType, err, AECfolderpls)
+					return
+				}
+			case ".asx":
+				if _, err = pl.ReadASX(file); err != nil {
+					WriteError(w, r, http.StatusUnsupportedMediaType, err, AECfolderasx)
+					return
+				}
+			case ".xspf":
+				if _, err = pl.ReadXSPF(file); err != nil {
+					WriteError(w, r, http.StatusUnsupportedMediaType, err, AECfolderxspf)
+					return
+				}
+			default:
+				WriteError(w, r, http.StatusUnsupportedMediaType, ErrNotPlay, AECfolderformat)
+				return
+			}
+
+			var vfiles []fs.FileInfo // verified file infos
+			var vpaths []string      // verified paths
+			for _, track := range pl.Tracks {
+				var fpath = ToSlash(track.Location)
+				if !prf.IsHidden(fpath) {
+					if fi, _ := StatFile(fpath); fi != nil {
+						if prf.PathAccess(fpath, auth == prf) {
+							vfiles = append(vfiles, fi)
+							vpaths = append(vpaths, fpath)
+						}
 					}
 				}
 			}
+			if ret.List, _, err = ScanFileInfoList(prf, session, vfiles, vpaths); err != nil {
+				WriteError500(w, r, err, AECfoldertracks)
+				return
+			}
+			ret.Skip = len(pl.Tracks) - len(ret.List)
 		}
-		if ret.List, _, err = ScanFileInfoList(prf, session, vfiles, vpaths); err != nil {
-			WriteError500(w, r, err, AECfoldertracks)
-			return
-		}
-		ret.Skip = len(pl.Tracks) - len(ret.List)
 	}
 
 	Log.Infof("id%d: navigate to %s, items %d, timeout %s", prf.ID, syspath, len(ret.List), time.Since(t))

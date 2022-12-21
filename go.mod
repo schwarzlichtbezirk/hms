@@ -4,7 +4,6 @@ go 1.18
 
 require (
 	github.com/avct/uasurfer v0.0.0-20191028135549-26b5daa857f1
-	github.com/bluele/gcache v0.0.2
 	github.com/cespare/xxhash v1.1.0
 	github.com/chai2010/webp v1.1.1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible

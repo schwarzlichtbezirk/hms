@@ -335,11 +335,7 @@ func Shutdown() {
 	})
 
 	wg.Go(func() (err error) {
-		diskcache.Enum(func(fpath string, cell ExpireCell[DiskFS]) bool {
-			cell.Wait.Stop()
-			cell.Data.Close()
-			return true
-		})
+		diskcache.ToLimit(0) // close all opened ISO-files
 		return
 	})
 

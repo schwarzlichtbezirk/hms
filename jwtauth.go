@@ -168,7 +168,12 @@ func pubkeyAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pubkeycache.Set(idenc.EncodeToString(ret.Key[:]), struct{}{})
+	var cell TempCell[struct{}]
+	cell.Data = nil
+	cell.Wait = time.AfterFunc(15*time.Second, func() {
+		pubkcache.Remove(ret.Key)
+	})
+	pubkcache.Set(ret.Key, cell)
 
 	WriteOK(w, r, &ret)
 }
@@ -199,7 +204,7 @@ func signinAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err = pubkeycache.Get(idenc.EncodeToString(arg.PubK[:])); err != nil {
+	if _, ok := pubkcache.Get(arg.PubK); !ok {
 		WriteError(w, r, http.StatusForbidden, ErrNoPubKey, AECsigninpkey)
 		return
 	}
@@ -211,6 +216,8 @@ func signinAPI(w http.ResponseWriter, r *http.Request) {
 		WriteError(w, r, http.StatusForbidden, ErrBadPass, AECsignindeny)
 		return
 	}
+
+	pubkcache.Remove(arg.PubK) // remove public key on successful login
 
 	res.Make(prf.ID)
 
