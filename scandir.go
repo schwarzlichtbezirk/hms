@@ -74,76 +74,7 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 		vpuids = append(vpuids, puid)
 	}
 
-	////////////////////////////
-	// define files to upsert //
-	////////////////////////////
-
-	var vfs []FileStore // verified file store list
-	var oldfs, newfs, updfs []FileStore
-	if err = session.In("puid", vpuids).Find(&oldfs); err != nil {
-		return
-	}
-	for i, fpath := range vpaths {
-		var fs FileStore
-		var puid = vpuids[i]
-		var fi = vfiles[i]
-		var grp = prf.GetPathGroup(fpath, fi)
-		*lstp.FGrp.Field(grp)++
-		var found = false
-		for _, v := range oldfs {
-			if v.Puid == puid {
-				fs = v
-				if fi != nil {
-					var sizeval = fi.Size()
-					var timeval = UnixJS(fi.ModTime())
-					var typeval = prf.PathType(fpath, fi)
-					if fs.Prop.Type != typeval || fs.Prop.Size != sizeval || fs.Prop.Time != timeval {
-						fs.Prop.Type = typeval
-						fs.Prop.Size = sizeval
-						fs.Prop.Time = timeval
-						updfs = append(updfs, fs)
-					}
-				}
-				found = true
-				break
-			}
-		}
-		if !found {
-			fs.Puid = puid
-			fs.Prop.Name = path.Base(fpath)
-			fs.Prop.Type = prf.PathType(fpath, fi)
-			if fi != nil {
-				fs.Prop.Size = fi.Size()
-				fs.Prop.Time = UnixJS(fi.ModTime())
-			}
-			newfs = append(newfs, fs)
-		}
-		vfs = append(vfs, fs)
-	}
-
-	if len(newfs) > 0 || len(updfs) > 0 {
-		go xormEngine.Transaction(func(session *Session) (res any, err error) {
-			// insert new items
-			if len(newfs) > 0 {
-				if _, err = session.Insert(newfs); err != nil {
-					return
-				}
-			}
-
-			// update changed items
-			for _, fs := range updfs {
-				if _, err = session.ID(fs.Puid).Cols("type", "size", "time").Update(&fs); err != nil {
-					return
-				}
-			}
-			return
-		})
-	}
-
-	//////////////////////
-	// update dir cache //
-	//////////////////////
-
+	// update dir cache
 	var dpmap = map[Puid_t]DirProp{}
 	var idds []Puid_t
 	for _, puid := range vpuids {
@@ -164,15 +95,24 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 		}
 	}
 
-	/////////////////////
-	// format response //
-	/////////////////////
+	// format response
+	for i, fpath := range vpaths {
+		var fp FileProp
+		var fi = vfiles[i]
+		fp.Name = path.Base(fpath)
+		fp.Type = prf.PathType(fpath, fi)
+		if fi != nil {
+			fp.Size = fi.Size()
+			fp.Time = UnixJS(fi.ModTime())
+		}
+		var grp = prf.GetPathGroup(fpath, fi)
+		*lstp.FGrp.Field(grp)++
 
-	for i, fs := range vfs {
-		if dp, ok := dpmap[fs.Puid]; ok {
+		var puid = vpuids[i]
+		if dp, ok := dpmap[puid]; ok || fp.Type != FTfile {
 			var dk DirKit
-			dk.PUID = fs.Puid
-			dk.FileProp = fs.Prop
+			dk.PUID = puid
+			dk.FileProp = fp
 			dk.DirProp = dp
 			if vfiles[i] == nil && dk.Type != FTctgr {
 				dk.Latency = -1
@@ -180,9 +120,9 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 			ret = append(ret, &dk)
 		} else {
 			var fk FileKit
-			fk.PUID = fs.Puid
-			fk.FileProp = fs.Prop
-			if tp, ok := tilecache.Peek(fk.PUID); ok {
+			fk.PUID = puid
+			fk.FileProp = fp
+			if tp, ok := tilecache.Peek(puid); ok {
 				fk.TileProp = *tp
 			}
 			ret = append(ret, &fk)

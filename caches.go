@@ -86,7 +86,6 @@ type Store[T any] struct {
 }
 
 type (
-	FileStore Store[FileProp]
 	DirStore  Store[DirProp]
 	ExifStore Store[ExifProp]
 	TagStore  Store[TagProp]
@@ -94,7 +93,6 @@ type (
 
 var (
 	pathcache = NewBimap[Puid_t, string]()   // Bidirectional map for PUIDs and system paths.
-	filecache = NewCache[Puid_t, FileProp]() // LRU cache for files.
 	dircache  = NewCache[Puid_t, DirProp]()  // LRU cache for directories.
 	exifcache = NewCache[Puid_t, ExifProp]() // FIFO cache for EXIF tags.
 	tagcache  = NewCache[Puid_t, TagProp]()  // FIFO cache for ID3 tags.
@@ -156,33 +154,6 @@ func PathStoreCache(session *Session, fpath string) (puid Puid_t) {
 	puid = pst.Puid
 	// set to memory cache
 	pathcache.Set(puid, fpath)
-	return
-}
-
-// FileStoreGet returns value from files properties cache.
-func FileStoreGet(session *Session, puid Puid_t) (fp FileProp, ok bool) {
-	// try to get from memory cache
-	if fp, ok = filecache.Get(puid); ok {
-		return
-	}
-	// try to get from database
-	var fst FileStore
-	if ok, _ = session.ID(puid).Get(&fst); ok { // skip errors
-		fp = fst.Prop
-		filecache.Set(puid, fp) // update cache
-		return
-	}
-	return
-}
-
-// FileStoreSet puts value to files properties cache.
-func FileStoreSet(session *Session, fst *FileStore) (err error) {
-	// set to memory cache
-	filecache.Set(fst.Puid, fst.Prop)
-	// set to database
-	if affected, _ := session.InsertOne(fst); affected == 0 {
-		_, err = session.ID(fst.Puid).AllCols().Omit("puid").Update(fst)
-	}
 	return
 }
 
@@ -684,7 +655,7 @@ func InitXorm() (err error) {
 	xormEngine.SetMapper(names.GonicMapper{})
 
 	_, err = SqlSession(func(session *Session) (res any, err error) {
-		if err = session.Sync(&PathStore{}, &FileStore{}, &DirStore{}, &ExifStore{}, &TagStore{}); err != nil {
+		if err = session.Sync(&PathStore{}, &DirStore{}, &ExifStore{}, &TagStore{}); err != nil {
 			return
 		}
 
@@ -694,33 +665,16 @@ func InitXorm() (err error) {
 			return
 		}
 		if ok {
-			var tinit = UnixJSNow()
 			var ctgrpath = make([]PathStore, PUIDcache-1)
-			var ctgrfile = make([]FileStore, PUIDcache-1)
 			for puid, path := range CatKeyPath {
 				ctgrpath[puid-1].Puid = puid
 				ctgrpath[puid-1].Path = path
-				ctgrfile[puid-1].Puid = puid
-				ctgrfile[puid-1].Prop = FileProp{
-					Name: CatNames[puid],
-					Type: FTctgr,
-					Time: tinit,
-				}
 			}
 			for puid := Puid_t(len(CatKeyPath) + 1); puid < PUIDcache; puid++ {
 				ctgrpath[puid-1].Puid = puid
 				ctgrpath[puid-1].Path = fmt.Sprintf("<reserved%d>", puid)
-				ctgrfile[puid-1].Puid = puid
-				ctgrfile[puid-1].Prop = FileProp{
-					Name: fmt.Sprintf("reserved #%d", puid),
-					Type: FTctgr,
-					Time: tinit,
-				}
 			}
 			if _, err = session.Insert(&ctgrpath); err != nil {
-				return
-			}
-			if _, err = session.Insert(&ctgrfile); err != nil {
 				return
 			}
 		}

@@ -135,12 +135,10 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		}
 		if inc {
 			var fpath, _ = pathcache.GetDir(puid)
-			if !prf.IsHidden(fpath) {
+			if !prf.IsHidden(fpath) && prf.PathAccess(fpath, auth == prf) {
 				if fi, _ := StatFile(fpath); fi != nil {
-					if prf.PathAccess(fpath, auth == prf) {
-						vfiles = append(vfiles, fi)
-						vpaths = append(vpaths, fpath)
-					}
+					vfiles = append(vfiles, fi)
+					vpaths = append(vpaths, fpath)
 				}
 			}
 		}

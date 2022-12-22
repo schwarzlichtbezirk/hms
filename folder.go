@@ -172,13 +172,11 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 			var vpaths []string      // verified paths
 			gpscache.Range(func(puid Puid_t, gps GpsInfo) bool {
 				if fpath, ok := pathcache.GetDir(puid); ok {
-					if !prf.IsHidden(fpath) {
+					if !prf.IsHidden(fpath) && prf.PathAccess(fpath, auth == prf) {
 						if fi, _ := StatFile(fpath); fi != nil {
-							if prf.PathAccess(fpath, auth == prf) {
-								vfiles = append(vfiles, fi)
-								vpaths = append(vpaths, fpath)
-								n++
-							}
+							vfiles = append(vfiles, fi)
+							vpaths = append(vpaths, fpath)
+							n++
 						}
 					}
 				}
@@ -258,12 +256,10 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 			var vpaths []string      // verified paths
 			for _, track := range pl.Tracks {
 				var fpath = ToSlash(track.Location)
-				if !prf.IsHidden(fpath) {
+				if !prf.IsHidden(fpath) && prf.PathAccess(fpath, auth == prf) {
 					if fi, _ := StatFile(fpath); fi != nil {
-						if prf.PathAccess(fpath, auth == prf) {
-							vfiles = append(vfiles, fi)
-							vpaths = append(vpaths, fpath)
-						}
+						vfiles = append(vfiles, fi)
+						vpaths = append(vpaths, fpath)
 					}
 				}
 			}

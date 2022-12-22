@@ -483,7 +483,6 @@ func cchinfAPI(w http.ResponseWriter, r *http.Request) {
 	defer session.Close()
 
 	var pathcount, _ = session.Count(&PathStore{})
-	var filecount, _ = session.Count(&FileStore{})
 	var dircount, _ = session.Count(&DirStore{})
 	var exifcount, _ = session.Count(&ExifStore{})
 	var tagcount, _ = session.Count(&TagStore{})
@@ -522,7 +521,6 @@ func cchinfAPI(w http.ResponseWriter, r *http.Request) {
 
 	var ret = XmlMap{
 		"pathcount":   pathcount,
-		"filecount":   filecount,
 		"dircount":    dircount,
 		"exifcount":   exifcount,
 		"tagcount":    tagcount,
