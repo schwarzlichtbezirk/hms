@@ -30,7 +30,7 @@ var (
 
 // Init performs global data initialization. Loads configuration files, initializes file cache.
 func Init() {
-	Log.Infof("version: %s, builton: %s %s\n", BuildVers, BuildDate, BuildTime)
+	Log.Infof("version: %s, builton: %s %s", BuildVers, BuildDate, BuildTime)
 
 	var err error
 
@@ -40,27 +40,27 @@ func Init() {
 	}
 	// load content of Config structure from YAML-file.
 	if err = cfg.ReadYaml(cfgfile); err != nil {
-		Log.Infoln("error on settings file: " + err.Error())
+		Log.Error("error on settings file: " + err.Error())
 	}
 	// rewrite settings from config file
 	if _, err := flags.Parse(&cfg); err != nil {
 		os.Exit(1)
 	}
-	Log.Infof("config path: %s\n", ConfigPath)
+	Log.Infof("config path: %s", ConfigPath)
 
 	// get package path
 	if PackPath, err = DetectPackPath(); err != nil {
 		Log.Fatal(err)
 	}
-	Log.Infof("package path: %s\n", PackPath)
+	Log.Infof("package path: %s", PackPath)
 
 	// get cache path
 	if CachePath, err = DetectCachePath(); err != nil {
 		Log.Fatal(err)
 	}
-	Log.Infof("cache path: %s\n", CachePath)
+	Log.Infof("cache path: %s", CachePath)
 
-	Log.Infoln("starts")
+	Log.Info("starts")
 
 	// create context and wait the break
 	exitctx, exitfn = context.WithCancel(context.Background())
@@ -78,16 +78,16 @@ func Init() {
 		select {
 		case <-exitctx.Done():
 			if errors.Is(exitctx.Err(), context.DeadlineExceeded) {
-				Log.Infoln("shutting down by timeout")
+				Log.Info("shutting down by timeout")
 			} else if errors.Is(exitctx.Err(), context.Canceled) {
-				Log.Infoln("shutting down by cancel")
+				Log.Info("shutting down by cancel")
 			} else {
 				Log.Infof("shutting down by %s", exitctx.Err().Error())
 			}
 		case <-sigint:
-			Log.Infoln("shutting down by break")
+			Log.Info("shutting down by break")
 		case <-sigterm:
-			Log.Infoln("shutting down by process termination")
+			Log.Info("shutting down by process termination")
 		}
 		signal.Stop(sigint)
 		signal.Stop(sigterm)
@@ -139,7 +139,7 @@ func Init() {
 
 	// load previous users states
 	if err = usercache.ReadYaml(usrfile); err != nil {
-		Log.Infoln("error on users list file: " + err.Error())
+		Log.Error("error on users list file: " + err.Error())
 	}
 	Log.Infof("loaded %d items into users list", len(usercache.list))
 
@@ -176,7 +176,7 @@ func Run(gmux *Router) {
 			go func() {
 				defer exitwg.Done()
 
-				Log.Infof("start http on %s\n", addr)
+				Log.Infof("start http on %s", addr)
 				var server = &http.Server{
 					Addr:              addr,
 					Handler:           gmux,
@@ -203,9 +203,9 @@ func Run(gmux *Router) {
 
 				server.SetKeepAlivesEnabled(false)
 				if err := server.Shutdown(ctx); err != nil {
-					Log.Infof("shutdown http on %s: %v\n", addr, err)
+					Log.Infof("shutdown http on %s: %v", addr, err)
 				} else {
-					Log.Infof("stop http on %s\n", addr)
+					Log.Infof("stop http on %s", addr)
 				}
 			}()
 		}
@@ -218,7 +218,7 @@ func Run(gmux *Router) {
 			go func() {
 				defer exitwg.Done()
 
-				Log.Infof("start tls on %s\n", addr)
+				Log.Infof("start tls on %s", addr)
 				var config *tls.Config
 				if cfg.AutoCert { // get certificate from letsencrypt.org
 					var m = &autocert.Manager{
@@ -263,9 +263,9 @@ func Run(gmux *Router) {
 
 				server.SetKeepAlivesEnabled(false)
 				if err := server.Shutdown(ctx); err != nil {
-					Log.Infof("shutdown tls on %s: %v\n", addr, err)
+					Log.Infof("shutdown tls on %s: %v", addr, err)
 				} else {
-					Log.Infof("stop tls on %s\n", addr)
+					Log.Infof("stop tls on %s", addr)
 				}
 			}()
 		}
@@ -295,19 +295,19 @@ func WaitExit() {
 		if !has80 {
 			suff = cfg.PortHTTP[0]
 		}
-		Log.Infof("hint: Open http://localhost%[1]s page in browser to view the player. If you want to stop the server, press 'Ctrl+C' for graceful network shutdown. Use http://localhost%[1]s/stat for server state monitoring.\n", suff)
+		Log.Infof("hint: Open http://localhost%[1]s page in browser to view the player. If you want to stop the server, press 'Ctrl+C' for graceful network shutdown. Use http://localhost%[1]s/stat for server state monitoring.", suff)
 	}
 	// wait for exit signal
 	<-exitctx.Done()
-	Log.Infoln("shutting down begin")
+	Log.Info("shutting down begin")
 
 	// wait until all server threads will be stopped.
 	exitwg.Wait()
-	Log.Infoln("server threads completed")
+	Log.Info("server threads completed")
 
 	// wait until all transactions will be done.
 	handwg.Wait()
-	Log.Infoln("transactions completed")
+	Log.Info("transactions completed")
 }
 
 // Shutdown performs graceful network shutdown.
@@ -316,14 +316,14 @@ func Shutdown() {
 
 	wg.Go(func() (err error) {
 		if err := usercache.WriteYaml(usrfile); err != nil {
-			Log.Infoln("error on users list file: " + err.Error())
+			Log.Error("error on users list file: " + err.Error())
 		}
 		return
 	})
 
 	wg.Go(func() (err error) {
 		if err := prflist.WriteYaml(prffile); err != nil {
-			Log.Infoln("error on profiles list file: " + err.Error())
+			Log.Error("error on profiles list file: " + err.Error())
 		}
 		return
 	})
@@ -364,7 +364,7 @@ func Shutdown() {
 	if err := wg.Wait(); err != nil {
 		return
 	}
-	Log.Infoln("shutting down complete.")
+	Log.Info("shutting down complete.")
 }
 
 // The End.

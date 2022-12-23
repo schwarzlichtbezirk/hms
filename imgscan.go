@@ -189,12 +189,12 @@ func (s *scanner) Scan() {
 							time.Sleep(500 * time.Millisecond)
 							// sync file tags tables of caches
 							if err := thumbpkg.Sync(); err != nil {
-								Log.Infoln(err)
+								Log.Error(err)
 							}
 							if err := tilespkg.Sync(); err != nil {
-								Log.Infoln(err)
+								Log.Error(err)
 							}
-							Log.Infoln("caches synced")
+							Log.Info("caches synced")
 						}()
 					}
 				}

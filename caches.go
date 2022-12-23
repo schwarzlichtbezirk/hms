@@ -653,6 +653,7 @@ func InitXorm() (err error) {
 	}
 	xormEngine.ShowSQL(true)
 	xormEngine.SetMapper(names.GonicMapper{})
+	//xormEngine.SetLogger(Log)
 
 	_, err = SqlSession(func(session *Session) (res any, err error) {
 		if err = session.Sync(&PathStore{}, &DirStore{}, &ExifStore{}, &TagStore{}); err != nil {

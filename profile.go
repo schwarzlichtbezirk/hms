@@ -372,7 +372,7 @@ func (prf *Profile) UpdateShares() {
 			prf.puidshare[puid] = syspath
 			Log.Infof("id%d: shared '%s' as %s", prf.ID, syspath, puid)
 		} else {
-			Log.Infof("id%d: can not share '%s'", prf.ID, syspath)
+			Log.Warnf("id%d: can not share '%s'", prf.ID, syspath)
 		}
 	}
 	prf.updateGrp()

@@ -17,8 +17,11 @@ import (
 // The prefix is followed by a colon only when Llongfile or Lshortfile
 // is specified.
 // For example, flags Ldate | Ltime (or LstdFlags) produce,
+//
 //	2009/01/23 01:23:23 message
+//
 // while flags Ldate | Ltime | Lmicroseconds | Llongfile produce,
+//
 //	2009/01/23 01:23:23.123123 /a/b/c/d.go:23: message
 const (
 	Ldate         = 1 << iota     // the date in the local time zone: 2009/01/23
@@ -51,6 +54,8 @@ type Logger struct {
 	lim  int        // maximum log size
 	size int        // current log size
 	flag int        // properties
+	sql  bool       // show SQL messages
+	lev  int        // log level
 }
 
 // NewLogger creates a new Logger. The out variable sets the
@@ -89,8 +94,8 @@ func itoa(buf *[]byte, i int, wid int) {
 }
 
 // formatHeader writes log header to buf in following order:
-//   * date and/or time (if corresponding flags are provided),
-//   * file and line number (if corresponding flags are provided).
+//   - date and/or time (if corresponding flags are provided),
+//   - file and line number (if corresponding flags are provided).
 func formatHeader(buf *[]byte, t time.Time, flag int, file string, line int) {
 	if flag&(Ldate|Ltime|Lmicroseconds) != 0 {
 		if flag&LUTC != 0 {
@@ -204,9 +209,13 @@ func (l *Logger) Logf(level string, format string, v ...interface{}) {
 // Arguments are handled in the manner of fmt.Print.
 func (l *Logger) Log(level string, v ...interface{}) { l.Output(2, level, fmt.Sprint(v...)) }
 
-// Logln calls l.Output to print to the logger with specified level.
-// Arguments are handled in the manner of fmt.Println.
-func (l *Logger) Logln(level string, v ...interface{}) { l.Output(2, level, fmt.Sprintln(v...)) }
+// Debug is equivalent to l.Info().
+func (l *Logger) Debug(v ...interface{}) { l.Output(2, "debug", fmt.Sprint(v...)) }
+
+// Debugf is equivalent to l.Infof().
+func (l *Logger) Debugf(format string, v ...interface{}) {
+	l.Output(2, "debug", fmt.Sprintf(format, v...))
+}
 
 // Infof calls l.Output to print to the logger.
 // Arguments are handled in the manner of fmt.Printf.
@@ -218,26 +227,20 @@ func (l *Logger) Infof(format string, v ...interface{}) {
 // Arguments are handled in the manner of fmt.Print.
 func (l *Logger) Info(v ...interface{}) { l.Output(2, "info", fmt.Sprint(v...)) }
 
-// Infoln calls l.Output to print to the logger.
-// Arguments are handled in the manner of fmt.Infoln.
-func (l *Logger) Infoln(v ...interface{}) { l.Output(2, "info", fmt.Sprintln(v...)) }
+// Warn is equivalent to l.Info().
+func (l *Logger) Warn(v ...interface{}) { l.Output(2, "warn", fmt.Sprint(v...)) }
 
-// Fatal is equivalent to l.Info() followed by a call to os.Exit(1).
-func (l *Logger) Fatal(v ...interface{}) {
-	l.Output(2, "fatal", fmt.Sprint(v...))
-	os.Exit(1)
+// Warnf is equivalent to l.Infof().
+func (l *Logger) Warnf(format string, v ...interface{}) {
+	l.Output(2, "warn", fmt.Sprintf(format, v...))
 }
 
-// Fatalf is equivalent to l.Infof() followed by a call to os.Exit(1).
-func (l *Logger) Fatalf(format string, v ...interface{}) {
-	l.Output(2, "fatal", fmt.Sprintf(format, v...))
-	os.Exit(1)
-}
+// Error is equivalent to l.Info().
+func (l *Logger) Error(v ...interface{}) { l.Output(2, "error", fmt.Sprint(v...)) }
 
-// Fatalln is equivalent to l.Infoln() followed by a call to os.Exit(1).
-func (l *Logger) Fatalln(v ...interface{}) {
-	l.Output(2, "fatal", fmt.Sprintln(v...))
-	os.Exit(1)
+// Errorf is equivalent to l.Infof().
+func (l *Logger) Errorf(format string, v ...interface{}) {
+	l.Output(2, "error", fmt.Sprintf(format, v...))
 }
 
 // Panic is equivalent to l.Info() followed by a call to panic().
@@ -254,11 +257,40 @@ func (l *Logger) Panicf(format string, v ...interface{}) {
 	panic(s)
 }
 
-// Panicln is equivalent to l.Infoln() followed by a call to panic().
-func (l *Logger) Panicln(v ...interface{}) {
-	var s = fmt.Sprintln(v...)
-	l.Output(2, "panic", s)
-	panic(s)
+// Fatal is equivalent to l.Info() followed by a call to os.Exit(1).
+func (l *Logger) Fatal(v ...interface{}) {
+	l.Output(2, "fatal", fmt.Sprint(v...))
+	os.Exit(1)
+}
+
+// Fatalf is equivalent to l.Infof() followed by a call to os.Exit(1).
+func (l *Logger) Fatalf(format string, v ...interface{}) {
+	l.Output(2, "fatal", fmt.Sprintf(format, v...))
+	os.Exit(1)
+}
+
+// Level implement xorm.ILogger.
+func (l *Logger) Level() int {
+	return l.lev
+}
+
+// SetLevel implement xorm.ILogger.
+func (l *Logger) SetLevel(ll int) {
+	l.lev = ll
+}
+
+// ShowSQL implement xorm.ILogger.
+func (l *Logger) ShowSQL(show ...bool) {
+	if len(show) == 0 {
+		l.sql = true
+		return
+	}
+	l.sql = show[0]
+}
+
+// IsShowSQL implement xorm.ILogger.
+func (l *Logger) IsShowSQL() bool {
+	return l.sql
 }
 
 // Ring returns last element of ring of log items.

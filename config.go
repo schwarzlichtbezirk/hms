@@ -206,7 +206,7 @@ func DetectConfigPath() (retpath string, err error) {
 		if retpath, ok = CheckPath(path.Join(exepath, fpath), detectname); ok {
 			return
 		}
-		Log.Infof("no access to pointed configuration path '%s'\n", fpath)
+		Log.Warnf("no access to pointed configuration path '%s'", fpath)
 	}
 
 	// try to get from config subdirectory on executable path
@@ -290,7 +290,7 @@ func DetectPackPath() (retpath string, err error) {
 		if retpath, ok = CheckPath(path.Join(exepath, fpath), detectname); ok {
 			return
 		}
-		Log.Infof("no access to pointed package path '%s'\n", fpath)
+		Log.Warnf("no access to pointed package path '%s'", fpath)
 	}
 
 	// try to find in executable path
@@ -344,7 +344,7 @@ func DetectCachePath() (retpath string, err error) {
 		if retpath, ok = CheckPath(path.Join(exepath, fpath), ""); ok {
 			return
 		}
-		Log.Infof("no access to pointed cache path '%s'\n", fpath)
+		Log.Warnf("no access to pointed cache path '%s'", fpath)
 	}
 
 	retpath = path.Join(PackPath, "cache")
