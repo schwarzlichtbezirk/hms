@@ -108,7 +108,7 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		arg.Limit = cfg.RangeSearchLimit
 	}
 
-	var session = xormEngine.NewSession()
+	var session = xormStorage.NewSession()
 	defer session.Close()
 
 	var prf *Profile

@@ -31,7 +31,7 @@ var (
 
 const xormDriverName = "sqlite3"
 
-var xormEngine *xorm.Engine
+var xormStorage *xorm.Engine
 
 // Error messages
 var (
@@ -63,7 +63,7 @@ type Session = xorm.Session
 
 // SqlSession execute sql wrapped in a single session.
 func SqlSession(f func(*Session) (any, error)) (any, error) {
-	var session = xormEngine.NewSession()
+	var session = xormStorage.NewSession()
 	defer session.Close()
 	return f(session)
 }
@@ -648,12 +648,15 @@ func InitPackages() (err error) {
 
 // InitXorm inits database caches engines.
 func InitXorm() (err error) {
-	if xormEngine, err = xorm.NewEngine(xormDriverName, path.Join(CachePath, dirfile)); err != nil {
+	if xormStorage, err = xorm.NewEngine(xormDriverName, path.Join(CachePath, dirfile)); err != nil {
 		return
 	}
-	xormEngine.ShowSQL(true)
-	xormEngine.SetMapper(names.GonicMapper{})
-	//xormEngine.SetLogger(Log)
+	xormStorage.SetMapper(names.GonicMapper{})
+	var xlb = XormLoggerBridge{
+		Logger: Log,
+	}
+	xlb.ShowSQL(true)
+	xormStorage.SetLogger(&xlb)
 
 	_, err = SqlSession(func(session *Session) (res any, err error) {
 		if err = session.Sync(&PathStore{}, &DirStore{}, &ExifStore{}, &TagStore{}); err != nil {
@@ -686,7 +689,7 @@ func InitXorm() (err error) {
 
 // LoadPathCache loads whole path table from database into cache.
 func LoadPathCache() (err error) {
-	var session = xormEngine.NewSession()
+	var session = xormStorage.NewSession()
 	defer session.Close()
 
 	const limit = 256
@@ -709,7 +712,7 @@ func LoadPathCache() (err error) {
 
 // LoadGpsCache loads all items with GPS information from EXIF table of storage into cache.
 func LoadGpsCache() (err error) {
-	var session = xormEngine.NewSession()
+	var session = xormStorage.NewSession()
 	defer session.Close()
 
 	const limit = 256

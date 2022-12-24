@@ -88,7 +88,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	var fpath = strings.Join(chunks[3:], "/")
 
-	var session = xormEngine.NewSession()
+	var session = xormStorage.NewSession()
 	defer session.Close()
 
 	var syspath string
@@ -236,7 +236,7 @@ func etmbHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var session = xormEngine.NewSession()
+	var session = xormStorage.NewSession()
 	defer session.Close()
 
 	var prf *Profile
@@ -299,7 +299,7 @@ func mtmbHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var session = xormEngine.NewSession()
+	var session = xormStorage.NewSession()
 	defer session.Close()
 
 	var prf *Profile
@@ -367,7 +367,7 @@ func tileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var session = xormEngine.NewSession()
+	var session = xormStorage.NewSession()
 	defer session.Close()
 
 	var prf *Profile
@@ -479,7 +479,7 @@ func memusgAPI(w http.ResponseWriter, r *http.Request) {
 
 // APIHANDLER
 func cchinfAPI(w http.ResponseWriter, r *http.Request) {
-	var session = xormEngine.NewSession()
+	var session = xormStorage.NewSession()
 	defer session.Close()
 
 	var pathcount, _ = session.Count(&PathStore{})
@@ -573,7 +573,7 @@ func getlogAPI(w http.ResponseWriter, r *http.Request) {
 	ret.List = make([]LogItem, num)
 	var h = Log.Ring()
 	for i := 0; i < num; i++ {
-		ret.List[i] = h.Value.(LogItem)
+		ret.List[num-i-1] = h.Value.(LogItem)
 		h = h.Prev()
 	}
 
@@ -652,7 +652,7 @@ func propAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var session = xormEngine.NewSession()
+	var session = xormStorage.NewSession()
 	defer session.Close()
 
 	var prf *Profile
@@ -714,7 +714,7 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		return
 	}
 
-	var session = xormEngine.NewSession()
+	var session = xormStorage.NewSession()
 	defer session.Close()
 
 	var prf *Profile
@@ -781,7 +781,7 @@ func shraddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		return
 	}
 
-	var session = xormEngine.NewSession()
+	var session = xormStorage.NewSession()
 	defer session.Close()
 
 	var prf *Profile
@@ -869,7 +869,7 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		return
 	}
 
-	var session = xormEngine.NewSession()
+	var session = xormStorage.NewSession()
 	defer session.Close()
 
 	var prf *Profile
@@ -952,7 +952,7 @@ func drvdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		return
 	}
 
-	var session = xormEngine.NewSession()
+	var session = xormStorage.NewSession()
 	defer session.Close()
 
 	var prf *Profile
@@ -1008,7 +1008,7 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		return
 	}
 
-	var session = xormEngine.NewSession()
+	var session = xormStorage.NewSession()
 	defer session.Close()
 
 	var prf *Profile
@@ -1148,7 +1148,7 @@ func edtrenameAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		return
 	}
 
-	var session = xormEngine.NewSession()
+	var session = xormStorage.NewSession()
 	defer session.Close()
 
 	var prf *Profile
@@ -1228,7 +1228,7 @@ func edtdeleteAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		return
 	}
 
-	var session = xormEngine.NewSession()
+	var session = xormStorage.NewSession()
 	defer session.Close()
 
 	var prf *Profile

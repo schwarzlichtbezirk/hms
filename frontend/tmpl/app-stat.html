@@ -202,7 +202,7 @@
 						<button v-on:click="ontime" type="button" v-bind:class="istime" class="btn console-but">Time</button>
 						<button v-on:click="ondatetime" type="button" v-bind:class="isdatetime" class="btn console-but">Date-time</button>
 					</div>
-					<pre ref="console" class="console-window">{{consolecontent}}</pre>
+					<pre ref="console" class="console-window"><template v-for="item in log"><div v-bind:class="llc(item)" v-html="logline(item)"></div></template></pre>
 				</div>
 			</div>
 		</div>

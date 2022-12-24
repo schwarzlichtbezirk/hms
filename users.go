@@ -167,7 +167,7 @@ func usrlstAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var session = xormEngine.NewSession()
+	var session = xormStorage.NewSession()
 	defer session.Close()
 
 	ret.Total = len(usercache.list)

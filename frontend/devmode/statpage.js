@@ -6,6 +6,19 @@ const scanfreq = 2000;
 // Maximum number of buttons at pagination component.
 const maxpageitem = 5;
 
+// Log level class.
+const LLC = {
+	0: "debug",
+	1: "info",
+	2: "warn",
+	3: "error",
+	4: "fatal",
+	5: "panic",
+}
+
+// Extract SQL-query from log message.
+const sqllogregex = /^(\[SQL\] (.*) (\[.*\]))/i;
+
 // User Agent structure sample:
 // {"Browser":{"Name":1,"Version":{"Major":86,"Minor":0,"Patch":4240}},"OS":{"Platform":1,"Name":2,"Version":{"Major":10,"Minor":0,"Patch":0}},"DeviceType":1}
 
@@ -62,27 +75,6 @@ const VueStatApp = {
 		};
 	},
 	computed: {
-		consolecontent() {
-			const text = [];
-			for (const i of this.log) {
-				let prefix = "";
-				const t = new Date(i.time);
-				switch (this.timemode) {
-					case 1:
-						prefix = t.toLocaleTimeString() + ' ';
-						break;
-					case 2:
-						prefix = t.toLocaleString() + ' ';
-						break;
-				}
-				if (i.file) {
-					prefix += i.file + ':' + i.line + ': ';
-				}
-				text.unshift(prefix + i.msg.trimRight());
-			}
-			return text.join('\n');
-		},
-
 		isnoprefix() {
 			return this.timemode === 0 && 'btn-info' || 'btn-outline-info';
 		},
@@ -140,6 +132,25 @@ const VueStatApp = {
 		}
 	},
 	methods: {
+		llc(item) {
+			return LLC[item.level] ?? "";
+		},
+		logline(item) {
+			let prefix = "";
+			const t = new Date(item.time);
+			switch (this.timemode) {
+				case 1:
+					prefix = t.toLocaleTimeString() + ' ';
+					break;
+				case 2:
+					prefix = t.toLocaleString() + ' ';
+					break;
+			}
+			if (item.file) {
+				prefix += item.file + ':' + item.line + ': ';
+			}
+			return prefix + item.msg.replace(sqllogregex, `<span class="sql">$2</span>`);
+		},
 		fmtduration(dur) {
 			const sec = 1000;
 			const min = 60 * sec;

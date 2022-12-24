@@ -22,8 +22,8 @@
 	}
 
 .console-window {
-	color: #d9d9d9;
-	background: #262626;
+	color: #ccc;
+	background: #222;
 	margin-top: 1em;
 	margin-bottom: 1em;
 	width: 80ch;
@@ -33,6 +33,38 @@
 	white-space: pre-wrap;
 	word-break: break-all;
 }
+
+	.console-window > .trace {
+		color: #2d2;
+	}
+
+	.console-window > .debug {
+		color: #2dd;
+	}
+
+	.console-window > .info {
+		color: #ccc;
+	}
+
+	.console-window > .warn {
+		color: #dd2;
+	}
+
+	.console-window > .error {
+		color: #d22;
+	}
+
+	.console-window > .fatal {
+		color: #44d;
+	}
+
+	.console-window > .panic {
+		color: #d2d;
+	}
+
+	.console-window .sql {
+		color: #aca;
+	}
 
 .console-but {
 	width: 120px;

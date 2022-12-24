@@ -286,7 +286,7 @@ func tilechkAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var session = xormEngine.NewSession()
+	var session = xormStorage.NewSession()
 	defer session.Close()
 
 	var prf *Profile
@@ -340,7 +340,7 @@ func tilescnstartAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var session = xormEngine.NewSession()
+	var session = xormStorage.NewSession()
 	defer session.Close()
 
 	var prf *Profile
@@ -387,7 +387,7 @@ func tilescnbreakAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var session = xormEngine.NewSession()
+	var session = xormStorage.NewSession()
 	defer session.Close()
 
 	var prf *Profile

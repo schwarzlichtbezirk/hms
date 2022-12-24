@@ -350,8 +350,8 @@ func Shutdown() {
 	})
 
 	wg.Go(func() (err error) {
-		if xormEngine != nil {
-			xormEngine.Close()
+		if xormStorage != nil {
+			xormStorage.Close()
 		}
 		return
 	})
