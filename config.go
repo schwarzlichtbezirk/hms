@@ -80,10 +80,12 @@ type CfgAppSets struct {
 	OnlineTimeout time.Duration `json:"online-timeout" yaml:"online-timeout" long:"ot" description:"Maximum duration between two ajax-calls to think client is online."`
 	// Default profile identifier for user on localhost.
 	DefAccID ID_t `json:"default-profile-id" yaml:"default-profile-id" long:"defaid" description:"Default profile identifier for user on localhost."`
-	// Maximum items number in files properties cache.
-	PropCacheMaxNum int `json:"prop-cache-maxnum" yaml:"prop-cache-maxnum" long:"pcmn" description:"Maximum items number in files properties cache."`
-	// Maximum items number in converted media files cache.
-	MediaCacheMaxNum int `json:"media-cache-maxnum" yaml:"media-cache-maxnum" long:"mcmn" description:"Maximum items number in converted media files cache."`
+	// Maximum number of cached embedded thumbnails.
+	ThumbCacheMaxNum int `json:"thumb-cache-maxnum" yaml:"thumb-cache-maxnum" long:"pcmn" description:"Maximum number of cached embedded thumbnails."`
+	// Maximum number of converted media files at memory cache.
+	MediaCacheMaxNum int `json:"media-cache-maxnum" yaml:"media-cache-maxnum" long:"mcmn" description:"Maximum number of converted media files at memory cache."`
+	// Maximum number of images converted to HD resolution at memory cache.
+	HdCacheMaxNum int `json:"hd-cache-maxnum" yaml:"hd-cache-maxnum" long:"hcmn" description:"Maximum number of images converted to HD resolution at memory cache."`
 	// Expiration duration to keep opened iso-disk structures in cache from last access to it.
 	DiskCacheExpire time.Duration `json:"disk-cache-expire" yaml:"disk-cache-expire" long:"dce" description:"Expiration duration to keep opened iso-disk structures in cache from last access to it."`
 	// Maximum number of photos to get on default map state.
@@ -103,8 +105,8 @@ type Config struct {
 // Instance of common service settings.
 var cfg = Config{ // inits default values:
 	CfgJWTAuth: CfgJWTAuth{
-		AccessTTL:  time.Duration(1*24) * time.Hour,
-		RefreshTTL: time.Duration(3*24) * time.Hour,
+		AccessTTL:  1 * 24 * time.Hour,
+		RefreshTTL: 3 * 24 * time.Hour,
 		AccessKey:  "skJgM4NsbP3fs4k7vh0gfdkgGl8dJTszdLxZ1sQ9ksFnxbgvw2RsGH8xxddUV479",
 		RefreshKey: "zxK4dUnuq3Lhd1Gzhpr3usI5lAzgvy2t3fmxld2spzz7a5nfv0hsksm9cheyutie",
 	},
@@ -112,12 +114,12 @@ var cfg = Config{ // inits default values:
 		AutoCert:          false,
 		PortHTTP:          []string{":80"},
 		PortTLS:           []string{},
-		ReadTimeout:       time.Duration(15) * time.Second,
-		ReadHeaderTimeout: time.Duration(15) * time.Second,
-		WriteTimeout:      time.Duration(15) * time.Second,
-		IdleTimeout:       time.Duration(60) * time.Second,
+		ReadTimeout:       15 * time.Second,
+		ReadHeaderTimeout: 15 * time.Second,
+		WriteTimeout:      15 * time.Second,
+		IdleTimeout:       60 * time.Second,
 		MaxHeaderBytes:    1 << 20,
-		ShutdownTimeout:   time.Duration(15) * time.Second,
+		ShutdownTimeout:   15 * time.Second,
 	},
 	CfgImgProp: CfgImgProp{
 		ThumbFileMaxSize: 4096*3072*4 + 65536,
@@ -129,11 +131,12 @@ var cfg = Config{ // inits default values:
 	CfgAppSets: CfgAppSets{
 		WPKName:          []string{"hms-full.wpk"},
 		WPKmmap:          false,
-		OnlineTimeout:    time.Duration(3*60*1000) * time.Millisecond,
+		OnlineTimeout:    3 * 60 * 1000 * time.Millisecond,
 		DefAccID:         1,
-		PropCacheMaxNum:  32 * 1024,
+		ThumbCacheMaxNum: 16 * 1024,
 		MediaCacheMaxNum: 64,
-		DiskCacheExpire:  time.Duration(15) * time.Second,
+		HdCacheMaxNum:    256,
+		DiskCacheExpire:  2 * time.Minute,
 		RangeSearchAny:   20,
 		RangeSearchLimit: 100,
 	},

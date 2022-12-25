@@ -439,7 +439,7 @@ func HdCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 
 	md, err = ToNativeImg(dst, ftype)
 	hdcache.Push(puid, md)
-	hdcache.ToLimit(cfg.MediaCacheMaxNum)
+	hdcache.ToLimit(cfg.HdCacheMaxNum)
 	return
 }
 
@@ -646,8 +646,8 @@ func InitPackages() (err error) {
 	return nil
 }
 
-// InitXorm inits database caches engines.
-func InitXorm() (err error) {
+// InitStorage inits database caches engine.
+func InitStorage() (err error) {
 	if xormStorage, err = xorm.NewEngine(xormDriverName, path.Join(CachePath, dirfile)); err != nil {
 		return
 	}

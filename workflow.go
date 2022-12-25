@@ -99,7 +99,7 @@ func Init() {
 	}
 
 	// init database caches
-	if err = InitXorm(); err != nil {
+	if err = InitStorage(); err != nil {
 		Log.Fatal("can not init XORM: " + err.Error())
 	}
 	SqlSession(func(session *Session) (res any, err error) {

@@ -62,12 +62,14 @@ specification:
   online-timeout: 180s # 3 minutes
   # Default profile identifier for user on localhost.
   default-profile-id: 1
-  # Maximum items number in files properties cache.
-  prop-cache-maxnum: 32768
-  # Maximum items number in converted media files memory cache.
+  # Maximum number of cached embedded thumbnails.
+  thumb-cache-maxnum: 16384
+  # Maximum number of converted media files at memory cache.
   media-cache-maxnum: 64
+  # Maximum number of images converted to HD resolution at memory cache.
+  hd-cache-maxnum: 256
   # Expiration duration to keep opened iso-disk structures in cache from last access to it.
-  disk-cache-expire: 15s
+  disk-cache-expire: 2m
   # Maximum number of photos to get on default map state.
   range-search-any: 20
   # Limit of range search.

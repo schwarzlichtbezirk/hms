@@ -88,40 +88,33 @@ const VueStatApp = {
 		},
 
 		avrshow() {
-			const zn = (this.cchinf.tmbjpgnum ? 1 : 0) + (this.cchinf.tmbpngnum ? 1 : 0) + (this.cchinf.tmbgifnum ? 1 : 0);
+			const zn = (this.cchinf.jpgnum ? 1 : 0) + (this.cchinf.pngnum ? 1 : 0) + (this.cchinf.gifnum ? 1 : 0);
 			return zn > 1;
 		},
 		avrtmbcchsize() {
-			if (this.cchinf.tmbcchnum) {
-				return (this.cchinf.tmbcchsize1 / this.cchinf.tmbcchnum).toFixed();
+			if (this.cchinf.mtmbcount) {
+				return (this.cchinf.mtmbsumsize1 / this.cchinf.mtmbcount).toFixed();
 			} else {
 				return "N/A";
 			}
 		},
 		avrtmbjpgsize() {
-			if (this.cchinf.tmbjpgnum) {
-				return (this.cchinf.tmbjpgsize1 / this.cchinf.tmbjpgnum).toFixed();
+			if (this.cchinf.jpgnum) {
+				return (this.cchinf.jpgsumsize1 / this.cchinf.jpgnum).toFixed();
 			} else {
 				return "N/A";
 			}
 		},
 		avrtmbpngsize() {
-			if (this.cchinf.tmbpngnum) {
-				return (this.cchinf.tmbpngsize1 / this.cchinf.tmbpngnum).toFixed();
+			if (this.cchinf.pngnum) {
+				return (this.cchinf.pngsumsize1 / this.cchinf.pngnum).toFixed();
 			} else {
 				return "N/A";
 			}
 		},
 		avrtmbgifsize() {
-			if (this.cchinf.tmbgifnum) {
-				return (this.cchinf.tmbgifsize1 / this.cchinf.tmbgifnum).toFixed();
-			} else {
-				return "N/A";
-			}
-		},
-		avrmedcchsize() {
-			if (this.cchinf.medcchnum) {
-				return (this.cchinf.medcchsize1 / this.cchinf.medcchnum).toFixed();
+			if (this.cchinf.gifnum) {
+				return (this.cchinf.gifsumsize1 / this.cchinf.gifnum).toFixed();
 			} else {
 				return "N/A";
 			}

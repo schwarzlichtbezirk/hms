@@ -268,7 +268,7 @@ func etmbHandler(w http.ResponseWriter, r *http.Request) {
 	var md MediaData
 	if md, err = ExtractThmub(session, syspath); err != nil {
 		if errors.Is(err, ErrNoThumb) {
-			WriteError(w, r, http.StatusNoContent, ErrNoThumb, AECetmbnotmb)
+			WriteError(w, r, http.StatusNoContent, err, AECetmbnotmb)
 			return
 		} else {
 			WriteError500(w, r, err, AECetmbbadcnt)
@@ -487,19 +487,16 @@ func cchinfAPI(w http.ResponseWriter, r *http.Request) {
 	var exifcount, _ = session.Count(&ExifStore{})
 	var tagcount, _ = session.Count(&TagStore{})
 	var gpscount = gpscache.Count()
+	var etmbcount = tmbcache.Len()
 
 	type stat struct {
 		size1 float64
 		size2 float64
 		num   int
 	}
-	var med stat
 	var jpg, png, gif stat
 	thumbpkg.Enum(func(fkey string, ts *wpk.TagsetRaw) bool {
 		var l = float64(ts.Size())
-		med.size1 += l
-		med.size2 += l * l
-		med.num++
 		if str, ok := ts.TagStr(wpk.TIDmime); ok {
 			var s *stat
 			switch MimeVal[str] {
@@ -520,26 +517,24 @@ func cchinfAPI(w http.ResponseWriter, r *http.Request) {
 	})
 
 	var ret = XmlMap{
-		"pathcount":   pathcount,
-		"dircount":    dircount,
-		"exifcount":   exifcount,
-		"tagcount":    tagcount,
-		"gpscount":    gpscount,
-		"tmbcchnum":   gif.num + png.num + jpg.num,
-		"tmbcchsize1": gif.size1 + png.size1 + jpg.size1,
-		"tmbcchsize2": gif.size2 + png.size2 + jpg.size2,
-		"tmbjpgnum":   jpg.num,
-		"tmbjpgsize1": jpg.size1,
-		"tmbjpgsize2": jpg.size2,
-		"tmbpngnum":   png.num,
-		"tmbpngsize1": png.size1,
-		"tmbpngsize2": png.size2,
-		"tmbgifnum":   gif.num,
-		"tmbgifsize1": gif.size1,
-		"tmbgifsize2": gif.size2,
-		"medcchnum":   med.num,
-		"medcchsize1": med.size1,
-		"medcchsize2": med.size2,
+		"pathcount":    pathcount,
+		"dircount":     dircount,
+		"exifcount":    exifcount,
+		"tagcount":     tagcount,
+		"gpscount":     gpscount,
+		"etmbcount":    etmbcount,
+		"mtmbcount":    gif.num + png.num + jpg.num,
+		"mtmbsumsize1": gif.size1 + png.size1 + jpg.size1,
+		"mtmbsumsize2": gif.size2 + png.size2 + jpg.size2,
+		"jpgnum":       jpg.num,
+		"jpgsumsize1":  jpg.size1,
+		"jpgsumsize2":  jpg.size2,
+		"pngnum":       png.num,
+		"pngsumsize1":  png.size1,
+		"pngsumsize2":  png.size2,
+		"gifnum":       gif.num,
+		"gifsumsize1":  gif.size1,
+		"gifsumsize2":  gif.size2,
 	}
 
 	WriteOK(w, r, ret)
@@ -551,7 +546,7 @@ func getlogAPI(w http.ResponseWriter, r *http.Request) {
 	var ret struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
 
-		List []LogItem `json:"list" yaml:"list" xml:"list>item"`
+		List []LogStore `json:"list" yaml:"list" xml:"list>item"`
 	}
 
 	var size = Log.Size()
@@ -570,10 +565,10 @@ func getlogAPI(w http.ResponseWriter, r *http.Request) {
 		num = size
 	}
 
-	ret.List = make([]LogItem, num)
+	ret.List = make([]LogStore, num)
 	var h = Log.Ring()
 	for i := 0; i < num; i++ {
-		ret.List[num-i-1] = h.Value.(LogItem)
+		ret.List[num-i-1] = h.Value.(LogStore)
 		h = h.Prev()
 	}
 

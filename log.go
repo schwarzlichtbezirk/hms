@@ -46,14 +46,15 @@ const (
 	LLpanic
 )
 
-// LogItem represents structured log fields for each log entry.
+// LogStore represents structured log fields for each log entry.
 // It's used to transmit the log items by network.
-type LogItem struct {
-	Time    Unix_t `json:"time" yaml:"time" xml:"time"`
-	Message string `json:"msg" yaml:"msg" xml:"msg"`
-	Level   LL     `json:"level" yaml:"level" xml:"level"`
-	Line    int    `json:"line,omitempty" yaml:"line,omitempty" xml:"line,omitempty"`
-	File    string `json:"file,omitempty" yaml:"file,omitempty" xml:"file,omitempty"`
+type LogStore struct {
+	ID    uint   `xorm:"pk autoincr" json:"id" yaml:"id" xml:"id,attr"`
+	Time  Unix_t `json:"time" yaml:"time" xml:"time,attr"`
+	Level LL     `json:"level" yaml:"level" xml:"level,attr"`
+	Msg   string `json:"msg" yaml:"msg" xml:"msg"`
+	Line  int    `json:"line,omitempty" yaml:"line,omitempty" xml:"line,omitempty"`
+	File  string `json:"file,omitempty" yaml:"file,omitempty" xml:"file,omitempty"`
 }
 
 // A Logger represents an active logging object that generates lines of
@@ -185,12 +186,12 @@ func (l *Logger) Output(calldepth int, lev LL, s string) error {
 	if len(s) == 0 || s[len(s)-1] != '\n' {
 		buf = append(buf, '\n')
 	}
-	var li = LogItem{
-		Time:    UnixJS(now),
-		Message: s,
-		Level:   lev,
-		Line:    line,
-		File:    file,
+	var li = LogStore{
+		Time:  UnixJS(now),
+		Level: lev,
+		Msg:   s,
+		Line:  line,
+		File:  file,
 	}
 
 	defer l.mux.Unlock()
