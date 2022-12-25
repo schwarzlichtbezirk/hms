@@ -97,9 +97,14 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 
 	// format response
 	for i, fpath := range vpaths {
+		var puid = vpuids[i]
 		var fp FileProp
 		var fi = vfiles[i]
-		fp.Name = path.Base(fpath)
+		if name, ok := CatNames[puid]; ok {
+			fp.Name = name
+		} else {
+			fp.Name = path.Base(fpath)
+		}
 		fp.Type = prf.PathType(fpath, fi)
 		if fi != nil {
 			fp.Size = fi.Size()
@@ -108,7 +113,6 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 		var grp = prf.GetPathGroup(fpath, fi)
 		*lstp.FGrp.Field(grp)++
 
-		var puid = vpuids[i]
 		if dp, ok := dpmap[puid]; ok || fp.Type != FTfile {
 			var dk DirKit
 			dk.PUID = puid

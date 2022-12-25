@@ -76,6 +76,7 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
 
 		List []any `json:"list" yaml:"list" xml:"list>prop"`
+		Home bool  `json:"home" yaml:"home" xml:"home,attr"`
 	}
 
 	// get arguments
@@ -115,6 +116,20 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	if prf = prflist.ByID(arg.AID); prf == nil {
 		WriteError400(w, r, ErrNoAcc, AECgpsrangenoacc)
 		return
+	}
+
+	if auth == prf {
+		ret.Home = true
+	} else if prf.IsShared(CPhome) {
+		for _, fpath := range CatKeyPath {
+			if fpath == CPhome {
+				continue
+			}
+			if prf.IsShared(fpath) {
+				ret.Home = true
+				break
+			}
+		}
 	}
 
 	var vfiles []fs.FileInfo // verified file infos

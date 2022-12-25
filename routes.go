@@ -522,7 +522,6 @@ func RegisterRoutes(gmux *Router) {
 	api.Path("/auth/pubkey").HandlerFunc(pubkeyAPI)
 	api.Path("/auth/signin").HandlerFunc(signinAPI)
 	api.Path("/auth/refrsh").HandlerFunc(refrshAPI)
-	api.Path("/res/ishome").HandlerFunc(ishomeAPI)
 	api.Path("/res/folder").HandlerFunc(folderAPI)
 	api.Path("/res/prop").HandlerFunc(propAPI)
 	api.Path("/res/ispath").HandlerFunc(AuthWrap(ispathAPI))

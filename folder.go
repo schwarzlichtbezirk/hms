@@ -65,17 +65,18 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
 		AID  ID_t   `json:"aid" yaml:"aid" xml:"aid,attr"`
-		Path string `json:"path,omitempty" yaml:"path,omitempty" xml:"path,omitempty"`
-		Ext  string `json:"ext,omitempty" yaml:"ext,omitempty" xml:"ext,omitempty"`
+		Path string `json:"path,omitempty" yaml:"path,omitempty" xml:"path,omitempty,attr"`
+		Ext  string `json:"ext,omitempty" yaml:"ext,omitempty" xml:"ext,omitempty,attr"`
 	}
 	var ret struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
 
 		List []any  `json:"list" yaml:"list" xml:"list>prop"`
-		Skip int    `json:"skip" yaml:"skip" xml:"skip"`
-		PUID Puid_t `json:"puid" yaml:"puid" xml:"puid"`
-		Path string `json:"path" yaml:"path" xml:"path"`
-		Name string `json:"shrname" yaml:"shrname" xml:"shrname"`
+		Skip int    `json:"skip" yaml:"skip" xml:"skip,attr"`
+		PUID Puid_t `json:"puid" yaml:"puid" xml:"puid,attr"`
+		Path string `json:"path" yaml:"path" xml:"path,attr"`
+		Name string `json:"shrname" yaml:"shrname" xml:"shrname,attr"`
+		Home bool   `json:"home" yaml:"home" xml:"home,attr"`
 	}
 
 	// get arguments
@@ -119,7 +120,25 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 	}
 	ret.PUID = puid
 	ret.Path = shrpath
-	ret.Name = path.Base(base)
+	if puid0, ok := CatPathKey[base]; ok {
+		ret.Name = CatNames[puid0]
+	} else {
+		ret.Name = path.Base(base)
+	}
+
+	if auth == prf {
+		ret.Home = true
+	} else if prf.IsShared(CPhome) {
+		for _, fpath := range CatKeyPath {
+			if fpath == CPhome {
+				continue
+			}
+			if prf.IsShared(fpath) {
+				ret.Home = true
+				break
+			}
+		}
+	}
 
 	var t = time.Now()
 	if puid < PUIDcache {

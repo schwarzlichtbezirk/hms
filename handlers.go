@@ -576,52 +576,6 @@ func getlogAPI(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
-func ishomeAPI(w http.ResponseWriter, r *http.Request) {
-	var err error
-	var arg struct {
-		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
-
-		AID ID_t `json:"aid" yaml:"aid" xml:"aid,attr"`
-	}
-	var ret struct {
-		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
-
-		IsHome bool `json:"ishome" yaml:"ishome" xml:"ishome"`
-	}
-
-	// get arguments
-	if err = ParseBody(w, r, &arg); err != nil {
-		return
-	}
-
-	var prf *Profile
-	if prf = prflist.ByID(arg.AID); prf == nil {
-		WriteError(w, r, http.StatusNotFound, ErrNoAcc, AECishomenoacc)
-		return
-	}
-	var auth *Profile
-	if auth, err = GetAuth(w, r); err != nil {
-		return
-	}
-
-	if auth == prf {
-		ret.IsHome = true
-	} else if prf.IsShared(CPhome) {
-		for _, fpath := range CatKeyPath {
-			if fpath == CPhome {
-				continue
-			}
-			if prf.IsShared(fpath) {
-				ret.IsHome = true
-				break
-			}
-		}
-	}
-
-	WriteOK(w, r, &ret)
-}
-
-// APIHANDLER
 func propAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {

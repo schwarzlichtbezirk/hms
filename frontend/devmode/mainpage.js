@@ -445,7 +445,7 @@ const VueMainApp = {
 			isauth: false, // is authorized
 			authid: 0, // authorized ID
 			aid: 0, // profile ID
-			ishome: false, // able to go home
+			hashome: false, // able to go home
 
 			selfile: null, // current selected item
 			shared: [], // list of shared items
@@ -560,7 +560,7 @@ const VueMainApp = {
 		// common buttons enablers
 
 		clshome() {
-			return { 'disabled': this.curpuid === PUID.home || !(this.isadmin || this.ishome) };
+			return { 'disabled': this.curpuid === PUID.home || !this.hashome };
 		},
 		clsback() {
 			return { 'disabled': this.histpos < 2 };
@@ -699,17 +699,6 @@ const VueMainApp = {
 			eventHub.emit('iconset', iconmapping);
 		},
 
-		async fetchishome() {
-			const response = await fetchajaxauth("POST", "/api/res/ishome", {
-				aid: this.aid
-			});
-			traceajax(response);
-			if (!response.ok) {
-				throw new HttpError(response.status, response.data);
-			}
-			this.ishome = response.data.ishome;
-		},
-
 		// opens given folder cleary
 		async fetchfolder(arg) {
 			const response = await fetchajaxauth("POST", "/api/res/folder", arg);
@@ -723,6 +712,7 @@ const VueMainApp = {
 			this.curpuid = response.data.puid;
 			this.curpath = response.data.path;
 			this.shrname = response.data.shrname;
+			this.hashome = response.data.home;
 
 			await this.newfolder(response.data.list);
 		},
@@ -739,6 +729,7 @@ const VueMainApp = {
 			this.curpuid = PUID.map;
 			this.curpath = "";
 			this.shrname = "";
+			this.hashome = response.data.home;
 
 			await this.newfolder(response.data.list);
 		},
@@ -945,9 +936,6 @@ const VueMainApp = {
 					await this.fetchfolder({ aid: this.aid, path: this.curpuid ?? this.curpath });
 					if (this.isadmin && this.curpuid !== PUID.shares) {
 						await this.fetchshared(); // get shares
-					}
-					if (!this.isadmin) {
-						await this.fetchishome();
 					}
 				} catch (e) {
 					ajaxfail(e);
@@ -1215,9 +1203,6 @@ const VueMainApp = {
 				await this.fetchfolder(hist);
 				if (this.isadmin && hist.puid !== PUID.shares) {
 					await this.fetchshared(); // get shares
-				}
-				if (!this.isadmin) {
-					await this.fetchishome();
 				}
 				this.pushhist(hist);
 			} catch (e) {

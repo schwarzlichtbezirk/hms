@@ -104,12 +104,6 @@ const (
 	AECrefrshnodata
 	AECrefrshparse
 
-	// res/ishome
-
-	AECishomenoacc
-
-	// res/ctgr
-
 	// res/folder
 
 	AECfoldernodata
