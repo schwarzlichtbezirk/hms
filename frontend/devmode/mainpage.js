@@ -446,6 +446,7 @@ const VueMainApp = {
 			authid: 0, // authorized ID
 			aid: 0, // profile ID
 			hashome: false, // able to go home
+			readonly: true, // can't modify content of folder
 
 			selfile: null, // current selected item
 			shared: [], // list of shared items
@@ -615,7 +616,7 @@ const VueMainApp = {
 		clspaste() {
 			const sel = this.copied ?? this.cuted;
 			return {
-				'disabled': !sel || (() => {
+				'disabled': !sel || this.readonly || (() => {
 					for (const file of this.flist) {
 						if (file.puid === sel.puid) {
 							return true;
@@ -628,7 +629,7 @@ const VueMainApp = {
 		clspastego() {
 			const sel = this.copied ?? this.cuted;
 			return {
-				'disabled': !sel || !(() => {
+				'disabled': !sel || this.readonly || !(() => {
 					for (const file of this.flist) {
 						if (file.name === sel.name) {
 							return true;
@@ -639,10 +640,10 @@ const VueMainApp = {
 			};
 		},
 		clscut() {
-			return { 'disabled': !this.selfile || this.selfile.type === FT.drv || this.selfile.type === FT.ctgr };
+			return { 'disabled': !this.selfile || this.readonly || this.selfile.type === FT.drv || this.selfile.type === FT.ctgr };
 		},
 		clsdelete() {
-			return { 'disabled': !this.selfile || this.selfile.type === FT.drv || this.selfile.type === FT.ctgr };
+			return { 'disabled': !this.selfile || this.readonly || this.selfile.type === FT.drv || this.selfile.type === FT.ctgr };
 		},
 		hintpaste() {
 			return `paste: ${this.copied?.name ?? this.cuted?.name}`;
@@ -712,7 +713,8 @@ const VueMainApp = {
 			this.curpuid = response.data.puid;
 			this.curpath = response.data.path;
 			this.shrname = response.data.shrname;
-			this.hashome = response.data.home;
+			this.hashome = response.data.hashome;
+			this.readonly = response.data.readonly;
 
 			await this.newfolder(response.data.list);
 		},
@@ -729,7 +731,8 @@ const VueMainApp = {
 			this.curpuid = PUID.map;
 			this.curpath = "";
 			this.shrname = "";
-			this.hashome = response.data.home;
+			this.hashome = response.data.hashome;
+			this.readonly = true;
 
 			await this.newfolder(response.data.list);
 		},
@@ -1029,7 +1032,7 @@ const VueMainApp = {
 				try {
 					const response = await fetchjsonauth("POST", "/api/edit/delete", {
 						aid: this.$root.aid,
-						puid: this.delfile.puid
+						src: this.delfile.puid
 					});
 					traceajax(response);
 					if (response.ok) {

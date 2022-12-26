@@ -76,7 +76,9 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 		PUID Puid_t `json:"puid" yaml:"puid" xml:"puid,attr"`
 		Path string `json:"path" yaml:"path" xml:"path,attr"`
 		Name string `json:"shrname" yaml:"shrname" xml:"shrname,attr"`
-		Home bool   `json:"home" yaml:"home" xml:"home,attr"`
+
+		HasHome  bool `json:"hashome" yaml:"hashome" xml:"hashome,attr"`
+		ReadOnly bool `json:"readonly" yaml:"readonly" xml:"readonly,attr"`
 	}
 
 	// get arguments
@@ -127,14 +129,14 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if auth == prf {
-		ret.Home = true
+		ret.HasHome = true
 	} else if prf.IsShared(CPhome) {
 		for _, fpath := range CatKeyPath {
 			if fpath == CPhome {
 				continue
 			}
 			if prf.IsShared(fpath) {
-				ret.Home = true
+				ret.HasHome = true
 				break
 			}
 		}
@@ -142,6 +144,8 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 
 	var t = time.Now()
 	if puid < PUIDcache {
+		ret.ReadOnly = true
+
 		if auth != prf && !prf.IsShared(syspath) {
 			WriteError(w, r, http.StatusForbidden, ErrNotShared, AECfoldernoshr)
 			return
@@ -222,6 +226,9 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 		}
 
 		if fi.IsDir() || IsTypeISO(ext) {
+			var _, iso = fi.(*FileInfoISO)
+			ret.ReadOnly = iso || IsTypeISO(ext)
+
 			if ret.List, ret.Skip, err = ScanDir(prf, session, syspath, &cg); err != nil && len(ret.List) == 0 {
 				if errors.Is(err, fs.ErrNotExist) {
 					WriteError(w, r, http.StatusNotFound, err, AECfolderabsent)
@@ -231,6 +238,8 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 		} else if IsTypePlaylist(ext) {
+			ret.ReadOnly = true
+
 			var file io.ReadCloser
 			if file, err = OpenFile(syspath); err != nil {
 				WriteError500(w, r, err, AECfolderopen)
