@@ -536,6 +536,7 @@ func RegisterRoutes(gmux *Router) {
 	api.Path("/edit/rename").HandlerFunc(AuthWrap(edtrenameAPI))
 	api.Path("/edit/delete").HandlerFunc(AuthWrap(edtdeleteAPI))
 	api.Path("/gps/range").HandlerFunc(AuthWrap(gpsrangeAPI))
+	api.Path("/gps/scan").HandlerFunc(gpsscanAPI)
 }
 
 // The End.

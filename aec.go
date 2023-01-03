@@ -233,6 +233,10 @@ const (
 	AECgpsrangeshpbad
 	AECgpsrangenoacc
 	AECgpsrangelist
+
+	// gps/scan
+	AECgpsscannodata
+	AECgpsscannoacc
 )
 
 // HTTP error messages

@@ -5,6 +5,8 @@ import (
 	"io/fs"
 	"math"
 	"net/http"
+
+	"golang.org/x/sync/errgroup"
 )
 
 // Haversine uses formula to calculate the great-circle distance between
@@ -163,6 +165,91 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	if ret.List, _, err = ScanFileInfoList(prf, session, vfiles, vpaths); err != nil {
 		WriteError500(w, r, err, AECgpsrangelist)
 		return
+	}
+
+	WriteOK(w, r, &ret)
+}
+
+// APIHANDLER
+func gpsscanAPI(w http.ResponseWriter, r *http.Request) {
+	var err error
+	var arg struct {
+		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
+
+		AID  ID_t     `json:"aid" yaml:"aid" xml:"aid,attr"`
+		List []Puid_t `json:"list" yaml:"list" xml:"list>puid"`
+	}
+	var ret struct {
+		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
+
+		List []Store[GpsInfo] `json:"list" yaml:"list" xml:"list>tile"`
+	}
+
+	// get arguments
+	if err = ParseBody(w, r, &arg); err != nil {
+		return
+	}
+	if len(arg.List) == 0 {
+		WriteError400(w, r, ErrNoData, AECgpsscannodata)
+		return
+	}
+
+	var wg errgroup.Group
+	var session = xormStorage.NewSession()
+	defer func() {
+		go func() {
+			wg.Wait()
+			session.Close()
+		}()
+	}()
+
+	var prf *Profile
+	if prf = prflist.ByID(arg.AID); prf == nil {
+		WriteError400(w, r, ErrNoAcc, AECgpsscannoacc)
+		return
+	}
+	var auth *Profile
+	if auth, err = GetAuth(w, r); err != nil {
+		return
+	}
+
+	for _, puid := range arg.List {
+		var puid = puid // localize
+		if syspath, ok := PathStorePath(session, puid); ok {
+			if prf.PathAccess(syspath, auth == prf) {
+				if val, ok := gpscache.Load(puid); ok {
+					var gst = Store[GpsInfo]{
+						Puid: puid,
+						Prop: val.(GpsInfo),
+					}
+					ret.List = append(ret.List, gst)
+				} else {
+					// check memory cache
+					if ok = exifcache.Has(puid); ok {
+						continue // there are tags without GPS
+					}
+					// try to extract from file
+					var ep ExifProp
+					if err := ep.Extract(syspath); err != nil {
+						continue
+					}
+					if ok = !ep.IsZero(); ok {
+						wg.Go(func() (err error) {
+							return ExifStoreSet(session, &ExifStore{ // update database
+								Puid: puid,
+								Prop: ep,
+							})
+						})
+					}
+					if ep.Latitude != 0 || ep.Longitude != 0 {
+						var gst Store[GpsInfo]
+						gst.Puid = puid
+						gst.Prop.FromProp(&ep)
+						ret.List = append(ret.List, gst)
+					}
+				}
+			}
+		}
 	}
 
 	WriteOK(w, r, &ret)

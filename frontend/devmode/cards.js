@@ -51,6 +51,13 @@ const mm = {
 	remove: 'remove',
 };
 
+// TypeEXIF checks that file extension belongs to images with EXIF tags.
+const typeEXIF = {
+	".tif": true, ".tiff": true,
+	".jpg": true, ".jpe": true, ".jpeg": true, ".jfif": true,
+	".png": true, ".webp": true,
+};
+
 const gpxcolors = [
 	'#6495ED', // CornflowerBlue
 	'#DA70D6', // Orchid
@@ -603,7 +610,6 @@ const VueFileCard = {
 	props: ["flist"],
 	data() {
 		return {
-			flisthub: makeeventhub(),
 			expanded: true,
 			sortorder: 1,
 			sortmode: 'byalpha',
@@ -621,6 +627,7 @@ const VueFileCard = {
 				true // dir
 			],
 
+			flisthub: makeeventhub(),
 			iid: makestrid(10) // instance ID
 		};
 	},
@@ -766,7 +773,7 @@ const VueFileCard = {
 		}
 	},
 	methods: {
-		async fetchscan(flist) {
+		async fetchtmbscan(flist) {
 			// not cached thumbnails
 			const uncached = [];
 			// get embedded thumbnails at first
@@ -827,7 +834,6 @@ const VueFileCard = {
 						throw new HttpError(response.status, response.data);
 					}
 
-					const gpslist = [];
 					uncached.splice(0); // refill uncached
 					for (const tp of response.data.list) {
 						if (tp.mime) {
@@ -838,10 +844,6 @@ const VueFileCard = {
 									} else {
 										file.mtmb = tp.mime; // Vue.set
 									}
-									// add gps-item
-									if (file.latitude && file.longitude && Number(file.mtmb) > 0) {
-										gpslist.push(file);
-									}
 									break;
 								}
 							}
@@ -849,8 +851,6 @@ const VueFileCard = {
 							uncached.push(tp)
 						}
 					}
-					// update map card
-					self.$root.$refs.mcard.addmarkers(gpslist);
 					// check cached state loop
 					if (!uncached.length) {
 						return;
@@ -887,7 +887,7 @@ const VueFileCard = {
 		onnewlist(newlist, oldlist) {
 			(async () => {
 				try {
-					await this.fetchscan(newlist); // fetch at backround
+					await this.fetchtmbscan(newlist); // fetch at backround
 				} catch (e) {
 					ajaxfail(e);
 				}
@@ -977,7 +977,7 @@ const VueFileCard = {
 			(async () => {
 				try {
 					this.expanded = true;
-					await this.fetchscan(this.flist); // fetch at backround
+					await this.fetchtmbscan(this.flist); // fetch at backround
 				} catch (e) {
 					ajaxfail(e);
 				}
@@ -1203,6 +1203,7 @@ const VueTileCard = {
 			tilemode: 'mode-246',
 			tiles: [],
 			sheet: [],
+
 			flisthub: makeeventhub(),
 			iid: makestrid(10) // instance ID
 		};
@@ -1304,7 +1305,7 @@ const VueTileCard = {
 		}
 	},
 	methods: {
-		async fetchscan() {
+		async fetchtilescan() {
 			// not cached tiles
 			const uncached = [];
 			for (const tile of this.tiles) {
@@ -1397,7 +1398,7 @@ const VueTileCard = {
 		onwdhmult() {
 			(async () => {
 				try {
-					await this.fetchscan(); // fetch at backround
+					await this.fetchtilescan(); // fetch at backround
 				} catch (e) {
 					ajaxfail(e);
 				}
@@ -1410,7 +1411,7 @@ const VueTileCard = {
 			this.flisthub.emit(null);
 			(async () => {
 				try {
-					await this.fetchscan(); // fetch at backround
+					await this.fetchtilescan(); // fetch at backround
 				} catch (e) {
 					ajaxfail(e);
 				}
@@ -1462,7 +1463,7 @@ const VueTileCard = {
 			(async () => {
 				try {
 					this.expanded = true;
-					await this.fetchscan(); // fetch at backround
+					await this.fetchtilescan(); // fetch at backround
 				} catch (e) {
 					ajaxfail(e);
 				}
@@ -1507,6 +1508,7 @@ const VueMapCard = {
 	props: ["flist"],
 	data() {
 		return {
+			expanded: true,
 			isfullscreen: false,
 			styleid: 'mapbox-hybrid',
 			markermode: 'thumb',
@@ -1525,12 +1527,14 @@ const VueMapCard = {
 			tracks: null,
 			gpslist: [],
 
+			flisthub: makeeventhub(),
 			iid: makestrid(10) // instance ID
 		};
 	},
 	watch: {
 		flist: {
 			handler(newlist, oldlist) {
+				this.flisthub.emit(null);
 				this.onnewlist(newlist, oldlist);
 			}
 		},
@@ -1666,6 +1670,162 @@ const VueMapCard = {
 		}
 	},
 	methods: {
+		async fetchgpsscan(flist) {
+			const response = await fetchajaxauth("POST", "/api/gps/scan", {
+				aid: this.$root.aid,
+				list: flist.map(file => file.puid),
+			});
+			traceajax(response);
+			if (!response.ok) {
+				throw new HttpError(response.status, response.data);
+			}
+			for (const gsi of response.data.list) {
+				for (const file of flist) {
+					if (gsi.puid === file.puid) {
+						file.latitude = gsi.prop.lat;
+						file.longitude = gsi.prop.lon;
+						file.altitude = gsi.prop.alt;
+						file.datetime = gsi.prop.time;
+						break;
+					}
+				}
+			}
+		},
+
+		async fetchtmbscan(flist) {
+			const mlist = [];
+			for (const file of flist) {
+				if (!file.mtmb && (file.latitude || file.longitude)) {
+					if (!this.hasmarker(file.puid)) {
+						mlist.push(file);
+					}
+				}
+			}
+
+			// not cached thumbnails
+			const uncached = [];
+			// get embedded thumbnails at first
+			for (const file of mlist) {
+				if (!file.etmb && !file.mtmb) {
+					uncached.push({ puid: file.puid, tm: -1 });
+				}
+			}
+			// then get rendered thumbnails
+			for (const file of mlist) {
+				if (!file.mtmb) {
+					uncached.push({ puid: file.puid, tm: 0 });
+				}
+			}
+			if (!uncached.length) {
+				return;
+			}
+
+			let stop = false;
+			const onnewlist = () => {
+				stop = true;
+			}
+
+			const self = this;
+			const gen = (async function* () {
+				const response = await fetchjsonauth("POST", "/api/tile/scnstart", {
+					aid: self.$root.aid,
+					list: uncached,
+				});
+				traceajax(response);
+				if (!response.ok) {
+					throw new HttpError(response.status, response.data);
+				}
+
+				yield;
+
+				let ul = uncached.length;
+				let uc = 0;
+				// cache folder thumnails
+				while (true) {
+					if (stop || !self.expanded) {
+						const response = await fetchjsonauth("POST", "/api/tile/scnbreak", {
+							aid: self.$root.aid,
+							list: uncached,
+						});
+						traceajax(response);
+						if (!response.ok) {
+							throw new HttpError(response.status, response.data);
+						}
+						return;
+					}
+					const response = await fetchajaxauth("POST", "/api/tile/chk", {
+						aid: self.$root.aid,
+						list: uncached
+					});
+					traceajax(response);
+					if (!response.ok) {
+						throw new HttpError(response.status, response.data);
+					}
+
+					const gpslist = [];
+					uncached.splice(0); // refill uncached
+					for (const tp of response.data.list) {
+						if (tp.mime) {
+							for (const file of mlist) {
+								if (file.puid === tp.puid) {
+									if (tp.tm == -1) {
+										file.etmb = tp.mime; // Vue.set
+									} else {
+										file.mtmb = tp.mime; // Vue.set
+									}
+									gpslist.push(file); // add new marker
+									break;
+								}
+							}
+						} else {
+							uncached.push(tp)
+						}
+					}
+					this.addmarkers(gpslist);
+					// check cached state loop
+					if (!uncached.length) {
+						return;
+					}
+					// check for some files remains uncached
+					if (uncached.length >= ul) {
+						uc++;
+						if (uc > 9) {
+							// add remain markers without thumbnails as is
+							const gpslist = [];
+							for (const tp of uncached) {
+								for (const file of mlist) {
+									if (file.puid === tp.puid) {
+										gpslist.push(file);
+										break;
+									}
+								}
+							}
+							this.addmarkers(gpslist);
+							return;
+						}
+					} else {
+						ul = uncached.length;
+						uc = 0;
+					}
+
+					yield;
+				}
+			})();
+
+			this.flisthub.on(null, onnewlist);
+			await (async () => {
+				while (true) {
+					const ret = await gen.next();
+					if (ret.done) {
+						return;
+					}
+					// waits before new checkup iteration
+					await new Promise(resolve => setTimeout(resolve, 1500));
+				}
+			})()
+			this.flisthub.off(null, onnewlist);
+		},
+
 		// create new opened folder
 		onnewlist(newlist, oldlist) {
 			this.keepmap = this.$root.curpuid === PUID.map;
@@ -1682,17 +1842,49 @@ const VueMapCard = {
 			// no any gpx on map
 			this.tracknum = 0;
 
-			// update map card with incoming files
-			const gpslist = [];
+			// prepare list of files to get coords
+			const gpsget = [];
 			for (const file of newlist) {
-				if (file.latitude && file.longitude && Number(file.mtmb) > 0) {
-					gpslist.push(file);
+				if (file.type !== FT.file || file.latitude || file.longitude) {
+					continue;
 				}
-				if (pathext(file.name) === ".gpx") {
+				const ext = pathext(file.name);
+				if (typeEXIF[ext]) {
+					gpsget.push(file);
+				} else if (ext === ".gpx") {
 					this.addgpx(file);
 				}
 			}
-			this.addmarkers(gpslist);
+
+			// update map card with incoming files
+			(async () => {
+				try {
+					if (gpsget.length) {
+						await this.fetchgpsscan(gpsget); // fetch at backround
+					}
+					const gpslist = [];
+					for (const file of newlist) {
+						if (file.mtmb && (file.latitude || file.longitude)) {
+							if (!this.hasmarker(file.puid)) {
+								gpslist.push(file);
+							}
+						}
+					}
+					this.addmarkers(gpslist);
+					await this.fetchtmbscan(newlist);
+				} catch (e) {
+					ajaxfail(e);
+				}
+			})();
+		},
+
+		hasmarker(puid) {
+			for (const file of this.gpslist) {
+				if (file.puid === puid) {
+					return true;
+				}
+			}
+			return false;
 		},
 
 		makemarkericon(file) {
@@ -1701,6 +1893,8 @@ const VueMapCard = {
 			let src = "";
 			if (Number(file.mtmb) > 0 && thumbmode) {
 				src = `<source srcset="/id${this.$root.aid}/mtmb/${file.puid}" type="${MimeStr[file.mtmb]}">`;
+			} else if (Number(file.etmb) > 0 && thumbmode) {
+				src = `<source srcset="/id${this.$root.aid}/etmb/${file.puid}" type="${MimeStr[file.etmb]}">`;
 			} else {
 				for (fmt of iconmapping.iconfmt) {
 					src += `<source srcset="${icp + fmt.ext}" type="${fmt.mime}">`;
@@ -1715,6 +1909,8 @@ const VueMapCard = {
 			let src = "";
 			if (Number(file.mtmb) > 0 && thumbmode) {
 				src = `<source srcset="/id${this.$root.aid}/mtmb/${file.puid}" type="${MimeStr[file.mtmb]}">`;
+			} else if (Number(file.etmb) > 0 && thumbmode) {
+				src = `<source srcset="/id${this.$root.aid}/etmb/${file.puid}" type="${MimeStr[file.etmb]}">`;
 			} else {
 				for (fmt of iconmapping.iconfmt) {
 					src += `<source srcset="${icp + fmt.ext}" type="${fmt.mime}">`;
@@ -2061,8 +2257,23 @@ const VueMapCard = {
 			}
 		},
 		onexpand(e) {
+			(async () => {
+				try {
+					this.expanded = true;
+					await this.fetchtmbscan(this.flist); // fetch at backround
+				} catch (e) {
+					ajaxfail(e);
+				}
+			})();
 		},
 		oncollapse(e) {
+			(async () => {
+				try {
+					this.expanded = false;
+				} catch (e) {
+					ajaxfail(e);
+				}
+			})();
 		}
 	},
 	created() {

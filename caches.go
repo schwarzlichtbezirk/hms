@@ -81,8 +81,8 @@ type PathStore struct {
 
 // Store is struct of sqlite3 item for cache with puid/T values.
 type Store[T any] struct {
-	Puid Puid_t `xorm:"pk"`
-	Prop T      `xorm:"extends"`
+	Puid Puid_t `xorm:"pk" json:"puid" yaml:"puid" xml:"puid,attr"`
+	Prop T      `xorm:"extends" json:"prop" yaml:"prop" xml:"prop"`
 }
 
 type (
@@ -206,7 +206,7 @@ func ExifStoreGet(session *Session, puid Puid_t) (ep ExifProp, ok bool) {
 		ok = false
 		return
 	}
-	if !ep.IsZero() {
+	if ok = !ep.IsZero(); ok {
 		ExifStoreSet(session, &ExifStore{ // update database
 			Puid: puid,
 			Prop: ep,
@@ -218,7 +218,7 @@ func ExifStoreGet(session *Session, puid Puid_t) (ep ExifProp, ok bool) {
 // ExifStoreSet puts value to EXIF cache.
 func ExifStoreSet(session *Session, est *ExifStore) (err error) {
 	// set to GPS cache
-	if est.Prop.Latitude != 0 {
+	if est.Prop.Latitude != 0 || est.Prop.Longitude != 0 {
 		var gi GpsInfo
 		gi.FromProp(&est.Prop)
 		gpscache.Store(est.Puid, gi)
@@ -254,7 +254,7 @@ func TagStoreGet(session *Session, puid Puid_t) (tp TagProp, ok bool) {
 		ok = false
 		return
 	}
-	if !tp.IsZero() {
+	if ok = !tp.IsZero(); ok {
 		TagStoreSet(session, &TagStore{ // update database
 			Puid: puid,
 			Prop: tp,

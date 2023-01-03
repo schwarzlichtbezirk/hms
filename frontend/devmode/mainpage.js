@@ -999,7 +999,7 @@ const VueMainApp = {
 						}
 					}
 					this.flist.push(response.data);
-					await this.$refs.fcard.fetchscan(); // fetch at backround
+					await this.$refs.fcard.fetchtmbscan(); // fetch at backround
 				} catch (e) {
 					ajaxfail(e);
 				}
