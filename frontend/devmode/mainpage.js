@@ -449,8 +449,6 @@ const VueMainApp = {
 			readonly: true, // can't modify content of folder
 
 			selfile: null, // current selected item
-			shared: [], // list of shared items
-
 			delfile: null, // file to delete
 			delensured: false, // deletion request
 
@@ -743,7 +741,6 @@ const VueMainApp = {
 
 			// update folder settings
 			this.flist = newlist ?? [];
-			this.updateshared();
 
 			// update page data
 			this.curscan = new Date(Date.now());
@@ -751,18 +748,6 @@ const VueMainApp = {
 			document.title = `hms - ${this.curbasename}`;
 			// scroll page to top
 			this.$refs.page.scrollTop = 0;
-		},
-
-		async fetchshared() {
-			const response = await fetchajaxauth("POST", "/api/res/folder", {
-				aid: this.aid, path: PUID.shares
-			});
-			traceajax(response);
-			if (!response.ok) {
-				throw new HttpError(response.status, response.data);
-			}
-			this.shared = response.data.list ?? [];
-			this.updateshared();
 		},
 
 		async fetchshareadd(file) {
@@ -775,7 +760,6 @@ const VueMainApp = {
 				throw new HttpError(response.status, response.data);
 			}
 			file.shared = true; // Vue.set
-			this.shared.push(file);
 		},
 
 		async fetchsharedel(file) {
@@ -791,26 +775,6 @@ const VueMainApp = {
 			// update folder settings
 			if (response.data.deleted) { // on ok
 				file.shared = false; // Vue.set
-				for (let i = 0; i < this.shared.length;) {
-					if (this.shared[i].puid === file.puid) {
-						this.shared.splice(i, 1);
-					} else {
-						i++;
-					}
-				}
-			}
-		},
-
-		updateshared() {
-			for (const file of this.flist) {
-				let sf = false;
-				for (const shr of this.shared) {
-					if (shr.puid === file.puid) {
-						sf = true;
-						break;
-					}
-				}
-				file.shared = sf; // Vue.set
 			}
 		},
 
@@ -937,9 +901,6 @@ const VueMainApp = {
 				eventHub.emit('ajax', +1);
 				try {
 					await this.fetchfolder({ aid: this.aid, path: this.curpuid ?? this.curpath });
-					if (this.isadmin && this.curpuid !== PUID.shares) {
-						await this.fetchshared(); // get shares
-					}
 				} catch (e) {
 					ajaxfail(e);
 				} finally {
@@ -1204,9 +1165,6 @@ const VueMainApp = {
 
 				// open route and push history step
 				await this.fetchfolder(hist);
-				if (this.isadmin && hist.puid !== PUID.shares) {
-					await this.fetchshared(); // get shares
-				}
 				this.pushhist(hist);
 			} catch (e) {
 				ajaxfail(e);

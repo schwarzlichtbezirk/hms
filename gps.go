@@ -5,8 +5,6 @@ import (
 	"io/fs"
 	"math"
 	"net/http"
-
-	"golang.org/x/sync/errgroup"
 )
 
 // Haversine uses formula to calculate the great-circle distance between
@@ -194,14 +192,8 @@ func gpsscanAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var wg errgroup.Group
 	var session = xormStorage.NewSession()
-	defer func() {
-		go func() {
-			wg.Wait()
-			session.Close()
-		}()
-	}()
+	defer session.Close()
 
 	var prf *Profile
 	if prf = prflist.ByID(arg.AID); prf == nil {
@@ -213,6 +205,7 @@ func gpsscanAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var ests []ExifStore
 	for _, puid := range arg.List {
 		var puid = puid // localize
 		if syspath, ok := PathStorePath(session, puid); ok {
@@ -225,31 +218,48 @@ func gpsscanAPI(w http.ResponseWriter, r *http.Request) {
 					ret.List = append(ret.List, gst)
 				} else {
 					// check memory cache
-					if ok = exifcache.Has(puid); ok {
+					if exifcache.Has(puid) {
 						continue // there are tags without GPS
 					}
-					// try to extract from file
-					var ep ExifProp
-					if err := ep.Extract(syspath); err != nil {
-						continue
+					// try to get from database
+					var est ExifStore
+					est.Puid = puid
+					if ok, _ = session.Get(&est); ok { // skip errors
+						exifcache.Push(puid, est.Prop) // update cache
+						if est.Prop.IsZero() {
+							continue
+						}
+					} else {
+						// try to extract from file
+						if err := est.Prop.Extract(syspath); err != nil {
+							continue
+						}
+						if est.Prop.IsZero() {
+							continue
+						}
+						// set to memory cache
+						exifcache.Push(puid, est.Prop)
+						// prepare to set to database
+						ests = append(ests, est)
 					}
-					if ok = !ep.IsZero(); ok {
-						wg.Go(func() (err error) {
-							return ExifStoreSet(session, &ExifStore{ // update database
-								Puid: puid,
-								Prop: ep,
-							})
-						})
-					}
-					if ep.Latitude != 0 || ep.Longitude != 0 {
+					if est.Prop.Latitude != 0 || est.Prop.Longitude != 0 {
 						var gst Store[GpsInfo]
 						gst.Puid = puid
-						gst.Prop.FromProp(&ep)
+						gst.Prop.FromProp(&est.Prop)
 						ret.List = append(ret.List, gst)
+						// set to GPS cache
+						gpscache.Store(puid, gst.Prop)
 					}
 				}
 			}
 		}
+	}
+
+	if len(ests) > 0 {
+		go SqlSession(func(session *Session) (res any, err error) {
+			_, err = session.Insert(&ests)
+			return
+		})
 	}
 
 	WriteOK(w, r, &ret)

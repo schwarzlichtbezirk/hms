@@ -586,9 +586,9 @@ func propAPI(w http.ResponseWriter, r *http.Request) {
 	var ret struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
 
-		Path string `json:"path" yaml:"path" xml:"path"`
-		Name string `json:"shrname" yaml:"shrname" xml:"shrname"`
-		Prop any    `json:"prop" yaml:"prop" xml:"prop"`
+		Path string  `json:"path" yaml:"path" xml:"path"`
+		Name string  `json:"shrname" yaml:"shrname" xml:"shrname"`
+		Prop FileKit `json:"prop" yaml:"prop" xml:"prop"`
 	}
 
 	// get arguments
@@ -638,7 +638,8 @@ func propAPI(w http.ResponseWriter, r *http.Request) {
 		WriteError500(w, r, err, AECpropbadstat)
 		return
 	}
-	ret.Prop = MakeProp(session, syspath, fi)
+	ret.Prop.Setup(session, syspath, fi)
+	ret.Prop.Shared = prf.IsShared(syspath)
 
 	WriteOK(w, r, &ret)
 }
@@ -702,6 +703,7 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 
 	var fk FileKit
 	fk.Setup(session, syspath, fi)
+	fk.Shared = prf.IsShared(syspath)
 	WriteOK(w, r, &fk)
 }
 
@@ -864,6 +866,7 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 
 	var fk FileKit
 	fk.PUID = puid
+	fk.Shared = prf.IsShared(syspath)
 	fk.Name = path.Base(syspath)
 	fk.Type = FTdrv
 	fk.Size = fi.Size()

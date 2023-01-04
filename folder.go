@@ -168,12 +168,13 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 				WriteError500(w, r, err, AECfolderhome)
 				return
 			}
-			go func() {
+			go SqlSession(func(session *Session) (res any, err error) {
 				DirStoreSet(session, &DirStore{
 					Puid: puid,
 					Prop: lstp,
 				})
-			}()
+				return
+			})
 		case PUIDdrives:
 			if ret.List, err = prf.ScanRoots(session); err != nil {
 				WriteError500(w, r, err, AECfolderdrives)

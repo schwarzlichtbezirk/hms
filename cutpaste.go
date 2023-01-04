@@ -168,6 +168,11 @@ func edtrenameAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		Dst string `json:"dst" yaml:"dst" xml:"dst"`
 		Ovw bool   `json:"overwrite,omitempty" yaml:"overwrite,omitempty" xml:"overwrite,omitempty,attr"`
 	}
+	var ret struct {
+		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
+
+		Prop FileKit `json:"prop" yaml:"prop" xml:"prop"`
+	}
 
 	// get arguments
 	if err = ParseBody(w, r, &arg); err != nil {
@@ -234,9 +239,9 @@ func edtrenameAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		WriteError500(w, r, err, AECedtrenstat)
 		return
 	}
-	var prop = MakeProp(session, dstpath, fi)
+	ret.Prop.Setup(session, dstpath, fi)
 
-	WriteOK(w, r, prop)
+	WriteOK(w, r, &ret)
 }
 
 // APIHANDLER

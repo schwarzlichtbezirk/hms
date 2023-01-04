@@ -5,36 +5,6 @@ import (
 	"path"
 )
 
-func GetPropSize(p any) (int64, bool) {
-	switch v := p.(type) {
-	case *FileKit:
-		return v.Size, true
-	case *DirKit:
-		return v.Size, true
-	case *ExifKit:
-		return v.Size, true
-	case *TagKit:
-		return v.Size, true
-	default:
-		return 0, false
-	}
-}
-
-func GetPropType(p any) (FT_t, bool) {
-	switch v := p.(type) {
-	case *FileKit:
-		return v.Type, true
-	case *DirKit:
-		return v.Type, true
-	case *ExifKit:
-		return v.Type, true
-	case *TagKit:
-		return v.Type, true
-	default:
-		return 0, false
-	}
-}
-
 // FileProp is common file properties chunk.
 type FileProp struct {
 	Name string `xorm:"'name'" json:"name" yaml:"name" xml:"name"`
@@ -53,7 +23,8 @@ func (fp *FileProp) Setup(fi fs.FileInfo) {
 
 // PuidProp encapsulated path unique ID value for some properties kit.
 type PuidProp struct {
-	PUID Puid_t `xorm:"'puid'" json:"puid" yaml:"puid" xml:"puid"`
+	PUID   Puid_t `xorm:"'puid'" json:"puid" yaml:"puid" xml:"puid"`
+	Shared bool   `xorm:"'shared'" json:"shared" yaml:"shared" xml:"shared"`
 }
 
 func (pp *PuidProp) Setup(session *Session, syspath string) {
@@ -144,29 +115,6 @@ func (dk *DirKit) Setup(session *Session, syspath string, fi fs.FileInfo) {
 	dk.Size = fi.Size()
 	dk.Time = UnixJS(fi.ModTime())
 	dk.DirProp, _ = DirStoreGet(session, dk.PUID)
-}
-
-// MakeProp is file properties factory.
-func MakeProp(session *Session, syspath string, fi fs.FileInfo) any {
-	if fi.IsDir() {
-		var dk DirKit
-		dk.Setup(session, syspath, fi)
-		return &dk
-	}
-	var ext = GetFileExt(syspath)
-	if IsTypeID3(ext) {
-		var tk TagKit
-		tk.Setup(session, syspath, fi)
-		return &tk
-	} else if IsTypeEXIF(ext) {
-		var ek ExifKit
-		ek.Setup(session, syspath, fi)
-		return &ek
-	} else {
-		var fk FileKit
-		fk.Setup(session, syspath, fi)
-		return &fk
-	}
 }
 
 // The End.

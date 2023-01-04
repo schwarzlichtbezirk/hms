@@ -182,36 +182,35 @@ func (prf *Profile) GetPathGroup(fpath string, fi fs.FileInfo) (grp FG_t) {
 // IsHidden do check up that file path is in hidden list.
 func (prf *Profile) IsHidden(fpath string) bool {
 	var matched bool
-	var kpath = strings.ToLower(ToSlash(fpath))
+	var kpath = strings.ToLower(fpath)
 
 	prf.mux.RLock()
 	defer prf.mux.RUnlock()
 
 	var name = path.Base(kpath)
-patterns:
 	for _, pattern := range prf.Hidden {
 		if strings.HasPrefix(pattern, "**/") {
 			if matched, _ = path.Match(pattern[3:], name); matched {
-				break
+				return true
 			}
 		} else if strings.HasPrefix(pattern, "?:/") {
 			for _, root := range prf.Roots {
 				if root[len(root)-1] != '/' {
 					root += "/"
 				}
-				if strings.HasPrefix(kpath, root) {
+				if strings.HasPrefix(kpath, strings.ToLower(root)) {
 					if matched, _ = path.Match(pattern[3:], kpath[len(root):]); matched {
-						break patterns
+						return true
 					}
 				}
 			}
 		} else {
 			if matched, _ = path.Match(pattern, kpath); matched {
-				break
+				return true
 			}
 		}
 	}
-	return matched
+	return false
 }
 
 // IsRoot checks whether file path is disk root path.
@@ -227,15 +226,11 @@ func (prf *Profile) IsRoot(syspath string) bool {
 }
 
 // IsShared checks that syspath is become in any share.
-func (prf *Profile) IsShared(syspath string) bool {
+func (prf *Profile) IsShared(syspath string) (ok bool) {
 	prf.mux.RLock()
-	defer prf.mux.RUnlock()
-	for _, fpath := range prf.Shares {
-		if fpath == syspath {
-			return true
-		}
-	}
-	return false
+	_, ok = prf.sharepuid[syspath]
+	prf.mux.RUnlock()
+	return
 }
 
 // RootIndex returns index of given path in roots list or -1 if not found.

@@ -1781,7 +1781,7 @@ const VueMapCard = {
 							uncached.push(tp)
 						}
 					}
-					this.addmarkers(gpslist);
+					self.addmarkers(gpslist);
 					// check cached state loop
 					if (!uncached.length) {
 						return;
@@ -1800,7 +1800,7 @@ const VueMapCard = {
 									}
 								}
 							}
-							this.addmarkers(gpslist);
+							self.addmarkers(gpslist);
 							return;
 						}
 					} else {
