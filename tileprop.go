@@ -4,8 +4,10 @@ import (
 	"encoding/xml"
 	"fmt"
 	"net/http"
+	"strconv"
 	"strings"
 
+	"github.com/gorilla/mux"
 	"github.com/schwarzlichtbezirk/wpk"
 )
 
@@ -268,7 +270,6 @@ func tilechkAPI(w http.ResponseWriter, r *http.Request) {
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
-		AID  ID_t     `json:"aid" yaml:"aid" xml:"aid,attr"`
 		List []tiletm `json:"list" yaml:"list" xml:"list>puid"`
 	}
 	var ret struct {
@@ -278,6 +279,12 @@ func tilechkAPI(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get arguments
+	var vars = mux.Vars(r)
+	var aid uint64
+	if aid, err = strconv.ParseUint(vars["aid"], 10, 64); err != nil {
+		WriteError400(w, r, err, AECtilechknoaid)
+		return
+	}
 	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
@@ -290,7 +297,7 @@ func tilechkAPI(w http.ResponseWriter, r *http.Request) {
 	defer session.Close()
 
 	var prf *Profile
-	if prf = prflist.ByID(arg.AID); prf == nil {
+	if prf = prflist.ByID(ID_t(aid)); prf == nil {
 		WriteError400(w, r, ErrNoAcc, AECscnstartnoacc)
 		return
 	}
@@ -327,11 +334,16 @@ func tilescnstartAPI(w http.ResponseWriter, r *http.Request) {
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
-		AID  ID_t     `json:"aid" yaml:"aid" xml:"aid,attr"`
 		List []tiletm `json:"list" yaml:"list" xml:"list>tiletm"`
 	}
 
 	// get arguments
+	var vars = mux.Vars(r)
+	var aid uint64
+	if aid, err = strconv.ParseUint(vars["aid"], 10, 64); err != nil {
+		WriteError400(w, r, err, AECscnstartnoaid)
+		return
+	}
 	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
@@ -344,7 +356,7 @@ func tilescnstartAPI(w http.ResponseWriter, r *http.Request) {
 	defer session.Close()
 
 	var prf *Profile
-	if prf = prflist.ByID(arg.AID); prf == nil {
+	if prf = prflist.ByID(ID_t(aid)); prf == nil {
 		WriteError400(w, r, ErrNoAcc, AECscnstartnoacc)
 		return
 	}
@@ -374,11 +386,16 @@ func tilescnbreakAPI(w http.ResponseWriter, r *http.Request) {
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
-		AID  ID_t     `json:"aid" yaml:"aid" xml:"aid,attr"`
 		List []tiletm `json:"list" yaml:"list" xml:"list>tiletm"`
 	}
 
 	// get arguments
+	var vars = mux.Vars(r)
+	var aid uint64
+	if aid, err = strconv.ParseUint(vars["aid"], 10, 64); err != nil {
+		WriteError400(w, r, err, AECscnbreaknoaid)
+		return
+	}
 	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
@@ -391,7 +408,7 @@ func tilescnbreakAPI(w http.ResponseWriter, r *http.Request) {
 	defer session.Close()
 
 	var prf *Profile
-	if prf = prflist.ByID(arg.AID); prf == nil {
+	if prf = prflist.ByID(ID_t(aid)); prf == nil {
 		WriteError400(w, r, ErrNoAcc, AECscnbreaknoacc)
 		return
 	}

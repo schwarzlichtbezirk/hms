@@ -15,8 +15,8 @@ import (
 var xormUserlog *xorm.Engine
 
 type UserStore struct {
-	UID       uint   `xorm:"pk autoincr"`
-	CreatedAt Unix_t `xorm:"DateTime"`
+	UID       uint `xorm:"pk autoincr"`
+	CreatedAt Time `xorm:"created"`
 }
 
 type UaStore struct {
@@ -30,7 +30,7 @@ type OpenStore struct {
 	UID     uint `json:"uid" yaml:"uid" xml:"uid,attr"`
 	AID     uint
 	Path    string
-	Time    Unix_t `xorm:"DateTime"`
+	Time    Time
 	Latency int
 }
 

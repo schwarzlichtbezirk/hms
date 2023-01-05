@@ -361,8 +361,7 @@ const VueDriveCard = {
 			(async () => {
 				eventHub.emit('ajax', +1);
 				try {
-					const response = await fetchajaxauth("POST", "/api/drive/add", {
-						aid: this.$root.aid,
+					const response = await fetchajaxauth("POST", `/id${this.$root.aid}/api/drive/add`, {
 						path: this.diskpath
 					});
 					traceajax(response);
@@ -386,8 +385,7 @@ const VueDriveCard = {
 			(async () => {
 				eventHub.emit('ajax', +1);
 				try {
-					const response = await fetchajaxauth("POST", "/api/drive/del", {
-						aid: this.$root.aid,
+					const response = await fetchajaxauth("POST", `/id${this.$root.aid}/api/drive/del`, {
 						puid: this.selfile.puid
 					});
 					traceajax(response);
@@ -412,8 +410,7 @@ const VueDriveCard = {
 		ondiskpathchange(e) {
 			(async () => {
 				try {
-					const response = await fetchajaxauth("POST", "/api/res/ispath", {
-						aid: this.$root.aid,
+					const response = await fetchajaxauth("POST", `/id${this.$root.aid}/api/res/ispath`, {
 						path: this.diskpath
 					});
 					if (response.ok) {
@@ -799,8 +796,7 @@ const VueFileCard = {
 
 			const self = this;
 			const gen = (async function* () {
-				const response = await fetchjsonauth("POST", "/api/tile/scnstart", {
-					aid: self.$root.aid,
+				const response = await fetchjsonauth("POST", `/id${self.$root.aid}/api/tile/scnstart`, {
 					list: uncached,
 				});
 				traceajax(response);
@@ -815,8 +811,7 @@ const VueFileCard = {
 				// cache folder thumnails
 				while (true) {
 					if (stop || !self.expanded) {
-						const response = await fetchjsonauth("POST", "/api/tile/scnbreak", {
-							aid: self.$root.aid,
+						const response = await fetchjsonauth("POST", `/id${self.$root.aid}/api/tile/scnbreak`, {
 							list: uncached,
 						});
 						traceajax(response);
@@ -825,8 +820,7 @@ const VueFileCard = {
 						}
 						return;
 					}
-					const response = await fetchajaxauth("POST", "/api/tile/chk", {
-						aid: self.$root.aid,
+					const response = await fetchajaxauth("POST", `/id${self.$root.aid}/api/tile/chk`, {
 						list: uncached
 					});
 					traceajax(response);
@@ -1325,8 +1319,7 @@ const VueTileCard = {
 
 			const self = this;
 			const gen = (async function* () {
-				const response = await fetchjsonauth("POST", "/api/tile/scnstart", {
-					aid: self.$root.aid,
+				const response = await fetchjsonauth("POST", `/id${self.$root.aid}/api/tile/scnstart`, {
 					list: uncached,
 				});
 				traceajax(response);
@@ -1339,8 +1332,7 @@ const VueTileCard = {
 				// cache folder tiles
 				while (true) {
 					if (stop || !self.expanded) {
-						const response = await fetchjsonauth("POST", "/api/tile/scnbreak", {
-							aid: self.$root.aid,
+						const response = await fetchjsonauth("POST", `/id${self.$root.aid}/api/tile/scnbreak`, {
 							list: uncached,
 						});
 						traceajax(response);
@@ -1349,8 +1341,7 @@ const VueTileCard = {
 						}
 						return;
 					}
-					const response = await fetchajaxauth("POST", "/api/tile/chk", {
-						aid: self.$root.aid,
+					const response = await fetchajaxauth("POST", `/id${self.$root.aid}/api/tile/chk`, {
 						list: uncached
 					});
 					traceajax(response);
@@ -1671,8 +1662,7 @@ const VueMapCard = {
 	},
 	methods: {
 		async fetchgpsscan(flist) {
-			const response = await fetchajaxauth("POST", "/api/gps/scan", {
-				aid: this.$root.aid,
+			const response = await fetchajaxauth("POST", `/id${this.$root.aid}/api/gps/scan`, {
 				list: flist.map(file => file.puid),
 			});
 			traceajax(response);
@@ -1727,8 +1717,7 @@ const VueMapCard = {
 
 			const self = this;
 			const gen = (async function* () {
-				const response = await fetchjsonauth("POST", "/api/tile/scnstart", {
-					aid: self.$root.aid,
+				const response = await fetchjsonauth("POST", `/id${self.$root.aid}/api/tile/scnstart`, {
 					list: uncached,
 				});
 				traceajax(response);
@@ -1743,8 +1732,7 @@ const VueMapCard = {
 				// cache folder thumnails
 				while (true) {
 					if (stop || !self.expanded) {
-						const response = await fetchjsonauth("POST", "/api/tile/scnbreak", {
-							aid: self.$root.aid,
+						const response = await fetchjsonauth("POST", `/id${self.$root.aid}/api/tile/scnbreak`, {
 							list: uncached,
 						});
 						traceajax(response);
@@ -1753,8 +1741,7 @@ const VueMapCard = {
 						}
 						return;
 					}
-					const response = await fetchajaxauth("POST", "/api/tile/chk", {
-						aid: self.$root.aid,
+					const response = await fetchajaxauth("POST", `/id${self.$root.aid}/api/tile/chk`, {
 						list: uncached
 					});
 					traceajax(response);
@@ -2354,7 +2341,6 @@ const VueMapCard = {
 
 		const postmsg = () => {
 			const arg = {
-				aid: self.$root.aid,
 				paths: []
 			};
 			for (const layer of mappaths.getLayers()) {

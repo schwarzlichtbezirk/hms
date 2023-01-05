@@ -10,7 +10,7 @@ type FileProp struct {
 	Name string `xorm:"'name'" json:"name" yaml:"name" xml:"name"`
 	Type FT_t   `xorm:"'type'" json:"type" yaml:"type" xml:"type"` // do not omit empty
 	Size int64  `xorm:"'size' default 0" json:"size,omitempty" yaml:"size,omitempty" xml:"size,omitempty"`
-	Time Unix_t `xorm:"'time' DateTime default 0" json:"time,omitempty" yaml:"time,omitempty" xml:"time,omitempty"`
+	Time Time   `xorm:"'time' DateTime default 0" json:"time,omitempty" yaml:"time,omitempty" xml:"time,omitempty"`
 }
 
 // Setup fills fields from fs.FileInfo structure. Do not looks for share.
@@ -18,7 +18,7 @@ func (fp *FileProp) Setup(fi fs.FileInfo) {
 	fp.Name = fi.Name()
 	fp.Type = FTfile
 	fp.Size = fi.Size()
-	fp.Time = UnixJS(fi.ModTime())
+	fp.Time = fi.ModTime()
 }
 
 // PuidProp encapsulated path unique ID value for some properties kit.
@@ -95,7 +95,7 @@ func (fg *FileGroup) IsZero() bool {
 
 // DirProp is directory properties chunk.
 type DirProp struct {
-	Scan    Unix_t    `xorm:"DateTime default 0" json:"scan,omitempty" yaml:"scan,omitempty" xml:"scan,omitempty"` // directory scanning time in UNIX format, milliseconds.
+	Scan    Time      `json:"scan,omitempty" yaml:"scan,omitempty" xml:"scan,omitempty"`                           // directory scanning time in UNIX format, milliseconds.
 	FGrp    FileGroup `xorm:"extends" json:"fgrp,omitempty" yaml:"fgrp,flow,omitempty" xml:"fgrp,omitempty"`       // directory file groups counters.
 	Latency int       `xorm:"default 0" json:"latency,omitempty" yaml:"latency,omitempty" xml:"latency,omitempty"` // drive connection latency in ms, or -1 on error
 }
@@ -113,7 +113,7 @@ func (dk *DirKit) Setup(session *Session, syspath string, fi fs.FileInfo) {
 	dk.Name = path.Base(syspath)
 	dk.Type = FTdir
 	dk.Size = fi.Size()
-	dk.Time = UnixJS(fi.ModTime())
+	dk.Time = fi.ModTime()
 	dk.DirProp, _ = DirStoreGet(session, dk.PUID)
 }
 

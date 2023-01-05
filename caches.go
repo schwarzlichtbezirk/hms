@@ -283,7 +283,7 @@ type GpsInfo struct {
 
 // FromProp fills fields with values from ExifProp.
 func (gi *GpsInfo) FromProp(ep *ExifProp) {
-	gi.DateTime = ep.DateTime
+	gi.DateTime = UnixJS(ep.DateTime)
 	gi.Latitude = ep.Latitude
 	gi.Longitude = ep.Longitude
 	gi.Altitude = ep.Altitude

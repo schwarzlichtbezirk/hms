@@ -9,6 +9,9 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
 // APIHANDLER
@@ -17,7 +20,6 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
-		AID ID_t   `json:"aid" yaml:"aid" xml:"aid,attr"`
 		Src string `json:"src" yaml:"src" xml:"src"`
 		Dst string `json:"dst" yaml:"dst" xml:"dst"`
 		Ovw bool   `json:"overwrite,omitempty" yaml:"overwrite,omitempty" xml:"overwrite,omitempty,attr"`
@@ -30,6 +32,12 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var isret bool
 
 	// get arguments
+	var vars = mux.Vars(r)
+	var aid uint64
+	if aid, err = strconv.ParseUint(vars["aid"], 10, 64); err != nil {
+		WriteError400(w, r, err, AECedtcopynoaid)
+		return
+	}
 	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
@@ -42,7 +50,7 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	defer session.Close()
 
 	var prf *Profile
-	if prf = prflist.ByID(arg.AID); prf == nil {
+	if prf = prflist.ByID(ID_t(aid)); prf == nil {
 		WriteError400(w, r, ErrNoAcc, AECedtcopynoacc)
 		return
 	}
@@ -163,7 +171,6 @@ func edtrenameAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
-		AID ID_t   `json:"aid" yaml:"aid" xml:"aid,attr"`
 		Src string `json:"src" yaml:"src" xml:"src"`
 		Dst string `json:"dst" yaml:"dst" xml:"dst"`
 		Ovw bool   `json:"overwrite,omitempty" yaml:"overwrite,omitempty" xml:"overwrite,omitempty,attr"`
@@ -175,6 +182,12 @@ func edtrenameAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	}
 
 	// get arguments
+	var vars = mux.Vars(r)
+	var aid uint64
+	if aid, err = strconv.ParseUint(vars["aid"], 10, 64); err != nil {
+		WriteError400(w, r, err, AECedtrennoaid)
+		return
+	}
 	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
@@ -187,7 +200,7 @@ func edtrenameAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	defer session.Close()
 
 	var prf *Profile
-	if prf = prflist.ByID(arg.AID); prf == nil {
+	if prf = prflist.ByID(ID_t(aid)); prf == nil {
 		WriteError400(w, r, ErrNoAcc, AECedtrennoacc)
 		return
 	}
@@ -250,11 +263,16 @@ func edtdeleteAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
-		AID ID_t   `json:"aid" yaml:"aid" xml:"aid,attr"`
 		Src string `json:"src" yaml:"src" xml:"src"`
 	}
 
 	// get arguments
+	var vars = mux.Vars(r)
+	var aid uint64
+	if aid, err = strconv.ParseUint(vars["aid"], 10, 64); err != nil {
+		WriteError400(w, r, err, AECedtdelnoaid)
+		return
+	}
 	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
@@ -267,7 +285,7 @@ func edtdeleteAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	defer session.Close()
 
 	var prf *Profile
-	if prf = prflist.ByID(arg.AID); prf == nil {
+	if prf = prflist.ByID(ID_t(aid)); prf == nil {
 		WriteError400(w, r, ErrNoAcc, AECedtdelnoacc)
 		return
 	}

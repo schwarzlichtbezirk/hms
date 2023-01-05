@@ -108,7 +108,7 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 		fp.Type = prf.PathType(fpath, fi)
 		if fi != nil {
 			fp.Size = fi.Size()
-			fp.Time = UnixJS(fi.ModTime())
+			fp.Time = fi.ModTime()
 		}
 		var grp = prf.GetPathGroup(fpath, fi)
 		*lstp.FGrp.Field(grp)++
@@ -135,7 +135,7 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 		}
 	}
 
-	lstp.Scan = UnixJS(tscan)
+	lstp.Scan = tscan
 	lstp.Latency = int(time.Since(tscan) / time.Millisecond)
 
 	return

@@ -5,6 +5,9 @@ import (
 	"io/fs"
 	"math"
 	"net/http"
+	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
 // Haversine uses formula to calculate the great-circle distance between
@@ -66,7 +69,6 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
-		AID   ID_t      `json:"aid" yaml:"aid" xml:"aid,attr"`
 		Paths []MapPath `json:"paths" yaml:"paths" xml:"paths>path"`
 		Limit int       `json:"limit,omitempty" yaml:"limit,omitempty" xml:"limit,omitempty"`
 		Time1 Unix_t    `json:"time1,omitempty" yaml:"time1,omitempty" xml:"time1,omitempty"`
@@ -81,6 +83,12 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	}
 
 	// get arguments
+	var vars = mux.Vars(r)
+	var aid uint64
+	if aid, err = strconv.ParseUint(vars["aid"], 10, 64); err != nil {
+		WriteError400(w, r, err, AECgpsrangenoaid)
+		return
+	}
 	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
@@ -114,7 +122,7 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	defer session.Close()
 
 	var prf *Profile
-	if prf = prflist.ByID(arg.AID); prf == nil {
+	if prf = prflist.ByID(ID_t(aid)); prf == nil {
 		WriteError400(w, r, ErrNoAcc, AECgpsrangenoacc)
 		return
 	}
@@ -174,7 +182,6 @@ func gpsscanAPI(w http.ResponseWriter, r *http.Request) {
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
-		AID  ID_t     `json:"aid" yaml:"aid" xml:"aid,attr"`
 		List []Puid_t `json:"list" yaml:"list" xml:"list>puid"`
 	}
 	var ret struct {
@@ -184,6 +191,12 @@ func gpsscanAPI(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get arguments
+	var vars = mux.Vars(r)
+	var aid uint64
+	if aid, err = strconv.ParseUint(vars["aid"], 10, 64); err != nil {
+		WriteError400(w, r, err, AECgpsscannoaid)
+		return
+	}
 	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
@@ -196,7 +209,7 @@ func gpsscanAPI(w http.ResponseWriter, r *http.Request) {
 	defer session.Close()
 
 	var prf *Profile
-	if prf = prflist.ByID(arg.AID); prf == nil {
+	if prf = prflist.ByID(ID_t(aid)); prf == nil {
 		WriteError400(w, r, ErrNoAcc, AECgpsscannoacc)
 		return
 	}

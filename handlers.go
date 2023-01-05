@@ -580,7 +580,6 @@ func propAPI(w http.ResponseWriter, r *http.Request) {
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
-		AID  ID_t   `json:"aid" yaml:"aid" xml:"aid,attr"`
 		PUID Puid_t `json:"puid" yaml:"puid" xml:"puid,attr"`
 	}
 	var ret struct {
@@ -592,6 +591,12 @@ func propAPI(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get arguments
+	var vars = mux.Vars(r)
+	var aid uint64
+	if aid, err = strconv.ParseUint(vars["aid"], 10, 64); err != nil {
+		WriteError400(w, r, err, AECpropnoaid)
+		return
+	}
 	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
@@ -604,7 +609,7 @@ func propAPI(w http.ResponseWriter, r *http.Request) {
 	defer session.Close()
 
 	var prf *Profile
-	if prf = prflist.ByID(arg.AID); prf == nil {
+	if prf = prflist.ByID(ID_t(aid)); prf == nil {
 		WriteError400(w, r, ErrNoAcc, AECpropnoacc)
 		return
 	}
@@ -650,11 +655,16 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
-		AID  ID_t   `json:"aid" yaml:"aid" xml:"aid,attr"`
 		Path string `json:"path" yaml:"path" xml:"path"`
 	}
 
 	// get arguments
+	var vars = mux.Vars(r)
+	var aid uint64
+	if aid, err = strconv.ParseUint(vars["aid"], 10, 64); err != nil {
+		WriteError400(w, r, err, AECispathnoaid)
+		return
+	}
 	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
@@ -667,7 +677,7 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	defer session.Close()
 
 	var prf *Profile
-	if prf = prflist.ByID(arg.AID); prf == nil {
+	if prf = prflist.ByID(ID_t(aid)); prf == nil {
 		WriteError400(w, r, ErrNoAcc, AECispathnoacc)
 		return
 	}
@@ -713,7 +723,6 @@ func shraddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
-		AID  ID_t   `json:"aid" yaml:"aid" xml:"aid,attr"`
 		PUID Puid_t `json:"puid" yaml:"puid" xml:"puid"`
 	}
 	var ret struct {
@@ -723,6 +732,12 @@ func shraddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	}
 
 	// get arguments
+	var vars = mux.Vars(r)
+	var aid uint64
+	if aid, err = strconv.ParseUint(vars["aid"], 10, 64); err != nil {
+		WriteError400(w, r, err, AECshraddnoaid)
+		return
+	}
 	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
@@ -735,7 +750,7 @@ func shraddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	defer session.Close()
 
 	var prf *Profile
-	if prf = prflist.ByID(arg.AID); prf == nil {
+	if prf = prflist.ByID(ID_t(aid)); prf == nil {
 		WriteError400(w, r, ErrNoAcc, AECshraddnoacc)
 		return
 	}
@@ -765,7 +780,6 @@ func shrdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
-		AID  ID_t   `json:"aid" yaml:"aid" xml:"aid,attr"`
 		PUID Puid_t `json:"puid" yaml:"puid" xml:"puid"`
 	}
 	var ret struct {
@@ -775,6 +789,12 @@ func shrdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	}
 
 	// get arguments
+	var vars = mux.Vars(r)
+	var aid uint64
+	if aid, err = strconv.ParseUint(vars["aid"], 10, 64); err != nil {
+		WriteError400(w, r, err, AECshrdelnoaid)
+		return
+	}
 	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
@@ -784,7 +804,7 @@ func shrdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	}
 
 	var prf *Profile
-	if prf = prflist.ByID(arg.AID); prf == nil {
+	if prf = prflist.ByID(ID_t(aid)); prf == nil {
 		WriteError400(w, r, ErrNoAcc, AECshrdelnoacc)
 		return
 	}
@@ -806,11 +826,16 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
-		AID  ID_t   `json:"aid" yaml:"aid" xml:"aid,attr"`
 		Path string `json:"path" yaml:"path" xml:"path"`
 	}
 
 	// get arguments
+	var vars = mux.Vars(r)
+	var aid uint64
+	if aid, err = strconv.ParseUint(vars["aid"], 10, 64); err != nil {
+		WriteError400(w, r, err, AECdrvaddnoaid)
+		return
+	}
 	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
@@ -823,7 +848,7 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	defer session.Close()
 
 	var prf *Profile
-	if prf = prflist.ByID(arg.AID); prf == nil {
+	if prf = prflist.ByID(ID_t(aid)); prf == nil {
 		WriteError400(w, r, ErrNoAcc, AECdrvaddnoacc)
 		return
 	}
@@ -870,7 +895,7 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	fk.Name = path.Base(syspath)
 	fk.Type = FTdrv
 	fk.Size = fi.Size()
-	fk.Time = UnixJS(fi.ModTime())
+	fk.Time = fi.ModTime()
 
 	prf.mux.Lock()
 	prf.Roots = append(prf.Roots, syspath)
@@ -885,7 +910,6 @@ func drvdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
-		AID  ID_t   `json:"aid" yaml:"aid" xml:"aid,attr"`
 		PUID Puid_t `json:"puid" yaml:"puid" xml:"puid"`
 	}
 	var ret struct {
@@ -895,6 +919,12 @@ func drvdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	}
 
 	// get arguments
+	var vars = mux.Vars(r)
+	var aid uint64
+	if aid, err = strconv.ParseUint(vars["aid"], 10, 64); err != nil {
+		WriteError400(w, r, err, AECdrvdelnoaid)
+		return
+	}
 	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
@@ -907,7 +937,7 @@ func drvdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	defer session.Close()
 
 	var prf *Profile
-	if prf = prflist.ByID(arg.AID); prf == nil {
+	if prf = prflist.ByID(ID_t(aid)); prf == nil {
 		WriteError400(w, r, ErrNoAcc, AECdrvdelnoacc)
 		return
 	}

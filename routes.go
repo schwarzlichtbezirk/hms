@@ -475,9 +475,7 @@ func AjaxMiddleware(next http.Handler) http.Handler {
 			uid, _ = strconv.ParseInt(c.Value, 16, 64)
 		}
 		if uid == 0 {
-			var ust = UserStore{
-				CreatedAt: UnixJSNow(),
-			}
+			var ust UserStore
 			if _, err := xormUserlog.InsertOne(&ust); err == nil {
 				uid = int64(ust.UID)
 				http.SetCookie(w, &http.Cookie{
@@ -535,32 +533,41 @@ func RegisterRoutes(gmux *Router) {
 
 	// API routes
 	var api = gmux.PathPrefix("/api").Subrouter()
+	var usr = gacc.PathPrefix("/api").Subrouter()
 	api.Use(AjaxMiddleware)
 	api.Path("/ping").HandlerFunc(pingAPI)
 	api.Path("/reload").HandlerFunc(AuthWrap(reloadAPI))
+
 	api.Path("/stat/srvinf").HandlerFunc(srvinfAPI)
 	api.Path("/stat/memusg").HandlerFunc(memusgAPI)
 	api.Path("/stat/cchinf").HandlerFunc(cchinfAPI)
 	api.Path("/stat/getlog").HandlerFunc(getlogAPI)
 	api.Path("/stat/usrlst").HandlerFunc(usrlstAPI)
+
 	api.Path("/auth/pubkey").HandlerFunc(pubkeyAPI)
 	api.Path("/auth/signin").HandlerFunc(signinAPI)
 	api.Path("/auth/refrsh").HandlerFunc(refrshAPI)
-	api.Path("/res/folder").HandlerFunc(folderAPI)
-	api.Path("/res/prop").HandlerFunc(propAPI)
-	api.Path("/res/ispath").HandlerFunc(AuthWrap(ispathAPI))
-	api.Path("/tile/chk").HandlerFunc(tilechkAPI)
-	api.Path("/tile/scnstart").HandlerFunc(tilescnstartAPI)
-	api.Path("/tile/scnbreak").HandlerFunc(tilescnbreakAPI)
-	api.Path("/share/add").HandlerFunc(AuthWrap(shraddAPI))
-	api.Path("/share/del").HandlerFunc(AuthWrap(shrdelAPI))
-	api.Path("/drive/add").HandlerFunc(AuthWrap(drvaddAPI))
-	api.Path("/drive/del").HandlerFunc(AuthWrap(drvdelAPI))
-	api.Path("/edit/copy").HandlerFunc(AuthWrap(edtcopyAPI))
-	api.Path("/edit/rename").HandlerFunc(AuthWrap(edtrenameAPI))
-	api.Path("/edit/delete").HandlerFunc(AuthWrap(edtdeleteAPI))
-	api.Path("/gps/range").HandlerFunc(AuthWrap(gpsrangeAPI))
-	api.Path("/gps/scan").HandlerFunc(gpsscanAPI)
+
+	usr.Path("/res/folder").HandlerFunc(folderAPI)
+	usr.Path("/res/prop").HandlerFunc(propAPI)
+	usr.Path("/res/ispath").HandlerFunc(AuthWrap(ispathAPI))
+
+	usr.Path("/tile/chk").HandlerFunc(tilechkAPI)
+	usr.Path("/tile/scnstart").HandlerFunc(tilescnstartAPI)
+	usr.Path("/tile/scnbreak").HandlerFunc(tilescnbreakAPI)
+
+	usr.Path("/share/add").HandlerFunc(AuthWrap(shraddAPI))
+	usr.Path("/share/del").HandlerFunc(AuthWrap(shrdelAPI))
+
+	usr.Path("/drive/add").HandlerFunc(AuthWrap(drvaddAPI))
+	usr.Path("/drive/del").HandlerFunc(AuthWrap(drvdelAPI))
+
+	usr.Path("/edit/copy").HandlerFunc(AuthWrap(edtcopyAPI))
+	usr.Path("/edit/rename").HandlerFunc(AuthWrap(edtrenameAPI))
+	usr.Path("/edit/delete").HandlerFunc(AuthWrap(edtdeleteAPI))
+
+	usr.Path("/gps/range").HandlerFunc(AuthWrap(gpsrangeAPI))
+	usr.Path("/gps/scan").HandlerFunc(gpsscanAPI)
 }
 
 // The End.

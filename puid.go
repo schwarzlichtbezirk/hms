@@ -20,6 +20,8 @@ type Puid_t uint64
 // Unix_t is UNIX time in milliseconds.
 type Unix_t uint64
 
+type Time = time.Time
+
 // Predefined PUIDs.
 const (
 	PUIDhome   Puid_t = 1
@@ -161,7 +163,7 @@ func (pt *Puid_t) Rand(bits int) {
 	*pt &= 0xffffffffffffffff >> (65 - bits) // throw one more bit to prevent string representation overflow
 }
 
-func (ut Unix_t) Time() time.Time {
+func (ut Unix_t) Time() Time {
 	return time.Unix(int64(ut/1000), int64(ut%1000)*1000000)
 }
 
@@ -178,7 +180,7 @@ func (ut Unix_t) ToDB() ([]byte, error) {
 
 // FromDB is Conversion interface implementation for XORM engine.
 func (ut *Unix_t) FromDB(b []byte) (err error) {
-	var t time.Time
+	var t Time
 	if t, err = time.Parse(ExifDate, b2s(b)); err != nil {
 		return
 	}
@@ -197,7 +199,7 @@ func (ut *Unix_t) UnmarshalJSON(b []byte) (err error) {
 	if err = json.Unmarshal(b, &s); err != nil {
 		return err
 	}
-	var t time.Time
+	var t Time
 	if t, err = time.Parse(ExifDate, s); err != nil {
 		return
 	}
@@ -212,7 +214,7 @@ func (ut Unix_t) MarshalYAML() (any, error) {
 
 // UnmarshalYAML is YAML unmarshaler interface implementation.
 func (ut *Unix_t) UnmarshalYAML(value *yaml.Node) (err error) {
-	var t time.Time
+	var t Time
 	if t, err = time.Parse(ExifDate, value.Value); err != nil {
 		return
 	}
@@ -231,7 +233,7 @@ func (ut *Unix_t) UnmarshalXML(d *xml.Decoder, start xml.StartElement) (err erro
 	if err = d.DecodeElement(&s, &start); err != nil {
 		return err
 	}
-	var t time.Time
+	var t Time
 	if t, err = time.Parse(ExifDate, s); err != nil {
 		return
 	}
@@ -240,7 +242,7 @@ func (ut *Unix_t) UnmarshalXML(d *xml.Decoder, start xml.StartElement) (err erro
 }
 
 // UnixJS converts time to UNIX-time in milliseconds, compatible with javascript time format.
-func UnixJS(u time.Time) Unix_t {
+func UnixJS(u Time) Unix_t {
 	return Unix_t(u.UnixMilli())
 }
 

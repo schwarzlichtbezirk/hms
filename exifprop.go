@@ -18,7 +18,7 @@ type ExifProp struct {
 	Model        string  `xorm:"'model'" json:"model,omitempty" yaml:"model,omitempty" xml:"model,omitempty"`
 	Make         string  `xorm:"'make'" json:"make,omitempty" yaml:"make,omitempty" xml:"make,omitempty"`
 	Software     string  `xorm:"'software'" json:"software,omitempty" yaml:"software,omitempty" xml:"software,omitempty"`
-	DateTime     Unix_t  `xorm:"'datetime' DateTime" json:"datetime,omitempty" yaml:"datetime,omitempty" xml:"datetime,omitempty"`
+	DateTime     Time    `xorm:"'datetime'" json:"datetime,omitempty" yaml:"datetime,omitempty" xml:"datetime,omitempty"`
 	Orientation  int     `xorm:"'orientation'" json:"orientation,omitempty" yaml:"orientation,omitempty" xml:"orientation,omitempty"`
 	ExposureTime string  `xorm:"'exposure_time'" json:"exposuretime,omitempty" yaml:"exposuretime,omitempty" xml:"exposuretime,omitempty"`
 	ExposureProg int     `xorm:"'exposure_prog'" json:"exposureprog,omitempty" yaml:"exposureprog,omitempty" xml:"exposureprog,omitempty"`
@@ -45,7 +45,7 @@ type ExifProp struct {
 // it should be omitted when marshaling to yaml.
 func (ep *ExifProp) IsZero() bool {
 	return ep.Width == 0 && ep.Height == 0 && ep.Model == "" &&
-		ep.Make == "" && ep.Software == "" && ep.DateTime == 0 &&
+		ep.Make == "" && ep.Software == "" && ep.DateTime.IsZero() &&
 		ep.Orientation == 0 && ep.ExposureTime == "" && ep.ExposureProg == 0 &&
 		ep.FNumber == 0 && ep.ISOSpeed == 0 && ep.ShutterSpeed == 0 &&
 		ep.Aperture == 0 && ep.ExposureBias == 0 && ep.LightSource == 0 &&
@@ -90,7 +90,7 @@ func (ep *ExifProp) Setup(x *exif.Exif) {
 		ep.Software, _ = t.StringVal()
 	}
 	if tm, err := x.DateTime(); err == nil {
-		ep.DateTime = UnixJS(tm)
+		ep.DateTime = tm
 	}
 	if t, err = x.Get(exif.Orientation); err == nil {
 		ep.Orientation, _ = t.Int(0)

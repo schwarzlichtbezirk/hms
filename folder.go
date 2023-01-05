@@ -8,8 +8,11 @@ import (
 	"io/fs"
 	"net/http"
 	"path"
+	"strconv"
 	"strings"
 	"time"
+
+	"github.com/gorilla/mux"
 )
 
 var catcolumn = map[Puid_t]string{
@@ -64,7 +67,6 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
-		AID  ID_t   `json:"aid" yaml:"aid" xml:"aid,attr"`
 		Path string `json:"path,omitempty" yaml:"path,omitempty" xml:"path,omitempty,attr"`
 		Ext  string `json:"ext,omitempty" yaml:"ext,omitempty" xml:"ext,omitempty,attr"`
 	}
@@ -82,6 +84,12 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get arguments
+	var vars = mux.Vars(r)
+	var aid uint64
+	if aid, err = strconv.ParseUint(vars["aid"], 10, 64); err != nil {
+		WriteError400(w, r, err, AECfoldernoaid)
+		return
+	}
 	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
@@ -94,7 +102,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 	defer session.Close()
 
 	var prf *Profile
-	if prf = prflist.ByID(arg.AID); prf == nil {
+	if prf = prflist.ByID(ID_t(aid)); prf == nil {
 		WriteError400(w, r, ErrNoAcc, AECfoldernoacc)
 		return
 	}

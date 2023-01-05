@@ -421,8 +421,7 @@ const VueIconMenu = {
 		scan() {
 			(async () => {
 				try {
-					const response = await fetchajaxauth("POST", "/api/res/prop", {
-						aid: this.$root.aid,
+					const response = await fetchajaxauth("POST", `/id${this.$root.aid}/api/res/prop`, {
 						puid: this.file.puid
 					});
 					traceajax(response);

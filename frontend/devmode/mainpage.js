@@ -700,7 +700,7 @@ const VueMainApp = {
 
 		// opens given folder cleary
 		async fetchfolder(arg) {
-			const response = await fetchajaxauth("POST", "/api/res/folder", arg);
+			const response = await fetchajaxauth("POST", `/id${this.aid}/api/res/folder`, arg);
 			traceajax(response);
 			if (!response.ok) {
 				throw new HttpError(response.status, response.data);
@@ -718,7 +718,7 @@ const VueMainApp = {
 		},
 
 		async fetchrangesearch(arg) {
-			const response = await fetchajaxauth("POST", "/api/gps/range", arg);
+			const response = await fetchajaxauth("POST", `/id${this.$root.aid}/api/gps/range`, arg);
 			traceajax(response);
 			if (!response.ok) {
 				throw new HttpError(response.status, response.data);
@@ -751,8 +751,7 @@ const VueMainApp = {
 		},
 
 		async fetchshareadd(file) {
-			const response = await fetchajaxauth("POST", "/api/share/add", {
-				aid: this.aid,
+			const response = await fetchajaxauth("POST", `/id${this.aid}/api/share/add`, {
 				puid: file.puid
 			});
 			traceajax(response);
@@ -763,8 +762,7 @@ const VueMainApp = {
 		},
 
 		async fetchsharedel(file) {
-			const response = await fetchajaxauth("DELETE", "/api/share/del", {
-				aid: this.aid,
+			const response = await fetchajaxauth("DELETE", `/id${this.aid}/api/share/del`, {
 				puid: file.puid
 			});
 			traceajax(response);
@@ -836,7 +834,7 @@ const VueMainApp = {
 				eventHub.emit('ajax', +1);
 				try {
 					// open route and push history step
-					const hist = { aid: this.aid, path: PUID.home };
+					const hist = { path: PUID.home };
 					await this.fetchfolder(hist);
 					this.pushhist(hist);
 				} catch (e) {
@@ -885,7 +883,7 @@ const VueMainApp = {
 					const path = this.curpathway.length
 						? this.curpathway[this.curpathway.length - 1].path
 						: "";
-					const hist = { aid: this.aid, path: path };
+					const hist = { path: path };
 					await this.fetchfolder(hist);
 					this.pushhist(hist);
 				} catch (e) {
@@ -900,7 +898,7 @@ const VueMainApp = {
 			(async () => {
 				eventHub.emit('ajax', +1);
 				try {
-					await this.fetchfolder({ aid: this.aid, path: this.curpuid ?? this.curpath });
+					await this.fetchfolder({ path: this.curpuid ?? this.curpath });
 				} catch (e) {
 					ajaxfail(e);
 				} finally {
@@ -940,8 +938,7 @@ const VueMainApp = {
 			(async () => {
 				try {
 					const file = this.copied || this.cuted;
-					const response = await fetchajaxauth("POST", "/api/edit/copy", {
-						aid: this.$root.aid,
+					const response = await fetchajaxauth("POST", `/id${this.$root.aid}/api/edit/copy`, {
 						src: file.puid,
 						dst: this.curpuid,
 						overwrite: ovw && !!this.copied
@@ -991,8 +988,7 @@ const VueMainApp = {
 			}
 			(async () => {
 				try {
-					const response = await fetchjsonauth("POST", "/api/edit/delete", {
-						aid: this.$root.aid,
+					const response = await fetchjsonauth("POST", `/id${this.$root.aid}/api/edit/delete`, {
 						src: this.delfile.puid
 					});
 					traceajax(response);
@@ -1054,7 +1050,7 @@ const VueMainApp = {
 						eventHub.emit('ajax', +1);
 						try {
 							// open route and push history step
-							const hist = { aid: this.aid, path: file.puid ?? file.path };
+							const hist = { path: file.puid ?? file.path };
 							await this.fetchfolder(hist);
 							this.pushhist(hist);
 						} catch (e) {
@@ -1119,7 +1115,7 @@ const VueMainApp = {
 			this.aid = 1;
 		}
 
-		const hist = { aid: this.aid };
+		const hist = {};
 		// get route
 		const route = chunks[0];
 		chunks.shift();
