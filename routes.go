@@ -2,6 +2,7 @@ package hms
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"encoding/xml"
 	"errors"
@@ -11,6 +12,7 @@ import (
 	"net/http"
 	"path"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -52,7 +54,7 @@ type AjaxErr struct {
 	// message with problem description
 	What jerr `json:"what" yaml:"what" xml:"what"`
 	// time of error rising, in milliseconds of UNIX format
-	When Unix_t `json:"when" yaml:"when" xml:"when"`
+	When Unix_t `xorm:"DateTime" json:"when" yaml:"when" xml:"when"`
 	// unique API error code
 	Code int `json:"code,omitempty" yaml:"code,omitempty" xml:"code,omitempty"`
 	// URL with problem detailed description
@@ -424,6 +426,8 @@ func LoadTemplates() (err error) {
 	return
 }
 
+type ctxkey string
+
 // Transaction locker, locks until handler will be done.
 var handwg sync.WaitGroup
 
@@ -465,8 +469,28 @@ func AjaxMiddleware(next http.Handler) http.Handler {
 		default:
 		}
 
+		// get UID
+		var uid int64
+		if c, err := r.Cookie("UID"); err == nil {
+			uid, _ = strconv.ParseInt(c.Value, 16, 64)
+		}
+		if uid == 0 {
+			var ust = UserStore{
+				CreatedAt: UnixJSNow(),
+			}
+			if _, err := xormUserlog.InsertOne(&ust); err == nil {
+				uid = int64(ust.UID)
+				http.SetCookie(w, &http.Cookie{
+					Name:  "UID",
+					Value: strconv.FormatInt(uid, 16),
+					Path:  "/",
+				})
+			}
+		}
+		var ctx = context.WithValue(r.Context(), ctxkey("UID"), uid)
+
 		// call the next handler, which can be another middleware in the chain, or the final handler
-		next.ServeHTTP(w, r)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 

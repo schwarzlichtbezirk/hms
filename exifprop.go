@@ -18,7 +18,7 @@ type ExifProp struct {
 	Model        string  `xorm:"'model'" json:"model,omitempty" yaml:"model,omitempty" xml:"model,omitempty"`
 	Make         string  `xorm:"'make'" json:"make,omitempty" yaml:"make,omitempty" xml:"make,omitempty"`
 	Software     string  `xorm:"'software'" json:"software,omitempty" yaml:"software,omitempty" xml:"software,omitempty"`
-	DateTime     Unix_t  `xorm:"'datetime'" json:"datetime,omitempty" yaml:"datetime,omitempty" xml:"datetime,omitempty"`
+	DateTime     Unix_t  `xorm:"'datetime' DateTime" json:"datetime,omitempty" yaml:"datetime,omitempty" xml:"datetime,omitempty"`
 	Orientation  int     `xorm:"'orientation'" json:"orientation,omitempty" yaml:"orientation,omitempty" xml:"orientation,omitempty"`
 	ExposureTime string  `xorm:"'exposure_time'" json:"exposuretime,omitempty" yaml:"exposuretime,omitempty" xml:"exposuretime,omitempty"`
 	ExposureProg int     `xorm:"'exposure_prog'" json:"exposureprog,omitempty" yaml:"exposureprog,omitempty" xml:"exposureprog,omitempty"`

@@ -8,28 +8,52 @@ import (
 
 	uas "github.com/avct/uasurfer"
 	"github.com/cespare/xxhash"
+	"xorm.io/xorm"
+	"xorm.io/xorm/names"
 )
+
+var xormUserlog *xorm.Engine
+
+type UserStore struct {
+	UID       uint   `xorm:"pk autoincr"`
+	CreatedAt Unix_t `xorm:"DateTime"`
+}
+
+type UaStore struct {
+	UID       uint   `json:"uid" yaml:"uid" xml:"uid,attr"`
+	UserAgent string `json:"useragent" yaml:"user-agent" xml:"useragent"` // user agent
+	Lang      string `json:"lang" yaml:"lang" xml:"lang"`                 // accept language
+	Addr      string `json:"addr" yaml:"addr" xml:"addr"`                 // remote address
+}
+
+type OpenStore struct {
+	UID     uint `json:"uid" yaml:"uid" xml:"uid,attr"`
+	AID     uint
+	Path    string
+	Time    Unix_t `xorm:"DateTime"`
+	Latency int
+}
 
 // HistItem is history item. Contains PUID of served file or
 // opened directory and UNIX-time in milliseconds of start of this event.
 type HistItem struct {
 	PUID Puid_t `json:"puid" yaml:"puid" xml:"puid,attr"`
-	Time Unix_t `json:"time" yaml:"time" xml:"time,attr"`
+	Time Unix_t `xorm:"DateTime" json:"time" yaml:"time" xml:"time,attr"`
 }
 
 // User has vomplete information about user activity on server,
 // identified by remote address and user agent.
 type User struct {
-	Addr      string     `json:"addr" yaml:"addr" xml:"addr"`                   // remote address
-	UserAgent string     `json:"useragent" yaml:"user-agent" xml:"useragent"`   // user agent
-	Lang      string     `json:"lang" yaml:"lang" xml:"lang,attr"`              // accept language
-	LastAjax  Unix_t     `json:"lastajax" yaml:"last-ajax" xml:"lastajax,attr"` // last ajax-call UNIX-time in milliseconds
-	LastPage  Unix_t     `json:"lastpage" yaml:"last-page" xml:"lastpage,attr"` // last page load UNIX-time in milliseconds
-	IsAuth    bool       `json:"isauth" yaml:"is-auth" xml:"isauth,attr"`       // is user authorized
-	AuthID    ID_t       `json:"authid" yaml:"auth-id" xml:"authid,attr"`       // authorized ID
-	PrfID     ID_t       `json:"prfid" yaml:"prf-id" xml:"prfid,attr"`          // page profile ID
-	Paths     []HistItem `json:"paths" yaml:"paths" xml:"paths"`                // list of opened system paths
-	Files     []HistItem `json:"files" yaml:"files" xml:"files"`                // list of served files
+	Addr      string     `json:"addr" yaml:"addr" xml:"addr"`                                   // remote address
+	UserAgent string     `json:"useragent" yaml:"user-agent" xml:"useragent"`                   // user agent
+	Lang      string     `json:"lang" yaml:"lang" xml:"lang,attr"`                              // accept language
+	LastAjax  Unix_t     `xorm:"DateTime" json:"lastajax" yaml:"last-ajax" xml:"lastajax,attr"` // last ajax-call UNIX-time in milliseconds
+	LastPage  Unix_t     `xorm:"DateTime" json:"lastpage" yaml:"last-page" xml:"lastpage,attr"` // last page load UNIX-time in milliseconds
+	IsAuth    bool       `json:"isauth" yaml:"is-auth" xml:"isauth,attr"`                       // is user authorized
+	AuthID    ID_t       `json:"authid" yaml:"auth-id" xml:"authid,attr"`                       // authorized ID
+	PrfID     ID_t       `json:"prfid" yaml:"prf-id" xml:"prfid,attr"`                          // page profile ID
+	Paths     []HistItem `json:"paths" yaml:"paths" xml:"paths"`                                // list of opened system paths
+	Files     []HistItem `json:"files" yaml:"files" xml:"files"`                                // list of served files
 
 	// private parsed user agent data
 	ua uas.UserAgent
@@ -132,6 +156,20 @@ func UserScanner() {
 			return
 		}
 	}
+}
+
+// InitUserlog inits database user log engine.
+func InitUserlog() (err error) {
+	if xormUserlog, err = xorm.NewEngine(xormDriverName, path.Join(CachePath, userlog)); err != nil {
+		return
+	}
+	xormUserlog.SetMapper(names.GonicMapper{})
+	xormUserlog.ShowSQL(false)
+
+	if err = xormUserlog.Sync(&UserStore{}, &UaStore{}, &OpenStore{}); err != nil {
+		return
+	}
+	return
 }
 
 // APIHANDLER

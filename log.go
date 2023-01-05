@@ -50,7 +50,7 @@ const (
 // It's used to transmit the log items by network.
 type LogStore struct {
 	ID    uint   `xorm:"pk autoincr" json:"id" yaml:"id" xml:"id,attr"`
-	Time  Unix_t `json:"time" yaml:"time" xml:"time,attr"`
+	Time  Unix_t `xorm:"DateTime" json:"time" yaml:"time" xml:"time,attr"`
 	Level LL     `json:"level" yaml:"level" xml:"level,attr"`
 	Msg   string `json:"msg" yaml:"msg" xml:"msg"`
 	Line  int    `json:"line,omitempty" yaml:"line,omitempty" xml:"line,omitempty"`

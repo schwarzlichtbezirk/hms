@@ -167,6 +167,25 @@ func (ut Unix_t) Time() time.Time {
 
 const ExifDate = "2006-01-02 15:04:05.999"
 
+func (ut Unix_t) String() string {
+	return ut.Time().Format(ExifDate)
+}
+
+// ToDB is Conversion interface implementation for XORM engine.
+func (ut Unix_t) ToDB() ([]byte, error) {
+	return s2b(ut.Time().Format(ExifDate)), nil
+}
+
+// FromDB is Conversion interface implementation for XORM engine.
+func (ut *Unix_t) FromDB(b []byte) (err error) {
+	var t time.Time
+	if t, err = time.Parse(ExifDate, b2s(b)); err != nil {
+		return
+	}
+	*ut = UnixJS(t)
+	return
+}
+
 // MarshalJSON is JSON marshaler interface implementation.
 func (ut Unix_t) MarshalJSON() ([]byte, error) {
 	return json.Marshal(ut.Time().Format(ExifDate))

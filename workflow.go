@@ -100,7 +100,7 @@ func Init() {
 
 	// init database caches
 	if err = InitStorage(); err != nil {
-		Log.Fatal("can not init XORM: " + err.Error())
+		Log.Fatal("can not init XORM storage: " + err.Error())
 	}
 	SqlSession(func(session *Session) (res any, err error) {
 		var pathcount, _ = session.Count(&PathStore{})
@@ -113,6 +113,18 @@ func Init() {
 		Log.Infof("found %d items at ID3-tags cache", tagcount)
 		return
 	})
+
+	if err = InitUserlog(); err != nil {
+		Log.Fatal("can not init XORM user log: " + err.Error())
+	}
+	{
+		var usercount, _ = xormUserlog.Count(&UserStore{})
+		Log.Infof("user count %d items", usercount)
+		var uacount, _ = xormUserlog.Count(&UaStore{})
+		Log.Infof("user agent count %d items", uacount)
+		var opencount, _ = xormUserlog.Count(&OpenStore{})
+		Log.Infof("resources open count %d items", opencount)
+	}
 
 	// load path and GPS caches
 	if err = LoadPathCache(); err != nil {

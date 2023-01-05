@@ -16,11 +16,14 @@ const (
 
 	prffile = "profiles.yaml"
 	dirfile = "storage.sqlite"
+	userlog = "userlog.sqlite"
 	usrfile = "userlist.yaml"
 
 	tmbfile = "thumb.wpt"
 	tilfile = "tiles.wpt"
 )
+
+const xormDriverName = "sqlite3"
 
 const (
 	devmsuff = "devmode" // relative path to folder with development mode code files
