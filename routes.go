@@ -15,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/schwarzlichtbezirk/wpk"
@@ -54,7 +55,7 @@ type AjaxErr struct {
 	// message with problem description
 	What jerr `json:"what" yaml:"what" xml:"what"`
 	// time of error rising, in milliseconds of UNIX format
-	When Unix_t `xorm:"DateTime" json:"when" yaml:"when" xml:"when"`
+	When time.Time `json:"when" yaml:"when" xml:"when"`
 	// unique API error code
 	Code int `json:"code,omitempty" yaml:"code,omitempty" xml:"code,omitempty"`
 	// URL with problem detailed description
@@ -65,7 +66,7 @@ type AjaxErr struct {
 func MakeAjaxErr(what error, code int) *AjaxErr {
 	return &AjaxErr{
 		What: jerr{what},
-		When: UnixJSNow(),
+		When: time.Now(),
 		Code: code,
 	}
 }
@@ -74,7 +75,7 @@ func MakeAjaxErr(what error, code int) *AjaxErr {
 func MakeAjaxInfo(what error, code int, info string) *AjaxErr {
 	return &AjaxErr{
 		What: jerr{what},
-		When: UnixJSNow(),
+		When: time.Now(),
 		Code: code,
 		Info: info,
 	}
@@ -100,7 +101,7 @@ func MakeErrPanic(what error, code int, stack string) *ErrPanic {
 	return &ErrPanic{
 		AjaxErr: AjaxErr{
 			What: jerr{what},
-			When: UnixJSNow(),
+			When: time.Now(),
 			Code: code,
 		},
 		Stack: stack,
@@ -470,17 +471,17 @@ func AjaxMiddleware(next http.Handler) http.Handler {
 		}
 
 		// get UID
-		var uid int64
+		var uid uint64
 		if c, err := r.Cookie("UID"); err == nil {
-			uid, _ = strconv.ParseInt(c.Value, 16, 64)
+			uid, _ = strconv.ParseUint(c.Value, 16, 64)
 		}
 		if uid == 0 {
 			var ust UserStore
 			if _, err := xormUserlog.InsertOne(&ust); err == nil {
-				uid = int64(ust.UID)
+				uid = ust.UID
 				http.SetCookie(w, &http.Cookie{
 					Name:  "UID",
-					Value: strconv.FormatInt(uid, 16),
+					Value: strconv.FormatUint(uid, 16),
 					Path:  "/",
 				})
 			}
@@ -494,6 +495,8 @@ func AjaxMiddleware(next http.Handler) http.Handler {
 
 // RegisterRoutes puts application routes to given router.
 func RegisterRoutes(gmux *Router) {
+	gmux.Use(AjaxMiddleware)
+
 	// main page
 	var devm = gmux.PathPrefix("/dev").Subrouter()
 	devm.Path("/").HandlerFunc(pageHandler(devmsuff, "main"))
@@ -506,8 +509,6 @@ func RegisterRoutes(gmux *Router) {
 	// UI routes
 	var dacc = devm.PathPrefix("/id{aid:[0-9]+}/").Subrouter()
 	var gacc = gmux.PathPrefix("/id{aid:[0-9]+}/").Subrouter()
-	dacc.Use(AjaxMiddleware)
-	gacc.Use(AjaxMiddleware)
 	for _, pref := range routemain {
 		dacc.PathPrefix(pref).HandlerFunc(pageHandler(devmsuff, "main"))
 		gacc.PathPrefix(pref).HandlerFunc(pageHandler(relmsuff, "main"))

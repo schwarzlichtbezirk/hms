@@ -15,20 +15,20 @@ import (
 var xormUserlog *xorm.Engine
 
 type UserStore struct {
-	UID       uint `xorm:"pk autoincr"`
-	CreatedAt Time `xorm:"created"`
+	UID       uint64 `xorm:"pk autoincr"`
+	CreatedAt Time   `xorm:"created"`
 }
 
 type UaStore struct {
-	UID       uint   `json:"uid" yaml:"uid" xml:"uid,attr"`
+	UID       uint64 `json:"uid" yaml:"uid" xml:"uid,attr"`
 	UserAgent string `json:"useragent" yaml:"user-agent" xml:"useragent"` // user agent
 	Lang      string `json:"lang" yaml:"lang" xml:"lang"`                 // accept language
 	Addr      string `json:"addr" yaml:"addr" xml:"addr"`                 // remote address
 }
 
 type OpenStore struct {
-	UID     uint `json:"uid" yaml:"uid" xml:"uid,attr"`
-	AID     uint
+	UID     uint64 `json:"uid" yaml:"uid" xml:"uid,attr"`
+	AID     uint64
 	Path    string
 	Time    Time
 	Latency int
@@ -118,6 +118,7 @@ type UsrMsg struct {
 }
 
 var (
+	openlog  = make(chan OpenStore)
 	usermsg  = make(chan UsrMsg)        // message with some data of user-change
 	userajax = make(chan *http.Request) // sends on any ajax-call
 )
@@ -127,6 +128,8 @@ var (
 func UserScanner() {
 	for {
 		select {
+		case item := <-openlog:
+			go xormUserlog.InsertOne(&item)
 		case um := <-usermsg:
 			var user = usercache.Get(um.r)
 			user.LastAjax = UnixJSNow()

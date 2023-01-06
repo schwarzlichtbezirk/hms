@@ -308,8 +308,18 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	Log.Infof("id%d: navigate to %s, items %d, timeout %s", prf.ID, syspath, len(ret.List), time.Since(t))
+	var latency = time.Since(t)
+	Log.Infof("id%d: navigate to %s, items %d, timeout %s", prf.ID, syspath, len(ret.List), latency)
 	usermsg <- UsrMsg{r, "path", puid}
+	if uid, ok := r.Context().Value(ctxkey("UID")).(uint64); ok {
+		openlog <- OpenStore{
+			UID:     uid,
+			AID:     aid,
+			Path:    syspath,
+			Time:    t,
+			Latency: int(latency / time.Millisecond),
+		}
+	}
 
 	WriteOK(w, r, &ret)
 }

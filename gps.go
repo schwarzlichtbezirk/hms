@@ -71,8 +71,8 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 
 		Paths []MapPath `json:"paths" yaml:"paths" xml:"paths>path"`
 		Limit int       `json:"limit,omitempty" yaml:"limit,omitempty" xml:"limit,omitempty"`
-		Time1 Unix_t    `json:"time1,omitempty" yaml:"time1,omitempty" xml:"time1,omitempty"`
-		Time2 Unix_t    `json:"time2,omitempty" yaml:"time2,omitempty" xml:"time2,omitempty"`
+		Time1 Time      `json:"time1,omitempty" yaml:"time1,omitempty" xml:"time1,omitempty"`
+		Time2 Time      `json:"time2,omitempty" yaml:"time2,omitempty" xml:"time2,omitempty"`
 	}
 	var ret struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
@@ -149,10 +149,10 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 			if !mp.Contains(gps.Latitude, gps.Longitude) {
 				continue
 			}
-			if arg.Time1 > 0 && gps.DateTime < arg.Time1 {
+			if !arg.Time1.IsZero() && gps.DateTime.Before(arg.Time1) {
 				continue
 			}
-			if arg.Time2 > 0 && gps.DateTime > arg.Time2 {
+			if !arg.Time2.IsZero() && gps.DateTime.After(arg.Time2) {
 				continue
 			}
 			inc = !mp.Eject

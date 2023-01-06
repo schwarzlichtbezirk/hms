@@ -275,7 +275,7 @@ func TagStoreSet(session *Session, tst *TagStore) (err error) {
 // GpsInfo describes GPS-data from the photos:
 // latitude, longitude, altitude and creation time.
 type GpsInfo struct {
-	DateTime  Unix_t  `xorm:"DateTime" json:"time" yaml:"time" xml:"time,attr"` // photo creation date/time in Unix milliseconds
+	DateTime  Time    `xorm:"DateTime" json:"time" yaml:"time" xml:"time,attr"` // photo creation date/time in Unix milliseconds
 	Latitude  float64 `json:"lat" yaml:"lat" xml:"lat,attr"`
 	Longitude float64 `json:"lon" yaml:"lon" xml:"lon,attr"`
 	Altitude  float32 `json:"alt,omitempty" yaml:"alt,omitempty" xml:"alt,omitempty,attr"`
@@ -283,7 +283,7 @@ type GpsInfo struct {
 
 // FromProp fills fields with values from ExifProp.
 func (gi *GpsInfo) FromProp(ep *ExifProp) {
-	gi.DateTime = UnixJS(ep.DateTime)
+	gi.DateTime = ep.DateTime
 	gi.Latitude = ep.Latitude
 	gi.Longitude = ep.Longitude
 	gi.Altitude = ep.Altitude

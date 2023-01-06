@@ -140,6 +140,15 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
+			if uid, ok := r.Context().Value(ctxkey("UID")).(uint64); ok {
+				openlog <- OpenStore{
+					UID:     uid,
+					AID:     aid,
+					Path:    syspath,
+					Time:    time.Now(),
+					Latency: -1,
+				}
+			}
 			go func() {
 				if _, ok := r.Header["If-Range"]; !ok {
 					Log.Infof("id%d: media-hd %s", prf.ID, path.Base(syspath))
@@ -173,6 +182,15 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
+			if uid, ok := r.Context().Value(ctxkey("UID")).(uint64); ok {
+				openlog <- OpenStore{
+					UID:     uid,
+					AID:     aid,
+					Path:    syspath,
+					Time:    time.Now(),
+					Latency: -1,
+				}
+			}
 			go func() {
 				if _, ok := r.Header["If-Range"]; !ok {
 					Log.Infof("id%d: media %s", prf.ID, path.Base(syspath))
@@ -189,6 +207,15 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	if uid, ok := r.Context().Value(ctxkey("UID")).(uint64); ok {
+		openlog <- OpenStore{
+			UID:     uid,
+			AID:     aid,
+			Path:    syspath,
+			Time:    time.Now(),
+			Latency: -1,
+		}
+	}
 	go func() {
 		if _, ok := r.Header["If-Range"]; !ok {
 			Log.Infof("id%d: serve %s", prf.ID, path.Base(syspath))
@@ -439,7 +466,7 @@ func srvinfAPI(w http.ResponseWriter, r *http.Request) {
 	var ret = XmlMap{
 		"buildvers": BuildVers,
 		"builddate": BuildDate,
-		"started":   UnixJS(starttime),
+		"started":   starttime,
 		"govers":    runtime.Version(),
 		"os":        runtime.GOOS,
 		"numcpu":    runtime.NumCPU(),
