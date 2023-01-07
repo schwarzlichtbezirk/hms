@@ -285,7 +285,8 @@ func IsTypeNonalpha(ext string) bool {
 // IsTypeID3 checks that file extension belongs to audio/video files with ID3 tags.
 func IsTypeID3(ext string) bool {
 	switch ext {
-	case ".mp3", ".flac", ".ogg", ".opus", ".wma", ".mp4", ".acc", ".m4a", ".alac":
+	case ".mp3", ".flac", ".ogg", ".opus",
+		".wma", ".mp4", ".acc", ".m4a", ".alac":
 		return true
 	}
 	return false

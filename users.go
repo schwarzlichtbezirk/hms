@@ -4,6 +4,7 @@ import (
 	"encoding/xml"
 	"net/http"
 	"path"
+	"strconv"
 	"time"
 
 	uas "github.com/avct/uasurfer"
@@ -32,6 +33,16 @@ type OpenStore struct {
 	Path    string
 	Time    Time
 	Latency int
+}
+
+// UaMap is the set hashes of of user-agent records.
+var UaMap = map[uint64]void{}
+
+func (ust *UaStore) Hash() uint64 {
+	var h = xxhash.New()
+	h.Write(s2b(ust.Addr))
+	h.Write(s2b(ust.UserAgent))
+	return h.Sum64()
 }
 
 // HistItem is history item. Contains PUID of served file or
@@ -73,14 +84,13 @@ type UserCache struct {
 	list    []*User
 }
 
-var userkeyhash = xxhash.New()
-
 // UserKey returns unique for this server session key for address
-// plus user-agent, produced on fast ID_t-hash.
+// plus user-agent, produced on fast uint64-hash.
 func UserKey(addr, agent string) ID_t {
-	userkeyhash.Reset()
-	userkeyhash.Write([]byte(addr + agent))
-	return ID_t(userkeyhash.Sum64())
+	var h = xxhash.New()
+	h.Reset()
+	h.Write([]byte(addr + agent))
+	return ID_t(h.Sum64())
 }
 
 // Get returns User structure depending on http-request,
@@ -118,9 +128,9 @@ type UsrMsg struct {
 }
 
 var (
-	openlog  = make(chan OpenStore)
-	usermsg  = make(chan UsrMsg)        // message with some data of user-change
-	userajax = make(chan *http.Request) // sends on any ajax-call
+	openlog = make(chan OpenStore)     // sends on folder open or any file open.
+	ajaxreq = make(chan *http.Request) // sends on any ajax-call
+	usermsg = make(chan UsrMsg)        // message with some data of user-change
 )
 
 // UserScanner - users scanner goroutine. Receives data from
@@ -130,6 +140,27 @@ func UserScanner() {
 		select {
 		case item := <-openlog:
 			go xormUserlog.InsertOne(&item)
+
+		case r := <-ajaxreq:
+			if c, err := r.Cookie("UID"); err == nil {
+				var uid, _ = strconv.ParseUint(c.Value, 16, 64)
+				var ust UaStore
+				ust.Addr = StripPort(r.RemoteAddr)
+				ust.UserAgent = r.UserAgent()
+				var hv = ust.Hash()
+				if _, ok := UaMap[hv]; !ok {
+					ust.UID = uid
+					if lang, ok := r.Header["Accept-Language"]; ok {
+						ust.Lang = lang[0]
+					}
+					UaMap[hv] = void{}
+					go xormUserlog.InsertOne(&ust)
+				}
+			}
+
+			var user = usercache.Get(r)
+			user.LastAjax = UnixJSNow()
+
 		case um := <-usermsg:
 			var user = usercache.Get(um.r)
 			user.LastAjax = UnixJSNow()
@@ -151,10 +182,6 @@ func UserScanner() {
 				user.Files = append(user.Files, HistItem{(um.val).(Puid_t), user.LastAjax})
 			}
 
-		case r := <-userajax:
-			var user = usercache.Get(r)
-			user.LastAjax = UnixJSNow()
-
 		case <-exitctx.Done():
 			return
 		}
@@ -171,6 +198,29 @@ func InitUserlog() (err error) {
 
 	if err = xormUserlog.Sync(&UserStore{}, &UaStore{}, &OpenStore{}); err != nil {
 		return
+	}
+	return
+}
+
+// LoadUaMap forms content of UaMap from database on server start.
+func LoadUaMap() (err error) {
+	var session = xormUserlog.NewSession()
+	defer session.Close()
+
+	const limit = 256
+	var offset int
+	for {
+		var chunk []UaStore
+		if err = session.Limit(limit, offset).Find(&chunk); err != nil {
+			return
+		}
+		offset += limit
+		for _, ust := range chunk {
+			UaMap[ust.Hash()] = void{}
+		}
+		if limit > len(chunk) {
+			break
+		}
 	}
 	return
 }

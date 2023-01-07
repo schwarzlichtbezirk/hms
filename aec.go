@@ -131,14 +131,16 @@ const (
 	AECfolderformat
 	AECfoldertracks
 
-	// res/prop
-	AECpropnoaid
-	AECpropnodata
-	AECpropnoacc
-	AECpropbadpath
-	AECprophidden
-	AECpropaccess
-	AECpropbadstat
+	// res/tags
+	AECtagsnoaid
+	AECtagsnodata
+	AECtagsnoacc
+	AECtagsbadpath
+	AECtagshidden
+	AECtagsaccess
+	AECtagsnoexif
+	AECtagsnoid3
+	AECtagsnotags
 
 	// res/ispath
 

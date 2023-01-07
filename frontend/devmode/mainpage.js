@@ -307,7 +307,7 @@ const geticonpath = file => {
 				return { org: org.drive.red, alt: alt.drive.red };
 			}
 		case FT.dir:
-			if (file.scan) {
+			if (file.scan > "0001-01-01T00:00:00Z") {
 				let fnum = 0;
 				const fg = file.fgrp;
 				for (const n in fg) {

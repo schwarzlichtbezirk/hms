@@ -114,6 +114,16 @@ func Init() {
 		return
 	})
 
+	// load path and GPS caches
+	if err = LoadPathCache(); err != nil {
+		Log.Fatal("path cache loading failure: " + err.Error())
+	}
+	Log.Infof("loaded %d items into path cache", pathcache.Len())
+	if err = LoadGpsCache(); err != nil {
+		Log.Fatal("GPS cache loading failure: " + err.Error())
+	}
+	Log.Infof("loaded %d items into GPS cache", gpscache.Count())
+
 	if err = InitUserlog(); err != nil {
 		Log.Fatal("can not init XORM user log: " + err.Error())
 	}
@@ -126,15 +136,10 @@ func Init() {
 		Log.Infof("resources open count %d items", opencount)
 	}
 
-	// load path and GPS caches
-	if err = LoadPathCache(); err != nil {
-		Log.Fatal("path cache loading failure: " + err.Error())
+	// load UaMap
+	if err = LoadUaMap(); err != nil {
+		Log.Fatal("user agent map loading failure: " + err.Error())
 	}
-	Log.Infof("loaded %d items into path cache", pathcache.Len())
-	if err = LoadGpsCache(); err != nil {
-		Log.Fatal("GPS cache loading failure: " + err.Error())
-	}
-	Log.Infof("loaded %d items into GPS cache", gpscache.Count())
 
 	// insert components templates into pages
 	if err = LoadTemplates(); err != nil {

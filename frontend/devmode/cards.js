@@ -1669,7 +1669,7 @@ const VueMapCard = {
 			if (!response.ok) {
 				throw new HttpError(response.status, response.data);
 			}
-			for (const gsi of response.data.list) {
+			for (const gsi of response.data.list || []) {
 				for (const file of flist) {
 					if (gsi.puid === file.puid) {
 						file.latitude = gsi.prop.lat;

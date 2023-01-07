@@ -2,7 +2,6 @@ package hms
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"encoding/xml"
 	"errors"
@@ -427,8 +426,6 @@ func LoadTemplates() (err error) {
 	return
 }
 
-type ctxkey string
-
 // Transaction locker, locks until handler will be done.
 var handwg sync.WaitGroup
 
@@ -455,8 +452,9 @@ func AjaxMiddleware(next http.Handler) http.Handler {
 				WriteRet(w, r, http.StatusInternalServerError, MakeErrPanic(err, AECpanic, str))
 			}
 		}()
+
 		go func() {
-			userajax <- r
+			ajaxreq <- r
 		}()
 
 		// lock before exit check
@@ -486,10 +484,9 @@ func AjaxMiddleware(next http.Handler) http.Handler {
 				})
 			}
 		}
-		var ctx = context.WithValue(r.Context(), ctxkey("UID"), uid)
 
 		// call the next handler, which can be another middleware in the chain, or the final handler
-		next.ServeHTTP(w, r.WithContext(ctx))
+		next.ServeHTTP(w, r)
 	})
 }
 
@@ -550,7 +547,7 @@ func RegisterRoutes(gmux *Router) {
 	api.Path("/auth/refrsh").HandlerFunc(refrshAPI)
 
 	usr.Path("/res/folder").HandlerFunc(folderAPI)
-	usr.Path("/res/prop").HandlerFunc(propAPI)
+	usr.Path("/res/tags").HandlerFunc(tagsAPI)
 	usr.Path("/res/ispath").HandlerFunc(AuthWrap(ispathAPI))
 
 	usr.Path("/tile/chk").HandlerFunc(tilechkAPI)

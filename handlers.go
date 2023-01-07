@@ -140,7 +140,8 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			if uid, ok := r.Context().Value(ctxkey("UID")).(uint64); ok {
+			if c, err := r.Cookie("UID"); err == nil {
+				var uid, _ = strconv.ParseUint(c.Value, 16, 64)
 				openlog <- OpenStore{
 					UID:     uid,
 					AID:     aid,
@@ -154,9 +155,6 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 					Log.Infof("id%d: media-hd %s", prf.ID, path.Base(syspath))
 					// not partial content
 					usermsg <- UsrMsg{r, "file", puid}
-				} else {
-					// update statistics for partial content
-					userajax <- r
 				}
 			}()
 			w.Header().Set("Content-Type", MimeStr[md.Mime])
@@ -182,7 +180,8 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			if uid, ok := r.Context().Value(ctxkey("UID")).(uint64); ok {
+			if c, err := r.Cookie("UID"); err == nil {
+				var uid, _ = strconv.ParseUint(c.Value, 16, 64)
 				openlog <- OpenStore{
 					UID:     uid,
 					AID:     aid,
@@ -196,9 +195,6 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 					Log.Infof("id%d: media %s", prf.ID, path.Base(syspath))
 					// not partial content
 					usermsg <- UsrMsg{r, "file", puid}
-				} else {
-					// update statistics for partial content
-					userajax <- r
 				}
 			}()
 			w.Header().Set("Content-Type", MimeStr[md.Mime])
@@ -207,7 +203,8 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if uid, ok := r.Context().Value(ctxkey("UID")).(uint64); ok {
+	if c, err := r.Cookie("UID"); err == nil {
+		var uid, _ = strconv.ParseUint(c.Value, 16, 64)
 		openlog <- OpenStore{
 			UID:     uid,
 			AID:     aid,
@@ -221,9 +218,6 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 			Log.Infof("id%d: serve %s", prf.ID, path.Base(syspath))
 			// not partial content
 			usermsg <- UsrMsg{r, "file", puid}
-		} else {
-			// update statistics for partial content
-			userajax <- r
 		}
 	}()
 
@@ -602,7 +596,7 @@ func getlogAPI(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
-func propAPI(w http.ResponseWriter, r *http.Request) {
+func tagsAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
@@ -612,23 +606,21 @@ func propAPI(w http.ResponseWriter, r *http.Request) {
 	var ret struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
 
-		Path string  `json:"path" yaml:"path" xml:"path"`
-		Name string  `json:"shrname" yaml:"shrname" xml:"shrname"`
-		Prop FileKit `json:"prop" yaml:"prop" xml:"prop"`
+		Prop any `json:"prop" yaml:"prop" xml:"prop"`
 	}
 
 	// get arguments
 	var vars = mux.Vars(r)
 	var aid uint64
 	if aid, err = strconv.ParseUint(vars["aid"], 10, 64); err != nil {
-		WriteError400(w, r, err, AECpropnoaid)
+		WriteError400(w, r, err, AECtagsnoaid)
 		return
 	}
 	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
 	if arg.PUID == 0 {
-		WriteError400(w, r, ErrArgNoPuid, AECpropnodata)
+		WriteError400(w, r, ErrArgNoPuid, AECtagsnodata)
 		return
 	}
 
@@ -637,7 +629,7 @@ func propAPI(w http.ResponseWriter, r *http.Request) {
 
 	var prf *Profile
 	if prf = prflist.ByID(ID_t(aid)); prf == nil {
-		WriteError400(w, r, ErrNoAcc, AECpropnoacc)
+		WriteError400(w, r, ErrNoAcc, AECtagsnoacc)
 		return
 	}
 	var auth *Profile
@@ -648,30 +640,39 @@ func propAPI(w http.ResponseWriter, r *http.Request) {
 	var syspath string
 	var ok bool
 	if syspath, ok = PathStorePath(session, arg.PUID); !ok {
-		WriteError400(w, r, ErrNoPath, AECpropbadpath)
+		WriteError400(w, r, ErrNoPath, AECtagsbadpath)
 		return
 	}
 
 	if prf.IsHidden(syspath) {
-		WriteError(w, r, http.StatusForbidden, ErrHidden, AECprophidden)
+		WriteError(w, r, http.StatusForbidden, ErrHidden, AECtagshidden)
 		return
 	}
 
-	var shrpath, base, cg = prf.GetSharePath(session, syspath, auth == prf)
-	if cg.IsZero() && syspath != CPshares {
-		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECpropaccess)
+	if !prf.PathAccess(syspath, auth == prf) {
+		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECtagsaccess)
 		return
 	}
-	ret.Path = shrpath
-	ret.Name = path.Base(base)
 
-	var fi fs.FileInfo
-	if fi, err = StatFile(syspath); err != nil {
-		WriteError500(w, r, err, AECpropbadstat)
+	var ext = GetFileExt(syspath)
+	if IsTypeEXIF(ext) {
+		var ep ExifProp
+		if err = ep.Extract(syspath); err != nil {
+			WriteError(w, r, http.StatusNoContent, err, AECtagsnoexif)
+			return
+		}
+		ret.Prop = &ep
+	} else if IsTypeID3(ext) {
+		var tp TagProp
+		if err = tp.Extract(syspath); err != nil {
+			WriteError(w, r, http.StatusNoContent, err, AECtagsnoid3)
+			return
+		}
+		ret.Prop = &tp
+	} else {
+		WriteError(w, r, http.StatusNoContent, ErrNoData, AECtagsnotags)
 		return
 	}
-	ret.Prop.Setup(session, syspath, fi)
-	ret.Prop.Shared = prf.IsShared(syspath)
 
 	WriteOK(w, r, &ret)
 }

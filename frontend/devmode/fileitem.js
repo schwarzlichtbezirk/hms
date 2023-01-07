@@ -35,7 +35,7 @@ const filehint = file => {
 	if (file.type === FT.file) {
 		lst.push(['size', fmtitemsize(file.size ?? 0)]);
 	}
-	if (file.time) {
+	if (file.time > "0001-01-01T00:00:00Z") {
 		lst.push(['time', (new Date(file.time)).toLocaleString()]);
 	}
 	// Dir properties
@@ -199,73 +199,75 @@ const fileinfo = file => {
 	if (file.exposurebias) {
 		lst.push(['exposure bias', file.exposurebias]);
 	}
-	switch (file.lightsource) {
-		case 1:
-			lst.push(['light source', 'daylight']);
-			break;
-		case 2:
-			lst.push(['light source', 'fluorescent']);
-			break;
-		case 3:
-			lst.push(['light source', 'tungsten (incandescent light)']);
-			break;
-		case 4:
-			lst.push(['light source', 'flash']);
-			break;
-		case 9:
-			lst.push(['light source', 'fine weather']);
-			break;
-		case 10:
-			lst.push(['light source', 'cloudy weather']);
-			break;
-		case 11:
-			lst.push(['light source', 'shade']);
-			break;
-		case 12:
-			lst.push(['light source', 'daylight fluorescent (D 5700-7100K)']);
-			break;
-		case 13:
-			lst.push(['light source', 'day white fluorescent (N 4600-5700K)']);
-			break;
-		case 14:
-			lst.push(['light source', 'cool white fluorescent (W 3800-4600K)']);
-			break;
-		case 15:
-			lst.push(['light source', 'white fluorescent (WW 3250-3800K)']);
-			break;
-		case 16:
-			lst.push(['light source', 'warm white fluorescent (L 2600-3250K)']);
-			break;
-		case 17:
-			lst.push(['light source', 'standard light A']);
-			break;
-		case 18:
-			lst.push(['light source', 'standard light B']);
-			break;
-		case 19:
-			lst.push(['light source', 'standard light C']);
-			break;
-		case 20:
-			lst.push(['light source', 'D55']);
-			break;
-		case 21:
-			lst.push(['light source', 'D65']);
-			break;
-		case 22:
-			lst.push(['light source', 'D75']);
-			break;
-		case 23:
-			lst.push(['light source', 'D50']);
-			break;
-		case 24:
-			lst.push(['light source', 'ISO studio tungsten']);
-			break;
-		case 255:
-			lst.push(['light source', 'other light source']);
-			break;
-		default:
-			lst.push(['light source', `light code #${file.lightsource}`]);
-			break;
+	if (file.lightsource) {
+		switch (file.lightsource) {
+			case 1:
+				lst.push(['light source', 'daylight']);
+				break;
+			case 2:
+				lst.push(['light source', 'fluorescent']);
+				break;
+			case 3:
+				lst.push(['light source', 'tungsten (incandescent light)']);
+				break;
+			case 4:
+				lst.push(['light source', 'flash']);
+				break;
+			case 9:
+				lst.push(['light source', 'fine weather']);
+				break;
+			case 10:
+				lst.push(['light source', 'cloudy weather']);
+				break;
+			case 11:
+				lst.push(['light source', 'shade']);
+				break;
+			case 12:
+				lst.push(['light source', 'daylight fluorescent (D 5700-7100K)']);
+				break;
+			case 13:
+				lst.push(['light source', 'day white fluorescent (N 4600-5700K)']);
+				break;
+			case 14:
+				lst.push(['light source', 'cool white fluorescent (W 3800-4600K)']);
+				break;
+			case 15:
+				lst.push(['light source', 'white fluorescent (WW 3250-3800K)']);
+				break;
+			case 16:
+				lst.push(['light source', 'warm white fluorescent (L 2600-3250K)']);
+				break;
+			case 17:
+				lst.push(['light source', 'standard light A']);
+				break;
+			case 18:
+				lst.push(['light source', 'standard light B']);
+				break;
+			case 19:
+				lst.push(['light source', 'standard light C']);
+				break;
+			case 20:
+				lst.push(['light source', 'D55']);
+				break;
+			case 21:
+				lst.push(['light source', 'D65']);
+				break;
+			case 22:
+				lst.push(['light source', 'D75']);
+				break;
+			case 23:
+				lst.push(['light source', 'D50']);
+				break;
+			case 24:
+				lst.push(['light source', 'ISO studio tungsten']);
+				break;
+			case 255:
+				lst.push(['light source', 'other light source']);
+				break;
+			default:
+				lst.push(['light source', `light code #${file.lightsource}`]);
+				break;
+		}
 	}
 	if (file.focal) {
 		lst.push(['focal length', `${file.focal} mm`]);
@@ -421,7 +423,7 @@ const VueIconMenu = {
 		scan() {
 			(async () => {
 				try {
-					const response = await fetchajaxauth("POST", `/id${this.$root.aid}/api/res/prop`, {
+					const response = await fetchajaxauth("POST", `/id${this.$root.aid}/api/res/tags`, {
 						puid: this.file.puid
 					});
 					traceajax(response);
