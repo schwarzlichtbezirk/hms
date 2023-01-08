@@ -18,8 +18,12 @@ const (
 	// auth
 
 	AECnoauth
-	AECtokenless
+	AECtokenmalform
+	AECtokennotsign
+	AECtokenexpired
+	AECtokennotyet
 	AECtokenerror
+	AECtokenless
 	AECtokennoacc
 
 	// page

@@ -45,6 +45,9 @@ func (ust *UaStore) Hash() uint64 {
 	return h.Sum64()
 }
 
+// UserOnline is map of last AJAX query time for each user.
+var UserOnline = map[uint64]Unix_t{}
+
 // HistItem is history item. Contains PUID of served file or
 // opened directory and UNIX-time in milliseconds of start of this event.
 type HistItem struct {
@@ -156,6 +159,7 @@ func UserScanner() {
 					UaMap[hv] = void{}
 					go xormUserlog.InsertOne(&ust)
 				}
+				UserOnline[uid] = UnixJSNow()
 			}
 
 			var user = usercache.Get(r)

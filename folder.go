@@ -107,7 +107,8 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var auth *Profile
-	if auth, err = GetAuth(w, r); err != nil {
+	if auth, err = GetAuth(r); err != nil {
+		WriteRet(w, r, http.StatusUnauthorized, err)
 		return
 	}
 

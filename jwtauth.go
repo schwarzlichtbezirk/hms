@@ -83,17 +83,12 @@ func StripPort(addrport string) string {
 	return addrport // return as is otherwise
 }
 
-// IsLocalhost do check up host:port string refer is to localhost.
-func IsLocalhost(addrport string) bool {
-	return net.ParseIP(StripPort(addrport)).IsLoopback()
-}
-
 // GetAuth returns profile from authorization header if it present,
 // or default profile with no error if authorization is absent on localhost.
 // Returns nil pointer and nil error on unauthorized request from any host.
-func GetAuth(w http.ResponseWriter, r *http.Request) (auth *Profile, err error) {
+func GetAuth(r *http.Request) (auth *Profile, aerr error) {
 	defer func() {
-		if err == nil {
+		if aerr == nil {
 			var aid ID_t
 			if auth != nil {
 				aid = auth.ID
@@ -102,6 +97,7 @@ func GetAuth(w http.ResponseWriter, r *http.Request) (auth *Profile, err error) 
 		}
 	}()
 	if pool, is := r.Header["Authorization"]; is {
+		var err error
 		var claims Claims
 		var bearer = false
 		// at least one authorization field should have valid bearer access
@@ -119,21 +115,37 @@ func GetAuth(w http.ResponseWriter, r *http.Request) (auth *Profile, err error) 
 				}
 			}
 		}
-		if err != nil {
-			WriteError(w, r, http.StatusUnauthorized, err, AECtokenerror)
+		var ve jwt.ValidationError
+		if errors.As(err, &ve) {
+			if ve.Errors&jwt.ValidationErrorMalformed != 0 {
+				aerr = MakeAjaxErr(err, AECtokenmalform)
+				return
+			} else if ve.Errors&jwt.ValidationErrorSignatureInvalid != 0 {
+				aerr = MakeAjaxErr(err, AECtokennotsign)
+				return
+			} else if ve.Errors&jwt.ValidationErrorExpired != 0 {
+				aerr = MakeAjaxErr(err, AECtokenexpired)
+				return
+			} else if ve.Errors&jwt.ValidationErrorNotValidYet != 0 {
+				aerr = MakeAjaxErr(err, AECtokennotyet)
+				return
+			} else {
+				aerr = MakeAjaxErr(err, AECtokenerror)
+				return
+			}
+		} else if err != nil {
+			aerr = MakeAjaxErr(err, AECtokenerror)
 			return
 		} else if !bearer {
-			err = ErrNoBearer
-			WriteError(w, r, http.StatusUnauthorized, err, AECtokenless)
+			aerr = MakeAjaxErr(ErrNoBearer, AECtokenless)
 			return
 		} else if auth = prflist.ByID(claims.AID); auth == nil {
-			err = ErrNoAcc
-			WriteError(w, r, http.StatusUnauthorized, err, AECtokennoacc)
+			aerr = MakeAjaxErr(ErrNoAcc, AECtokennoacc)
 			return
 		}
 		return
 	}
-	if IsLocalhost(r.RemoteAddr) {
+	if net.ParseIP(StripPort(r.RemoteAddr)).IsLoopback() {
 		auth = prflist.ByID(cfg.DefAccID)
 	}
 	return
@@ -144,7 +156,8 @@ func AuthWrap(fn AuthHandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var err error
 		var auth *Profile
-		if auth, err = GetAuth(w, r); err != nil {
+		if auth, err = GetAuth(r); err != nil {
+			WriteRet(w, r, http.StatusUnauthorized, err)
 			return
 		}
 		if auth == nil {
