@@ -141,31 +141,4 @@ func (pl *Profiles) WriteYaml(fname string) error {
 	return WriteYaml(fname, intro, pl.list)
 }
 
-// ReadYaml reads content of UserCache structure from YAML-file
-// with given file name.
-func (uc *UserCache) ReadYaml(fname string) (err error) {
-	if err = ReadYaml(fname, &uc.list); err != nil {
-		return
-	}
-
-	uc.keyuser = make(UserMap, len(uc.list))
-	for _, user := range uc.list {
-		user.ParseUserAgent()
-		var key = UserKey(user.Addr, user.UserAgent)
-		uc.keyuser[key] = user
-	}
-	return
-}
-
-// WriteYaml writes content of UserCache object in YAML format
-// with header comment to file with given file name.
-func (uc *UserCache) WriteYaml(fname string) (err error) {
-	const intro = `
-# Log of all clients that had activity on the server.
-# Each client identify by IP-address and user-agent.
-
-`
-	return WriteYaml(fname, intro, uc.list)
-}
-
 // The End.

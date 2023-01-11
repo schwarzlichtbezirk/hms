@@ -87,15 +87,6 @@ func StripPort(addrport string) string {
 // or default profile with no error if authorization is absent on localhost.
 // Returns nil pointer and nil error on unauthorized request from any host.
 func GetAuth(r *http.Request) (auth *Profile, aerr error) {
-	defer func() {
-		if aerr == nil {
-			var aid ID_t
-			if auth != nil {
-				aid = auth.ID
-			}
-			go func() { usermsg <- UsrMsg{r, "auth", aid} }()
-		}
-	}()
 	if pool, is := r.Header["Authorization"]; is {
 		var err error
 		var claims Claims

@@ -476,7 +476,7 @@ func AjaxMiddleware(next http.Handler) http.Handler {
 		if uid == 0 {
 			var ust UserStore
 			if _, err := xormUserlog.InsertOne(&ust); err == nil {
-				uid = ust.UID
+				uid = uint64(ust.UID)
 				http.SetCookie(w, &http.Cookie{
 					Name:  "UID",
 					Value: strconv.FormatUint(uid, 16),

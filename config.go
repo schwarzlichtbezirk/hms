@@ -12,12 +12,12 @@ import (
 const (
 	gitname = "hms"
 	gitpath = "github.com/schwarzlichtbezirk/" + gitname
-	cfgfile = "settings.yaml"
 
+	cfgfile = "settings.yaml"
 	prffile = "profiles.yaml"
+
 	dirfile = "storage.sqlite"
 	userlog = "userlog.sqlite"
-	usrfile = "userlist.yaml"
 
 	tmbfile = "thumb.wpt"
 	tilfile = "tiles.wpt"

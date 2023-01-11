@@ -296,8 +296,8 @@ func tilechkAPI(w http.ResponseWriter, r *http.Request) {
 	var session = xormStorage.NewSession()
 	defer session.Close()
 
-	var prf *Profile
-	if prf = prflist.ByID(ID_t(aid)); prf == nil {
+	var acc *Profile
+	if acc = prflist.ByID(ID_t(aid)); acc == nil {
 		WriteError400(w, r, ErrNoAcc, AECscnstartnoacc)
 		return
 	}
@@ -311,7 +311,7 @@ func tilechkAPI(w http.ResponseWriter, r *http.Request) {
 	for i, ttm := range arg.List {
 		var mime = MimeDis // disable if no access
 		if syspath, ok := PathStorePath(session, ttm.PUID); ok {
-			if prf.PathAccess(syspath, auth == prf) {
+			if acc.PathAccess(syspath, auth == acc) {
 				if tp, ok := tilecache.Peek(ttm.PUID); ok {
 					mime, _ = tp.Tile(ttm.TM)
 				} else {
@@ -356,8 +356,8 @@ func tilescnstartAPI(w http.ResponseWriter, r *http.Request) {
 	var session = xormStorage.NewSession()
 	defer session.Close()
 
-	var prf *Profile
-	if prf = prflist.ByID(ID_t(aid)); prf == nil {
+	var acc *Profile
+	if acc = prflist.ByID(ID_t(aid)); acc == nil {
 		WriteError400(w, r, ErrNoAcc, AECscnstartnoacc)
 		return
 	}
@@ -369,7 +369,7 @@ func tilescnstartAPI(w http.ResponseWriter, r *http.Request) {
 
 	for _, ttm := range arg.List {
 		if syspath, ok := PathStorePath(session, ttm.PUID); ok {
-			if prf.PathAccess(syspath, auth == prf) {
+			if acc.PathAccess(syspath, auth == acc) {
 				ImgScanner.AddTile(syspath, ttm.TM)
 			}
 		}
@@ -409,8 +409,8 @@ func tilescnbreakAPI(w http.ResponseWriter, r *http.Request) {
 	var session = xormStorage.NewSession()
 	defer session.Close()
 
-	var prf *Profile
-	if prf = prflist.ByID(ID_t(aid)); prf == nil {
+	var acc *Profile
+	if acc = prflist.ByID(ID_t(aid)); acc == nil {
 		WriteError400(w, r, ErrNoAcc, AECscnbreaknoacc)
 		return
 	}
@@ -422,7 +422,7 @@ func tilescnbreakAPI(w http.ResponseWriter, r *http.Request) {
 
 	for _, ttm := range arg.List {
 		if syspath, ok := PathStorePath(session, ttm.PUID); ok {
-			if prf.PathAccess(syspath, auth == prf) {
+			if acc.PathAccess(syspath, auth == acc) {
 				ImgScanner.RemoveTile(syspath, ttm.TM)
 			}
 		}

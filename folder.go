@@ -101,8 +101,8 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 	var session = xormStorage.NewSession()
 	defer session.Close()
 
-	var prf *Profile
-	if prf = prflist.ByID(ID_t(aid)); prf == nil {
+	var acc *Profile
+	if acc = prflist.ByID(ID_t(aid)); acc == nil {
 		WriteError400(w, r, ErrNoAcc, AECfoldernoacc)
 		return
 	}
@@ -119,12 +119,12 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if prf.IsHidden(syspath) {
+	if acc.IsHidden(syspath) {
 		WriteError(w, r, http.StatusForbidden, ErrHidden, AECfolderhidden)
 		return
 	}
 
-	var shrpath, base, cg = prf.GetSharePath(session, syspath, auth == prf)
+	var shrpath, base, cg = acc.GetSharePath(session, syspath, auth == acc)
 	if cg.IsZero() && syspath != CPshares {
 		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECfolderaccess)
 		return
@@ -137,14 +137,14 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 		ret.Name = path.Base(base)
 	}
 
-	if auth == prf {
+	if auth == acc {
 		ret.HasHome = true
-	} else if prf.IsShared(CPhome) {
+	} else if acc.IsShared(CPhome) {
 		for _, fpath := range CatKeyPath {
 			if fpath == CPhome {
 				continue
 			}
-			if prf.IsShared(fpath) {
+			if acc.IsShared(fpath) {
 				ret.HasHome = true
 				break
 			}
@@ -155,7 +155,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 	if puid < PUIDcache {
 		ret.ReadOnly = true
 
-		if auth != prf && !prf.IsShared(syspath) {
+		if auth != acc && !acc.IsShared(syspath) {
 			WriteError(w, r, http.StatusForbidden, ErrNotShared, AECfoldernoshr)
 			return
 		}
@@ -167,13 +167,13 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 					continue
 				}
 				if fpath, ok := CatKeyPath[puid]; ok {
-					if auth == prf || prf.IsShared(fpath) {
+					if auth == acc || acc.IsShared(fpath) {
 						vfiles = append(vfiles, fpath)
 					}
 				}
 			}
 			var lstp DirProp
-			if ret.List, lstp, err = ScanFileNameList(prf, session, vfiles); err != nil {
+			if ret.List, lstp, err = ScanFileNameList(acc, session, vfiles); err != nil {
 				WriteError500(w, r, err, AECfolderhome)
 				return
 			}
@@ -185,17 +185,17 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 				return
 			})
 		case PUIDdrives:
-			if ret.List, err = prf.ScanRoots(session); err != nil {
+			if ret.List, err = acc.ScanRoots(session); err != nil {
 				WriteError500(w, r, err, AECfolderdrives)
 				return
 			}
 		case PUIDshares:
-			if ret.List, err = prf.ScanShares(session); err != nil {
+			if ret.List, err = acc.ScanShares(session); err != nil {
 				WriteError500(w, r, err, AECfoldershares)
 				return
 			}
 		case PUIDmedia, PUIDvideo, PUIDaudio, PUIDimage, PUIDbooks, PUIDtexts:
-			if ret.List, err = ScanCat(prf, session, puid, catcolumn[puid], 0.5); err != nil {
+			if ret.List, err = ScanCat(acc, session, puid, catcolumn[puid], 0.5); err != nil {
 				WriteError500(w, r, err, AECfoldermedia)
 				return
 			}
@@ -205,7 +205,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 			var vpaths []string      // verified paths
 			gpscache.Range(func(puid Puid_t, gps GpsInfo) bool {
 				if fpath, ok := pathcache.GetDir(puid); ok {
-					if !prf.IsHidden(fpath) && prf.PathAccess(fpath, auth == prf) {
+					if !acc.IsHidden(fpath) && acc.PathAccess(fpath, auth == acc) {
 						if fi, _ := StatFile(fpath); fi != nil {
 							vfiles = append(vfiles, fi)
 							vpaths = append(vpaths, fpath)
@@ -215,7 +215,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 				}
 				return cfg.RangeSearchAny <= 0 || n < cfg.RangeSearchAny
 			})
-			if ret.List, _, err = ScanFileInfoList(prf, session, vfiles, vpaths); err != nil {
+			if ret.List, _, err = ScanFileInfoList(acc, session, vfiles, vpaths); err != nil {
 				WriteError500(w, r, err, AECfoldermap)
 				return
 			}
@@ -239,7 +239,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 			var _, iso = fi.(*FileInfoISO)
 			ret.ReadOnly = iso || IsTypeISO(ext)
 
-			if ret.List, ret.Skip, err = ScanDir(prf, session, syspath, &cg); err != nil && len(ret.List) == 0 {
+			if ret.List, ret.Skip, err = ScanDir(acc, session, syspath, &cg); err != nil && len(ret.List) == 0 {
 				if errors.Is(err, fs.ErrNotExist) {
 					WriteError(w, r, http.StatusNotFound, err, AECfolderabsent)
 				} else {
@@ -294,14 +294,14 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 			var vpaths []string      // verified paths
 			for _, track := range pl.Tracks {
 				var fpath = ToSlash(track.Location)
-				if !prf.IsHidden(fpath) && prf.PathAccess(fpath, auth == prf) {
+				if !acc.IsHidden(fpath) && acc.PathAccess(fpath, auth == acc) {
 					if fi, _ := StatFile(fpath); fi != nil {
 						vfiles = append(vfiles, fi)
 						vpaths = append(vpaths, fpath)
 					}
 				}
 			}
-			if ret.List, _, err = ScanFileInfoList(prf, session, vfiles, vpaths); err != nil {
+			if ret.List, _, err = ScanFileInfoList(acc, session, vfiles, vpaths); err != nil {
 				WriteError500(w, r, err, AECfoldertracks)
 				return
 			}
@@ -310,15 +310,14 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var latency = time.Since(t)
-	Log.Infof("id%d: navigate to %s, items %d, timeout %s", prf.ID, syspath, len(ret.List), latency)
-	usermsg <- UsrMsg{r, "path", puid}
+	Log.Infof("id%d: navigate to %s, items %d, timeout %s", acc.ID, syspath, len(ret.List), latency)
 	if c, err := r.Cookie("UID"); err == nil {
 		var uid, _ = strconv.ParseUint(c.Value, 16, 64)
 		openlog <- OpenStore{
-			UID:     uid,
-			AID:     aid,
+			UID:     ID_t(uid),
+			AID:     ID_t(aid),
+			PID:     auth.ID,
 			Path:    syspath,
-			Time:    t,
 			Latency: int(latency / time.Millisecond),
 		}
 	}

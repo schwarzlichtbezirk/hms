@@ -154,12 +154,6 @@ func Init() {
 		Log.Fatal(err)
 	}
 
-	// load previous users states
-	if err = usercache.ReadYaml(usrfile); err != nil {
-		Log.Error("error on users list file: " + err.Error())
-	}
-	Log.Infof("loaded %d items into users list", len(usercache.list))
-
 	// load profiles with roots, hidden and shares lists
 	if err = prflist.ReadYaml(prffile); err != nil {
 		Log.Fatal("error on profiles file: " + err.Error())
@@ -330,13 +324,6 @@ func WaitExit() {
 // Shutdown performs graceful network shutdown.
 func Shutdown() {
 	var wg errgroup.Group
-
-	wg.Go(func() (err error) {
-		if err := usercache.WriteYaml(usrfile); err != nil {
-			Log.Error("error on users list file: " + err.Error())
-		}
-		return
-	})
 
 	wg.Go(func() (err error) {
 		if err := prflist.WriteYaml(prffile); err != nil {

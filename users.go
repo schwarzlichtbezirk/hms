@@ -16,23 +16,25 @@ import (
 var xormUserlog *xorm.Engine
 
 type UserStore struct {
-	UID       uint64 `xorm:"pk autoincr"`
-	CreatedAt Time   `xorm:"created"`
+	UID  ID_t `xorm:"pk autoincr"`
+	Time Time `xorm:"created"`
 }
 
 type UaStore struct {
-	UID       uint64 `json:"uid" yaml:"uid" xml:"uid,attr"`
+	UID       ID_t   `json:"uid" yaml:"uid" xml:"uid,attr"`
 	UserAgent string `json:"useragent" yaml:"user-agent" xml:"useragent"` // user agent
 	Lang      string `json:"lang" yaml:"lang" xml:"lang"`                 // accept language
 	Addr      string `json:"addr" yaml:"addr" xml:"addr"`                 // remote address
+	Time      Time   `xorm:"created"`
 }
 
 type OpenStore struct {
-	UID     uint64 `json:"uid" yaml:"uid" xml:"uid,attr"`
-	AID     uint64
-	Path    string
-	Time    Time
-	Latency int
+	UID     ID_t   `json:"uid" yaml:"uid" xml:"uid,attr"`                  // user unique ID
+	AID     ID_t   `xorm:"default 0" json:"aid" yaml:"aid" xml:"aid,attr"` // access ID
+	PID     ID_t   `xorm:"default 0" json:"pid" yaml:"pid" xml:"pid,attr"` // authorized profile ID
+	Path    string // system path
+	Latency int    // event latency, in milliseconds, or -1 if it file
+	Time    Time   `xorm:"created"` // time of event rise
 }
 
 // UaMap is the set hashes of of user-agent records.
@@ -47,6 +49,11 @@ func (ust *UaStore) Hash() uint64 {
 
 // UserOnline is map of last AJAX query time for each user.
 var UserOnline = map[uint64]Unix_t{}
+
+var (
+	openlog = make(chan OpenStore)     // sends on folder open or any file open.
+	ajaxreq = make(chan *http.Request) // sends on any ajax-call
+)
 
 // HistItem is history item. Contains PUID of served file or
 // opened directory and UNIX-time in milliseconds of start of this event.
@@ -78,64 +85,6 @@ func (user *User) ParseUserAgent() {
 	uas.ParseUserAgent(user.UserAgent, &user.ua)
 }
 
-// UserMap is map with users with ID_t-keys produced as hash of address plus user-agent.
-type UserMap = map[ID_t]*User
-
-// UserCache - users cache, ordered list and map.
-type UserCache struct {
-	keyuser UserMap
-	list    []*User
-}
-
-// UserKey returns unique for this server session key for address
-// plus user-agent, produced on fast uint64-hash.
-func UserKey(addr, agent string) ID_t {
-	var h = xxhash.New()
-	h.Reset()
-	h.Write([]byte(addr + agent))
-	return ID_t(h.Sum64())
-}
-
-// Get returns User structure depending on http-request,
-// identified by remote address and user agent.
-func (uc *UserCache) Get(r *http.Request) *User {
-	var addr = StripPort(r.RemoteAddr)
-	var agent = r.UserAgent()
-	var key = UserKey(addr, agent)
-	var user, ok = uc.keyuser[key]
-	if !ok {
-		user = &User{
-			Addr:      addr,
-			UserAgent: agent,
-		}
-		user.ParseUserAgent()
-		if lang, ok := r.Header["Accept-Language"]; ok && len(lang) > 0 {
-			user.Lang = lang[0]
-		}
-		uc.keyuser[key] = user
-		uc.list = append(uc.list, user)
-	}
-	return user
-}
-
-var usercache = UserCache{
-	keyuser: UserMap{},
-	list:    []*User{},
-}
-
-// UsrMsg is user message. Contains some chunk of data changes in user structure.
-type UsrMsg struct {
-	r   *http.Request
-	msg string
-	val any
-}
-
-var (
-	openlog = make(chan OpenStore)     // sends on folder open or any file open.
-	ajaxreq = make(chan *http.Request) // sends on any ajax-call
-	usermsg = make(chan UsrMsg)        // message with some data of user-change
-)
-
 // UserScanner - users scanner goroutine. Receives data from
 // any API-calls to update statistics.
 func UserScanner() {
@@ -152,7 +101,7 @@ func UserScanner() {
 				ust.UserAgent = r.UserAgent()
 				var hv = ust.Hash()
 				if _, ok := UaMap[hv]; !ok {
-					ust.UID = uid
+					ust.UID = ID_t(uid)
 					if lang, ok := r.Header["Accept-Language"]; ok {
 						ust.Lang = lang[0]
 					}
@@ -160,30 +109,6 @@ func UserScanner() {
 					go xormUserlog.InsertOne(&ust)
 				}
 				UserOnline[uid] = UnixJSNow()
-			}
-
-			var user = usercache.Get(r)
-			user.LastAjax = UnixJSNow()
-
-		case um := <-usermsg:
-			var user = usercache.Get(um.r)
-			user.LastAjax = UnixJSNow()
-			switch um.msg {
-			case "auth":
-				var aid = (um.val).(ID_t)
-				if aid > 0 {
-					user.IsAuth = true
-					user.AuthID = aid
-				} else {
-					user.IsAuth = false
-				}
-			case "page":
-				user.LastPage = user.LastAjax
-				user.PrfID = (um.val).(ID_t)
-			case "path":
-				user.Paths = append(user.Paths, HistItem{(um.val).(Puid_t), user.LastAjax})
-			case "file":
-				user.Files = append(user.Files, HistItem{(um.val).(Puid_t), user.LastAjax})
 			}
 
 		case <-exitctx.Done():
@@ -253,7 +178,7 @@ func usrlstAPI(w http.ResponseWriter, r *http.Request) {
 	var ret struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
 
-		Total int    `json:"total" yaml:"total" xml:"total"`
+		Total int64  `json:"total" yaml:"total" xml:"total"`
 		List  []item `json:"list" yaml:"list" xml:"list>item"`
 	}
 
@@ -262,29 +187,39 @@ func usrlstAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var session = xormStorage.NewSession()
+	var session = xormUserlog.NewSession()
 	defer session.Close()
 
-	ret.Total = len(usercache.list)
-	var ot = UnixJSNow() - Unix_t(cfg.OnlineTimeout/time.Millisecond)
-	for i := arg.Pos; i < arg.Pos+arg.Num && i < len(usercache.list); i++ {
-		var user = usercache.list[i]
-		var ui item
-		ui.Addr = user.Addr
-		ui.UA = user.ua
-		ui.Lang = user.Lang
-		if len(user.Paths) > 0 {
-			var fpath, _ = PathStorePath(session, user.Paths[len(user.Paths)-1].PUID)
-			ui.Path = path.Base(fpath)
+	type jstore struct {
+		UserStore `xorm:"extends"`
+		UaStore   `xorm:"extends"`
+		Path      OpenStore `xorm:"extends"`
+		File      OpenStore `xorm:"extends"`
+	}
+
+	ret.Total, _ = session.Count(&UserStore{})
+	var justs []jstore
+	if err = session.Distinct().Table("user_store").
+		Join("INNER", "ua_store", "user_store.uid = ua_store.uid AND ua_store.time = (SELECT MIN(time) FROM ua_store WHERE uid = user_store.uid)").
+		Join("INNER", "open_store t1", "user_store.uid = t1.uid AND t1.time = (SELECT MAX(time) FROM open_store WHERE uid = user_store.uid AND latency>=0)").
+		Join("INNER", "open_store t2", "user_store.uid = t2.uid AND t2.time = (SELECT MAX(time) FROM open_store WHERE uid = user_store.uid AND latency=-1)").
+		Limit(arg.Num, arg.Pos).Find(&justs); err != nil {
+		WriteError500(w, r, err, AECusrlstusts)
+		return
+	}
+	var now = time.Now()
+	for _, rec := range justs {
+		var ui = item{
+			Addr:   rec.Addr,
+			Lang:   rec.Lang,
+			Path:   rec.Path.Path,
+			File:   rec.File.Path,
+			Online: now.Sub(rec.File.Time) < cfg.OnlineTimeout,
+			IsAuth: rec.Path.PID > 0,
+			AuthID: rec.Path.PID,
+			PrfID:  rec.Path.AID,
 		}
-		if len(user.Files) > 0 {
-			var fpath, _ = PathStorePath(session, user.Files[len(user.Files)-1].PUID)
-			ui.File = path.Base(fpath)
-		}
-		ui.Online = user.LastAjax > ot
-		ui.IsAuth = user.IsAuth
-		ui.AuthID = user.AuthID
-		ui.PrfID = user.PrfID
+		uas.ParseUserAgent(rec.UserAgent, &ui.UA)
 		ret.List = append(ret.List, ui)
 	}
 

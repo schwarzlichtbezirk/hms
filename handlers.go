@@ -29,22 +29,7 @@ func pageHandler(pref, name string) http.HandlerFunc {
 		var content, ok = pagecache[pref+"/"+alias]
 		if !ok {
 			WriteError(w, r, http.StatusNotFound, ErrNotFound, AECpageabsent)
-		}
-		if name == "main" {
-			go func() {
-				var chunks = strings.Split(r.URL.Path, "/")
-				var pos = 1
-				if len(chunks) > pos && chunks[pos] == "dev" {
-					pos++
-				}
-				var aid = cfg.DefAccID
-				if len(chunks) > pos && len(chunks[pos]) > 2 && chunks[pos][:2] == "id" {
-					if u64, err := strconv.ParseUint(chunks[pos][2:], 10, 32); err == nil {
-						aid = ID_t(u64)
-					}
-				}
-				usermsg <- UsrMsg{r, "page", aid}
-			}()
+			return
 		}
 
 		WriteHTMLHeader(w)
@@ -97,8 +82,8 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var prf *Profile
-	if prf = prflist.ByID(ID_t(aid)); prf == nil {
+	var acc *Profile
+	if acc = prflist.ByID(ID_t(aid)); acc == nil {
 		WriteError(w, r, http.StatusNotFound, ErrNoAcc, AECmedianoacc)
 		return
 	}
@@ -113,12 +98,12 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if prf.IsHidden(syspath) {
+	if acc.IsHidden(syspath) {
 		WriteError(w, r, http.StatusForbidden, ErrHidden, AECmediahidden)
 		return
 	}
 
-	if !prf.PathAccess(syspath, auth == prf) {
+	if !acc.PathAccess(syspath, auth == acc) {
 		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECmediaaccess)
 		return
 	}
@@ -141,23 +126,20 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			if c, err := r.Cookie("UID"); err == nil {
-				var uid, _ = strconv.ParseUint(c.Value, 16, 64)
-				openlog <- OpenStore{
-					UID:     uid,
-					AID:     aid,
-					Path:    syspath,
-					Time:    time.Now(),
-					Latency: -1,
+			if _, ok := r.Header["If-Range"]; !ok {
+				Log.Infof("id%d: media-hd %s", acc.ID, path.Base(syspath))
+				// not partial content
+				if c, err := r.Cookie("UID"); err == nil {
+					var uid, _ = strconv.ParseUint(c.Value, 16, 64)
+					openlog <- OpenStore{
+						UID:     ID_t(uid),
+						AID:     ID_t(aid),
+						PID:     auth.ID,
+						Path:    syspath,
+						Latency: -1,
+					}
 				}
 			}
-			go func() {
-				if _, ok := r.Header["If-Range"]; !ok {
-					Log.Infof("id%d: media-hd %s", prf.ID, path.Base(syspath))
-					// not partial content
-					usermsg <- UsrMsg{r, "file", puid}
-				}
-			}()
 			w.Header().Set("Content-Type", MimeStr[md.Mime])
 			http.ServeContent(w, r, syspath, starttime, bytes.NewReader(md.Data))
 			return
@@ -181,46 +163,40 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			if c, err := r.Cookie("UID"); err == nil {
-				var uid, _ = strconv.ParseUint(c.Value, 16, 64)
-				openlog <- OpenStore{
-					UID:     uid,
-					AID:     aid,
-					Path:    syspath,
-					Time:    time.Now(),
-					Latency: -1,
+			if _, ok := r.Header["If-Range"]; !ok {
+				Log.Infof("id%d: media %s", acc.ID, path.Base(syspath))
+				// not partial content
+				if c, err := r.Cookie("UID"); err == nil {
+					var uid, _ = strconv.ParseUint(c.Value, 16, 64)
+					openlog <- OpenStore{
+						UID:     ID_t(uid),
+						AID:     ID_t(aid),
+						PID:     auth.ID,
+						Path:    syspath,
+						Latency: -1,
+					}
 				}
 			}
-			go func() {
-				if _, ok := r.Header["If-Range"]; !ok {
-					Log.Infof("id%d: media %s", prf.ID, path.Base(syspath))
-					// not partial content
-					usermsg <- UsrMsg{r, "file", puid}
-				}
-			}()
 			w.Header().Set("Content-Type", MimeStr[md.Mime])
 			http.ServeContent(w, r, syspath, starttime, bytes.NewReader(md.Data))
 			return
 		}
 	}
 
-	if c, err := r.Cookie("UID"); err == nil {
-		var uid, _ = strconv.ParseUint(c.Value, 16, 64)
-		openlog <- OpenStore{
-			UID:     uid,
-			AID:     aid,
-			Path:    syspath,
-			Time:    time.Now(),
-			Latency: -1,
+	if _, ok := r.Header["If-Range"]; !ok {
+		Log.Infof("id%d: serve %s", acc.ID, path.Base(syspath))
+		// not partial content
+		if c, err := r.Cookie("UID"); err == nil {
+			var uid, _ = strconv.ParseUint(c.Value, 16, 64)
+			openlog <- OpenStore{
+				UID:     ID_t(uid),
+				AID:     ID_t(aid),
+				PID:     auth.ID,
+				Path:    syspath,
+				Latency: -1,
+			}
 		}
 	}
-	go func() {
-		if _, ok := r.Header["If-Range"]; !ok {
-			Log.Infof("id%d: serve %s", prf.ID, path.Base(syspath))
-			// not partial content
-			usermsg <- UsrMsg{r, "file", puid}
-		}
-	}()
 
 	var content io.ReadSeekCloser
 	if content, err = OpenFile(syspath); err != nil {
@@ -260,8 +236,8 @@ func etmbHandler(w http.ResponseWriter, r *http.Request) {
 	var session = xormStorage.NewSession()
 	defer session.Close()
 
-	var prf *Profile
-	if prf = prflist.ByID(ID_t(aid)); prf == nil {
+	var acc *Profile
+	if acc = prflist.ByID(ID_t(aid)); acc == nil {
 		WriteError(w, r, http.StatusNotFound, ErrNoAcc, AECetmbnoacc)
 		return
 	}
@@ -277,12 +253,12 @@ func etmbHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if prf.IsHidden(syspath) {
+	if acc.IsHidden(syspath) {
 		WriteError(w, r, http.StatusForbidden, ErrHidden, AECetmbhidden)
 		return
 	}
 
-	if !prf.PathAccess(syspath, auth == prf) {
+	if !acc.PathAccess(syspath, auth == acc) {
 		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECetmbaccess)
 		return
 	}
@@ -324,8 +300,8 @@ func mtmbHandler(w http.ResponseWriter, r *http.Request) {
 	var session = xormStorage.NewSession()
 	defer session.Close()
 
-	var prf *Profile
-	if prf = prflist.ByID(ID_t(aid)); prf == nil {
+	var acc *Profile
+	if acc = prflist.ByID(ID_t(aid)); acc == nil {
 		WriteError(w, r, http.StatusNotFound, ErrNoAcc, AECmtmbnoacc)
 		return
 	}
@@ -341,12 +317,12 @@ func mtmbHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if prf.IsHidden(syspath) {
+	if acc.IsHidden(syspath) {
 		WriteError(w, r, http.StatusForbidden, ErrHidden, AECmtmbhidden)
 		return
 	}
 
-	if !prf.PathAccess(syspath, auth == prf) {
+	if !acc.PathAccess(syspath, auth == acc) {
 		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECmtmbaccess)
 		return
 	}
@@ -393,8 +369,8 @@ func tileHandler(w http.ResponseWriter, r *http.Request) {
 	var session = xormStorage.NewSession()
 	defer session.Close()
 
-	var prf *Profile
-	if prf = prflist.ByID(ID_t(aid)); prf == nil {
+	var acc *Profile
+	if acc = prflist.ByID(ID_t(aid)); acc == nil {
 		WriteError(w, r, http.StatusNotFound, ErrNoAcc, AECtilenoacc)
 		return
 	}
@@ -410,12 +386,12 @@ func tileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if prf.IsHidden(syspath) {
+	if acc.IsHidden(syspath) {
 		WriteError(w, r, http.StatusForbidden, ErrHidden, AECtilehidden)
 		return
 	}
 
-	if !prf.PathAccess(syspath, auth == prf) {
+	if !acc.PathAccess(syspath, auth == acc) {
 		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECtileaccess)
 		return
 	}
@@ -631,8 +607,8 @@ func tagsAPI(w http.ResponseWriter, r *http.Request) {
 	var session = xormStorage.NewSession()
 	defer session.Close()
 
-	var prf *Profile
-	if prf = prflist.ByID(ID_t(aid)); prf == nil {
+	var acc *Profile
+	if acc = prflist.ByID(ID_t(aid)); acc == nil {
 		WriteError400(w, r, ErrNoAcc, AECtagsnoacc)
 		return
 	}
@@ -649,12 +625,12 @@ func tagsAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if prf.IsHidden(syspath) {
+	if acc.IsHidden(syspath) {
 		WriteError(w, r, http.StatusForbidden, ErrHidden, AECtagshidden)
 		return
 	}
 
-	if !prf.PathAccess(syspath, auth == prf) {
+	if !acc.PathAccess(syspath, auth == acc) {
 		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECtagsaccess)
 		return
 	}
@@ -709,12 +685,12 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var session = xormStorage.NewSession()
 	defer session.Close()
 
-	var prf *Profile
-	if prf = prflist.ByID(ID_t(aid)); prf == nil {
+	var acc *Profile
+	if acc = prflist.ByID(ID_t(aid)); acc == nil {
 		WriteError400(w, r, ErrNoAcc, AECispathnoacc)
 		return
 	}
-	if auth != prf {
+	if auth != acc {
 		WriteError(w, r, http.StatusForbidden, ErrDeny, AECispathdeny)
 		return
 	}
@@ -739,14 +715,14 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		}
 	}
 
-	if prf.IsHidden(syspath) {
+	if acc.IsHidden(syspath) {
 		WriteError(w, r, http.StatusForbidden, ErrHidden, AECispathhidden)
 		return
 	}
 
 	var fk FileKit
 	fk.Setup(session, syspath, fi)
-	fk.Shared = prf.IsShared(syspath)
+	fk.Shared = acc.IsShared(syspath)
 	WriteOK(w, r, &fk)
 }
 
@@ -782,12 +758,12 @@ func shraddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var session = xormStorage.NewSession()
 	defer session.Close()
 
-	var prf *Profile
-	if prf = prflist.ByID(ID_t(aid)); prf == nil {
+	var acc *Profile
+	if acc = prflist.ByID(ID_t(aid)); acc == nil {
 		WriteError400(w, r, ErrNoAcc, AECshraddnoacc)
 		return
 	}
-	if auth != prf {
+	if auth != acc {
 		WriteError(w, r, http.StatusForbidden, ErrDeny, AECshradddeny)
 		return
 	}
@@ -796,13 +772,13 @@ func shraddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	if !ok {
 		WriteError(w, r, http.StatusNotFound, ErrNoPath, AECshraddnopath)
 	}
-	if !prf.PathAdmin(syspath) {
+	if !acc.PathAdmin(syspath) {
 		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECshraddaccess)
 		return
 	}
 
-	ret.Shared = prf.AddShare(session, syspath)
-	Log.Infof("id%d: add share '%s' as %s", prf.ID, syspath, arg.PUID)
+	ret.Shared = acc.AddShare(session, syspath)
+	Log.Infof("id%d: add share '%s' as %s", acc.ID, syspath, arg.PUID)
 
 	WriteOK(w, r, &ret)
 }
@@ -836,18 +812,18 @@ func shrdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		return
 	}
 
-	var prf *Profile
-	if prf = prflist.ByID(ID_t(aid)); prf == nil {
+	var acc *Profile
+	if acc = prflist.ByID(ID_t(aid)); acc == nil {
 		WriteError400(w, r, ErrNoAcc, AECshrdelnoacc)
 		return
 	}
-	if auth != prf {
+	if auth != acc {
 		WriteError(w, r, http.StatusForbidden, ErrDeny, AECshrdeldeny)
 		return
 	}
 
-	if ret.Deleted = prf.DelShare(arg.PUID); ret.Deleted {
-		Log.Infof("id%d: delete share %s", prf.ID, arg.PUID)
+	if ret.Deleted = acc.DelShare(arg.PUID); ret.Deleted {
+		Log.Infof("id%d: delete share %s", acc.ID, arg.PUID)
 	}
 
 	WriteOK(w, r, &ret)
@@ -880,12 +856,12 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var session = xormStorage.NewSession()
 	defer session.Close()
 
-	var prf *Profile
-	if prf = prflist.ByID(ID_t(aid)); prf == nil {
+	var acc *Profile
+	if acc = prflist.ByID(ID_t(aid)); acc == nil {
 		WriteError400(w, r, ErrNoAcc, AECdrvaddnoacc)
 		return
 	}
-	if auth != prf {
+	if auth != acc {
 		WriteError(w, r, http.StatusForbidden, ErrDeny, AECdrvadddeny)
 		return
 	}
@@ -912,27 +888,27 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		}
 	}
 
-	if prf.IsHidden(syspath) {
+	if acc.IsHidden(syspath) {
 		WriteError(w, r, http.StatusForbidden, ErrHidden, AECdrvaddhidden)
 		return
 	}
 
-	if prf.RootIndex(syspath) >= 0 {
+	if acc.RootIndex(syspath) >= 0 {
 		WriteOK(w, r, nil)
 		return
 	}
 
 	var fk FileKit
 	fk.PUID = puid
-	fk.Shared = prf.IsShared(syspath)
+	fk.Shared = acc.IsShared(syspath)
 	fk.Name = path.Base(syspath)
 	fk.Type = FTdrv
 	fk.Size = fi.Size()
 	fk.Time = fi.ModTime()
 
-	prf.mux.Lock()
-	prf.Roots = append(prf.Roots, syspath)
-	prf.mux.Unlock()
+	acc.mux.Lock()
+	acc.Roots = append(acc.Roots, syspath)
+	acc.mux.Unlock()
 
 	WriteOK(w, r, &fk)
 }
@@ -969,12 +945,12 @@ func drvdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var session = xormStorage.NewSession()
 	defer session.Close()
 
-	var prf *Profile
-	if prf = prflist.ByID(ID_t(aid)); prf == nil {
+	var acc *Profile
+	if acc = prflist.ByID(ID_t(aid)); acc == nil {
 		WriteError400(w, r, ErrNoAcc, AECdrvdelnoacc)
 		return
 	}
-	if auth != prf {
+	if auth != acc {
 		WriteError(w, r, http.StatusForbidden, ErrDeny, AECdrvdeldeny)
 		return
 	}
@@ -985,10 +961,10 @@ func drvdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	}
 
 	var i int
-	if i = prf.RootIndex(syspath); i >= 0 {
-		prf.mux.Lock()
-		prf.Roots = append(prf.Roots[:i], prf.Roots[i+1:]...)
-		prf.mux.Unlock()
+	if i = acc.RootIndex(syspath); i >= 0 {
+		acc.mux.Lock()
+		acc.Roots = append(acc.Roots[:i], acc.Roots[i+1:]...)
+		acc.mux.Unlock()
 	}
 
 	ret.Deleted = i >= 0
