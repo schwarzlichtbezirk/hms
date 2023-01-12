@@ -134,7 +134,7 @@ var cfg = Config{ // inits default values:
 	CfgAppSets: CfgAppSets{
 		WPKName:          []string{"hms-full.wpk"},
 		WPKmmap:          false,
-		OnlineTimeout:    3 * 60 * 1000 * time.Millisecond,
+		OnlineTimeout:    3 * 60 * time.Second,
 		DefAccID:         1,
 		ThumbCacheMaxNum: 16 * 1024,
 		MediaCacheMaxNum: 64,

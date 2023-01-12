@@ -48,42 +48,12 @@ func (ust *UaStore) Hash() uint64 {
 }
 
 // UserOnline is map of last AJAX query time for each user.
-var UserOnline = map[uint64]Unix_t{}
+var UserOnline = map[ID_t]time.Time{}
 
 var (
 	openlog = make(chan OpenStore)     // sends on folder open or any file open.
 	ajaxreq = make(chan *http.Request) // sends on any ajax-call
 )
-
-// HistItem is history item. Contains PUID of served file or
-// opened directory and UNIX-time in milliseconds of start of this event.
-type HistItem struct {
-	PUID Puid_t `json:"puid" yaml:"puid" xml:"puid,attr"`
-	Time Unix_t `xorm:"DateTime" json:"time" yaml:"time" xml:"time,attr"`
-}
-
-// User has vomplete information about user activity on server,
-// identified by remote address and user agent.
-type User struct {
-	Addr      string     `json:"addr" yaml:"addr" xml:"addr"`                                   // remote address
-	UserAgent string     `json:"useragent" yaml:"user-agent" xml:"useragent"`                   // user agent
-	Lang      string     `json:"lang" yaml:"lang" xml:"lang,attr"`                              // accept language
-	LastAjax  Unix_t     `xorm:"DateTime" json:"lastajax" yaml:"last-ajax" xml:"lastajax,attr"` // last ajax-call UNIX-time in milliseconds
-	LastPage  Unix_t     `xorm:"DateTime" json:"lastpage" yaml:"last-page" xml:"lastpage,attr"` // last page load UNIX-time in milliseconds
-	IsAuth    bool       `json:"isauth" yaml:"is-auth" xml:"isauth,attr"`                       // is user authorized
-	AuthID    ID_t       `json:"authid" yaml:"auth-id" xml:"authid,attr"`                       // authorized ID
-	PrfID     ID_t       `json:"prfid" yaml:"prf-id" xml:"prfid,attr"`                          // page profile ID
-	Paths     []HistItem `json:"paths" yaml:"paths" xml:"paths"`                                // list of opened system paths
-	Files     []HistItem `json:"files" yaml:"files" xml:"files"`                                // list of served files
-
-	// private parsed user agent data
-	ua uas.UserAgent
-}
-
-// ParseUserAgent parse and setup private data with structured user agent representation.
-func (user *User) ParseUserAgent() {
-	uas.ParseUserAgent(user.UserAgent, &user.ua)
-}
 
 // UserScanner - users scanner goroutine. Receives data from
 // any API-calls to update statistics.
@@ -108,7 +78,7 @@ func UserScanner() {
 					UaMap[hv] = void{}
 					go xormUserlog.InsertOne(&ust)
 				}
-				UserOnline[uid] = UnixJSNow()
+				UserOnline[ID_t(uid)] = time.Now()
 			}
 
 		case <-exitctx.Done():
@@ -163,9 +133,8 @@ func usrlstAPI(w http.ResponseWriter, r *http.Request) {
 		Path   string        `json:"path" yaml:"path" xml:"path"`
 		File   string        `json:"file" yaml:"file" xml:"file"`
 		Online bool          `json:"online" yaml:"online" xml:"online"`
-		IsAuth bool          `json:"isauth" yaml:"isauth" xml:"isauth"`
-		AuthID ID_t          `json:"authid" yaml:"authid" xml:"authid"`
-		PrfID  ID_t          `json:"prfid" yaml:"prfid" xml:"prfid"`
+		AID    ID_t          `json:"accid" yaml:"accid" xml:"accid"`
+		PID    ID_t          `json:"prfid" yaml:"prfid" xml:"prfid"`
 	}
 
 	var err error
@@ -214,10 +183,9 @@ func usrlstAPI(w http.ResponseWriter, r *http.Request) {
 			Lang:   rec.Lang,
 			Path:   rec.Path.Path,
 			File:   rec.File.Path,
-			Online: now.Sub(rec.File.Time) < cfg.OnlineTimeout,
-			IsAuth: rec.Path.PID > 0,
-			AuthID: rec.Path.PID,
-			PrfID:  rec.Path.AID,
+			Online: now.Sub(UserOnline[rec.UaStore.UID]) < cfg.OnlineTimeout,
+			AID:    rec.Path.AID,
+			PID:    rec.Path.PID,
 		}
 		uas.ParseUserAgent(rec.UserAgent, &ui.UA)
 		ret.List = append(ret.List, ui)

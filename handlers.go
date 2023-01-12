@@ -126,9 +126,8 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			if _, ok := r.Header["If-Range"]; !ok {
+			if HasRangeBegin(r) { // beginning of content
 				Log.Infof("id%d: media-hd %s", acc.ID, path.Base(syspath))
-				// not partial content
 				if c, err := r.Cookie("UID"); err == nil {
 					var uid, _ = strconv.ParseUint(c.Value, 16, 64)
 					openlog <- OpenStore{
@@ -163,9 +162,8 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			if _, ok := r.Header["If-Range"]; !ok {
+			if HasRangeBegin(r) { // beginning of content
 				Log.Infof("id%d: media %s", acc.ID, path.Base(syspath))
-				// not partial content
 				if c, err := r.Cookie("UID"); err == nil {
 					var uid, _ = strconv.ParseUint(c.Value, 16, 64)
 					openlog <- OpenStore{
@@ -183,9 +181,8 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if _, ok := r.Header["If-Range"]; !ok {
+	if HasRangeBegin(r) { // beginning of content
 		Log.Infof("id%d: serve %s", acc.ID, path.Base(syspath))
-		// not partial content
 		if c, err := r.Cookie("UID"); err == nil {
 			var uid, _ = strconv.ParseUint(c.Value, 16, 64)
 			openlog <- OpenStore{

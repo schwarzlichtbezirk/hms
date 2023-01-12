@@ -389,10 +389,10 @@ const VueUser = {
 			return this.user.online ? 'text-success' : 'text-secondary';
 		},
 		txtonline() {
-			if (this.user.authid) {
-				return this.user.isauth ? 'person' : 'person_outline';
+			if (this.user.prfid) {
+				return this.user.prfid > 0 ? 'person' : 'person_outline';
 			} else {
-				return this.user.prfid ? 'radio_button_checked' : 'radio_button_unchecked';
+				return this.user.accid ? 'radio_button_checked' : 'radio_button_unchecked';
 			}
 		},
 		txtdevice() {
