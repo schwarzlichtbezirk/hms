@@ -169,12 +169,6 @@ type Router = mux.Router
 // NewRouter is local alias for router creation function.
 var NewRouter = mux.NewRouter
 
-const (
-	htmlcontent = "text/html; charset=utf-8"
-	csscontent  = "text/css; charset=utf-8"
-	jscontent   = "text/javascript; charset=utf-8"
-)
-
 // "Server" field for HTTP headers.
 var serverlabel = fmt.Sprintf("hms/%s (%s)", BuildVers, runtime.GOOS)
 
@@ -185,22 +179,24 @@ func ParseBody(w http.ResponseWriter, r *http.Request, arg any) (err error) {
 		if pos := strings.IndexByte(ctype, ';'); pos != -1 {
 			ctype = ctype[:pos]
 		}
-		if ctype == "application/json" {
+		switch ctype {
+		case "application/json", "text/json":
 			if err = json.Unmarshal(jb, arg); err != nil {
 				WriteError400(w, r, err, AECbadjson)
 				return
 			}
-		} else if ctype == "application/x-yaml" || ctype == "application/yaml" {
+		case "application/x-yaml", "application/yaml", "application/yml",
+			"text/x-yaml", "text/yaml", "text/yml":
 			if err = yaml.Unmarshal(jb, arg); err != nil {
 				WriteError400(w, r, err, AECbadyaml)
 				return
 			}
-		} else if ctype == "application/xml" {
+		case "application/xml", "text/xml":
 			if err = xml.Unmarshal(jb, arg); err != nil {
 				WriteError400(w, r, err, AECbadxml)
 				return
 			}
-		} else {
+		default:
 			WriteError400(w, r, ErrArgUndef, AECargundef)
 			return
 		}
@@ -267,7 +263,7 @@ func WriteStdHeader(w http.ResponseWriter) {
 func WriteHTMLHeader(w http.ResponseWriter) {
 	WriteStdHeader(w)
 	w.Header().Set("X-Frame-Options", "sameorigin")
-	w.Header().Set("Content-Type", htmlcontent)
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 }
 
 // WriteRet writes to response given status code and marshaled body.
@@ -492,7 +488,7 @@ func AjaxMiddleware(next http.Handler) http.Handler {
 				}
 				var buf [2048]byte
 				var stacklen = runtime.Stack(buf[:], false)
-				var str = string(buf[:stacklen])
+				var str = b2s(buf[:stacklen])
 				Log.Error(str)
 				WriteRet(w, r, http.StatusInternalServerError, MakeErrPanic(err, AECpanic, str))
 			}

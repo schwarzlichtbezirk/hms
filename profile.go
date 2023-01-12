@@ -61,13 +61,13 @@ func (cg *CatGrp) SetAll(v bool) {
 
 // Profile contains access configuration to resources.
 type Profile struct {
-	ID       ID_t   `json:"id"`
-	Login    string `json:"login"`
-	Password string `json:"password"`
+	ID       ID_t   `json:"id" yaml:"id" xml:"id,attr"`
+	Login    string `json:"login" yaml:"login" xml:"login"`
+	Password string `json:"password" yaml:"password" xml:"password"`
 
-	Roots  []string `json:"roots"`  // root directories list
-	Hidden []string `json:"hidden"` // patterns for hidden files
-	Shares []string `json:"shares"`
+	Roots  []string `json:"roots" yaml:"roots" xml:"roots>item"`    // root directories list
+	Hidden []string `json:"hidden" yaml:"hidden" xml:"hidden>item"` // patterns for hidden files
+	Shares []string `json:"shares" yaml:"shares" xml:"shares>item"`
 
 	// private shares data
 	sharepuid map[string]Puid_t // share/puid key/values
@@ -79,8 +79,8 @@ type Profile struct {
 
 // Profiles is the list of Profile structures.
 type Profiles struct {
-	list []*Profile
-	mux  sync.RWMutex
+	pm  map[ID_t]*Profile
+	mux sync.RWMutex
 }
 
 // NewProfile make new profile and insert it to the list.
@@ -94,9 +94,14 @@ func (pl *Profiles) NewProfile(login, password string) *Profile {
 		sharepuid: map[string]Puid_t{},
 		puidshare: map[Puid_t]string{},
 	}
-	if len(pl.list) > 0 {
-		prf.ID = pl.list[len(pl.list)-1].ID + 1
+
+	var mid ID_t
+	for id := range pl.pm {
+		if id > mid {
+			mid = id
+		}
 	}
+	prf.ID = mid + 1
 
 	pl.Insert(prf)
 	return prf
@@ -106,19 +111,14 @@ func (pl *Profiles) NewProfile(login, password string) *Profile {
 func (pl *Profiles) ByID(prfid ID_t) *Profile {
 	pl.mux.RLock()
 	defer pl.mux.RUnlock()
-	for _, prf := range pl.list {
-		if prf.ID == prfid {
-			return prf
-		}
-	}
-	return nil
+	return pl.pm[prfid]
 }
 
 // ByLogin finds profile with given login.
 func (pl *Profiles) ByLogin(login string) *Profile {
 	pl.mux.RLock()
 	defer pl.mux.RUnlock()
-	for _, prf := range pl.list {
+	for _, prf := range pl.pm {
 		if prf.Login == login {
 			return prf
 		}
@@ -130,20 +130,17 @@ func (pl *Profiles) ByLogin(login string) *Profile {
 func (pl *Profiles) Insert(prf *Profile) {
 	pl.mux.Lock()
 	defer pl.mux.Unlock()
-	pl.list = append(pl.list, prf)
+	pl.pm[prf.ID] = prf
 }
 
 // Delete profile with "prfid" identifier from the list.
-func (pl *Profiles) Delete(prfid ID_t) bool {
+func (pl *Profiles) Delete(prfid ID_t) (ok bool) {
 	pl.mux.RLock()
 	defer pl.mux.RUnlock()
-	for i, prf := range pl.list {
-		if prf.ID == prfid {
-			pl.list = append(pl.list[:i], pl.list[i+1:]...)
-			return true
-		}
+	if _, ok = pl.pm[prfid]; ok {
+		delete(pl.pm, prfid)
 	}
-	return false
+	return
 }
 
 // Profiles list.

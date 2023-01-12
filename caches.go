@@ -653,7 +653,7 @@ func InitStorage() (err error) {
 	var xlb = XormLoggerBridge{
 		Logger: Log,
 	}
-	xlb.ShowSQL(true)
+	xlb.ShowSQL(devmode)
 	xormStorage.SetLogger(&xlb)
 
 	_, err = SqlSession(func(session *Session) (res any, err error) {

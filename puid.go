@@ -109,7 +109,7 @@ func (pt Puid_t) String() string {
 // Set writes base32 string representation of ID into integer value.
 func (pt *Puid_t) Set(puid string) error {
 	var buf [8]byte
-	_, err := idenc.Decode(buf[:], []byte(puid))
+	_, err := idenc.Decode(buf[:], s2b(puid))
 	*pt = Puid_t(binary.LittleEndian.Uint64(buf[:]))
 	return err
 }

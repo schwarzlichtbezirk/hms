@@ -4,6 +4,7 @@ import (
 	"io"
 	"os"
 	"path"
+	"sort"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -83,13 +84,18 @@ func (cfg *Config) WriteYaml(fname string) error {
 // ReadYaml reads content of Profiles structure from YAML-file
 // with given file name.
 func (pl *Profiles) ReadYaml(fname string) (err error) {
-	if err = ReadYaml(fname, &pl.list); err != nil {
+	var list []*Profile
+	if err = ReadYaml(fname, &list); err != nil {
 		return
 	}
+	pl.pm = map[ID_t]*Profile{}
+	for _, prf := range list {
+		pl.pm[prf.ID] = prf
+	}
 
-	if len(pl.list) > 0 {
+	if len(list) > 0 {
 		SqlSession(func(session *Session) (res any, err error) {
-			for _, prf := range pl.list {
+			for _, prf := range list {
 				Log.Infof("loaded profile id%d, login='%s'", prf.ID, prf.Login)
 				// cache roots
 				for _, fpath := range prf.Roots {
@@ -138,7 +144,14 @@ func (pl *Profiles) WriteYaml(fname string) error {
 # root drives, shares, and to hide files on specified masks.
 
 `
-	return WriteYaml(fname, intro, pl.list)
+	var list []*Profile
+	for _, prf := range pl.pm {
+		list = append(list, prf)
+	}
+	sort.Slice(list, func(i, j int) bool {
+		return list[i].ID > list[j].ID
+	})
+	return WriteYaml(fname, intro, list)
 }
 
 // The End.

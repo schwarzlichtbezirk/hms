@@ -97,7 +97,7 @@ func GetAuth(r *http.Request) (auth *Profile, aerr error) {
 				bearer = true
 				if _, err = jwt.ParseWithClaims(val[7:], &claims, func(*jwt.Token) (any, error) {
 					if claims.AID > 0 {
-						return []byte(cfg.AccessKey), nil
+						return s2b(cfg.AccessKey), nil
 					} else {
 						return nil, ErrNoUserID
 					}
@@ -214,7 +214,7 @@ func signinAPI(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var mac = hmac.New(sha256.New, arg.PubK[:])
-	mac.Write([]byte(prf.Password))
+	mac.Write(s2b(prf.Password))
 	var cmp = mac.Sum(nil)
 	if !hmac.Equal(arg.Hash[:], cmp) {
 		WriteError(w, r, http.StatusForbidden, ErrBadPass, AECsignindeny)
@@ -244,7 +244,7 @@ func refrshAPI(w http.ResponseWriter, r *http.Request) {
 
 	var claims Claims
 	if _, err = jwt.ParseWithClaims(arg.Refrsh, &claims, func(token *jwt.Token) (any, error) {
-		return []byte(cfg.RefreshKey), nil
+		return s2b(cfg.RefreshKey), nil
 	}); err != nil {
 		WriteError400(w, r, err, AECrefrshparse)
 		return
