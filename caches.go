@@ -350,15 +350,14 @@ func MediaCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 	}
 	defer file.Close()
 
-	var ftype string
 	var src image.Image
-	if src, ftype, err = image.Decode(file); err != nil {
+	if src, _, err = image.Decode(file); err != nil {
 		if src == nil { // skip "short Huffman data" or others errors with partial results
 			return // can not decode file by any codec
 		}
 	}
 
-	md, err = ToNativeImg(src, ftype)
+	md, err = EncodeRGBA2WebP(src)
 	mediacache.Push(puid, md)
 	mediacache.ToLimit(cfg.MediaCacheMaxNum)
 	return
@@ -403,9 +402,8 @@ func HdCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 	}
 	defer file.Close()
 
-	var ftype string
 	var src, dst image.Image
-	if src, ftype, err = image.Decode(file); err != nil {
+	if src, _, err = image.Decode(file); err != nil {
 		if src == nil { // skip "short Huffman data" or others errors with partial results
 			return // can not decode file by any codec
 		}
@@ -435,7 +433,7 @@ func HdCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 	filter.Draw(img, src)
 	dst = img
 
-	md, err = ToNativeImg(dst, ftype)
+	md, err = EncodeRGBA2WebP(dst)
 	hdcache.Push(puid, md)
 	hdcache.ToLimit(cfg.HdCacheMaxNum)
 	return

@@ -5,15 +5,15 @@ import (
 	"errors"
 	"fmt"
 	"image"
-	"image/gif"
-	"image/jpeg"
+	_ "image/gif"
+	_ "image/jpeg"
 	"image/png"
 	"io"
 	"io/fs"
 
 	"github.com/disintegration/gift"
 
-	_ "github.com/chai2010/webp"     // register WebP
+	"github.com/chai2010/webp"       // register WebP
 	_ "github.com/oov/psd"           // register PSD format
 	_ "github.com/spate/glimage/dds" // register DDS format
 	_ "golang.org/x/image/bmp"       // register BMP format
@@ -110,9 +110,8 @@ func ExtractThmub(session *Session, syspath string) (md MediaData, err error) {
 // MakeThumb produces new thumbnail object.
 func MakeThumb(r io.Reader, orientation int) (md MediaData, err error) {
 	// create sized image for thumbnail
-	var ftype string
 	var src, dst image.Image
-	if src, ftype, err = image.Decode(r); err != nil {
+	if src, _, err = image.Decode(r); err != nil {
 		if src == nil { // skip "short Huffman data" or others errors with partial results
 			return // can not decode file by any codec
 		}
@@ -134,32 +133,17 @@ func MakeThumb(r io.Reader, orientation int) (md MediaData, err error) {
 	}
 
 	// create valid thumbnail
-	return ToNativeImg(dst, ftype)
+	return EncodeRGBA2WebP(dst)
 }
 
-// ToNativeImg converts Image to specified file format supported by browser.
-func ToNativeImg(m image.Image, ftype string) (md MediaData, err error) {
-	var buf bytes.Buffer
-	var mime Mime_t
-	switch ftype {
-	case "gif":
-		if err = gif.Encode(&buf, m, nil); err != nil {
-			return // can not write gif
-		}
-		mime = MimeGif
-	case "png", "dds", "webp", "psd":
-		if err = tmbpngenc.Encode(&buf, m); err != nil {
-			return // can not write png
-		}
-		mime = MimePng
-	default:
-		if err = jpeg.Encode(&buf, m, &jpeg.Options{Quality: cfg.TmbJpegQuality}); err != nil {
-			return // can not write jpeg
-		}
-		mime = MimeJpeg
+// EncodeRGBA2WebP converts Image to WebP file lossless format with alpha channel.
+func EncodeRGBA2WebP(m image.Image) (md MediaData, err error) {
+	var data []byte
+	if data, err = webp.EncodeRGBA(m, cfg.TmbWebpQuality); err != nil {
+		return // can not write webp
 	}
-	md.Data = buf.Bytes()
-	md.Mime = mime
+	md.Data = data
+	md.Mime = MimeWebp
 	return
 }
 
@@ -236,9 +220,8 @@ func CacheThumb(session *Session, syspath string) (md MediaData, err error) {
 
 // MakeTile produces new tile object.
 func MakeTile(r io.Reader, wdh, hgt int, orientation int) (md MediaData, err error) {
-	var ftype string
 	var src, dst image.Image
-	if src, ftype, err = image.Decode(r); err != nil {
+	if src, _, err = image.Decode(r); err != nil {
 		if src == nil { // skip "short Huffman data" or others errors with partial results
 			return // can not decode file by any codec
 		}
@@ -260,7 +243,7 @@ func MakeTile(r io.Reader, wdh, hgt int, orientation int) (md MediaData, err err
 	filter.Draw(img, src)
 	dst = img
 
-	return ToNativeImg(dst, ftype)
+	return EncodeRGBA2WebP(dst)
 }
 
 // CacheTile tries to extract existing tile from cache, otherwise

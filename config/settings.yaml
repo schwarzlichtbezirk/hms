@@ -49,9 +49,11 @@ images-prop:
   hd-resolution: [1920, 1080]
   # Thumbnails JPEG quality, ranges from 1 to 100 inclusive.
   tmb-jpeg-quality: 80
+  # Thumbnails WebP quality, ranges from 1 to 100 inclusive.
+  tmb-webp-quality: 80
   # Number of image processing threads in which performs converting to
   # tiles and thumbnails. Zero sets this number to GOMAXPROCS value.
-  scan-threads-num: 2
+  scan-threads-num: 4
 specification:
   # Name of wpk-file with program resources.
   wpk-name: ["hms-app.wpk", "hms-full.wpk"]
