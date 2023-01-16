@@ -16,10 +16,10 @@ cfg = {
 	-- list of icons collections IDs, see 'id' tags of 'iconlist' in 'resmodel.json' file
 	iconset = {
 		oxygen = {"avif", "webp", "png"},
-		ubuntu = {"webp", "png"},
+		ubuntu = {"avif", "webp", "png"},
 		papirus = {"svg"},
 		paomedia = {"svg"},
-		tulliana = {"webp", "png"},
+		tulliana = {"avif", "webp", "png"},
 	},
 	-- default skin ID if nothing was selected
 	defskinid = "neon",
