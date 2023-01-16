@@ -1,4 +1,6 @@
 #!/bin/bash -u
+# This script compiles project for Windows x86.
+# It produces static C-libraries linkage.
 
 wd=$(realpath -s "$(dirname "$0")/..")
 

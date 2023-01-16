@@ -1,4 +1,5 @@
 #!/bin/bash -u
+# This script downloads fonts used on frontend.
 
 asstdir=$(dirname $0)/../frontend/assets/iconfont
 mkdir -pv "$asstdir"

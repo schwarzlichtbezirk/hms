@@ -1,4 +1,6 @@
 #!/bin/bash -u
+# This script performs CSS-files minification for each skin.
+# Downloads closure-stylesheets tool if it necessary.
 
 # define the working directory
 wd=$(realpath -s "$(dirname "$0")/../frontend/skin")

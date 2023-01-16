@@ -1,4 +1,5 @@
 #!/bin/bash -u
+# This script perform all jobs for project deployment after git clone.
 
 # define the task directory
 taskdir="$(dirname "$0")"

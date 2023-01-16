@@ -1,4 +1,7 @@
 @echo off
+rem This script performs CSS-files minification for each skin.
+rem Downloads closure-stylesheets tool if it necessary.
+
 call :realpath %~dp0..\frontend\skin
 set wd=%retval%
 

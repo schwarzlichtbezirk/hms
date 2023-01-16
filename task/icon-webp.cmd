@@ -26,7 +26,7 @@ tar -xf %tooldir%\libwebp-%webpver%-windows-x64.zip -C %tooldir%
 
 :cwebpexist
 
-for /r %icondir%\chakram %%f in (*.jpg) do (
+for /r %icondir%\chakram %%f in (*.png) do (
 	%cwebp%  -q 80 -alpha_filter best -m 6 -af -hint picture -short %%f -o %%~dpnf.webp
 )
 

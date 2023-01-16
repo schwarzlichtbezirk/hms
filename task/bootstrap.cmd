@@ -1,4 +1,5 @@
 @echo off
+rem This script perform all jobs for project deployment after git clone.
 
 rem define the task directory
 set taskdir=%~dp0

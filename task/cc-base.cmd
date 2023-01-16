@@ -1,4 +1,7 @@
 @echo off
+rem This script performs js-files minification for some plugins.
+rem Downloads closure-compiler tool if it necessary.
+
 call :realpath %~dp0..\frontend
 set wd=%retval%
 

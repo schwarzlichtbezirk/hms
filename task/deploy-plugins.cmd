@@ -1,4 +1,5 @@
 @echo off
+rem This script downloads all javascript dependencies used on frontend.
 set plugdir=%~dp0..\frontend\plugin
 mkdir %plugdir%\images
 

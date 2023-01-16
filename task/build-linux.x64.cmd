@@ -1,4 +1,6 @@
 @echo off
+rem This script compiles project for Linux amd64.
+rem It produces static C-libraries linkage.
 set wd=%~dp0..
 
 for /F "tokens=*" %%g in ('git describe --tags') do (set buildvers=%%g)

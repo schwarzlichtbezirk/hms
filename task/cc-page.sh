@@ -1,4 +1,6 @@
 #!/bin/bash -u
+# This script performs js-files minification for all pages.
+# Downloads closure-compiler tool if it necessary.
 
 # define the working directory
 wd=$(realpath -s "$(dirname "$0")/../frontend")

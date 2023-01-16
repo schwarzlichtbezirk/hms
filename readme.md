@@ -24,7 +24,7 @@ Compiled binaries can be downloaded in [Releases](https://github.com/schwarzlich
 
 2. Install [Java RE](https://www.java.com/en/download/manual.jsp), its needed to run [Closure Compiler](https://developers.google.com/closure/compiler) and [Closure Stylesheets](https://github.com/google/closure-stylesheets/releases).
 
-3. Clone project, download dependencies, and run `deploy-all` script at `task` directory.
+3. Clone project, download dependencies, and run `bootstrap` script at `task` directory.
 
 4. Then run script to build executable, `build-win.x64.cmd` to build program for `Windows amd64` platform, or run `build-win.x86.cmd` to build program for `Windows x86` platform, or `build-linux.x64.sh` for `linux`-based platforms.
 
@@ -32,7 +32,7 @@ Compiled binaries can be downloaded in [Releases](https://github.com/schwarzlich
 git clone https://github.com/schwarzlichtbezirk/hms.git
 cd hms
 go mod download
-task\deploy-all.cmd
+task\bootstrap.cmd
 task\build-win.x64.cmd
 ```
 
@@ -43,7 +43,7 @@ git clone https://github.com/schwarzlichtbezirk/hms.git
 cd hms
 go mod download
 sudo chmod +x ./task/*.sh
-./task/deploy-all.sh
+./task/bootstrap.sh
 ./task/build-linux.x64.sh
 ```
 

@@ -1,6 +1,5 @@
 
--- only with free resources iconset
--- with allowed commercial usage
+-- package with all available resources
 
 cfg = {
 	-- package info

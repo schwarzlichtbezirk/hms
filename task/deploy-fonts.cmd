@@ -1,4 +1,5 @@
 @echo off
+rem This script downloads fonts used on frontend.
 set asstdir=%~dp0..\frontend\assets\iconfont
 mkdir %asstdir%
 

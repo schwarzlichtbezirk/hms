@@ -1,4 +1,5 @@
 #!/bin/bash -u
+# This script downloads all javascript dependencies used on frontend.
 
 plugdir=$(dirname $0)/../frontend/plugin
 mkdir -pv "$plugdir/images"
