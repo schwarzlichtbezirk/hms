@@ -26,12 +26,26 @@ tar -xf %tooldir%\libwebp-%webpver%-windows-x64.zip -C %tooldir%
 
 :cwebpexist
 
-for /r %icondir%\chakram %%f in (*.png) do (
-	%cwebp%  -q 80 -alpha_filter best -m 6 -af -hint picture -short %%f -o %%~dpnf.webp
-)
+call :convertpath chakram
+call :convertpath delta
+call :convertpath junior
+call :convertpath oxygen
+call :convertpath senary
+call :convertpath senary2
+call :convertpath tulliana
+call :convertpath ubuntu
+call :convertpath whistlepuff
+call :convertpath xrabbit
 
 exit /b 0
 
 :realpath
 set retval=%~f1
+exit /b
+
+:convertpath
+for /r %icondir%\%1 %%f in (*.png) do (
+	echo | set /p=%1\%%~nf
+	%cwebp% -mt -q 80 -alpha_filter best -m 6 -af -hint picture -short %%f -o %%~dpnf.webp
+)
 exit /b
