@@ -4,12 +4,11 @@ rem Downloads WebP tools if it necessary.
 rem see https://developers.google.com/speed/webp/download
 
 call :realpath %~dp0..\frontend\icon
-set icondir=%retval%
-
-set tooldir=%~d0\devtools
+set wd=%retval%
 
 set webpver=1.3.0
 
+set tooldir=%~d0\devtools
 set cwebp=%tooldir%\cwebp.exe
 if exist %cwebp% (
 	goto cwebpexist
@@ -44,7 +43,7 @@ set retval=%~f1
 exit /b
 
 :convertpath
-for /r %icondir%\%1 %%f in (*.png) do (
+for /r %wd%\%1 %%f in (*.png) do (
 	echo | set /p=%1\%%~nf
 	%cwebp% -mt -q 80 -alpha_filter best -m 6 -af -hint picture -short "%%f" -o "%%~dpnf.webp"
 )

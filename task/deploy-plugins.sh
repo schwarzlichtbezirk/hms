@@ -1,7 +1,7 @@
 #!/bin/bash -u
 # This script downloads all javascript dependencies used on frontend.
 
-plugdir=$(dirname $0)/../frontend/plugin
+plugdir=$(realpath -s "$(dirname $0)/../frontend/plugin")
 mkdir -pv "$plugdir/images"
 
 # bootstrap 5.2.3

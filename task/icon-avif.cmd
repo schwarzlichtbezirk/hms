@@ -4,18 +4,18 @@ rem Requires Node.js 14.15.0+.
 rem see https://github.com/lovell/avif-cli
 
 call :realpath %~dp0..\frontend\icon
-set icondir=%retval:\=/%
+set wd=%retval:\=/%
 
-npx avif --input="%icondir%/chakram/*.png" --quality=50 --effort=9 --overwrite --verbose
-npx avif --input="%icondir%/delta/*.png" --quality=50 --effort=9 --overwrite --verbose
-npx avif --input="%icondir%/junior/*.png" --quality=50 --effort=9 --overwrite --verbose
-npx avif --input="%icondir%/oxygen/*.png" --quality=50 --effort=9 --overwrite --verbose
-npx avif --input="%icondir%/senary/*.png" --quality=50 --effort=9 --overwrite --verbose
-npx avif --input="%icondir%/senary2/*.png" --quality=50 --effort=9 --overwrite --verbose
-npx avif --input="%icondir%/tulliana/*.png" --quality=50 --effort=9 --overwrite --verbose
-npx avif --input="%icondir%/ubuntu/*.png" --quality=50 --effort=9 --overwrite --verbose
-npx avif --input="%icondir%/whistlepuff/*.png" --quality=50 --effort=9 --overwrite --verbose
-npx avif --input="%icondir%/xrabbit/*.png" --quality=50 --effort=9 --overwrite --verbose
+npx avif --input="%wd%/chakram/*.png" --quality=50 --effort=9 --overwrite --verbose
+npx avif --input="%wd%/delta/*.png" --quality=50 --effort=9 --overwrite --verbose
+npx avif --input="%wd%/junior/*.png" --quality=50 --effort=9 --overwrite --verbose
+npx avif --input="%wd%/oxygen/*.png" --quality=50 --effort=9 --overwrite --verbose
+npx avif --input="%wd%/senary/*.png" --quality=50 --effort=9 --overwrite --verbose
+npx avif --input="%wd%/senary2/*.png" --quality=50 --effort=9 --overwrite --verbose
+npx avif --input="%wd%/tulliana/*.png" --quality=50 --effort=9 --overwrite --verbose
+npx avif --input="%wd%/ubuntu/*.png" --quality=50 --effort=9 --overwrite --verbose
+npx avif --input="%wd%/whistlepuff/*.png" --quality=50 --effort=9 --overwrite --verbose
+npx avif --input="%wd%/xrabbit/*.png" --quality=50 --effort=9 --overwrite --verbose
 
 exit /b 0
 

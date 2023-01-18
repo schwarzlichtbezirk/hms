@@ -33,7 +33,7 @@ if [ ! -f "$cs" ]; then
 	fi
 fi
 
-compileskin() {
+function compileskin() {
 	java -jar $cs\
 	 $wd/$1/page.css\
 	 $wd/$1/card.css\
