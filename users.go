@@ -1,6 +1,7 @@
 package hms
 
 import (
+	"encoding/binary"
 	"encoding/xml"
 	"net/http"
 	"path"
@@ -22,9 +23,9 @@ type UserStore struct {
 
 type UaStore struct {
 	UID       ID_t   `json:"uid" yaml:"uid" xml:"uid,attr"`
+	Addr      string `json:"addr" yaml:"addr" xml:"addr"`                 // remote address
 	UserAgent string `json:"useragent" yaml:"user-agent" xml:"useragent"` // user agent
 	Lang      string `json:"lang" yaml:"lang" xml:"lang"`                 // accept language
-	Addr      string `json:"addr" yaml:"addr" xml:"addr"`                 // remote address
 	Time      Time   `xorm:"created"`
 }
 
@@ -40,10 +41,13 @@ type OpenStore struct {
 // UaMap is the set hashes of of user-agent records.
 var UaMap = map[uint64]void{}
 
-func (ust *UaStore) Hash() uint64 {
+func (ast *UaStore) Hash() uint64 {
 	var h = xxhash.New()
-	h.Write(s2b(ust.Addr))
-	h.Write(s2b(ust.UserAgent))
+	var buf [8]byte
+	binary.LittleEndian.PutUint64(buf[:], uint64(ast.UID))
+	h.Write(buf[:])
+	h.Write(s2b(ast.Addr))
+	h.Write(s2b(ast.UserAgent))
 	return h.Sum64()
 }
 
@@ -66,17 +70,18 @@ func UserScanner() {
 		case r := <-ajaxreq:
 			if c, err := r.Cookie("UID"); err == nil {
 				var uid, _ = strconv.ParseUint(c.Value, 16, 64)
-				var ust UaStore
-				ust.Addr = StripPort(r.RemoteAddr)
-				ust.UserAgent = r.UserAgent()
-				var hv = ust.Hash()
+				var ast = UaStore{
+					UID:       ID_t(uid),
+					Addr:      StripPort(r.RemoteAddr),
+					UserAgent: r.UserAgent(),
+				}
+				var hv = ast.Hash()
 				if _, ok := UaMap[hv]; !ok {
-					ust.UID = ID_t(uid)
-					if lang, ok := r.Header["Accept-Language"]; ok {
-						ust.Lang = lang[0]
-					}
 					UaMap[hv] = void{}
-					go xormUserlog.InsertOne(&ust)
+					if lang, ok := r.Header["Accept-Language"]; ok {
+						ast.Lang = lang[0]
+					}
+					go xormUserlog.InsertOne(&ast)
 				}
 				UserOnline[ID_t(uid)] = time.Now()
 			}
