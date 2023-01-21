@@ -720,6 +720,11 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var fk FileKit
 	fk.Setup(session, syspath, fi)
 	fk.Shared = acc.IsShared(syspath)
+	if fi != nil {
+		_, fk.Static = fi.(*FileInfoISO)
+	} else {
+		fk.Static = true
+	}
 	WriteOK(w, r, &fk)
 }
 
@@ -898,6 +903,11 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var fk FileKit
 	fk.PUID = puid
 	fk.Shared = acc.IsShared(syspath)
+	if fi != nil {
+		_, fk.Static = fi.(*FileInfoISO)
+	} else {
+		fk.Static = true
+	}
 	fk.Name = path.Base(syspath)
 	fk.Type = FTdrv
 	fk.Size = fi.Size()

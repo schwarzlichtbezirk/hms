@@ -446,7 +446,6 @@ const VueMainApp = {
 			authid: 0, // authorized ID
 			aid: 0, // profile ID
 			hashome: false, // able to go home
-			readonly: true, // can't modify content of folder
 
 			selfile: null, // current selected item
 			delfile: null, // file to delete
@@ -614,7 +613,7 @@ const VueMainApp = {
 		clspaste() {
 			const sel = this.copied ?? this.cuted;
 			return {
-				'disabled': !sel || this.readonly || (() => {
+				'disabled': !sel || sel.static || (() => {
 					for (const file of this.flist) {
 						if (file.puid === sel.puid) {
 							return true;
@@ -627,7 +626,7 @@ const VueMainApp = {
 		clspastego() {
 			const sel = this.copied ?? this.cuted;
 			return {
-				'disabled': !sel || this.readonly || !(() => {
+				'disabled': !sel || sel.static || !(() => {
 					for (const file of this.flist) {
 						if (file.name === sel.name) {
 							return true;
@@ -638,10 +637,10 @@ const VueMainApp = {
 			};
 		},
 		clscut() {
-			return { 'disabled': !this.selfile || this.readonly || this.selfile.type === FT.drv || this.selfile.type === FT.ctgr };
+			return { 'disabled': !this.selfile || this.selfile.static };
 		},
 		clsdelete() {
-			return { 'disabled': !this.selfile || this.readonly || this.selfile.type === FT.drv || this.selfile.type === FT.ctgr };
+			return { 'disabled': !this.selfile || this.selfile.static };
 		},
 		hintpaste() {
 			return `paste: ${this.copied?.name ?? this.cuted?.name}`;
@@ -712,7 +711,6 @@ const VueMainApp = {
 			this.curpath = response.data.path;
 			this.shrname = response.data.shrname;
 			this.hashome = response.data.hashome;
-			this.readonly = response.data.readonly;
 
 			await this.newfolder(response.data.list);
 		},
@@ -730,7 +728,6 @@ const VueMainApp = {
 			this.curpath = "";
 			this.shrname = "";
 			this.hashome = response.data.hashome;
-			this.readonly = true;
 
 			await this.newfolder(response.data.list);
 		},

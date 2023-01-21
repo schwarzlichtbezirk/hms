@@ -415,8 +415,11 @@ const VueIconMenu = {
 		showinfo() {
 			return this.file.type === FT.file;
 		},
-		showcopydel() {
+		showcopy() {
 			return this.file.type === FT.file || this.file.type === FT.dir;
+		},
+		showcutdel() {
+			return !this.file.static;
 		}
 	},
 	methods: {

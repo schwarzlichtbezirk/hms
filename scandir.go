@@ -117,6 +117,11 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 			var dk DirKit
 			dk.PUID = puid
 			dk.Shared = prf.IsShared(fpath)
+			if fi != nil {
+				_, dk.Static = fi.(*FileInfoISO)
+			} else {
+				dk.Static = true
+			}
 			dk.FileProp = fp
 			dk.DirProp = dp
 			if vfiles[i] == nil && dk.Type != FTctgr {
@@ -127,6 +132,11 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 			var fk FileKit
 			fk.PUID = puid
 			fk.Shared = prf.IsShared(fpath)
+			if fi != nil {
+				_, fk.Static = fi.(*FileInfoISO)
+			} else {
+				fk.Static = true
+			}
 			fk.FileProp = fp
 			if tp, ok := tilecache.Peek(puid); ok {
 				fk.TileProp = *tp
