@@ -357,6 +357,8 @@ func DetectCachePath() (retpath string, err error) {
 	}
 
 	retpath = path.Join(PackPath, "cache")
+
+	err = os.MkdirAll(retpath, os.ModePerm)
 	return
 }
 

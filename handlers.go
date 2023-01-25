@@ -92,6 +92,10 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 		WriteRet(w, r, http.StatusUnauthorized, err)
 		return
 	}
+	var pid ID_t
+	if auth != nil {
+		pid = auth.ID
+	}
 
 	if strings.HasPrefix(syspath, "http://") || strings.HasPrefix(syspath, "https://") {
 		http.Redirect(w, r, syspath, http.StatusMovedPermanently)
@@ -133,7 +137,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 					openlog <- OpenStore{
 						UID:     ID_t(uid),
 						AID:     ID_t(aid),
-						PID:     auth.ID,
+						PID:     pid,
 						Path:    syspath,
 						Latency: -1,
 					}
@@ -169,7 +173,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 					openlog <- OpenStore{
 						UID:     ID_t(uid),
 						AID:     ID_t(aid),
-						PID:     auth.ID,
+						PID:     pid,
 						Path:    syspath,
 						Latency: -1,
 					}
@@ -188,7 +192,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 			openlog <- OpenStore{
 				UID:     ID_t(uid),
 				AID:     ID_t(aid),
-				PID:     auth.ID,
+				PID:     pid,
 				Path:    syspath,
 				Latency: -1,
 			}

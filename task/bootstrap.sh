@@ -82,8 +82,8 @@ source $taskdir/wpk-app.sh
 
 
 echo
-echo "STAGE#8: build full resources WPK-file"
-source $taskdir/wpk-full.sh
+echo "STAGE#8: build edge resources WPK-file"
+source $taskdir/wpk-edge.sh
 
 
 echo

@@ -110,6 +110,10 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 		WriteRet(w, r, http.StatusUnauthorized, err)
 		return
 	}
+	var pid ID_t
+	if auth != nil {
+		pid = auth.ID
+	}
 
 	var syspath string
 	var puid Puid_t
@@ -308,7 +312,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 		openlog <- OpenStore{
 			UID:     ID_t(uid),
 			AID:     ID_t(aid),
-			PID:     auth.ID,
+			PID:     pid,
 			Path:    syspath,
 			Latency: int(latency / time.Millisecond),
 		}
