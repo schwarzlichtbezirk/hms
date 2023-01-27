@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"path"
 	"strconv"
+	"sync"
 	"time"
 
 	uas "github.com/avct/uasurfer"
@@ -16,80 +17,59 @@ import (
 
 var xormUserlog *xorm.Engine
 
-type UserStore struct {
-	UID  ID_t `xorm:"pk autoincr"`
+type ClientStore struct {
+	CID  ID_t `xorm:"pk autoincr"`
 	Time Time `xorm:"created"`
 }
 
-type UaStore struct {
-	UID       ID_t   `json:"uid" yaml:"uid" xml:"uid,attr"`
-	Addr      string `json:"addr" yaml:"addr" xml:"addr"`                 // remote address
-	UserAgent string `json:"useragent" yaml:"user-agent" xml:"useragent"` // user agent
-	Lang      string `json:"lang" yaml:"lang" xml:"lang"`                 // accept language
-	Time      Time   `xorm:"created"`
+type AgentStore struct {
+	CID  ID_t
+	Addr string // remote address
+	UA   string // user agent
+	Lang string // accept language
+	Time Time   `xorm:"created"`
 }
 
 type OpenStore struct {
-	UID     ID_t   `json:"uid" yaml:"uid" xml:"uid,attr"`                  // user unique ID
-	AID     ID_t   `xorm:"default 0" json:"aid" yaml:"aid" xml:"aid,attr"` // access ID
-	PID     ID_t   `xorm:"default 0" json:"pid" yaml:"pid" xml:"pid,attr"` // authorized profile ID
+	CID     ID_t   // client unique ID
+	AID     ID_t   `xorm:"default 0"` // access ID
+	UID     ID_t   `xorm:"default 0"` // user profile ID
 	Path    string // system path
 	Latency int    // event latency, in milliseconds, or -1 if it file
 	Time    Time   `xorm:"created"` // time of event rise
 }
 
-// UaMap is the set hashes of of user-agent records.
-var UaMap = map[uint64]void{}
+var (
+	// UserOnline is map of last AJAX query time for each user.
+	UserOnline = map[ID_t]time.Time{}
+	// UaMap is the set hashes of of user-agent records.
+	UaMap = map[uint64]void{}
+	// mutex to get access to user-agent maps.
+	uamux sync.Mutex
+)
 
-func (ast *UaStore) Hash() uint64 {
+func (ast *AgentStore) Hash() uint64 {
 	var h = xxhash.New()
 	var buf [8]byte
-	binary.LittleEndian.PutUint64(buf[:], uint64(ast.UID))
+	binary.LittleEndian.PutUint64(buf[:], uint64(ast.CID))
 	h.Write(buf[:])
 	h.Write(s2b(ast.Addr))
-	h.Write(s2b(ast.UserAgent))
+	h.Write(s2b(ast.UA))
 	return h.Sum64()
 }
 
-// UserOnline is map of last AJAX query time for each user.
-var UserOnline = map[ID_t]time.Time{}
-
-var (
-	openlog = make(chan OpenStore)     // sends on folder open or any file open.
-	ajaxreq = make(chan *http.Request) // sends on any ajax-call
-)
-
-// UserScanner - users scanner goroutine. Receives data from
-// any API-calls to update statistics.
-func UserScanner() {
-	for {
-		select {
-		case item := <-openlog:
-			go xormUserlog.InsertOne(&item)
-
-		case r := <-ajaxreq:
-			if c, err := r.Cookie("UID"); err == nil {
-				var uid, _ = strconv.ParseUint(c.Value, 16, 64)
-				var ast = UaStore{
-					UID:       ID_t(uid),
-					Addr:      StripPort(r.RemoteAddr),
-					UserAgent: r.UserAgent(),
-				}
-				var hv = ast.Hash()
-				if _, ok := UaMap[hv]; !ok {
-					UaMap[hv] = void{}
-					if lang, ok := r.Header["Accept-Language"]; ok {
-						ast.Lang = lang[0]
-					}
-					go xormUserlog.InsertOne(&ast)
-				}
-				UserOnline[ID_t(uid)] = time.Now()
-			}
-
-		case <-exitctx.Done():
-			return
-		}
+// GetCID extract client ID from cookie.
+func GetCID(r *http.Request) (cid ID_t, err error) {
+	var c *http.Cookie
+	if c, err = r.Cookie("CID"); err != nil {
+		return
 	}
+	var u64 uint64
+	if u64, err = strconv.ParseUint(c.Value, 16, 64); err != nil {
+		return
+	}
+	cid = ID_t(u64)
+	return
 }
 
 // InitUserlog inits database user log engine.
@@ -100,7 +80,7 @@ func InitUserlog() (err error) {
 	xormUserlog.SetMapper(names.GonicMapper{})
 	xormUserlog.ShowSQL(false)
 
-	if err = xormUserlog.Sync(&UserStore{}, &UaStore{}, &OpenStore{}); err != nil {
+	if err = xormUserlog.Sync(&ClientStore{}, &AgentStore{}, &OpenStore{}); err != nil {
 		return
 	}
 	return
@@ -114,13 +94,13 @@ func LoadUaMap() (err error) {
 	const limit = 256
 	var offset int
 	for {
-		var chunk []UaStore
+		var chunk []AgentStore
 		if err = session.Limit(limit, offset).Find(&chunk); err != nil {
 			return
 		}
 		offset += limit
-		for _, ust := range chunk {
-			UaMap[ust.Hash()] = void{}
+		for _, ast := range chunk {
+			UaMap[ast.Hash()] = void{}
 		}
 		if limit > len(chunk) {
 			break
@@ -139,7 +119,7 @@ func usrlstAPI(w http.ResponseWriter, r *http.Request) {
 		File   string        `json:"file" yaml:"file" xml:"file"`
 		Online bool          `json:"online" yaml:"online" xml:"online"`
 		AID    ID_t          `json:"accid" yaml:"accid" xml:"accid"`
-		PID    ID_t          `json:"prfid" yaml:"prfid" xml:"prfid"`
+		UID    ID_t          `json:"usrid" yaml:"usrid" xml:"usrid"`
 	}
 
 	var err error
@@ -165,34 +145,37 @@ func usrlstAPI(w http.ResponseWriter, r *http.Request) {
 	defer session.Close()
 
 	type jstore struct {
-		UserStore `xorm:"extends"`
-		UaStore   `xorm:"extends"`
-		Path      OpenStore `xorm:"extends"`
-		File      OpenStore `xorm:"extends"`
+		ClientStore `xorm:"extends"`
+		AgentStore  `xorm:"extends"`
+		Path        OpenStore `xorm:"extends"`
+		File        OpenStore `xorm:"extends"`
 	}
 
-	ret.Total, _ = session.Count(&UserStore{})
+	ret.Total, _ = session.Count(&ClientStore{})
 	var justs []jstore
-	if err = session.Distinct().Table("user_store").
-		Join("INNER", "ua_store", "user_store.uid = ua_store.uid AND ua_store.time = (SELECT MIN(time) FROM ua_store WHERE uid = user_store.uid)").
-		Join("INNER", "open_store t1", "user_store.uid = t1.uid AND t1.time = (SELECT MAX(time) FROM open_store WHERE uid = user_store.uid AND latency>=0)").
-		Join("INNER", "open_store t2", "user_store.uid = t2.uid AND t2.time = (SELECT MAX(time) FROM open_store WHERE uid = user_store.uid AND latency=-1)").
+	if err = session.Distinct().Table("client_store").
+		Join("INNER", "agent_store", "client_store.cid = agent_store.cid AND agent_store.time = (SELECT MIN(time) FROM agent_store WHERE cid = client_store.cid)").
+		Join("INNER", "open_store t1", "client_store.cid = t1.cid AND t1.time = (SELECT MAX(time) FROM open_store WHERE cid = client_store.cid AND latency>=0)").
+		Join("INNER", "open_store t2", "client_store.cid = t2.cid AND t2.time = (SELECT MAX(time) FROM open_store WHERE cid = client_store.cid AND latency=-1)").
 		Limit(arg.Num, arg.Pos).Find(&justs); err != nil {
 		WriteError500(w, r, err, AECusrlstusts)
 		return
 	}
 	var now = time.Now()
 	for _, rec := range justs {
+		uamux.Lock()
+		var online = now.Sub(UserOnline[rec.AgentStore.CID]) < cfg.OnlineTimeout
+		uamux.Unlock()
 		var ui = item{
 			Addr:   rec.Addr,
 			Lang:   rec.Lang,
 			Path:   rec.Path.Path,
 			File:   rec.File.Path,
-			Online: now.Sub(UserOnline[rec.UaStore.UID]) < cfg.OnlineTimeout,
+			Online: online,
 			AID:    rec.Path.AID,
-			PID:    rec.Path.PID,
+			UID:    rec.Path.UID,
 		}
-		uas.ParseUserAgent(rec.UserAgent, &ui.UA)
+		uas.ParseUserAgent(rec.UA, &ui.UA)
 		ret.List = append(ret.List, ui)
 	}
 

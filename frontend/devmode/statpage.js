@@ -389,8 +389,8 @@ const VueUser = {
 			return this.user.online ? 'text-success' : 'text-secondary';
 		},
 		txtonline() {
-			if (this.user.prfid) {
-				return this.user.prfid > 0 ? 'person' : 'person_outline';
+			if (this.user.usrid) {
+				return this.user.usrid > 0 ? 'person' : 'person_outline';
 			} else {
 				return this.user.accid ? 'radio_button_checked' : 'radio_button_unchecked';
 			}

@@ -1815,7 +1815,7 @@ const VueMapCard = {
 
 		// create new opened folder
 		onnewlist(newlist, oldlist) {
-			this.keepmap = this.$root.curpuid === PUID.map;
+			this.keepmap = this.$root.curpuid === CNID.map;
 			// new empty list
 			this.gpslist = [];
 			// remove all markers from the cluster

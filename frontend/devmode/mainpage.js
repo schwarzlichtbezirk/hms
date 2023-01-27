@@ -24,8 +24,8 @@ let iconmapping = {
 };
 let thumbmode = storageGetBoolean("thumbmode", true);
 
-// Predefined PUIDs.
-const PUID = {
+// Category identifiers by names.
+const CNID = {
 	home: "04",
 	drives: "08",
 	shares: "0C",
@@ -40,8 +40,8 @@ const PUID = {
 	reserved: 32
 };
 
-// Category identifiers.
-const CID = {
+// Category names by identifiers.
+const CIDN = {
 	"04": "home",
 	"08": "drives",
 	"0C": "shares",
@@ -293,8 +293,8 @@ const geticonpath = file => {
 	switch (file.type) {
 		case FT.ctgr:
 			return {
-				org: org.cid[CID[file.puid]] || org.cid.cid,
-				alt: alt.cid[CID[file.puid]] || alt.cid.cid
+				org: org.cid[CIDN[file.puid]] || org.cid.cid,
+				alt: alt.cid[CIDN[file.puid]] || alt.cid.cid
 			};
 		case FT.drv:
 			if (file.latency < 0) {
@@ -558,7 +558,7 @@ const VueMainApp = {
 		// common buttons enablers
 
 		clshome() {
-			return { 'disabled': this.curpuid === PUID.home || !this.hashome };
+			return { 'disabled': this.curpuid === CNID.home || !this.hashome };
 		},
 		clsback() {
 			return { 'disabled': this.histpos < 2 };
@@ -724,7 +724,7 @@ const VueMainApp = {
 
 			// current path & state
 			this.skipped = 0;
-			this.curpuid = PUID.map;
+			this.curpuid = CNID.map;
 			this.curpath = "";
 			this.shrname = "";
 			this.hashome = response.data.hashome;
@@ -808,8 +808,8 @@ const VueMainApp = {
 
 		seturl() {
 			const url = (() => {
-				if (CID[this.curpuid]) {
-					return `${(devmode ? "/dev" : "")}/id${this.aid}/ctgr/${CID[this.curpuid]}/`;
+				if (CIDN[this.curpuid]) {
+					return `${(devmode ? "/dev" : "")}/id${this.aid}/ctgr/${CIDN[this.curpuid]}/`;
 				} else if (this.curpath) {
 					return this.curlongurl;
 				} else {
@@ -831,7 +831,7 @@ const VueMainApp = {
 				eventHub.emit('ajax', +1);
 				try {
 					// open route and push history step
-					const hist = { path: PUID.home };
+					const hist = { path: CNID.home };
 					await this.fetchfolder(hist);
 					this.pushhist(hist);
 				} catch (e) {
@@ -1015,9 +1015,9 @@ const VueMainApp = {
 			(async () => {
 				try {
 					await this.fetchrangesearch(arg);
-					if (this.curpuid !== PUID.map) {
+					if (this.curpuid !== CNID.map) {
 						// open route and push history step
-						const hist = { aid: this.aid, puid: PUID.map };
+						const hist = { aid: this.aid, puid: CNID.map };
 						this.pushhist(hist);
 					}
 				} catch (e) {
@@ -1117,14 +1117,14 @@ const VueMainApp = {
 		const route = chunks[0];
 		chunks.shift();
 		if (route === "ctgr") {
-			hist.path = PUID[chunks[0]];
+			hist.path = CNID[chunks[0]];
 			chunks.shift();
 		} else if (route === "path") {
 			hist.path = chunks.join('/');
 		} else if (route === "main") {
-			hist.path = PUID.home;
+			hist.path = CNID.home;
 		} else {
-			hist.path = PUID.home;
+			hist.path = CNID.home;
 		}
 
 		// load resources and open route

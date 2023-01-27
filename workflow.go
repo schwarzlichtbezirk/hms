@@ -128,9 +128,9 @@ func Init() {
 		Log.Fatal("can not init XORM user log: " + err.Error())
 	}
 	{
-		var usercount, _ = xormUserlog.Count(&UserStore{})
+		var usercount, _ = xormUserlog.Count(&ClientStore{})
 		Log.Infof("user count %d items", usercount)
-		var uacount, _ = xormUserlog.Count(&UaStore{})
+		var uacount, _ = xormUserlog.Count(&AgentStore{})
 		Log.Infof("user agent count %d items", uacount)
 		var opencount, _ = xormUserlog.Count(&OpenStore{})
 		Log.Infof("resources open count %d items", opencount)
@@ -163,9 +163,6 @@ func Init() {
 	if err = ReadPasslist(passlst); err != nil {
 		Log.Fatal("error at white list file: " + err.Error())
 	}
-
-	// run users scanner for statistics
-	go UserScanner()
 
 	// run thumbnails scanner
 	go ImgScanner.Scan()

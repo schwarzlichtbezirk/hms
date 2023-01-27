@@ -92,9 +92,9 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 		WriteRet(w, r, http.StatusUnauthorized, err)
 		return
 	}
-	var pid ID_t
+	var uid ID_t
 	if auth != nil {
-		pid = auth.ID
+		uid = auth.ID
 	}
 
 	if strings.HasPrefix(syspath, "http://") || strings.HasPrefix(syspath, "https://") {
@@ -132,15 +132,14 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 
 			if HasRangeBegin(r) { // beginning of content
 				Log.Infof("id%d: media-hd %s", acc.ID, path.Base(syspath))
-				if c, err := r.Cookie("UID"); err == nil {
-					var uid, _ = strconv.ParseUint(c.Value, 16, 64)
-					openlog <- OpenStore{
-						UID:     ID_t(uid),
+				if cid, err := GetCID(r); err == nil {
+					go xormUserlog.InsertOne(&OpenStore{
+						CID:     cid,
 						AID:     ID_t(aid),
-						PID:     pid,
+						UID:     uid,
 						Path:    syspath,
 						Latency: -1,
-					}
+					})
 				}
 			}
 			w.Header().Set("Content-Type", MimeStr[md.Mime])
@@ -168,15 +167,14 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 
 			if HasRangeBegin(r) { // beginning of content
 				Log.Infof("id%d: media %s", acc.ID, path.Base(syspath))
-				if c, err := r.Cookie("UID"); err == nil {
-					var uid, _ = strconv.ParseUint(c.Value, 16, 64)
-					openlog <- OpenStore{
-						UID:     ID_t(uid),
+				if cid, err := GetCID(r); err == nil {
+					go xormUserlog.InsertOne(&OpenStore{
+						CID:     cid,
 						AID:     ID_t(aid),
-						PID:     pid,
+						UID:     uid,
 						Path:    syspath,
 						Latency: -1,
-					}
+					})
 				}
 			}
 			w.Header().Set("Content-Type", MimeStr[md.Mime])
@@ -187,15 +185,14 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 
 	if HasRangeBegin(r) { // beginning of content
 		Log.Infof("id%d: serve %s", acc.ID, path.Base(syspath))
-		if c, err := r.Cookie("UID"); err == nil {
-			var uid, _ = strconv.ParseUint(c.Value, 16, 64)
-			openlog <- OpenStore{
-				UID:     ID_t(uid),
+		if cid, err := GetCID(r); err == nil {
+			go xormUserlog.InsertOne(&OpenStore{
+				CID:     cid,
 				AID:     ID_t(aid),
-				PID:     pid,
+				UID:     uid,
 				Path:    syspath,
 				Latency: -1,
-			}
+			})
 		}
 	}
 

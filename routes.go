@@ -494,33 +494,40 @@ func AjaxMiddleware(next http.Handler) http.Handler {
 			}
 		}()
 
-		go func() {
-			ajaxreq <- r
-		}()
-
 		// lock before exit check
 		handwg.Add(1)
 		defer handwg.Done()
 
-		// check on exit during handler is called
-		select {
-		case <-exitctx.Done():
-			return
-		default:
-		}
+		// get CID
+		if cid, err := GetCID(r); err == nil {
+			go func() {
+				var ast = AgentStore{
+					CID:  cid,
+					Addr: StripPort(r.RemoteAddr),
+					UA:   r.UserAgent(),
+				}
+				if lang, ok := r.Header["Accept-Language"]; ok {
+					ast.Lang = lang[0]
+				}
 
-		// get UID
-		var uid uint64
-		if c, err := r.Cookie("UID"); err == nil {
-			uid, _ = strconv.ParseUint(c.Value, 16, 64)
-		}
-		if uid == 0 {
-			var ust UserStore
-			if _, err := xormUserlog.InsertOne(&ust); err == nil {
-				uid = uint64(ust.UID)
+				var hv = ast.Hash()
+				uamux.Lock()
+				var _, ok = UaMap[hv]
+				if !ok {
+					UaMap[hv] = void{}
+				}
+				UserOnline[cid] = time.Now()
+				uamux.Unlock()
+				if !ok {
+					xormUserlog.InsertOne(&ast)
+				}
+			}()
+		} else {
+			var cst ClientStore
+			if _, err := xormUserlog.InsertOne(&cst); err == nil {
 				http.SetCookie(w, &http.Cookie{
-					Name:  "UID",
-					Value: strconv.FormatUint(uid, 16),
+					Name:  "CID",
+					Value: strconv.FormatUint(uint64(cst.CID), 16),
 					Path:  "/",
 				})
 			}

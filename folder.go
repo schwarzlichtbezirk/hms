@@ -110,9 +110,9 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 		WriteRet(w, r, http.StatusUnauthorized, err)
 		return
 	}
-	var pid ID_t
+	var uid ID_t
 	if auth != nil {
-		pid = auth.ID
+		uid = auth.ID
 	}
 
 	var syspath string
@@ -307,15 +307,14 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 
 	var latency = time.Since(t)
 	Log.Infof("id%d: navigate to %s, items %d, timeout %s", acc.ID, syspath, len(ret.List), latency)
-	if c, err := r.Cookie("UID"); err == nil {
-		var uid, _ = strconv.ParseUint(c.Value, 16, 64)
-		openlog <- OpenStore{
-			UID:     ID_t(uid),
+	if cid, err := GetCID(r); err == nil {
+		go xormUserlog.InsertOne(&OpenStore{
+			CID:     cid,
 			AID:     ID_t(aid),
-			PID:     pid,
+			UID:     uid,
 			Path:    syspath,
 			Latency: int(latency / time.Millisecond),
-		}
+		})
 	}
 
 	WriteOK(w, r, &ret)

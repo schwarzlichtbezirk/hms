@@ -151,7 +151,7 @@ func (pl *Profiles) WriteYaml(fname string) error {
 		list = append(list, prf)
 	}
 	sort.Slice(list, func(i, j int) bool {
-		return list[i].ID > list[j].ID
+		return list[i].ID < list[j].ID
 	})
 	return WriteYaml(fname, intro, list)
 }
