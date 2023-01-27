@@ -1,0 +1,8 @@
+# List of white addresses. Users from those addresses can have
+# full access to all host machine resources without authentication.
+# Ajax-requests gets authentication of account thats ID pointed at
+# the request URL. The list is strings with CIDR representations,
+# or DNS-addresses, or IP-addresses. Loopback is already included.
+# This file does not modified by server runtime.
+
+- 192.168.0.1/28 # local network segment from 192.168.0.1 to 192.168.0.15

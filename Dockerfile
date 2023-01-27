@@ -2,6 +2,10 @@
 # Here expected that "bootstrap.sh" script was successfully executed,
 # and project folder contains actual version of js-bundles and others files.
 
+# Typical usage:
+#   docker build --progress=plain --pull --rm -f "Dockerfile" -t hms:latest "."
+#   docker run -v F:/Music:/mnt/music -d -p 80:80 hms
+
 ##
 ## Build stage
 ##

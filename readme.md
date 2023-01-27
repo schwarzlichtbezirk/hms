@@ -52,8 +52,9 @@ sudo chmod +x ./task/*.sh
 Script `pack.lua` helps to build resources pack with given at another lua-script set of skins and icons. Available formats for each icons set can be seen at `fulliconset` table. You can provide several formats for each icons set with given subsequence that will be used as list of `<source>` tags in `<picture>`. In common case subsequence for formats can be followed: `avif`, `webp`, `jp2`, `png`, `gif`, `svg`. You can check on [caniuse.com](https://caniuse.com/) support of custom combination of formats. There is presents predefined scripts and tasks to build some resources combinations:
 
 * `hms-full` - full set of skins and icons with all available formats, can be useful for old browsers without `webp` support.
-* `hms-tiny` - minimal set, with two `svg` icons set. Can be used on lightweight systems.
+* `hms-edge` - full set of skins and icons in `avif`, `webp` and `svg` formats, useful for modern browsers at most common cases.
 * `hms-webp` - full set with `webp` and `svg` formats only, useful for modern browsers.
+* `hms-tiny` - minimal set, with two `svg` icons set. Can be used on lightweight systems.
 * `hms-free` - set of icons with public license and allowed commercial usage.
 
 # Configuration

@@ -40,7 +40,7 @@ func Init() {
 	}
 	// load content of Config structure from YAML-file.
 	if err = cfg.ReadYaml(cfgfile); err != nil {
-		Log.Error("error on settings file: " + err.Error())
+		Log.Error("error at settings file: " + err.Error())
 	}
 	// rewrite settings from config file
 	if _, err := flags.Parse(&cfg); err != nil {
@@ -156,7 +156,12 @@ func Init() {
 
 	// load profiles with roots, hidden and shares lists
 	if err = prflist.ReadYaml(prffile); err != nil {
-		Log.Fatal("error on profiles file: " + err.Error())
+		Log.Fatal("error at profiles file: " + err.Error())
+	}
+
+	// load white list
+	if err = ReadPasslist(passlst); err != nil {
+		Log.Fatal("error at white list file: " + err.Error())
 	}
 
 	// run users scanner for statistics

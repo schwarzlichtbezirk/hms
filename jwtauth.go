@@ -9,10 +9,12 @@ import (
 	"math/rand"
 	"net"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/gorilla/mux"
 )
 
 // jwt-go docs:
@@ -36,6 +38,8 @@ var (
 	ErrBadPass  = errors.New("password is incorrect")
 	ErrNoAcc    = errors.New("profile is absent")
 )
+
+var Passlist []net.IPNet
 
 // Zero hash value.
 var zero32 [32]byte
@@ -87,8 +91,8 @@ func StripPort(addrport string) string {
 // or default profile with no error if authorization is absent on localhost.
 // Returns nil pointer and nil error on unauthorized request from any host.
 func GetAuth(r *http.Request) (auth *Profile, aerr error) {
+	var err error
 	if pool, is := r.Header["Authorization"]; is {
-		var err error
 		var claims Claims
 		var bearer = false
 		// at least one authorization field should have valid bearer access
@@ -136,8 +140,25 @@ func GetAuth(r *http.Request) (auth *Profile, aerr error) {
 		}
 		return
 	}
-	if net.ParseIP(StripPort(r.RemoteAddr)).IsLoopback() {
-		auth = prflist.ByID(cfg.DefAccID)
+
+	var vars = mux.Vars(r)
+	if vars == nil {
+		return // no authorization
+	}
+	var aid uint64
+	if aid, err = strconv.ParseUint(vars["aid"], 10, 64); err != nil {
+		return // no authorization
+	}
+	var ip = net.ParseIP(StripPort(r.RemoteAddr))
+	if ip.IsLoopback() {
+		auth = prflist.ByID(ID_t(aid))
+		return
+	}
+	for _, ipn := range Passlist {
+		if ipn.Contains(ip) {
+			auth = prflist.ByID(ID_t(aid))
+			return
+		}
 	}
 	return
 }

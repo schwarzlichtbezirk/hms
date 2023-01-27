@@ -8,6 +8,7 @@ wd=$(realpath -s "$(dirname "$0")/../frontend/icon")
 webpver=1.3.0
 
 # detect host platform configuration
+# see https://stackoverflow.com/questions/48678152/how-to-detect-386-amd64-arm-or-arm64-os-architecture-via-shell-bash
 arc=$(uname -m)
 if [[ "$OSTYPE" == "linux-gnu"* ]] && [[ "$arc" == "x86_64" ]]; then
 	# some Linux-based platform detected

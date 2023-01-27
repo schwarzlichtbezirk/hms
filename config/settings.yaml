@@ -1,6 +1,7 @@
 ﻿
 # Server configuration file. First of all you can change
 # "access-key" and "refresh-key" for tokens protection.
+# This file does not modified by server runtime.
 
 authentication:
   # Access token time to live.
@@ -62,8 +63,6 @@ specification:
   wpk-mmap: false
   # Maximum duration between two ajax-calls to think client is online.
   online-timeout: 180s # 3 minutes
-  # Default profile identifier for user on localhost.
-  default-profile-id: 1
   # Maximum number of cached embedded thumbnails.
   thumb-cache-maxnum: 16384
   # Maximum number of converted media files at memory cache.

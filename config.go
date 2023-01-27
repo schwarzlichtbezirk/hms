@@ -15,6 +15,7 @@ const (
 
 	cfgfile = "settings.yaml"
 	prffile = "profiles.yaml"
+	passlst = "passlist.yaml"
 
 	dirfile = "storage.sqlite"
 	userlog = "userlog.sqlite"
@@ -83,8 +84,6 @@ type CfgAppSets struct {
 	WPKmmap bool `json:"wpk-mmap" yaml:"wpk-mmap" long:"mmap" description:"Memory mapping technology for WPK, or load into one solid byte slice otherwise."`
 	// Maximum duration between two ajax-calls to think client is online.
 	OnlineTimeout time.Duration `json:"online-timeout" yaml:"online-timeout" long:"ot" description:"Maximum duration between two ajax-calls to think client is online."`
-	// Default profile identifier for user on localhost.
-	DefAccID ID_t `json:"default-profile-id" yaml:"default-profile-id" long:"defaid" description:"Default profile identifier for user on localhost."`
 	// Maximum number of cached embedded thumbnails.
 	ThumbCacheMaxNum int `json:"thumb-cache-maxnum" yaml:"thumb-cache-maxnum" long:"pcmn" description:"Maximum number of cached embedded thumbnails."`
 	// Maximum number of converted media files at memory cache.
@@ -138,7 +137,6 @@ var cfg = Config{ // inits default values:
 		WPKName:          []string{"hms-full.wpk"},
 		WPKmmap:          false,
 		OnlineTimeout:    3 * 60 * time.Second,
-		DefAccID:         1,
 		ThumbCacheMaxNum: 16 * 1024,
 		MediaCacheMaxNum: 64,
 		HdCacheMaxNum:    256,

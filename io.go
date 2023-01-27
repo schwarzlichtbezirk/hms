@@ -2,6 +2,7 @@ package hms
 
 import (
 	"io"
+	"net"
 	"os"
 	"path"
 	"sort"
@@ -113,24 +114,25 @@ func (pl *Profiles) ReadYaml(fname string) (err error) {
 
 				// build shares tables
 				prf.UpdateShares()
+				// check up some roots already defined
+				if len(prf.Roots) == 0 {
+					prf.FindRoots()
+				}
 			}
 			return
 		})
-
-		// check up default profile
-		if prf := pl.ByID(cfg.DefAccID); prf != nil {
-			if len(prf.Roots) == 0 {
-				prf.FindRoots()
-			}
-		} else {
-			Log.Fatal("default profile is not found")
-		}
 	} else {
 		var prf = pl.NewProfile("admin", "dag qus fly in the sky")
-		prf.ID = cfg.DefAccID
-		Log.Infof("created profile id%d, login='%s'", prf.ID, prf.Login)
+		prf.ID = 1
 		prf.SetDefaultHidden()
+		prf.Shares = []string{
+			"<home>",
+		}
+		// build shares tables
+		prf.UpdateShares()
+		// setup all available disks as the roots
 		prf.FindRoots()
+		Log.Infof("created profile id%d, login='%s'", prf.ID, prf.Login)
 	}
 	return
 }
@@ -152,6 +154,39 @@ func (pl *Profiles) WriteYaml(fname string) error {
 		return list[i].ID > list[j].ID
 	})
 	return WriteYaml(fname, intro, list)
+}
+
+// ReadPasslist reads content of white list from YAML-file
+// with given file name.
+func ReadPasslist(fname string) (err error) {
+	var list []string
+	if err = ReadYaml(fname, &list); err != nil {
+		return
+	}
+	for _, str := range list {
+		if _, ipn, err := net.ParseCIDR(str); err == nil {
+			Passlist = append(Passlist, *ipn)
+			continue
+		}
+		if ip := net.ParseIP(str); ip != nil {
+			Passlist = append(Passlist, net.IPNet{
+				IP:   ip,
+				Mask: net.CIDRMask(len(ip)*8, len(ip)*8),
+			})
+			continue
+		}
+		if ips, err := net.LookupIP(str); err == nil {
+			for _, ip := range ips {
+				Passlist = append(Passlist, net.IPNet{
+					IP:   ip,
+					Mask: net.CIDRMask(len(ip)*8, len(ip)*8),
+				})
+			}
+			continue
+		}
+		Log.Infof("white list entry '%s' does not recognized", str)
+	}
+	return
 }
 
 // The End.
