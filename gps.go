@@ -5,7 +5,6 @@ import (
 	"io/fs"
 	"math"
 	"net/http"
-	"strconv"
 
 	"github.com/gorilla/mux"
 )
@@ -84,8 +83,8 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 
 	// get arguments
 	var vars = mux.Vars(r)
-	var aid uint64
-	if aid, err = strconv.ParseUint(vars["aid"], 10, 64); err != nil {
+	var aid ID_t
+	if aid, err = ParseID(vars["aid"]); err != nil {
 		WriteError400(w, r, err, AECgpsrangenoaid)
 		return
 	}
@@ -121,20 +120,20 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var session = xormStorage.NewSession()
 	defer session.Close()
 
-	var prf *Profile
-	if prf = prflist.ByID(ID_t(aid)); prf == nil {
+	var acc *Profile
+	if acc = prflist.ByID(aid); acc == nil {
 		WriteError400(w, r, ErrNoAcc, AECgpsrangenoacc)
 		return
 	}
 
-	if auth == prf {
+	if auth == acc {
 		ret.HasHome = true
-	} else if prf.IsShared(CPhome) {
+	} else if acc.IsShared(CPhome) {
 		for _, fpath := range CatKeyPath {
 			if fpath == CPhome {
 				continue
 			}
-			if prf.IsShared(fpath) {
+			if acc.IsShared(fpath) {
 				ret.HasHome = true
 				break
 			}
@@ -159,7 +158,7 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		}
 		if inc {
 			var fpath, _ = pathcache.GetDir(puid)
-			if !prf.IsHidden(fpath) && prf.PathAccess(fpath, auth == prf) {
+			if !acc.IsHidden(fpath) && acc.PathAccess(fpath, auth == acc) {
 				if fi, _ := StatFile(fpath); fi != nil {
 					vfiles = append(vfiles, fi)
 					vpaths = append(vpaths, fpath)
@@ -168,7 +167,7 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		}
 		return arg.Limit == 0 || len(ret.List) < arg.Limit
 	})
-	if ret.List, _, err = ScanFileInfoList(prf, session, vfiles, vpaths); err != nil {
+	if ret.List, _, err = ScanFileInfoList(acc, session, vfiles, vpaths); err != nil {
 		WriteError500(w, r, err, AECgpsrangelist)
 		return
 	}
@@ -192,8 +191,8 @@ func gpsscanAPI(w http.ResponseWriter, r *http.Request) {
 
 	// get arguments
 	var vars = mux.Vars(r)
-	var aid uint64
-	if aid, err = strconv.ParseUint(vars["aid"], 10, 64); err != nil {
+	var aid ID_t
+	if aid, err = ParseID(vars["aid"]); err != nil {
 		WriteError400(w, r, err, AECgpsscannoaid)
 		return
 	}
@@ -208,13 +207,13 @@ func gpsscanAPI(w http.ResponseWriter, r *http.Request) {
 	var session = xormStorage.NewSession()
 	defer session.Close()
 
-	var prf *Profile
-	if prf = prflist.ByID(ID_t(aid)); prf == nil {
+	var acc *Profile
+	if acc = prflist.ByID(aid); acc == nil {
 		WriteError400(w, r, ErrNoAcc, AECgpsscannoacc)
 		return
 	}
-	var auth *Profile
-	if auth, err = GetAuth(r); err != nil {
+	var uid ID_t
+	if uid, err = GetAuth(r); err != nil {
 		WriteRet(w, r, http.StatusUnauthorized, err)
 		return
 	}
@@ -223,7 +222,7 @@ func gpsscanAPI(w http.ResponseWriter, r *http.Request) {
 	for _, puid := range arg.List {
 		var puid = puid // localize
 		if syspath, ok := PathStorePath(session, puid); ok {
-			if prf.PathAccess(syspath, auth == prf) {
+			if acc.PathAccess(syspath, uid == aid) {
 				if val, ok := gpscache.Load(puid); ok {
 					var gst = Store[GpsInfo]{
 						Puid: puid,

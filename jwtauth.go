@@ -26,7 +26,7 @@ const jwtsubject = "hms"
 // Claims of JWT-tokens. Contains additional profile identifier.
 type Claims struct {
 	jwt.StandardClaims
-	AID ID_t `json:"aid,omitempty"`
+	UID ID_t `json:"uid,omitempty"`
 }
 
 // HTTP error messages
@@ -54,7 +54,7 @@ type Tokens struct {
 type AuthHandlerFunc func(w http.ResponseWriter, r *http.Request, auth *Profile)
 
 // Make creates access and refresh tokens pair for given AID.
-func (t *Tokens) Make(aid ID_t) {
+func (t *Tokens) Make(uid ID_t) {
 	var now = time.Now()
 	t.Access, _ = jwt.NewWithClaims(jwt.SigningMethodHS256, &Claims{
 		StandardClaims: jwt.StandardClaims{
@@ -62,7 +62,7 @@ func (t *Tokens) Make(aid ID_t) {
 			ExpiresAt: now.Add(cfg.AccessTTL).Unix(),
 			Subject:   jwtsubject,
 		},
-		AID: aid,
+		UID: uid,
 	}).SignedString([]byte(cfg.AccessKey))
 	t.Refrsh, _ = jwt.NewWithClaims(jwt.SigningMethodHS256, &Claims{
 		StandardClaims: jwt.StandardClaims{
@@ -70,7 +70,7 @@ func (t *Tokens) Make(aid ID_t) {
 			ExpiresAt: now.Add(cfg.RefreshTTL).Unix(),
 			Subject:   jwtsubject,
 		},
-		AID: aid,
+		UID: uid,
 	}).SignedString([]byte(cfg.RefreshKey))
 }
 
@@ -87,10 +87,32 @@ func StripPort(addrport string) string {
 	return addrport // return as is otherwise
 }
 
-// GetAuth returns profile from authorization header if it present,
+// ParseID is like ParseUint but for identifiers.
+func ParseID(s string) (id ID_t, err error) {
+	var u64 uint64
+	if u64, err = strconv.ParseUint(s, 10, 64); err != nil {
+		return
+	}
+	id = ID_t(u64)
+	return
+}
+
+// GetCID extract client ID from cookie.
+func GetCID(r *http.Request) (cid ID_t, err error) {
+	var c *http.Cookie
+	if c, err = r.Cookie("CID"); err != nil {
+		return
+	}
+	if cid, err = ParseID(c.Value); err != nil {
+		return
+	}
+	return
+}
+
+// GetAuth returns profile ID from authorization header if it present,
 // or default profile with no error if authorization is absent on localhost.
 // Returns nil pointer and nil error on unauthorized request from any host.
-func GetAuth(r *http.Request) (auth *Profile, aerr error) {
+func GetAuth(r *http.Request) (uid ID_t, aerr error) {
 	var err error
 	if pool, is := r.Header["Authorization"]; is {
 		var claims Claims
@@ -100,7 +122,7 @@ func GetAuth(r *http.Request) (auth *Profile, aerr error) {
 			if strings.HasPrefix(strings.ToLower(val), "bearer ") {
 				bearer = true
 				if _, err = jwt.ParseWithClaims(val[7:], &claims, func(*jwt.Token) (any, error) {
-					if claims.AID > 0 {
+					if claims.UID > 0 {
 						return s2b(cfg.AccessKey), nil
 					} else {
 						return nil, ErrNoUserID
@@ -134,10 +156,11 @@ func GetAuth(r *http.Request) (auth *Profile, aerr error) {
 		} else if !bearer {
 			aerr = MakeAjaxErr(ErrNoBearer, AECtokenless)
 			return
-		} else if auth = prflist.ByID(claims.AID); auth == nil {
+		} else if prflist.ByID(claims.UID) == nil {
 			aerr = MakeAjaxErr(ErrNoAcc, AECtokennoacc)
 			return
 		}
+		uid = claims.UID
 		return
 	}
 
@@ -145,18 +168,22 @@ func GetAuth(r *http.Request) (auth *Profile, aerr error) {
 	if vars == nil {
 		return // no authorization
 	}
-	var aid uint64
-	if aid, err = strconv.ParseUint(vars["aid"], 10, 64); err != nil {
+	var aid ID_t
+	if aid, err = ParseID(vars["aid"]); err != nil {
 		return // no authorization
+	}
+	if prflist.ByID(aid) == nil {
+		aerr = MakeAjaxErr(ErrNoAcc, AECtokennoaid)
+		return
 	}
 	var ip = net.ParseIP(StripPort(r.RemoteAddr))
 	if ip.IsLoopback() {
-		auth = prflist.ByID(ID_t(aid))
+		uid = aid
 		return
 	}
 	for _, ipn := range Passlist {
 		if ipn.Contains(ip) {
-			auth = prflist.ByID(ID_t(aid))
+			uid = aid
 			return
 		}
 	}
@@ -167,17 +194,17 @@ func GetAuth(r *http.Request) (auth *Profile, aerr error) {
 func AuthWrap(fn AuthHandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var err error
-		var auth *Profile
-		if auth, err = GetAuth(r); err != nil {
+		var uid ID_t
+		if uid, err = GetAuth(r); err != nil {
 			WriteRet(w, r, http.StatusUnauthorized, err)
 			return
 		}
-		if auth == nil {
+		if uid == 0 {
 			WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, AECnoauth)
 			return
 		}
 
-		fn(w, r, auth)
+		fn(w, r, prflist.ByID(uid))
 	}
 }
 
@@ -271,7 +298,7 @@ func refrshAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	res.Make(claims.AID)
+	res.Make(claims.UID)
 
 	WriteOK(w, r, &res)
 }

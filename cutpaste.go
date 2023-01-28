@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"os"
 	"path"
-	"strconv"
 
 	"github.com/gorilla/mux"
 )
@@ -33,8 +32,8 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 
 	// get arguments
 	var vars = mux.Vars(r)
-	var aid uint64
-	if aid, err = strconv.ParseUint(vars["aid"], 10, 64); err != nil {
+	var aid ID_t
+	if aid, err = ParseID(vars["aid"]); err != nil {
 		WriteError400(w, r, err, AECedtcopynoaid)
 		return
 	}
@@ -50,7 +49,7 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	defer session.Close()
 
 	var prf *Profile
-	if prf = prflist.ByID(ID_t(aid)); prf == nil {
+	if prf = prflist.ByID(aid); prf == nil {
 		WriteError400(w, r, ErrNoAcc, AECedtcopynoacc)
 		return
 	}
@@ -183,8 +182,8 @@ func edtrenameAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 
 	// get arguments
 	var vars = mux.Vars(r)
-	var aid uint64
-	if aid, err = strconv.ParseUint(vars["aid"], 10, 64); err != nil {
+	var aid ID_t
+	if aid, err = ParseID(vars["aid"]); err != nil {
 		WriteError400(w, r, err, AECedtrennoaid)
 		return
 	}
@@ -200,7 +199,7 @@ func edtrenameAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	defer session.Close()
 
 	var prf *Profile
-	if prf = prflist.ByID(ID_t(aid)); prf == nil {
+	if prf = prflist.ByID(aid); prf == nil {
 		WriteError400(w, r, ErrNoAcc, AECedtrennoacc)
 		return
 	}
@@ -268,8 +267,8 @@ func edtdeleteAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 
 	// get arguments
 	var vars = mux.Vars(r)
-	var aid uint64
-	if aid, err = strconv.ParseUint(vars["aid"], 10, 64); err != nil {
+	var aid ID_t
+	if aid, err = ParseID(vars["aid"]); err != nil {
 		WriteError400(w, r, err, AECedtdelnoaid)
 		return
 	}
@@ -285,7 +284,7 @@ func edtdeleteAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	defer session.Close()
 
 	var prf *Profile
-	if prf = prflist.ByID(ID_t(aid)); prf == nil {
+	if prf = prflist.ByID(aid); prf == nil {
 		WriteError400(w, r, ErrNoAcc, AECedtdelnoacc)
 		return
 	}

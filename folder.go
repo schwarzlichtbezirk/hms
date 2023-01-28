@@ -8,7 +8,6 @@ import (
 	"io/fs"
 	"net/http"
 	"path"
-	"strconv"
 	"strings"
 	"time"
 
@@ -84,8 +83,8 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 
 	// get arguments
 	var vars = mux.Vars(r)
-	var aid uint64
-	if aid, err = strconv.ParseUint(vars["aid"], 10, 64); err != nil {
+	var aid ID_t
+	if aid, err = ParseID(vars["aid"]); err != nil {
 		WriteError400(w, r, err, AECfoldernoaid)
 		return
 	}
@@ -101,18 +100,14 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 	defer session.Close()
 
 	var acc *Profile
-	if acc = prflist.ByID(ID_t(aid)); acc == nil {
+	if acc = prflist.ByID(aid); acc == nil {
 		WriteError400(w, r, ErrNoAcc, AECfoldernoacc)
 		return
 	}
-	var auth *Profile
-	if auth, err = GetAuth(r); err != nil {
+	var uid ID_t
+	if uid, err = GetAuth(r); err != nil {
 		WriteRet(w, r, http.StatusUnauthorized, err)
 		return
-	}
-	var uid ID_t
-	if auth != nil {
-		uid = auth.ID
 	}
 
 	var syspath string
@@ -127,7 +122,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var shrpath, base, cg = acc.GetSharePath(session, syspath, auth == acc)
+	var shrpath, base, cg = acc.GetSharePath(session, syspath, uid == aid)
 	if cg.IsZero() && syspath != CPshares {
 		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECfolderaccess)
 		return
@@ -140,7 +135,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 		ret.Name = path.Base(base)
 	}
 
-	if auth == acc {
+	if uid == aid {
 		ret.HasHome = true
 	} else if acc.IsShared(CPhome) {
 		for _, fpath := range CatKeyPath {
@@ -156,7 +151,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 
 	var t = time.Now()
 	if puid < PUIDcache {
-		if auth != acc && !acc.IsShared(syspath) {
+		if uid != aid && !acc.IsShared(syspath) {
 			WriteError(w, r, http.StatusForbidden, ErrNotShared, AECfoldernoshr)
 			return
 		}
@@ -168,7 +163,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 					continue
 				}
 				if fpath, ok := CatKeyPath[puid]; ok {
-					if auth == acc || acc.IsShared(fpath) {
+					if uid == aid || acc.IsShared(fpath) {
 						vfiles = append(vfiles, fpath)
 					}
 				}
@@ -206,7 +201,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 			var vpaths []string      // verified paths
 			gpscache.Range(func(puid Puid_t, gps GpsInfo) bool {
 				if fpath, ok := pathcache.GetDir(puid); ok {
-					if !acc.IsHidden(fpath) && acc.PathAccess(fpath, auth == acc) {
+					if !acc.IsHidden(fpath) && acc.PathAccess(fpath, uid == aid) {
 						if fi, _ := StatFile(fpath); fi != nil {
 							vfiles = append(vfiles, fi)
 							vpaths = append(vpaths, fpath)
@@ -290,7 +285,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 			var vpaths []string      // verified paths
 			for _, track := range pl.Tracks {
 				var fpath = ToSlash(track.Location)
-				if !acc.IsHidden(fpath) && acc.PathAccess(fpath, auth == acc) {
+				if !acc.IsHidden(fpath) && acc.PathAccess(fpath, uid == aid) {
 					if fi, _ := StatFile(fpath); fi != nil {
 						vfiles = append(vfiles, fi)
 						vpaths = append(vpaths, fpath)
@@ -310,7 +305,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 	if cid, err := GetCID(r); err == nil {
 		go xormUserlog.InsertOne(&OpenStore{
 			CID:     cid,
-			AID:     ID_t(aid),
+			AID:     aid,
 			UID:     uid,
 			Path:    syspath,
 			Latency: int(latency / time.Millisecond),

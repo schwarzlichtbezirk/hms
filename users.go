@@ -5,7 +5,6 @@ import (
 	"encoding/xml"
 	"net/http"
 	"path"
-	"strconv"
 	"sync"
 	"time"
 
@@ -56,20 +55,6 @@ func (ast *AgentStore) Hash() uint64 {
 	h.Write(s2b(ast.Addr))
 	h.Write(s2b(ast.UA))
 	return h.Sum64()
-}
-
-// GetCID extract client ID from cookie.
-func GetCID(r *http.Request) (cid ID_t, err error) {
-	var c *http.Cookie
-	if c, err = r.Cookie("CID"); err != nil {
-		return
-	}
-	var u64 uint64
-	if u64, err = strconv.ParseUint(c.Value, 16, 64); err != nil {
-		return
-	}
-	cid = ID_t(u64)
-	return
 }
 
 // InitUserlog inits database user log engine.

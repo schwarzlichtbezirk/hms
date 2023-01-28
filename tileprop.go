@@ -4,7 +4,6 @@ import (
 	"encoding/xml"
 	"fmt"
 	"net/http"
-	"strconv"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -280,8 +279,8 @@ func tilechkAPI(w http.ResponseWriter, r *http.Request) {
 
 	// get arguments
 	var vars = mux.Vars(r)
-	var aid uint64
-	if aid, err = strconv.ParseUint(vars["aid"], 10, 64); err != nil {
+	var aid ID_t
+	if aid, err = ParseID(vars["aid"]); err != nil {
 		WriteError400(w, r, err, AECtilechknoaid)
 		return
 	}
@@ -297,12 +296,12 @@ func tilechkAPI(w http.ResponseWriter, r *http.Request) {
 	defer session.Close()
 
 	var acc *Profile
-	if acc = prflist.ByID(ID_t(aid)); acc == nil {
+	if acc = prflist.ByID(aid); acc == nil {
 		WriteError400(w, r, ErrNoAcc, AECscnstartnoacc)
 		return
 	}
-	var auth *Profile
-	if auth, err = GetAuth(r); err != nil {
+	var uid ID_t
+	if uid, err = GetAuth(r); err != nil {
 		WriteRet(w, r, http.StatusUnauthorized, err)
 		return
 	}
@@ -311,7 +310,7 @@ func tilechkAPI(w http.ResponseWriter, r *http.Request) {
 	for i, ttm := range arg.List {
 		var mime = MimeDis // disable if no access
 		if syspath, ok := PathStorePath(session, ttm.PUID); ok {
-			if acc.PathAccess(syspath, auth == acc) {
+			if acc.PathAccess(syspath, uid == aid) {
 				if tp, ok := tilecache.Peek(ttm.PUID); ok {
 					mime, _ = tp.Tile(ttm.TM)
 				} else {
@@ -340,8 +339,8 @@ func tilescnstartAPI(w http.ResponseWriter, r *http.Request) {
 
 	// get arguments
 	var vars = mux.Vars(r)
-	var aid uint64
-	if aid, err = strconv.ParseUint(vars["aid"], 10, 64); err != nil {
+	var aid ID_t
+	if aid, err = ParseID(vars["aid"]); err != nil {
 		WriteError400(w, r, err, AECscnstartnoaid)
 		return
 	}
@@ -357,19 +356,19 @@ func tilescnstartAPI(w http.ResponseWriter, r *http.Request) {
 	defer session.Close()
 
 	var acc *Profile
-	if acc = prflist.ByID(ID_t(aid)); acc == nil {
+	if acc = prflist.ByID(aid); acc == nil {
 		WriteError400(w, r, ErrNoAcc, AECscnstartnoacc)
 		return
 	}
-	var auth *Profile
-	if auth, err = GetAuth(r); err != nil {
+	var uid ID_t
+	if uid, err = GetAuth(r); err != nil {
 		WriteRet(w, r, http.StatusUnauthorized, err)
 		return
 	}
 
 	for _, ttm := range arg.List {
 		if syspath, ok := PathStorePath(session, ttm.PUID); ok {
-			if acc.PathAccess(syspath, auth == acc) {
+			if acc.PathAccess(syspath, uid == aid) {
 				ImgScanner.AddTile(syspath, ttm.TM)
 			}
 		}
@@ -393,8 +392,8 @@ func tilescnbreakAPI(w http.ResponseWriter, r *http.Request) {
 
 	// get arguments
 	var vars = mux.Vars(r)
-	var aid uint64
-	if aid, err = strconv.ParseUint(vars["aid"], 10, 64); err != nil {
+	var aid ID_t
+	if aid, err = ParseID(vars["aid"]); err != nil {
 		WriteError400(w, r, err, AECscnbreaknoaid)
 		return
 	}
@@ -410,19 +409,19 @@ func tilescnbreakAPI(w http.ResponseWriter, r *http.Request) {
 	defer session.Close()
 
 	var acc *Profile
-	if acc = prflist.ByID(ID_t(aid)); acc == nil {
+	if acc = prflist.ByID(aid); acc == nil {
 		WriteError400(w, r, ErrNoAcc, AECscnbreaknoacc)
 		return
 	}
-	var auth *Profile
-	if auth, err = GetAuth(r); err != nil {
+	var uid ID_t
+	if uid, err = GetAuth(r); err != nil {
 		WriteRet(w, r, http.StatusUnauthorized, err)
 		return
 	}
 
 	for _, ttm := range arg.List {
 		if syspath, ok := PathStorePath(session, ttm.PUID); ok {
-			if acc.PathAccess(syspath, auth == acc) {
+			if acc.PathAccess(syspath, uid == aid) {
 				ImgScanner.RemoveTile(syspath, ttm.TM)
 			}
 		}

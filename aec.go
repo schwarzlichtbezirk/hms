@@ -25,6 +25,7 @@ const (
 	AECtokenerror
 	AECtokenless
 	AECtokennoacc
+	AECtokennoaid
 
 	// page
 

@@ -46,8 +46,8 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 	if vars == nil {
 		panic("bad route for URL " + r.URL.Path)
 	}
-	var aid uint64
-	if aid, err = strconv.ParseUint(vars["aid"], 10, 64); err != nil {
+	var aid ID_t
+	if aid, err = ParseID(vars["aid"]); err != nil {
 		WriteError400(w, r, err, AECmedianoaid)
 		return
 	}
@@ -83,18 +83,14 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var acc *Profile
-	if acc = prflist.ByID(ID_t(aid)); acc == nil {
+	if acc = prflist.ByID(aid); acc == nil {
 		WriteError(w, r, http.StatusNotFound, ErrNoAcc, AECmedianoacc)
 		return
 	}
-	var auth *Profile
-	if auth, err = GetAuth(r); err != nil {
+	var uid ID_t
+	if uid, err = GetAuth(r); err != nil {
 		WriteRet(w, r, http.StatusUnauthorized, err)
 		return
-	}
-	var uid ID_t
-	if auth != nil {
-		uid = auth.ID
 	}
 
 	if strings.HasPrefix(syspath, "http://") || strings.HasPrefix(syspath, "https://") {
@@ -107,7 +103,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !acc.PathAccess(syspath, auth == acc) {
+	if !acc.PathAccess(syspath, uid == aid) {
 		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECmediaaccess)
 		return
 	}
@@ -135,7 +131,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 				if cid, err := GetCID(r); err == nil {
 					go xormUserlog.InsertOne(&OpenStore{
 						CID:     cid,
-						AID:     ID_t(aid),
+						AID:     aid,
 						UID:     uid,
 						Path:    syspath,
 						Latency: -1,
@@ -170,7 +166,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 				if cid, err := GetCID(r); err == nil {
 					go xormUserlog.InsertOne(&OpenStore{
 						CID:     cid,
-						AID:     ID_t(aid),
+						AID:     aid,
 						UID:     uid,
 						Path:    syspath,
 						Latency: -1,
@@ -188,7 +184,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 		if cid, err := GetCID(r); err == nil {
 			go xormUserlog.InsertOne(&OpenStore{
 				CID:     cid,
-				AID:     ID_t(aid),
+				AID:     aid,
 				UID:     uid,
 				Path:    syspath,
 				Latency: -1,
@@ -220,8 +216,8 @@ func etmbHandler(w http.ResponseWriter, r *http.Request) {
 	if vars == nil {
 		panic("bad route for URL " + r.URL.Path)
 	}
-	var aid uint64
-	if aid, err = strconv.ParseUint(vars["aid"], 10, 64); err != nil {
+	var aid ID_t
+	if aid, err = ParseID(vars["aid"]); err != nil {
 		WriteError400(w, r, err, AECetmbnoaid)
 		return
 	}
@@ -235,12 +231,12 @@ func etmbHandler(w http.ResponseWriter, r *http.Request) {
 	defer session.Close()
 
 	var acc *Profile
-	if acc = prflist.ByID(ID_t(aid)); acc == nil {
+	if acc = prflist.ByID(aid); acc == nil {
 		WriteError(w, r, http.StatusNotFound, ErrNoAcc, AECetmbnoacc)
 		return
 	}
-	var auth *Profile
-	if auth, err = GetAuth(r); err != nil {
+	var uid ID_t
+	if uid, err = GetAuth(r); err != nil {
 		WriteRet(w, r, http.StatusUnauthorized, err)
 		return
 	}
@@ -256,7 +252,7 @@ func etmbHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !acc.PathAccess(syspath, auth == acc) {
+	if !acc.PathAccess(syspath, uid == aid) {
 		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECetmbaccess)
 		return
 	}
@@ -284,8 +280,8 @@ func mtmbHandler(w http.ResponseWriter, r *http.Request) {
 	if vars == nil {
 		panic("bad route for URL " + r.URL.Path)
 	}
-	var aid uint64
-	if aid, err = strconv.ParseUint(vars["aid"], 10, 64); err != nil {
+	var aid ID_t
+	if aid, err = ParseID(vars["aid"]); err != nil {
 		WriteError400(w, r, err, AECmtmbnoaid)
 		return
 	}
@@ -299,12 +295,12 @@ func mtmbHandler(w http.ResponseWriter, r *http.Request) {
 	defer session.Close()
 
 	var acc *Profile
-	if acc = prflist.ByID(ID_t(aid)); acc == nil {
+	if acc = prflist.ByID(aid); acc == nil {
 		WriteError(w, r, http.StatusNotFound, ErrNoAcc, AECmtmbnoacc)
 		return
 	}
-	var auth *Profile
-	if auth, err = GetAuth(r); err != nil {
+	var uid ID_t
+	if uid, err = GetAuth(r); err != nil {
 		WriteRet(w, r, http.StatusUnauthorized, err)
 		return
 	}
@@ -320,7 +316,7 @@ func mtmbHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !acc.PathAccess(syspath, auth == acc) {
+	if !acc.PathAccess(syspath, uid == aid) {
 		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECmtmbaccess)
 		return
 	}
@@ -347,8 +343,8 @@ func tileHandler(w http.ResponseWriter, r *http.Request) {
 	if vars == nil {
 		panic("bad route for URL " + r.URL.Path)
 	}
-	var aid uint64
-	if aid, err = strconv.ParseUint(vars["aid"], 10, 64); err != nil {
+	var aid ID_t
+	if aid, err = ParseID(vars["aid"]); err != nil {
 		WriteError400(w, r, err, AECtilenoaid)
 		return
 	}
@@ -368,12 +364,12 @@ func tileHandler(w http.ResponseWriter, r *http.Request) {
 	defer session.Close()
 
 	var acc *Profile
-	if acc = prflist.ByID(ID_t(aid)); acc == nil {
+	if acc = prflist.ByID(aid); acc == nil {
 		WriteError(w, r, http.StatusNotFound, ErrNoAcc, AECtilenoacc)
 		return
 	}
-	var auth *Profile
-	if auth, err = GetAuth(r); err != nil {
+	var uid ID_t
+	if uid, err = GetAuth(r); err != nil {
 		WriteRet(w, r, http.StatusUnauthorized, err)
 		return
 	}
@@ -389,7 +385,7 @@ func tileHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !acc.PathAccess(syspath, auth == acc) {
+	if !acc.PathAccess(syspath, uid == aid) {
 		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECtileaccess)
 		return
 	}
@@ -418,7 +414,6 @@ func pingAPI(w http.ResponseWriter, r *http.Request) {
 
 // APIHANDLER
 func reloadAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
-	_ = auth
 	var err error
 
 	if err = OpenPackage(); err != nil {
@@ -589,8 +584,8 @@ func tagsAPI(w http.ResponseWriter, r *http.Request) {
 
 	// get arguments
 	var vars = mux.Vars(r)
-	var aid uint64
-	if aid, err = strconv.ParseUint(vars["aid"], 10, 64); err != nil {
+	var aid ID_t
+	if aid, err = ParseID(vars["aid"]); err != nil {
 		WriteError400(w, r, err, AECtagsnoaid)
 		return
 	}
@@ -606,12 +601,12 @@ func tagsAPI(w http.ResponseWriter, r *http.Request) {
 	defer session.Close()
 
 	var acc *Profile
-	if acc = prflist.ByID(ID_t(aid)); acc == nil {
+	if acc = prflist.ByID(aid); acc == nil {
 		WriteError400(w, r, ErrNoAcc, AECtagsnoacc)
 		return
 	}
-	var auth *Profile
-	if auth, err = GetAuth(r); err != nil {
+	var uid ID_t
+	if uid, err = GetAuth(r); err != nil {
 		WriteRet(w, r, http.StatusUnauthorized, err)
 		return
 	}
@@ -628,7 +623,7 @@ func tagsAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if !acc.PathAccess(syspath, auth == acc) {
+	if !acc.PathAccess(syspath, uid == aid) {
 		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECtagsaccess)
 		return
 	}
@@ -667,8 +662,8 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 
 	// get arguments
 	var vars = mux.Vars(r)
-	var aid uint64
-	if aid, err = strconv.ParseUint(vars["aid"], 10, 64); err != nil {
+	var aid ID_t
+	if aid, err = ParseID(vars["aid"]); err != nil {
 		WriteError400(w, r, err, AECispathnoaid)
 		return
 	}
@@ -684,7 +679,7 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	defer session.Close()
 
 	var acc *Profile
-	if acc = prflist.ByID(ID_t(aid)); acc == nil {
+	if acc = prflist.ByID(aid); acc == nil {
 		WriteError400(w, r, ErrNoAcc, AECispathnoacc)
 		return
 	}
@@ -745,8 +740,8 @@ func shraddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 
 	// get arguments
 	var vars = mux.Vars(r)
-	var aid uint64
-	if aid, err = strconv.ParseUint(vars["aid"], 10, 64); err != nil {
+	var aid ID_t
+	if aid, err = ParseID(vars["aid"]); err != nil {
 		WriteError400(w, r, err, AECshraddnoaid)
 		return
 	}
@@ -762,7 +757,7 @@ func shraddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	defer session.Close()
 
 	var acc *Profile
-	if acc = prflist.ByID(ID_t(aid)); acc == nil {
+	if acc = prflist.ByID(aid); acc == nil {
 		WriteError400(w, r, ErrNoAcc, AECshraddnoacc)
 		return
 	}
@@ -802,8 +797,8 @@ func shrdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 
 	// get arguments
 	var vars = mux.Vars(r)
-	var aid uint64
-	if aid, err = strconv.ParseUint(vars["aid"], 10, 64); err != nil {
+	var aid ID_t
+	if aid, err = ParseID(vars["aid"]); err != nil {
 		WriteError400(w, r, err, AECshrdelnoaid)
 		return
 	}
@@ -816,7 +811,7 @@ func shrdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	}
 
 	var acc *Profile
-	if acc = prflist.ByID(ID_t(aid)); acc == nil {
+	if acc = prflist.ByID(aid); acc == nil {
 		WriteError400(w, r, ErrNoAcc, AECshrdelnoacc)
 		return
 	}
@@ -843,8 +838,8 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 
 	// get arguments
 	var vars = mux.Vars(r)
-	var aid uint64
-	if aid, err = strconv.ParseUint(vars["aid"], 10, 64); err != nil {
+	var aid ID_t
+	if aid, err = ParseID(vars["aid"]); err != nil {
 		WriteError400(w, r, err, AECdrvaddnoaid)
 		return
 	}
@@ -860,7 +855,7 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	defer session.Close()
 
 	var acc *Profile
-	if acc = prflist.ByID(ID_t(aid)); acc == nil {
+	if acc = prflist.ByID(aid); acc == nil {
 		WriteError400(w, r, ErrNoAcc, AECdrvaddnoacc)
 		return
 	}
@@ -937,8 +932,8 @@ func drvdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 
 	// get arguments
 	var vars = mux.Vars(r)
-	var aid uint64
-	if aid, err = strconv.ParseUint(vars["aid"], 10, 64); err != nil {
+	var aid ID_t
+	if aid, err = ParseID(vars["aid"]); err != nil {
 		WriteError400(w, r, err, AECdrvdelnoaid)
 		return
 	}
@@ -954,7 +949,7 @@ func drvdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	defer session.Close()
 
 	var acc *Profile
-	if acc = prflist.ByID(ID_t(aid)); acc == nil {
+	if acc = prflist.ByID(aid); acc == nil {
 		WriteError400(w, r, ErrNoAcc, AECdrvdelnoacc)
 		return
 	}
