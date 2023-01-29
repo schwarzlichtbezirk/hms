@@ -10,8 +10,6 @@ import (
 	"path"
 	"strings"
 	"time"
-
-	"github.com/gorilla/mux"
 )
 
 var catcolumn = map[Puid_t]string{
@@ -61,7 +59,7 @@ func UnfoldPath(session *Session, shrpath string) (syspath string, puid Puid_t, 
 }
 
 // APIHANDLER
-func folderAPI(w http.ResponseWriter, r *http.Request) {
+func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var err error
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
@@ -81,13 +79,13 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 		HasHome bool `json:"hashome" yaml:"hashome" xml:"hashome,attr"`
 	}
 
-	// get arguments
-	var vars = mux.Vars(r)
-	var aid ID_t
-	if aid, err = ParseID(vars["aid"]); err != nil {
-		WriteError400(w, r, err, AECfoldernoaid)
+	var acc *Profile
+	if acc = prflist.ByID(aid); acc == nil {
+		WriteError400(w, r, ErrNoAcc, AECfoldernoacc)
 		return
 	}
+
+	// get arguments
 	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
@@ -98,17 +96,6 @@ func folderAPI(w http.ResponseWriter, r *http.Request) {
 
 	var session = xormStorage.NewSession()
 	defer session.Close()
-
-	var acc *Profile
-	if acc = prflist.ByID(aid); acc == nil {
-		WriteError400(w, r, ErrNoAcc, AECfoldernoacc)
-		return
-	}
-	var uid ID_t
-	if uid, err = GetAuth(r); err != nil {
-		WriteRet(w, r, http.StatusUnauthorized, err)
-		return
-	}
 
 	var syspath string
 	var puid Puid_t

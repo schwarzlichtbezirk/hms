@@ -51,7 +51,7 @@ type Tokens struct {
 }
 
 // AuthHandlerFunc is type of handler for authorized API calls.
-type AuthHandlerFunc func(w http.ResponseWriter, r *http.Request, auth *Profile)
+type AuthHandlerFunc func(w http.ResponseWriter, r *http.Request, aid, uid ID_t)
 
 // Make creates access and refresh tokens pair for given AID.
 func (t *Tokens) Make(uid ID_t) {
@@ -194,17 +194,22 @@ func GetAuth(r *http.Request) (uid ID_t, aerr error) {
 func AuthWrap(fn AuthHandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var err error
+		var vars = mux.Vars(r)
+		if vars == nil {
+			panic("bad route for URL " + r.URL.Path)
+		}
+		var aid ID_t
+		if aid, err = ParseID(vars["aid"]); err != nil {
+			WriteError400(w, r, err, AECnoaid)
+			return
+		}
 		var uid ID_t
 		if uid, err = GetAuth(r); err != nil {
 			WriteRet(w, r, http.StatusUnauthorized, err)
 			return
 		}
-		if uid == 0 {
-			WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, AECnoauth)
-			return
-		}
 
-		fn(w, r, prflist.ByID(uid))
+		fn(w, r, aid, uid)
 	}
 }
 

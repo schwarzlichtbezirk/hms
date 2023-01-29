@@ -9,12 +9,10 @@ import (
 	"net/http"
 	"os"
 	"path"
-
-	"github.com/gorilla/mux"
 )
 
 // APIHANDLER
-func edtcopyAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
+func edtcopyAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var err error
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
@@ -29,14 +27,12 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		FT FT_t `json:"ft" yaml:"ft" xml:"ft"`
 	}
 	var isret bool
-
-	// get arguments
-	var vars = mux.Vars(r)
-	var aid ID_t
-	if aid, err = ParseID(vars["aid"]); err != nil {
-		WriteError400(w, r, err, AECedtcopynoaid)
+	if uid == 0 { // only authorized access allowed
+		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, AECnoauth)
 		return
 	}
+
+	// get arguments
 	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
@@ -53,7 +49,7 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		WriteError400(w, r, ErrNoAcc, AECedtcopynoacc)
 		return
 	}
-	if auth != prf {
+	if uid != aid {
 		WriteError(w, r, http.StatusForbidden, ErrDeny, AECedtcopydeny)
 		return
 	}
@@ -165,7 +161,7 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 }
 
 // APIHANDLER
-func edtrenameAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
+func edtrenameAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var err error
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
@@ -179,14 +175,12 @@ func edtrenameAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 
 		Prop FileKit `json:"prop" yaml:"prop" xml:"prop"`
 	}
-
-	// get arguments
-	var vars = mux.Vars(r)
-	var aid ID_t
-	if aid, err = ParseID(vars["aid"]); err != nil {
-		WriteError400(w, r, err, AECedtrennoaid)
+	if uid == 0 { // only authorized access allowed
+		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, AECnoauth)
 		return
 	}
+
+	// get arguments
 	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
@@ -203,7 +197,7 @@ func edtrenameAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		WriteError400(w, r, ErrNoAcc, AECedtrennoacc)
 		return
 	}
-	if auth != prf {
+	if uid != aid {
 		WriteError(w, r, http.StatusForbidden, ErrDeny, AECedtrendeny)
 		return
 	}
@@ -257,21 +251,19 @@ func edtrenameAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 }
 
 // APIHANDLER
-func edtdeleteAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
+func edtdeleteAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var err error
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
 		Src string `json:"src" yaml:"src" xml:"src"`
 	}
-
-	// get arguments
-	var vars = mux.Vars(r)
-	var aid ID_t
-	if aid, err = ParseID(vars["aid"]); err != nil {
-		WriteError400(w, r, err, AECedtdelnoaid)
+	if uid == 0 { // only authorized access allowed
+		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, AECnoauth)
 		return
 	}
+
+	// get arguments
 	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
@@ -288,7 +280,7 @@ func edtdeleteAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		WriteError400(w, r, ErrNoAcc, AECedtdelnoacc)
 		return
 	}
-	if auth != prf {
+	if uid != aid {
 		WriteError(w, r, http.StatusForbidden, ErrDeny, AECedtdeldeny)
 		return
 	}

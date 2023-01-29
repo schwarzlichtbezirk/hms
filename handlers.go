@@ -38,19 +38,16 @@ func pageHandler(pref, name string) http.HandlerFunc {
 }
 
 // Hands out converted media files if them can be cached.
-func fileHandler(w http.ResponseWriter, r *http.Request) {
+func fileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var err error
 
-	// get arguments
-	var vars = mux.Vars(r)
-	if vars == nil {
-		panic("bad route for URL " + r.URL.Path)
-	}
-	var aid ID_t
-	if aid, err = ParseID(vars["aid"]); err != nil {
-		WriteError400(w, r, err, AECmedianoaid)
+	var acc *Profile
+	if acc = prflist.ByID(aid); acc == nil {
+		WriteError(w, r, http.StatusNotFound, ErrNoAcc, AECmedianoacc)
 		return
 	}
+
+	// get arguments
 	var media bool
 	if s := r.FormValue("media"); len(s) > 0 {
 		if media, err = strconv.ParseBool(s); err != nil {
@@ -79,17 +76,6 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 	var puid Puid_t
 	if syspath, puid, err = UnfoldPath(session, fpath); err != nil {
 		WriteError400(w, r, err, AECmediabadpath)
-		return
-	}
-
-	var acc *Profile
-	if acc = prflist.ByID(aid); acc == nil {
-		WriteError(w, r, http.StatusNotFound, ErrNoAcc, AECmedianoacc)
-		return
-	}
-	var uid ID_t
-	if uid, err = GetAuth(r); err != nil {
-		WriteRet(w, r, http.StatusUnauthorized, err)
 		return
 	}
 
@@ -208,19 +194,17 @@ func fileHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // Hands out embedded thumbnails for given files if any.
-func etmbHandler(w http.ResponseWriter, r *http.Request) {
+func etmbHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var err error
+
+	var acc *Profile
+	if acc = prflist.ByID(aid); acc == nil {
+		WriteError(w, r, http.StatusNotFound, ErrNoAcc, AECetmbnoacc)
+		return
+	}
 
 	// get arguments
 	var vars = mux.Vars(r)
-	if vars == nil {
-		panic("bad route for URL " + r.URL.Path)
-	}
-	var aid ID_t
-	if aid, err = ParseID(vars["aid"]); err != nil {
-		WriteError400(w, r, err, AECetmbnoaid)
-		return
-	}
 	var puid Puid_t
 	if err = puid.Set(vars["puid"]); err != nil {
 		WriteError400(w, r, err, AECetmbnopuid)
@@ -229,17 +213,6 @@ func etmbHandler(w http.ResponseWriter, r *http.Request) {
 
 	var session = xormStorage.NewSession()
 	defer session.Close()
-
-	var acc *Profile
-	if acc = prflist.ByID(aid); acc == nil {
-		WriteError(w, r, http.StatusNotFound, ErrNoAcc, AECetmbnoacc)
-		return
-	}
-	var uid ID_t
-	if uid, err = GetAuth(r); err != nil {
-		WriteRet(w, r, http.StatusUnauthorized, err)
-		return
-	}
 
 	var syspath, ok = PathStorePath(session, puid)
 	if !ok {
@@ -272,19 +245,17 @@ func etmbHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // Hands out cached thumbnails for given files.
-func mtmbHandler(w http.ResponseWriter, r *http.Request) {
+func mtmbHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var err error
+
+	var acc *Profile
+	if acc = prflist.ByID(aid); acc == nil {
+		WriteError(w, r, http.StatusNotFound, ErrNoAcc, AECmtmbnoacc)
+		return
+	}
 
 	// get arguments
 	var vars = mux.Vars(r)
-	if vars == nil {
-		panic("bad route for URL " + r.URL.Path)
-	}
-	var aid ID_t
-	if aid, err = ParseID(vars["aid"]); err != nil {
-		WriteError400(w, r, err, AECmtmbnoaid)
-		return
-	}
 	var puid Puid_t
 	if err = puid.Set(vars["puid"]); err != nil {
 		WriteError400(w, r, err, AECmtmbnopuid)
@@ -293,17 +264,6 @@ func mtmbHandler(w http.ResponseWriter, r *http.Request) {
 
 	var session = xormStorage.NewSession()
 	defer session.Close()
-
-	var acc *Profile
-	if acc = prflist.ByID(aid); acc == nil {
-		WriteError(w, r, http.StatusNotFound, ErrNoAcc, AECmtmbnoacc)
-		return
-	}
-	var uid ID_t
-	if uid, err = GetAuth(r); err != nil {
-		WriteRet(w, r, http.StatusUnauthorized, err)
-		return
-	}
 
 	var syspath, ok = PathStorePath(session, puid)
 	if !ok {
@@ -335,19 +295,17 @@ func mtmbHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // Hands out thumbnails for given files if them cached.
-func tileHandler(w http.ResponseWriter, r *http.Request) {
+func tileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var err error
+
+	var acc *Profile
+	if acc = prflist.ByID(aid); acc == nil {
+		WriteError(w, r, http.StatusNotFound, ErrNoAcc, AECtilenoacc)
+		return
+	}
 
 	// get arguments
 	var vars = mux.Vars(r)
-	if vars == nil {
-		panic("bad route for URL " + r.URL.Path)
-	}
-	var aid ID_t
-	if aid, err = ParseID(vars["aid"]); err != nil {
-		WriteError400(w, r, err, AECtilenoaid)
-		return
-	}
 	var puid Puid_t
 	if err = puid.Set(vars["puid"]); err != nil {
 		WriteError400(w, r, err, AECtilenopuid)
@@ -362,17 +320,6 @@ func tileHandler(w http.ResponseWriter, r *http.Request) {
 
 	var session = xormStorage.NewSession()
 	defer session.Close()
-
-	var acc *Profile
-	if acc = prflist.ByID(aid); acc == nil {
-		WriteError(w, r, http.StatusNotFound, ErrNoAcc, AECtilenoacc)
-		return
-	}
-	var uid ID_t
-	if uid, err = GetAuth(r); err != nil {
-		WriteRet(w, r, http.StatusUnauthorized, err)
-		return
-	}
 
 	var syspath, ok = PathStorePath(session, puid)
 	if !ok {
@@ -413,8 +360,17 @@ func pingAPI(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
-func reloadAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
+func reloadAPI(w http.ResponseWriter, r *http.Request) {
 	var err error
+	var uid ID_t
+	if uid, err = GetAuth(r); err != nil {
+		WriteRet(w, r, http.StatusUnauthorized, err)
+		return
+	}
+	if uid == 0 { // only authorized access allowed
+		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, AECnoauth)
+		return
+	}
 
 	if err = OpenPackage(); err != nil {
 		WriteError500(w, r, err, AECreloadload)
@@ -569,7 +525,7 @@ func getlogAPI(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
-func tagsAPI(w http.ResponseWriter, r *http.Request) {
+func tagsAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var err error
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
@@ -582,13 +538,13 @@ func tagsAPI(w http.ResponseWriter, r *http.Request) {
 		Prop any `json:"prop" yaml:"prop" xml:"prop"`
 	}
 
-	// get arguments
-	var vars = mux.Vars(r)
-	var aid ID_t
-	if aid, err = ParseID(vars["aid"]); err != nil {
-		WriteError400(w, r, err, AECtagsnoaid)
+	var acc *Profile
+	if acc = prflist.ByID(aid); acc == nil {
+		WriteError400(w, r, ErrNoAcc, AECtagsnoacc)
 		return
 	}
+
+	// get arguments
 	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
@@ -599,17 +555,6 @@ func tagsAPI(w http.ResponseWriter, r *http.Request) {
 
 	var session = xormStorage.NewSession()
 	defer session.Close()
-
-	var acc *Profile
-	if acc = prflist.ByID(aid); acc == nil {
-		WriteError400(w, r, ErrNoAcc, AECtagsnoacc)
-		return
-	}
-	var uid ID_t
-	if uid, err = GetAuth(r); err != nil {
-		WriteRet(w, r, http.StatusUnauthorized, err)
-		return
-	}
 
 	var syspath string
 	var ok bool
@@ -652,21 +597,28 @@ func tagsAPI(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
-func ispathAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
+func ispathAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var err error
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
 		Path string `json:"path" yaml:"path" xml:"path"`
 	}
-
-	// get arguments
-	var vars = mux.Vars(r)
-	var aid ID_t
-	if aid, err = ParseID(vars["aid"]); err != nil {
-		WriteError400(w, r, err, AECispathnoaid)
+	if uid == 0 { // only authorized access allowed
+		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, AECnoauth)
 		return
 	}
+	var acc *Profile
+	if acc = prflist.ByID(aid); acc == nil {
+		WriteError400(w, r, ErrNoAcc, AECispathnoacc)
+		return
+	}
+	if uid != aid {
+		WriteError(w, r, http.StatusForbidden, ErrDeny, AECispathdeny)
+		return
+	}
+
+	// get arguments
 	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
@@ -677,16 +629,6 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 
 	var session = xormStorage.NewSession()
 	defer session.Close()
-
-	var acc *Profile
-	if acc = prflist.ByID(aid); acc == nil {
-		WriteError400(w, r, ErrNoAcc, AECispathnoacc)
-		return
-	}
-	if auth != acc {
-		WriteError(w, r, http.StatusForbidden, ErrDeny, AECispathdeny)
-		return
-	}
 
 	var fpath = ToSlash(arg.Path)
 	var syspath string
@@ -725,7 +667,7 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 }
 
 // APIHANDLER
-func shraddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
+func shraddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var err error
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
@@ -737,14 +679,21 @@ func shraddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 
 		Shared bool `json:"shared" yaml:"shared" xml:"shared"`
 	}
-
-	// get arguments
-	var vars = mux.Vars(r)
-	var aid ID_t
-	if aid, err = ParseID(vars["aid"]); err != nil {
-		WriteError400(w, r, err, AECshraddnoaid)
+	if uid == 0 { // only authorized access allowed
+		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, AECnoauth)
 		return
 	}
+	var acc *Profile
+	if acc = prflist.ByID(aid); acc == nil {
+		WriteError400(w, r, ErrNoAcc, AECshraddnoacc)
+		return
+	}
+	if uid != aid {
+		WriteError(w, r, http.StatusForbidden, ErrDeny, AECshradddeny)
+		return
+	}
+
+	// get arguments
 	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
@@ -755,16 +704,6 @@ func shraddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 
 	var session = xormStorage.NewSession()
 	defer session.Close()
-
-	var acc *Profile
-	if acc = prflist.ByID(aid); acc == nil {
-		WriteError400(w, r, ErrNoAcc, AECshraddnoacc)
-		return
-	}
-	if auth != acc {
-		WriteError(w, r, http.StatusForbidden, ErrDeny, AECshradddeny)
-		return
-	}
 
 	var syspath, ok = PathStorePath(session, arg.PUID)
 	if !ok {
@@ -782,7 +721,7 @@ func shraddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 }
 
 // APIHANDLER
-func shrdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
+func shrdelAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var err error
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
@@ -794,29 +733,26 @@ func shrdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 
 		Deleted bool `json:"deleted" yaml:"deleted" xml:"deleted"`
 	}
-
-	// get arguments
-	var vars = mux.Vars(r)
-	var aid ID_t
-	if aid, err = ParseID(vars["aid"]); err != nil {
-		WriteError400(w, r, err, AECshrdelnoaid)
+	if uid == 0 { // only authorized access allowed
+		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, AECnoauth)
 		return
 	}
-	if err = ParseBody(w, r, &arg); err != nil {
-		return
-	}
-	if arg.PUID == 0 {
-		WriteError400(w, r, ErrArgNoPuid, AECshrdelnodata)
-		return
-	}
-
 	var acc *Profile
 	if acc = prflist.ByID(aid); acc == nil {
 		WriteError400(w, r, ErrNoAcc, AECshrdelnoacc)
 		return
 	}
-	if auth != acc {
+	if uid != aid {
 		WriteError(w, r, http.StatusForbidden, ErrDeny, AECshrdeldeny)
+		return
+	}
+
+	// get arguments
+	if err = ParseBody(w, r, &arg); err != nil {
+		return
+	}
+	if arg.PUID == 0 {
+		WriteError400(w, r, ErrArgNoPuid, AECshrdelnodata)
 		return
 	}
 
@@ -828,21 +764,28 @@ func shrdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 }
 
 // APIHANDLER
-func drvaddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
+func drvaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var err error
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
 		Path string `json:"path" yaml:"path" xml:"path"`
 	}
-
-	// get arguments
-	var vars = mux.Vars(r)
-	var aid ID_t
-	if aid, err = ParseID(vars["aid"]); err != nil {
-		WriteError400(w, r, err, AECdrvaddnoaid)
+	if uid == 0 { // only authorized access allowed
+		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, AECnoauth)
 		return
 	}
+	var acc *Profile
+	if acc = prflist.ByID(aid); acc == nil {
+		WriteError400(w, r, ErrNoAcc, AECdrvaddnoacc)
+		return
+	}
+	if uid != aid {
+		WriteError(w, r, http.StatusForbidden, ErrDeny, AECdrvadddeny)
+		return
+	}
+
+	// get arguments
 	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
@@ -853,16 +796,6 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 
 	var session = xormStorage.NewSession()
 	defer session.Close()
-
-	var acc *Profile
-	if acc = prflist.ByID(aid); acc == nil {
-		WriteError400(w, r, ErrNoAcc, AECdrvaddnoacc)
-		return
-	}
-	if auth != acc {
-		WriteError(w, r, http.StatusForbidden, ErrDeny, AECdrvadddeny)
-		return
-	}
 
 	var fpath = ToSlash(arg.Path)
 	var syspath string
@@ -917,7 +850,7 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 }
 
 // APIHANDLER
-func drvdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
+func drvdelAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var err error
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
@@ -929,14 +862,21 @@ func drvdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 
 		Deleted bool `json:"deleted" yaml:"deleted" xml:"deleted"`
 	}
-
-	// get arguments
-	var vars = mux.Vars(r)
-	var aid ID_t
-	if aid, err = ParseID(vars["aid"]); err != nil {
-		WriteError400(w, r, err, AECdrvdelnoaid)
+	if uid == 0 { // only authorized access allowed
+		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, AECnoauth)
 		return
 	}
+	var acc *Profile
+	if acc = prflist.ByID(aid); acc == nil {
+		WriteError400(w, r, ErrNoAcc, AECdrvdelnoacc)
+		return
+	}
+	if uid != aid {
+		WriteError(w, r, http.StatusForbidden, ErrDeny, AECdrvdeldeny)
+		return
+	}
+
+	// get arguments
 	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
@@ -947,16 +887,6 @@ func drvdelAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 
 	var session = xormStorage.NewSession()
 	defer session.Close()
-
-	var acc *Profile
-	if acc = prflist.ByID(aid); acc == nil {
-		WriteError400(w, r, ErrNoAcc, AECdrvdelnoacc)
-		return
-	}
-	if auth != acc {
-		WriteError(w, r, http.StatusForbidden, ErrDeny, AECdrvdeldeny)
-		return
-	}
 
 	var syspath, ok = PathStorePath(session, arg.PUID)
 	if !ok {

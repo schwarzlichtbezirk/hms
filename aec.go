@@ -17,6 +17,7 @@ const (
 
 	// auth
 
+	AECnoaid
 	AECnoauth
 	AECtokenmalform
 	AECtokennotsign
@@ -34,11 +35,10 @@ const (
 
 	// file
 
-	AECmedianoaid
+	AECmedianoacc
 	AECmediabadmedia
 	AECmediabadhd
 	AECmediabadpath
-	AECmedianoacc
 	AECmediahidden
 	AECmediaaccess
 	AECmediahdgone
@@ -52,9 +52,8 @@ const (
 
 	// etmb
 
-	AECetmbnoaid
-	AECetmbnopuid
 	AECetmbnoacc
+	AECetmbnopuid
 	AECetmbnopath
 	AECetmbhidden
 	AECetmbaccess
@@ -63,9 +62,8 @@ const (
 
 	// mtmb
 
-	AECmtmbnoaid
-	AECmtmbnopuid
 	AECmtmbnoacc
+	AECmtmbnopuid
 	AECmtmbnopath
 	AECmtmbhidden
 	AECmtmbaccess
@@ -74,10 +72,9 @@ const (
 
 	// tile
 
-	AECtilenoaid
+	AECtilenoacc
 	AECtilenopuid
 	AECtilebadres
-	AECtilenoacc
 	AECtilenopath
 	AECtilehidden
 	AECtileaccess
@@ -111,9 +108,8 @@ const (
 
 	// res/folder
 
-	AECfoldernoaid
-	AECfoldernodata
 	AECfoldernoacc
+	AECfoldernodata
 	AECfolderbadpath
 	AECfolderhidden
 	AECfolderaccess
@@ -137,9 +133,8 @@ const (
 	AECfoldertracks
 
 	// res/tags
-	AECtagsnoaid
-	AECtagsnodata
 	AECtagsnoacc
+	AECtagsnodata
 	AECtagsbadpath
 	AECtagshidden
 	AECtagsaccess
@@ -149,68 +144,61 @@ const (
 
 	// res/ispath
 
-	AECispathnoaid
-	AECispathnodata
 	AECispathnoacc
 	AECispathdeny
+	AECispathnodata
 	AECispathbadpath
 	AECispathmiss
 	AECispathhidden
 
 	// tile/chk
 
-	AECtilechknoaid
+	AECtilechknoacc
 	AECtilechknodata
 
 	// tile/scnstart
 
-	AECscnstartnoaid
-	AECscnstartnodata
 	AECscnstartnoacc
+	AECscnstartnodata
 
 	// tile/scnbreak
 
+	AECscnbreaknoacc
 	AECscnbreaknoaid
 	AECscnbreaknodata
-	AECscnbreaknoacc
 
 	// share/add
 
-	AECshraddnoaid
-	AECshraddnodata
 	AECshraddnoacc
 	AECshradddeny
+	AECshraddnodata
 	AECshraddnopath
 	AECshraddaccess
 
 	// share/del
 
-	AECshrdelnoaid
-	AECshrdelnodata
 	AECshrdelnoacc
 	AECshrdeldeny
+	AECshrdelnodata
 
 	// drive/add
 
-	AECdrvaddnoaid
-	AECdrvaddnodata
 	AECdrvaddnoacc
 	AECdrvadddeny
+	AECdrvaddnodata
 	AECdrvaddbadpath
 	AECdrvaddmiss
 	AECdrvaddhidden
 
 	// drive/del
 
-	AECdrvdelnoaid
-	AECdrvdelnodata
 	AECdrvdelnoacc
 	AECdrvdeldeny
+	AECdrvdelnodata
 	AECdrvdelnopath
 
 	// edit/copy
 
-	AECedtcopynoaid
 	AECedtcopynodata
 	AECedtcopynoacc
 	AECedtcopydeny
@@ -227,7 +215,6 @@ const (
 
 	// edit/rename
 
-	AECedtrennoaid
 	AECedtrennodata
 	AECedtrennoacc
 	AECedtrendeny
@@ -239,7 +226,6 @@ const (
 
 	// edit/del
 
-	AECedtdelnoaid
 	AECedtdelnodata
 	AECedtdelnoacc
 	AECedtdeldeny
@@ -247,18 +233,16 @@ const (
 	AECedtdelremove
 
 	// gps/range
-	AECgpsrangenoaid
+	AECgpsrangenoacc
 	AECgpsrangeshpcirc
 	AECgpsrangeshppoly
 	AECgpsrangeshprect
 	AECgpsrangeshpbad
-	AECgpsrangenoacc
 	AECgpsrangelist
 
 	// gps/scan
-	AECgpsscannoaid
-	AECgpsscannodata
 	AECgpsscannoacc
+	AECgpsscannodata
 
 	// stat/usrlst
 	AECusrlstusts

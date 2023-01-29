@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/gorilla/mux"
 	"github.com/schwarzlichtbezirk/wpk"
 )
 
@@ -255,7 +254,7 @@ func (tp *TileProp) SetTile(tm TM_t, mime Mime_t) (ok bool) {
 }
 
 // APIHANDLER
-func tilechkAPI(w http.ResponseWriter, r *http.Request) {
+func tilechkAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	type tiletm struct {
 		PUID Puid_t `json:"puid" yaml:"puid" xml:"puid,attr"`
 		TM   TM_t   `json:"tm" yaml:"tm" xml:"tm,omitempty,attr"`
@@ -277,13 +276,13 @@ func tilechkAPI(w http.ResponseWriter, r *http.Request) {
 		List []tilemime `json:"list" yaml:"list" xml:"list>tile"`
 	}
 
-	// get arguments
-	var vars = mux.Vars(r)
-	var aid ID_t
-	if aid, err = ParseID(vars["aid"]); err != nil {
-		WriteError400(w, r, err, AECtilechknoaid)
+	var acc *Profile
+	if acc = prflist.ByID(aid); acc == nil {
+		WriteError400(w, r, ErrNoAcc, AECtilechknoacc)
 		return
 	}
+
+	// get arguments
 	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
@@ -294,17 +293,6 @@ func tilechkAPI(w http.ResponseWriter, r *http.Request) {
 
 	var session = xormStorage.NewSession()
 	defer session.Close()
-
-	var acc *Profile
-	if acc = prflist.ByID(aid); acc == nil {
-		WriteError400(w, r, ErrNoAcc, AECscnstartnoacc)
-		return
-	}
-	var uid ID_t
-	if uid, err = GetAuth(r); err != nil {
-		WriteRet(w, r, http.StatusUnauthorized, err)
-		return
-	}
 
 	ret.List = make([]tilemime, len(arg.List))
 	for i, ttm := range arg.List {
@@ -325,7 +313,7 @@ func tilechkAPI(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
-func tilescnstartAPI(w http.ResponseWriter, r *http.Request) {
+func tilescnstartAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	type tiletm struct {
 		PUID Puid_t `json:"puid" yaml:"puid" xml:"puid,attr"`
 		TM   TM_t   `json:"tm,omitempty" yaml:"tm,omitempty" xml:"tm,omitempty,attr"`
@@ -337,13 +325,13 @@ func tilescnstartAPI(w http.ResponseWriter, r *http.Request) {
 		List []tiletm `json:"list" yaml:"list" xml:"list>tiletm"`
 	}
 
-	// get arguments
-	var vars = mux.Vars(r)
-	var aid ID_t
-	if aid, err = ParseID(vars["aid"]); err != nil {
-		WriteError400(w, r, err, AECscnstartnoaid)
+	var acc *Profile
+	if acc = prflist.ByID(aid); acc == nil {
+		WriteError400(w, r, ErrNoAcc, AECscnstartnoacc)
 		return
 	}
+
+	// get arguments
 	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
@@ -354,17 +342,6 @@ func tilescnstartAPI(w http.ResponseWriter, r *http.Request) {
 
 	var session = xormStorage.NewSession()
 	defer session.Close()
-
-	var acc *Profile
-	if acc = prflist.ByID(aid); acc == nil {
-		WriteError400(w, r, ErrNoAcc, AECscnstartnoacc)
-		return
-	}
-	var uid ID_t
-	if uid, err = GetAuth(r); err != nil {
-		WriteRet(w, r, http.StatusUnauthorized, err)
-		return
-	}
 
 	for _, ttm := range arg.List {
 		if syspath, ok := PathStorePath(session, ttm.PUID); ok {
@@ -378,7 +355,7 @@ func tilescnstartAPI(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
-func tilescnbreakAPI(w http.ResponseWriter, r *http.Request) {
+func tilescnbreakAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	type tiletm struct {
 		PUID Puid_t `json:"puid" yaml:"puid" xml:"puid,attr"`
 		TM   TM_t   `json:"tm,omitempty" yaml:"tm,omitempty" xml:"tm,omitempty,attr"`
@@ -390,13 +367,13 @@ func tilescnbreakAPI(w http.ResponseWriter, r *http.Request) {
 		List []tiletm `json:"list" yaml:"list" xml:"list>tiletm"`
 	}
 
-	// get arguments
-	var vars = mux.Vars(r)
-	var aid ID_t
-	if aid, err = ParseID(vars["aid"]); err != nil {
-		WriteError400(w, r, err, AECscnbreaknoaid)
+	var acc *Profile
+	if acc = prflist.ByID(aid); acc == nil {
+		WriteError400(w, r, ErrNoAcc, AECscnbreaknoacc)
 		return
 	}
+
+	// get arguments
 	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
@@ -407,17 +384,6 @@ func tilescnbreakAPI(w http.ResponseWriter, r *http.Request) {
 
 	var session = xormStorage.NewSession()
 	defer session.Close()
-
-	var acc *Profile
-	if acc = prflist.ByID(aid); acc == nil {
-		WriteError400(w, r, ErrNoAcc, AECscnbreaknoacc)
-		return
-	}
-	var uid ID_t
-	if uid, err = GetAuth(r); err != nil {
-		WriteRet(w, r, http.StatusUnauthorized, err)
-		return
-	}
 
 	for _, ttm := range arg.List {
 		if syspath, ok := PathStorePath(session, ttm.PUID); ok {

@@ -5,8 +5,6 @@ import (
 	"io/fs"
 	"math"
 	"net/http"
-
-	"github.com/gorilla/mux"
 )
 
 // Haversine uses formula to calculate the great-circle distance between
@@ -63,7 +61,7 @@ func (mp *MapPath) Contains(lat, lon float64) bool {
 }
 
 // APIHANDLER
-func gpsrangeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
+func gpsrangeAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var err error
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
@@ -80,14 +78,17 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 
 		HasHome bool `json:"hashome" yaml:"hashome" xml:"hashome,attr"`
 	}
-
-	// get arguments
-	var vars = mux.Vars(r)
-	var aid ID_t
-	if aid, err = ParseID(vars["aid"]); err != nil {
-		WriteError400(w, r, err, AECgpsrangenoaid)
+	if uid == 0 { // only authorized access allowed
+		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, AECnoauth)
 		return
 	}
+	var acc *Profile
+	if acc = prflist.ByID(aid); acc == nil {
+		WriteError400(w, r, ErrNoAcc, AECgpsrangenoacc)
+		return
+	}
+
+	// get arguments
 	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
@@ -120,13 +121,7 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 	var session = xormStorage.NewSession()
 	defer session.Close()
 
-	var acc *Profile
-	if acc = prflist.ByID(aid); acc == nil {
-		WriteError400(w, r, ErrNoAcc, AECgpsrangenoacc)
-		return
-	}
-
-	if auth == acc {
+	if uid == aid {
 		ret.HasHome = true
 	} else if acc.IsShared(CPhome) {
 		for _, fpath := range CatKeyPath {
@@ -158,7 +153,7 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 		}
 		if inc {
 			var fpath, _ = pathcache.GetDir(puid)
-			if !acc.IsHidden(fpath) && acc.PathAccess(fpath, auth == acc) {
+			if !acc.IsHidden(fpath) && acc.PathAccess(fpath, uid == aid) {
 				if fi, _ := StatFile(fpath); fi != nil {
 					vfiles = append(vfiles, fi)
 					vpaths = append(vpaths, fpath)
@@ -176,7 +171,7 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, auth *Profile) {
 }
 
 // APIHANDLER
-func gpsscanAPI(w http.ResponseWriter, r *http.Request) {
+func gpsscanAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var err error
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
@@ -189,13 +184,13 @@ func gpsscanAPI(w http.ResponseWriter, r *http.Request) {
 		List []Store[GpsInfo] `json:"list" yaml:"list" xml:"list>tile"`
 	}
 
-	// get arguments
-	var vars = mux.Vars(r)
-	var aid ID_t
-	if aid, err = ParseID(vars["aid"]); err != nil {
-		WriteError400(w, r, err, AECgpsscannoaid)
+	var acc *Profile
+	if acc = prflist.ByID(aid); acc == nil {
+		WriteError400(w, r, ErrNoAcc, AECgpsscannoacc)
 		return
 	}
+
+	// get arguments
 	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
@@ -206,17 +201,6 @@ func gpsscanAPI(w http.ResponseWriter, r *http.Request) {
 
 	var session = xormStorage.NewSession()
 	defer session.Close()
-
-	var acc *Profile
-	if acc = prflist.ByID(aid); acc == nil {
-		WriteError400(w, r, ErrNoAcc, AECgpsscannoacc)
-		return
-	}
-	var uid ID_t
-	if uid, err = GetAuth(r); err != nil {
-		WriteRet(w, r, http.StatusUnauthorized, err)
-		return
-	}
 
 	var ests []ExifStore
 	for _, puid := range arg.List {
