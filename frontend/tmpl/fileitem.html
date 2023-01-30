@@ -10,7 +10,11 @@
 			</template>
 			<img v-bind:class="clsicon" class="label position-absolute top-50 start-50 translate-middle" alt="shared">
 		</picture>
-		<img v-if="file.playback" v-bind:class="clsiconpix" class="bars position-absolute top-50 start-50 translate-middle" src="/asst/equalizer-bars.gif" alt="play">
+		<picture v-if="file.playback">
+			<source srcset="/asst/equalizer-bars.webp" type="image/webp">
+			<source srcset="/asst/equalizer-bars.gif" type="image/gif">
+			<img v-bind:class="clsiconpix" class="bars position-absolute top-50 start-50 translate-middle" alt="play">
+		</picture>
 		<div class="iconmenu-band position-absolute bottom-0 start-0">
 			<iconmenu-tag v-bind:file="file" v-bind:key="file.puid"></iconmenu-tag>
 		</div>

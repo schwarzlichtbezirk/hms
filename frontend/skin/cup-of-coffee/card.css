@@ -26,7 +26,8 @@
 }
 
 .folder-head .breadcrumb, .card, .modal-content {
-	background-image: url("/fs/skin/cup-of-coffee/cup-of-coffee.jpg");
+	background-image: url("/fs/skin/cup-of-coffee/cup-of-coffee.avif");
+	/* @alternate */ background-image: url("/fs/skin/cup-of-coffee/cup-of-coffee.jpg");
 	background-color: rgb(208, 160, 76);
 	background-position: center center;
 	background-repeat: no-repeat;

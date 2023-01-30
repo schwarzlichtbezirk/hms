@@ -26,7 +26,8 @@
 }
 
 .folder-head .breadcrumb, .card, .modal-content {
-	background-image: url("/fs/skin/neon/nightglow-rainbow.jpg");
+	background-image: url("/fs/skin/neon/nightglow-rainbow.avif");
+	/* @alternate */ background-image: url("/fs/skin/neon/nightglow-rainbow.jpg");
 	background-color: rgb(152, 128, 244);
 	background-position: center center;
 	background-repeat: no-repeat;

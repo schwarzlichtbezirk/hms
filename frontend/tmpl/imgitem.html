@@ -7,6 +7,10 @@
 		</template>
 		<img class="label position-absolute bottom-0 start-0" alt="shared">
 	</picture>
-	<img v-if="file.playback" class="bars position-absolute top-50 start-50 translate-middle" src="/asst/equalizer-bars.gif" alt="play">
+	<picture v-if="file.playback">
+		<source srcset="/asst/equalizer-bars.webp" type="image/webp">
+		<source srcset="/asst/equalizer-bars.gif" type="image/gif">
+		<img class="bars position-absolute top-50 start-50 translate-middle" alt="play">
+	</picture>
 	<div class="tag itemfont overflow-hidden">{{file.name}}</div>
 </div>

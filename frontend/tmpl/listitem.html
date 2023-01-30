@@ -10,7 +10,11 @@
 			</template>
 			<img v-bind:class="clsicon" class="label position-absolute top-50 start-50 translate-middle" alt="shared">
 		</picture>
-		<img v-if="file.playback" class="bars icon-pix-xs position-absolute top-50 start-50 translate-middle" src="/asst/equalizer-bars.gif" alt="play">
+		<picture v-if="file.playback">
+			<source srcset="/asst/equalizer-bars.webp" type="image/webp">
+			<source srcset="/asst/equalizer-bars.gif" type="image/gif">
+			<img class="bars icon-pix-xs position-absolute top-50 start-50 translate-middle" alt="play">
+		</picture>
 	</div>
 	<div class="name flex-grow-1 overflow-hidden">{{file.name}}</div>
 	<div class="attr d-flex flex-column">
