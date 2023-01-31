@@ -8,9 +8,9 @@
 		<img class="label position-absolute bottom-0 start-0" alt="shared">
 	</picture>
 	<picture v-if="file.playback">
-		<source srcset="/asst/equalizer-bars.webp" type="image/webp">
-		<source srcset="/asst/equalizer-bars.gif" type="image/gif">
-		<img class="bars position-absolute top-50 start-50 translate-middle" alt="play">
+		<source v-bind:srcset="wavebars+'.webp'" type="image/webp">
+		<source v-bind:srcset="wavebars+'.gif'" type="image/gif">
+	<img class="bars position-absolute top-50 start-50 translate-middle" alt="play">
 	</picture>
 	<div class="tag itemfont overflow-hidden">{{file.name}}</div>
 </div>

@@ -503,6 +503,7 @@ const VueListItem = {
 	props: ["file"],
 	data() {
 		return {
+			wavebars: iconmapping.wavebars,
 			iconfmt: [],
 			tm: true
 		};
@@ -558,6 +559,7 @@ const VueListItem = {
 	},
 	methods: {
 		_iconset(im) {
+			this.wavebars = im.wavebars;
 			this.iconfmt = im.iconfmt;
 		},
 		_thumbmode(tm) {
@@ -583,6 +585,7 @@ const VueFileItem = {
 	props: ["file", "size"],
 	data() {
 		return {
+			wavebars: iconmapping.wavebars,
 			iconfmt: [],
 			tm: true
 		};
@@ -626,6 +629,7 @@ const VueFileItem = {
 	},
 	methods: {
 		_iconset(im) {
+			this.wavebars = im.wavebars;
 			this.iconfmt = im.iconfmt;
 		},
 		_thumbmode(tm) {
@@ -651,6 +655,7 @@ const VueImgItem = {
 	props: ["file"],
 	data() {
 		return {
+			wavebars: iconmapping.wavebars,
 			iconfmt: [],
 			tm: true
 		};
@@ -676,6 +681,7 @@ const VueImgItem = {
 	},
 	methods: {
 		_iconset(im) {
+			this.wavebars = im.wavebars;
 			this.iconfmt = im.iconfmt;
 		},
 		_thumbmode(tm) {

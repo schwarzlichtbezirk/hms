@@ -11,8 +11,8 @@
 			<img v-bind:class="clsicon" class="label position-absolute top-50 start-50 translate-middle" alt="shared">
 		</picture>
 		<picture v-if="file.playback">
-			<source srcset="/asst/equalizer-bars.webp" type="image/webp">
-			<source srcset="/asst/equalizer-bars.gif" type="image/gif">
+			<source v-bind:srcset="wavebars+'.webp'" type="image/webp">
+			<source v-bind:srcset="wavebars+'.gif'" type="image/gif">
 			<img class="bars icon-pix-xs position-absolute top-50 start-50 translate-middle" alt="play">
 		</picture>
 	</div>
