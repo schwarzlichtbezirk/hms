@@ -134,6 +134,6 @@
 		"grp": {},
 		"ext": {}
 	},
-	"wavebars": "/asst/equalizer-bars",
+	"wavebars": "/fs/assets/wavebars/leds",
 	"iconfmt": []
 }
