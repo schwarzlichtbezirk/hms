@@ -708,8 +708,8 @@ const VueMainApp = {
 			// current path & state
 			this.skipped = response.data.skip;
 			this.curpuid = response.data.puid;
-			this.curpath = response.data.path;
-			this.shrname = response.data.shrname;
+			this.curpath = response.data.sharepath || response.data.rootpath;
+			this.shrname = response.data.sharename || response.data.rootname;
 			this.hashome = response.data.hashome;
 
 			await this.newfolder(response.data.list);
@@ -749,7 +749,7 @@ const VueMainApp = {
 
 		async fetchshareadd(file) {
 			const response = await fetchajaxauth("POST", `/id${this.aid}/api/share/add`, {
-				puid: file.puid
+				path: file.puid
 			});
 			traceajax(response);
 			if (!response.ok) {
@@ -760,7 +760,7 @@ const VueMainApp = {
 
 		async fetchsharedel(file) {
 			const response = await fetchajaxauth("DELETE", `/id${this.aid}/api/share/del`, {
-				puid: file.puid
+				path: file.puid
 			});
 			traceajax(response);
 			if (!response.ok) {

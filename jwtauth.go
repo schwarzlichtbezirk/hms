@@ -177,17 +177,23 @@ func GetAuth(r *http.Request) (uid ID_t, aerr error) {
 		return
 	}
 	var ip = net.ParseIP(StripPort(r.RemoteAddr))
-	if ip.IsLoopback() {
+	if InPasslist(ip) {
 		uid = aid
-		return
+	}
+	return
+}
+
+// InPasslist checks that IP is loopback or in passlist.
+func InPasslist(ip net.IP) bool {
+	if ip.IsLoopback() {
+		return true
 	}
 	for _, ipn := range Passlist {
 		if ipn.Contains(ip) {
-			uid = aid
-			return
+			return true
 		}
 	}
-	return
+	return false
 }
 
 // AuthWrap is handler wrapper for API with admin checkup.

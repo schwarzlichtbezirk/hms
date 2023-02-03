@@ -359,8 +359,8 @@ var pagecache = map[string][]byte{}
 
 // Pages aliases.
 var pagealias = map[string]string{
-	"main": "main.html",
-	"stat": "stat.html",
+	"/":     "main.html",
+	"/stat": "stat.html",
 }
 
 // Main page routes.
@@ -542,21 +542,19 @@ func AjaxMiddleware(next http.Handler) http.Handler {
 func RegisterRoutes(gmux *Router) {
 	gmux.Use(AjaxMiddleware)
 
-	// main page
+	// UI pages
 	var devm = gmux.PathPrefix("/dev").Subrouter()
-	devm.Path("/").HandlerFunc(pageHandler(devmsuff, "main"))
-	gmux.Path("/").HandlerFunc(pageHandler(relmsuff, "main"))
-	for name := range pagealias {
-		devm.Path("/" + name).HandlerFunc(pageHandler(devmsuff, name)) // development mode
-		gmux.Path("/" + name).HandlerFunc(pageHandler(relmsuff, name)) // release mode
+	for fpath, fname := range pagealias {
+		devm.Path(fpath).HandlerFunc(pageHandler(devmsuff, fname)) // development mode
+		gmux.Path(fpath).HandlerFunc(pageHandler(relmsuff, fname)) // release mode
 	}
 
-	// UI routes
+	// profile routes
 	var dacc = devm.PathPrefix("/id{aid:[0-9]+}/").Subrouter()
 	var gacc = gmux.PathPrefix("/id{aid:[0-9]+}/").Subrouter()
 	for _, pref := range routemain {
-		dacc.PathPrefix(pref).HandlerFunc(pageHandler(devmsuff, "main"))
-		gacc.PathPrefix(pref).HandlerFunc(pageHandler(relmsuff, "main"))
+		dacc.PathPrefix(pref).HandlerFunc(pageHandler(devmsuff, pagealias["/"]))
+		gacc.PathPrefix(pref).HandlerFunc(pageHandler(relmsuff, pagealias["/"]))
 	}
 
 	// wpk-files sharing

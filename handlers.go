@@ -23,17 +23,16 @@ import (
 //////////////////////////
 
 // APIHANDLER
-func pageHandler(pref, name string) http.HandlerFunc {
+func pageHandler(pref, fname string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var alias = pagealias[name]
-		var content, ok = pagecache[pref+"/"+alias]
+		var content, ok = pagecache[pref+"/"+fname]
 		if !ok {
 			WriteError(w, r, http.StatusNotFound, ErrNotFound, AECpageabsent)
 			return
 		}
 
 		WriteHTMLHeader(w)
-		http.ServeContent(w, r, alias, starttime, bytes.NewReader(content))
+		http.ServeContent(w, r, fname, starttime, bytes.NewReader(content))
 	}
 }
 
@@ -88,7 +87,6 @@ func fileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		WriteError(w, r, http.StatusForbidden, ErrHidden, AECmediahidden)
 		return
 	}
-
 	if !acc.PathAccess(syspath, uid == aid) {
 		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECmediaaccess)
 		return
@@ -224,7 +222,6 @@ func etmbHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		WriteError(w, r, http.StatusForbidden, ErrHidden, AECetmbhidden)
 		return
 	}
-
 	if !acc.PathAccess(syspath, uid == aid) {
 		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECetmbaccess)
 		return
@@ -275,7 +272,6 @@ func mtmbHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		WriteError(w, r, http.StatusForbidden, ErrHidden, AECmtmbhidden)
 		return
 	}
-
 	if !acc.PathAccess(syspath, uid == aid) {
 		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECmtmbaccess)
 		return
@@ -331,7 +327,6 @@ func tileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		WriteError(w, r, http.StatusForbidden, ErrHidden, AECtilehidden)
 		return
 	}
-
 	if !acc.PathAccess(syspath, uid == aid) {
 		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECtileaccess)
 		return
@@ -567,7 +562,6 @@ func tagsAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		WriteError(w, r, http.StatusForbidden, ErrHidden, AECtagshidden)
 		return
 	}
-
 	if !acc.PathAccess(syspath, uid == aid) {
 		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECtagsaccess)
 		return
@@ -672,7 +666,7 @@ func shraddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
-		PUID Puid_t `json:"puid" yaml:"puid" xml:"puid"`
+		Path string `json:"path" yaml:"path" xml:"path"`
 	}
 	var ret struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
@@ -697,7 +691,7 @@ func shraddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
-	if arg.PUID == 0 {
+	if len(arg.Path) == 0 {
 		WriteError400(w, r, ErrArgNoPuid, AECshraddnodata)
 		return
 	}
@@ -705,17 +699,17 @@ func shraddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var session = xormStorage.NewSession()
 	defer session.Close()
 
-	var syspath, ok = PathStorePath(session, arg.PUID)
-	if !ok {
-		WriteError(w, r, http.StatusNotFound, ErrNoPath, AECshraddnopath)
+	var syspath string
+	if syspath, _, err = UnfoldPath(session, ToSlash(arg.Path)); err != nil {
+		WriteError(w, r, http.StatusNotFound, err, AECshraddnopath)
 	}
 	if !acc.PathAdmin(syspath) {
 		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECshraddaccess)
 		return
 	}
 
-	ret.Shared = acc.AddShare(session, syspath)
-	Log.Infof("id%d: add share '%s' as %s", acc.ID, syspath, arg.PUID)
+	ret.Shared = acc.AddShare(syspath)
+	Log.Infof("id%d: add share '%s'", acc.ID, syspath)
 
 	WriteOK(w, r, &ret)
 }
@@ -726,7 +720,7 @@ func shrdelAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
-		PUID Puid_t `json:"puid" yaml:"puid" xml:"puid"`
+		Path string `json:"path" yaml:"path" xml:"path"`
 	}
 	var ret struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
@@ -751,13 +745,25 @@ func shrdelAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	if err = ParseBody(w, r, &arg); err != nil {
 		return
 	}
-	if arg.PUID == 0 {
+	if len(arg.Path) == 0 {
 		WriteError400(w, r, ErrArgNoPuid, AECshrdelnodata)
 		return
 	}
 
-	if ret.Deleted = acc.DelShare(arg.PUID); ret.Deleted {
-		Log.Infof("id%d: delete share %s", acc.ID, arg.PUID)
+	var session = xormStorage.NewSession()
+	defer session.Close()
+
+	var syspath string
+	if syspath, _, err = UnfoldPath(session, ToSlash(arg.Path)); err != nil {
+		WriteError(w, r, http.StatusNotFound, ErrNoPath, AECshrdelnopath)
+	}
+	if !acc.PathAdmin(syspath) {
+		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECshrdelaccess)
+		return
+	}
+
+	if ret.Deleted = acc.DelShare(syspath); ret.Deleted {
+		Log.Infof("id%d: delete share '%s'", acc.ID, syspath)
 	}
 
 	WriteOK(w, r, &ret)

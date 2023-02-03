@@ -70,11 +70,8 @@ type Profile struct {
 	Shares []string `json:"shares" yaml:"shares" xml:"shares>item"`
 
 	// private shares data
-	sharepuid map[string]Puid_t // share/puid key/values
-	puidshare map[Puid_t]string // puid/share key/values
 	ctgrshare CatGrp
-
-	mux sync.RWMutex
+	mux       sync.RWMutex
 }
 
 // Profiles is the list of Profile structures.
@@ -86,13 +83,11 @@ type Profiles struct {
 // NewProfile make new profile and insert it to the list.
 func (pl *Profiles) NewProfile(login, password string) *Profile {
 	var prf = &Profile{
-		Login:     login,
-		Password:  password,
-		Roots:     []string{},
-		Hidden:    []string{},
-		Shares:    []string{},
-		sharepuid: map[string]Puid_t{},
-		puidshare: map[Puid_t]string{},
+		Login:    login,
+		Password: password,
+		Roots:    []string{},
+		Hidden:   []string{},
+		Shares:   []string{},
 	}
 
 	var mid ID_t
@@ -223,11 +218,15 @@ func (prf *Profile) IsRoot(syspath string) bool {
 }
 
 // IsShared checks that syspath is become in any share.
-func (prf *Profile) IsShared(syspath string) (ok bool) {
+func (prf *Profile) IsShared(syspath string) bool {
 	prf.mux.RLock()
-	_, ok = prf.sharepuid[syspath]
-	prf.mux.RUnlock()
-	return
+	defer prf.mux.RUnlock()
+	for _, shr := range prf.Shares {
+		if shr == syspath {
+			return true
+		}
+	}
+	return false
 }
 
 // RootIndex returns index of given path in roots list or -1 if not found.
@@ -328,8 +327,12 @@ func (prf *Profile) ScanShares(session *Session) (ret []any, err error) {
 // Private function to update profile shares private data.
 func (prf *Profile) updateGrp() {
 	var is = func(fpath string) bool {
-		var _, ok = prf.sharepuid[fpath]
-		return ok
+		for _, shr := range prf.Shares {
+			if shr == fpath {
+				return true
+			}
+		}
+		return false
 	}
 
 	var all = is(CPdrives)
@@ -346,70 +349,43 @@ func (prf *Profile) updateGrp() {
 	}
 }
 
-// UpdateShares recreates shares maps, puts share property to cache.
-func (prf *Profile) UpdateShares() {
+// AddShare adds share with given system path.
+func (prf *Profile) AddShare(syspath string) bool {
 	prf.mux.Lock()
 	defer prf.mux.Unlock()
 
-	prf.sharepuid = map[string]Puid_t{}
-	prf.puidshare = map[Puid_t]string{}
 	for _, shr := range prf.Shares {
-		var syspath = shr
-		if puid, ok := CatPathKey[syspath]; ok {
-			prf.sharepuid[syspath] = puid
-			prf.puidshare[puid] = syspath
-			Log.Infof("id%d: shared '%s' as %s", prf.ID, syspath, puid)
-		} else if puid, ok := pathcache.GetRev(syspath); ok {
-			prf.sharepuid[syspath] = puid
-			prf.puidshare[puid] = syspath
-			Log.Infof("id%d: shared '%s' as %s", prf.ID, syspath, puid)
-		} else {
-			Log.Warnf("id%d: can not share '%s'", prf.ID, syspath)
+		if shr == syspath {
+			return false
 		}
 	}
+	prf.Shares = append(prf.Shares, syspath)
 	prf.updateGrp()
+	return true
 }
 
-// AddShare adds share with given path unigue identifier.
-func (prf *Profile) AddShare(session *Session, syspath string) bool {
+// DelShare deletes share by given system path.
+func (prf *Profile) DelShare(syspath string) bool {
 	prf.mux.Lock()
 	defer prf.mux.Unlock()
 
-	var puid = PathStoreCache(session, syspath)
-	if _, ok := prf.puidshare[puid]; !ok {
-		prf.Shares = append(prf.Shares, syspath)
-		prf.sharepuid[syspath] = puid
-		prf.puidshare[puid] = syspath
-		prf.updateGrp()
-		return true
-	}
-	return false
-}
-
-// DelShare deletes share by given path unigue identifier.
-func (prf *Profile) DelShare(puid Puid_t) bool {
-	prf.mux.Lock()
-	defer prf.mux.Unlock()
-
-	if syspath, ok := prf.puidshare[puid]; ok {
-		for i, shr := range prf.Shares {
-			if shr == syspath {
-				prf.Shares = append(prf.Shares[:i], prf.Shares[i+1:]...)
-			}
+	for i, fpath := range prf.Shares {
+		if fpath == syspath {
+			prf.Shares = append(prf.Shares[:i], prf.Shares[i+1:]...)
+			prf.updateGrp()
+			return true
 		}
-		delete(prf.sharepuid, syspath)
-		delete(prf.puidshare, puid)
-		prf.updateGrp()
-		return true
 	}
 	return false
 }
 
-// GetSharePath brings system path to largest share path.
-func (prf *Profile) GetSharePath(session *Session, syspath string, isadmin bool) (shrpath string, base string, cg CatGrp) {
+// GetSharePath returns path in nearest shared folder that
+// contains given syspath.
+func (prf *Profile) GetSharePath(session *Session, syspath string) (shrpath string, shrpuid Puid_t) {
 	prf.mux.RLock()
 	defer prf.mux.RUnlock()
 
+	var base string
 	for _, fpath := range prf.Shares {
 		if PathStarts(syspath, fpath) {
 			if len(fpath) > len(base) {
@@ -418,42 +394,40 @@ func (prf *Profile) GetSharePath(session *Session, syspath string, isadmin bool)
 		}
 	}
 	if len(base) > 0 {
-		shrpath = path.Join(PathStoreCache(session, base).String(), syspath[len(base):])
-		cg.SetAll(true)
+		shrpuid = PathStoreCache(session, base)
+		shrpath = path.Join(shrpuid.String(), syspath[len(base):])
 		return
 	}
+	return
+}
 
-	for _, root := range prf.Roots {
-		if PathStarts(syspath, root) {
-			if len(root) > len(base) {
-				base = root
+// GetRootPath returns path to nearest root that contains given syspath.
+// Or returns category it self, if it given.
+func (prf *Profile) GetRootPath(session *Session, syspath string) (rootpath string, rootpuid Puid_t) {
+	prf.mux.RLock()
+	defer prf.mux.RUnlock()
+
+	var base string
+	for _, fpath := range prf.Roots {
+		if PathStarts(syspath, fpath) {
+			if len(fpath) > len(base) {
+				base = fpath
 			}
 		}
 	}
 	if len(base) > 0 {
-		shrpath = path.Join(PathStoreCache(session, base).String(), syspath[len(base):])
-		if isadmin {
-			cg.SetAll(true)
-		} else {
-			cg = prf.ctgrshare
-		}
+		rootpuid = PathStoreCache(session, base)
+		rootpath = path.Join(rootpuid.String(), syspath[len(base):])
 		return
 	}
 
-	for _, fpath := range CatKeyPath {
+	for puid, fpath := range CatKeyPath {
 		if syspath == fpath {
-			shrpath, base = fpath, fpath
+			rootpuid = puid
+			rootpath = fpath
+			return
 		}
 	}
-	if len(base) > 0 {
-		if isadmin {
-			cg.SetAll(true)
-		} else {
-			cg = prf.ctgrshare
-		}
-	}
-
-	shrpath = syspath
 	return
 }
 
@@ -472,11 +446,13 @@ func (prf *Profile) PathAccess(syspath string, isadmin bool) bool {
 			if isadmin {
 				return true
 			} else {
-				var cg = prf.ctgrshare
 				var grp = GetFileGroup(syspath)
-				return cg[grp]
+				return prf.ctgrshare[grp]
 			}
 		}
+	}
+	if _, ok := CatPathKey[syspath]; ok {
+		return isadmin
 	}
 	return false
 }

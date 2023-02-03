@@ -113,10 +113,21 @@ func (pl *Profiles) ReadYaml(fname string) (err error) {
 				}
 
 				// build shares tables
-				prf.UpdateShares()
+				prf.updateGrp()
 				// check up some roots already defined
 				if len(prf.Roots) == 0 {
 					prf.FindRoots()
+				}
+
+				// print shares list for each
+				for _, shr := range prf.Shares {
+					if puid, ok := CatPathKey[shr]; ok {
+						Log.Infof("id%d: shared '%s' as %s", prf.ID, shr, puid)
+					} else if puid, ok := pathcache.GetRev(shr); ok {
+						Log.Infof("id%d: shared '%s' as %s", prf.ID, shr, puid)
+					} else {
+						Log.Warnf("id%d: can not share '%s'", prf.ID, shr)
+					}
 				}
 			}
 			return
@@ -129,7 +140,7 @@ func (pl *Profiles) ReadYaml(fname string) (err error) {
 			"<home>",
 		}
 		// build shares tables
-		prf.UpdateShares()
+		prf.updateGrp()
 		// setup all available disks as the roots
 		prf.FindRoots()
 		Log.Infof("created profile id%d, login='%s'", prf.ID, prf.Login)

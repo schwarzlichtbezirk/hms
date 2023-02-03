@@ -70,11 +70,14 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var ret struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
 
-		List []any  `json:"list" yaml:"list" xml:"list>prop"`
-		Skip int    `json:"skip" yaml:"skip" xml:"skip,attr"`
-		PUID Puid_t `json:"puid" yaml:"puid" xml:"puid,attr"`
-		Path string `json:"path" yaml:"path" xml:"path,attr"`
-		Name string `json:"shrname" yaml:"shrname" xml:"shrname,attr"`
+		List []any `json:"list" yaml:"list" xml:"list>prop"`
+		Skip int   `json:"skip" yaml:"skip" xml:"skip,attr"`
+
+		PUID      Puid_t `json:"puid" yaml:"puid" xml:"puid,attr"`
+		SharePath string `json:"sharepath" yaml:"sharepath" xml:"sharepath,attr"`
+		ShareName string `json:"sharename" yaml:"sharename" xml:"sharename,attr"`
+		RootPath  string `json:"rootpath" yaml:"rootpath" xml:"rootpath,attr"`
+		RootName  string `json:"rootname" yaml:"rootname" xml:"rootname,attr"`
 
 		HasHome bool `json:"hashome" yaml:"hashome" xml:"hashome,attr"`
 	}
@@ -108,18 +111,27 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		WriteError(w, r, http.StatusForbidden, ErrHidden, AECfolderhidden)
 		return
 	}
-
-	var shrpath, base, cg = acc.GetSharePath(session, syspath, uid == aid)
-	if cg.IsZero() && syspath != CPshares {
+	if !acc.PathAccess(syspath, uid == aid) {
 		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECfolderaccess)
 		return
 	}
+
 	ret.PUID = puid
-	ret.Path = shrpath
-	if puid0, ok := CatPathKey[base]; ok {
-		ret.Name = CatNames[puid0]
-	} else {
-		ret.Name = path.Base(base)
+	var shrpath, shrpuid = acc.GetSharePath(session, syspath)
+	ret.SharePath = shrpath
+	if name, ok := CatNames[shrpuid]; ok {
+		ret.ShareName = name
+	} else if shrpuid != 0 {
+		var base, _ = PathStorePath(session, shrpuid)
+		ret.ShareName = path.Base(base)
+	}
+	var rootpath, rootpuid = acc.GetRootPath(session, syspath)
+	ret.RootPath = rootpath
+	if name, ok := CatNames[rootpuid]; ok {
+		ret.RootName = name
+	} else if rootpuid != 0 {
+		var base, _ = PathStorePath(session, rootpuid)
+		ret.RootName = path.Base(base)
 	}
 
 	if uid == aid {
@@ -219,7 +231,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		}
 
 		if fi.IsDir() || IsTypeISO(ext) {
-			if ret.List, ret.Skip, err = ScanDir(acc, session, syspath, &cg); err != nil && len(ret.List) == 0 {
+			if ret.List, ret.Skip, err = ScanDir(acc, session, syspath, uid == aid); err != nil && len(ret.List) == 0 {
 				if errors.Is(err, fs.ErrNotExist) {
 					WriteError(w, r, http.StatusNotFound, err, AECfolderabsent)
 				} else {

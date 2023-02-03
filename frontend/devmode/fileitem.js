@@ -768,7 +768,7 @@ const VueTileItem = {
 			return `/id${this.$root.aid}/tile/${this.file.puid}/${24 * this.wdhmult * this.sx}x${18 * this.wdhmult * this.sy}`;
 		},
 		iconblank() {
-			return `/asst/blank-tile/${24 * this.wdhmult * this.sx}x${18 * this.wdhmult * this.sy}.svg`;
+			return `/fs/assets/blank-tile/${24 * this.wdhmult * this.sx}x${18 * this.wdhmult * this.sy}.svg`;
 		}
 	},
 	methods: {

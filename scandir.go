@@ -153,7 +153,7 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 
 // ScanDir returns file properties list for given file system directory,
 // or directory in iso-disk.
-func ScanDir(prf *Profile, session *Session, dir string, cg *CatGrp) (ret []any, skip int, err error) {
+func ScanDir(prf *Profile, session *Session, dir string, isadmin bool) (ret []any, skip int, err error) {
 	var files []fs.FileInfo
 	if files, err = ReadDir(dir); err != nil && len(files) == 0 {
 		return
@@ -173,8 +173,7 @@ func ScanDir(prf *Profile, session *Session, dir string, cg *CatGrp) (ret []any,
 		if prf.IsHidden(fpath) {
 			continue
 		}
-		var grp = prf.GetPathGroup(fpath, fi)
-		if !cg[grp] {
+		if !prf.PathAccess(fpath, isadmin) {
 			continue
 		}
 

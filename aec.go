@@ -180,6 +180,8 @@ const (
 	AECshrdelnoacc
 	AECshrdeldeny
 	AECshrdelnodata
+	AECshrdelnopath
+	AECshrdelaccess
 
 	// drive/add
 
