@@ -402,7 +402,6 @@ func (prf *Profile) GetSharePath(session *Session, syspath string) (shrpath stri
 }
 
 // GetRootPath returns path to nearest root that contains given syspath.
-// Or returns category it self, if it given.
 func (prf *Profile) GetRootPath(session *Session, syspath string) (rootpath string, rootpuid Puid_t) {
 	prf.mux.RLock()
 	defer prf.mux.RUnlock()
@@ -419,14 +418,6 @@ func (prf *Profile) GetRootPath(session *Session, syspath string) (rootpath stri
 		rootpuid = PathStoreCache(session, base)
 		rootpath = path.Join(rootpuid.String(), syspath[len(base):])
 		return
-	}
-
-	for puid, fpath := range CatKeyPath {
-		if syspath == fpath {
-			rootpuid = puid
-			rootpath = fpath
-			return
-		}
 	}
 	return
 }

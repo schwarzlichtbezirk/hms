@@ -9,14 +9,14 @@
 						<li class="breadcrumb-item active" aria-current="page">{{curbasename}}</li>
 					</ol>
 				</nav>
-				<template v-if="curpath">
+				<template v-if="sharename||rootname">
 					<div class="small">
-						<template v-if="shrname">
-							Shared at <span class="bg-stat">{{shrname}}</span> as
+						<template v-if="sharename">
+							Shared at <span class="bg-stat">{{sharename}}</span> as
 							<span class="bg-stat"><a v-bind:href="curshorturl" target="_blank">{{curshorturl}}</a></span>.
 						</template>
-						<template v-else>
-							Folder does not shared
+						<template v-else-if="rootname">
+							Folder at disk <span class="bg-stat">{{rootname}}</span> does not shared.
 						</template>
 						Total <span class="bg-stat">{{pathcount}}</span> subfolders,
 						<span class="bg-stat">{{filecount}}</span> files on <span class="bg-stat">{{sumsize}}</span>

@@ -70,10 +70,10 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var ret struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
 
-		List []any `json:"list" yaml:"list" xml:"list>prop"`
-		Skip int   `json:"skip" yaml:"skip" xml:"skip,attr"`
+		List    []any  `json:"list" yaml:"list" xml:"list>prop"`
+		Skipped int    `json:"skipped" yaml:"skipped" xml:"skipped,attr"`
+		PUID    Puid_t `json:"puid" yaml:"puid" xml:"puid,attr"`
 
-		PUID      Puid_t `json:"puid" yaml:"puid" xml:"puid,attr"`
 		SharePath string `json:"sharepath" yaml:"sharepath" xml:"sharepath,attr"`
 		ShareName string `json:"sharename" yaml:"sharename" xml:"sharename,attr"`
 		RootPath  string `json:"rootpath" yaml:"rootpath" xml:"rootpath,attr"`
@@ -231,7 +231,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		}
 
 		if fi.IsDir() || IsTypeISO(ext) {
-			if ret.List, ret.Skip, err = ScanDir(acc, session, syspath, uid == aid); err != nil && len(ret.List) == 0 {
+			if ret.List, ret.Skipped, err = ScanDir(acc, session, syspath, uid == aid); err != nil && len(ret.List) == 0 {
 				if errors.Is(err, fs.ErrNotExist) {
 					WriteError(w, r, http.StatusNotFound, err, AECfolderabsent)
 				} else {
@@ -295,7 +295,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 				WriteError500(w, r, err, AECfoldertracks)
 				return
 			}
-			ret.Skip = len(pl.Tracks) - len(ret.List)
+			ret.Skipped = len(pl.Tracks) - len(ret.List)
 		}
 	}
 

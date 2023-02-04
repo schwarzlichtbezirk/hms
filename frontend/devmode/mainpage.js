@@ -219,7 +219,7 @@ const extfmt = {
 	"image": {
 		".tga": 1, ".bmp": 1, ".dib": 1, ".rle": 1, ".dds": 1,
 		".tif": 1, ".tiff": 1, ".jpg": 1, ".jpe": 1, ".jpeg": 1, ".jfif": 1,
-		".gif": 1, ".png": 1, ".webp": 1, ".psd": 1, ".psb": 1,
+		".gif": 1, ".png": 1, ".webp": 1, ".avif": 1, ".psd": 1, ".psb": 1,
 		".jp2": 1, ".jpg2": 1, ".jpx": 1, ".jpm": 1, ".jxr": 1
 	},
 	"audio": {
@@ -460,8 +460,10 @@ const VueMainApp = {
 			skipped: 0, // number of skipped files in current folder
 			curscan: new Date(), // time of last scanning of current folder
 			curpuid: "", // current folder PUID
-			curpath: "", // current folder path and path state
-			shrname: "", // current folder path share name
+			sharepath: "", // current folder share path
+			sharename: "", // current folder share name
+			rootpath: "", // current folder root path
+			rootname: "", // current folder root name
 			copied: null, // copied item
 			cuted: null, // cuted item
 
@@ -479,34 +481,39 @@ const VueMainApp = {
 		},
 		// current page URL
 		curlongurl() {
-			return `${(devmode ? "/dev" : "")}/id${this.aid}/path/${this.curpath}`;
+			if (CIDN[this.curpuid]) {
+				return `${(devmode ? "/dev" : "")}/id${this.aid}/ctgr/${CIDN[this.curpuid]}/`;
+			} else {
+				return `${(devmode ? "/dev" : "")}/id${this.aid}/path/${this.curpath}`;
+			}
+		},
+		// current folder path, to share or to disk
+		curpath() {
+			return this.sharepath || this.rootpath;
 		},
 		// current path base name
 		curbasename() {
 			if (CP[this.curpuid]) {
 				return CP[this.curpuid];
-			} else if (this.curpath) {
-				const arr = this.curpath.split('/');
-				const base = arr.pop() || arr.pop();
-				return arr.length ? base : this.shrname;
 			} else {
-				return "unknown";
+				const arr = this.curpath.split('/');
+				if (arr.length > 1) {
+					return arr.pop();
+				} else {
+					return this.sharename || this.rootname;
+				}
 			}
 		},
 		// array of paths to current folder
 		curpathway() {
+			const lst = [];
 			if (!this.curpath) {
 				return [];
 			}
 
 			const arr = this.curpath.split('/');
-			// remove empty element from separator at the end
-			// and remove current name
-			if (!arr.pop()) {
-				arr.pop();
-			}
+			arr.pop(); // remove current name
 
-			const lst = [];
 			let path = '';
 			for (const fn of arr) {
 				if (path) {
@@ -521,7 +528,7 @@ const VueMainApp = {
 				});
 			}
 			if (lst.length) {
-				lst[0].name = this.shrname || lst[0].name;
+				lst[0].name = this.sharename || this.rootname;
 			}
 			return lst;
 		},
@@ -656,7 +663,7 @@ const VueMainApp = {
 				if (CP[hist.puid]) {
 					return `back to "${CP[hist.puid]}"`;
 				} else if (hist.path) {
-					return `back to /id${hist.aid}/path/${hist.path}`;
+					return `back to /id${this.aid}/path/${hist.path}`;
 				} else {
 					return "back to home";
 				}
@@ -669,7 +676,7 @@ const VueMainApp = {
 				if (CP[hist.puid]) {
 					return `forward to ${CP[hist.puid]}`;
 				} else if (hist.path) {
-					return `forward to /id${hist.aid}/path/${hist.path}`;
+					return `forward to /id${this.aid}/path/${hist.path}`;
 				} else {
 					return "forward to home";
 				}
@@ -706,10 +713,12 @@ const VueMainApp = {
 			}
 
 			// current path & state
-			this.skipped = response.data.skip;
+			this.skipped = response.data.skipped;
 			this.curpuid = response.data.puid;
-			this.curpath = response.data.sharepath || response.data.rootpath;
-			this.shrname = response.data.sharename || response.data.rootname;
+			this.sharepath = response.data.sharepath;
+			this.sharename = response.data.sharename;
+			this.rootpath = response.data.rootpath;
+			this.rootname = response.data.rootname;
 			this.hashome = response.data.hashome;
 
 			await this.newfolder(response.data.list);
@@ -725,8 +734,10 @@ const VueMainApp = {
 			// current path & state
 			this.skipped = 0;
 			this.curpuid = CNID.map;
-			this.curpath = "";
-			this.shrname = "";
+			this.sharepath = "";
+			this.sharename = "";
+			this.rootpath = "";
+			this.rootname = "";
 			this.hashome = response.data.hashome;
 
 			await this.newfolder(response.data.list);
@@ -741,7 +752,7 @@ const VueMainApp = {
 
 			// update page data
 			this.curscan = new Date(Date.now());
-			this.seturl();
+			window.history.replaceState(null, "", this.curlongurl);
 			document.title = `hms - ${this.curbasename}`;
 			// scroll page to top
 			this.$refs.page.scrollTop = 0;
@@ -806,19 +817,6 @@ const VueMainApp = {
 			}
 		},
 
-		seturl() {
-			const url = (() => {
-				if (CIDN[this.curpuid]) {
-					return `${(devmode ? "/dev" : "")}/id${this.aid}/ctgr/${CIDN[this.curpuid]}/`;
-				} else if (this.curpath) {
-					return this.curlongurl;
-				} else {
-					return `${(devmode ? "/dev" : "")}/id${this.aid}/home/`;
-				}
-			})();
-			window.history.replaceState(null, this.curpath, url);
-		},
-
 		// push item into folders history
 		pushhist(hist) {
 			this.histlist.splice(this.histpos);
@@ -877,9 +875,7 @@ const VueMainApp = {
 				eventHub.emit('ajax', +1);
 				try {
 					// open route and push history step
-					const path = this.curpathway.length
-						? this.curpathway[this.curpathway.length - 1].path
-						: "";
+					const path = this.curpathway[this.curpathway.length - 1].path || CNID.home;
 					const hist = { path: path };
 					await this.fetchfolder(hist);
 					this.pushhist(hist);

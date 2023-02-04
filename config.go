@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/schwarzlichtbezirk/wpk"
 )
 
 const (
@@ -185,7 +187,7 @@ func init() {
 	} else {
 		exepath = path.Dir(ToSlash(os.Args[0]))
 	}
-	if ok, _ := PathExists(path.Join(exepath, "hms.go")); ok && strings.HasSuffix(exepath, "hms/cmd") {
+	if ok, _ := wpk.PathExists(path.Join(exepath, "hms.go")); ok && strings.HasSuffix(exepath, "hms/cmd") {
 		devmode = true
 	}
 }

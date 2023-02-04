@@ -512,7 +512,7 @@ func InitCacheWriter(fname string) (cw *CachePackage, err error) {
 		}
 	}()
 
-	var ok, _ = PathExists(pkgpath)
+	var ok, _ = wpk.PathExists(pkgpath)
 	if cw.wpt, err = os.OpenFile(pkgpath, os.O_WRONLY|os.O_CREATE, 0755); err != nil {
 		return
 	}
