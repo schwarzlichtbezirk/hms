@@ -192,7 +192,7 @@ func ExifStoreGet(session *Session, puid Puid_t) (ep ExifProp, ok bool) {
 	var est ExifStore
 	if ok, _ = session.ID(puid).Get(&est); ok { // skip errors
 		ep = est.Prop
-		exifcache.Push(puid, ep) // update cache
+		exifcache.Poke(puid, ep) // update cache
 		return
 	}
 	// try to extract from file
@@ -222,7 +222,7 @@ func ExifStoreSet(session *Session, est *ExifStore) (err error) {
 		gpscache.Store(est.Puid, gi)
 	}
 	// set to memory cache
-	exifcache.Push(est.Puid, est.Prop)
+	exifcache.Poke(est.Puid, est.Prop)
 	// set to database
 	if affected, _ := session.InsertOne(est); affected == 0 {
 		_, err = session.ID(est.Puid).AllCols().Omit("puid").Update(est)
@@ -240,7 +240,7 @@ func TagStoreGet(session *Session, puid Puid_t) (tp TagProp, ok bool) {
 	var tst TagStore
 	if ok, _ = session.ID(puid).Get(&tst); ok { // skip errors
 		tp = tst.Prop
-		tagcache.Push(puid, tp) // update cache
+		tagcache.Poke(puid, tp) // update cache
 		return
 	}
 	// try to extract from file
@@ -264,7 +264,7 @@ func TagStoreGet(session *Session, puid Puid_t) (tp TagProp, ok bool) {
 // TagStoreSet puts value to tags cache.
 func TagStoreSet(session *Session, tst *TagStore) (err error) {
 	// set to memory cache
-	tagcache.Push(tst.Puid, tst.Prop)
+	tagcache.Poke(tst.Puid, tst.Prop)
 	// set to database
 	if affected, _ := session.InsertOne(tst); affected == 0 {
 		_, err = session.ID(tst.Puid).AllCols().Omit("puid").Update(tst)
@@ -358,7 +358,7 @@ func MediaCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 	}
 
 	md, err = EncodeRGBA2WebP(src)
-	mediacache.Push(puid, md)
+	mediacache.Poke(puid, md)
 	mediacache.ToLimit(cfg.MediaCacheMaxNum)
 	return
 }
@@ -434,7 +434,7 @@ func HdCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 	dst = img
 
 	md, err = EncodeRGBA2WebP(dst)
-	hdcache.Push(puid, md)
+	hdcache.Poke(puid, md)
 	hdcache.ToLimit(cfg.HdCacheMaxNum)
 	return
 }

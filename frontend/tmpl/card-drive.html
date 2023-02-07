@@ -4,7 +4,7 @@
 		<div class="navbar-text flex-grow-1 py-0">
 			<a class="card-link d-block" data-bs-toggle="collapse" v-bind:href="'#card'+iid">drives</a>
 		</div>
-		<ul v-show="isadmin" class="navbar-nav flex-row ms-auto">
+		<ul class="navbar-nav flex-row ms-auto">
 			<li><button class="btn toolbtn" title="add disk" data-bs-toggle="modal" v-bind:data-bs-target="'#diskadd'+iid"><i class="material-icons">add_circle_outline</i></button></li>
 			<li><button class="btn toolbtn" v-bind:class="clsdiskremove" v-on:click="ondiskremove" title="remove disk"><i class="material-icons">remove_circle_outline</i></button></li>
 		</ul>

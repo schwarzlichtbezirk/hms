@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"net"
 	"net/http"
 	"path"
 	"strings"
@@ -80,6 +81,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		RootName  string `json:"rootname" yaml:"rootname" xml:"rootname,attr"`
 
 		HasHome bool `json:"hashome" yaml:"hashome" xml:"hashome,attr"`
+		Access  bool `json:"access" yaml:"access" xml:"access,attr"`
 	}
 
 	var acc *Profile
@@ -147,6 +149,8 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			}
 		}
 	}
+	var ip = net.ParseIP(StripPort(r.RemoteAddr))
+	ret.Access = InPasslist(ip)
 
 	var t = time.Now()
 	if puid < PUIDcache {

@@ -24,6 +24,7 @@ func (fp *FileProp) Setup(fi fs.FileInfo) {
 // PuidProp encapsulated path unique ID value for some properties kit.
 type PuidProp struct {
 	PUID   Puid_t `xorm:"'puid'" json:"puid" yaml:"puid" xml:"puid,attr"`
+	Free   bool   `xorm:"'free'" json:"free" yaml:"free" xml:"free,attr"`
 	Shared bool   `xorm:"'shared'" json:"shared" yaml:"shared" xml:"shared,attr"`
 	Static bool   `xorm:"'static'" json:"static" yaml:"static" xml:"static,attr"`
 }

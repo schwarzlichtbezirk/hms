@@ -32,7 +32,7 @@ func (fpath EmbedPath) Cache() {
 		tp = &TileProp{}
 	}
 	tp.SetTile(tme, md.Mime)
-	tilecache.Push(puid, tp)
+	tilecache.Poke(puid, tp)
 }
 
 // ThumbPath is thumbnail path type for cache processing.
@@ -55,7 +55,7 @@ func (fpath ThumbPath) Cache() {
 		tp = &TileProp{}
 	}
 	tp.SetTile(tm0, md.Mime)
-	tilecache.Push(puid, tp)
+	tilecache.Poke(puid, tp)
 }
 
 // TilePath is tile path type for cache processing.
@@ -83,7 +83,7 @@ func (tile TilePath) Cache() {
 	}
 	var tm = TM_t(tile.Wdh / htcell)
 	tp.SetTile(tm, md.Mime)
-	tilecache.Push(puid, tp)
+	tilecache.Poke(puid, tp)
 }
 
 // ImgScanner is singleton for thumbnails producing

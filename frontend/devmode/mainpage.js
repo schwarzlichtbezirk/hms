@@ -446,6 +446,7 @@ const VueMainApp = {
 			authid: 0, // authorized ID
 			aid: 0, // profile ID
 			hashome: false, // able to go home
+			access: false, // this client can have access to not shared files
 
 			selfile: null, // current selected item
 			delfile: null, // file to delete
@@ -473,7 +474,7 @@ const VueMainApp = {
 	computed: {
 		// is it authorized or running on localhost
 		isadmin() {
-			return this.isauth || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+			return this.isauth || this.access;
 		},
 		// current page URL
 		curshorturl() {
@@ -610,7 +611,7 @@ const VueMainApp = {
 		},
 
 		showcopypaste() {
-			return !!this.curpath && this.isadmin;
+			return !!this.rootpath && this.isadmin;
 		},
 		showpastego() {
 		},
@@ -720,6 +721,7 @@ const VueMainApp = {
 			this.rootpath = response.data.rootpath;
 			this.rootname = response.data.rootname;
 			this.hashome = response.data.hashome;
+			this.access = response.data.access;
 
 			await this.newfolder(response.data.list);
 		},

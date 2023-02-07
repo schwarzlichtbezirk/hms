@@ -70,7 +70,7 @@ func (c *Cache[K, T]) Get(key K) (ret T, ok bool) {
 	return
 }
 
-func (c *Cache[K, T]) Push(key K, val T) {
+func (c *Cache[K, T]) Poke(key K, val T) {
 	c.mux.Lock()
 	defer c.mux.Unlock()
 

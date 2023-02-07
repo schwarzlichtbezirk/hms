@@ -27,7 +27,7 @@ type DiskFS struct {
 func NewDiskFS(fpath string) (d *DiskFS, err error) {
 	d = &DiskFS{}
 	var disk *disk.Disk
-	if disk, err = diskfs.OpenWithMode(fpath, diskfs.ReadOnly); err != nil {
+	if disk, err = diskfs.Open(fpath, diskfs.WithOpenMode(diskfs.ReadOnly)); err != nil {
 		return
 	}
 	d.file = disk.File

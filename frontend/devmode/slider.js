@@ -247,13 +247,13 @@ const VuePhotoSlider = {
 		},
 
 		onopen(file, list) {
-			if (imagefilter(file) || videofilter(file)) {
+			if ((this.$root.access || file.free) && imagefilter(file) || videofilter(file)) {
 				this.popup(file, list);
 			}
 		},
 		onselect(file) {
 			if (this.isvisible()) {
-				if (file && (imagefilter(file) || videofilter(file))) {
+				if (file && (this.$root.access || file.free) && (imagefilter(file) || videofilter(file))) {
 					this.load(file);
 					// update controls timer if it set
 					if (this.ctrlhnd) {

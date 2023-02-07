@@ -291,7 +291,7 @@ const VuePlayer = {
 			}
 		},
 		onselect(file) {
-			const is = file => file && (audiofilter(file) || !this.audioonly && videofilter(file));
+			const is = file => file && (this.$root.access || file.free) && (audiofilter(file) || !this.audioonly && videofilter(file));
 			if (this.visible) {
 				if (is(file)) {
 					this.setup(file);

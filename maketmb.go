@@ -101,7 +101,7 @@ func ExtractThmub(session *Session, syspath string) (md MediaData, err error) {
 
 	// push successful result to cache, err != nil, md.Mime != MimeDis
 	if err != nil {
-		tmbcache.Push(puid, md)
+		tmbcache.Poke(puid, md)
 		tmbcache.ToLimit(cfg.ThumbCacheMaxNum)
 	}
 	return

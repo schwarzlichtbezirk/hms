@@ -116,6 +116,7 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 		if dp, ok := dpmap[puid]; ok || fp.Type != FTfile {
 			var dk DirKit
 			dk.PUID = puid
+			dk.Free = prf.PathAccess(fpath, false)
 			dk.Shared = prf.IsShared(fpath)
 			if fi != nil {
 				_, dk.Static = fi.(*FileInfoISO)
@@ -131,6 +132,7 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 		} else {
 			var fk FileKit
 			fk.PUID = puid
+			fk.Free = prf.PathAccess(fpath, false)
 			fk.Shared = prf.IsShared(fpath)
 			if fi != nil {
 				_, fk.Static = fi.(*FileInfoISO)

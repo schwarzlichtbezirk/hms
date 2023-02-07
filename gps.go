@@ -206,47 +206,48 @@ func gpsscanAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	for _, puid := range arg.List {
 		var puid = puid // localize
 		if syspath, ok := PathStorePath(session, puid); ok {
-			if acc.PathAccess(syspath, uid == aid) {
-				if val, ok := gpscache.Load(puid); ok {
-					var gst = Store[GpsInfo]{
-						Puid: puid,
-						Prop: val.(GpsInfo),
+			if !acc.PathAccess(syspath, uid == aid) {
+				continue
+			}
+			if val, ok := gpscache.Load(puid); ok {
+				var gst = Store[GpsInfo]{
+					Puid: puid,
+					Prop: val.(GpsInfo),
+				}
+				ret.List = append(ret.List, gst)
+			} else {
+				// check memory cache
+				if exifcache.Has(puid) {
+					continue // there are tags without GPS
+				}
+				// try to get from database
+				var est ExifStore
+				est.Puid = puid
+				if ok, _ = session.Get(&est); ok { // skip errors
+					exifcache.Poke(puid, est.Prop) // update cache
+					if est.Prop.IsZero() {
+						continue
 					}
-					ret.List = append(ret.List, gst)
 				} else {
-					// check memory cache
-					if exifcache.Has(puid) {
-						continue // there are tags without GPS
+					// try to extract from file
+					if err := est.Prop.Extract(syspath); err != nil {
+						continue
 					}
-					// try to get from database
-					var est ExifStore
-					est.Puid = puid
-					if ok, _ = session.Get(&est); ok { // skip errors
-						exifcache.Push(puid, est.Prop) // update cache
-						if est.Prop.IsZero() {
-							continue
-						}
-					} else {
-						// try to extract from file
-						if err := est.Prop.Extract(syspath); err != nil {
-							continue
-						}
-						if est.Prop.IsZero() {
-							continue
-						}
-						// set to memory cache
-						exifcache.Push(puid, est.Prop)
-						// prepare to set to database
-						ests = append(ests, est)
+					if est.Prop.IsZero() {
+						continue
 					}
-					if est.Prop.Latitude != 0 || est.Prop.Longitude != 0 {
-						var gst Store[GpsInfo]
-						gst.Puid = puid
-						gst.Prop.FromProp(&est.Prop)
-						ret.List = append(ret.List, gst)
-						// set to GPS cache
-						gpscache.Store(puid, gst.Prop)
-					}
+					// set to memory cache
+					exifcache.Poke(puid, est.Prop)
+					// prepare to set to database
+					ests = append(ests, est)
+				}
+				if est.Prop.Latitude != 0 || est.Prop.Longitude != 0 {
+					var gst Store[GpsInfo]
+					gst.Puid = puid
+					gst.Prop.FromProp(&est.Prop)
+					ret.List = append(ret.List, gst)
+					// set to GPS cache
+					gpscache.Store(puid, gst.Prop)
 				}
 			}
 		}

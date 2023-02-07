@@ -262,7 +262,6 @@ const VueDriveCard = {
 	props: ["flist"],
 	data() {
 		return {
-			isauth: false, // is authorized
 			selfile: null, // current selected drive
 			diskpath: "", // path to disk to add
 			diskpathstate: 0,
@@ -282,10 +281,6 @@ const VueDriveCard = {
 				}
 			}
 			return l;
-		},
-		// is it authorized or running on localhost
-		isadmin() {
-			return this.isauth || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 		},
 		isvisible() {
 			return this.drvlist.length > 0;
@@ -438,9 +433,6 @@ const VueDriveCard = {
 		oncollapse(e) {
 		},
 
-		authclosure(is) {
-			this.isauth = is;
-		},
 		onanyselect(file) {
 			if (file && file.type === FT.drv) {
 				this.selfile = file
@@ -454,7 +446,6 @@ const VueDriveCard = {
 		this.listmode = storageGetString("card.drive.listmode", 'sm');
 	},
 	mounted() {
-		eventHub.on('auth', this.authclosure);
 		eventHub.on('select', this.onanyselect);
 		{
 			const el = document.getElementById('card' + this.iid);
@@ -476,7 +467,6 @@ const VueDriveCard = {
 		}
 	},
 	unmounted() {
-		eventHub.off('auth', this.authclosure);
 		eventHub.off('select', this.onanyselect);
 		{
 			const el = document.getElementById('card' + this.iid);
@@ -775,13 +765,13 @@ const VueFileCard = {
 			const uncached = [];
 			// get embedded thumbnails at first
 			for (const file of flist) {
-				if (file.type === FT.file && !file.etmb && !file.mtmb) {
+				if ((this.$root.access || file.free) && file.type === FT.file && !file.etmb && !file.mtmb) {
 					uncached.push({ puid: file.puid, tm: -1 });
 				}
 			}
 			// then get rendered thumbnails
 			for (const file of flist) {
-				if (file.type === FT.file && !file.mtmb) {
+				if ((this.$root.access || file.free) && file.type === FT.file && !file.mtmb) {
 					uncached.push({ puid: file.puid, tm: 0 });
 				}
 			}
@@ -1304,7 +1294,7 @@ const VueTileCard = {
 			const uncached = [];
 			for (const tile of this.tiles) {
 				const fld = 'mt' + (tile.sx * wdhmult < 10 ? '0' : '') + tile.sx * wdhmult;
-				if (tile.file.type === FT.file && !tile.file[fld]) {
+				if ((this.$root.access || tile.file.free) && tile.file.type === FT.file && !tile.file[fld]) {
 					uncached.push({ puid: tile.file.puid, tm: tile.sx * wdhmult });
 				}
 			}
@@ -1696,7 +1686,7 @@ const VueMapCard = {
 			const uncached = [];
 			// get embedded thumbnails at first
 			for (const file of mlist) {
-				if (!file.etmb && !file.mtmb) {
+				if ((this.$root.access || file.free) && !file.etmb && !file.mtmb) {
 					uncached.push({ puid: file.puid, tm: -1 });
 				}
 			}
