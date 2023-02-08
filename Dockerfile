@@ -11,7 +11,7 @@
 ##
 
 # Use image with golang last version as builder.
-FROM golang:1.19-bullseye AS build
+FROM golang:1.20-bullseye AS build
 
 # See https://stackoverflow.com/questions/64462922/docker-multi-stage-build-go-image-x509-certificate-signed-by-unknown-authorit
 RUN apt-get update && apt-get install -y ca-certificates openssl
@@ -50,7 +50,7 @@ RUN task/build-linux.x64.sh
 ##
 
 # Thin deploy image.
-FROM gcr.io/distroless/base-debian11
+FROM scratch
 
 # Copy compiled executable and packages to new image destination.
 COPY --from=build /go/bin/hms* /go/bin/

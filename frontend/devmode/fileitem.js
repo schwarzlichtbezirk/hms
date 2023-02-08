@@ -426,19 +426,19 @@ const VueIconMenu = {
 		scan() {
 			(async () => {
 				try {
-					const response = await fetchajaxauth("POST", `/id${this.$root.aid}/api/res/tags`, {
+					const response = await fetchjsonauth("POST", `/id${this.$root.aid}/api/res/tags`, {
 						puid: this.file.puid
 					});
-					traceajax(response);
+					const data = await response.json();
+					traceajax(response, data);
 					if (response.ok) {
-						extend(this.file, response.data.prop);
+						extend(this.file, data.prop);
 						this.popover.setContent({
 							'.popover-header': this.file.name,
 							'.popover-body': fileinfo(this.file).map(e => `<b>${e[0]}</b>: ${e[1]}`).join('<br>')
 						})
 						this.scanned = true;
 					} else {
-						const data = await response.json();
 						throw new HttpError(response.status, data);
 					}
 				} catch (e) {

@@ -832,7 +832,7 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	}
 
 	if acc.RootIndex(syspath) >= 0 {
-		WriteOK(w, r, nil)
+		WriteOK(w, r, false)
 		return
 	}
 

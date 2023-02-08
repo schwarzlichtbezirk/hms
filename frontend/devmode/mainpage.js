@@ -443,8 +443,7 @@ const VueMainApp = {
 			resmodel: resmodel,
 			showauth: false, // display authorization form
 			isauth: false, // is authorized
-			authid: 0, // authorized ID
-			aid: 0, // profile ID
+			aid: 0, // profile access ID
 			hashome: false, // able to go home
 			access: false, // this client can have access to not shared files
 
@@ -707,30 +706,32 @@ const VueMainApp = {
 
 		// opens given folder cleary
 		async fetchfolder(arg) {
-			const response = await fetchajaxauth("POST", `/id${this.aid}/api/res/folder`, arg);
-			traceajax(response);
+			const response = await fetchjsonauth("POST", `/id${this.aid}/api/res/folder`, arg);
+			const data = await response.json();
+			traceajax(response, data);
 			if (!response.ok) {
-				throw new HttpError(response.status, response.data);
+				throw new HttpError(response.status, data);
 			}
 
 			// current path & state
-			this.skipped = response.data.skipped;
-			this.curpuid = response.data.puid;
-			this.sharepath = response.data.sharepath;
-			this.sharename = response.data.sharename;
-			this.rootpath = response.data.rootpath;
-			this.rootname = response.data.rootname;
-			this.hashome = response.data.hashome;
-			this.access = response.data.access;
+			this.skipped = data.skipped;
+			this.curpuid = data.puid;
+			this.sharepath = data.sharepath;
+			this.sharename = data.sharename;
+			this.rootpath = data.rootpath;
+			this.rootname = data.rootname;
+			this.hashome = data.hashome;
+			this.access = data.access;
 
-			await this.newfolder(response.data.list);
+			await this.newfolder(data.list);
 		},
 
 		async fetchrangesearch(arg) {
-			const response = await fetchajaxauth("POST", `/id${this.$root.aid}/api/gps/range`, arg);
-			traceajax(response);
+			const response = await fetchjsonauth("POST", `/id${this.$root.aid}/api/gps/range`, arg);
+			const data = await response.json();
+			traceajax(response, data);
 			if (!response.ok) {
-				throw new HttpError(response.status, response.data);
+				throw new HttpError(response.status, data);
 			}
 
 			// current path & state
@@ -740,9 +741,9 @@ const VueMainApp = {
 			this.sharename = "";
 			this.rootpath = "";
 			this.rootname = "";
-			this.hashome = response.data.hashome;
+			this.hashome = data.hashome;
 
-			await this.newfolder(response.data.list);
+			await this.newfolder(data.list);
 		},
 
 		async newfolder(newlist) {
@@ -761,27 +762,29 @@ const VueMainApp = {
 		},
 
 		async fetchshareadd(file) {
-			const response = await fetchajaxauth("POST", `/id${this.aid}/api/share/add`, {
+			const response = await fetchjsonauth("POST", `/id${this.aid}/api/share/add`, {
 				path: file.puid
 			});
-			traceajax(response);
+			const data = await response.json();
+			traceajax(response, data);
 			if (!response.ok) {
-				throw new HttpError(response.status, response.data);
+				throw new HttpError(response.status, data);
 			}
 			file.shared = true; // Vue.set
 		},
 
 		async fetchsharedel(file) {
-			const response = await fetchajaxauth("DELETE", `/id${this.aid}/api/share/del`, {
+			const response = await fetchjsonauth("DELETE", `/id${this.aid}/api/share/del`, {
 				path: file.puid
 			});
-			traceajax(response);
+			const data = await response.json();
+			traceajax(response, data);
 			if (!response.ok) {
-				throw new HttpError(response.status, response.data);
+				throw new HttpError(response.status, data);
 			}
 
 			// update folder settings
-			if (response.data.deleted) { // on ok
+			if (data.deleted) { // on ok
 				file.shared = false; // Vue.set
 			}
 		},
@@ -933,14 +936,15 @@ const VueMainApp = {
 			(async () => {
 				try {
 					const file = this.copied || this.cuted;
-					const response = await fetchajaxauth("POST", `/id${this.$root.aid}/api/edit/copy`, {
+					const response = await fetchjsonauth("POST", `/id${this.$root.aid}/api/edit/copy`, {
 						src: file.puid,
 						dst: this.curpuid,
 						overwrite: ovw && !!this.copied
 					});
-					traceajax(response);
+					const data = await response.json();
+					traceajax(response, data);
 					if (!response.ok) {
-						throw new HttpError(response.status, response.data);
+						throw new HttpError(response.status, data);
 					}
 					// update folder settings
 					if (this.cuted) {
@@ -951,7 +955,7 @@ const VueMainApp = {
 							}
 						}
 					}
-					this.flist.push(response.data);
+					this.flist.push(data);
 					await this.$refs.fcard.fetchtmbscan(); // fetch at backround
 				} catch (e) {
 					ajaxfail(e);
@@ -1024,13 +1028,12 @@ const VueMainApp = {
 			})();
 		},
 
-		authclosure(is) {
-			this.isauth = is;
-			if (is) {
+		authclosure(auth) {
+			this.isauth = auth.signed;
+			if (auth.signed) {
 				const claims = auth.claims();
-				if (claims && 'aid' in claims) {
-					this.authid = claims.aid;
-					this.aid = claims.aid;
+				if (claims && 'uid' in claims) {
+					this.aid = claims.uid;
 				}
 			}
 		},
@@ -1076,20 +1079,14 @@ const VueMainApp = {
 		}
 	},
 	created() {
-		auth.signload();
-		this.login = auth.login;
-		if (devmode && this.isauth) {
-			console.log("token:", auth.token);
-			console.log("login:", auth.login);
-		}
-	},
-	mounted() {
 		eventHub.on('auth', this.authclosure);
 		eventHub.on('ajax', viewpreloader);
 		eventHub.on('open', this.onopen);
 		eventHub.on('select', this.onselect);
 		eventHub.on('playback', this.onplayback);
-
+		auth.signload(); // run it after handler set
+	},
+	mounted() {
 		const chunks = decodeURI(window.location.pathname).split('/');
 		// remove first empty element
 		chunks.shift();
@@ -1226,17 +1223,17 @@ const VueAuth = {
 					traceajax(resp2, data2);
 
 					if (resp2.status === 200) {
-						auth.signin(data2, this.login);
+						auth.signin(data2.access, data2.refrsh, this.login);
 						this.namestate = 1;
 						this.passstate = 1;
 					} else if (resp2.status === 403) { // Forbidden
 						auth.signout();
 						switch (data2.code) {
-							case 13:
+							case 61: // AECsigninnoacc
 								this.namestate = -1;
 								this.passstate = 0;
 								break;
-							case 15:
+							case 63: // AECsignindeny
 								this.namestate = 1;
 								this.passstate = -1;
 								break;
@@ -1260,9 +1257,9 @@ const VueAuth = {
 			this.passstate = 0;
 		},
 
-		authclosure(is) {
-			this.isauth = is;
-			if (is) {
+		authclosure(auth) {
+			this.isauth = auth.signed;
+			if (auth.signed) {
 				this.login = auth.login;
 			}
 		}

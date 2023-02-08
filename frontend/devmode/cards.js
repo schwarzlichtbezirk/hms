@@ -356,12 +356,13 @@ const VueDriveCard = {
 			(async () => {
 				eventHub.emit('ajax', +1);
 				try {
-					const response = await fetchajaxauth("POST", `/id${this.$root.aid}/api/drive/add`, {
+					const response = await fetchjsonauth("POST", `/id${this.$root.aid}/api/drive/add`, {
 						path: this.diskpath
 					});
-					traceajax(response);
+					const data = await response.json();
+					traceajax(response, data);
 					if (response.ok) {
-						const file = response.data;
+						const file = data;
 						if (file) {
 							this.flist.push(file);
 						}
@@ -380,15 +381,16 @@ const VueDriveCard = {
 			(async () => {
 				eventHub.emit('ajax', +1);
 				try {
-					const response = await fetchajaxauth("POST", `/id${this.$root.aid}/api/drive/del`, {
+					const response = await fetchjsonauth("POST", `/id${this.$root.aid}/api/drive/del`, {
 						puid: this.selfile.puid
 					});
-					traceajax(response);
+					const data = await response.json();
+					traceajax(response, data);
 					if (!response.ok) {
-						throw new HttpError(response.status, response.data);
+						throw new HttpError(response.status, data);
 					}
 
-					if (response.data.deleted) {
+					if (data.deleted) {
 						this.flist.splice(this.flist.findIndex(elem => elem === this.selfile), 1);
 						if (this.selfile.shared) {
 							await this.$root.fetchsharedel(this.selfile);
@@ -405,11 +407,12 @@ const VueDriveCard = {
 		ondiskpathchange(e) {
 			(async () => {
 				try {
-					const response = await fetchajaxauth("POST", `/id${this.$root.aid}/api/res/ispath`, {
+					const response = await fetchjsonauth("POST", `/id${this.$root.aid}/api/res/ispath`, {
 						path: this.diskpath
 					});
+					const data = await response.json();
 					if (response.ok) {
-						this.diskpathstate = response.data ? 1 : 0;
+						this.diskpathstate = data ? 1 : 0;
 					} else {
 						this.diskpathstate = -1;
 					}
@@ -791,7 +794,8 @@ const VueFileCard = {
 				});
 				traceajax(response);
 				if (!response.ok) {
-					throw new HttpError(response.status, response.data);
+					const data = await response.json();
+					throw new HttpError(response.status, data);
 				}
 
 				yield;
@@ -806,20 +810,22 @@ const VueFileCard = {
 						});
 						traceajax(response);
 						if (!response.ok) {
-							throw new HttpError(response.status, response.data);
+							const data = await response.json();
+							throw new HttpError(response.status, data);
 						}
 						return;
 					}
-					const response = await fetchajaxauth("POST", `/id${self.$root.aid}/api/tile/chk`, {
+					const response = await fetchjsonauth("POST", `/id${self.$root.aid}/api/tile/chk`, {
 						list: uncached
 					});
-					traceajax(response);
+					const data = await response.json();
+					traceajax(response, data);
 					if (!response.ok) {
-						throw new HttpError(response.status, response.data);
+						throw new HttpError(response.status, data);
 					}
 
 					uncached.splice(0); // refill uncached
-					for (const tp of response.data.list) {
+					for (const tp of data.list) {
 						if (tp.mime) {
 							for (const file of flist) {
 								if (file.puid === tp.puid) {
@@ -1314,7 +1320,8 @@ const VueTileCard = {
 				});
 				traceajax(response);
 				if (!response.ok) {
-					throw new HttpError(response.status, response.data);
+					const data = await response.json();
+					throw new HttpError(response.status, data);
 				}
 
 				yield;
@@ -1327,20 +1334,22 @@ const VueTileCard = {
 						});
 						traceajax(response);
 						if (!response.ok) {
-							throw new HttpError(response.status, response.data);
+							const data = await response.json();
+							throw new HttpError(response.status, data);
 						}
 						return;
 					}
-					const response = await fetchajaxauth("POST", `/id${self.$root.aid}/api/tile/chk`, {
+					const response = await fetchjsonauth("POST", `/id${self.$root.aid}/api/tile/chk`, {
 						list: uncached
 					});
-					traceajax(response);
+					const data = await response.json();
+					traceajax(response, data);
 					if (!response.ok) {
-						throw new HttpError(response.status, response.data);
+						throw new HttpError(response.status, data);
 					}
 
 					uncached.splice(0); // refill uncached
-					for (const tp of response.data.list) {
+					for (const tp of data.list) {
 						if (tp.mime) {
 							for (const tile of self.tiles) {
 								if (tile.file.puid === tp.puid) {
@@ -1652,14 +1661,15 @@ const VueMapCard = {
 	},
 	methods: {
 		async fetchgpsscan(flist) {
-			const response = await fetchajaxauth("POST", `/id${this.$root.aid}/api/gps/scan`, {
+			const response = await fetchjsonauth("POST", `/id${this.$root.aid}/api/gps/scan`, {
 				list: flist.map(file => file.puid),
 			});
-			traceajax(response);
+			const data = await response.json();
+			traceajax(response, data);
 			if (!response.ok) {
-				throw new HttpError(response.status, response.data);
+				throw new HttpError(response.status, data);
 			}
-			for (const gsi of response.data.list || []) {
+			for (const gsi of data.list || []) {
 				for (const file of flist) {
 					if (gsi.puid === file.puid) {
 						file.latitude = gsi.prop.lat;
@@ -1712,7 +1722,8 @@ const VueMapCard = {
 				});
 				traceajax(response);
 				if (!response.ok) {
-					throw new HttpError(response.status, response.data);
+					const data = await response.json();
+					throw new HttpError(response.status, data);
 				}
 
 				yield;
@@ -1727,21 +1738,23 @@ const VueMapCard = {
 						});
 						traceajax(response);
 						if (!response.ok) {
-							throw new HttpError(response.status, response.data);
+							const data = await response.json();
+							throw new HttpError(response.status, data);
 						}
 						return;
 					}
-					const response = await fetchajaxauth("POST", `/id${self.$root.aid}/api/tile/chk`, {
+					const response = await fetchjsonauth("POST", `/id${self.$root.aid}/api/tile/chk`, {
 						list: uncached
 					});
-					traceajax(response);
+					const data = await response.json();
+					traceajax(response, data);
 					if (!response.ok) {
-						throw new HttpError(response.status, response.data);
+						throw new HttpError(response.status, data);
 					}
 
 					const gpslist = [];
 					uncached.splice(0); // refill uncached
-					for (const tp of response.data.list) {
+					for (const tp of data.list) {
 						if (tp.mime) {
 							for (const file of mlist) {
 								if (file.puid === tp.puid) {

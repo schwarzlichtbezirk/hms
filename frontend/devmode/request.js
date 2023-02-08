@@ -3,56 +3,66 @@
 
 const eventHub = makeeventhub();
 
-const auth = {
-	token: {
-		access: null,
-		refrsh: null
-	},
-	login: "",
+const makeauth = () => {
+	let access = null;
+	let refrsh = null;
+	let login = "";
 
-	signed() {
-		return !!this.token.access;
-	},
-	claims() {
-		try {
-			const p = this.token.access.split('.');
-			return JSON.parse(atob(p[1]));
-		} catch {
-			return null;
+	const t = {
+		get signed() {
+			return !!access;
+		},
+		get access() {
+			return access;
+		},
+		get refrsh() {
+			return refrsh;
+		},
+		get login() {
+			return login;
+		},
+		get uid() {
+			return this.claims()?.uid;
+		},
+		claims() {
+			try {
+				const p = access.split('.');
+				return JSON.parse(atob(p[1]));
+			} catch {
+				return null;
+			}
+		},
+		signin(ta, tr, ln) {
+			sessionStorage.setItem('token.access', ta);
+			sessionStorage.setItem('token.refrsh', tr);
+			access = ta;
+			refrsh = tr;
+			if (ln) {
+				sessionStorage.setItem('login', ln);
+				login = ln;
+			}
+			eventHub.emit('auth', this);
+		},
+		signout() {
+			sessionStorage.removeItem('token.access');
+			sessionStorage.removeItem('token.refrsh');
+			access = null;
+			refrsh = null;
+			// login remains unchanged
+			eventHub.emit('auth', this);
+		},
+		signload() {
+			access = storageGetString('token.access', null);
+			refrsh = storageGetString('token.refrsh', null);
+			login = storageGetString('login', "");
+			eventHub.emit('auth', this);
 		}
-	},
-	signin(tok, lgn) {
-		sessionStorage.setItem('token', JSON.stringify(tok));
-		this.token.access = tok.access;
-		this.token.refrsh = tok.refrsh;
-		if (lgn) {
-			sessionStorage.setItem('login', lgn);
-			this.login = lgn;
-		}
-		eventHub.emit('auth', true);
-	},
-	signout() {
-		sessionStorage.removeItem('token');
-		this.token.access = null;
-		this.token.refrsh = null;
-		// login remains unchanged
-		eventHub.emit('auth', false);
-	},
-	signload() {
-		try {
-			const tok = JSON.parse(sessionStorage.getItem('token'));
-			this.token.access = tok?.access;
-			this.token.refrsh = tok?.refrsh;
-			this.login = storageGetString('login', "");
-			eventHub.emit('auth', true);
-		} catch {
-			this.token.access = null;
-			this.token.refrsh = null;
-			this.login = "";
-			eventHub.emit('auth', false);
-		}
-	}
+	};
+
+	return t;
 };
+
+const auth = makeauth();
 
 // error on HTTP response with given status.
 class HttpError extends Error {
@@ -68,10 +78,10 @@ class HttpError extends Error {
 const ajaxheader = (bearer) => {
 	const hdr = {
 		'Accept': 'application/json',
-		'Content-Type': 'application/json; charset=utf-8'
+		'Content-Type': 'application/json; charset=utf-8',
 	};
-	if (bearer && auth.token.access) {
-		hdr['Authorization'] = 'Bearer ' + auth.token.access;
+	if (bearer && auth.access) {
+		hdr['Authorization'] = 'Bearer ' + auth.access;
 	}
 	return hdr;
 };
@@ -81,19 +91,8 @@ const fetchjson = async (method, url, body) => {
 	return await fetch(url, {
 		method: method,
 		headers: ajaxheader(false),
-		body: JSON.stringify(body)
+		body: body && JSON.stringify(body),
 	});
-};
-
-// make ajax-call with json data and get json-response.
-const fetchajax = async (method, url, body) => {
-	const response = await fetch(url, {
-		method: method,
-		headers: ajaxheader(false),
-		body: body && JSON.stringify(body)
-	});
-	response.data = await response.json();
-	return response;
 };
 
 // make authorized ajax-call with json data.
@@ -101,32 +100,29 @@ const fetchjsonauth = async (method, url, body) => {
 	const resp0 = await fetch(url, { // 1-st try
 		method: method,
 		headers: ajaxheader(true),
-		body: body && JSON.stringify(body)
+		body: body && JSON.stringify(body),
 	});
-	if (resp0.status === 401 && auth.token.refrsh) { // Unauthorized
-		const resp1 = await fetchjson("POST", "/api/auth/refrsh", {
-			refrsh: auth.token.refrsh
+	if (resp0.status === 401 && auth.refrsh) { // Unauthorized
+		const resp1 = await fetch("/api/auth/refrsh", { // get new token
+			method: "POST",
+			headers: ajaxheader(true),
+			body: JSON.stringify({
+				refrsh: auth.refrsh
+			}),
 		});
-		const data = await resp1.json();
+		const data1 = await resp1.json();
 		if (!resp1.ok) {
-			throw new HttpError(resp1.status, data);
+			throw new HttpError(resp1.status, data1);
 		}
-		auth.signin(data);
+		auth.signin(data1.access, data1.refrsh);
 		const resp2 = fetch(url, { // 2-nd try
 			method: method,
 			headers: ajaxheader(true),
-			body: body && JSON.stringify(body)
+			body: body && JSON.stringify(body),
 		});
 		return resp2;
 	}
 	return resp0;
-};
-
-// make authorized ajax-call with json data and get json-response.
-const fetchajaxauth = async (method, url, body) => {
-	const response = await fetchjsonauth(method, url, body);
-	response.data = await response.json();
-	return response;
 };
 
 // show / hide global preloader.
