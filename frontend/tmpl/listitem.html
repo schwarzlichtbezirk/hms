@@ -5,14 +5,14 @@
 			<icon-tag v-bind:file="file" size="xs" />
 		</div>
 		<picture v-if="label">
-			<template v-for="fmt in iconfmt">
+			<template v-for="fmt in im.iconfmt">
 				<source v-bind:srcset="label+fmt.ext" v-bind:type="fmt.mime">
 			</template>
 			<img v-bind:class="clsicon" class="label position-absolute top-50 start-50 translate-middle" alt="shared">
 		</picture>
 		<picture v-if="file.playback">
-			<source v-bind:srcset="wavebars+'.webp'" type="image/webp">
-			<source v-bind:srcset="wavebars+'.gif'" type="image/gif">
+			<source v-bind:srcset="im.wavebars+'.webp'" type="image/webp">
+			<source v-bind:srcset="im.wavebars+'.gif'" type="image/gif">
 			<img class="bars icon-pix-xs position-absolute top-50 start-50 translate-middle" alt="play">
 		</picture>
 	</div>

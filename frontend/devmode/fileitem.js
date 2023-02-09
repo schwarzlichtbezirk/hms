@@ -19,15 +19,6 @@ const imagefilter = file => file.type === FT.file && file.size && isMainImage(pa
 const audiofilter = file => file.type === FT.file && file.size && isMainAudio(pathext(file.name));
 const videofilter = file => file.type === FT.file && file.size && isMainVideo(pathext(file.name));
 
-const iconwebp = file => {
-	const res = geticonpath(file);
-	return (res.org || res.alt) + '.webp';
-};
-const iconpng = file => {
-	const res = geticonpath(file);
-	return (res.org || res.alt) + '.png';
-};
-
 const filehint = file => {
 	const lst = [];
 	// Std properties
@@ -334,7 +325,7 @@ const VueIcon = {
 	props: ["file", "size"],
 	data() {
 		return {
-			iconfmt: [],
+			im: [],
 			tm: true
 		};
 	},
@@ -343,7 +334,7 @@ const VueIcon = {
 			return pathext(this.file.name);
 		},
 		clsicon() {
-			for (const fmt of this.iconfmt) {
+			for (const fmt of this.im.iconfmt) {
 				if (fmt.mime === 'image/svg+xml') {
 					return iconsvgsize[this.size];
 				} else {
@@ -358,8 +349,7 @@ const VueIcon = {
 			return Number(this.file.etmb) > 0 && this.tm;
 		},
 		iconsrc() {
-			const _ = this.iconfmt; // force update field
-			const res = geticonpath(this.file);
+			const res = geticonpath(this.im, this.file);
 			return res.org || res.alt;
 		},
 		mtmbsrc() {
@@ -377,14 +367,14 @@ const VueIcon = {
 	},
 	methods: {
 		_iconset(im) {
-			this.iconfmt = im.iconfmt;
+			this.im = im;
 		},
 		_thumbmode(tm) {
 			this.tm = tm;
 		}
 	},
 	created() {
-		this.iconfmt = iconmapping.iconfmt;
+		this.im = iconmapping;
 		this.tm = thumbmode;
 	},
 	mounted() {
@@ -503,8 +493,7 @@ const VueListItem = {
 	props: ["file"],
 	data() {
 		return {
-			wavebars: iconmapping.wavebars,
-			iconfmt: [],
+			im: [],
 			tm: true
 		};
 	},
@@ -513,19 +502,18 @@ const VueListItem = {
 			return filehint(this.file).map(e => `${e[0]}: ${e[1]}`).join('\n');
 		},
 		label() {
-			const _ = this.iconfmt; // force update field
 			if (Number(this.file.mtmb) > 0 && this.tm
-				|| !geticonpath(this.file).org) {
+				|| !geticonpath(this.im, this.file).org) {
 				return this.file.shared
-					? iconmapping.shared.label
-					: iconmapping.private.label;
+					? this.im.shared.label
+					: this.im.private.label;
 			}
 		},
 		clsiconwdh() {
 			return iconwdh['xs'];
 		},
 		clsicon() {
-			for (const fmt of this.iconfmt) {
+			for (const fmt of this.im.iconfmt) {
 				if (fmt.mime === 'image/svg+xml') {
 					return iconsvgsize['xs'];
 				} else {
@@ -559,15 +547,14 @@ const VueListItem = {
 	},
 	methods: {
 		_iconset(im) {
-			this.wavebars = im.wavebars;
-			this.iconfmt = im.iconfmt;
+			this.im = im;
 		},
 		_thumbmode(tm) {
 			this.tm = tm;
 		}
 	},
 	created() {
-		this.iconfmt = iconmapping.iconfmt;
+		this.im = iconmapping;
 		this.tm = thumbmode;
 	},
 	mounted() {
@@ -585,8 +572,7 @@ const VueFileItem = {
 	props: ["file", "size"],
 	data() {
 		return {
-			wavebars: iconmapping.wavebars,
-			iconfmt: [],
+			im: [],
 			tm: true
 		};
 	},
@@ -595,19 +581,18 @@ const VueFileItem = {
 			return filehint(this.file).map(e => `${e[0]}: ${e[1]}`).join('\n');
 		},
 		label() {
-			const _ = this.iconfmt; // force update field
 			if (Number(this.file.mtmb) > 0 && this.tm
-				|| !geticonpath(this.file).org) {
+				|| !geticonpath(this.im, this.file).org) {
 				return this.file.shared
-					? iconmapping.shared.label
-					: iconmapping.private.label;
+					? this.im.shared.label
+					: this.im.private.label;
 			}
 		},
 		clsiconwdh() {
 			return iconwdh[this.size];
 		},
 		clsicon() {
-			for (const fmt of this.iconfmt) {
+			for (const fmt of this.im.iconfmt) {
 				if (fmt.mime === 'image/svg+xml') {
 					return iconsvgsize[this.size];
 				} else {
@@ -629,15 +614,14 @@ const VueFileItem = {
 	},
 	methods: {
 		_iconset(im) {
-			this.wavebars = im.wavebars;
-			this.iconfmt = im.iconfmt;
+			this.im = im;
 		},
 		_thumbmode(tm) {
 			this.tm = tm;
 		}
 	},
 	created() {
-		this.iconfmt = iconmapping.iconfmt;
+		this.im = iconmapping;
 		this.tm = thumbmode;
 	},
 	mounted() {
@@ -655,8 +639,7 @@ const VueImgItem = {
 	props: ["file"],
 	data() {
 		return {
-			wavebars: iconmapping.wavebars,
-			iconfmt: [],
+			im: [],
 			tm: true
 		};
 	},
@@ -665,12 +648,11 @@ const VueImgItem = {
 			return filehint(this.file).map(e => `${e[0]}: ${e[1]}`).join('\n');
 		},
 		label() {
-			const _ = this.iconfmt; // force update field
 			if (Number(this.file.mtmb) > 0 && this.tm
-				|| !geticonpath(this.file).org) {
+				|| !geticonpath(this.im, this.file).org) {
 				return this.file.shared
-					? iconmapping.shared.label
-					: iconmapping.private.label;
+					? this.im.shared.label
+					: this.im.private.label;
 			}
 		},
 
@@ -681,15 +663,14 @@ const VueImgItem = {
 	},
 	methods: {
 		_iconset(im) {
-			this.wavebars = im.wavebars;
-			this.iconfmt = im.iconfmt;
+			this.im = im;
 		},
 		_thumbmode(tm) {
 			this.tm = tm;
 		}
 	},
 	created() {
-		this.iconfmt = iconmapping.iconfmt;
+		this.im = iconmapping;
 		this.tm = thumbmode;
 	},
 	mounted() {
@@ -749,7 +730,7 @@ const VueTileItem = {
 	data() {
 		return {
 			wdhmult: wdhmult,
-			iconfmt: [],
+			im: [],
 			tm: true
 		};
 	},
@@ -773,7 +754,7 @@ const VueTileItem = {
 	},
 	methods: {
 		_iconset(im) {
-			this.iconfmt = im.iconfmt;
+			this.im = im;
 		},
 		_thumbmode(tm) {
 			this.tm = tm;
@@ -783,7 +764,7 @@ const VueTileItem = {
 		}
 	},
 	created() {
-		this.iconfmt = iconmapping.iconfmt;
+		this.im = iconmapping;
 		this.tm = thumbmode;
 	},
 	mounted() {

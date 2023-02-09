@@ -6,7 +6,7 @@
 	<template v-else-if="isetmb">
 		<source v-bind:srcset="etmbsrc" v-bind:type="etmbmime">
 	</template>
-	<template v-else v-for="fmt in iconfmt">
+	<template v-else v-for="fmt in im.iconfmt">
 		<source v-bind:srcset="iconsrc+fmt.ext" v-bind:type="fmt.mime">
 	</template>
 	<img v-bind:class="clsicon" v-bind:alt="fmtalt">

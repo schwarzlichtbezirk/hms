@@ -20,6 +20,7 @@ let iconmapping = {
 		grp: {},
 		ext: {}
 	},
+	wavebars: "",
 	iconfmt: []
 };
 let thumbmode = storageGetBoolean("thumbmode", true);
@@ -287,9 +288,9 @@ const getFileGroup = file => {
 	else return FG.other;
 };
 
-const geticonpath = file => {
-	const org = file.shared ? iconmapping.shared : iconmapping.private;
-	const alt = file.shared ? iconmapping.private : iconmapping.shared;
+const geticonpath = (im, file) => {
+	const org = file.shared ? im.shared : im.private;
+	const alt = file.shared ? im.private : im.shared;
 	switch (file.type) {
 		case FT.ctgr:
 			return {
@@ -1192,6 +1193,9 @@ const VueAuth = {
 		clspass() {
 			return !this.passstate ? ''
 				: this.passstate === -1 ? 'is-invalid' : 'is-valid';
+		},
+		clslogin() {
+			return { 'disabled': !this.login || !this.password };
 		}
 	},
 	methods: {

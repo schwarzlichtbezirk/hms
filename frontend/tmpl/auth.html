@@ -9,6 +9,6 @@
 			<input v-model="login" v-bind:class="clsname" v-on:keyup.enter.prevent="onlogin" v-on:keyup="onauthchange" class="form-control toolinp bg-tool" type="text" size="10" maxlength="16" placeholder="login">
 			<input v-model="password" v-bind:class="clspass" v-on:keyup.enter.prevent="onlogin" v-on:keyup="onauthchange" class="form-control toolinp bg-tool" type="password" size="10" maxlength="80" placeholder="password">
 		</div>
-		<button class="btn toolbtn" v-on:click="onlogin" title="sign-in with given password"><i class="material-icons">login</i></button>
+		<button class="btn toolbtn" v-on:click="onlogin" v-bind:class="clslogin" title="sign-in with given password"><i class="material-icons">login</i></button>
 	</template>
 </div>

@@ -2,14 +2,14 @@
 <div class="imgitem position-relative" v-bind:class="itemview" v-bind:title="fmttitle">
 	<icon-tag v-bind:file="file" size="lg" />
 	<picture v-if="label">
-		<template v-for="fmt in iconfmt">
+		<template v-for="fmt in im.iconfmt">
 			<source v-bind:srcset="label+fmt.ext" v-bind:type="fmt.mime">
 		</template>
 		<img class="label position-absolute bottom-0 start-0" alt="shared">
 	</picture>
 	<picture v-if="file.playback">
-		<source v-bind:srcset="wavebars+'.webp'" type="image/webp">
-		<source v-bind:srcset="wavebars+'.gif'" type="image/gif">
+		<source v-bind:srcset="im.wavebars+'.webp'" type="image/webp">
+		<source v-bind:srcset="im.wavebars+'.gif'" type="image/gif">
 	<img class="bars position-absolute top-50 start-50 translate-middle" alt="play">
 	</picture>
 	<div class="tag itemfont overflow-hidden">{{file.name}}</div>

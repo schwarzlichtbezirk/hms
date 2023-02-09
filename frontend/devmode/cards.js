@@ -1517,6 +1517,7 @@ const VueMapCard = {
 			tracks: null,
 			gpslist: [],
 
+			im: [],
 			flisthub: makeeventhub(),
 			iid: makestrid(10) // instance ID
 		};
@@ -1878,7 +1879,7 @@ const VueMapCard = {
 		},
 
 		makemarkericon(file) {
-			const res = geticonpath(file);
+			const res = geticonpath(this.im, file);
 			const icp = res.org || res.alt;
 			let src = "";
 			if (Number(file.mtmb) > 0 && thumbmode) {
@@ -1886,7 +1887,7 @@ const VueMapCard = {
 			} else if (Number(file.etmb) > 0 && thumbmode) {
 				src = `<source srcset="/id${this.$root.aid}/etmb/${file.puid}" type="${MimeStr[file.etmb]}">`;
 			} else {
-				for (fmt of iconmapping.iconfmt) {
+				for (fmt of this.im.iconfmt) {
 					src += `<source srcset="${icp + fmt.ext}" type="${fmt.mime}">`;
 				}
 			}
@@ -1894,7 +1895,7 @@ const VueMapCard = {
 		},
 
 		makemarkerpopup(file) {
-			const res = geticonpath(file);
+			const res = geticonpath(this.im, file);
 			const icp = res.org || res.alt;
 			let src = "";
 			if (Number(file.mtmb) > 0 && thumbmode) {
@@ -1902,7 +1903,7 @@ const VueMapCard = {
 			} else if (Number(file.etmb) > 0 && thumbmode) {
 				src = `<source srcset="/id${this.$root.aid}/etmb/${file.puid}" type="${MimeStr[file.etmb]}">`;
 			} else {
-				for (fmt of iconmapping.iconfmt) {
+				for (fmt of this.im.iconfmt) {
 					src += `<source srcset="${icp + fmt.ext}" type="${fmt.mime}">`;
 				}
 			}
@@ -2264,13 +2265,20 @@ const VueMapCard = {
 					ajaxfail(e);
 				}
 			})();
+		},
+
+		_iconset(im) {
+			this.im = im;
 		}
 	},
 	created() {
 		this.styleid = storageGetString("card.map.styleid", 'mapbox-hybrid');
 		this.markermode = storageGetString("card.map.markermode", 'thumb');
+		this.im = iconmapping;
 	},
 	mounted() {
+		eventHub.on('iconset', this._iconset);
+
 		const el = document.getElementById('card' + this.iid);
 		if (el) {
 			el.addEventListener('shown.bs.collapse', this.onexpand);
@@ -2542,6 +2550,8 @@ const VueMapCard = {
 		});
 	},
 	unmounted() {
+		eventHub.off('iconset', this._iconset);
+
 		const el = document.getElementById('card' + this.iid);
 		if (el) {
 			el.removeEventListener('shown.bs.collapse', this.onexpand);
