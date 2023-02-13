@@ -25,7 +25,12 @@
 	font-size: 1.5rem;
 }
 
-.folder-head .breadcrumb, .card, .modal-content {
+.bg-stat {
+	background: rgba(141, 113, 71, 0.33); /* coffee with milk */
+	padding: 0px 4px;
+}
+
+.hms-card, .folder-head .breadcrumb, .modal-content {
 	background-image: url("/fs/skin/coffee-beans/coffee-beans.avif");
 	/* @alternate */ background-image: url("/fs/skin/coffee-beans/coffee-beans.jpg");
 	background-color: rgb(124, 84, 64);
@@ -35,62 +40,63 @@
 	background-size: cover;
 }
 
-.bg-stat {
-	background: rgba(141, 113, 71, 0.33); /* coffee with milk */
-	padding: 0px 4px;
-}
-
-.bg-card {
-	background: rgba(75, 0, 130, 0.5); /* Indigo */
-}
-
-	.bg-card.card-header {
+	.hms-card > .card-header {
+		background: rgba(75, 0, 130, 0.5); /* Indigo */
 		padding-top: 0.25rem;
 		padding-bottom: 0.25rem;
 	}
 
-		.bg-card.card-header > .navbar-nav ~ .navbar-nav {
+		.hms-card > .card-header > .navbar-nav ~ .navbar-nav {
 			padding-left: 1.25rem;
 		}
 
-	.bg-card .navbar-text {
-		color: rgba(255, 255, 255, 0.5);
-	}
-
-		.bg-card .navbar-text a {
-			color: #fff;
+		.hms-card > .card-header .navbar-text {
+			color: rgba(255, 255, 255, 0.5);
 		}
 
-			.bg-card .navbar-text a:hover, .bg-card .navbar-text a:focus {
+			.hms-card > .card-header .navbar-text a {
 				color: #fff;
 			}
 
-	.bg-card .btn {
-		padding: 0;
+				.hms-card > .card-header .navbar-text a:hover,
+				.hms-card > .card-header .navbar-text a:focus {
+					color: #fff;
+				}
+
+		.hms-card > .card-header .btn {
+			padding: 0;
+		}
+
+		.hms-card > .card-header button {
+			line-height: 1;
+			color: rgba(255, 255, 255, 0.5);
+		}
+
+			.hms-card > .card-header button:hover,
+			.hms-card > .card-header button:focus {
+				color: rgba(255, 255, 255, 0.75);
+				background-color: rgba(175, 86, 4, 0.5); /* body 35%, #af5604 */
+			}
+
+			.hms-card > .card-header button:disabled,
+			.hms-card > .card-header button.disabled {
+				color: rgba(255, 255, 255, 0.25);
+				background-color: transparent;
+				pointer-events: none;
+				cursor: default;
+			}
+
+			.hms-card > .card-header button.active,
+			.hms-card > .card-header .active > button {
+				color: #fff;
+			}
+
+	.hms-card .dropdown-menu {
+		background: rgba(75, 0, 130, 0.5); /* Indigo */
 	}
 
-	.bg-card button {
-		line-height: 1;
-		color: rgba(255, 255, 255, 0.5);
-	}
-
-		.bg-card button:hover, .bg-card button:focus {
-			color: rgba(255, 255, 255, 0.75);
-			background-color: rgba(175, 86, 4, 0.5); /* body 35%, #af5604 */
-		}
-
-		.bg-card button:disabled, bg-card button.disabled {
-			color: rgba(255, 255, 255, 0.25);
-			background-color: transparent;
-			pointer-events: none;
-			cursor: default;
-		}
-
-		.bg-card button.active, .bg-card .active > button {
-			color: #fff;
-		}
-
-	.bg-card .dropdown-item.active, .bg-card .active > .dropdown-item {
+	.hms-card > .card-header .dropdown-item.active,
+	.hms-card > .card-header .active > .dropdown-item {
 		background: rgba(128, 0, 128, 0.5); /* Purple */
 	}
 

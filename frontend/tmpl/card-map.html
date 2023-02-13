@@ -1,6 +1,6 @@
 
-<div v-show="isvisible" class="card m-sm-2">
-	<div class="card-header bg-card d-flex flex-wrap align-items-center">
+<div v-show="isvisible" class="hms-card card m-sm-2">
+	<div class="card-header d-flex flex-wrap align-items-center">
 		<div class="navbar-text flex-grow-1 py-0">
 			<a class="card-link d-block" data-bs-toggle="collapse" v-bind:href="'#card'+iid">map</a>
 		</div>
@@ -11,7 +11,7 @@
 						data-bs-toggle="dropdown" aria-expanded="false">
 						<span class="material-icons">map</span>
 					</button>
-					<div class="dropdown-menu dropdown-menu-end bg-card menu-scrollable">
+					<div class="dropdown-menu dropdown-menu-end menu-scrollable">
 						<button class="dropdown-item" type="button" v-on:click="onmapboxhybrid"
 							v-bind:class="clsmapboxhybrid">Mapbox hybrid</button>
 						<button class="dropdown-item" type="button" v-on:click="onmapboxsatellite"

@@ -4,8 +4,8 @@
 
 	<div id="accordion">
 
-		<div class="card m-sm-2">
-			<div class="card-header bg-card d-flex flex-wrap align-items-center">
+		<div class="hms-card card m-sm-2">
+			<div class="card-header d-flex flex-wrap align-items-center">
 				<div class="navbar-text flex-grow-1 py-0">
 					<a class="card-link d-block" data-bs-toggle="collapse" href="#collapse-servinfo">server info</a>
 				</div>
@@ -73,8 +73,8 @@
 			</div>
 		</div>
 
-		<div class="card m-sm-2">
-			<div class="card-header bg-card d-flex flex-wrap align-items-center">
+		<div class="hms-card card m-sm-2">
+			<div class="card-header d-flex flex-wrap align-items-center">
 				<div class="navbar-text flex-grow-1 py-0">
 					<a class="card-link d-block collapsed" data-bs-toggle="collapse" href="#collapse-memory">memory usage &amp; garbage collector</a>
 				</div>
@@ -118,8 +118,8 @@
 			</div>
 		</div>
 
-		<div class="card m-sm-2">
-			<div class="card-header bg-card d-flex flex-wrap align-items-center">
+		<div class="hms-card card m-sm-2">
+			<div class="card-header d-flex flex-wrap align-items-center">
 				<div class="navbar-text flex-grow-1 py-0">
 					<a class="card-link d-block collapsed" data-bs-toggle="collapse" href="#collapse-cache">caches state</a>
 				</div>
@@ -199,8 +199,8 @@
 			</div>
 		</div>
 
-		<div class="card m-sm-2">
-			<div class="card-header bg-card d-flex flex-wrap align-items-center">
+		<div class="hms-card card m-sm-2">
+			<div class="card-header d-flex flex-wrap align-items-center">
 				<div class="navbar-text flex-grow-1 py-0">
 					<a class="card-link d-block collapsed" data-bs-toggle="collapse" href="#collapse-console">console output</a>
 				</div>
@@ -210,7 +210,6 @@
 			</div>
 			<div id="collapse-console" class="collapse">
 				<div class="card-body">
-					<button v-on:click="ongetlog" type="button" class="btn btn-primary console-but">Update</button>
 					<div class="btn-group">
 						<button v-on:click="onnoprefix" type="button" v-bind:class="isnoprefix" class="btn console-but">No prefix</button>
 						<button v-on:click="ontime" type="button" v-bind:class="istime" class="btn console-but">Time</button>
@@ -221,8 +220,8 @@
 			</div>
 		</div>
 
-		<div class="card m-sm-2">
-			<div class="card-header bg-card d-flex flex-wrap align-items-center">
+		<div class="hms-card card m-sm-2">
+			<div class="card-header d-flex flex-wrap align-items-center">
 				<div class="navbar-text flex-grow-1 py-0">
 					<a class="card-link d-block collapsed" data-bs-toggle="collapse" href="#collapse-users">users activity</a>
 				</div>

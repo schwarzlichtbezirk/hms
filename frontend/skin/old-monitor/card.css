@@ -25,68 +25,74 @@
 	font-size: 1.5rem;
 }
 
-.folder-head .breadcrumb, .card, .modal-content {
-	background-color: #001800;
-}
-
 .bg-stat {
 	background: rgba(255, 255, 255, 0.15);
 	padding: 0px 4px;
 }
 
-.bg-card {
-	background: #003c00;
+.hms-card, .folder-head .breadcrumb, .modal-content {
+	background-color: #001800;
 }
 
-	.bg-card.card-header {
+	.hms-card > .card-header {
+		background: #003c00;
 		padding-top: 0.25rem;
 		padding-bottom: 0.25rem;
 		font-size: 1.25rem;
 	}
 
-		.bg-card.card-header > .navbar-nav ~ .navbar-nav {
+		.hms-card > .card-header > .navbar-nav ~ .navbar-nav {
 			padding-left: 1.25rem;
 		}
 
-	.bg-card .navbar-text {
-		color: rgba(255, 255, 255, 0.5);
-	}
-
-		.bg-card .navbar-text a {
-			color: LightGreen;
+		.hms-card > .card-header .navbar-text {
+			color: rgba(255, 255, 255, 0.5);
 		}
 
-			.bg-card .navbar-text a:hover, .bg-card .navbar-text a:focus {
+			.hms-card > .card-header .navbar-text a {
 				color: LightGreen;
 			}
 
-	.bg-card .btn {
-		padding: 0;
+				.hms-card > .card-header .navbar-text a:hover,
+				.hms-card > .card-header .navbar-text a:focus {
+					color: LightGreen;
+				}
+
+		.hms-card > .card-header .btn {
+			padding: 0;
+		}
+
+		.hms-card > .card-header button {
+			line-height: 1;
+			color: rgba(255, 255, 255, 0.5);
+			border-radius: 0;
+		}
+
+			.hms-card > .card-header button:hover,
+			.hms-card > .card-header button:focus {
+				color: rgba(255, 255, 255, 0.75);
+				background-color: rgba(0, 128, 0, 0.5); /* Green */
+			}
+
+			.hms-card > .card-header button:disabled,
+			.hms-card > .card-header button.disabled {
+				color: rgba(255, 255, 255, 0.25);
+				background-color: transparent;
+				pointer-events: none;
+				cursor: default;
+			}
+
+			.hms-card > .card-header button.active,
+			.hms-card > .card-header .active > button {
+				color: PaleGreen;
+			}
+
+	.hms-card .dropdown-menu {
+		background: #003c00;
 	}
 
-	.bg-card button {
-		line-height: 1;
-		color: rgba(255, 255, 255, 0.5);
-		border-radius: 0;
-	}
-
-		.bg-card button:hover, .bg-card button:focus {
-			color: rgba(255, 255, 255, 0.75);
-			background-color: rgba(0, 128, 0, 0.5); /* Green */
-		}
-
-		.bg-card button:disabled, bg-card button.disabled {
-			color: rgba(255, 255, 255, 0.25);
-			background-color: transparent;
-			pointer-events: none;
-			cursor: default;
-		}
-
-		.bg-card button.active, .bg-card .active > button {
-			color: PaleGreen;
-		}
-
-	.bg-card .dropdown-item.active, .bg-card .active > .dropdown-item {
+	.hms-card > .card-header .dropdown-item.active,
+	.hms-card > .card-header .active > .dropdown-item {
 		color: #001800;
 		background: rgba(255, 255, 255, 0.5);
 	}

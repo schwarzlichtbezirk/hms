@@ -1,6 +1,6 @@
 
-<div v-show="isvisible" class="card m-sm-2">
-	<div class="card-header bg-card d-flex flex-wrap align-items-center">
+<div v-show="isvisible" class="hms-card card m-sm-2">
+	<div class="card-header d-flex flex-wrap align-items-center">
 		<div class="navbar-text flex-grow-1 py-0">
 			<a class="card-link d-block" data-bs-toggle="collapse" v-bind:href="'#card'+iid">drives</a>
 		</div>
@@ -15,7 +15,7 @@
 					<button type="button" class="btn dropdown-toggle" v-bind:title="hintlist" data-bs-toggle="dropdown" aria-expanded="false">
 						<i class="material-icons">{{clslistmode}}</i>
 					</button>
-					<div class="dropdown-menu dropdown-menu-end bg-card">
+					<div class="dropdown-menu dropdown-menu-end">
 						<button class="dropdown-item" type="button" v-on:click="onlistmodels"><i class="material-icons">format_align_justify</i><span>list</span></button>
 						<button class="dropdown-item" type="button" v-on:click="onlistmodesm"><i class="material-icons">view_comfy</i><span>small icons</span></button>
 						<button class="dropdown-item" type="button" v-on:click="onlistmodemd"><i class="material-icons">view_module</i><span>middle icons</span></button>

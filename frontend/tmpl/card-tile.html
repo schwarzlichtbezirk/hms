@@ -1,6 +1,6 @@
 
-<div v-show="isvisible" class="card m-sm-2">
-	<div class="card-header bg-card d-flex flex-wrap align-items-center">
+<div v-show="isvisible" class="hms-card card m-sm-2">
+	<div class="card-header d-flex flex-wrap align-items-center">
 		<div class="navbar-text flex-grow-1 py-0">
 			<a class="card-link d-block" data-bs-toggle="collapse" v-bind:href="'#card'+iid">smart tiles</a>
 		</div>
@@ -11,7 +11,7 @@
 					<button type="button" class="btn dropdown-toggle" v-bind:title="hintsortmode" data-bs-toggle="dropdown" aria-expanded="false">
 						<i class="material-icons">{{clssortmode}}</i>
 					</button>
-					<div class="dropdown-menu dropdown-menu-end bg-card">
+					<div class="dropdown-menu dropdown-menu-end">
 						<button class="dropdown-item" type="button" v-on:click="onsortalpha"><i class="material-icons">sort_by_alpha</i><span>sort by alpha</span></button>
 						<button class="dropdown-item" type="button" v-on:click="onsorttime"><i class="material-icons">schedule</i><span>sort by time</span></button>
 						<button class="dropdown-item" type="button" v-on:click="onsortsize"><i class="material-icons">sort</i><span>sort by size</span></button>
@@ -24,7 +24,7 @@
 					<button type="button" class="btn dropdown-toggle" v-bind:title="hinttilemode" data-bs-toggle="dropdown" aria-expanded="false">
 						<i class="material-icons">dashboard</i>
 					</button>
-					<div class="dropdown-menu dropdown-menu-end bg-card menu-scrollable">
+					<div class="dropdown-menu dropdown-menu-end menu-scrollable">
 						<button class="dropdown-item" type="button" v-on:click="onmode246" v-bind:class="clsmode246">mode-246</button>
 						<button class="dropdown-item" type="button" v-on:click="onmode234" v-bind:class="clsmode234">mode-234</button>
 						<button class="dropdown-item" type="button" v-on:click="onmode26" v-bind:class="clsmode26">mode-26</button>
