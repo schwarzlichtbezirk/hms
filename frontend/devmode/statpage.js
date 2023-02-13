@@ -87,37 +87,30 @@ const VueStatApp = {
 			return this.timemode === 2 && 'btn-info' || 'btn-outline-info';
 		},
 
-		avrshow() {
-			const zn = (this.cchinf.jpgnum ? 1 : 0) + (this.cchinf.pngnum ? 1 : 0) + (this.cchinf.gifnum ? 1 : 0);
-			return zn > 1;
-		},
 		avrtmbcchsize() {
-			if (this.cchinf.mtmbcount) {
-				return (this.cchinf.mtmbsumsize1 / this.cchinf.mtmbcount).toFixed();
-			} else {
-				return "N/A";
-			}
+			return this.cchinf.mtmbcount
+				? (this.cchinf.mtmbsumsize1 / this.cchinf.mtmbcount).toFixed()
+				: "N/A";
+		},
+		avrtmbwebpsize() {
+			return this.cchinf.webpnum
+				? (this.cchinf.webpsumsize1 / this.cchinf.webpnum).toFixed()
+				: "N/A";
 		},
 		avrtmbjpgsize() {
-			if (this.cchinf.jpgnum) {
-				return (this.cchinf.jpgsumsize1 / this.cchinf.jpgnum).toFixed();
-			} else {
-				return "N/A";
-			}
+			return this.cchinf.jpgnum
+				? (this.cchinf.jpgsumsize1 / this.cchinf.jpgnum).toFixed()
+				: "N/A";
 		},
 		avrtmbpngsize() {
-			if (this.cchinf.pngnum) {
-				return (this.cchinf.pngsumsize1 / this.cchinf.pngnum).toFixed();
-			} else {
-				return "N/A";
-			}
+			return this.cchinf.pngnum
+				? (this.cchinf.pngsumsize1 / this.cchinf.pngnum).toFixed()
+				: "N/A";
 		},
 		avrtmbgifsize() {
-			if (this.cchinf.gifnum) {
-				return (this.cchinf.gifsumsize1 / this.cchinf.gifnum).toFixed();
-			} else {
-				return "N/A";
-			}
+			return this.cchinf.gifnum
+				? (this.cchinf.gifsumsize1 / this.cchinf.gifnum).toFixed()
+				: "N/A";
 		},
 
 		usrlstnum() {

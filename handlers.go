@@ -438,7 +438,7 @@ func cchinfAPI(w http.ResponseWriter, r *http.Request) {
 		size2 float64
 		num   int
 	}
-	var jpg, png, gif stat
+	var webp, jpg, png, gif stat
 	thumbpkg.Enum(func(fkey string, ts *wpk.TagsetRaw) bool {
 		var l = float64(ts.Size())
 		if str, ok := ts.TagStr(wpk.TIDmime); ok {
@@ -450,6 +450,8 @@ func cchinfAPI(w http.ResponseWriter, r *http.Request) {
 				s = &png
 			case MimeJpeg:
 				s = &jpg
+			case MimeWebp:
+				s = &webp
 			default:
 				panic(fmt.Sprintf("unexpected MIME type in cache %s", str))
 			}
@@ -467,9 +469,12 @@ func cchinfAPI(w http.ResponseWriter, r *http.Request) {
 		"tagcount":     tagcount,
 		"gpscount":     gpscount,
 		"etmbcount":    etmbcount,
-		"mtmbcount":    gif.num + png.num + jpg.num,
-		"mtmbsumsize1": gif.size1 + png.size1 + jpg.size1,
-		"mtmbsumsize2": gif.size2 + png.size2 + jpg.size2,
+		"mtmbcount":    gif.num + png.num + jpg.num + webp.num,
+		"mtmbsumsize1": gif.size1 + png.size1 + jpg.size1 + webp.size1,
+		"mtmbsumsize2": gif.size2 + png.size2 + jpg.size2 + webp.size2,
+		"webpnum":      webp.num,
+		"webpsumsize1": webp.size1,
+		"webpsumsize2": webp.size2,
 		"jpgnum":       jpg.num,
 		"jpgsumsize1":  jpg.size1,
 		"jpgsumsize2":  jpg.size2,
