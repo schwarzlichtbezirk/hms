@@ -27,7 +27,7 @@ const filehint = file => {
 		lst.push(['size', fmtitemsize(file.size ?? 0)]);
 	}
 	if (file.time > "0001-01-01T00:00:00Z") {
-		lst.push(['time', (new Date(file.time)).toLocaleString()]);
+		lst.push(['time', (new Date(file.time)).toLocaleString('en-GB')]);
 	}
 	// Dir properties
 	if (file.fgrp) {
@@ -66,7 +66,7 @@ const fileinfo = file => {
 		lst.push(['size', fmtitemsize(file.size ?? 0)]);
 	}
 	if (file.time) {
-		lst.push(['time', (new Date(file.time)).toLocaleString()]);
+		lst.push(['time', (new Date(file.time)).toLocaleString('en-GB')]);
 	}
 	// MP3 tags properties
 	if (file.title) {
@@ -118,7 +118,7 @@ const fileinfo = file => {
 		lst.push(['software', file.software]);
 	}*/
 	if (file.datetime) {
-		lst.push(['photo taken', (new Date(file.datetime)).toLocaleString()]);
+		lst.push(['photo taken', (new Date(file.datetime)).toLocaleString('en-GB')]);
 	}
 	switch (file.orientation) {
 		case 1:
@@ -542,7 +542,7 @@ const VueListItem = {
 			return (new Date(this.file.time)).toLocaleDateString();
 		},
 		filetime() {
-			return (new Date(this.file.time)).toLocaleTimeString('en-US', { hour12: false });
+			return (new Date(this.file.time)).toLocaleTimeString('en-GB');
 		}
 	},
 	methods: {

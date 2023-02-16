@@ -67,26 +67,12 @@ const VueStatApp = {
 			srvinf: {},
 			memgc: {},
 			cchinf: {},
-			log: [],
-			timemode: 1,
 			usrlst: {},
 			usrlstpage: 0,
 			usrlstsize: 20
 		};
 	},
 	computed: {
-		isnoprefix() {
-			return this.timemode === 0 && 'btn-info' || 'btn-outline-info';
-		},
-
-		istime() {
-			return this.timemode === 1 && 'btn-info' || 'btn-outline-info';
-		},
-
-		isdatetime() {
-			return this.timemode === 2 && 'btn-info' || 'btn-outline-info';
-		},
-
 		avrtmbcchsize() {
 			return this.cchinf.mtmbcount
 				? (this.cchinf.mtmbsumsize1 / this.cchinf.mtmbcount).toFixed()
@@ -118,25 +104,6 @@ const VueStatApp = {
 		}
 	},
 	methods: {
-		llc(item) {
-			return LLC[item.level] ?? "";
-		},
-		logline(item) {
-			let prefix = "";
-			const t = new Date(item.time);
-			switch (this.timemode) {
-				case 1:
-					prefix = t.toLocaleTimeString() + ' ';
-					break;
-				case 2:
-					prefix = t.toLocaleString() + ' ';
-					break;
-			}
-			if (item.file) {
-				prefix += item.file + ':' + item.line + ': ';
-			}
-			return prefix + item.msg.replace(sqllogregex, `<span class="sql">$2</span>`);
-		},
 		fmtduration(dur) {
 			const sec = 1000;
 			const min = 60 * sec;
@@ -152,31 +119,6 @@ const VueStatApp = {
 				fd = "%02d min %02d sec".printf(Math.floor(dur % hour / min), Math.floor(dur % min / sec));
 			}
 			return fd;
-		},
-
-		onupdlog() {
-		},
-		ongetlog() {
-			(async () => {
-				try {
-					const response = await fetch("/api/stat/getlog");
-					if (response.ok) {
-						const data = await response.json();
-						this.log = data.list;
-					}
-				} catch (e) { console.error(e); }
-			})();
-		},
-
-		onnoprefix() {
-			this.timemode = 0;
-		},
-
-		ontime() {
-			this.timemode = 1;
-		},
-		ondatetime() {
-			this.timemode = 2;
 		},
 
 		onusrlstpage(page) {
@@ -238,13 +180,6 @@ const VueStatApp = {
 			});
 			el?.addEventListener('hide.bs.collapse', e => {
 				expanded = false;
-			});
-		}
-
-		{
-			const el = document.getElementById('collapse-console');
-			el?.addEventListener('show.bs.collapse', e => {
-				this.ongetlog();
 			});
 		}
 
@@ -437,11 +372,84 @@ const VueUser = {
 	}
 };
 
+const VueConsoleCard = {
+	template: '#console-card-tpl',
+	data() {
+		return {
+			log: [],
+			timemode: 1,
+		};
+	},
+	computed: {
+		isnoprefix() {
+			return this.timemode === 0 && 'btn-info' || 'btn-outline-info';
+		},
+		istime() {
+			return this.timemode === 1 && 'btn-info' || 'btn-outline-info';
+		},
+		isdatetime() {
+			return this.timemode === 2 && 'btn-info' || 'btn-outline-info';
+		},
+	},
+	methods: {
+		llc(item) {
+			return LLC[item.level] ?? "";
+		},
+		logline(item) {
+			let prefix = "";
+			const t = new Date(item.time);
+			switch (this.timemode) {
+				case 1:
+					prefix = t.toLocaleTimeString('en-GB') + ' ';
+					break;
+				case 2:
+					prefix = t.toLocaleString('en-GB') + ' ';
+					break;
+			}
+			if (item.file) {
+				prefix += item.file + ':' + item.line + ': ';
+			}
+			return prefix + item.msg.replace(sqllogregex, `<span class="sql">$2</span>`);
+		},
+
+		onupdate() {
+		},
+		onrefresh() {
+			(async () => {
+				try {
+					const response = await fetch("/api/stat/getlog");
+					if (response.ok) {
+						const data = await response.json();
+						this.log = data.list;
+					}
+				} catch (e) { console.error(e); }
+			})();
+		},
+
+		onnoprefix() {
+			this.timemode = 0;
+		},
+		ontime() {
+			this.timemode = 1;
+		},
+		ondatetime() {
+			this.timemode = 2;
+		},
+	},
+	mounted() {
+		const el = document.getElementById('collapse-console');
+		el?.addEventListener('show.bs.collapse', e => {
+			this.onrefresh();
+		});
+	},
+};
+
 // Create application view model
 const appws = Vue.createApp(VueStatApp)
 	.component('catitem-tag', VueCatItem)
 	.component('pagination-tag', VuePagination)
 	.component('user-tag', VueUser)
+	.component('console-card-tag', VueConsoleCard)
 	.mount('#app');
 
 // The End.
