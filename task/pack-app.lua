@@ -42,10 +42,11 @@ pkg:setinfo({ -- set package info
 pkg:begin(envfmt("${GOPATH}/bin/hms-app.wpk"))
 
 -- write record log
+local fnum = 1
 local function logfile(kpath)
-	logfmt("#%d %s, %d bytes, %s",
-		pkg:gettag(kpath, "fid").uint32, kpath,
+	logfmt("#%d %s, %d bytes, %s", fnum, kpath,
 		pkg:filesize(kpath), pkg:gettag(kpath, "mime").string)
+	fnum = fnum+1
 end
 -- patterns for ignored files
 local skippattern = {

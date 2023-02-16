@@ -31,7 +31,6 @@ const xormDriverName = "sqlite3"
 const (
 	devmsuff = "devmode" // relative path to folder with development mode code files
 	relmsuff = "build"   // relative path to folder with compiled code files
-	tmplsuff = "tmpl"    // relative path to html templates folder
 )
 
 // CfgJWTAuth is authentication settings.

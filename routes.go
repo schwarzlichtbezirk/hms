@@ -431,7 +431,10 @@ func LoadTemplates() (err error) {
 	}
 
 	ts = template.New("storage").Delims("[=[", "]=]")
-	if load(ts, path.Join(tmplsuff, "*.html")); err != nil {
+	if load(ts, path.Join("tmpl", "*.html")); err != nil {
+		return
+	}
+	if load(ts, path.Join("tmpl", "*", "*.html")); err != nil { // subfolders
 		return
 	}
 

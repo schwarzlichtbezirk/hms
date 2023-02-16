@@ -154,6 +154,8 @@ const VueStatApp = {
 			return fd;
 		},
 
+		onupdlog() {
+		},
 		ongetlog() {
 			(async () => {
 				try {
