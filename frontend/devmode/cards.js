@@ -170,6 +170,7 @@ const VueCtgrCard = {
 	data() {
 		return {
 			listmode: 'sm',
+			expanded: true,
 			iid: makestrid(10), // instance ID
 		};
 	},
@@ -205,6 +206,9 @@ const VueCtgrCard = {
 		hintlist() {
 			return listmodehint[this.listmode];
 		},
+		expandchevron() {
+			return this.expanded ? 'expand_more' : 'chevron_right';
+		},
 	},
 	methods: {
 		onlistmodels() {
@@ -234,8 +238,10 @@ const VueCtgrCard = {
 			eventHub.emit('select', null);
 		},
 		onexpand(e) {
+			this.expanded = true;
 		},
 		oncollapse(e) {
+			this.expanded = false;
 		},
 	},
 	created() {
@@ -244,6 +250,7 @@ const VueCtgrCard = {
 	mounted() {
 		const el = document.getElementById('card' + this.iid);
 		if (el) {
+			if (this.expanded) { el.classList.add('show'); }
 			el.addEventListener('shown.bs.collapse', this.onexpand);
 			el.addEventListener('hidden.bs.collapse', this.oncollapse);
 		}
@@ -269,6 +276,7 @@ const VueDriveCard = {
 
 			sortorder: 1,
 			listmode: 'sm',
+			expanded: true,
 			iid: makestrid(10), // instance ID
 		};
 	},
@@ -328,6 +336,9 @@ const VueDriveCard = {
 		},
 		hintlist() {
 			return listmodehint[this.listmode];
+		},
+		expandchevron() {
+			return this.expanded ? 'expand_more' : 'chevron_right';
 		},
 	},
 	methods: {
@@ -432,8 +443,10 @@ const VueDriveCard = {
 			eventHub.emit('select', null);
 		},
 		onexpand(e) {
+			this.expanded = true;
 		},
 		oncollapse(e) {
+			this.expanded = false;
 		},
 
 		onanyselect(file) {
@@ -462,6 +475,7 @@ const VueDriveCard = {
 		{
 			const el = document.getElementById('diskadd' + this.iid);
 			if (el) {
+				if (this.expanded) { el.classList.add('show'); }
 				this.diskadd = new bootstrap.Modal(el);
 				el.addEventListener('shown.bs.modal', e => {
 					el.querySelector('input').focus();
@@ -491,6 +505,7 @@ const VueDirCard = {
 		return {
 			sortorder: 1,
 			listmode: 'sm',
+			expanded: true,
 			iid: makestrid(10), // instance ID
 		};
 	},
@@ -538,6 +553,9 @@ const VueDirCard = {
 		hintlist() {
 			return listmodehint[this.listmode];
 		},
+		expandchevron() {
+			return this.expanded ? 'expand_more' : 'chevron_right';
+		},
 	},
 	methods: {
 		onorder() {
@@ -571,8 +589,10 @@ const VueDirCard = {
 			eventHub.emit('select', null);
 		},
 		onexpand(e) {
+			this.expanded = true;
 		},
 		oncollapse(e) {
+			this.expanded = false;
 		},
 	},
 	created() {
@@ -582,6 +602,7 @@ const VueDirCard = {
 	mounted() {
 		const el = document.getElementById('card' + this.iid);
 		if (el) {
+			if (this.expanded) { el.classList.add('show'); }
 			el.addEventListener('shown.bs.collapse', this.onexpand);
 			el.addEventListener('hidden.bs.collapse', this.oncollapse);
 		}
@@ -618,6 +639,7 @@ const VueFileCard = {
 			],
 
 			flisthub: makeeventhub(),
+			expanded: true,
 			iid: makestrid(10), // instance ID
 		};
 	},
@@ -760,6 +782,9 @@ const VueFileCard = {
 		},
 		hintlist() {
 			return listmodehint[this.listmode];
+		},
+		expandchevron() {
+			return this.expanded ? 'expand_more' : 'chevron_right';
 		},
 	},
 	methods: {
@@ -964,9 +989,9 @@ const VueFileCard = {
 		},
 
 		onexpand(e) {
+			this.expanded = true;
 			(async () => {
 				try {
-					this.expanded = true;
 					await this.fetchtmbscan(this.flist); // fetch at backround
 				} catch (e) {
 					ajaxfail(e);
@@ -974,13 +999,7 @@ const VueFileCard = {
 			})();
 		},
 		oncollapse(e) {
-			(async () => {
-				try {
-					this.expanded = false;
-				} catch (e) {
-					ajaxfail(e);
-				}
-			})();
+			this.expanded = false;
 		},
 
 		_thumbmode(val) {
@@ -1002,6 +1021,7 @@ const VueFileCard = {
 		eventHub.on('audioonly', this._audioonly);
 		const el = document.getElementById('card' + this.iid);
 		if (el) {
+			if (this.expanded) { el.classList.add('show'); }
 			el.addEventListener('shown.bs.collapse', this.onexpand);
 			el.addEventListener('hidden.bs.collapse', this.oncollapse);
 		}
@@ -1195,6 +1215,7 @@ const VueTileCard = {
 			sheet: [],
 
 			flisthub: makeeventhub(),
+			expanded: true,
 			iid: makestrid(10), // instance ID
 		};
 	},
@@ -1292,6 +1313,9 @@ const VueTileCard = {
 		},
 		clsmode2346() {
 			return { active: this.tilemode === 'mode-2346' };
+		},
+		expandchevron() {
+			return this.expanded ? 'expand_more' : 'chevron_right';
 		},
 	},
 	methods: {
@@ -1450,9 +1474,9 @@ const VueTileCard = {
 			eventHub.emit('open', file, this.photolist);
 		},
 		onexpand(e) {
+			this.expanded = true;
 			(async () => {
 				try {
-					this.expanded = true;
 					await this.fetchtilescan(); // fetch at backround
 				} catch (e) {
 					ajaxfail(e);
@@ -1460,13 +1484,7 @@ const VueTileCard = {
 			})();
 		},
 		oncollapse(e) {
-			(async () => {
-				try {
-					this.expanded = false;
-				} catch (e) {
-					ajaxfail(e);
-				}
-			})();
+			this.expanded = false;
 		},
 	},
 	created() {
@@ -1478,6 +1496,7 @@ const VueTileCard = {
 		eventHub.on('wdhmult', this.onwdhmult);
 		const el = document.getElementById('card' + this.iid);
 		if (el) {
+			if (this.expanded) { el.classList.add('show'); }
 			el.addEventListener('shown.bs.collapse', this.onexpand);
 			el.addEventListener('hidden.bs.collapse', this.oncollapse);
 		}
@@ -1519,6 +1538,7 @@ const VueMapCard = {
 
 			im: [],
 			flisthub: makeeventhub(),
+			expanded: true,
 			iid: makestrid(10), // instance ID
 		};
 	},
@@ -1658,6 +1678,9 @@ const VueMapCard = {
 				case 'marker': return "photo positions by markers";
 				case 'thumb': return "photo positions by thumbnails";
 			}
+		},
+		expandchevron() {
+			return this.expanded ? 'expand_more' : 'chevron_right';
 		},
 	},
 	methods: {
@@ -2248,9 +2271,9 @@ const VueMapCard = {
 			}
 		},
 		onexpand(e) {
+			this.expanded = true;
 			(async () => {
 				try {
-					this.expanded = true;
 					await this.fetchtmbscan(this.flist); // fetch at backround
 				} catch (e) {
 					ajaxfail(e);
@@ -2258,13 +2281,7 @@ const VueMapCard = {
 			})();
 		},
 		oncollapse(e) {
-			(async () => {
-				try {
-					this.expanded = false;
-				} catch (e) {
-					ajaxfail(e);
-				}
-			})();
+			this.expanded = false;
 		},
 
 		_iconset(im) {
@@ -2281,6 +2298,7 @@ const VueMapCard = {
 
 		const el = document.getElementById('card' + this.iid);
 		if (el) {
+			if (this.expanded) { el.classList.add('show'); }
 			el.addEventListener('shown.bs.collapse', this.onexpand);
 			el.addEventListener('hidden.bs.collapse', this.oncollapse);
 		}

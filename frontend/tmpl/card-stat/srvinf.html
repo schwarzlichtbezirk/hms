@@ -5,8 +5,9 @@
 			<a class="card-link d-block" data-bs-toggle="collapse" v-bind:href="'#card'+iid">server info</a>
 		</div>
 		<ul class="navbar-nav flex-row ms-auto"></ul>
+		<i class="material-icons ms-auto ms-sm-2">{{expandchevron}}</i>
 	</div>
-	<div v-bind:id="'card'+iid" class="collapse show">
+	<div v-bind:id="'card'+iid" class="collapse">
 		<div class="card-body stattable">
 			<div class="row">
 				<div class="col-sm-6 field-name">client version:</div>

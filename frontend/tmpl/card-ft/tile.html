@@ -34,8 +34,9 @@
 			</li>
 			<li><button class="btn" v-on:click="onrebuild" title="rebuild cascade"><span class="material-icons">shuffle</span></button></li>
 		</ul>
+		<i class="material-icons ms-auto ms-sm-2">{{expandchevron}}</i>
 	</div>
-	<div v-bind:id="'card'+iid" class="collapse show">
+	<div v-bind:id="'card'+iid" class="collapse">
 		<div ref="slide" class="card-body p-1 p-sm-3 folder-table">
 			<table class="w-100">
 				<tr>

@@ -242,14 +242,31 @@ const VueSrvinfCard = {
 	data() {
 		return {
 			srvinf: {},
+			expanded: true,
 			iid: makestrid(10), // instance ID
 		};
 	},
 	computed: {
+		expandchevron() {
+			return this.expanded ? 'expand_more' : 'chevron_right';
+		},
 	},
 	methods: {
+		onexpand(e) {
+			this.expanded = true;
+		},
+		oncollapse(e) {
+			this.expanded = false;
+		},
 	},
 	mounted() {
+		const el = document.getElementById('card' + this.iid);
+		if (el) {
+			if (this.expanded) { el.classList.add('show'); }
+			el.addEventListener('show.bs.collapse', this.onexpand);
+			el.addEventListener('hide.bs.collapse', this.oncollapse);
+		}
+
 		(async () => {
 			try {
 				const response = await fetch("/api/stat/srvinf");
@@ -261,6 +278,14 @@ const VueSrvinfCard = {
 			} catch (e) { console.error(e); }
 		})();
 	},
+	unmounted() {
+		const el = document.getElementById('card' + this.iid);
+		if (el) {
+			if (this.expanded) { el.classList.add('show'); }
+			el.removeEventListener('shown.bs.collapse', this.onexpand);
+			el.removeEventListener('hidden.bs.collapse', this.oncollapse);
+		}
+	},
 };
 
 const VueMemgcCard = {
@@ -268,10 +293,14 @@ const VueMemgcCard = {
 	data() {
 		return {
 			memgc: {},
+			expanded: false,
 			iid: makestrid(10), // instance ID
 		};
 	},
 	computed: {
+		expandchevron() {
+			return this.expanded ? 'expand_more' : 'chevron_right';
+		},
 	},
 	methods: {
 		fmtduration(dur) {
@@ -292,18 +321,10 @@ const VueMemgcCard = {
 		},
 
 		onexpand(e) {
-		},
-		oncollapse(e) {
-		},
-	},
-	mounted() {
-		const el = document.getElementById('card' + this.iid);
-		let expanded = false;
-		el?.addEventListener('show.bs.collapse', e => {
-			expanded = true;
+			this.expanded = true;
 			(async () => {
 				try {
-					while (expanded) {
+					while (this.expanded) {
 						const response = await fetch("/api/stat/memusg");
 						if (response.ok) {
 							this.memgc = await response.json();
@@ -312,10 +333,25 @@ const VueMemgcCard = {
 					}
 				} catch (e) { console.error(e); }
 			})();
-		});
-		el?.addEventListener('hide.bs.collapse', e => {
-			expanded = false;
-		});
+		},
+		oncollapse(e) {
+			this.expanded = false;
+		},
+	},
+	mounted() {
+		const el = document.getElementById('card' + this.iid);
+		if (el) {
+			if (this.expanded) { el.classList.add('show'); }
+			el.addEventListener('show.bs.collapse', this.onexpand);
+			el.addEventListener('hide.bs.collapse', this.oncollapse);
+		}
+	},
+	unmounted() {
+		const el = document.getElementById('card' + this.iid);
+		if (el) {
+			el.removeEventListener('shown.bs.collapse', this.onexpand);
+			el.removeEventListener('hidden.bs.collapse', this.oncollapse);
+		}
 	},
 };
 
@@ -324,6 +360,7 @@ const VueCchinfCard = {
 	data() {
 		return {
 			cchinf: {},
+			expanded: false,
 			iid: makestrid(10), // instance ID
 		};
 	},
@@ -353,21 +390,17 @@ const VueCchinfCard = {
 				? (this.cchinf.gifsumsize1 / this.cchinf.gifnum).toFixed()
 				: "N/A";
 		},
+
+		expandchevron() {
+			return this.expanded ? 'expand_more' : 'chevron_right';
+		},
 	},
 	methods: {
 		onexpand(e) {
-		},
-		oncollapse(e) {
-		},
-	},
-	mounted() {
-		const el = document.getElementById('card' + this.iid);
-		let expanded = false;
-		el?.addEventListener('show.bs.collapse', e => {
-			expanded = true;
+			this.expanded = true;
 			(async () => {
 				try {
-					while (expanded) {
+					while (this.expanded) {
 						const response = await fetch("/api/stat/cchinf");
 						if (response.ok) {
 							this.cchinf = await response.json();
@@ -376,10 +409,25 @@ const VueCchinfCard = {
 					}
 				} catch (e) { console.error(e); }
 			})();
-		});
-		el?.addEventListener('hide.bs.collapse', e => {
-			expanded = false;
-		});
+		},
+		oncollapse(e) {
+			this.expanded = false;
+		},
+	},
+	mounted() {
+		const el = document.getElementById('card' + this.iid);
+		if (el) {
+			if (this.expanded) { el.classList.add('show'); }
+			el.addEventListener('show.bs.collapse', this.onexpand);
+			el.addEventListener('hide.bs.collapse', this.oncollapse);
+		}
+	},
+	unmounted() {
+		const el = document.getElementById('card' + this.iid);
+		if (el) {
+			el.removeEventListener('shown.bs.collapse', this.onexpand);
+			el.removeEventListener('hidden.bs.collapse', this.oncollapse);
+		}
 	},
 };
 
@@ -389,6 +437,7 @@ const VueConsoleCard = {
 		return {
 			log: [],
 			timemode: 1,
+			expanded: false,
 			iid: makestrid(10), // instance ID
 		};
 	},
@@ -401,6 +450,10 @@ const VueConsoleCard = {
 		},
 		isdatetime() {
 			return this.timemode === 2 && 'btn-info' || 'btn-outline-info';
+		},
+
+		expandchevron() {
+			return this.expanded ? 'expand_more' : 'chevron_right';
 		},
 	},
 	methods: {
@@ -449,15 +502,27 @@ const VueConsoleCard = {
 		},
 
 		onexpand(e) {
+			this.expanded = true;
+			this.onrefresh();
 		},
 		oncollapse(e) {
+			this.expanded = false;
 		},
 	},
 	mounted() {
 		const el = document.getElementById('card' + this.iid);
-		el?.addEventListener('show.bs.collapse', e => {
-			this.onrefresh();
-		});
+		if (el) {
+			if (this.expanded) { el.classList.add('show'); }
+			el.addEventListener('show.bs.collapse', this.onexpand);
+			el.addEventListener('hide.bs.collapse', this.oncollapse);
+		}
+	},
+	unmounted() {
+		const el = document.getElementById('card' + this.iid);
+		if (el) {
+			el.removeEventListener('shown.bs.collapse', this.onexpand);
+			el.removeEventListener('hidden.bs.collapse', this.oncollapse);
+		}
 	},
 };
 
@@ -468,12 +533,17 @@ const VueUsercCard = {
 			usrlst: {},
 			usrlstpage: 0,
 			usrlstsize: 20,
+			expanded: false,
 			iid: makestrid(10), // instance ID
 		};
 	},
 	computed: {
 		usrlstnum() {
 			return Math.ceil(this.usrlst.total / this.usrlstsize);
+		},
+
+		expandchevron() {
+			return this.expanded ? 'expand_more' : 'chevron_right';
 		},
 	},
 	methods: {
@@ -482,18 +552,10 @@ const VueUsercCard = {
 		},
 
 		onexpand(e) {
-		},
-		oncollapse(e) {
-		},
-	},
-	mounted() {
-		const el = document.getElementById('card' + this.iid);
-		let expanded = false;
-		el?.addEventListener('show.bs.collapse', e => {
-			expanded = true;
+			this.expanded = true;
 			(async () => {
 				try {
-					while (expanded) {
+					while (this.expanded) {
 						const response = await fetchjson("POST", "/api/stat/usrlst", {
 							pos: this.usrlstpage * this.usrlstsize, num: this.usrlstsize
 						});
@@ -504,10 +566,25 @@ const VueUsercCard = {
 					}
 				} catch (e) { console.error(e); }
 			})();
-		});
-		el?.addEventListener('hide.bs.collapse', e => {
-			expanded = false;
-		});
+		},
+		oncollapse(e) {
+			this.expanded = false;
+		},
+	},
+	mounted() {
+		const el = document.getElementById('card' + this.iid);
+		if (el) {
+			if (this.expanded) { el.classList.add('show'); }
+			el.addEventListener('show.bs.collapse', this.onexpand);
+			el.addEventListener('hide.bs.collapse', this.oncollapse);
+		}
+	},
+	unmounted() {
+		const el = document.getElementById('card' + this.iid);
+		if (el) {
+			el.removeEventListener('shown.bs.collapse', this.onexpand);
+			el.removeEventListener('hidden.bs.collapse', this.oncollapse);
+		}
 	},
 };
 

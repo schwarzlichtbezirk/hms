@@ -48,8 +48,9 @@
 			<li><button class="btn" v-on:click="onmarkermode" v-bind:title="hintmarkermode"><span
 						class="material-icons">{{iconmarkermode}}</span></button></li>
 		</ul>
+		<i class="material-icons ms-auto ms-sm-2">{{expandchevron}}</i>
 	</div>
-	<div v-bind:id="'card'+iid" class="collapse show">
+	<div v-bind:id="'card'+iid" class="collapse">
 		<div class="card-body">
 			<div ref="map" class="photomap">
 				<div class="leaflet-top leaflet-right">

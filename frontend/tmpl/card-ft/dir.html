@@ -20,8 +20,9 @@
 				</div>
 			</li>
 		</ul>
+		<i class="material-icons ms-auto ms-sm-2">{{expandchevron}}</i>
 	</div>
-	<div v-bind:id="'card'+iid" class="collapse show">
+	<div v-bind:id="'card'+iid" class="collapse">
 		<div class="card-body p-1 p-sm-3 folder-list" v-bind:class="clsfilelist" v-on:click="onunselect">
 			<template v-for="file in sortedlist">
 				<component v-bind:is="iconmodetag" v-bind:file="file" v-bind:size="listmode" v-on:click.stop="onselect(file)" v-on:dblclick.stop="onopen(file)" />
