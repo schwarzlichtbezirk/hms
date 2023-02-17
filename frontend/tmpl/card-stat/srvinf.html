@@ -2,11 +2,11 @@
 <div class="hms-card card m-sm-2">
 	<div class="card-header d-flex flex-wrap align-items-center">
 		<div class="navbar-text flex-grow-1 py-0">
-			<a class="card-link d-block" data-bs-toggle="collapse" href="#collapse-servinfo">server info</a>
+			<a class="card-link d-block" data-bs-toggle="collapse" v-bind:href="'#card'+iid">server info</a>
 		</div>
 		<ul class="navbar-nav flex-row ms-auto"></ul>
 	</div>
-	<div id="collapse-servinfo" class="collapse show">
+	<div v-bind:id="'card'+iid" class="collapse show">
 		<div class="card-body stattable">
 			<div class="row">
 				<div class="col-sm-6 field-name">client version:</div>

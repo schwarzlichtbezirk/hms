@@ -4,38 +4,38 @@ const sortmodeicon = {
 	byalpha: 'sort_by_alpha',
 	bytime: 'schedule',
 	bysize: 'sort',
-	unsorted: 'filter_alt_off'
+	unsorted: 'filter_alt_off',
 };
 const sortmodehint = {
 	byalpha: "sort by alpha",
 	bytime: "sort by time",
 	bysize: "sort by size",
-	unsorted: "as is unsorted"
+	unsorted: "as is unsorted",
 };
 
 const listmodetag = {
 	xs: 'list-item-tag',
 	sm: 'file-item-tag',
 	md: 'file-item-tag',
-	lg: 'img-item-tag'
+	lg: 'img-item-tag',
 };
 const listmoderow = {
 	xs: 'align-items-start',
 	sm: 'align-items-start',
 	md: 'align-items-start',
-	lg: 'align-items-center'
+	lg: 'align-items-center',
 };
 const listmodeicon = {
 	xs: 'format_align_justify',
 	sm: 'view_comfy',
 	md: 'view_module',
-	lg: 'widgets'
+	lg: 'widgets',
 };
 const listmodehint = {
 	xs: "list",
 	sm: "small icons",
 	md: "middle icons",
-	lg: "large icons"
+	lg: "large icons",
 };
 
 const noderadius = 15;
@@ -73,7 +73,7 @@ const gpxcolors = [
 	'#F4A460', // SandyBrown
 	'#FA8072', // Salmon
 	'#20B2AA', // LightSeaGreen
-	'#4169E1'  // RoyalBlue
+	'#4169E1', // RoyalBlue
 ];
 
 const copyTextToClipboard = text => {
@@ -170,7 +170,7 @@ const VueCtgrCard = {
 	data() {
 		return {
 			listmode: 'sm',
-			iid: makestrid(10) // instance ID
+			iid: makestrid(10), // instance ID
 		};
 	},
 	computed: {
@@ -204,7 +204,7 @@ const VueCtgrCard = {
 
 		hintlist() {
 			return listmodehint[this.listmode];
-		}
+		},
 	},
 	methods: {
 		onlistmodels() {
@@ -236,7 +236,7 @@ const VueCtgrCard = {
 		onexpand(e) {
 		},
 		oncollapse(e) {
-		}
+		},
 	},
 	created() {
 		this.listmode = storageGetString("card.ctgr.listmode", 'sm');
@@ -254,7 +254,7 @@ const VueCtgrCard = {
 			el.removeEventListener('shown.bs.collapse', this.onexpand);
 			el.removeEventListener('hidden.bs.collapse', this.oncollapse);
 		}
-	}
+	},
 };
 
 const VueDriveCard = {
@@ -269,7 +269,7 @@ const VueDriveCard = {
 
 			sortorder: 1,
 			listmode: 'sm',
-			iid: makestrid(10) // instance ID
+			iid: makestrid(10), // instance ID
 		};
 	},
 	computed: {
@@ -328,7 +328,7 @@ const VueDriveCard = {
 		},
 		hintlist() {
 			return listmodehint[this.listmode];
-		}
+		},
 	},
 	methods: {
 		onorder() {
@@ -442,7 +442,7 @@ const VueDriveCard = {
 			} else {
 				this.selfile = null;
 			}
-		}
+		},
 	},
 	created() {
 		this.sortorder = storageGetNumber("card.drive.sortorder", 1);
@@ -481,7 +481,7 @@ const VueDriveCard = {
 
 		// erase diskadd dialog
 		this.diskadd = null;
-	}
+	},
 };
 
 const VueDirCard = {
@@ -491,7 +491,7 @@ const VueDirCard = {
 		return {
 			sortorder: 1,
 			listmode: 'sm',
-			iid: makestrid(10) // instance ID
+			iid: makestrid(10), // instance ID
 		};
 	},
 	computed: {
@@ -537,7 +537,7 @@ const VueDirCard = {
 		},
 		hintlist() {
 			return listmodehint[this.listmode];
-		}
+		},
 	},
 	methods: {
 		onorder() {
@@ -573,7 +573,7 @@ const VueDirCard = {
 		onexpand(e) {
 		},
 		oncollapse(e) {
-		}
+		},
 	},
 	created() {
 		this.sortorder = storageGetNumber("card.dir.sortorder", 1);
@@ -592,7 +592,7 @@ const VueDirCard = {
 			el.removeEventListener('shown.bs.collapse', this.onexpand);
 			el.removeEventListener('hidden.bs.collapse', this.oncollapse);
 		}
-	}
+	},
 };
 
 const VueFileCard = {
@@ -618,7 +618,7 @@ const VueFileCard = {
 			],
 
 			flisthub: makeeventhub(),
-			iid: makestrid(10) // instance ID
+			iid: makestrid(10), // instance ID
 		};
 	},
 	watch: {
@@ -632,7 +632,7 @@ const VueFileCard = {
 			handler(val, oldval) {
 				eventHub.emit('sortedlist', val);
 			}
-		}
+		},
 	},
 	computed: {
 		filelist() {
@@ -760,7 +760,7 @@ const VueFileCard = {
 		},
 		hintlist() {
 			return listmodehint[this.listmode];
-		}
+		},
 	},
 	methods: {
 		async fetchtmbscan(flist) {
@@ -988,7 +988,7 @@ const VueFileCard = {
 		},
 		_audioonly(val) {
 			this.audioonly = val;
-		}
+		},
 	},
 	created() {
 		this.sortorder = storageGetNumber("card.file.sortorder", 1);
@@ -1014,7 +1014,7 @@ const VueFileCard = {
 			el.removeEventListener('shown.bs.collapse', this.onexpand);
 			el.removeEventListener('hidden.bs.collapse', this.oncollapse);
 		}
-	}
+	},
 };
 
 // set of possible sizes for horizontal images
@@ -1195,7 +1195,7 @@ const VueTileCard = {
 			sheet: [],
 
 			flisthub: makeeventhub(),
-			iid: makestrid(10) // instance ID
+			iid: makestrid(10), // instance ID
 		};
 	},
 	watch: {
@@ -1203,7 +1203,7 @@ const VueTileCard = {
 			handler(newlist, oldlist) {
 				this.onrebuild();
 			}
-		}
+		},
 	},
 	computed: {
 		photolist() {
@@ -1292,7 +1292,7 @@ const VueTileCard = {
 		},
 		clsmode2346() {
 			return { active: this.tilemode === 'mode-2346' };
-		}
+		},
 	},
 	methods: {
 		async fetchtilescan() {
@@ -1467,7 +1467,7 @@ const VueTileCard = {
 					ajaxfail(e);
 				}
 			})();
-		}
+		},
 	},
 	created() {
 		this.sortorder = storageGetNumber("card.tile.sortorder", 1);
@@ -1490,7 +1490,7 @@ const VueTileCard = {
 			el.removeEventListener('shown.bs.collapse', this.onexpand);
 			el.removeEventListener('hidden.bs.collapse', this.oncollapse);
 		}
-	}
+	},
 };
 
 const VueMapCard = {
@@ -1519,7 +1519,7 @@ const VueMapCard = {
 
 			im: [],
 			flisthub: makeeventhub(),
-			iid: makestrid(10) // instance ID
+			iid: makestrid(10), // instance ID
 		};
 	},
 	watch: {
@@ -1543,7 +1543,7 @@ const VueMapCard = {
 						break;
 					}
 			}
-		}
+		},
 	},
 	computed: {
 		isvisible() {
@@ -1658,7 +1658,7 @@ const VueMapCard = {
 				case 'marker': return "photo positions by markers";
 				case 'thumb': return "photo positions by thumbnails";
 			}
-		}
+		},
 	},
 	methods: {
 		async fetchgpsscan(flist) {
@@ -2269,7 +2269,7 @@ const VueMapCard = {
 
 		_iconset(im) {
 			this.im = im;
-		}
+		},
 	},
 	created() {
 		this.styleid = storageGetString("card.map.styleid", 'mapbox-hybrid');
@@ -2557,7 +2557,7 @@ const VueMapCard = {
 			el.removeEventListener('shown.bs.collapse', this.onexpand);
 			el.removeEventListener('hidden.bs.collapse', this.oncollapse);
 		}
-	}
+	},
 };
 
 // The End.

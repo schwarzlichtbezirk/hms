@@ -33,7 +33,7 @@ const BN = [
 	"AppleBot", "BaiduBot", "BingBot", "DuckDuckGoBot",
 	"FacebookBot", "GoogleBot", "LinkedInBot", "MsnBot",
 	"PingdomBot", "TwitterBot", "YandexBot", "CocCocBot",
-	"YahooBot" // Bot list ends here
+	"YahooBot", // Bot list ends here
 ];
 
 // OS Name
@@ -43,7 +43,7 @@ const OSN = [
 	"iOS", "Android", "Blackberry",
 	"ChromeOS", "Kindle", "WebOS", "Linux",
 	"Playstation", "Xbox", "Nintendo",
-	"Bot"
+	"Bot",
 ];
 
 // OS Platform
@@ -52,66 +52,32 @@ const OSP = [
 	"Windows", "Mac", "Linux",
 	"iPad", "iPhone", "iPod", "Blackberry", "WindowsPhone",
 	"Playstation", "Xbox", "Nintendo",
-	"Bot"
+	"Bot",
 ];
 
 // Device Type
 const DT = [
-	"Unknown", "Computer", "Tablet", "Phone", "Console", "Wearable", "TV"
+	"Unknown", "Computer", "Tablet", "Phone", "Console", "Wearable", "TV",
 ];
 
 const VueStatApp = {
 	template: '#app-tpl',
 	data() {
 		return {
-			usrlst: {},
-			usrlstpage: 0,
-			usrlstsize: 20
 		};
 	},
 	computed: {
-		usrlstnum() {
-			return Math.ceil(this.usrlst.total / this.usrlstsize);
-		}
 	},
 	methods: {
-		onusrlstpage(page) {
-			this.usrlstpage = page;
-		}
 	},
 	mounted() {
 		eventHub.on('ajax', viewpreloader);
-
-		{
-			const el = document.getElementById('collapse-users');
-			let expanded = false;
-			el?.addEventListener('show.bs.collapse', e => {
-				expanded = true;
-				(async () => {
-					try {
-						while (expanded) {
-							const response = await fetchjson("POST", "/api/stat/usrlst", {
-								pos: this.usrlstpage * this.usrlstsize, num: this.usrlstsize
-							});
-							if (response.ok) {
-								this.usrlst = await response.json();
-							}
-							await new Promise(resolve => setTimeout(resolve, scanfreq));
-						}
-					} catch (e) { console.error(e); }
-				})();
-			});
-			el?.addEventListener('hide.bs.collapse', e => {
-				expanded = false;
-			});
-		}
-
 		// hide start-up preloader
 		eventHub.emit('ajax', -1);
 	},
 	unmounted() {
 		eventHub.off('ajax', viewpreloader);
-	}
+	},
 }; // end of vue application
 
 const VueCatItem = {
@@ -136,74 +102,7 @@ const VueCatItem = {
 	},
 	created() {
 		this.widen = this.wide;
-	}
-};
-
-const VuePagination = {
-	template: '#pagination-tpl',
-	props: ["num"],
-	emits: {
-		'page': page => page >= 0 && page < this.num
 	},
-	data() {
-		return {
-			view: maxpageitem,
-			left: 0,
-			sel: 0
-		};
-	},
-	computed: {
-		pagelist() {
-			const lst = [];
-			for (let i = this.left; i < this.left + this.view && i < this.num; i++) {
-				lst.push(i);
-			}
-			return lst;
-		},
-
-		disleft() {
-			return this.left === 0;
-		},
-		disright() {
-			return this.left === (this.num > this.view ? this.num - this.view : 0);
-		},
-		clsleft() {
-			return this.disleft && 'disabled';
-		},
-		clsright() {
-			return this.disright && 'disabled';
-		}
-	},
-	methods: {
-		clsactive(page) {
-			return page === this.sel && 'active';
-		},
-
-		onpage(page) {
-			if (page !== this.sel) {
-				this.sel = page;
-				this.$emit('page', page);
-			}
-		},
-		onleft() {
-			if (this.left <= 0) {
-				this.left = 0;
-			} else if (this.left + this.view > this.num) {
-				this.left = this.num > this.view ? this.num - this.view : 0;
-			} else {
-				this.left--;
-			}
-		},
-		onright() {
-			if (this.left < 0) {
-				this.left = 0;
-			} else if (this.left + this.view > this.num - 2) {
-				this.left = this.num > this.view ? this.num - this.view : 0;
-			} else {
-				this.left++;
-			}
-		}
-	}
 };
 
 const VueUser = {
@@ -265,10 +164,77 @@ const VueUser = {
 		},
 		device() {
 			return DT[this.user.ua.DeviceType];
-		}
+		},
 	},
 	methods: {
-	}
+	},
+};
+
+const VuePagination = {
+	template: '#pagination-tpl',
+	props: ["num"],
+	emits: {
+		'page': page => page >= 0 && page < this.num
+	},
+	data() {
+		return {
+			view: maxpageitem,
+			left: 0,
+			sel: 0
+		};
+	},
+	computed: {
+		pagelist() {
+			const lst = [];
+			for (let i = this.left; i < this.left + this.view && i < this.num; i++) {
+				lst.push(i);
+			}
+			return lst;
+		},
+
+		disleft() {
+			return this.left === 0;
+		},
+		disright() {
+			return this.left === (this.num > this.view ? this.num - this.view : 0);
+		},
+		clsleft() {
+			return this.disleft && 'disabled';
+		},
+		clsright() {
+			return this.disright && 'disabled';
+		},
+	},
+	methods: {
+		clsactive(page) {
+			return page === this.sel && 'active';
+		},
+
+		onpage(page) {
+			if (page !== this.sel) {
+				this.sel = page;
+				this.$emit('page', page);
+			}
+		},
+		onleft() {
+			if (this.left <= 0) {
+				this.left = 0;
+			} else if (this.left + this.view > this.num) {
+				this.left = this.num > this.view ? this.num - this.view : 0;
+			} else {
+				this.left--;
+			}
+		},
+		onright() {
+			if (this.left < 0) {
+				this.left = 0;
+			} else if (this.left + this.view > this.num - 2) {
+				this.left = this.num > this.view ? this.num - this.view : 0;
+			} else {
+				this.left++;
+			}
+		},
+	},
 };
 
 const VueSrvinfCard = {
@@ -276,6 +242,7 @@ const VueSrvinfCard = {
 	data() {
 		return {
 			srvinf: {},
+			iid: makestrid(10), // instance ID
 		};
 	},
 	computed: {
@@ -301,6 +268,7 @@ const VueMemgcCard = {
 	data() {
 		return {
 			memgc: {},
+			iid: makestrid(10), // instance ID
 		};
 	},
 	computed: {
@@ -322,9 +290,14 @@ const VueMemgcCard = {
 			}
 			return fd;
 		},
+
+		onexpand(e) {
+		},
+		oncollapse(e) {
+		},
 	},
 	mounted() {
-		const el = document.getElementById('collapse-memory');
+		const el = document.getElementById('card' + this.iid);
 		let expanded = false;
 		el?.addEventListener('show.bs.collapse', e => {
 			expanded = true;
@@ -351,6 +324,7 @@ const VueCchinfCard = {
 	data() {
 		return {
 			cchinf: {},
+			iid: makestrid(10), // instance ID
 		};
 	},
 	computed: {
@@ -381,9 +355,13 @@ const VueCchinfCard = {
 		},
 	},
 	methods: {
+		onexpand(e) {
+		},
+		oncollapse(e) {
+		},
 	},
 	mounted() {
-		const el = document.getElementById('collapse-cache');
+		const el = document.getElementById('card' + this.iid);
 		let expanded = false;
 		el?.addEventListener('show.bs.collapse', e => {
 			expanded = true;
@@ -411,6 +389,7 @@ const VueConsoleCard = {
 		return {
 			log: [],
 			timemode: 1,
+			iid: makestrid(10), // instance ID
 		};
 	},
 	computed: {
@@ -468,11 +447,66 @@ const VueConsoleCard = {
 		ondatetime() {
 			this.timemode = 2;
 		},
+
+		onexpand(e) {
+		},
+		oncollapse(e) {
+		},
 	},
 	mounted() {
-		const el = document.getElementById('collapse-console');
+		const el = document.getElementById('card' + this.iid);
 		el?.addEventListener('show.bs.collapse', e => {
 			this.onrefresh();
+		});
+	},
+};
+
+const VueUsercCard = {
+	template: '#users-card-tpl',
+	data() {
+		return {
+			usrlst: {},
+			usrlstpage: 0,
+			usrlstsize: 20,
+			iid: makestrid(10), // instance ID
+		};
+	},
+	computed: {
+		usrlstnum() {
+			return Math.ceil(this.usrlst.total / this.usrlstsize);
+		},
+	},
+	methods: {
+		onusrlstpage(page) {
+			this.usrlstpage = page;
+		},
+
+		onexpand(e) {
+		},
+		oncollapse(e) {
+		},
+	},
+	mounted() {
+		const el = document.getElementById('card' + this.iid);
+		let expanded = false;
+		el?.addEventListener('show.bs.collapse', e => {
+			expanded = true;
+			(async () => {
+				try {
+					while (expanded) {
+						const response = await fetchjson("POST", "/api/stat/usrlst", {
+							pos: this.usrlstpage * this.usrlstsize, num: this.usrlstsize
+						});
+						if (response.ok) {
+							this.usrlst = await response.json();
+						}
+						await new Promise(resolve => setTimeout(resolve, scanfreq));
+					}
+				} catch (e) { console.error(e); }
+			})();
+		});
+		el?.addEventListener('hide.bs.collapse', e => {
+			expanded = false;
 		});
 	},
 };
@@ -480,12 +514,13 @@ const VueConsoleCard = {
 // Create application view model
 const appws = Vue.createApp(VueStatApp)
 	.component('catitem-tag', VueCatItem)
-	.component('pagination-tag', VuePagination)
 	.component('user-tag', VueUser)
+	.component('pagination-tag', VuePagination)
 	.component('srvinf-card-tag', VueSrvinfCard)
 	.component('memgc-card-tag', VueMemgcCard)
 	.component('cchinf-card-tag', VueCchinfCard)
 	.component('console-card-tag', VueConsoleCard)
+	.component('users-card-tag', VueUsercCard)
 	.mount('#app');
 
 // The End.

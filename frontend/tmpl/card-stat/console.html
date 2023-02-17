@@ -2,14 +2,14 @@
 <div class="hms-card card m-sm-2">
 	<div class="card-header d-flex flex-wrap align-items-center">
 		<div class="navbar-text flex-grow-1 py-0">
-			<a class="card-link d-block collapsed" data-bs-toggle="collapse" href="#collapse-console">console output</a>
+			<a class="card-link d-block collapsed" data-bs-toggle="collapse" v-bind:href="'#card'+iid">console output</a>
 		</div>
 		<ul class="navbar-nav flex-row ms-auto">
 			<li><button class="btn" v-on:click="onupdate" title="update mode"><i class="material-icons">update</i></button></li>
 			<li><button class="btn" v-on:click="onrefresh" title="refresh"><i class="material-icons">refresh</i></button></li>
 		</ul>
 	</div>
-	<div id="collapse-console" class="collapse">
+	<div v-bind:id="'card'+iid" class="collapse">
 		<div class="card-body">
 			<div class="btn-group">
 				<button v-on:click="onnoprefix" type="button" v-bind:class="isnoprefix" class="btn console-but">No prefix</button>

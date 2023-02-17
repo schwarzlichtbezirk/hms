@@ -2,11 +2,11 @@
 <div class="hms-card card m-sm-2">
 	<div class="card-header d-flex flex-wrap align-items-center">
 		<div class="navbar-text flex-grow-1 py-0">
-			<a class="card-link d-block collapsed" data-bs-toggle="collapse" href="#collapse-cache">caches state</a>
+			<a class="card-link d-block collapsed" data-bs-toggle="collapse" v-bind:href="'#card'+iid">caches state</a>
 		</div>
 		<ul class="navbar-nav flex-row ms-auto"></ul>
 	</div>
-	<div id="collapse-cache" class="collapse">
+	<div v-bind:id="'card'+iid" class="collapse">
 		<div class="card-body stattable">
 			<div class="row">
 				<div class="col-sm-6 field-name">path cache database size:</div>

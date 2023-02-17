@@ -1,0 +1,20 @@
+
+<div class="hms-card card m-sm-2">
+	<div class="card-header d-flex flex-wrap align-items-center">
+		<div class="navbar-text flex-grow-1 py-0">
+			<a class="card-link d-block collapsed" data-bs-toggle="collapse" v-bind:href="'#card'+iid">users activity</a>
+		</div>
+		<ul class="navbar-nav flex-row ms-auto"></ul>
+	</div>
+	<div v-bind:id="'card'+iid" class="collapse">
+		<div class="card-body">
+			<div>
+				<span class="field-name">total clients:</span><span class="field-value mx-2">{{usrlst.total}}</span>
+			</div>
+			<template v-for="user in usrlst.list">
+				<user-tag v-bind:user="user" />
+			</template>
+			<pagination-tag v-bind:num="usrlstnum" v-on:page="onusrlstpage" />
+		</div>
+	</div>
+</div>
