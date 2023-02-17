@@ -64,112 +64,23 @@ const VueStatApp = {
 	template: '#app-tpl',
 	data() {
 		return {
-			memgc: {},
-			cchinf: {},
 			usrlst: {},
 			usrlstpage: 0,
 			usrlstsize: 20
 		};
 	},
 	computed: {
-		avrtmbcchsize() {
-			return this.cchinf.mtmbcount
-				? (this.cchinf.mtmbsumsize1 / this.cchinf.mtmbcount).toFixed()
-				: "N/A";
-		},
-		avrtmbwebpsize() {
-			return this.cchinf.webpnum
-				? (this.cchinf.webpsumsize1 / this.cchinf.webpnum).toFixed()
-				: "N/A";
-		},
-		avrtmbjpgsize() {
-			return this.cchinf.jpgnum
-				? (this.cchinf.jpgsumsize1 / this.cchinf.jpgnum).toFixed()
-				: "N/A";
-		},
-		avrtmbpngsize() {
-			return this.cchinf.pngnum
-				? (this.cchinf.pngsumsize1 / this.cchinf.pngnum).toFixed()
-				: "N/A";
-		},
-		avrtmbgifsize() {
-			return this.cchinf.gifnum
-				? (this.cchinf.gifsumsize1 / this.cchinf.gifnum).toFixed()
-				: "N/A";
-		},
-
 		usrlstnum() {
 			return Math.ceil(this.usrlst.total / this.usrlstsize);
 		}
 	},
 	methods: {
-		fmtduration(dur) {
-			const sec = 1000;
-			const min = 60 * sec;
-			const hour = 60 * min;
-			const day = 24 * hour;
-
-			let fd;
-			if (dur > day) {
-				fd = "%d days %02d hours %02d min".printf(Math.floor(dur / day), Math.floor(dur % day / hour), Math.floor(dur % hour / min));
-			} else if (dur > hour) {
-				fd = "%d hours %02d min %02d sec".printf(Math.floor(dur / hour), Math.floor(dur % hour / min), Math.floor(dur % min / sec));
-			} else {
-				fd = "%02d min %02d sec".printf(Math.floor(dur % hour / min), Math.floor(dur % min / sec));
-			}
-			return fd;
-		},
-
 		onusrlstpage(page) {
 			this.usrlstpage = page;
 		}
 	},
 	mounted() {
 		eventHub.on('ajax', viewpreloader);
-
-		{
-			const el = document.getElementById('collapse-memory');
-			let expanded = false;
-			el?.addEventListener('show.bs.collapse', e => {
-				expanded = true;
-				(async () => {
-					try {
-						while (expanded) {
-							const response = await fetch("/api/stat/memusg");
-							if (response.ok) {
-								this.memgc = await response.json();
-							}
-							await new Promise(resolve => setTimeout(resolve, scanfreq));
-						}
-					} catch (e) { console.error(e); }
-				})();
-			});
-			el?.addEventListener('hide.bs.collapse', e => {
-				expanded = false;
-			});
-		}
-
-		{
-			const el = document.getElementById('collapse-cache');
-			let expanded = false;
-			el?.addEventListener('show.bs.collapse', e => {
-				expanded = true;
-				(async () => {
-					try {
-						while (expanded) {
-							const response = await fetch("/api/stat/cchinf");
-							if (response.ok) {
-								this.cchinf = await response.json();
-							}
-							await new Promise(resolve => setTimeout(resolve, scanfreq));
-						}
-					} catch (e) { console.error(e); }
-				})();
-			});
-			el?.addEventListener('hide.bs.collapse', e => {
-				expanded = false;
-			});
-		}
 
 		{
 			const el = document.getElementById('collapse-users');
@@ -385,6 +296,115 @@ const VueSrvinfCard = {
 	},
 };
 
+const VueMemgcCard = {
+	template: '#memgc-card-tpl',
+	data() {
+		return {
+			memgc: {},
+		};
+	},
+	computed: {
+	},
+	methods: {
+		fmtduration(dur) {
+			const sec = 1000;
+			const min = 60 * sec;
+			const hour = 60 * min;
+			const day = 24 * hour;
+
+			let fd;
+			if (dur > day) {
+				fd = "%d days %02d hours %02d min".printf(Math.floor(dur / day), Math.floor(dur % day / hour), Math.floor(dur % hour / min));
+			} else if (dur > hour) {
+				fd = "%d hours %02d min %02d sec".printf(Math.floor(dur / hour), Math.floor(dur % hour / min), Math.floor(dur % min / sec));
+			} else {
+				fd = "%02d min %02d sec".printf(Math.floor(dur % hour / min), Math.floor(dur % min / sec));
+			}
+			return fd;
+		},
+	},
+	mounted() {
+		const el = document.getElementById('collapse-memory');
+		let expanded = false;
+		el?.addEventListener('show.bs.collapse', e => {
+			expanded = true;
+			(async () => {
+				try {
+					while (expanded) {
+						const response = await fetch("/api/stat/memusg");
+						if (response.ok) {
+							this.memgc = await response.json();
+						}
+						await new Promise(resolve => setTimeout(resolve, scanfreq));
+					}
+				} catch (e) { console.error(e); }
+			})();
+		});
+		el?.addEventListener('hide.bs.collapse', e => {
+			expanded = false;
+		});
+	},
+};
+
+const VueCchinfCard = {
+	template: '#cchinf-card-tpl',
+	data() {
+		return {
+			cchinf: {},
+		};
+	},
+	computed: {
+		avrtmbcchsize() {
+			return this.cchinf.mtmbcount
+				? (this.cchinf.mtmbsumsize1 / this.cchinf.mtmbcount).toFixed()
+				: "N/A";
+		},
+		avrtmbwebpsize() {
+			return this.cchinf.webpnum
+				? (this.cchinf.webpsumsize1 / this.cchinf.webpnum).toFixed()
+				: "N/A";
+		},
+		avrtmbjpgsize() {
+			return this.cchinf.jpgnum
+				? (this.cchinf.jpgsumsize1 / this.cchinf.jpgnum).toFixed()
+				: "N/A";
+		},
+		avrtmbpngsize() {
+			return this.cchinf.pngnum
+				? (this.cchinf.pngsumsize1 / this.cchinf.pngnum).toFixed()
+				: "N/A";
+		},
+		avrtmbgifsize() {
+			return this.cchinf.gifnum
+				? (this.cchinf.gifsumsize1 / this.cchinf.gifnum).toFixed()
+				: "N/A";
+		},
+	},
+	methods: {
+	},
+	mounted() {
+		const el = document.getElementById('collapse-cache');
+		let expanded = false;
+		el?.addEventListener('show.bs.collapse', e => {
+			expanded = true;
+			(async () => {
+				try {
+					while (expanded) {
+						const response = await fetch("/api/stat/cchinf");
+						if (response.ok) {
+							this.cchinf = await response.json();
+						}
+						await new Promise(resolve => setTimeout(resolve, scanfreq));
+					}
+				} catch (e) { console.error(e); }
+			})();
+		});
+		el?.addEventListener('hide.bs.collapse', e => {
+			expanded = false;
+		});
+	},
+};
+
 const VueConsoleCard = {
 	template: '#console-card-tpl',
 	data() {
@@ -463,6 +483,8 @@ const appws = Vue.createApp(VueStatApp)
 	.component('pagination-tag', VuePagination)
 	.component('user-tag', VueUser)
 	.component('srvinf-card-tag', VueSrvinfCard)
+	.component('memgc-card-tag', VueMemgcCard)
+	.component('cchinf-card-tag', VueCchinfCard)
 	.component('console-card-tag', VueConsoleCard)
 	.mount('#app');
 

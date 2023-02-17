@@ -1,0 +1,81 @@
+
+<div class="hms-card card m-sm-2">
+	<div class="card-header d-flex flex-wrap align-items-center">
+		<div class="navbar-text flex-grow-1 py-0">
+			<a class="card-link d-block collapsed" data-bs-toggle="collapse" href="#collapse-cache">caches state</a>
+		</div>
+		<ul class="navbar-nav flex-row ms-auto"></ul>
+	</div>
+	<div id="collapse-cache" class="collapse">
+		<div class="card-body stattable">
+			<div class="row">
+				<div class="col-sm-6 field-name">path cache database size:</div>
+				<div class="col-md-6 field-value">{{cchinf.pathcount}}</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-6 field-name">directories properties database size:</div>
+				<div class="col-md-6 field-value">{{cchinf.dircount}}</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-6 field-name">EXIF tags database size:</div>
+				<div class="col-md-6 field-value">{{cchinf.exifcount}}</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-6 field-name">ID3 tags database size:</div>
+				<div class="col-md-6 field-value">{{cchinf.tagcount}}</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-6 field-name">GPS cache size:</div>
+				<div class="col-md-6 field-value">{{cchinf.gpscount}}</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-6 field-name">embedded thumbnails cache size:</div>
+				<div class="col-md-6 field-value">{{cchinf.etmbcount}}</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-6 field-name">thumbnails cache number items:</div>
+				<div class="col-md-6 field-value">{{cchinf.mtmbcount}}</div>
+			</div>
+			<div class="row" v-show="cchinf.mtmbcount">
+				<div class="col-sm-6 field-name">thumbnails cache total size, bytes:</div>
+				<div class="col-md-6 field-value">{{cchinf.mtmbsumsize1}}</div>
+			</div>
+			<div class="row" v-show="cchinf.mtmbcount">
+				<div class="col-sm-6 field-name">average thumbnail size, bytes:</div>
+				<div class="col-md-6 field-value">{{avrtmbcchsize}}</div>
+			</div>
+			<div class="row" v-show="cchinf.webpnum">
+				<div class="col-sm-6 field-name">webp thumbnails number items:</div>
+				<div class="col-md-6 field-value">{{cchinf.webpnum}}</div>
+			</div>
+			<div class="row" v-show="cchinf.webpnum">
+				<div class="col-sm-6 field-name">webp average thumbnail size, bytes:</div>
+				<div class="col-md-6 field-value">{{avrtmbwebpsize}}</div>
+			</div>
+			<div class="row" v-show="cchinf.jpgnum">
+				<div class="col-sm-6 field-name">jpeg thumbnails number items:</div>
+				<div class="col-md-6 field-value">{{cchinf.jpgnum}}</div>
+			</div>
+			<div class="row" v-show="cchinf.jpgnum">
+				<div class="col-sm-6 field-name">jpeg average thumbnail size, bytes:</div>
+				<div class="col-md-6 field-value">{{avrtmbjpgsize}}</div>
+			</div>
+			<div class="row" v-show="cchinf.pngnum">
+				<div class="col-sm-6 field-name">png thumbnails number items:</div>
+				<div class="col-md-6 field-value">{{cchinf.pngnum}}</div>
+			</div>
+			<div class="row" v-show="cchinf.pngnum">
+				<div class="col-sm-6 field-name">png average thumbnail size, bytes:</div>
+				<div class="col-md-6 field-value">{{avrtmbpngsize}}</div>
+			</div>
+			<div class="row" v-show="cchinf.gifnum">
+				<div class="col-sm-6 field-name">gif thumbnails number items:</div>
+				<div class="col-md-6 field-value">{{cchinf.gifnum}}</div>
+			</div>
+			<div class="row" v-show="cchinf.gifnum">
+				<div class="col-sm-6 field-name">gif average thumbnail size, bytes:</div>
+				<div class="col-md-6 field-value">{{avrtmbgifsize}}</div>
+			</div>
+		</div>
+	</div>
+</div>
