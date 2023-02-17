@@ -20,7 +20,7 @@ require (
 	github.com/schwarzlichtbezirk/wpk v1.4.2
 	github.com/spate/glimage v0.0.0-20200505055513-fbdcc60a65e5
 	golang.org/x/crypto v0.6.0
-	golang.org/x/image v0.4.0
+	golang.org/x/image v0.5.0
 	golang.org/x/sync v0.1.0
 	golang.org/x/text v0.7.0
 	gopkg.in/ini.v1 v1.67.0
