@@ -64,7 +64,6 @@ const VueStatApp = {
 	template: '#app-tpl',
 	data() {
 		return {
-			srvinf: {},
 			memgc: {},
 			cchinf: {},
 			usrlst: {},
@@ -127,17 +126,6 @@ const VueStatApp = {
 	},
 	mounted() {
 		eventHub.on('ajax', viewpreloader);
-
-		(async () => {
-			try {
-				const response = await fetch("/api/stat/srvinf");
-				if (response.ok) {
-					this.srvinf = await response.json();
-					this.srvinf.clientbuildvers = buildvers;
-					this.srvinf.clientbuilddate = builddate;
-				}
-			} catch (e) { console.error(e); }
-		})();
 
 		{
 			const el = document.getElementById('collapse-memory');
@@ -372,6 +360,31 @@ const VueUser = {
 	}
 };
 
+const VueSrvinfCard = {
+	template: '#srvinf-card-tpl',
+	data() {
+		return {
+			srvinf: {},
+		};
+	},
+	computed: {
+	},
+	methods: {
+	},
+	mounted() {
+		(async () => {
+			try {
+				const response = await fetch("/api/stat/srvinf");
+				if (response.ok) {
+					this.srvinf = await response.json();
+					this.srvinf.clientbuildvers = buildvers;
+					this.srvinf.clientbuilddate = builddate;
+				}
+			} catch (e) { console.error(e); }
+		})();
+	},
+};
+
 const VueConsoleCard = {
 	template: '#console-card-tpl',
 	data() {
@@ -449,6 +462,7 @@ const appws = Vue.createApp(VueStatApp)
 	.component('catitem-tag', VueCatItem)
 	.component('pagination-tag', VuePagination)
 	.component('user-tag', VueUser)
+	.component('srvinf-card-tag', VueSrvinfCard)
 	.component('console-card-tag', VueConsoleCard)
 	.mount('#app');
 
