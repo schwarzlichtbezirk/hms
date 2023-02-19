@@ -383,7 +383,7 @@ func reloadAPI(w http.ResponseWriter, r *http.Request) {
 func srvinfAPI(w http.ResponseWriter, r *http.Request) {
 	var ret = XmlMap{
 		"buildvers": BuildVers,
-		"builddate": BuildDate,
+		"buildtime": BuildTime,
 		"started":   starttime,
 		"govers":    runtime.Version(),
 		"os":        runtime.GOOS,
@@ -406,7 +406,6 @@ func memusgAPI(w http.ResponseWriter, r *http.Request) {
 
 	var ret = XmlMap{
 		"buildvers":     BuildVers,
-		"builddate":     BuildDate,
 		"buildtime":     BuildTime,
 		"running":       time.Since(starttime) / time.Millisecond,
 		"heapalloc":     mem.HeapAlloc,

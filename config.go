@@ -153,11 +153,7 @@ var (
 	BuildVers string
 
 	// compiled binary build date, sets by compiler with command
-	//    go build -ldflags="-X 'github.com/schwarzlichtbezirk/hms.BuildDate=%date%'"
-	BuildDate string
-
-	// compiled binary build time, sets by compiler with command
-	//    go build -ldflags="-X 'github.com/schwarzlichtbezirk/hms.BuildTime=%time%'"
+	//    go build -ldflags="-X 'github.com/schwarzlichtbezirk/hms.BuildDate=%buildtime%'"
 	BuildTime string
 )
 

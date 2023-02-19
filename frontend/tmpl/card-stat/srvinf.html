@@ -23,7 +23,7 @@
 			</div>
 			<div class="row">
 				<div class="col-sm-6 field-name">server builton:</div>
-				<div class="col-md-6 field-value">{{srvinf.builddate}} {{srvinf.buildtime}}</div>
+				<div class="col-md-6 field-value">{{(new Date(srvinf.buildtime)).toLocaleString('en-GB')}}</div>
 			</div>
 			<div class="row">
 				<div class="col-sm-6 field-name">server start time:</div>

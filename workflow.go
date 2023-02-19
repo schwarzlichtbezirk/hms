@@ -30,7 +30,7 @@ var (
 
 // Init performs global data initialization. Loads configuration files, initializes file cache.
 func Init() {
-	Log.Infof("version: %s, builton: %s %s", BuildVers, BuildDate, BuildTime)
+	Log.Infof("version: %s, builton: %s", BuildVers, BuildTime)
 
 	var err error
 
