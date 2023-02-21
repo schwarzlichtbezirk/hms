@@ -294,10 +294,16 @@ const VueMemgcCard = {
 		return {
 			memgc: {},
 			expanded: false,
+			upmode: 5000,
+			upid: 0,
 			iid: makestrid(10), // instance ID
 		};
 	},
 	computed: {
+		clsupdate() {
+			return { 'active': !!this.upmode };
+		},
+
 		expandchevron() {
 			return this.expanded ? 'expand_more' : 'chevron_right';
 		},
@@ -320,22 +326,37 @@ const VueMemgcCard = {
 			return fd;
 		},
 
-		onexpand(e) {
-			this.expanded = true;
+		onupdate() {
+			clearInterval(this.upid);
+			this.upid = 0;
+			this.upmode = this.upmode ? 0 : 5000;
+			if (this.expanded && this.upmode) {
+				this.onrefresh();
+				this.upid = setInterval(() => this.onrefresh(), this.upmode);
+			}
+		},
+		onrefresh() {
 			(async () => {
 				try {
-					while (this.expanded) {
-						const response = await fetch("/api/stat/memusg");
-						if (response.ok) {
-							this.memgc = await response.json();
-						}
-						await new Promise(resolve => setTimeout(resolve, scanfreq));
+					const response = await fetch("/api/stat/memusg");
+					if (response.ok) {
+						this.memgc = await response.json();
 					}
 				} catch (e) { console.error(e); }
 			})();
 		},
+
+		onexpand(e) {
+			this.expanded = true;
+			this.onrefresh();
+			if (this.upmode) {
+				this.upid = setInterval(() => this.onrefresh(), this.upmode);
+			}
+		},
 		oncollapse(e) {
 			this.expanded = false;
+			clearInterval(this.upid);
+			this.upid = 0;
 		},
 	},
 	mounted() {
@@ -360,11 +381,17 @@ const VueCchinfCard = {
 	data() {
 		return {
 			cchinf: {},
+			upmode: 5000,
+			upid: 0,
 			expanded: false,
 			iid: makestrid(10), // instance ID
 		};
 	},
 	computed: {
+		clsupdate() {
+			return { 'active': !!this.upmode };
+		},
+
 		avrtmbcchsize() {
 			return this.cchinf.mtmbcount
 				? (this.cchinf.mtmbsumsize1 / this.cchinf.mtmbcount).toFixed()
@@ -396,22 +423,36 @@ const VueCchinfCard = {
 		},
 	},
 	methods: {
-		onexpand(e) {
-			this.expanded = true;
+		onupdate() {
+			clearInterval(this.upid);
+			this.upid = 0;
+			this.upmode = this.upmode ? 0 : 5000;
+			if (this.expanded && this.upmode) {
+				this.onrefresh();
+				this.upid = setInterval(() => this.onrefresh(), this.upmode);
+			}
+		},
+		onrefresh() {
 			(async () => {
 				try {
-					while (this.expanded) {
-						const response = await fetch("/api/stat/cchinf");
-						if (response.ok) {
-							this.cchinf = await response.json();
-						}
-						await new Promise(resolve => setTimeout(resolve, scanfreq));
+					const response = await fetch("/api/stat/cchinf");
+					if (response.ok) {
+						this.cchinf = await response.json();
 					}
 				} catch (e) { console.error(e); }
 			})();
 		},
+		onexpand(e) {
+			this.expanded = true;
+			this.onrefresh();
+			if (this.upmode) {
+				this.upid = setInterval(() => this.onrefresh(), this.upmode);
+			}
+		},
 		oncollapse(e) {
 			this.expanded = false;
+			clearInterval(this.upid);
+			this.upid = 0;
 		},
 	},
 	mounted() {
@@ -437,19 +478,39 @@ const VueConsoleCard = {
 		return {
 			log: [],
 			timemode: 1,
+			fitwdh: false,
+			upmode: 2500,
+			upid: 0,
 			expanded: false,
 			iid: makestrid(10), // instance ID
 		};
 	},
 	computed: {
-		isnoprefix() {
-			return this.timemode === 0 && 'btn-info' || 'btn-outline-info';
+		clsupdate() {
+			return { 'active': !!this.upmode };
 		},
-		istime() {
-			return this.timemode === 1 && 'btn-info' || 'btn-outline-info';
+
+		clsconsole() {
+			return this.fitwdh ? 'w-100' : 'w-console';
 		},
-		isdatetime() {
-			return this.timemode === 2 && 'btn-info' || 'btn-outline-info';
+		clsfitwdh() {
+			return { 'active': this.fitwdh };
+		},
+		clsvoid() {
+			return { 'active': this.timemode === 0 };
+		},
+		clstime() {
+			return { 'active': this.timemode === 1 };
+		},
+		clsdate() {
+			return { 'active': this.timemode === 2 };
+		},
+		hintprefix() {
+			switch (this.timemode) {
+				case 0: return "time format: no prefix";
+				case 1: return "time format: time only";
+				case 2: return "time format: date-time";
+			}
 		},
 
 		expandchevron() {
@@ -477,7 +538,27 @@ const VueConsoleCard = {
 			return prefix + item.msg.replace(sqllogregex, `<span class="sql">$2</span>`);
 		},
 
+		onfitwdh() {
+			this.fitwdh = !this.fitwdh;
+		},
+		onvoid() {
+			this.timemode = 0;
+		},
+		ontime() {
+			this.timemode = 1;
+		},
+		ondate() {
+			this.timemode = 2;
+		},
+
 		onupdate() {
+			clearInterval(this.upid);
+			this.upid = 0;
+			this.upmode = this.upmode ? 0 : 2500;
+			if (this.expanded && this.upmode) {
+				this.onrefresh();
+				this.upid = setInterval(() => this.onrefresh(), this.upmode);
+			}
 		},
 		onrefresh() {
 			(async () => {
@@ -491,22 +572,17 @@ const VueConsoleCard = {
 			})();
 		},
 
-		onnoprefix() {
-			this.timemode = 0;
-		},
-		ontime() {
-			this.timemode = 1;
-		},
-		ondatetime() {
-			this.timemode = 2;
-		},
-
 		onexpand(e) {
 			this.expanded = true;
 			this.onrefresh();
+			if (this.upmode) {
+				this.upid = setInterval(() => this.onrefresh(), this.upmode);
+			}
 		},
 		oncollapse(e) {
 			this.expanded = false;
+			clearInterval(this.upid);
+			this.upid = 0;
 		},
 	},
 	mounted() {

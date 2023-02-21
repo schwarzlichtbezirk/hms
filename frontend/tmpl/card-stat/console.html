@@ -4,20 +4,30 @@
 		<div class="navbar-text flex-grow-1 py-0">
 			<a class="card-link d-block collapsed" data-bs-toggle="collapse" v-bind:href="'#card'+iid">console output</a>
 		</div>
-		<ul class="navbar-nav flex-row ms-auto">
-			<li><button class="btn" v-on:click="onupdate" title="update mode"><i class="material-icons">update</i></button></li>
+		<ul v-show="expanded" class="navbar-nav flex-row ms-auto">
+			<li><button class="btn" v-on:click="onfitwdh" v-bind:class="clsfitwdh" title="fit to full width"><i class="material-icons">settings_overscan</i></button></li>
+			<li>
+				<div class="btn-group">
+					<button type="button" class="btn dropdown-toggle" v-bind:title="hintprefix" data-bs-toggle="dropdown" aria-expanded="false">
+						<i class="material-icons">more_time</i>
+					</button>
+					<div class="dropdown-menu dropdown-menu-end">
+						<button class="dropdown-item" type="button" v-on:click="onvoid" v-bind:class="clsvoid"><text>no prefix</text></button>
+						<button class="dropdown-item" type="button" v-on:click="ontime" v-bind:class="clstime"><text>time only</text></button>
+						<button class="dropdown-item" type="button" v-on:click="ondate" v-bind:class="clsdate"><text>date-time</text></button>
+					</div>
+				</div>
+			</li>
+		</ul>
+		<ul v-show="expanded" class="navbar-nav flex-row ms-auto">
+			<li><button class="btn" v-on:click="onupdate" v-bind:class="clsupdate" title="update mode"><i class="material-icons">update</i></button></li>
 			<li><button class="btn" v-on:click="onrefresh" title="refresh"><i class="material-icons">refresh</i></button></li>
 		</ul>
 		<i class="material-icons ms-auto ms-sm-2">{{expandchevron}}</i>
 	</div>
 	<div v-bind:id="'card'+iid" class="collapse">
 		<div class="card-body">
-			<div class="btn-group">
-				<button v-on:click="onnoprefix" type="button" v-bind:class="isnoprefix" class="btn console-but">No prefix</button>
-				<button v-on:click="ontime" type="button" v-bind:class="istime" class="btn console-but">Time</button>
-				<button v-on:click="ondatetime" type="button" v-bind:class="isdatetime" class="btn console-but">Date-time</button>
-			</div>
-			<pre ref="console" class="console-window"><template v-for="item in log"><div v-bind:class="llc(item)" v-html="logline(item)"></div></template></pre>
+			<pre ref="console" class="console-window" v-bind:class="clsconsole"><template v-for="item in log"><div v-bind:class="llc(item)" v-html="logline(item)"></div></template></pre>
 		</div>
 	</div>
 </div>

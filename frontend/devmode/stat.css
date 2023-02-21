@@ -21,12 +21,15 @@
 		border-bottom: 1px solid rgba(0, 0, 0, 0.125);
 	}
 
+.w-console {
+	width: 80ch;
+}
+
 .console-window {
 	color: #ccc;
 	background: #222;
 	margin-top: 1em;
 	margin-bottom: 1em;
-	width: 80ch;
 	height: 25em;
 	overflow: auto;
 	-ms-overflow-style: scrollbar;
@@ -66,10 +69,6 @@
 		color: #aca;
 	}
 
-.console-but {
-	width: 120px;
-}
-
 @media (max-width: 575.98px) {
 	.field-name {
 		text-align: left;
@@ -84,10 +83,6 @@
 	.console-window {
 		width: 40ch;
 		height: 40em;
-	}
-
-	.console-but {
-		width: auto;
 	}
 }
 
