@@ -199,15 +199,15 @@ const VuePagination = {
 			return this.left === (this.num > this.view ? this.num - this.view : 0);
 		},
 		clsleft() {
-			return this.disleft && 'disabled';
+			return { disabled: this.disleft };
 		},
 		clsright() {
-			return this.disright && 'disabled';
+			return { disabled: this.disright };
 		},
 	},
 	methods: {
 		clsactive(page) {
-			return page === this.sel && 'active';
+			return { active: page === this.sel };
 		},
 
 		onpage(page) {
@@ -301,7 +301,7 @@ const VueMemgcCard = {
 	},
 	computed: {
 		clsupdate() {
-			return { 'active': !!this.upmode };
+			return { active: !!this.upmode };
 		},
 
 		expandchevron() {
@@ -389,7 +389,7 @@ const VueCchinfCard = {
 	},
 	computed: {
 		clsupdate() {
-			return { 'active': !!this.upmode };
+			return { active: !!this.upmode };
 		},
 
 		avrtmbcchsize() {
@@ -477,6 +477,7 @@ const VueConsoleCard = {
 	data() {
 		return {
 			log: [],
+			last: Date.now(),
 			timemode: 1,
 			fitwdh: false,
 			upmode: 2500,
@@ -487,23 +488,23 @@ const VueConsoleCard = {
 	},
 	computed: {
 		clsupdate() {
-			return { 'active': !!this.upmode };
+			return { active: !!this.upmode };
 		},
 
 		clsconsole() {
 			return this.fitwdh ? 'w-100' : 'w-console';
 		},
 		clsfitwdh() {
-			return { 'active': this.fitwdh };
+			return { active: this.fitwdh };
 		},
 		clsvoid() {
-			return { 'active': this.timemode === 0 };
+			return { active: this.timemode === 0 };
 		},
 		clstime() {
-			return { 'active': this.timemode === 1 };
+			return { active: this.timemode === 1 };
 		},
 		clsdate() {
-			return { 'active': this.timemode === 2 };
+			return { active: this.timemode === 2 };
 		},
 		hintprefix() {
 			switch (this.timemode) {
@@ -557,7 +558,16 @@ const VueConsoleCard = {
 			this.upmode = this.upmode ? 0 : 2500;
 			if (this.expanded && this.upmode) {
 				this.onrefresh();
-				this.upid = setInterval(() => this.onrefresh(), this.upmode);
+				this.upid = setInterval(() => (async () => {
+					try {
+						const response = await fetch(`/api/stat/getlog?unixms=${this.last}`);
+						if (response.ok) {
+							const data = await response.json();
+							this.log.push(...data.list);
+							this.last = Date.now();
+						}
+					} catch (e) { console.error(e); }
+				})(), this.upmode);
 			}
 		},
 		onrefresh() {
@@ -567,6 +577,7 @@ const VueConsoleCard = {
 					if (response.ok) {
 						const data = await response.json();
 						this.log = data.list;
+						this.last = Date.now();
 					}
 				} catch (e) { console.error(e); }
 			})();

@@ -89,6 +89,8 @@ const (
 	// stat/getlog
 
 	AECgetlogbadnum
+	AECgetlogbadunix
+	AECgetlogbadums
 
 	// auth/pubkey
 
@@ -261,6 +263,7 @@ var (
 
 	ErrNotFound  = errors.New("resource not found")
 	ErrArgNoNum  = errors.New("'num' parameter not recognized")
+	ErrArgNoTime = errors.New("unix time value not recognized")
 	ErrArgNoHD   = errors.New("'hd' parameter not recognized")
 	ErrArgNoPuid = errors.New("'puid' argument required")
 	ErrArgNoRes  = errors.New("bad tiles resolution")

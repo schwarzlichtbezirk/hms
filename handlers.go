@@ -512,7 +512,33 @@ func getlogAPI(w http.ResponseWriter, r *http.Request) {
 	if num <= 0 || num > size {
 		num = size
 	}
+	var from time.Time
+	if s := r.FormValue("unix"); len(s) > 0 {
+		var i64 int64
+		if i64, err = strconv.ParseInt(s, 10, 64); err != nil {
+			WriteError400(w, r, ErrArgNoTime, AECgetlogbadunix)
+			return
+		}
+		from = time.Unix(i64, 0)
+	}
+	if s := r.FormValue("unixms"); len(s) > 0 {
+		var i64 int64
+		if i64, err = strconv.ParseInt(s, 10, 64); err != nil {
+			WriteError400(w, r, ErrArgNoTime, AECgetlogbadums)
+			return
+		}
+		from = time.UnixMilli(i64)
+	}
 
+	if !from.IsZero() {
+		var h = Log.Ring()
+		for i := 0; i < num; i++ {
+			if from.After(h.Value.(LogStore).Time) {
+				num = i
+				break
+			}
+		}
+	}
 	ret.List = make([]LogStore, num)
 	var h = Log.Ring()
 	for i := 0; i < num; i++ {
