@@ -239,18 +239,32 @@ const VueCtgrCard = {
 		},
 		onexpand(e) {
 			this.expanded = true;
+			sessionStorage.setItem("card.ctgr.expanded", this.expanded);
+			this.expand();
 		},
 		oncollapse(e) {
 			this.expanded = false;
+			sessionStorage.setItem("card.ctgr.expanded", this.expanded);
+			this.collapse();
+		},
+		expand() {
+		},
+		collapse() {
 		},
 	},
 	created() {
-		this.listmode = storageGetString("card.ctgr.listmode", 'sm');
+		this.listmode = storageGetString("card.ctgr.listmode", this.listmode);
+		this.expanded = storageGetBoolean("card.ctgr.expanded", this.expanded);
 	},
 	mounted() {
 		const el = document.getElementById('card' + this.iid);
 		if (el) {
-			if (this.expanded) { el.classList.add('show'); }
+			if (this.expanded) { 
+				el.classList.add('show');
+				this.expand();
+			} else {
+				this.collapse();
+			}
 			el.addEventListener('shown.bs.collapse', this.onexpand);
 			el.addEventListener('hidden.bs.collapse', this.oncollapse);
 		}
@@ -444,9 +458,17 @@ const VueDriveCard = {
 		},
 		onexpand(e) {
 			this.expanded = true;
+			sessionStorage.setItem("card.ctgr.expanded", this.expanded);
+			this.expand();
 		},
 		oncollapse(e) {
 			this.expanded = false;
+			sessionStorage.setItem("card.ctgr.expanded", this.expanded);
+			this.collapse();
+		},
+		expand() {
+		},
+		collapse() {
 		},
 
 		onanyselect(file) {
@@ -458,14 +480,21 @@ const VueDriveCard = {
 		},
 	},
 	created() {
-		this.sortorder = storageGetNumber("card.drive.sortorder", 1);
-		this.listmode = storageGetString("card.drive.listmode", 'sm');
+		this.sortorder = storageGetNumber("card.drive.sortorder", this.sortorder);
+		this.listmode = storageGetString("card.drive.listmode", this.listmode);
+		this.expanded = storageGetBoolean("card.drive.expanded", this.expanded);
 	},
 	mounted() {
 		eventHub.on('select', this.onanyselect);
 		{
 			const el = document.getElementById('card' + this.iid);
 			if (el) {
+				if (this.expanded) {
+					el.classList.add('show');
+					this.expand();
+				} else {
+					this.collapse();
+				}
 				el.addEventListener('shown.bs.collapse', this.onexpand);
 				el.addEventListener('hidden.bs.collapse', this.oncollapse);
 			}
@@ -475,7 +504,6 @@ const VueDriveCard = {
 		{
 			const el = document.getElementById('diskadd' + this.iid);
 			if (el) {
-				if (this.expanded) { el.classList.add('show'); }
 				this.diskadd = new bootstrap.Modal(el);
 				el.addEventListener('shown.bs.modal', e => {
 					el.querySelector('input').focus();
@@ -590,19 +618,33 @@ const VueDirCard = {
 		},
 		onexpand(e) {
 			this.expanded = true;
+			sessionStorage.setItem("card.ctgr.expanded", this.expanded);
+			this.expand();
 		},
 		oncollapse(e) {
 			this.expanded = false;
+			sessionStorage.setItem("card.ctgr.expanded", this.expanded);
+			this.collapse();
+		},
+		expand() {
+		},
+		collapse() {
 		},
 	},
 	created() {
-		this.sortorder = storageGetNumber("card.dir.sortorder", 1);
-		this.listmode = storageGetString("card.dir.listmode", 'sm');
+		this.sortorder = storageGetNumber("card.dir.sortorder", this.sortorder);
+		this.listmode = storageGetString("card.dir.listmode", this.listmode);
+		this.expanded = storageGetBoolean("card.dir.expanded", this.expanded);
 	},
 	mounted() {
 		const el = document.getElementById('card' + this.iid);
 		if (el) {
-			if (this.expanded) { el.classList.add('show'); }
+			if (this.expanded) { 
+				el.classList.add('show');
+				this.expand();
+			} else {
+				this.collapse();
+			}
 			el.addEventListener('shown.bs.collapse', this.onexpand);
 			el.addEventListener('hidden.bs.collapse', this.oncollapse);
 		}
@@ -990,6 +1032,15 @@ const VueFileCard = {
 
 		onexpand(e) {
 			this.expanded = true;
+			sessionStorage.setItem("card.ctgr.expanded", this.expanded);
+			this.expand();
+		},
+		oncollapse(e) {
+			this.expanded = false;
+			sessionStorage.setItem("card.ctgr.expanded", this.expanded);
+			this.collapse();
+		},
+		expand() {
 			(async () => {
 				try {
 					await this.fetchtmbscan(this.flist); // fetch at backround
@@ -998,8 +1049,7 @@ const VueFileCard = {
 				}
 			})();
 		},
-		oncollapse(e) {
-			this.expanded = false;
+		collapse() {
 		},
 
 		_thumbmode(val) {
@@ -1010,18 +1060,24 @@ const VueFileCard = {
 		},
 	},
 	created() {
-		this.sortorder = storageGetNumber("card.file.sortorder", 1);
-		this.sortmode = storageGetString("card.file.sortmode", 'byalpha');
-		this.listmode = storageGetString("card.file.listmode", 'sm');
-		this.thumbmode = storageGetBoolean("thumbmode", true);
-		this.audioonly = storageGetBoolean('audioonly', false);
+		this.sortorder = storageGetNumber("card.file.sortorder", this.sortorder);
+		this.sortmode = storageGetString("card.file.sortmode", this.sortmode);
+		this.listmode = storageGetString("card.file.listmode", this.listmode);
+		this.expanded = storageGetBoolean("card.file.expanded", this.expanded);
+		this.thumbmode = storageGetBoolean("thumbmode", this.thumbmode);
+		this.audioonly = storageGetBoolean('audioonly', this.audioonly);
 	},
 	mounted() {
 		eventHub.on('thumbmode', this._thumbmode);
 		eventHub.on('audioonly', this._audioonly);
 		const el = document.getElementById('card' + this.iid);
 		if (el) {
-			if (this.expanded) { el.classList.add('show'); }
+			if (this.expanded) { 
+				el.classList.add('show');
+				this.expand();
+			} else {
+				this.collapse();
+			}
 			el.addEventListener('shown.bs.collapse', this.onexpand);
 			el.addEventListener('hidden.bs.collapse', this.oncollapse);
 		}
@@ -1475,6 +1531,15 @@ const VueTileCard = {
 		},
 		onexpand(e) {
 			this.expanded = true;
+			sessionStorage.setItem("card.ctgr.expanded", this.expanded);
+			this.expand();
+		},
+		oncollapse(e) {
+			this.expanded = false;
+			sessionStorage.setItem("card.ctgr.expanded", this.expanded);
+			this.collapse();
+		},
+		expand() {
 			(async () => {
 				try {
 					await this.fetchtilescan(); // fetch at backround
@@ -1483,20 +1548,25 @@ const VueTileCard = {
 				}
 			})();
 		},
-		oncollapse(e) {
-			this.expanded = false;
+		collapse() {
 		},
 	},
 	created() {
-		this.sortorder = storageGetNumber("card.tile.sortorder", 1);
-		this.sortmode = storageGetString("card.tile.sortmode", 'byalpha');
-		this.tilemode = storageGetString("card.tile.tilemode", 'mode-246');
+		this.sortorder = storageGetNumber("card.tile.sortorder", this.sortorder);
+		this.sortmode = storageGetString("card.tile.sortmode", this.sortmode);
+		this.tilemode = storageGetString("card.tile.tilemode", this.tilemode);
+		this.expanded = storageGetBoolean("card.tile.expanded", this.expanded);
 	},
 	mounted() {
 		eventHub.on('wdhmult', this.onwdhmult);
 		const el = document.getElementById('card' + this.iid);
 		if (el) {
-			if (this.expanded) { el.classList.add('show'); }
+			if (this.expanded) { 
+				el.classList.add('show');
+				this.expand();
+			} else {
+				this.collapse();
+			}
 			el.addEventListener('shown.bs.collapse', this.onexpand);
 			el.addEventListener('hidden.bs.collapse', this.oncollapse);
 		}
@@ -2272,6 +2342,15 @@ const VueMapCard = {
 		},
 		onexpand(e) {
 			this.expanded = true;
+			sessionStorage.setItem("card.ctgr.expanded", this.expanded);
+			this.expand();
+		},
+		oncollapse(e) {
+			this.expanded = false;
+			sessionStorage.setItem("card.ctgr.expanded", this.expanded);
+			this.collapse();
+		},
+		expand() {
 			(async () => {
 				try {
 					await this.fetchtmbscan(this.flist); // fetch at backround
@@ -2280,8 +2359,7 @@ const VueMapCard = {
 				}
 			})();
 		},
-		oncollapse(e) {
-			this.expanded = false;
+		collapse() {
 		},
 
 		_iconset(im) {
@@ -2289,8 +2367,9 @@ const VueMapCard = {
 		},
 	},
 	created() {
-		this.styleid = storageGetString("card.map.styleid", 'mapbox-hybrid');
-		this.markermode = storageGetString("card.map.markermode", 'thumb');
+		this.styleid = storageGetString("card.map.styleid", this.styleid);
+		this.markermode = storageGetString("card.map.markermode", this.markermode);
+		this.expanded = storageGetBoolean("card.map.expanded", this.expanded);
 		this.im = iconmapping;
 	},
 	mounted() {
@@ -2298,7 +2377,12 @@ const VueMapCard = {
 
 		const el = document.getElementById('card' + this.iid);
 		if (el) {
-			if (this.expanded) { el.classList.add('show'); }
+			if (this.expanded) { 
+				el.classList.add('show');
+				this.expand();
+			} else {
+				this.collapse();
+			}
 			el.addEventListener('shown.bs.collapse', this.onexpand);
 			el.addEventListener('hidden.bs.collapse', this.oncollapse);
 		}

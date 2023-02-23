@@ -1,8 +1,5 @@
 "use strict";
 
-// Scanning frequency.
-const scanfreq = 2000;
-
 // Maximum number of buttons at pagination component.
 const maxpageitem = 5;
 
@@ -64,14 +61,54 @@ const VueStatApp = {
 	template: '#app-tpl',
 	data() {
 		return {
+			skinid: "", // ID of skin CSS
+			resmodel: { skinlist: [], iconlist: [] },
 		};
 	},
 	computed: {
 	},
 	methods: {
+		setskin(skinid) {
+			if (skinid !== this.skinid) {
+				for (const v of this.resmodel.skinlist) {
+					if (v.id === skinid) {
+						document.getElementById('skinmodel')?.setAttribute('href', v.link);
+						sessionStorage.setItem('skinid', skinid);
+						this.skinid = skinid;
+					}
+				}
+			}
+		},
 	},
 	mounted() {
 		eventHub.on('ajax', viewpreloader);
+
+		// load resources and open route
+		(async () => {
+			eventHub.emit('ajax', +1);
+			try {
+				// load resources model at first
+				const response = await fetch("/fs/assets/resmodel.json");
+				if (!response.ok) {
+					throw new HttpError(response.status, { what: "can not load resources model file", when: Date.now(), code: 0 });
+				}
+				this.resmodel = await response.json();
+
+				// set skin
+				const skinid = storageGetString('skinid', this.resmodel.defskinid);
+				for (const v of this.resmodel.skinlist) {
+					if (v.id === skinid) {
+						document.getElementById('skinmodel')?.setAttribute('href', v.link);
+						this.skinid = skinid;
+					}
+				}
+			} catch (e) {
+				ajaxfail(e);
+			} finally {
+				eventHub.emit('ajax', -1);
+			}
+		})();
+
 		// hide start-up preloader
 		eventHub.emit('ajax', -1);
 	},
@@ -254,15 +291,31 @@ const VueSrvinfCard = {
 	methods: {
 		onexpand(e) {
 			this.expanded = true;
+			sessionStorage.setItem("card.srvinf.expanded", this.expanded);
+			this.expand();
 		},
 		oncollapse(e) {
 			this.expanded = false;
+			sessionStorage.setItem("card.srvinf.expanded", this.expanded);
+			this.collapse();
 		},
+		expand() {
+		},
+		collapse() {
+		},
+	},
+	created() {
+		this.expanded = storageGetBoolean("card.srvinf.expanded", this.expanded);
 	},
 	mounted() {
 		const el = document.getElementById('card' + this.iid);
 		if (el) {
-			if (this.expanded) { el.classList.add('show'); }
+			if (this.expanded) { 
+				el.classList.add('show');
+				this.expand();
+			} else {
+				this.collapse();
+			}
 			el.addEventListener('show.bs.collapse', this.onexpand);
 			el.addEventListener('hide.bs.collapse', this.oncollapse);
 		}
@@ -281,7 +334,6 @@ const VueSrvinfCard = {
 	unmounted() {
 		const el = document.getElementById('card' + this.iid);
 		if (el) {
-			if (this.expanded) { el.classList.add('show'); }
 			el.removeEventListener('shown.bs.collapse', this.onexpand);
 			el.removeEventListener('hidden.bs.collapse', this.oncollapse);
 		}
@@ -332,7 +384,7 @@ const VueMemgcCard = {
 			this.upmode = this.upmode ? 0 : 5000;
 			if (this.expanded && this.upmode) {
 				this.onrefresh();
-				this.upid = setInterval(() => this.onrefresh(), this.upmode);
+				this.update();
 			}
 		},
 		onrefresh() {
@@ -345,24 +397,43 @@ const VueMemgcCard = {
 				} catch (e) { console.error(e); }
 			})();
 		},
+		update() {
+			this.upid = setInterval(() => this.onrefresh(), this.upmode);
+		},
 
 		onexpand(e) {
 			this.expanded = true;
-			this.onrefresh();
-			if (this.upmode) {
-				this.upid = setInterval(() => this.onrefresh(), this.upmode);
-			}
+			sessionStorage.setItem("card.memgc.expanded", this.expanded);
+			this.expand();
 		},
 		oncollapse(e) {
 			this.expanded = false;
+			sessionStorage.setItem("card.memgc.expanded", this.expanded);
+			this.collapse();
+		},
+		expand() {
+			this.onrefresh();
+			if (this.upmode) {
+				this.update();
+			}
+		},
+		collapse() {
 			clearInterval(this.upid);
 			this.upid = 0;
 		},
 	},
+	created() {
+		this.expanded = storageGetBoolean("card.memgc.expanded", this.expanded);
+	},
 	mounted() {
 		const el = document.getElementById('card' + this.iid);
 		if (el) {
-			if (this.expanded) { el.classList.add('show'); }
+			if (this.expanded) { 
+				el.classList.add('show');
+				this.expand();
+			} else {
+				this.collapse();
+			}
 			el.addEventListener('show.bs.collapse', this.onexpand);
 			el.addEventListener('hide.bs.collapse', this.oncollapse);
 		}
@@ -429,7 +500,7 @@ const VueCchinfCard = {
 			this.upmode = this.upmode ? 0 : 5000;
 			if (this.expanded && this.upmode) {
 				this.onrefresh();
-				this.upid = setInterval(() => this.onrefresh(), this.upmode);
+				this.update();
 			}
 		},
 		onrefresh() {
@@ -442,23 +513,43 @@ const VueCchinfCard = {
 				} catch (e) { console.error(e); }
 			})();
 		},
+		update() {
+			this.upid = setInterval(() => this.onrefresh(), this.upmode);
+		},
+
 		onexpand(e) {
 			this.expanded = true;
-			this.onrefresh();
-			if (this.upmode) {
-				this.upid = setInterval(() => this.onrefresh(), this.upmode);
-			}
+			sessionStorage.setItem("card.cchinf.expanded", this.expanded);
+			this.expand();
 		},
 		oncollapse(e) {
 			this.expanded = false;
+			sessionStorage.setItem("card.cchinf.expanded", this.expanded);
+			this.collapse();
+		},
+		expand() {
+			this.onrefresh();
+			if (this.upmode) {
+				this.update();
+			}
+		},
+		collapse() {
 			clearInterval(this.upid);
 			this.upid = 0;
 		},
 	},
+	created() {
+		this.expanded = storageGetBoolean("card.cchinf.expanded", this.expanded);
+	},
 	mounted() {
 		const el = document.getElementById('card' + this.iid);
 		if (el) {
-			if (this.expanded) { el.classList.add('show'); }
+			if (this.expanded) { 
+				el.classList.add('show');
+				this.expand();
+			} else {
+				this.collapse();
+			}
 			el.addEventListener('show.bs.collapse', this.onexpand);
 			el.addEventListener('hide.bs.collapse', this.oncollapse);
 		}
@@ -541,15 +632,19 @@ const VueConsoleCard = {
 
 		onfitwdh() {
 			this.fitwdh = !this.fitwdh;
+			sessionStorage.setItem("card.console.fitwdh", this.fitwdh);
 		},
 		onvoid() {
 			this.timemode = 0;
+			sessionStorage.setItem("card.console.timemode", this.timemode);
 		},
 		ontime() {
 			this.timemode = 1;
+			sessionStorage.setItem("card.console.timemode", this.timemode);
 		},
 		ondate() {
 			this.timemode = 2;
+			sessionStorage.setItem("card.console.timemode", this.timemode);
 		},
 
 		onupdate() {
@@ -558,16 +653,7 @@ const VueConsoleCard = {
 			this.upmode = this.upmode ? 0 : 2500;
 			if (this.expanded && this.upmode) {
 				this.onrefresh();
-				this.upid = setInterval(() => (async () => {
-					try {
-						const response = await fetch(`/api/stat/getlog?unixms=${this.last}`);
-						if (response.ok) {
-							const data = await response.json();
-							this.log.push(...data.list);
-							this.last = Date.now();
-						}
-					} catch (e) { console.error(e); }
-				})(), this.upmode);
+				this.update();
 			}
 		},
 		onrefresh() {
@@ -582,24 +668,54 @@ const VueConsoleCard = {
 				} catch (e) { console.error(e); }
 			})();
 		},
+		update() {
+			this.upid = setInterval(() => (async () => {
+				try {
+					const response = await fetch(`/api/stat/getlog?unixms=${this.last}`);
+					if (response.ok) {
+						const data = await response.json();
+						this.log.push(...data.list);
+						this.last = Date.now();
+					}
+				} catch (e) { console.error(e); }
+			})(), this.upmode);
+		},
 
 		onexpand(e) {
 			this.expanded = true;
-			this.onrefresh();
-			if (this.upmode) {
-				this.upid = setInterval(() => this.onrefresh(), this.upmode);
-			}
+			sessionStorage.setItem("card.console.expanded", this.expanded);
+			this.expand();
 		},
 		oncollapse(e) {
 			this.expanded = false;
+			sessionStorage.setItem("card.console.expanded", this.expanded);
+			this.collapse();
+		},
+		expand() {
+			this.onrefresh();
+			if (this.upmode) {
+				this.update();
+			}
+		},
+		collapse() {
 			clearInterval(this.upid);
 			this.upid = 0;
 		},
 	},
+	created() {
+		this.timemode = storageGetBoolean("card.console.timemode", this.timemode);
+		this.fitwdh = storageGetBoolean("card.console.fitwdh", this.fitwdh);
+		this.expanded = storageGetBoolean("card.console.expanded", this.expanded);
+	},
 	mounted() {
 		const el = document.getElementById('card' + this.iid);
 		if (el) {
-			if (this.expanded) { el.classList.add('show'); }
+			if (this.expanded) { 
+				el.classList.add('show');
+				this.expand();
+			} else {
+				this.collapse();
+			}
 			el.addEventListener('show.bs.collapse', this.onexpand);
 			el.addEventListener('hide.bs.collapse', this.oncollapse);
 		}
@@ -620,6 +736,8 @@ const VueUsercCard = {
 			usrlst: {},
 			usrlstpage: 0,
 			usrlstsize: 20,
+			upmode: 5000,
+			upid: 0,
 			expanded: false,
 			iid: makestrid(10), // instance ID
 		};
@@ -627,6 +745,10 @@ const VueUsercCard = {
 	computed: {
 		usrlstnum() {
 			return Math.ceil(this.usrlst.total / this.usrlstsize);
+		},
+
+		clsupdate() {
+			return { active: !!this.upmode };
 		},
 
 		expandchevron() {
@@ -638,30 +760,64 @@ const VueUsercCard = {
 			this.usrlstpage = page;
 		},
 
-		onexpand(e) {
-			this.expanded = true;
+		onupdate() {
+			clearInterval(this.upid);
+			this.upid = 0;
+			this.upmode = this.upmode ? 0 : 5000;
+			if (this.expanded && this.upmode) {
+				this.onrefresh();
+				this.update();
+			}
+		},
+		onrefresh() {
 			(async () => {
 				try {
-					while (this.expanded) {
-						const response = await fetchjson("POST", "/api/stat/usrlst", {
-							pos: this.usrlstpage * this.usrlstsize, num: this.usrlstsize
-						});
-						if (response.ok) {
-							this.usrlst = await response.json();
-						}
-						await new Promise(resolve => setTimeout(resolve, scanfreq));
+					const response = await fetchjson("POST", "/api/stat/usrlst", {
+						pos: this.usrlstpage * this.usrlstsize, num: this.usrlstsize
+					});
+					if (response.ok) {
+						this.usrlst = await response.json();
 					}
 				} catch (e) { console.error(e); }
 			})();
 		},
+		update() {
+			this.upid = setInterval(() => this.onrefresh(), this.upmode);
+		},
+
+		onexpand(e) {
+			this.expanded = true;
+			sessionStorage.setItem("card.users.expanded", this.expanded);
+			this.expand();
+		},
 		oncollapse(e) {
 			this.expanded = false;
+			sessionStorage.setItem("card.users.expanded", this.expanded);
+			this.collapse();
 		},
+		expand() {
+			this.onrefresh();
+			if (this.upmode) {
+				this.update();
+			}
+		},
+		collapse() {
+			clearInterval(this.upid);
+			this.upid = 0;
+		},
+	},
+	created() {
+		this.expanded = storageGetBoolean("card.users.expanded", this.expanded);
 	},
 	mounted() {
 		const el = document.getElementById('card' + this.iid);
 		if (el) {
-			if (this.expanded) { el.classList.add('show'); }
+			if (this.expanded) { 
+				el.classList.add('show');
+				this.expand();
+			} else {
+				this.collapse();
+			}
 			el.addEventListener('show.bs.collapse', this.onexpand);
 			el.addEventListener('hide.bs.collapse', this.oncollapse);
 		}

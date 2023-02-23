@@ -1,6 +1,17 @@
 
 <div v-cloak>
-	<h2 class="m-sm-2">home media server monitor</h2>
+	<div class="d-flex flex-row m-sm-2">
+		<h2 class="flex-grow-1">home media server monitor</h2>
+		<div class="btn-group bg-tool ms-auto">
+			<button class="btn toolbtn dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" title="choose skin or icons"><i class="material-icons">color_lens</i></button>
+			<div class="dropdown-menu dropdown-menu-end bg-tool menu-scrollable">
+				<h6 class="dropdown-header">Skins:</h6>
+				<template v-for="item in resmodel.skinlist">
+					<button class="dropdown-item" v-on:click="setskin(item.id)" v-bind:class="{active:skinid===item.id}">{{item.name}}</button>
+				</template>
+			</div>
+		</div>
+	</div>
 
 	<div id="accordion">
 		<srvinf-card-tag />

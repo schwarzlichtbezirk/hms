@@ -4,7 +4,10 @@
 		<div class="navbar-text flex-grow-1 py-0">
 			<a class="card-link d-block collapsed" data-bs-toggle="collapse" v-bind:href="'#card'+iid">users activity</a>
 		</div>
-		<ul class="navbar-nav flex-row ms-auto"></ul>
+		<ul v-show="expanded" class="navbar-nav flex-row ms-auto">
+			<li><button class="btn" v-on:click="onupdate" v-bind:class="clsupdate" title="update mode"><i class="material-icons">autorenew</i></button></li>
+			<li><button class="btn" v-on:click="onrefresh" title="refresh"><i class="material-icons">refresh</i></button></li>
+		</ul>
 		<i class="material-icons ms-auto ms-sm-2">{{expandchevron}}</i>
 	</div>
 	<div v-bind:id="'card'+iid" class="collapse">

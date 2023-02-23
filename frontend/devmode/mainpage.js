@@ -1,6 +1,5 @@
 ﻿"use strict";
 
-let resmodel = { skinlist: [], iconlist: [] };
 let iconmapping = {
 	private: {
 		blank: "",
@@ -441,7 +440,7 @@ const VueMainApp = {
 		return {
 			skinid: "", // ID of skin CSS
 			iconid: "", // ID of icons mapping json
-			resmodel: resmodel,
+			resmodel: { skinlist: [], iconlist: [] },
 			showauth: false, // display authorization form
 			isauth: false, // is authorized
 			aid: 0, // profile access ID
@@ -1132,7 +1131,7 @@ const VueMainApp = {
 				if (!response.ok) {
 					throw new HttpError(response.status, { what: "can not load resources model file", when: Date.now(), code: 0 });
 				}
-				this.resmodel = resmodel = await response.json();
+				this.resmodel = await response.json();
 
 				// set skin
 				const skinid = storageGetString('skinid', this.resmodel.defskinid);
