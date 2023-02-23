@@ -19,11 +19,11 @@ local fullskinmap = {
 	["neon"] = {"neon.css", "nightglow-rainbow.jpg"},
 	["cup-of-coffee"] = {"cup-of-coffee.css", "cup-of-coffee.jpg"},
 	["coffee-beans"] = {"coffee-beans.css", "coffee-beans.jpg"},
-	["old-monitor"] = {"old-monitor.css"},
+	["matrix"] = {"matrix.css"},
 }
 -- full list of skins identifiers
 local fullskinset = {
-	"daylight", "light", "blue", "dark", "neon", "cup-of-coffee", "coffee-beans", "old-monitor",
+	"daylight", "light", "blue", "dark", "neon", "cup-of-coffee", "coffee-beans", "matrix",
 }
 -- full list of icons identifiers
 local fulliconset = {

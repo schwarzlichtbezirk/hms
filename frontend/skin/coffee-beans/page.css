@@ -31,17 +31,23 @@ a, .btn-link {
 		text-decoration: underline;
 	}
 
-.breadcrumb-item.active {
-	color: Khaki;
-}
-
-.breadcrumb-item + .breadcrumb-item::before {
-	color: DarkKhaki;
-}
-
 .menu-scrollable {
 	max-height: 20rem;
 	overflow-y: scroll;
+}
+
+.hms-breadcrumb > .breadcrumb-item.active {
+	color: Khaki;
+	font-size: 1.5rem;
+}
+
+.hms-breadcrumb > .breadcrumb-item + .hms-breadcrumb > .breadcrumb-item::before {
+	color: DarkKhaki;
+}
+
+.bg-stat {
+	background: rgba(141, 113, 71, 0.33); /* coffee with milk */
+	padding: 0px 4px;
 }
 
 .bg-tool {

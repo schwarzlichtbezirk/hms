@@ -39,6 +39,15 @@ a, .btn-link {
 	overflow-y: scroll;
 }
 
+.hms-breadcrumb > .breadcrumb-item.active {
+	font-size: 1.5rem;
+}
+
+.bg-stat {
+	background: rgba(75, 0, 130, 0.5); /* Indigo */
+	padding: 0px 4px;
+}
+
 .bg-tool {
 	background-color: #343a40;
 }

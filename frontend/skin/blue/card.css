@@ -21,15 +21,6 @@
 		padding: 2px;
 	}
 
-.breadcrumb-item.active {
-	font-size: 1.5rem;
-}
-
-.bg-stat {
-	background: rgba(255, 255, 255, 0.15);
-	padding: 0px 4px;
-}
-
 .hms-card, .folder-head .breadcrumb, .modal-content {
 	background-color: #d6dbe9;
 }
@@ -92,6 +83,10 @@
 	.hms-card > .card-header .dropdown-item.active,
 	.hms-card > .card-header .active > .dropdown-item {
 		background-color: rgba(255, 255, 255, 0.25);
+	}
+
+	.hms-card .card-body {
+		color: #293955;
 	}
 
 .dropdown-item {

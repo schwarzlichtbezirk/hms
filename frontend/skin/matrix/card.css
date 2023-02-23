@@ -21,15 +21,6 @@
 		padding: 2px;
 	}
 
-.breadcrumb-item.active {
-	font-size: 1.5rem;
-}
-
-.bg-stat {
-	background: rgba(255, 255, 255, 0.15);
-	padding: 0px 4px;
-}
-
 .hms-card, .folder-head .breadcrumb, .modal-content {
 	background-color: #001800;
 }
@@ -120,5 +111,5 @@
 
 	.itemfont.tag {
 		text-align: center;
-		max-height: 9.2ex;
+		max-height: 10.0ex;
 	}

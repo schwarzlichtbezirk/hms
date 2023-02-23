@@ -35,17 +35,23 @@ a, .btn-link {
 		text-decoration: underline;
 	}
 
-.breadcrumb-item.active {
-	color: #7525c0;
-}
-
-.breadcrumb-item + .breadcrumb-item::before {
-	color: #9966CC; /* Amethyst */
-}
-
 .menu-scrollable {
 	max-height: 20rem;
 	overflow-y: scroll;
+}
+
+.hms-breadcrumb > .breadcrumb-item.active {
+	color: #7525c0;
+	font-size: 1.5rem;
+}
+
+.hms-breadcrumb > .breadcrumb-item + .hms-breadcrumb > .breadcrumb-item::before {
+	color: #9966CC; /* Amethyst */
+}
+
+.bg-stat {
+	background: rgba(102, 51, 153, 0.25); /* RebeccaPurple */
+	padding: 0px 4px;
 }
 
 .bg-tool {

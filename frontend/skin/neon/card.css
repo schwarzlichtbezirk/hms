@@ -21,15 +21,6 @@
 		padding: 2px;
 	}
 
-.breadcrumb-item.active {
-	font-size: 1.5rem;
-}
-
-.bg-stat {
-	background: rgba(75, 0, 130, 0.5); /* Indigo */
-	padding: 0px 4px;
-}
-
 .hms-card, .folder-head .breadcrumb, .modal-content {
 	background-image: url("/fs/skin/neon/nightglow-rainbow.avif");
 	/* @alternate */ background-image: url("/fs/skin/neon/nightglow-rainbow.jpg");
@@ -91,6 +82,10 @@
 				color: #fff;
 			}
 
+			.hms-card .card-body {
+				color: DeepSkyBlue;
+			}
+		
 	.hms-card .dropdown-menu {
 		background: rgba(75, 0, 130, 0.75); /* Indigo */
 	}

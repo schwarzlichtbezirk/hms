@@ -26,6 +26,15 @@ body {
 	overflow-y: scroll;
 }
 
+.hms-breadcrumb > .breadcrumb-item.active {
+	font-size: 1.5rem;
+}
+
+.bg-stat {
+	background: rgba(255, 255, 255, 0.15);
+	padding: 0px 4px;
+}
+
 .bg-tool {
 	background-color: #1b1b1c;
 }

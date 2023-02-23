@@ -32,17 +32,23 @@ a, .btn-link {
 		text-decoration: underline;
 	}
 
-.breadcrumb-item.active {
-	color: #20c020;
-}
-
-.breadcrumb-item + .breadcrumb-item::before {
-	color: Green;
-}
-
 .menu-scrollable {
 	max-height: 20rem;
 	overflow-y: scroll;
+}
+
+.hms-breadcrumb > .breadcrumb-item.active {
+	color: #20c020;
+	font-size: 1.5rem;
+}
+
+.hms-breadcrumb > .breadcrumb-item + .hms-breadcrumb > .breadcrumb-item::before {
+	color: Green;
+}
+
+.bg-stat {
+	background: rgba(255, 255, 255, 0.15);
+	padding: 0px 4px;
 }
 
 .bg-tool {

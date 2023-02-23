@@ -36,9 +36,9 @@
 			"link": "/fs/skin/coffee-beans.css"
 		},
 		{
-			"id": "old-monitor",
-			"name": "old monitor",
-			"link": "/fs/skin/old-monitor.css"
+			"id": "matrix",
+			"name": "matrix",
+			"link": "/fs/skin/matrix.css"
 		}
 	],
 	"iconlist": [

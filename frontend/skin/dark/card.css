@@ -21,15 +21,6 @@
 		padding: 2px;
 	}
 
-.breadcrumb-item.active {
-	font-size: 1.5rem;
-}
-
-.bg-stat {
-	background: rgba(255, 255, 255, 0.15);
-	padding: 0px 4px;
-}
-
 .hms-card, .folder-head .breadcrumb, .modal-content {
 	background-color: #1e1e1e;
 }

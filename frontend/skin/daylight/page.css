@@ -26,6 +26,15 @@ body {
 	overflow-y: scroll;
 }
 
+.hms-breadcrumb > .breadcrumb-item.active {
+	font-size: 1.5rem;
+}
+
+.bg-stat {
+	background: Khaki;
+	padding: 0px 4px;
+}
+
 .bg-tool {
 	color: Tan;
 	background-color: #343a40;

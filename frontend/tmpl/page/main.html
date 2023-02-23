@@ -4,7 +4,7 @@
 		<div ref="page" class="flex-grow-1 overflow-auto">
 			<div class="container-fluid folder-head p-1 p-sm-2">
 				<nav aria-label="breadcrumb">
-					<ol class="breadcrumb align-items-center p-2 mb-2 rounded">
+					<ol class="hms-breadcrumb breadcrumb align-items-center p-2 mb-2 rounded">
 						<li v-for="file in curpathway" class="breadcrumb-item"><button v-on:click="onopen(file)" v-bind:title="`/id${aid}/path/${file.path}`" class="btn btn-link p-0">{{file.name}}</button></li>
 						<li class="breadcrumb-item active" aria-current="page">{{curbasename}}</li>
 					</ol>

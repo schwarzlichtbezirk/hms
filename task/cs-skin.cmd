@@ -20,7 +20,7 @@ call :compileskin "dark"
 call :compileskin "neon"
 call :compileskin "cup-of-coffee"
 call :compileskin "coffee-beans"
-call :compileskin "old-monitor"
+call :compileskin "matrix"
 
 exit /b 0
 

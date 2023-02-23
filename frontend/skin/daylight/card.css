@@ -21,15 +21,6 @@
 		padding: 2px;
 	}
 
-.breadcrumb-item.active {
-	font-size: 1.5rem;
-}
-
-.bg-stat {
-	background: Khaki;
-	padding: 0px 4px;
-}
-
 .hms-card, .folder-head .breadcrumb, .modal-content {
 	background-color: LemonChiffon;
 }
