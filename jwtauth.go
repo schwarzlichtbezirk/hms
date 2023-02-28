@@ -97,13 +97,13 @@ func ParseID(s string) (id ID_t, err error) {
 	return
 }
 
-// GetCID extract client ID from cookie.
-func GetCID(r *http.Request) (cid ID_t, err error) {
+// GetUAID extract user agent ID from cookie.
+func GetUAID(r *http.Request) (uaid ID_t, err error) {
 	var c *http.Cookie
-	if c, err = r.Cookie("CID"); err != nil {
+	if c, err = r.Cookie("UAID"); err != nil {
 		return
 	}
-	if cid, err = ParseID(c.Value); err != nil {
+	if uaid, err = ParseID(c.Value); err != nil {
 		return
 	}
 	return

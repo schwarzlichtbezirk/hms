@@ -305,9 +305,9 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	var latency = time.Since(t)
 	Log.Infof("id%d: navigate to %s, items %d, timeout %s", acc.ID, syspath, len(ret.List), latency)
-	if cid, err := GetCID(r); err == nil {
+	if uaid, err := GetUAID(r); err == nil {
 		go xormUserlog.InsertOne(&OpenStore{
-			CID:     cid,
+			UAID:    uaid,
 			AID:     aid,
 			UID:     uid,
 			Path:    syspath,

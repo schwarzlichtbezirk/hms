@@ -473,6 +473,8 @@ func LoadTemplates() (err error) {
 // Transaction locker, locks until handler will be done.
 var handwg sync.WaitGroup
 
+const alias_cond = "(cid1=? AND cid2=?) OR (cid1=? AND cid2=?)"
+
 // AjaxMiddleware is base handler middleware for AJAX API calls.
 func AjaxMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -501,40 +503,47 @@ func AjaxMiddleware(next http.Handler) http.Handler {
 		handwg.Add(1)
 		defer handwg.Done()
 
-		// get CID
-		if cid, err := GetCID(r); err == nil {
+		var (
+			cid          ID_t
+			uaold, uanew ID_t
+			isold, isnew bool
+		)
+
+		var ast = &AgentStore{
+			Addr: StripPort(r.RemoteAddr),
+			UA:   r.UserAgent(),
+		}
+		uanew = ID_t(ast.Hash())
+
+		// UAID at cookie
+		if uaold, _ = GetUAID(r); uaold == 0 {
+			http.SetCookie(w, &http.Cookie{
+				Name:  "UAID",
+				Value: strconv.FormatUint(uint64(uanew), 10),
+				Path:  "/",
+			})
+		}
+
+		uamux.Lock()
+		if cid, isnew = UaMap[uanew]; !isnew {
+			if cid, isold = UaMap[uaold]; !isold {
+				maxcid++
+				cid = maxcid
+			}
+			UaMap[uanew] = cid
 			go func() {
-				var ast = AgentStore{
-					CID:  cid,
-					Addr: StripPort(r.RemoteAddr),
-					UA:   r.UserAgent(),
-				}
+				ast.CID = cid
+				ast.UAID = uanew
 				if lang, ok := r.Header["Accept-Language"]; ok {
 					ast.Lang = lang[0]
 				}
-
-				var hv = ast.Hash()
-				uamux.Lock()
-				var _, ok = UaMap[hv]
-				if !ok {
-					UaMap[hv] = void{}
-				}
-				UserOnline[cid] = time.Now()
-				uamux.Unlock()
-				if !ok {
-					xormUserlog.InsertOne(&ast)
+				if _, err := xormUserlog.InsertOne(ast); err != nil {
+					panic(err.Error())
 				}
 			}()
-		} else {
-			var cst ClientStore
-			if _, err := xormUserlog.InsertOne(&cst); err == nil {
-				http.SetCookie(w, &http.Cookie{
-					Name:  "CID",
-					Value: strconv.FormatUint(uint64(cst.CID), 16),
-					Path:  "/",
-				})
-			}
 		}
+		UserOnline[uanew] = time.Now()
+		uamux.Unlock()
 
 		// call the next handler, which can be another middleware in the chain, or the final handler
 		next.ServeHTTP(w, r)

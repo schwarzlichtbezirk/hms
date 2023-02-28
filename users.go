@@ -1,7 +1,6 @@
 package hms
 
 import (
-	"encoding/binary"
 	"encoding/xml"
 	"net/http"
 	"path"
@@ -16,13 +15,9 @@ import (
 
 var xormUserlog *xorm.Engine
 
-type ClientStore struct {
-	CID  ID_t `xorm:"pk autoincr"`
-	Time Time `xorm:"created"`
-}
-
 type AgentStore struct {
-	CID  ID_t
+	UAID ID_t   `xorm:"unique"` // user agent ID
+	CID  ID_t   // client ID
 	Addr string // remote address
 	UA   string // user agent
 	Lang string // accept language
@@ -30,8 +25,8 @@ type AgentStore struct {
 }
 
 type OpenStore struct {
-	CID     ID_t   // client unique ID
-	AID     ID_t   `xorm:"default 0"` // access ID
+	UAID    ID_t   // client ID
+	AID     ID_t   `xorm:"default 0"` // access profile ID
 	UID     ID_t   `xorm:"default 0"` // user profile ID
 	Path    string // system path
 	Latency int    // event latency, in milliseconds, or -1 if it file
@@ -41,20 +36,22 @@ type OpenStore struct {
 var (
 	// UserOnline is map of last AJAX query time for each user.
 	UserOnline = map[ID_t]time.Time{}
-	// UaMap is the set hashes of of user-agent records.
-	UaMap = map[uint64]void{}
+	// UaMap is the map of user agent hashes and associated client IDs.
+	UaMap = map[ID_t]ID_t{}
+	// current maximum client ID
+	maxcid ID_t
 	// mutex to get access to user-agent maps.
 	uamux sync.Mutex
 )
 
+const ua_salt = "hms"
+
 func (ast *AgentStore) Hash() uint64 {
 	var h = xxhash.New()
-	var buf [8]byte
-	binary.LittleEndian.PutUint64(buf[:], uint64(ast.CID))
-	h.Write(buf[:])
+	h.Write(s2b(ua_salt))
 	h.Write(s2b(ast.Addr))
 	h.Write(s2b(ast.UA))
-	return h.Sum64()
+	return h.Sum64() & 0x7fff_ffff_ffff_ffff
 }
 
 // InitUserlog inits database user log engine.
@@ -65,7 +62,7 @@ func InitUserlog() (err error) {
 	xormUserlog.SetMapper(names.GonicMapper{})
 	xormUserlog.ShowSQL(false)
 
-	if err = xormUserlog.Sync(&ClientStore{}, &AgentStore{}, &OpenStore{}); err != nil {
+	if err = xormUserlog.Sync(&AgentStore{}, &OpenStore{}); err != nil {
 		return
 	}
 	return
@@ -76,6 +73,12 @@ func LoadUaMap() (err error) {
 	var session = xormUserlog.NewSession()
 	defer session.Close()
 
+	var u64 uint64
+	if _, err = session.Table(&AgentStore{}).Select("MAX(cid)").Get(&u64); err != nil {
+		return
+	}
+	maxcid = ID_t(u64)
+
 	const limit = 256
 	var offset int
 	for {
@@ -85,7 +88,7 @@ func LoadUaMap() (err error) {
 		}
 		offset += limit
 		for _, ast := range chunk {
-			UaMap[ast.Hash()] = void{}
+			UaMap[ast.UAID] = ast.CID
 		}
 		if limit > len(chunk) {
 			break
@@ -100,11 +103,11 @@ func usrlstAPI(w http.ResponseWriter, r *http.Request) {
 		Addr   string        `json:"addr" yaml:"addr" xml:"addr"`
 		UA     uas.UserAgent `json:"ua" yaml:"ua" xml:"ua"`
 		Lang   string        `json:"lang" yaml:"lang" xml:"lang"`
+		Online bool          `json:"online" yaml:"online" xml:"online,attr"`
+		AID    ID_t          `json:"accid" yaml:"accid" xml:"accid,attr"`
+		UID    ID_t          `json:"usrid" yaml:"usrid" xml:"usrid,attr"`
 		Path   string        `json:"path" yaml:"path" xml:"path"`
 		File   string        `json:"file" yaml:"file" xml:"file"`
-		Online bool          `json:"online" yaml:"online" xml:"online"`
-		AID    ID_t          `json:"accid" yaml:"accid" xml:"accid"`
-		UID    ID_t          `json:"usrid" yaml:"usrid" xml:"usrid"`
 	}
 
 	var err error
@@ -129,39 +132,47 @@ func usrlstAPI(w http.ResponseWriter, r *http.Request) {
 	var session = xormUserlog.NewSession()
 	defer session.Close()
 
-	type jstore struct {
-		ClientStore `xorm:"extends"`
-		AgentStore  `xorm:"extends"`
-		Path        OpenStore `xorm:"extends"`
-		File        OpenStore `xorm:"extends"`
-	}
-
-	ret.Total, _ = session.Count(&ClientStore{})
-	var justs []jstore
-	if err = session.Distinct().Table("client_store").
-		Join("INNER", "agent_store", "client_store.cid = agent_store.cid AND agent_store.time = (SELECT MIN(time) FROM agent_store WHERE cid = client_store.cid)").
-		Join("INNER", "open_store t1", "client_store.cid = t1.cid AND t1.time = (SELECT MAX(time) FROM open_store WHERE cid = client_store.cid AND latency>=0)").
-		Join("INNER", "open_store t2", "client_store.cid = t2.cid AND t2.time = (SELECT MAX(time) FROM open_store WHERE cid = client_store.cid AND latency=-1)").
-		Limit(arg.Num, arg.Pos).Find(&justs); err != nil {
-		WriteError500(w, r, err, AECusrlstusts)
+	var asts []AgentStore
+	if err = xormUserlog.Limit(arg.Num, arg.Pos).Find(&asts); err != nil {
+		WriteError500(w, r, err, AECusrlstasts)
 		return
 	}
+
+	ret.List = make([]item, len(asts))
 	var now = time.Now()
-	for _, rec := range justs {
+	for i, ast := range asts {
 		uamux.Lock()
-		var online = now.Sub(UserOnline[rec.AgentStore.CID]) < cfg.OnlineTimeout
+		var online = now.Sub(UserOnline[ast.UAID]) < cfg.OnlineTimeout
 		uamux.Unlock()
 		var ui = item{
-			Addr:   rec.Addr,
-			Lang:   rec.Lang,
-			Path:   rec.Path.Path,
-			File:   rec.File.Path,
+			Addr:   ast.Addr,
+			Lang:   ast.Lang,
 			Online: online,
-			AID:    rec.Path.AID,
-			UID:    rec.Path.UID,
 		}
-		uas.ParseUserAgent(rec.UA, &ui.UA)
-		ret.List = append(ret.List, ui)
+		uas.ParseUserAgent(ast.UA, &ui.UA)
+
+		var is bool
+		var fost, post OpenStore
+		if is, err = xormUserlog.Where("uaid=? AND latency<0", ast.UAID).Desc("time").Get(&fost); err != nil {
+			WriteError500(w, r, err, AECusrlstfost)
+			return
+		}
+		if is {
+			ui.File = fost.Path
+			ui.AID = fost.AID
+			ui.UID = fost.UID
+		}
+		if is, err = xormUserlog.Where("uaid=? AND latency>=0", ast.UAID).Desc("time").Get(&post); err != nil {
+			WriteError500(w, r, err, AECusrlstpost)
+			return
+		}
+		if is {
+			ui.File = post.Path
+			ui.AID = post.AID
+			ui.UID = post.UID
+		}
+
+		ret.List[i] = ui
 	}
 
 	WriteOK(w, r, &ret)

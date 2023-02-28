@@ -249,7 +249,9 @@ const (
 	AECgpsscannodata
 
 	// stat/usrlst
-	AECusrlstusts
+	AECusrlstasts
+	AECusrlstfost
+	AECusrlstpost
 )
 
 // HTTP error messages

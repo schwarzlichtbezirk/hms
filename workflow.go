@@ -128,10 +128,9 @@ func Init() {
 		Log.Fatal("can not init XORM user log: " + err.Error())
 	}
 	{
-		var usercount, _ = xormUserlog.Count(&ClientStore{})
-		Log.Infof("user count %d items", usercount)
 		var uacount, _ = xormUserlog.Count(&AgentStore{})
 		Log.Infof("user agent count %d items", uacount)
+		Log.Infof("clients count %d", maxcid)
 		var opencount, _ = xormUserlog.Count(&OpenStore{})
 		Log.Infof("resources open count %d items", opencount)
 	}

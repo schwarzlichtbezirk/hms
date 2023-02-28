@@ -112,9 +112,9 @@ func fileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 			if HasRangeBegin(r) { // beginning of content
 				Log.Infof("id%d: media-hd %s", acc.ID, path.Base(syspath))
-				if cid, err := GetCID(r); err == nil {
+				if uaid, err := GetUAID(r); err == nil {
 					go xormUserlog.InsertOne(&OpenStore{
-						CID:     cid,
+						UAID:    uaid,
 						AID:     aid,
 						UID:     uid,
 						Path:    syspath,
@@ -147,9 +147,9 @@ func fileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 			if HasRangeBegin(r) { // beginning of content
 				Log.Infof("id%d: media %s", acc.ID, path.Base(syspath))
-				if cid, err := GetCID(r); err == nil {
+				if uaid, err := GetUAID(r); err == nil {
 					go xormUserlog.InsertOne(&OpenStore{
-						CID:     cid,
+						UAID:    uaid,
 						AID:     aid,
 						UID:     uid,
 						Path:    syspath,
@@ -165,9 +165,9 @@ func fileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	if HasRangeBegin(r) { // beginning of content
 		Log.Infof("id%d: serve %s", acc.ID, path.Base(syspath))
-		if cid, err := GetCID(r); err == nil {
+		if uaid, err := GetUAID(r); err == nil {
 			go xormUserlog.InsertOne(&OpenStore{
-				CID:     cid,
+				UAID:    uaid,
 				AID:     aid,
 				UID:     uid,
 				Path:    syspath,
