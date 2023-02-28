@@ -509,11 +509,8 @@ func AjaxMiddleware(next http.Handler) http.Handler {
 			isold, isnew bool
 		)
 
-		var ast = &AgentStore{
-			Addr: StripPort(r.RemoteAddr),
-			UA:   r.UserAgent(),
-		}
-		uanew = ID_t(ast.Hash())
+		var addr, ua = StripPort(r.RemoteAddr), r.UserAgent()
+		uanew = CalcUAID(addr, ua)
 
 		// UAID at cookie
 		if uaold, _ = GetUAID(r); uaold == 0 {
@@ -532,12 +529,13 @@ func AjaxMiddleware(next http.Handler) http.Handler {
 			}
 			UaMap[uanew] = cid
 			go func() {
-				ast.CID = cid
-				ast.UAID = uanew
-				if lang, ok := r.Header["Accept-Language"]; ok {
-					ast.Lang = lang[0]
-				}
-				if _, err := xormUserlog.InsertOne(ast); err != nil {
+				if _, err := xormUserlog.InsertOne(&AgentStore{
+					UAID: uanew,
+					CID:  cid,
+					Addr: addr,
+					UA:   ua,
+					Lang: r.Header.Get("Accept-Language"),
+				}); err != nil {
 					panic(err.Error())
 				}
 			}()

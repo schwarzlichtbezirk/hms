@@ -112,15 +112,13 @@ func fileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 			if HasRangeBegin(r) { // beginning of content
 				Log.Infof("id%d: media-hd %s", acc.ID, path.Base(syspath))
-				if uaid, err := GetUAID(r); err == nil {
-					go xormUserlog.InsertOne(&OpenStore{
-						UAID:    uaid,
-						AID:     aid,
-						UID:     uid,
-						Path:    syspath,
-						Latency: -1,
-					})
-				}
+				go xormUserlog.InsertOne(&OpenStore{
+					UAID:    RequestUAID(r),
+					AID:     aid,
+					UID:     uid,
+					Path:    syspath,
+					Latency: -1,
+				})
 			}
 			w.Header().Set("Content-Type", MimeStr[md.Mime])
 			http.ServeContent(w, r, syspath, starttime, bytes.NewReader(md.Data))
@@ -147,15 +145,13 @@ func fileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 			if HasRangeBegin(r) { // beginning of content
 				Log.Infof("id%d: media %s", acc.ID, path.Base(syspath))
-				if uaid, err := GetUAID(r); err == nil {
-					go xormUserlog.InsertOne(&OpenStore{
-						UAID:    uaid,
-						AID:     aid,
-						UID:     uid,
-						Path:    syspath,
-						Latency: -1,
-					})
-				}
+				go xormUserlog.InsertOne(&OpenStore{
+					UAID:    RequestUAID(r),
+					AID:     aid,
+					UID:     uid,
+					Path:    syspath,
+					Latency: -1,
+				})
 			}
 			w.Header().Set("Content-Type", MimeStr[md.Mime])
 			http.ServeContent(w, r, syspath, starttime, bytes.NewReader(md.Data))
@@ -165,15 +161,13 @@ func fileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	if HasRangeBegin(r) { // beginning of content
 		Log.Infof("id%d: serve %s", acc.ID, path.Base(syspath))
-		if uaid, err := GetUAID(r); err == nil {
-			go xormUserlog.InsertOne(&OpenStore{
-				UAID:    uaid,
-				AID:     aid,
-				UID:     uid,
-				Path:    syspath,
-				Latency: -1,
-			})
-		}
+		go xormUserlog.InsertOne(&OpenStore{
+			UAID:    RequestUAID(r),
+			AID:     aid,
+			UID:     uid,
+			Path:    syspath,
+			Latency: -1,
+		})
 	}
 
 	var content io.ReadSeekCloser

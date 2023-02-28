@@ -43,6 +43,8 @@ type CfgJWTAuth struct {
 	AccessKey string `json:"access-key" yaml:"access-key"`
 	// Key for refresh HS-256 JWT-tokens.
 	RefreshKey string `json:"refresh-key" yaml:"refresh-key"`
+	// Key to calculate user agent ID by xxhash algorithm.
+	UaidHmacKey string `json:"uaid-hmac-key" yaml:"uaid-hmac-key"`
 }
 
 // CfgWebServ is web server settings.
@@ -55,6 +57,8 @@ type CfgWebServ struct {
 	WriteTimeout      time.Duration `json:"write-timeout" yaml:"write-timeout" long:"wt" description:"Maximum duration before timing out writes of the response."`
 	IdleTimeout       time.Duration `json:"idle-timeout" yaml:"idle-timeout" long:"it" description:"Maximum amount of time to wait for the next request when keep-alives are enabled."`
 	MaxHeaderBytes    int           `json:"max-header-bytes" yaml:"max-header-bytes" long:"mhb" description:"Controls the maximum number of bytes the server will read parsing the request header's keys and values, including the request line, in bytes."`
+	// Maximum duration between two ajax-calls to think client is online.
+	OnlineTimeout time.Duration `json:"online-timeout" yaml:"online-timeout" long:"ot" description:"Maximum duration between two ajax-calls to think client is online."`
 	// Maximum duration to wait for graceful shutdown.
 	ShutdownTimeout time.Duration `json:"shutdown-timeout" yaml:"shutdown-timeout" long:"st" description:"Maximum duration to wait for graceful shutdown."`
 }
@@ -83,8 +87,6 @@ type CfgAppSets struct {
 	WPKName []string `json:"wpk-name" yaml:"wpk-name,flow" long:"wpk" description:"Name of wpk-file with program resources."`
 	// Memory mapping technology for WPK, or load into one solid byte slice otherwise.
 	WPKmmap bool `json:"wpk-mmap" yaml:"wpk-mmap" long:"mmap" description:"Memory mapping technology for WPK, or load into one solid byte slice otherwise."`
-	// Maximum duration between two ajax-calls to think client is online.
-	OnlineTimeout time.Duration `json:"online-timeout" yaml:"online-timeout" long:"ot" description:"Maximum duration between two ajax-calls to think client is online."`
 	// Maximum number of cached embedded thumbnails.
 	ThumbCacheMaxNum int `json:"thumb-cache-maxnum" yaml:"thumb-cache-maxnum" long:"pcmn" description:"Maximum number of cached embedded thumbnails."`
 	// Maximum number of converted media files at memory cache.
@@ -110,10 +112,11 @@ type Config struct {
 // Instance of common service settings.
 var cfg = Config{ // inits default values:
 	CfgJWTAuth: CfgJWTAuth{
-		AccessTTL:  1 * 24 * time.Hour,
-		RefreshTTL: 3 * 24 * time.Hour,
-		AccessKey:  "skJgM4NsbP3fs4k7vh0gfdkgGl8dJTszdLxZ1sQ9ksFnxbgvw2RsGH8xxddUV479",
-		RefreshKey: "zxK4dUnuq3Lhd1Gzhpr3usI5lAzgvy2t3fmxld2spzz7a5nfv0hsksm9cheyutie",
+		AccessTTL:   1 * 24 * time.Hour,
+		RefreshTTL:  3 * 24 * time.Hour,
+		AccessKey:   "skJgM4NsbP3fs4k7vh0gfdkgGl8dJTszdLxZ1sQ9ksFnxbgvw2RsGH8xxddUV479",
+		RefreshKey:  "zxK4dUnuq3Lhd1Gzhpr3usI5lAzgvy2t3fmxld2spzz7a5nfv0hsksm9cheyutie",
+		UaidHmacKey: "hms-ua",
 	},
 	CfgWebServ: CfgWebServ{
 		AutoCert:          false,
@@ -124,6 +127,7 @@ var cfg = Config{ // inits default values:
 		WriteTimeout:      15 * time.Second,
 		IdleTimeout:       60 * time.Second,
 		MaxHeaderBytes:    1 << 20,
+		OnlineTimeout:     3 * 60 * time.Second,
 		ShutdownTimeout:   15 * time.Second,
 	},
 	CfgImgProp: CfgImgProp{
@@ -137,7 +141,6 @@ var cfg = Config{ // inits default values:
 	CfgAppSets: CfgAppSets{
 		WPKName:          []string{"hms-full.wpk"},
 		WPKmmap:          false,
-		OnlineTimeout:    3 * 60 * time.Second,
 		ThumbCacheMaxNum: 16 * 1024,
 		MediaCacheMaxNum: 64,
 		HdCacheMaxNum:    256,

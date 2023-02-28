@@ -15,6 +15,7 @@ import (
 
 var xormUserlog *xorm.Engine
 
+// AgentStore is storage record with user agent string and user host address.
 type AgentStore struct {
 	UAID ID_t   `xorm:"unique"` // user agent ID
 	CID  ID_t   // client ID
@@ -24,6 +25,7 @@ type AgentStore struct {
 	Time Time   `xorm:"created"`
 }
 
+// OpenStore is storage record with some opened file or opened folder.
 type OpenStore struct {
 	UAID    ID_t   // client ID
 	AID     ID_t   `xorm:"default 0"` // access profile ID
@@ -44,14 +46,18 @@ var (
 	uamux sync.Mutex
 )
 
-const ua_salt = "hms"
-
-func (ast *AgentStore) Hash() uint64 {
+// CalcUAID calculate user agent ID by xxhash from given strings.
+func CalcUAID(addr, ua string) ID_t {
 	var h = xxhash.New()
-	h.Write(s2b(ua_salt))
-	h.Write(s2b(ast.Addr))
-	h.Write(s2b(ast.UA))
-	return h.Sum64() & 0x7fff_ffff_ffff_ffff
+	h.Write(s2b(cfg.UaidHmacKey))
+	h.Write(s2b(addr))
+	h.Write(s2b(ua))
+	return ID_t(h.Sum64() & 0x7fff_ffff_ffff_ffff) // clear highest bit for xorm compatibility
+}
+
+// RequestUAID calculate user agent ID from given request.
+func RequestUAID(r *http.Request) ID_t {
+	return CalcUAID(StripPort(r.RemoteAddr), r.UserAgent())
 }
 
 // InitUserlog inits database user log engine.

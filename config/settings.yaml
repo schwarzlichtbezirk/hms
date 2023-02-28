@@ -12,6 +12,8 @@ authentication:
   access-key: skJgM4NsbP3fs4k7vh0gfdkgGl8dJTszdLxZ1sQ9ksFnxbgvw2RsGH8xxddUV479
   # Key for refresh HS-256 JWT-tokens.
   refresh-key: zxK4dUnuq3Lhd1Gzhpr3usI5lAzgvy2t3fmxld2spzz7a5nfv0hsksm9cheyutie
+  # Key to calculate user agent ID by xxhash algorithm.
+  uaid-hmac-key: hms-ua
 web-server: # See https://golang.org/pkg/net/http/#Server for details.
   # Indicates to get TLS-certificate from letsencrypt.org service
   # if this value is true. Uses local TLS-certificate otherwise.
@@ -37,6 +39,8 @@ web-server: # See https://golang.org/pkg/net/http/#Server for details.
   # Controls the maximum number of bytes the server will read parsing
   # the request header's keys and values, including the request line, in bytes.
   max-header-bytes: 1048576 # 1M
+  # Maximum duration between two ajax-calls to think client is online.
+  online-timeout: 180s # 3 minutes
   # Maximum duration to wait for graceful shutdown.
   shutdown-timeout: 15s
 images-prop:
@@ -61,8 +65,6 @@ specification:
   # On 'true' use memory mapping technology for access to wpk-package nested files.
   # On 'false' use wpk-package loaded into one solid byte slice.
   wpk-mmap: false
-  # Maximum duration between two ajax-calls to think client is online.
-  online-timeout: 180s # 3 minutes
   # Maximum number of cached embedded thumbnails.
   thumb-cache-maxnum: 16384
   # Maximum number of converted media files at memory cache.
