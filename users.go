@@ -126,7 +126,8 @@ func usrlstAPI(w http.ResponseWriter, r *http.Request) {
 	var ret struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
 
-		Total int64  `json:"total" yaml:"total" xml:"total"`
+		CNum  int    `json:"cnum" yaml:"cnum" xml:"cnum"`
+		UANum int    `json:"uanum" yaml:"uanum" xml:"uanum"`
 		List  []item `json:"list" yaml:"list" xml:"list>item"`
 	}
 
@@ -173,13 +174,17 @@ func usrlstAPI(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if is {
-			ui.File = post.Path
+			ui.Path = post.Path
 			ui.AID = post.AID
 			ui.UID = post.UID
 		}
 
 		ret.List[i] = ui
 	}
+	uamux.Lock()
+	ret.CNum = int(maxcid)
+	ret.UANum = len(UaMap)
+	uamux.Unlock()
 
 	WriteOK(w, r, &ret)
 }

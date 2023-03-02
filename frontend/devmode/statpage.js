@@ -744,7 +744,7 @@ const VueUsercCard = {
 	},
 	computed: {
 		usrlstnum() {
-			return Math.ceil(this.usrlst.total / this.usrlstsize);
+			return Math.ceil(this.usrlst.uanum / this.usrlstsize);
 		},
 
 		clsupdate() {

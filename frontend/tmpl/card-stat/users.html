@@ -13,7 +13,8 @@
 	<div v-bind:id="'card'+iid" class="collapse">
 		<div class="card-body">
 			<div>
-				<span class="field-name">total clients:</span><span class="field-value mx-2">{{usrlst.total}}</span>
+				<span class="field-name">original user number:</span><span class="field-value mx-2">{{usrlst.cnum}}</span>,
+				<span class="field-name">user agents number:</span><span class="field-value mx-2">{{usrlst.uanum}}</span>
 			</div>
 			<template v-for="user in usrlst.list">
 				<user-tag v-bind:user="user" />
