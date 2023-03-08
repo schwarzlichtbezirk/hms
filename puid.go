@@ -26,14 +26,15 @@ type Time = time.Time
 const (
 	PUIDhome   Puid_t = 1
 	PUIDdrives Puid_t = 2
-	PUIDshares Puid_t = 3
-	PUIDmedia  Puid_t = 4
-	PUIDvideo  Puid_t = 5
-	PUIDaudio  Puid_t = 6
-	PUIDimage  Puid_t = 7
-	PUIDbooks  Puid_t = 8
-	PUIDtexts  Puid_t = 9
-	PUIDmap    Puid_t = 10
+	PUIDremote Puid_t = 3
+	PUIDshares Puid_t = 4
+	PUIDmedia  Puid_t = 5
+	PUIDvideo  Puid_t = 6
+	PUIDaudio  Puid_t = 7
+	PUIDimage  Puid_t = 8
+	PUIDbooks  Puid_t = 9
+	PUIDtexts  Puid_t = 10
+	PUIDmap    Puid_t = 11
 
 	PUIDcache = 32 // first PUID of file system paths
 )
@@ -42,6 +43,7 @@ const (
 const (
 	CPhome   = "<home>"
 	CPdrives = "<drives>"
+	CPremote = "<remote>"
 	CPshares = "<shares>"
 	CPmedia  = "<media>"
 	CPvideo  = "<video>"
@@ -55,6 +57,7 @@ const (
 var CatNames = map[Puid_t]string{
 	PUIDhome:   "Home",
 	PUIDdrives: "Drives list",
+	PUIDremote: "Network",
 	PUIDshares: "Shared resources",
 	PUIDmedia:  "Multimedia files",
 	PUIDvideo:  "Movie and video files",
@@ -69,6 +72,7 @@ var CatNames = map[Puid_t]string{
 var CatKeyPath = map[Puid_t]string{
 	PUIDhome:   CPhome,
 	PUIDdrives: CPdrives,
+	PUIDremote: CPremote,
 	PUIDshares: CPshares,
 	PUIDmedia:  CPmedia,
 	PUIDvideo:  CPvideo,
@@ -83,6 +87,7 @@ var CatKeyPath = map[Puid_t]string{
 var CatPathKey = map[string]Puid_t{
 	CPhome:   PUIDhome,
 	CPdrives: PUIDdrives,
+	CPremote: PUIDremote,
 	CPshares: PUIDshares,
 	CPmedia:  PUIDmedia,
 	CPvideo:  PUIDvideo,

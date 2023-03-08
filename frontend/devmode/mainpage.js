@@ -28,14 +28,15 @@ let thumbmode = storageGetBoolean("thumbmode", true);
 const CNID = {
 	home: "04",
 	drives: "08",
-	shares: "0C",
-	media: "0G",
-	video: "0K",
-	audio: "0O",
-	image: "0S",
-	books: "10",
-	texts: "14",
-	map: "18",
+	remote: "0C",
+	shares: "0G",
+	media: "0K",
+	video: "0O",
+	audio: "0S",
+	image: "10",
+	books: "14",
+	texts: "18",
+	map: "1C",
 
 	reserved: 32
 };
@@ -44,28 +45,30 @@ const CNID = {
 const CIDN = {
 	"04": "home",
 	"08": "drives",
-	"0C": "shares",
-	"0G": "media",
-	"0K": "video",
-	"0O": "audio",
-	"0S": "image",
-	"10": "books",
-	"14": "texts",
-	"18": "map",
+	"0C": "remote",
+	"0G": "shares",
+	"0K": "media",
+	"0O": "video",
+	"0S": "audio",
+	"10": "image",
+	"14": "books",
+	"18": "texts",
+	"1C": "map",
 };
 
 // Category properties.
 const CP = {
 	"04": "Home",
 	"08": "Drives list",
-	"0C": "Shared resources",
-	"0G": "Multimedia files",
-	"0K": "Movie and video files",
-	"0O": "Music and audio files",
-	"0S": "Photos and images",
-	"10": "Books",
-	"14": "Text files",
-	"18": "Map",
+	"0C": "Network",
+	"0G": "Shared resources",
+	"0K": "Multimedia files",
+	"0O": "Movie and video files",
+	"0S": "Music and audio files",
+	"10": "Photos and images",
+	"14": "Books",
+	"18": "Text files",
+	"1C": "Map",
 };
 
 // MIME enum values.

@@ -663,7 +663,6 @@ const VueFileCard = {
 	props: ["flist"],
 	data() {
 		return {
-			expanded: true,
 			sortorder: 1,
 			sortmode: 'byalpha',
 			listmode: 'sm',
@@ -1263,7 +1262,6 @@ const VueTileCard = {
 	props: ["flist"],
 	data() {
 		return {
-			expanded: true,
 			sortorder: 1,
 			sortmode: 'byalpha',
 			tilemode: 'mode-246',
@@ -1587,7 +1585,6 @@ const VueMapCard = {
 	props: ["flist"],
 	data() {
 		return {
-			expanded: true,
 			isfullscreen: false,
 			styleid: 'mapbox-hybrid',
 			markermode: 'thumb',

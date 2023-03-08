@@ -345,9 +345,9 @@ const VueMemgcCard = {
 	data() {
 		return {
 			memgc: {},
-			expanded: false,
 			upmode: 5000,
 			upid: 0,
+			expanded: false,
 			iid: makestrid(10), // instance ID
 		};
 	},
