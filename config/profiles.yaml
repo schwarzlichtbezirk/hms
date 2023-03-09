@@ -22,5 +22,6 @@
     - ?:/ProgramData
     - ?:/Recovery
     - ?:/Config.Msi
+  remote:
   shares:
     - '<home>'

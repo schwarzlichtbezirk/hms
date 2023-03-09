@@ -67,6 +67,7 @@ type Profile struct {
 
 	Roots  []string `json:"roots" yaml:"roots" xml:"roots>item"`    // root directories list
 	Hidden []string `json:"hidden" yaml:"hidden" xml:"hidden>item"` // patterns for hidden files
+	Remote []string `json:"remote" yaml:"remote" xml:"remote>item"`
 	Shares []string `json:"shares" yaml:"shares" xml:"shares>item"`
 
 	// private shares data
@@ -85,9 +86,6 @@ func (pl *Profiles) NewProfile(login, password string) *Profile {
 	var prf = &Profile{
 		Login:    login,
 		Password: password,
-		Roots:    []string{},
-		Hidden:   []string{},
-		Shares:   []string{},
 	}
 
 	var mid ID_t
@@ -293,6 +291,28 @@ func (prf *Profile) ScanRoots(session *Session) (ret []any, err error) {
 	go SqlSession(func(session *Session) (res any, err error) {
 		DirStoreSet(session, &DirStore{
 			Puid: PUIDdrives,
+			Prop: dp,
+		})
+		return
+	})
+
+	return
+}
+
+func (prf *Profile) ScanRemote(session *Session) (ret []any, err error) {
+	prf.mux.RLock()
+	var vfiles = make([]string, len(prf.Remote))
+	copy(vfiles, prf.Remote)
+	prf.mux.RUnlock()
+
+	var dp DirProp
+	if ret, dp, err = ScanFileNameList(prf, session, vfiles); err != nil {
+		return
+	}
+
+	go SqlSession(func(session *Session) (res any, err error) {
+		DirStoreSet(session, &DirStore{
+			Puid: PUIDremote,
 			Prop: dp,
 		})
 		return

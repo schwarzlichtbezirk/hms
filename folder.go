@@ -188,6 +188,11 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 				WriteError500(w, r, err, AECfolderdrives)
 				return
 			}
+		case PUIDremote:
+			if ret.List, err = acc.ScanRemote(session); err != nil {
+				WriteError500(w, r, err, AECfolderremote)
+				return
+			}
 		case PUIDshares:
 			if ret.List, err = acc.ScanShares(session); err != nil {
 				WriteError500(w, r, err, AECfoldershares)

@@ -4,6 +4,7 @@
 		"cid": {
 			"home": "/fs/icon/oxygen/cid-home",
 			"drives": "/fs/icon/oxygen/cid-drives",
+			"remote": "/fs/icon/oxygen/cid-remote",
 			"shares": "/fs/icon/oxygen/cid-shares",
 			"media": "/fs/icon/oxygen/cid-media",
 			"video": "/fs/icon/oxygen/cid-video",
@@ -18,7 +19,9 @@
 			"green": "/fs/icon/oxygen/drive-green",
 			"yellow": "/fs/icon/oxygen/drive-yellow",
 			"red": "/fs/icon/oxygen/drive-red",
-			"offline": "/fs/icon/oxygen/drive-off"
+			"offline": "/fs/icon/oxygen/drive-off",
+			"network": "/fs/icon/oxygen/drive-network",
+			"network-off": "/fs/icon/oxygen/drive-network-off"
 		},
 		"folder": {
 			"other": "/fs/icon/oxygen/folder-store",

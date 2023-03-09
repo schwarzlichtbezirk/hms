@@ -4,6 +4,7 @@
 		"cid": {
 			"home": "/fs/icon/tulliana/cid-home",
 			"drives": "/fs/icon/tulliana/cid-drives",
+			"remote": "/fs/icon/tulliana/cid-remote",
 			"shares": "/fs/icon/tulliana/cid-shares",
 			"media": "/fs/icon/tulliana/cid-media",
 			"video": "/fs/icon/tulliana/cid-video",
@@ -18,7 +19,9 @@
 			"green": "/fs/icon/tulliana/drive-on",
 			"yellow": "/fs/icon/tulliana/drive-on",
 			"red": "/fs/icon/tulliana/drive-on",
-			"offline": "/fs/icon/tulliana/drive-off"
+			"offline": "/fs/icon/tulliana/drive-off",
+			"network": "/fs/icon/tulliana/drive-network",
+			"network-off": "/fs/icon/tulliana/drive-network-off"
 		},
 		"folder": {
 			"other": "/fs/icon/tulliana/folder-tulliana",

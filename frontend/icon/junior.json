@@ -4,6 +4,7 @@
 		"cid": {
 			"home": "/fs/icon/junior/cid-home",
 			"drives": "/fs/icon/junior/cid-drives",
+			"remote": "/fs/icon/junior/cid-remote",
 			"shares": "/fs/icon/junior/cid-shares",
 			"media": "/fs/icon/junior/cid-media",
 			"video": "/fs/icon/junior/cid-video",
@@ -18,7 +19,9 @@
 			"green": "/fs/icon/junior/drive-green",
 			"yellow": "/fs/icon/junior/drive-yellow",
 			"red": "/fs/icon/junior/drive-red",
-			"offline": "/fs/icon/junior/drive-off"
+			"offline": "/fs/icon/junior/drive-off",
+			"network": "/fs/icon/junior/drive-network",
+			"network-off": "/fs/icon/junior/drive-network-off"
 		},
 		"folder": {
 			"other": "/fs/icon/junior/folder-open",

@@ -4,6 +4,7 @@
 		"cid": {
 			"home": "/fs/icon/ubuntu/cid-home",
 			"drives": "/fs/icon/ubuntu/cid-drives",
+			"remote": "/fs/icon/ubuntu/cid-remote",
 			"shares": "/fs/icon/ubuntu/cid-shares",
 			"media": "/fs/icon/ubuntu/cid-media",
 			"video": "/fs/icon/ubuntu/cid-video",
@@ -18,7 +19,9 @@
 			"green": "/fs/icon/ubuntu/drive-green",
 			"yellow": "/fs/icon/ubuntu/drive-yellow",
 			"red": "/fs/icon/ubuntu/drive-red",
-			"offline": "/fs/icon/ubuntu/drive-off"
+			"offline": "/fs/icon/ubuntu/drive-off",
+			"network": "/fs/icon/ubuntu/drive-green",
+			"network-off": "/fs/icon/ubuntu/drive-off"
 		},
 		"folder": {
 			"other": "/fs/icon/ubuntu/folder-ubuntu",

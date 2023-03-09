@@ -119,6 +119,7 @@ const (
 	AECfoldernoshr
 	AECfolderhome
 	AECfolderdrives
+	AECfolderremote
 	AECfoldershares
 	AECfoldermedia
 	AECfoldermap

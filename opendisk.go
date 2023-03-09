@@ -116,21 +116,20 @@ func OpenFile(syspath string) (r io.ReadSeekCloser, err error) {
 
 // StatFile returns fs.FileInfo of file in file system, or file nested in disk image.
 func StatFile(syspath string) (fi fs.FileInfo, err error) {
+	// check up file is at primary filesystem
 	var file *os.File
-	if file, err = os.Open(syspath); err == nil { // primary filesystem file
+	if file, err = os.Open(syspath); err == nil {
 		defer file.Close()
 		return file.Stat()
 	}
 
 	// looking for nested file
 	var basepath = syspath
-	var operr = err
-	for errors.Is(operr, fs.ErrNotExist) && basepath != "." && basepath != "/" {
+	for errors.Is(err, fs.ErrNotExist) && basepath != "." && basepath != "/" {
 		basepath = path.Dir(basepath)
-		file, operr = os.Open(basepath)
+		file, err = os.Open(basepath)
 	}
-	if operr != nil {
-		err = operr
+	if err != nil {
 		return
 	}
 	file.Close()
