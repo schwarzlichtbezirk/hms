@@ -4,6 +4,7 @@
 		"cid": {
 			"home": "/fs/icon/xrabbit/cid-home",
 			"drives": "/fs/icon/xrabbit/cid-drives",
+			"remote": "/fs/icon/xrabbit/cid-remote",
 			"shares": "/fs/icon/xrabbit/cid-shares",
 			"media": "/fs/icon/xrabbit/folder-media",
 			"video": "/fs/icon/xrabbit/folder-video",
@@ -18,7 +19,9 @@
 			"green": "/fs/icon/xrabbit/drive-green",
 			"yellow": "/fs/icon/xrabbit/drive-yellow",
 			"red": "/fs/icon/xrabbit/drive-red",
-			"offline": "/fs/icon/xrabbit/drive-off"
+			"gray": "/fs/icon/xrabbit/drive-off",
+			"network": "/fs/icon/xrabbit/drive-network",
+			"offline": "/fs/icon/xrabbit/drive-offline"
 		},
 		"folder": {
 			"other": "/fs/icon/xrabbit/folder-other",

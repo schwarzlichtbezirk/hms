@@ -4,6 +4,7 @@
 		"cid": {
 			"home": "/fs/icon/paomedia/cid-home",
 			"drives": "/fs/icon/paomedia/cid-drives",
+			"remote": "/fs/icon/paomedia/cid-remote",
 			"shares": "/fs/icon/paomedia/cid-shares",
 			"media": "/fs/icon/paomedia/cid-media",
 			"video": "/fs/icon/paomedia/cid-video",
@@ -18,7 +19,9 @@
 			"green": "/fs/icon/paomedia/drive-green",
 			"yellow": "/fs/icon/paomedia/drive-yellow",
 			"red": "/fs/icon/paomedia/drive-red",
-			"offline": "/fs/icon/paomedia/drive-off"
+			"gray": "/fs/icon/paomedia/drive-off",
+			"network": "/fs/icon/paomedia/drive-cloud",
+			"offline": "/fs/icon/paomedia/drive-cloud"
 		},
 		"folder": {
 			"other": "/fs/icon/paomedia/folder-common",

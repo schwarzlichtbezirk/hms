@@ -4,6 +4,7 @@
 		"cid": {
 			"home": "/fs/icon/papirus/cid-home",
 			"drives": "/fs/icon/papirus/cid-drives",
+			"remote": "/fs/icon/papirus/cid-remote",
 			"shares": "/fs/icon/papirus/cid-shares",
 			"media": "/fs/icon/papirus/cid-media",
 			"video": "/fs/icon/papirus/cid-video",
@@ -18,6 +19,8 @@
 			"green": "/fs/icon/papirus/drive-green",
 			"yellow": "/fs/icon/papirus/drive-yellow",
 			"red": "/fs/icon/papirus/drive-red",
+			"gray": "/fs/icon/papirus/drive-off",
+			"network": "/fs/icon/papirus/drive-green",
 			"offline": "/fs/icon/papirus/drive-off"
 		},
 		"folder": {

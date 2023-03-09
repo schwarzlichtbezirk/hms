@@ -4,6 +4,7 @@
 		"cid": {
 			"home": "/fs/icon/chakram/cid-home",
 			"drives": "/fs/icon/chakram/cid-drives",
+			"remote": "/fs/icon/chakram/cid-map",
 			"shares": "/fs/icon/chakram/cid-shares",
 			"media": "/fs/icon/chakram/folder-media",
 			"video": "/fs/icon/chakram/folder-video",
@@ -18,6 +19,8 @@
 			"green": "/fs/icon/chakram/drive-green",
 			"yellow": "/fs/icon/chakram/drive-yellow",
 			"red": "/fs/icon/chakram/drive-red",
+			"gray": "/fs/icon/chakram/drive-off",
+			"network": "/fs/icon/chakram/drive-green",
 			"offline": "/fs/icon/chakram/drive-off"
 		},
 		"folder": {

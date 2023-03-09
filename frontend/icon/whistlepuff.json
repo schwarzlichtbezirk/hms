@@ -4,6 +4,7 @@
 		"cid": {
 			"home": "/fs/icon/whistlepuff/cid-home",
 			"drives": "/fs/icon/whistlepuff/cid-drives",
+			"remote": "/fs/icon/whistlepuff/cid-remote",
 			"shares": "/fs/icon/whistlepuff/cid-shares",
 			"media": "/fs/icon/whistlepuff/cid-media",
 			"video": "/fs/icon/whistlepuff/cid-video",
@@ -18,7 +19,9 @@
 			"green": "/fs/icon/whistlepuff/drive",
 			"yellow": "/fs/icon/whistlepuff/drive",
 			"red": "/fs/icon/whistlepuff/drive",
-			"offline": "/fs/icon/whistlepuff/drive-off"
+			"gray": "/fs/icon/whistlepuff/drive-off",
+			"network": "/fs/icon/whistlepuff/network",
+			"offline": "/fs/icon/whistlepuff/offline"
 		},
 		"folder": {
 			"other": "/fs/icon/whistlepuff/folder-close",

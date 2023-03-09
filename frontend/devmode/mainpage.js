@@ -301,7 +301,7 @@ const geticonpath = (im, file) => {
 			};
 		case FT.drv:
 			if (file.latency < 0) {
-				return { org: org.drive.offline, alt: alt.drive.offline };
+				return { org: org.drive.gray, alt: alt.drive.gray };
 			} else if (!file.latency || file.latency < DS.yellow) {
 				return { org: org.drive.green, alt: alt.drive.green };
 			} else if (file.latency < DS.red) {

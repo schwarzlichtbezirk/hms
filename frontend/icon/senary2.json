@@ -2,8 +2,9 @@
 	"private": {
 		"blank": "/fs/icon/senary/file-default",
 		"cid": {
-			"home": "/fs/icon/senary/folder-close",
+			"home": "/fs/icon/senary/cid-home",
 			"drives": "/fs/icon/senary/cid-drives",
+			"remote": "/fs/icon/senary2/cid-remote",
 			"shares": "/fs/icon/senary/cid-shares",
 			"media": "/fs/icon/senary/cid-media",
 			"video": "/fs/icon/senary/cid-video",
@@ -18,7 +19,9 @@
 			"green": "/fs/icon/senary/drive",
 			"yellow": "/fs/icon/senary/drive",
 			"red": "/fs/icon/senary/drive",
-			"offline": "/fs/icon/senary/drive"
+			"gray": "/fs/icon/senary/drive",
+			"network": "/fs/icon/senary/drive-network",
+			"offline": "/fs/icon/senary/drive-network-off"
 		},
 		"folder": {
 			"other": "/fs/icon/senary/folder-options",

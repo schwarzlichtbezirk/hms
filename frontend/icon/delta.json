@@ -4,6 +4,7 @@
 		"cid": {
 			"home": "/fs/icon/delta/cid-home",
 			"drives": "/fs/icon/delta/cid-drives",
+			"remote": "/fs/icon/delta/cid-remote",
 			"shares": "/fs/icon/delta/cid-shares",
 			"media": "/fs/icon/delta/cid-media",
 			"video": "/fs/icon/delta/cid-video",
@@ -16,9 +17,11 @@
 		},
 		"drive": {
 			"green": "/fs/icon/delta/drive-green",
-			"yellow": "/fs/icon/delta/drive-yellow",
+			"yellow": "/fs/icon/delta/drive-green",
 			"red": "/fs/icon/delta/drive-red",
-			"offline": "/fs/icon/delta/drive-off"
+			"gray": "/fs/icon/delta/drive-off",
+			"network": "/fs/icon/delta/drive-network",
+			"offline": "/fs/icon/delta/drive-network-off"
 		},
 		"folder": {
 			"other": "/fs/icon/delta/folder-briefcase",
