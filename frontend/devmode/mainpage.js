@@ -107,7 +107,8 @@ const FT = {
 	file: 1,
 	dir: 2,
 	drv: 3,
-	ctgr: 4
+	cld: 4,
+	ctgr: 5,
 };
 
 // File groups
@@ -119,7 +120,7 @@ const FG = {
 	books: 4,
 	texts: 5,
 	packs: 6,
-	dir: 7
+	group: 7
 };
 
 // Drive state
@@ -278,7 +279,7 @@ const extfmtorder = [
 
 const getFileGroup = file => {
 	if (file.type !== FT.file) {
-		return FG.dir;
+		return FG.group;
 	}
 	const ext = pathext(file.name);
 	if (extfmt.image[ext]) return FG.image;
@@ -332,8 +333,8 @@ const geticonpath = (im, file) => {
 					return { org: org.folder.texts, alt: alt.folder.texts };
 				} else if (fg.packs / fnum > 0.5) {
 					return { org: org.folder.packs, alt: alt.folder.packs };
-				} else if (fg.dir / fnum > 0.5) {
-					return { org: org.folder.dir, alt: alt.folder.dir };
+				} else if (fg.group / fnum > 0.5) {
+					return { org: org.folder.group, alt: alt.folder.group };
 				} else if ((fg.audio + fg.video + fg.image) / fnum > 0.5) {
 					return { org: org.folder.media, alt: alt.folder.media };
 				} else {

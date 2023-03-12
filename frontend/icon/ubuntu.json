@@ -31,7 +31,7 @@
 			"books": "/fs/icon/ubuntu/folder-books",
 			"texts": "/fs/icon/ubuntu/folder-texts",
 			"packs": "/fs/icon/ubuntu/folder-dropbox",
-			"dir": "/fs/icon/ubuntu/folder-ubuntu",
+			"group": "/fs/icon/ubuntu/folder-ubuntu",
 			"media": "/fs/icon/ubuntu/folder-red",
 			"open": "/fs/icon/ubuntu/folder-open",
 			"close": "/fs/icon/ubuntu/folder-close"
@@ -129,7 +129,7 @@
 			"books": "/fs/icon/ubuntu/folder-books-pub",
 			"texts": "/fs/icon/ubuntu/folder-texts-pub",
 			"packs": "/fs/icon/ubuntu/folder-dropbox-pub",
-			"dir": "/fs/icon/ubuntu/folder-ubuntu-pub",
+			"group": "/fs/icon/ubuntu/folder-ubuntu-pub",
 			"media": "/fs/icon/ubuntu/folder-red-pub",
 			"open": "/fs/icon/ubuntu/folder-open-pub",
 			"close": "/fs/icon/ubuntu/folder-close-pub"

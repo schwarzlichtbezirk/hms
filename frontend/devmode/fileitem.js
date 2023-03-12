@@ -31,8 +31,8 @@ const filehint = file => {
 	}
 	// Dir properties
 	if (file.fgrp) {
-		if (file.fgrp.dir) {
-			lst.push(['directories', file.fgrp.dir]);
+		if (file.fgrp.group) {
+			lst.push(['directories', file.fgrp.group]);
 		}
 		if (file.fgrp.video) {
 			lst.push(['video', file.fgrp.video]);

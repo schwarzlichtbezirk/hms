@@ -153,6 +153,9 @@ func (prf *Profile) PathType(fpath string, fi fs.FileInfo) FT_t {
 	if len(fpath) > 1 && fpath[0] == '<' && fpath[len(fpath)-1] == '>' {
 		return FTctgr
 	}
+	if prf.IsCloud(fpath) {
+		return FTcld
+	}
 	if prf.IsRoot(fpath) {
 		return FTdrv
 	}
@@ -164,7 +167,7 @@ func (prf *Profile) PathType(fpath string, fi fs.FileInfo) FT_t {
 
 func (prf *Profile) GetPathGroup(fpath string, fi fs.FileInfo) (grp FG_t) {
 	if prf.PathType(fpath, fi) != FTfile {
-		return FGdir
+		return FGgroup
 	}
 	return GetFileGroup(fpath)
 }
@@ -209,6 +212,18 @@ func (prf *Profile) IsRoot(syspath string) bool {
 	defer prf.mux.RUnlock()
 	for _, root := range prf.Roots {
 		if root == syspath {
+			return true
+		}
+	}
+	return false
+}
+
+// IsCloud checks whether file path is cloud root path.
+func (prf *Profile) IsCloud(syspath string) bool {
+	prf.mux.RLock()
+	defer prf.mux.RUnlock()
+	for _, cloud := range prf.Remote {
+		if cloud == syspath {
 			return true
 		}
 	}

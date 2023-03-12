@@ -2,7 +2,6 @@ package hms
 
 import (
 	"io/fs"
-	"path"
 )
 
 // FileProp is common file properties chunk.
@@ -40,15 +39,6 @@ type FileKit struct {
 	TileProp `xorm:"extends" yaml:",inline"`
 }
 
-// Setup calls nested structures setups.
-func (fk *FileKit) Setup(session *Session, syspath string, fi fs.FileInfo) {
-	fk.PuidProp.Setup(session, syspath)
-	fk.FileProp.Setup(fi)
-	if tp, ok := tilecache.Peek(fk.PUID); ok {
-		fk.TileProp = *tp
-	}
-}
-
 type FileGroup struct {
 	FGother uint `xorm:"'other' default 0" json:"other,omitempty" yaml:"other,omitempty" xml,omitempty,attr:"other"`
 	FGvideo uint `xorm:"'video' default 0" json:"video,omitempty" yaml:"video,omitempty" xml,omitempty,attr:"video"`
@@ -57,7 +47,7 @@ type FileGroup struct {
 	FGbooks uint `xorm:"'books' default 0" json:"books,omitempty" yaml:"books,omitempty" xml,omitempty,attr:"books"`
 	FGtexts uint `xorm:"'texts' default 0" json:"texts,omitempty" yaml:"texts,omitempty" xml,omitempty,attr:"texts"`
 	FGpacks uint `xorm:"'packs' default 0" json:"packs,omitempty" yaml:"packs,omitempty" xml,omitempty,attr:"packs"`
-	FGdir   uint `xorm:"'dir' default 0" json:"dir,omitempty" yaml:"dir,omitempty" xml,omitempty,attr:"dir"`
+	FGgroup uint `xorm:"'group' default 0" json:"group,omitempty" yaml:"group,omitempty" xml,omitempty,attr:"group"`
 }
 
 // Field returns pointer to field value with given identifier.
@@ -77,8 +67,8 @@ func (fg *FileGroup) Field(id FG_t) *uint {
 		return &fg.FGtexts
 	case FGpacks:
 		return &fg.FGpacks
-	case FGdir:
-		return &fg.FGdir
+	case FGgroup:
+		return &fg.FGgroup
 	default:
 		return nil
 	}
@@ -86,7 +76,7 @@ func (fg *FileGroup) Field(id FG_t) *uint {
 
 // Sum returns sum of all fields.
 func (fg *FileGroup) Sum() uint {
-	return fg.FGother + fg.FGvideo + fg.FGaudio + fg.FGimage + fg.FGbooks + fg.FGtexts + fg.FGpacks + fg.FGdir
+	return fg.FGother + fg.FGvideo + fg.FGaudio + fg.FGimage + fg.FGbooks + fg.FGtexts + fg.FGpacks + fg.FGgroup
 }
 
 // IsZero used to check whether an object is zero to determine whether
@@ -107,16 +97,6 @@ type DirKit struct {
 	PuidProp `xorm:"extends" yaml:",inline"`
 	FileProp `xorm:"extends" yaml:",inline"`
 	DirProp  `xorm:"extends" yaml:",inline"`
-}
-
-// Setup fills fields with given path. Do not looks for share.
-func (dk *DirKit) Setup(session *Session, syspath string, fi fs.FileInfo) {
-	dk.PuidProp.Setup(session, syspath)
-	dk.Name = path.Base(syspath)
-	dk.Type = FTdir
-	dk.Size = fi.Size()
-	dk.Time = fi.ModTime()
-	dk.DirProp, _ = DirStoreGet(session, dk.PUID)
 }
 
 // The End.

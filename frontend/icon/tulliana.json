@@ -31,7 +31,7 @@
 			"books": "/fs/icon/tulliana/folder-print",
 			"texts": "/fs/icon/tulliana/folder-txt",
 			"packs": "/fs/icon/tulliana/folder-tar",
-			"dir": "/fs/icon/tulliana/folder-open",
+			"group": "/fs/icon/tulliana/folder-open",
 			"media": "/fs/icon/tulliana/folder-sound",
 			"open": "/fs/icon/tulliana/folder-open",
 			"close": "/fs/icon/tulliana/folder-close"

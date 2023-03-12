@@ -14,7 +14,8 @@ const (
 	FTfile FT_t = 1
 	FTdir  FT_t = 2
 	FTdrv  FT_t = 3
-	FTctgr FT_t = 4
+	FTcld  FT_t = 4
+	FTctgr FT_t = 5
 )
 
 // FG_t is enum type for file groups.
@@ -29,7 +30,7 @@ const (
 	FGbooks FG_t = 4
 	FGtexts FG_t = 5
 	FGpacks FG_t = 6
-	FGdir   FG_t = 7
+	FGgroup FG_t = 7
 )
 
 // FGnum is count of file groups.

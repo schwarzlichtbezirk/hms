@@ -31,7 +31,7 @@
 			"books": "/fs/icon/senary/folder-doc",
 			"texts": "/fs/icon/senary/folder-doc",
 			"packs": "/fs/icon/senary/folder-doc",
-			"dir": "/fs/icon/senary/folder-dir",
+			"group": "/fs/icon/senary/folder-dir",
 			"media": "/fs/icon/senary/folder-video",
 			"open": "/fs/icon/senary/folder-open",
 			"close": "/fs/icon/senary/folder-close"

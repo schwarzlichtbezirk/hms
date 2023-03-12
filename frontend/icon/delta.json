@@ -31,7 +31,7 @@
 			"books": "/fs/icon/delta/folder-briefcase",
 			"texts": "/fs/icon/delta/folder-briefcase",
 			"packs": "/fs/icon/delta/folder-briefcase",
-			"dir": "/fs/icon/delta/folder-open",
+			"group": "/fs/icon/delta/folder-open",
 			"media": "/fs/icon/delta/folder-doc",
 			"open": "/fs/icon/delta/folder-open",
 			"close": "/fs/icon/delta/folder-close"
@@ -115,7 +115,7 @@
 			"books": "/fs/icon/delta/folder-briefcase-pub",
 			"texts": "/fs/icon/delta/folder-briefcase-pub",
 			"packs": "/fs/icon/delta/folder-briefcase-pub",
-			"dir": "/fs/icon/delta/folder-open-pub",
+			"group": "/fs/icon/delta/folder-open-pub",
 			"media": "/fs/icon/delta/folder-doc-pub",
 			"open": "/fs/icon/delta/folder-open-pub",
 			"close": "/fs/icon/delta/folder-close-pub"

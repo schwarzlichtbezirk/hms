@@ -31,7 +31,7 @@
 			"books": "/fs/icon/paomedia/folder-document",
 			"texts": "/fs/icon/paomedia/folder-document",
 			"packs": "/fs/icon/paomedia/folder-house",
-			"dir": "/fs/icon/paomedia/folder-house",
+			"group": "/fs/icon/paomedia/folder-house",
 			"media": "/fs/icon/paomedia/folder-video",
 			"open": "/fs/icon/paomedia/folder-common",
 			"close": "/fs/icon/paomedia/folder-common"

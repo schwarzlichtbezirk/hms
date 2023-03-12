@@ -245,7 +245,11 @@ func edtrenameAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		WriteError500(w, r, err, AECedtrenstat)
 		return
 	}
-	ret.Prop.Setup(session, dstpath, fi)
+	ret.Prop.PuidProp.Setup(session, dstpath)
+	ret.Prop.FileProp.Setup(fi)
+	if tp, ok := tilecache.Peek(ret.Prop.PUID); ok {
+		ret.Prop.TileProp = *tp
+	}
 
 	WriteOK(w, r, &ret)
 }

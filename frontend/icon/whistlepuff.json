@@ -31,7 +31,7 @@
 			"books": "/fs/icon/whistlepuff/folder-doc",
 			"texts": "/fs/icon/whistlepuff/folder-doc",
 			"packs": "/fs/icon/whistlepuff/folder-close",
-			"dir": "/fs/icon/whistlepuff/folder-open",
+			"group": "/fs/icon/whistlepuff/folder-open",
 			"media": "/fs/icon/whistlepuff/folder-media",
 			"open": "/fs/icon/whistlepuff/folder-open",
 			"close": "/fs/icon/whistlepuff/folder-close"

@@ -31,7 +31,7 @@
 			"books": "/fs/icon/chakram/folder-books",
 			"texts": "/fs/icon/chakram/folder-texts",
 			"packs": "/fs/icon/chakram/folder-data",
-			"dir": "/fs/icon/chakram/folder",
+			"group": "/fs/icon/chakram/folder",
 			"media": "/fs/icon/chakram/folder-media",
 			"open": "/fs/icon/chakram/folder",
 			"close": "/fs/icon/chakram/folder"

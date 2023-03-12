@@ -31,7 +31,7 @@
 			"books": "/fs/icon/junior/folder-doc",
 			"texts": "/fs/icon/junior/folder-doc",
 			"packs": "/fs/icon/junior/folder-open",
-			"dir": "/fs/icon/junior/folder-dir",
+			"group": "/fs/icon/junior/folder-dir",
 			"media": "/fs/icon/junior/folder-media",
 			"open": "/fs/icon/junior/folder-open",
 			"close": "/fs/icon/junior/folder-close"
@@ -122,7 +122,7 @@
 			"books": "/fs/icon/junior/folder-doc-pub",
 			"texts": "/fs/icon/junior/folder-doc-pub",
 			"packs": "/fs/icon/junior/folder-open-pub",
-			"dir": "/fs/icon/junior/folder-dir-pub",
+			"group": "/fs/icon/junior/folder-dir-pub",
 			"media": "/fs/icon/junior/folder-media-pub",
 			"open": "/fs/icon/junior/folder-open-pub",
 			"close": "/fs/icon/junior/folder-close-pub"

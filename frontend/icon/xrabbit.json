@@ -31,7 +31,7 @@
 			"books": "/fs/icon/xrabbit/folder-books",
 			"texts": "/fs/icon/xrabbit/folder-texts",
 			"packs": "/fs/icon/xrabbit/folder-disks",
-			"dir": "/fs/icon/xrabbit/folder-dir",
+			"group": "/fs/icon/xrabbit/folder-dir",
 			"media": "/fs/icon/xrabbit/folder-media",
 			"open": "/fs/icon/xrabbit/folder-open",
 			"close": "/fs/icon/xrabbit/folder-close"

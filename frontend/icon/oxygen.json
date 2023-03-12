@@ -31,7 +31,7 @@
 			"books": "/fs/icon/oxygen/folder-html",
 			"texts": "/fs/icon/oxygen/folder-texts",
 			"packs": "/fs/icon/oxygen/folder-store",
-			"dir": "/fs/icon/oxygen/folder-doc",
+			"group": "/fs/icon/oxygen/folder-doc",
 			"media": "/fs/icon/oxygen/folder-media",
 			"open": "/fs/icon/oxygen/folder-open",
 			"close": "/fs/icon/oxygen/folder"

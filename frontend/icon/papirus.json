@@ -31,7 +31,7 @@
 			"books": "/fs/icon/papirus/folder-yellow-documents",
 			"texts": "/fs/icon/papirus/folder-yellow-documents",
 			"packs": "/fs/icon/papirus/folder-yellow-dropbox",
-			"dir": "/fs/icon/papirus/folder-yellow-drag",
+			"group": "/fs/icon/papirus/folder-yellow-drag",
 			"media": "/fs/icon/papirus/folder-yellow-video",
 			"open": "/fs/icon/papirus/folder-yellow-open",
 			"close": "/fs/icon/papirus/folder-yellow"

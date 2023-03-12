@@ -674,7 +674,11 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	}
 
 	var fk FileKit
-	fk.Setup(session, syspath, fi)
+	fk.PuidProp.Setup(session, syspath)
+	fk.FileProp.Setup(fi)
+	if tp, ok := tilecache.Peek(fk.PUID); ok {
+		fk.TileProp = *tp
+	}
 	fk.Free = acc.PathAccess(syspath, false)
 	fk.Shared = acc.IsShared(syspath)
 	if fi != nil {
