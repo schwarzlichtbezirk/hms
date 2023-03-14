@@ -3,7 +3,7 @@
 		"blank": "/fs/icon/papirus/file-blank",
 		"cid": {
 			"home": "/fs/icon/papirus/cid-home",
-			"drives": "/fs/icon/papirus/cid-drives",
+			"local": "/fs/icon/papirus/cid-drives",
 			"remote": "/fs/icon/papirus/cid-remote",
 			"shares": "/fs/icon/papirus/cid-shares",
 			"media": "/fs/icon/papirus/cid-media",

@@ -3,7 +3,7 @@
 		"blank": "/fs/icon/tulliana/file-blank",
 		"cid": {
 			"home": "/fs/icon/tulliana/cid-home",
-			"drives": "/fs/icon/tulliana/cid-drives",
+			"local": "/fs/icon/tulliana/cid-drives",
 			"remote": "/fs/icon/tulliana/cid-remote",
 			"shares": "/fs/icon/tulliana/cid-shares",
 			"media": "/fs/icon/tulliana/cid-media",

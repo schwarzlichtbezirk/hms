@@ -27,7 +27,7 @@ let thumbmode = storageGetBoolean("thumbmode", true);
 // Category identifiers by names.
 const CNID = {
 	home: "04",
-	drives: "08",
+	local: "08",
 	remote: "0C",
 	shares: "0G",
 	media: "0K",
@@ -44,7 +44,7 @@ const CNID = {
 // Category names by identifiers.
 const CIDN = {
 	"04": "home",
-	"08": "drives",
+	"08": "local",
 	"0C": "remote",
 	"0G": "shares",
 	"0K": "media",

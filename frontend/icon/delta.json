@@ -3,7 +3,7 @@
 		"blank": "/fs/icon/delta/file-blank",
 		"cid": {
 			"home": "/fs/icon/delta/cid-home",
-			"drives": "/fs/icon/delta/cid-drives",
+			"local": "/fs/icon/delta/cid-drives",
 			"remote": "/fs/icon/delta/cid-remote",
 			"shares": "/fs/icon/delta/cid-shares",
 			"media": "/fs/icon/delta/cid-media",

@@ -3,7 +3,7 @@
 		"blank": "/fs/icon/xrabbit/file-blank",
 		"cid": {
 			"home": "/fs/icon/xrabbit/cid-home",
-			"drives": "/fs/icon/xrabbit/cid-drives",
+			"local": "/fs/icon/xrabbit/cid-drives",
 			"remote": "/fs/icon/xrabbit/cid-remote",
 			"shares": "/fs/icon/xrabbit/cid-shares",
 			"media": "/fs/icon/xrabbit/folder-media",

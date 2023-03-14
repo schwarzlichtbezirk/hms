@@ -177,7 +177,7 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 
-	if acc.RootIndex(syspath) >= 0 {
+	if acc.IsLocal(syspath) {
 		WriteOK(w, r, false)
 		return
 	}

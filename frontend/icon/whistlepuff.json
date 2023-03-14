@@ -3,7 +3,7 @@
 		"blank": "/fs/icon/whistlepuff/file-textfile",
 		"cid": {
 			"home": "/fs/icon/whistlepuff/cid-home",
-			"drives": "/fs/icon/whistlepuff/cid-drives",
+			"local": "/fs/icon/whistlepuff/cid-drives",
 			"remote": "/fs/icon/whistlepuff/cid-remote",
 			"shares": "/fs/icon/whistlepuff/cid-shares",
 			"media": "/fs/icon/whistlepuff/cid-media",

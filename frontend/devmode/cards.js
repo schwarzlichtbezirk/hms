@@ -170,9 +170,18 @@ const VueCtgrCard = {
 	data() {
 		return {
 			listmode: 'sm',
+			pinned: false,
 			expanded: true,
 			iid: makestrid(10), // instance ID
 		};
+	},
+	watch: {
+		flist: {
+			handler(newlist, oldlist) {
+				this.flisthub.emit(null);
+				this.pinned = this.$root.curpuid === CNID.home;
+			}
+		},
 	},
 	computed: {
 		ctgrlist() {
@@ -290,9 +299,18 @@ const VueDriveCard = {
 
 			sortorder: 1,
 			listmode: 'sm',
+			pinned: false,
 			expanded: true,
 			iid: makestrid(10), // instance ID
 		};
+	},
+	watch: {
+		flist: {
+			handler(newlist, oldlist) {
+				this.flisthub.emit(null);
+				this.pinned = this.$root.curpuid === CNID.local;
+			}
+		},
 	},
 	computed: {
 		drvlist() {
@@ -1590,7 +1608,6 @@ const VueMapCard = {
 			markermode: 'thumb',
 			showtrack: false,
 			tracknum: 0,
-			keepmap: false,
 			mapmode: mm.view,
 			bounds: L.latLngBounds([]),
 			iszooming: false,
@@ -1605,6 +1622,7 @@ const VueMapCard = {
 
 			im: [],
 			flisthub: makeeventhub(),
+			pinned: false,
 			expanded: true,
 			iid: makestrid(10), // instance ID
 		};
@@ -1613,6 +1631,7 @@ const VueMapCard = {
 		flist: {
 			handler(newlist, oldlist) {
 				this.flisthub.emit(null);
+				this.pinned = this.$root.curpuid === CNID.map;
 				this.onnewlist(newlist, oldlist);
 			}
 		},
@@ -1634,7 +1653,7 @@ const VueMapCard = {
 	},
 	computed: {
 		isvisible() {
-			return this.keepmap || this.gpslist.length > 0 || this.tracknum > 0;
+			return this.pinned || this.gpslist.length > 0 || this.tracknum > 0;
 		},
 		clsmapboxhybrid() {
 			return { active: this.styleid === 'mapbox-hybrid' };
@@ -1909,7 +1928,6 @@ const VueMapCard = {
 
 		// create new opened folder
 		onnewlist(newlist, oldlist) {
-			this.keepmap = this.$root.curpuid === CNID.map;
 			// new empty list
 			this.gpslist = [];
 			// remove all markers from the cluster
@@ -2463,7 +2481,7 @@ const VueMapCard = {
 				});
 			}
 			this.$root.rangesearch(arg);
-			this.keepmap = true;
+			this.pinned = true;
 		};
 
 		const viewmode = () => {

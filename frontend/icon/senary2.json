@@ -3,7 +3,7 @@
 		"blank": "/fs/icon/senary/file-default",
 		"cid": {
 			"home": "/fs/icon/senary/cid-home",
-			"drives": "/fs/icon/senary/cid-drives",
+			"local": "/fs/icon/senary/cid-drives",
 			"remote": "/fs/icon/senary2/cid-remote",
 			"shares": "/fs/icon/senary/cid-shares",
 			"media": "/fs/icon/senary/cid-media",

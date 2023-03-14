@@ -42,7 +42,7 @@ const (
 // Categories paths constants.
 const (
 	CPhome   = "<home>"
-	CPdrives = "<drives>"
+	CPdrives = "<local>"
 	CPremote = "<remote>"
 	CPshares = "<shares>"
 	CPmedia  = "<media>"

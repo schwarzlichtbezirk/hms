@@ -98,7 +98,7 @@ func (pl *Profiles) ReadYaml(fname string) (err error) {
 		SqlSession(func(session *Session) (res any, err error) {
 			for _, prf := range list {
 				Log.Infof("loaded profile id%d, login='%s'", prf.ID, prf.Login)
-				// cache roots
+				// cache local roots
 				for _, fpath := range prf.Roots {
 					PathStoreCache(session, fpath)
 				}
@@ -116,7 +116,7 @@ func (pl *Profiles) ReadYaml(fname string) (err error) {
 				prf.updateGrp()
 				// check up some roots already defined
 				if len(prf.Roots) == 0 {
-					prf.FindRoots()
+					prf.FindLocal()
 				}
 
 				// print shares list for each
@@ -142,7 +142,7 @@ func (pl *Profiles) ReadYaml(fname string) (err error) {
 		// build shares tables
 		prf.updateGrp()
 		// setup all available disks as the roots
-		prf.FindRoots()
+		prf.FindLocal()
 		Log.Infof("created profile id%d, login='%s'", prf.ID, prf.Login)
 	}
 	return
@@ -154,7 +154,7 @@ func (pl *Profiles) WriteYaml(fname string) error {
 	const intro = `
 # List of administration profiles. Each profile should be with
 # unique password, and allows to configure access to specified
-# root drives, shares, and to hide files on specified masks.
+# root paths, shares, and to hide files on specified masks.
 
 `
 	var list []*Profile

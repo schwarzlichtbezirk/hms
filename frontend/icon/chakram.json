@@ -3,7 +3,7 @@
 		"blank": "/fs/icon/chakram/file-blank",
 		"cid": {
 			"home": "/fs/icon/chakram/cid-home",
-			"drives": "/fs/icon/chakram/cid-drives",
+			"local": "/fs/icon/chakram/cid-drives",
 			"remote": "/fs/icon/chakram/cid-map",
 			"shares": "/fs/icon/chakram/cid-shares",
 			"media": "/fs/icon/chakram/folder-media",

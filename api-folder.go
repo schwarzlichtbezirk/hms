@@ -184,7 +184,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 				return
 			})
 		case PUIDdrives:
-			if ret.List, err = acc.ScanRoots(session); err != nil {
+			if ret.List, err = acc.ScanLocal(session); err != nil {
 				WriteError500(w, r, err, AECfolderdrives)
 				return
 			}

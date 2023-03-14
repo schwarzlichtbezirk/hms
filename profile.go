@@ -65,10 +65,10 @@ type Profile struct {
 	Login    string `json:"login" yaml:"login" xml:"login"`
 	Password string `json:"password" yaml:"password" xml:"password"`
 
-	Roots  []string `json:"roots" yaml:"roots" xml:"roots>item"`    // root directories list
-	Hidden []string `json:"hidden" yaml:"hidden" xml:"hidden>item"` // patterns for hidden files
+	Roots  []string `json:"local" yaml:"local" xml:"local>item"` // root directories list
 	Remote []string `json:"remote" yaml:"remote" xml:"remote>item"`
 	Shares []string `json:"shares" yaml:"shares" xml:"shares>item"`
+	Hidden []string `json:"hidden" yaml:"hidden" xml:"hidden>item"` // patterns for hidden files
 
 	// private shares data
 	ctgrshare CatGrp
@@ -156,7 +156,7 @@ func (prf *Profile) PathType(fpath string, fi fs.FileInfo) FT_t {
 	if prf.IsCloud(fpath) {
 		return FTcld
 	}
-	if prf.IsRoot(fpath) {
+	if prf.IsLocal(fpath) {
 		return FTdrv
 	}
 	if fi != nil && fi.IsDir() {
@@ -206,8 +206,8 @@ func (prf *Profile) IsHidden(fpath string) bool {
 	return false
 }
 
-// IsRoot checks whether file path is disk root path.
-func (prf *Profile) IsRoot(syspath string) bool {
+// IsLocal checks whether file path is disk root path.
+func (prf *Profile) IsLocal(syspath string) bool {
 	prf.mux.RLock()
 	defer prf.mux.RUnlock()
 	for _, root := range prf.Roots {
@@ -255,15 +255,15 @@ func (prf *Profile) RootIndex(fpath string) int {
 	return -1
 }
 
-// FindRoots scan all available drives installed on local machine.
-func (prf *Profile) FindRoots() {
+// FindLocal scans all available drives installed on local machine.
+func (prf *Profile) FindLocal() {
 	switch runtime.GOOS {
 	case "windows":
 		const windisks = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 		for _, d := range windisks {
 			var root = string(d) + ":/" // let's disk roots will be slash-terminated always
 			if _, err := os.Stat(root); err == nil {
-				if prf.RootIndex(root) < 0 {
+				if !prf.IsLocal(root) {
 					prf.mux.Lock()
 					prf.Roots = append(prf.Roots, root)
 					prf.mux.Unlock()
@@ -280,7 +280,7 @@ func (prf *Profile) FindRoots() {
 			if name := de.Name(); name != "wsl" && de.IsDir() {
 				var root = filepath.Join(mnt, name)
 				if _, err := os.Stat(root); err == nil {
-					if prf.RootIndex(root) < 0 {
+					if !prf.IsLocal(root) {
 						prf.mux.Lock()
 						prf.Roots = append(prf.Roots, root)
 						prf.mux.Unlock()
@@ -291,8 +291,8 @@ func (prf *Profile) FindRoots() {
 	}
 }
 
-// ScanRoots scan drives from roots list.
-func (prf *Profile) ScanRoots(session *Session) (ret []any, err error) {
+// ScanLocal scans paths from local roots list.
+func (prf *Profile) ScanLocal(session *Session) (ret []any, err error) {
 	prf.mux.RLock()
 	var vfiles = make([]string, len(prf.Roots))
 	copy(vfiles, prf.Roots)
@@ -314,6 +314,7 @@ func (prf *Profile) ScanRoots(session *Session) (ret []any, err error) {
 	return
 }
 
+// ScanRemote scans paths at network destination.
 func (prf *Profile) ScanRemote(session *Session) (ret []any, err error) {
 	prf.mux.RLock()
 	var vfiles = make([]string, len(prf.Remote))
@@ -336,7 +337,7 @@ func (prf *Profile) ScanRemote(session *Session) (ret []any, err error) {
 	return
 }
 
-// ScanShares scan actual shares from shares list.
+// ScanShares scans actual shares from shares list.
 func (prf *Profile) ScanShares(session *Session) (ret []any, err error) {
 	prf.mux.RLock()
 	var vfiles = make([]string, len(prf.Shares))

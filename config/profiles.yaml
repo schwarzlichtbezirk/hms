@@ -1,12 +1,15 @@
 ﻿
 # List of administration profiles. Each profile should be with
 # unique password, and allows to configure access to specified
-# root drives, shares, and to hide files on specified masks.
+# root paths, shares, and to hide files on specified masks.
 
 - id: 1
   login: admin
   password: dag qus fly in the sky
-  roots:
+  local:
+  remote:
+  shares:
+    - '<home>'
   hidden:
     - '**/*.sys'
     - '**/*.tmp'
@@ -22,6 +25,3 @@
     - ?:/ProgramData
     - ?:/Recovery
     - ?:/Config.Msi
-  remote:
-  shares:
-    - '<home>'

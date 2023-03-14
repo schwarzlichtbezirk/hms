@@ -3,7 +3,7 @@
 		"blank": "/fs/icon/oxygen/file-blank",
 		"cid": {
 			"home": "/fs/icon/oxygen/cid-home",
-			"drives": "/fs/icon/oxygen/cid-drives",
+			"local": "/fs/icon/oxygen/cid-drives",
 			"remote": "/fs/icon/oxygen/cid-remote",
 			"shares": "/fs/icon/oxygen/cid-shares",
 			"media": "/fs/icon/oxygen/cid-media",

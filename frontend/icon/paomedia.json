@@ -3,7 +3,7 @@
 		"blank": "/fs/icon/paomedia/file-blank",
 		"cid": {
 			"home": "/fs/icon/paomedia/cid-home",
-			"drives": "/fs/icon/paomedia/cid-drives",
+			"local": "/fs/icon/paomedia/cid-drives",
 			"remote": "/fs/icon/paomedia/cid-remote",
 			"shares": "/fs/icon/paomedia/cid-shares",
 			"media": "/fs/icon/paomedia/cid-media",

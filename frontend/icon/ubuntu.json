@@ -3,7 +3,7 @@
 		"blank": "/fs/icon/ubuntu/file-blank",
 		"cid": {
 			"home": "/fs/icon/ubuntu/cid-home",
-			"drives": "/fs/icon/ubuntu/cid-drives",
+			"local": "/fs/icon/ubuntu/cid-drives",
 			"remote": "/fs/icon/ubuntu/cid-remote",
 			"shares": "/fs/icon/ubuntu/cid-shares",
 			"media": "/fs/icon/ubuntu/cid-media",
