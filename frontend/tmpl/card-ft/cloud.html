@@ -2,11 +2,11 @@
 <div v-show="isvisible" class="hms-card card m-sm-2">
 	<div class="card-header d-flex flex-wrap align-items-center">
 		<div class="navbar-text flex-grow-1 py-0">
-			<a class="card-link d-block" data-bs-toggle="collapse" v-bind:href="'#card'+iid">local drives</a>
+			<a class="card-link d-block" data-bs-toggle="collapse" v-bind:href="'#card'+iid">network drives</a>
 		</div>
 		<ul class="navbar-nav flex-row ms-auto">
-			<li><button class="btn toolbtn" title="add disk" data-bs-toggle="modal" v-bind:data-bs-target="'#rootadd'+iid"><i class="material-icons">add_circle_outline</i></button></li>
-			<li><button class="btn toolbtn" v-bind:class="clsremove" v-on:click="onremove" title="remove disk"><i class="material-icons">remove_circle_outline</i></button></li>
+			<li><button class="btn toolbtn" title="add cloud" data-bs-toggle="modal" v-bind:data-bs-target="'#rootadd'+iid"><i class="material-icons">add_circle_outline</i></button></li>
+			<li><button class="btn toolbtn" v-bind:class="clsremove" v-on:click="onremove" title="remove cloud"><i class="material-icons">remove_circle_outline</i></button></li>
 		</ul>
 		<ul class="navbar-nav flex-row ms-auto">
 			<li><button class="btn" v-on:click="onorder" v-bind:title="hintorder"><i class="material-icons">{{clsorder}}</i></button></li>

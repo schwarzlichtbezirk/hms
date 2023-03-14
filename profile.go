@@ -305,7 +305,7 @@ func (prf *Profile) ScanLocal(session *Session) (ret []any, err error) {
 
 	go SqlSession(func(session *Session) (res any, err error) {
 		DirStoreSet(session, &DirStore{
-			Puid: PUIDdrives,
+			Puid: PUIDlocal,
 			Prop: dp,
 		})
 		return
@@ -371,7 +371,7 @@ func (prf *Profile) updateGrp() {
 		return false
 	}
 
-	var all = is(CPdrives)
+	var all = is(CPlocal)
 	var media = is(CPmedia)
 	prf.ctgrshare = CatGrp{
 		all,
@@ -455,6 +455,18 @@ func (prf *Profile) GetRootPath(session *Session, syspath string) (rootpath stri
 		rootpath = path.Join(rootpuid.String(), syspath[len(base):])
 		return
 	}
+	for _, fpath := range prf.Remote {
+		if PathStarts(syspath, fpath) {
+			if len(fpath) > len(base) {
+				base = fpath
+			}
+		}
+	}
+	if len(base) > 0 {
+		rootpuid = PathStoreCache(session, base)
+		rootpath = path.Join(rootpuid.String(), syspath[len(base):])
+		return
+	}
 	return
 }
 
@@ -470,6 +482,16 @@ func (prf *Profile) PathAccess(syspath string, isadmin bool) bool {
 	}
 	for _, root := range prf.Roots {
 		if PathStarts(syspath, root) {
+			if isadmin {
+				return true
+			} else {
+				var grp = GetFileGroup(syspath)
+				return prf.ctgrshare[grp]
+			}
+		}
+	}
+	for _, cloud := range prf.Remote {
+		if PathStarts(syspath, cloud) {
 			if isadmin {
 				return true
 			} else {
@@ -496,6 +518,11 @@ func (prf *Profile) PathAdmin(syspath string) bool {
 	}
 	for _, root := range prf.Roots {
 		if PathStarts(syspath, root) {
+			return true
+		}
+	}
+	for _, cloud := range prf.Remote {
+		if PathStarts(syspath, cloud) {
 			return true
 		}
 	}

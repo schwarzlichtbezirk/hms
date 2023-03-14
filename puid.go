@@ -25,7 +25,7 @@ type Time = time.Time
 // Predefined PUIDs.
 const (
 	PUIDhome   Puid_t = 1
-	PUIDdrives Puid_t = 2
+	PUIDlocal  Puid_t = 2
 	PUIDremote Puid_t = 3
 	PUIDshares Puid_t = 4
 	PUIDmedia  Puid_t = 5
@@ -42,7 +42,7 @@ const (
 // Categories paths constants.
 const (
 	CPhome   = "<home>"
-	CPdrives = "<local>"
+	CPlocal  = "<local>"
 	CPremote = "<remote>"
 	CPshares = "<shares>"
 	CPmedia  = "<media>"
@@ -56,7 +56,7 @@ const (
 
 var CatNames = map[Puid_t]string{
 	PUIDhome:   "Home",
-	PUIDdrives: "Drives list",
+	PUIDlocal:  "Drives list",
 	PUIDremote: "Network",
 	PUIDshares: "Shared resources",
 	PUIDmedia:  "Multimedia files",
@@ -71,7 +71,7 @@ var CatNames = map[Puid_t]string{
 // CatKeyPath is predefined read-only maps with PUIDs keys and categories values.
 var CatKeyPath = map[Puid_t]string{
 	PUIDhome:   CPhome,
-	PUIDdrives: CPdrives,
+	PUIDlocal:  CPlocal,
 	PUIDremote: CPremote,
 	PUIDshares: CPshares,
 	PUIDmedia:  CPmedia,
@@ -86,7 +86,7 @@ var CatKeyPath = map[Puid_t]string{
 // CatPathKey is predefined read-only map with categories keys and PUIDs values.
 var CatPathKey = map[string]Puid_t{
 	CPhome:   PUIDhome,
-	CPdrives: PUIDdrives,
+	CPlocal:  PUIDlocal,
 	CPremote: PUIDremote,
 	CPshares: PUIDshares,
 	CPmedia:  PUIDmedia,

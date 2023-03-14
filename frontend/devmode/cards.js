@@ -178,7 +178,6 @@ const VueCtgrCard = {
 	watch: {
 		flist: {
 			handler(newlist, oldlist) {
-				this.flisthub.emit(null);
 				this.pinned = this.$root.curpuid === CNID.home;
 			}
 		},
@@ -194,7 +193,7 @@ const VueCtgrCard = {
 			return l;
 		},
 		isvisible() {
-			return this.ctgrlist.length > 0;
+			return this.pinned || this.ctgrlist.length > 0;
 		},
 		sortedlist() {
 			return this.ctgrlist;
@@ -287,15 +286,15 @@ const VueCtgrCard = {
 	},
 };
 
-const VueDriveCard = {
-	template: '#drive-card-tpl',
+const VueCloudCard = {
+	template: '#cloud-card-tpl',
 	props: ["flist"],
 	data() {
 		return {
-			selfile: null, // current selected drive
-			diskpath: "", // path to disk to add
-			diskpathstate: 0,
-			diskadd: null,
+			selfile: null, // current selected cloud
+			rootpath: "", // path to disk to add
+			rootpathstate: 0,
+			rootadd: null,
 
 			sortorder: 1,
 			listmode: 'sm',
@@ -307,8 +306,7 @@ const VueDriveCard = {
 	watch: {
 		flist: {
 			handler(newlist, oldlist) {
-				this.flisthub.emit(null);
-				this.pinned = this.$root.curpuid === CNID.local;
+				this.pinned = this.$root.curpuid === CNID.remote;
 			}
 		},
 	},
@@ -316,14 +314,14 @@ const VueDriveCard = {
 		drvlist() {
 			const l = [];
 			for (const file of this.flist) {
-				if (file.type === FT.drv) {
+				if (file.type === FT.cld) {
 					l.push(file);
 				}
 			}
 			return l;
 		},
 		isvisible() {
-			return this.drvlist.length > 0;
+			return this.pinned || this.drvlist.length > 0;
 		},
 		sortedlist() {
 			return this.drvlist.slice().sort((v1, v2) => {
@@ -344,16 +342,272 @@ const VueDriveCard = {
 			return listmodeicon[this.listmode];
 		},
 
-		clsdiskpathedt() {
+		clsrootpathedt() {
 			return {
-				'is-invalid': this.diskpathstate === -1,
-				'is-valid': this.diskpathstate == 1
+				'is-invalid': this.rootpathstate === -1,
+				'is-valid': this.rootpathstate == 1
 			};
 		},
-		clsdiskadd() {
-			return { 'disabled': !this.diskpath.length };
+		clsadd() {
+			return { 'disabled': !this.rootpath.length };
 		},
-		clsdiskremove() {
+		clsremove() {
+			return { 'disabled': !this.selfile };
+		},
+
+		iconmodetag() {
+			return listmodetag[this.listmode];
+		},
+
+		hintorder() {
+			return this.sortorder > 0
+				? "direct order"
+				: "reverse order";
+		},
+		hintlist() {
+			return listmodehint[this.listmode];
+		},
+		expandchevron() {
+			return this.expanded ? 'expand_more' : 'chevron_right';
+		},
+	},
+	methods: {
+		onorder() {
+			this.sortorder = -this.sortorder;
+			sessionStorage.setItem("card.cloud.sortorder", this.sortorder);
+		},
+		onlistmodels() {
+			this.listmode = 'xs';
+			sessionStorage.setItem("card.cloud.listmode", this.listmode);
+		},
+		onlistmodesm() {
+			this.listmode = 'sm';
+			sessionStorage.setItem("card.cloud.listmode", this.listmode);
+		},
+		onlistmodemd() {
+			this.listmode = 'md';
+			sessionStorage.setItem("card.cloud.listmode", this.listmode);
+		},
+		onlistmodelg() {
+			this.listmode = 'lg';
+			sessionStorage.setItem("card.cloud.listmode", this.listmode);
+		},
+
+		onadd() {
+			(async () => {
+				eventHub.emit('ajax', +1);
+				try {
+					const response = await fetchjsonauth("POST", `/id${this.$root.aid}/api/drive/add`, {
+						path: this.rootpath
+					});
+					const data = await response.json();
+					traceajax(response, data);
+					if (response.ok) {
+						const file = data;
+						if (file) {
+							this.flist.push(file);
+						}
+						this.rootadd?.hide();
+					} else {
+						this.rootpathstate = -1;
+					}
+				} catch (e) {
+					ajaxfail(e);
+				} finally {
+					eventHub.emit('ajax', -1);
+				}
+			})();
+		},
+		onremove() {
+			(async () => {
+				eventHub.emit('ajax', +1);
+				try {
+					const response = await fetchjsonauth("POST", `/id${this.$root.aid}/api/drive/del`, {
+						puid: this.selfile.puid
+					});
+					const data = await response.json();
+					traceajax(response, data);
+					if (!response.ok) {
+						throw new HttpError(response.status, data);
+					}
+
+					if (data.deleted) {
+						this.flist.splice(this.flist.findIndex(elem => elem === this.selfile), 1);
+						if (this.selfile.shared) {
+							await this.$root.fetchsharedel(this.selfile);
+						}
+						this.selfile = null;
+					}
+				} catch (e) {
+					ajaxfail(e);
+				} finally {
+					eventHub.emit('ajax', -1);
+				}
+			})();
+		},
+		onpathchange(e) {
+			(async () => {
+				try {
+					const response = await fetchjsonauth("POST", `/id${this.$root.aid}/api/res/ispath`, {
+						path: this.rootpath
+					});
+					const data = await response.json();
+					if (response.ok) {
+						this.rootpathstate = data ? 1 : 0;
+					} else {
+						this.rootpathstate = -1;
+					}
+				} catch (e) {
+					ajaxfail(e);
+				}
+			})();
+		},
+
+		onselect(file) {
+			eventHub.emit('select', file);
+		},
+		onopen(file) {
+			eventHub.emit('open', file);
+		},
+		onunselect() {
+			eventHub.emit('select', null);
+		},
+		onexpand(e) {
+			this.expanded = true;
+			sessionStorage.setItem("card.ctgr.expanded", this.expanded);
+			this.expand();
+		},
+		oncollapse(e) {
+			this.expanded = false;
+			sessionStorage.setItem("card.ctgr.expanded", this.expanded);
+			this.collapse();
+		},
+		expand() {
+		},
+		collapse() {
+		},
+
+		onanyselect(file) {
+			if (file && file.type === FT.cld) {
+				this.selfile = file
+			} else {
+				this.selfile = null;
+			}
+		},
+	},
+	created() {
+		this.sortorder = storageGetNumber("card.cloud.sortorder", this.sortorder);
+		this.listmode = storageGetString("card.cloud.listmode", this.listmode);
+		this.expanded = storageGetBoolean("card.cloud.expanded", this.expanded);
+	},
+	mounted() {
+		eventHub.on('select', this.onanyselect);
+		{
+			const el = document.getElementById('card' + this.iid);
+			if (el) {
+				if (this.expanded) {
+					el.classList.add('show');
+					this.expand();
+				} else {
+					this.collapse();
+				}
+				el.addEventListener('shown.bs.collapse', this.onexpand);
+				el.addEventListener('hidden.bs.collapse', this.oncollapse);
+			}
+		}
+
+		// init rootadd dialog
+		{
+			const el = document.getElementById('rootadd' + this.iid);
+			if (el) {
+				this.rootadd = new bootstrap.Modal(el);
+				el.addEventListener('shown.bs.modal', e => {
+					el.querySelector('input').focus();
+				});
+			}
+		}
+	},
+	unmounted() {
+		eventHub.off('select', this.onanyselect);
+		{
+			const el = document.getElementById('card' + this.iid);
+			if (el) {
+				el.removeEventListener('shown.bs.collapse', this.onexpand);
+				el.removeEventListener('hidden.bs.collapse', this.oncollapse);
+			}
+		}
+
+		// erase rootadd dialog
+		this.rootadd = null;
+	},
+};
+
+const VueDriveCard = {
+	template: '#drive-card-tpl',
+	props: ["flist"],
+	data() {
+		return {
+			selfile: null, // current selected drive
+			rootpath: "", // path to disk to add
+			rootpathstate: 0,
+			rootadd: null,
+
+			sortorder: 1,
+			listmode: 'sm',
+			pinned: false,
+			expanded: true,
+			iid: makestrid(10), // instance ID
+		};
+	},
+	watch: {
+		flist: {
+			handler(newlist, oldlist) {
+				this.pinned = this.$root.curpuid === CNID.local;
+			}
+		},
+	},
+	computed: {
+		drvlist() {
+			const l = [];
+			for (const file of this.flist) {
+				if (file.type === FT.drv) {
+					l.push(file);
+				}
+			}
+			return l;
+		},
+		isvisible() {
+			return this.pinned || this.drvlist.length > 0;
+		},
+		sortedlist() {
+			return this.drvlist.slice().sort((v1, v2) => {
+				return this.sortorder * (v1.name.toLowerCase() > v2.name.toLowerCase() ? 1 : -1);
+			});
+		},
+
+		clsfilelist() {
+			return listmoderow[this.listmode];
+		},
+
+		clsorder() {
+			return this.sortorder > 0
+				? 'arrow_downward'
+				: 'arrow_upward';
+		},
+		clslistmode() {
+			return listmodeicon[this.listmode];
+		},
+
+		clsrootpathedt() {
+			return {
+				'is-invalid': this.rootpathstate === -1,
+				'is-valid': this.rootpathstate == 1
+			};
+		},
+		clsadd() {
+			return { 'disabled': !this.rootpath.length };
+		},
+		clsremove() {
 			return { 'disabled': !this.selfile };
 		},
 
@@ -395,12 +649,12 @@ const VueDriveCard = {
 			sessionStorage.setItem("card.drive.listmode", this.listmode);
 		},
 
-		ondiskadd() {
+		onadd() {
 			(async () => {
 				eventHub.emit('ajax', +1);
 				try {
 					const response = await fetchjsonauth("POST", `/id${this.$root.aid}/api/drive/add`, {
-						path: this.diskpath
+						path: this.rootpath
 					});
 					const data = await response.json();
 					traceajax(response, data);
@@ -409,9 +663,9 @@ const VueDriveCard = {
 						if (file) {
 							this.flist.push(file);
 						}
-						this.diskadd?.hide();
+						this.rootadd?.hide();
 					} else {
-						this.diskpathstate = -1;
+						this.rootpathstate = -1;
 					}
 				} catch (e) {
 					ajaxfail(e);
@@ -420,7 +674,7 @@ const VueDriveCard = {
 				}
 			})();
 		},
-		ondiskremove() {
+		onremove() {
 			(async () => {
 				eventHub.emit('ajax', +1);
 				try {
@@ -447,17 +701,17 @@ const VueDriveCard = {
 				}
 			})();
 		},
-		ondiskpathchange(e) {
+		onpathchange(e) {
 			(async () => {
 				try {
 					const response = await fetchjsonauth("POST", `/id${this.$root.aid}/api/res/ispath`, {
-						path: this.diskpath
+						path: this.rootpath
 					});
 					const data = await response.json();
 					if (response.ok) {
-						this.diskpathstate = data ? 1 : 0;
+						this.rootpathstate = data ? 1 : 0;
 					} else {
-						this.diskpathstate = -1;
+						this.rootpathstate = -1;
 					}
 				} catch (e) {
 					ajaxfail(e);
@@ -518,11 +772,11 @@ const VueDriveCard = {
 			}
 		}
 
-		// init diskadd dialog
+		// init rootadd dialog
 		{
-			const el = document.getElementById('diskadd' + this.iid);
+			const el = document.getElementById('rootadd' + this.iid);
 			if (el) {
-				this.diskadd = new bootstrap.Modal(el);
+				this.rootadd = new bootstrap.Modal(el);
 				el.addEventListener('shown.bs.modal', e => {
 					el.querySelector('input').focus();
 				});
@@ -539,8 +793,8 @@ const VueDriveCard = {
 			}
 		}
 
-		// erase diskadd dialog
-		this.diskadd = null;
+		// erase rootadd dialog
+		this.rootadd = null;
 	},
 };
 
