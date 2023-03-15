@@ -36,8 +36,12 @@
 
 	<div class="modal fade" v-bind:id="'rootadd'+iid" tabindex="-1" role="dialog" aria-labelledby="disk add" aria-hidden="true">
 		<div class="modal-dialog modal-dialog-centered" role="document">
-			<div class="modal-content">
-				<div class="rounded p-2 bg-tool fg-tool">
+			<form class="modal-content rounded p-2 bg-tool">
+				<div class="modal-header">
+					<div class="modal-title">New drive connecting</div>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
 					<label v-bind:for="'inp'+iid" class="small navbar-text form-label">Type here valid full path to resource that will be accessed as the disk. For example, <span class="bg-stat">C:/Music</span></label>
 					<div class="form-floating input-group">
 						<input v-model.trim="rootpath" v-bind:class="clsrootpathedt" v-bind:id="'inp'+iid" v-on:keyup.enter.prevent="onadd" v-on:keyup="onpathchange" v-bind:aria-describedby="'but'+iid" class="form-control toolinp bg-tool" type="text" maxlength="256" placeholder="c:/music" required>
@@ -45,7 +49,7 @@
 						<button v-bind:id="'but'+iid" class="btn toolbtn bg-high" v-bind:class="clsadd" v-on:click="onadd">Add disk</button>
 					</div>
 				</div>
-			</div>
+			</form>
 		</div>
 	</div>
 

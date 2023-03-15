@@ -300,6 +300,12 @@ const geticonpath = (im, file) => {
 				org: org.cid[CIDN[file.puid]] || org.cid.cid,
 				alt: alt.cid[CIDN[file.puid]] || alt.cid.cid
 			};
+		case FT.cld:
+			if (file.latency < 0) {
+				return { org: org.drive.offline, alt: alt.drive.offline };
+			} else {
+				return { org: org.drive.network, alt: alt.drive.network };
+			}
 		case FT.drv:
 			if (file.latency < 0) {
 				return { org: org.drive.gray, alt: alt.drive.gray };

@@ -65,6 +65,10 @@ a, .btn-link {
 		color: rgba(255, 255, 255, 0.5);
 	}
 
+	.bg-tool .modal-header, .bg-tool .modal-footer {
+		border-color: rgba(255, 255, 255, 0.35);
+	}
+
 	.bg-tool .dropdown-header {
 		color: rgba(255, 255, 255, 0.5);
 		background-color: rgba(75, 0, 130, 0.15);
@@ -94,6 +98,15 @@ a, .btn-link {
 			background-color: rgba(255, 255, 255, 0.25);
 		}
 
+	.bg-tool .btn-close {
+		color: #ccc;
+	}
+
+		.bg-tool .btn-close:hover, .bg-tool .btn-close:focus {
+			color: #ccc;
+			background-color: rgba(232, 17, 35, 0.5);
+		}
+
 .bg-high {
 	background-color: rgba(255, 255, 255, 0.25);
 }
@@ -101,7 +114,7 @@ a, .btn-link {
 .toolbtn {
 	line-height: 1;
 	padding: 0.25rem;
-	border-radius: 50%;
+	border-radius: 1.25rem;
 }
 
 .toolinp {

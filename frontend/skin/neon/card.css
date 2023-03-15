@@ -21,7 +21,7 @@
 		padding: 2px;
 	}
 
-.hms-card, .folder-head .breadcrumb, .modal-content {
+.hms-card, .folder-head .breadcrumb {
 	background-image: url("/fs/skin/neon/nightglow-rainbow.avif");
 	/* @alternate */ background-image: url("/fs/skin/neon/nightglow-rainbow.jpg");
 	background-color: rgb(152, 128, 244);

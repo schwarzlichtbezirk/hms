@@ -292,8 +292,14 @@ const VueCloudCard = {
 	data() {
 		return {
 			selfile: null, // current selected cloud
-			rootpath: "", // path to disk to add
-			rootpathstate: 0,
+			host: "", // path to disk to add
+			port: 21,
+			login: "",
+			password: "",
+			hoststate: 0,
+			portstate: 0,
+			namestate: 0,
+			passstate: 0,
 			rootadd: null,
 
 			sortorder: 1,
@@ -342,14 +348,32 @@ const VueCloudCard = {
 			return listmodeicon[this.listmode];
 		},
 
-		clsrootpathedt() {
+		clshostedt() {
 			return {
-				'is-invalid': this.rootpathstate === -1,
-				'is-valid': this.rootpathstate == 1
+				'is-invalid': this.hoststate === -1,
+				'is-valid': this.hoststate == 1
+			};
+		},
+		clsportedt() {
+			return {
+				'is-invalid': this.portstate === -1,
+				'is-valid': this.portstate == 1
+			};
+		},
+		clsnameedt() {
+			return {
+				'is-invalid': this.hoststate === -1,
+				'is-valid': this.hoststate == 1
+			};
+		},
+		clspassedt() {
+			return {
+				'is-invalid': this.portstate === -1,
+				'is-valid': this.portstate == 1
 			};
 		},
 		clsadd() {
-			return { 'disabled': !this.rootpath.length };
+			return { 'disabled': !this.host.length || !this.port };
 		},
 		clsremove() {
 			return { 'disabled': !this.selfile };
@@ -398,7 +422,7 @@ const VueCloudCard = {
 				eventHub.emit('ajax', +1);
 				try {
 					const response = await fetchjsonauth("POST", `/id${this.$root.aid}/api/drive/add`, {
-						path: this.rootpath
+						path: this.host
 					});
 					const data = await response.json();
 					traceajax(response, data);
@@ -445,22 +469,11 @@ const VueCloudCard = {
 				}
 			})();
 		},
-		onpathchange(e) {
-			(async () => {
-				try {
-					const response = await fetchjsonauth("POST", `/id${this.$root.aid}/api/res/ispath`, {
-						path: this.rootpath
-					});
-					const data = await response.json();
-					if (response.ok) {
-						this.rootpathstate = data ? 1 : 0;
-					} else {
-						this.rootpathstate = -1;
-					}
-				} catch (e) {
-					ajaxfail(e);
-				}
-			})();
+		onchange(e) {
+			this.hoststate = 0;
+			this.portstate = 0;
+			this.namestate = 0;
+			this.passstate = 0;
 		},
 
 		onselect(file) {

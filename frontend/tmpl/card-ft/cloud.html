@@ -36,16 +36,39 @@
 
 	<div class="modal fade" v-bind:id="'rootadd'+iid" tabindex="-1" role="dialog" aria-labelledby="disk add" aria-hidden="true">
 		<div class="modal-dialog modal-dialog-centered" role="document">
-			<div class="modal-content">
-				<div class="rounded p-2 bg-tool fg-tool">
-					<label v-bind:for="'inp'+iid" class="small navbar-text form-label">Type here valid full path to resource that will be accessed as the disk. For example, <span class="bg-stat">C:/Music</span></label>
-					<div class="form-floating input-group">
-						<input v-model.trim="rootpath" v-bind:class="clsrootpathedt" v-bind:id="'inp'+iid" v-on:keyup.enter.prevent="onadd" v-on:keyup="onpathchange" v-bind:aria-describedby="'but'+iid" class="form-control toolinp bg-tool" type="text" maxlength="256" placeholder="c:/music" required>
-						<label v-bind:for="'inp'+iid">destination path</label>
-						<button v-bind:id="'but'+iid" class="btn toolbtn bg-high" v-bind:class="clsadd" v-on:click="onadd">Add disk</button>
+			<form class="modal-content rounded p-2 bg-tool">
+				<div class="modal-header">
+					<div class="modal-title">Network disk connecting</div>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+					<label v-bind:for="'host'+iid" class="small navbar-text">Type here host where placed FTP server to connect and it's port. It can be DNS-name or IP-address. For example, host can be <span class="bg-stat">192.168.1.3</span> and port <span class="bg-stat">21</span></label>
+					<div class="row g-2">
+						<div class="form-floating col-md-8">
+							<input v-model.trim="host" v-bind:class="clshostedt" v-bind:id="'host'+iid" v-on:keyup.enter.prevent="onadd" v-on:keyup="onchange" class="form-control toolinp bg-tool" type="text" maxlength="256" placeholder="127.0.0.1" required>
+							<label v-bind:for="'host'+iid">connection host</label>
+						</div>
+						<div class="form-floating col-md-4">
+							<input v-model.trim="port" v-bind:class="clsportedt" v-bind:id="'port'+iid" v-on:keyup.enter.prevent="onadd" v-on:keyup="onchange" class="form-control toolinp bg-tool" type="number" min="1" max="65535" placeholder="21" required>
+							<label v-bind:for="'port'+iid">connection port</label>
+						</div>
+					</div>
+					<label v-bind:for="'name'+iid" class="small navbar-text">Connection credentials. Leave fields empty for anonymous access.</label>
+					<div class="row g-2">
+						<div class="form-floating col-md">
+							<input v-model.trim="login" v-bind:class="clsnameedt" v-bind:id="'name'+iid" v-on:keyup.enter.prevent="onadd" v-on:keyup="onchange" class="form-control toolinp bg-tool" type="text" maxlength="256">
+							<label v-bind:for="'name'+iid">login</label>
+						</div>
+						<div class="form-floating col-md">
+							<input v-model.trim="password" v-bind:class="clspassedt" v-bind:id="'pass'+iid" v-on:keyup.enter.prevent="onadd" v-on:keyup="onchange" class="form-control toolinp bg-tool" type="password" maxlength="256">
+							<label v-bind:for="'pass'+iid">password</label>
+						</div>
 					</div>
 				</div>
-			</div>
+				<div class="modal-footer">
+					<button class="btn toolbtn bg-high px-4 py-2" v-bind:class="clsadd" v-on:click="onadd">Add cloud</button>
+				</div>
+			</form>
 		</div>
 	</div>
 

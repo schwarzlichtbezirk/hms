@@ -68,6 +68,10 @@ a, .btn-link {
 		color: rgba(255, 255, 255, 0.5);
 	}
 
+	.bg-tool .modal-header, .bg-tool .modal-footer {
+		border-color: rgba(0, 255, 0, 0.35);
+	}
+
 	.bg-tool .dropdown-header {
 		color: rgba(80, 255, 80, 0.3);
 		background-color: rgba(0, 48, 0, 0.15);
@@ -95,6 +99,15 @@ a, .btn-link {
 		.bg-tool input.active {
 			color: PaleGreen;
 			background-color: rgba(255, 255, 255, 0.25);
+		}
+
+	.bg-tool .btn-close {
+		color: #ccc;
+	}
+
+		.bg-tool .btn-close:hover, .bg-tool .btn-close:focus {
+			color: #ccc;
+			background-color: rgba(24, 232, 24, 0.5);
 		}
 
 .bg-high {

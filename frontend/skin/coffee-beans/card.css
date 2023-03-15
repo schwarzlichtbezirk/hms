@@ -21,7 +21,7 @@
 		padding: 2px;
 	}
 
-.hms-card, .folder-head .breadcrumb, .modal-content {
+.hms-card, .folder-head .breadcrumb {
 	background-image: url("/fs/skin/coffee-beans/coffee-beans.avif");
 	/* @alternate */ background-image: url("/fs/skin/coffee-beans/coffee-beans.jpg");
 	background-color: rgb(124, 84, 64);
