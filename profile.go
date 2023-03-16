@@ -242,19 +242,6 @@ func (prf *Profile) IsShared(syspath string) bool {
 	return false
 }
 
-// RootIndex returns index of given path in roots list or -1 if not found.
-func (prf *Profile) RootIndex(fpath string) int {
-	prf.mux.RLock()
-	defer prf.mux.RUnlock()
-
-	for i, root := range prf.Roots {
-		if root == fpath {
-			return i
-		}
-	}
-	return -1
-}
-
 // FindLocal scans all available drives installed on local machine.
 func (prf *Profile) FindLocal() {
 	switch runtime.GOOS {
@@ -385,6 +372,62 @@ func (prf *Profile) updateGrp() {
 	}
 }
 
+// AddLocal adds system path to local roots list.
+func (prf *Profile) AddLocal(syspath string) bool {
+	prf.mux.Lock()
+	defer prf.mux.Unlock()
+
+	for _, root := range prf.Roots {
+		if root == syspath {
+			return false
+		}
+	}
+	prf.Roots = append(prf.Roots, syspath)
+	return true
+}
+
+// DelLocal removes system path from local roots list.
+func (prf *Profile) DelLocal(syspath string) bool {
+	prf.mux.Lock()
+	defer prf.mux.Unlock()
+
+	for i, root := range prf.Roots {
+		if root == syspath {
+			prf.Roots = append(prf.Roots[:i], prf.Roots[i+1:]...)
+			return true
+		}
+	}
+	return false
+}
+
+// AddCloud adds path to network roots list.
+func (prf *Profile) AddCloud(syspath string) bool {
+	prf.mux.Lock()
+	defer prf.mux.Unlock()
+
+	for _, cloud := range prf.Remote {
+		if cloud == syspath {
+			return false
+		}
+	}
+	prf.Remote = append(prf.Remote, syspath)
+	return true
+}
+
+// DelCloud removes path from network roots list.
+func (prf *Profile) DelCloud(syspath string) bool {
+	prf.mux.Lock()
+	defer prf.mux.Unlock()
+
+	for i, cloud := range prf.Remote {
+		if cloud == syspath {
+			prf.Remote = append(prf.Remote[:i], prf.Remote[i+1:]...)
+			return true
+		}
+	}
+	return false
+}
+
 // AddShare adds share with given system path.
 func (prf *Profile) AddShare(syspath string) bool {
 	prf.mux.Lock()
@@ -405,8 +448,8 @@ func (prf *Profile) DelShare(syspath string) bool {
 	prf.mux.Lock()
 	defer prf.mux.Unlock()
 
-	for i, fpath := range prf.Shares {
-		if fpath == syspath {
+	for i, shr := range prf.Shares {
+		if shr == syspath {
 			prf.Shares = append(prf.Shares[:i], prf.Shares[i+1:]...)
 			prf.updateGrp()
 			return true

@@ -610,11 +610,14 @@ func RegisterRoutes(gmux *Router) {
 	usr.Path("/tile/scnstart").HandlerFunc(AuthWrap(tilescnstartAPI))
 	usr.Path("/tile/scnbreak").HandlerFunc(AuthWrap(tilescnbreakAPI))
 
-	usr.Path("/share/add").HandlerFunc(AuthWrap(shraddAPI)) // authorized only
-	usr.Path("/share/del").HandlerFunc(AuthWrap(shrdelAPI)) // authorized only
-
 	usr.Path("/drive/add").HandlerFunc(AuthWrap(drvaddAPI)) // authorized only
 	usr.Path("/drive/del").HandlerFunc(AuthWrap(drvdelAPI)) // authorized only
+
+	usr.Path("/cloud/add").HandlerFunc(AuthWrap(cldaddAPI)) // authorized only
+	usr.Path("/cloud/del").HandlerFunc(AuthWrap(clddelAPI)) // authorized only
+
+	usr.Path("/share/add").HandlerFunc(AuthWrap(shraddAPI)) // authorized only
+	usr.Path("/share/del").HandlerFunc(AuthWrap(shrdelAPI)) // authorized only
 
 	usr.Path("/edit/copy").HandlerFunc(AuthWrap(edtcopyAPI))     // authorized only
 	usr.Path("/edit/rename").HandlerFunc(AuthWrap(edtrenameAPI)) // authorized only

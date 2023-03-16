@@ -300,6 +300,13 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 		Path string `json:"path" yaml:"path" xml:"path"`
 	}
+	var ret struct {
+		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
+
+		Valid bool `json:"valid" yaml:"valid" xml:"valid"`
+		IsDir bool `json:"isdir" yaml:"isdir" xml:"isdir"`
+		Space bool `json:"space" yaml:"space" xml:"space"`
+	}
 	if uid == 0 { // only authorized access allowed
 		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, AECnoauth)
 		return
@@ -337,34 +344,27 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		}
 	} else {
 		if syspath, _, err = UnfoldPath(session, fpath); err != nil {
-			WriteError400(w, r, err, AECispathbadpath)
+			ret.Valid = false
+			WriteOK(w, r, &ret)
 			return
 		}
 		if fi, err = StatFile(syspath); err != nil {
-			WriteError(w, r, http.StatusNotFound, http.ErrMissingFile, AECispathmiss)
+			ret.Valid = false
+			WriteOK(w, r, &ret)
 			return
 		}
 	}
 
 	if acc.IsHidden(syspath) {
-		WriteError(w, r, http.StatusForbidden, ErrHidden, AECispathhidden)
+		ret.Valid = false
+		WriteOK(w, r, &ret)
 		return
 	}
 
-	var fk FileKit
-	fk.PuidProp.Setup(session, syspath)
-	fk.FileProp.Setup(fi)
-	if tp, ok := tilecache.Peek(fk.PUID); ok {
-		fk.TileProp = *tp
-	}
-	fk.Free = acc.PathAccess(syspath, false)
-	fk.Shared = acc.IsShared(syspath)
-	if fi != nil {
-		_, fk.Static = fi.(*FileInfoISO)
-	} else {
-		fk.Static = true
-	}
-	WriteOK(w, r, &fk)
+	ret.Valid = true
+	ret.IsDir = fi.IsDir()
+	ret.Space = acc.PathAdmin(syspath)
+	WriteOK(w, r, &ret)
 }
 
 // The End.

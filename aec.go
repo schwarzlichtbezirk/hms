@@ -150,9 +150,6 @@ const (
 	AECispathnoacc
 	AECispathdeny
 	AECispathnodata
-	AECispathbadpath
-	AECispathmiss
-	AECispathhidden
 
 	// tile/chk
 
@@ -170,22 +167,6 @@ const (
 	AECscnbreaknoaid
 	AECscnbreaknodata
 
-	// share/add
-
-	AECshraddnoacc
-	AECshradddeny
-	AECshraddnodata
-	AECshraddnopath
-	AECshraddaccess
-
-	// share/del
-
-	AECshrdelnoacc
-	AECshrdeldeny
-	AECshrdelnodata
-	AECshrdelnopath
-	AECshrdelaccess
-
 	// drive/add
 
 	AECdrvaddnoacc
@@ -201,6 +182,37 @@ const (
 	AECdrvdeldeny
 	AECdrvdelnodata
 	AECdrvdelnopath
+
+	// cloud/add
+
+	AECcldaddnoacc
+	AECcldaddnodata
+	AECcldaddnodial
+	AECcldaddcred
+	AECcldaddroot
+
+	// cloud/del
+
+	AECclddelnoacc
+	AECclddeldeny
+	AECclddelnodata
+	AECclddelnopath
+
+	// share/add
+
+	AECshraddnoacc
+	AECshradddeny
+	AECshraddnodata
+	AECshraddnopath
+	AECshraddaccess
+
+	// share/del
+
+	AECshrdelnoacc
+	AECshrdeldeny
+	AECshrdelnodata
+	AECshrdelnopath
+	AECshrdelaccess
 
 	// edit/copy
 

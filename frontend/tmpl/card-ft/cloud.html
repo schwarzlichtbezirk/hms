@@ -42,28 +42,32 @@
 					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 				</div>
 				<div class="modal-body">
-					<label v-bind:for="'host'+iid" class="small navbar-text">Type here host where placed FTP server to connect and it's port. It can be DNS-name or IP-address. For example, host can be <span class="bg-stat">192.168.1.3</span> and port <span class="bg-stat">21</span></label>
-					<div class="row g-2">
-						<div class="form-floating col-md-8">
-							<input v-model.trim="host" v-bind:class="clshostedt" v-bind:id="'host'+iid" v-on:keyup.enter.prevent="onadd" v-on:keyup="onchange" class="form-control toolinp bg-tool" type="text" maxlength="256" placeholder="127.0.0.1" required>
-							<label v-bind:for="'host'+iid">connection host</label>
+					<fieldset>
+						<label v-bind:for="'host'+iid" class="small navbar-text">Type here host where placed FTP server to connect and it's port. It can be DNS-name or IP-address. For example, host can be <span class="bg-stat">192.168.1.3</span> and port <span class="bg-stat">21</span></label>
+						<div class="row g-2">
+							<div class="form-floating col-md-8">
+								<input v-model.trim="host" v-bind:class="clshostedt" v-bind:id="'host'+iid" v-on:keyup.enter.prevent="onadd" v-on:keyup="onchange" class="form-control toolinp bg-tool" type="text" maxlength="256" placeholder="127.0.0.1" required>
+								<label v-bind:for="'host'+iid">connection host</label>
+							</div>
+							<div class="form-floating col-md-4">
+								<input v-model.trim="port" v-bind:class="clsportedt" v-bind:id="'port'+iid" v-on:keyup.enter.prevent="onadd" v-on:keyup="onchange" class="form-control toolinp bg-tool" type="number" min="1" max="65535" placeholder="21" required>
+								<label v-bind:for="'port'+iid">connection port</label>
+							</div>
 						</div>
-						<div class="form-floating col-md-4">
-							<input v-model.trim="port" v-bind:class="clsportedt" v-bind:id="'port'+iid" v-on:keyup.enter.prevent="onadd" v-on:keyup="onchange" class="form-control toolinp bg-tool" type="number" min="1" max="65535" placeholder="21" required>
-							<label v-bind:for="'port'+iid">connection port</label>
+					</fieldset>
+					<fieldset>
+						<label v-bind:for="'name'+iid" class="small navbar-text">Connection credentials. Leave fields empty for anonymous access.</label>
+						<div class="row g-2">
+							<div class="form-floating col-md">
+								<input v-model.trim="login" v-bind:class="clsnameedt" v-bind:id="'name'+iid" v-on:keyup.enter.prevent="onadd" v-on:keyup="onchange" class="form-control toolinp bg-tool" type="text" maxlength="256">
+								<label v-bind:for="'name'+iid">login</label>
+							</div>
+							<div class="form-floating col-md">
+								<input v-model.trim="password" v-bind:class="clspassedt" v-bind:id="'pass'+iid" v-on:keyup.enter.prevent="onadd" v-on:keyup="onchange" class="form-control toolinp bg-tool" type="password" maxlength="256">
+								<label v-bind:for="'pass'+iid">password</label>
+							</div>
 						</div>
-					</div>
-					<label v-bind:for="'name'+iid" class="small navbar-text">Connection credentials. Leave fields empty for anonymous access.</label>
-					<div class="row g-2">
-						<div class="form-floating col-md">
-							<input v-model.trim="login" v-bind:class="clsnameedt" v-bind:id="'name'+iid" v-on:keyup.enter.prevent="onadd" v-on:keyup="onchange" class="form-control toolinp bg-tool" type="text" maxlength="256">
-							<label v-bind:for="'name'+iid">login</label>
-						</div>
-						<div class="form-floating col-md">
-							<input v-model.trim="password" v-bind:class="clspassedt" v-bind:id="'pass'+iid" v-on:keyup.enter.prevent="onadd" v-on:keyup="onchange" class="form-control toolinp bg-tool" type="password" maxlength="256">
-							<label v-bind:for="'pass'+iid">password</label>
-						</div>
-					</div>
+					</fieldset>
 				</div>
 				<div class="modal-footer">
 					<button class="btn toolbtn bg-high px-4 py-2" v-bind:class="clsadd" v-on:click="onadd">Add cloud</button>

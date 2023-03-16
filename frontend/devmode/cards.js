@@ -427,9 +427,8 @@ const VueCloudCard = {
 					const data = await response.json();
 					traceajax(response, data);
 					if (response.ok) {
-						const file = data;
-						if (file) {
-							this.flist.push(file);
+						if (data.added) {
+							this.flist.push(data.fp);
 						}
 						this.rootadd?.hide();
 					} else {
@@ -672,9 +671,8 @@ const VueDriveCard = {
 					const data = await response.json();
 					traceajax(response, data);
 					if (response.ok) {
-						const file = data;
-						if (file) {
-							this.flist.push(file);
+						if (data.added) {
+							this.flist.push(data.fp);
 						}
 						this.rootadd?.hide();
 					} else {
@@ -722,7 +720,13 @@ const VueDriveCard = {
 					});
 					const data = await response.json();
 					if (response.ok) {
-						this.rootpathstate = data ? 1 : 0;
+						if (data.valid) {
+							// makes green if path is not present
+							// at another drives of profile
+							this.rootpathstate = data.space ? 0 : 1;
+						} else {
+							this.rootpathstate = -1;
+						}
 					} else {
 						this.rootpathstate = -1;
 					}
