@@ -137,7 +137,7 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	var vfiles []fs.FileInfo // verified file infos
 	var vpaths []string      // verified paths
-	gpscache.Range(func(puid Puid_t, gps GpsInfo) bool {
+	gpscache.Enum(func(puid Puid_t, gps GpsInfo) bool {
 		var inc bool
 		for _, mp := range arg.Paths {
 			if !mp.Contains(gps.Latitude, gps.Longitude) {
@@ -209,10 +209,10 @@ func gpsscanAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			if !acc.PathAccess(syspath, uid == aid) {
 				continue
 			}
-			if val, ok := gpscache.Load(puid); ok {
+			if val, ok := gpscache.Peek(puid); ok {
 				var gst = Store[GpsInfo]{
 					Puid: puid,
-					Prop: val.(GpsInfo),
+					Prop: val,
 				}
 				ret.List = append(ret.List, gst)
 			} else {
@@ -247,7 +247,7 @@ func gpsscanAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 					gst.Prop.FromProp(&est.Prop)
 					ret.List = append(ret.List, gst)
 					// set to GPS cache
-					gpscache.Store(puid, gst.Prop)
+					gpscache.Poke(puid, gst.Prop)
 				}
 			}
 		}

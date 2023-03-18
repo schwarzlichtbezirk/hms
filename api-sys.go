@@ -101,7 +101,7 @@ func cchinfAPI(w http.ResponseWriter, r *http.Request) {
 	var dircount, _ = session.Count(&DirStore{})
 	var exifcount, _ = session.Count(&ExifStore{})
 	var tagcount, _ = session.Count(&TagStore{})
-	var gpscount = gpscache.Count()
+	var gpscount = gpscache.Len()
 	var etmbcount = tmbcache.Len()
 
 	type stat struct {

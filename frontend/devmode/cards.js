@@ -294,8 +294,8 @@ const VueCloudCard = {
 			selfile: null, // current selected cloud
 			host: "", // path to disk to add
 			port: 21,
-			login: "",
-			password: "",
+			name: "",
+			pass: "",
 			hoststate: 0,
 			portstate: 0,
 			namestate: 0,
@@ -373,7 +373,10 @@ const VueCloudCard = {
 			};
 		},
 		clsadd() {
-			return { 'disabled': !this.host.length || !this.port };
+			return {
+				'disabled': !this.host.length || !this.port ||
+					this.hoststate < 0 || this.portstate < 0
+			};
 		},
 		clsremove() {
 			return { 'disabled': !this.selfile };
@@ -421,8 +424,11 @@ const VueCloudCard = {
 			(async () => {
 				eventHub.emit('ajax', +1);
 				try {
-					const response = await fetchjsonauth("POST", `/id${this.$root.aid}/api/drive/add`, {
-						path: this.host
+					const response = await fetchjsonauth("POST", `/id${this.$root.aid}/api/cloud/add`, {
+						host: this.host,
+						port: this.port,
+						name: this.name,
+						pass: this.pass,
 					});
 					const data = await response.json();
 					traceajax(response, data);
@@ -445,7 +451,7 @@ const VueCloudCard = {
 			(async () => {
 				eventHub.emit('ajax', +1);
 				try {
-					const response = await fetchjsonauth("POST", `/id${this.$root.aid}/api/drive/del`, {
+					const response = await fetchjsonauth("POST", `/id${this.$root.aid}/api/cloud/del`, {
 						puid: this.selfile.puid
 					});
 					const data = await response.json();
@@ -617,7 +623,7 @@ const VueDriveCard = {
 			};
 		},
 		clsadd() {
-			return { 'disabled': !this.rootpath.length };
+			return { 'disabled': !this.rootpath.length || this.rootpathstate < 0 };
 		},
 		clsremove() {
 			return { 'disabled': !this.selfile };

@@ -207,7 +207,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			var n = 0
 			var vfiles []fs.FileInfo // verified file infos
 			var vpaths []string      // verified paths
-			gpscache.Range(func(puid Puid_t, gps GpsInfo) bool {
+			gpscache.Enum(func(puid Puid_t, gps GpsInfo) bool {
 				if fpath, ok := pathcache.GetDir(puid); ok {
 					if !acc.IsHidden(fpath) && acc.PathAccess(fpath, uid == aid) {
 						if fi, _ := StatFile(fpath); fi != nil {

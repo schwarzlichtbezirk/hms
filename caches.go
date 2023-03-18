@@ -8,7 +8,6 @@ import (
 	"io"
 	"os"
 	"path"
-	"sync"
 	"time"
 
 	"github.com/disintegration/gift"
@@ -66,6 +65,23 @@ func SqlSession(f func(*Session) (any, error)) (any, error) {
 	return f(session)
 }
 
+// GpsInfo describes GPS-data from the photos:
+// latitude, longitude, altitude and creation time.
+type GpsInfo struct {
+	DateTime  Time    `xorm:"DateTime" json:"time" yaml:"time" xml:"time,attr"` // photo creation date/time in Unix milliseconds
+	Latitude  float64 `json:"lat" yaml:"lat" xml:"lat,attr"`
+	Longitude float64 `json:"lon" yaml:"lon" xml:"lon,attr"`
+	Altitude  float32 `json:"alt,omitempty" yaml:"alt,omitempty" xml:"alt,omitempty,attr"`
+}
+
+// FromProp fills fields with values from ExifProp.
+func (gi *GpsInfo) FromProp(ep *ExifProp) {
+	gi.DateTime = ep.DateTime
+	gi.Latitude = ep.Latitude
+	gi.Longitude = ep.Longitude
+	gi.Altitude = ep.Altitude
+}
+
 type TempCell[T any] struct {
 	Data *T
 	Wait *time.Timer
@@ -95,6 +111,7 @@ var (
 	exifcache = NewCache[Puid_t, ExifProp]() // FIFO cache for EXIF tags.
 	tagcache  = NewCache[Puid_t, TagProp]()  // FIFO cache for ID3 tags.
 
+	gpscache  = NewCache[Puid_t, GpsInfo]()   // FIFO cache with GPS coordinates.
 	tmbcache  = NewCache[Puid_t, MediaData]() // FIFO cache with files embedded thumbnails.
 	tilecache = NewCache[Puid_t, *TileProp]() // FIFO cache with set of available tiles.
 
@@ -219,7 +236,7 @@ func ExifStoreSet(session *Session, est *ExifStore) (err error) {
 	if est.Prop.Latitude != 0 || est.Prop.Longitude != 0 {
 		var gi GpsInfo
 		gi.FromProp(&est.Prop)
-		gpscache.Store(est.Puid, gi)
+		gpscache.Poke(est.Puid, gi)
 	}
 	// set to memory cache
 	exifcache.Poke(est.Puid, est.Prop)
@@ -271,52 +288,6 @@ func TagStoreSet(session *Session, tst *TagStore) (err error) {
 	}
 	return
 }
-
-// GpsInfo describes GPS-data from the photos:
-// latitude, longitude, altitude and creation time.
-type GpsInfo struct {
-	DateTime  Time    `xorm:"DateTime" json:"time" yaml:"time" xml:"time,attr"` // photo creation date/time in Unix milliseconds
-	Latitude  float64 `json:"lat" yaml:"lat" xml:"lat,attr"`
-	Longitude float64 `json:"lon" yaml:"lon" xml:"lon,attr"`
-	Altitude  float32 `json:"alt,omitempty" yaml:"alt,omitempty" xml:"alt,omitempty,attr"`
-}
-
-// FromProp fills fields with values from ExifProp.
-func (gi *GpsInfo) FromProp(ep *ExifProp) {
-	gi.DateTime = ep.DateTime
-	gi.Latitude = ep.Latitude
-	gi.Longitude = ep.Longitude
-	gi.Altitude = ep.Altitude
-}
-
-// GpsCache inherits sync.Map and encapsulates functionality for cache.
-type GpsCache struct {
-	sync.Map
-}
-
-// Count returns number of entries in the map.
-func (gc *GpsCache) Count() (n int) {
-	gc.Map.Range(func(key any, value any) bool {
-		n++
-		return true
-	})
-	return
-}
-
-// Range calls given closure for each GpsInfo in the map.
-func (gc *GpsCache) Range(f func(Puid_t, GpsInfo) bool) {
-	gc.Map.Range(func(key, value any) bool {
-		var puid, okk = key.(Puid_t)
-		var gps, okv = value.(GpsInfo)
-		if okk && okv {
-			return f(puid, gps)
-		} else {
-			return true
-		}
-	})
-}
-
-var gpscache GpsCache
 
 // MediaCacheGet returns media file with given PUID converted to acceptable
 // for browser format, with media cache usage.
@@ -669,10 +640,13 @@ func InitStorage() (err error) {
 			for puid, path := range CatKeyPath {
 				ctgrpath[puid-1].Puid = puid
 				ctgrpath[puid-1].Path = path
+				pathcache.Set(puid, path)
 			}
 			for puid := Puid_t(len(CatKeyPath) + 1); puid < PUIDcache; puid++ {
+				var path = fmt.Sprintf("<reserved%d>", puid)
 				ctgrpath[puid-1].Puid = puid
-				ctgrpath[puid-1].Path = fmt.Sprintf("<reserved%d>", puid)
+				ctgrpath[puid-1].Path = path
+				pathcache.Set(puid, path)
 			}
 			if _, err = session.Insert(&ctgrpath); err != nil {
 				return
@@ -706,6 +680,29 @@ func LoadPathCache() (err error) {
 	return
 }
 
+// LoadDirCache loads whole directories table from database into cache.
+func LoadDirCache() (err error) {
+	var session = xormStorage.NewSession()
+	defer session.Close()
+
+	const limit = 256
+	var offset int
+	for {
+		var chunk []DirStore
+		if err = session.Limit(limit, offset).Find(&chunk); err != nil {
+			return
+		}
+		offset += limit
+		for _, ds := range chunk {
+			dircache.Poke(ds.Puid, ds.Prop)
+		}
+		if limit > len(chunk) {
+			break
+		}
+	}
+	return
+}
+
 // LoadGpsCache loads all items with GPS information from EXIF table of storage into cache.
 func LoadGpsCache() (err error) {
 	var session = xormStorage.NewSession()
@@ -722,7 +719,7 @@ func LoadGpsCache() (err error) {
 		for _, ec := range chunk {
 			var gi GpsInfo
 			gi.FromProp(&ec.Prop)
-			gpscache.Store(ec.Puid, gi)
+			gpscache.Poke(ec.Puid, gi)
 		}
 		if limit > len(chunk) {
 			break

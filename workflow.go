@@ -114,15 +114,19 @@ func Init() {
 		return
 	})
 
-	// load path and GPS caches
+	// load path, directories and GPS caches
 	if err = LoadPathCache(); err != nil {
 		Log.Fatal("path cache loading failure: " + err.Error())
 	}
 	Log.Infof("loaded %d items into path cache", pathcache.Len())
+	if err = LoadDirCache(); err != nil {
+		Log.Fatal("dir cache loading failure: " + err.Error())
+	}
+	Log.Infof("loaded %d items into dir cache", dircache.Len())
 	if err = LoadGpsCache(); err != nil {
 		Log.Fatal("GPS cache loading failure: " + err.Error())
 	}
-	Log.Infof("loaded %d items into GPS cache", gpscache.Count())
+	Log.Infof("loaded %d items into GPS cache", gpscache.Len())
 
 	if err = InitUserlog(); err != nil {
 		Log.Fatal("can not init XORM user log: " + err.Error())

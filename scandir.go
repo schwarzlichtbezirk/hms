@@ -74,13 +74,10 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 		vpuids = append(vpuids, puid)
 	}
 
-	// update dir cache
-	var dpmap = map[Puid_t]DirProp{}
+	// get directories, ISO-files and playlists as folder properties
 	var idds []Puid_t
 	for _, puid := range vpuids {
-		if dp, ok := dircache.Get(puid); ok {
-			dpmap[puid] = dp
-		} else { // get directories, ISO-files and playlists as folder properties
+		if !dircache.Has(puid) {
 			idds = append(idds, puid)
 		}
 	}
@@ -90,16 +87,25 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 			return
 		}
 		for _, ds := range dss {
-			dpmap[ds.Puid] = ds.Prop
-			dircache.Set(ds.Puid, ds.Prop)
+			dircache.Poke(ds.Puid, ds.Prop)
 		}
 	}
 
 	// format response
 	for i, fpath := range vpaths {
 		var puid = vpuids[i]
-		var fp FileProp
 		var fi = vfiles[i]
+		var pp = PuidProp{
+			PUID:   puid,
+			Free:   prf.PathAccess(fpath, false),
+			Shared: prf.IsShared(fpath),
+		}
+		if fi != nil {
+			_, pp.Static = fi.(*FileInfoISO)
+		} else {
+			pp.Static = true
+		}
+		var fp FileProp
 		if name, ok := CatNames[puid]; ok {
 			fp.Name = name
 		} else {
@@ -113,33 +119,21 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 		var grp = prf.GetPathGroup(fpath, fi)
 		*lstp.FGrp.Field(grp)++
 
-		if dp, ok := dpmap[puid]; ok || fp.Type != FTfile {
-			var dk DirKit
-			dk.PUID = puid
-			dk.Free = prf.PathAccess(fpath, false)
-			dk.Shared = prf.IsShared(fpath)
-			if fi != nil {
-				_, dk.Static = fi.(*FileInfoISO)
-			} else {
-				dk.Static = true
+		if dp, ok := dircache.Peek(puid); ok || fp.Type != FTfile {
+			var dk = DirKit{
+				PuidProp: pp,
+				FileProp: fp,
+				DirProp:  dp,
 			}
-			dk.FileProp = fp
-			dk.DirProp = dp
 			if vfiles[i] == nil && dk.Type != FTctgr {
 				dk.Latency = -1
 			}
 			ret = append(ret, &dk)
 		} else {
-			var fk FileKit
-			fk.PUID = puid
-			fk.Free = prf.PathAccess(fpath, false)
-			fk.Shared = prf.IsShared(fpath)
-			if fi != nil {
-				_, fk.Static = fi.(*FileInfoISO)
-			} else {
-				fk.Static = true
+			var fk = FileKit{
+				PuidProp: pp,
+				FileProp: fp,
 			}
-			fk.FileProp = fp
 			if tp, ok := tilecache.Peek(puid); ok {
 				fk.TileProp = *tp
 			}
