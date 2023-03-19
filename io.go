@@ -98,13 +98,16 @@ func (pl *Profiles) ReadYaml(fname string) (err error) {
 		SqlSession(func(session *Session) (res any, err error) {
 			for _, prf := range list {
 				Log.Infof("loaded profile id%d, login='%s'", prf.ID, prf.Login)
-				// cache local roots
-				for _, fpath := range prf.Roots {
-					PathStoreCache(session, fpath)
+				// cache local and remote roots
+				for _, dp := range prf.Roots {
+					PathStoreCache(session, dp.Path)
+				}
+				for _, dp := range prf.Remote {
+					PathStoreCache(session, dp.Path)
 				}
 				// cache shares
-				for _, fpath := range prf.Shares {
-					PathStoreCache(session, fpath)
+				for _, dp := range prf.Shares {
+					PathStoreCache(session, dp.Path)
 				}
 
 				// bring all hidden to lowercase
@@ -120,13 +123,11 @@ func (pl *Profiles) ReadYaml(fname string) (err error) {
 				}
 
 				// print shares list for each
-				for _, shr := range prf.Shares {
-					if puid, ok := CatPathKey[shr]; ok {
-						Log.Infof("id%d: shared '%s' as %s", prf.ID, shr, puid)
-					} else if puid, ok := pathcache.GetRev(shr); ok {
-						Log.Infof("id%d: shared '%s' as %s", prf.ID, shr, puid)
+				for _, dp := range prf.Shares {
+					if puid, ok := pathcache.GetRev(dp.Path); ok {
+						Log.Infof("id%d: shared '%s' as %s", prf.ID, dp.Name, puid)
 					} else {
-						Log.Warnf("id%d: can not share '%s'", prf.ID, shr)
+						Log.Warnf("id%d: can not share '%s'", prf.ID, dp.Name)
 					}
 				}
 			}
@@ -136,8 +137,8 @@ func (pl *Profiles) ReadYaml(fname string) (err error) {
 		var prf = pl.NewProfile("admin", "dag qus fly in the sky")
 		prf.ID = 1
 		prf.SetDefaultHidden()
-		prf.Shares = []string{
-			"<home>",
+		prf.Shares = []DiskPath{
+			{CPhome, CatNames[CPhome]},
 		}
 		// build shares tables
 		prf.updateGrp()

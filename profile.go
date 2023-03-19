@@ -65,10 +65,10 @@ type Profile struct {
 	Login    string `json:"login" yaml:"login" xml:"login"`
 	Password string `json:"password" yaml:"password" xml:"password"`
 
-	Roots  []string `json:"local" yaml:"local" xml:"local>item"` // root directories list
-	Remote []string `json:"remote" yaml:"remote" xml:"remote>item"`
-	Shares []string `json:"shares" yaml:"shares" xml:"shares>item"`
-	Hidden []string `json:"hidden" yaml:"hidden" xml:"hidden>item"` // patterns for hidden files
+	Roots  []DiskPath `json:"local" yaml:"local" xml:"local>item"` // root directories list
+	Remote []DiskPath `json:"remote" yaml:"remote" xml:"remote>item"`
+	Shares []DiskPath `json:"shares" yaml:"shares" xml:"shares>item"`
+	Hidden []string   `json:"hidden" yaml:"hidden" xml:"hidden>item"` // patterns for hidden files
 
 	// private shares data
 	ctgrshare CatGrp
@@ -148,6 +148,28 @@ func (prf *Profile) SetDefaultHidden() {
 	copy(prf.Hidden, DefHidden)
 }
 
+// PathName returns label for given path.
+func (prf *Profile) PathName(syspath string) string {
+	if name, ok := CatNames[syspath]; ok {
+		return name
+	}
+
+	prf.mux.RLock()
+	defer prf.mux.RUnlock()
+
+	for _, dp := range prf.Roots {
+		if syspath == dp.Path {
+			return dp.Name
+		}
+	}
+	for _, dp := range prf.Remote {
+		if syspath == dp.Path {
+			return dp.Name
+		}
+	}
+	return path.Base(syspath)
+}
+
 // PathType returns type of file by given path.
 func (prf *Profile) PathType(fpath string, fi fs.FileInfo) FT_t {
 	if len(fpath) > 1 && fpath[0] == '<' && fpath[len(fpath)-1] == '>' {
@@ -187,12 +209,9 @@ func (prf *Profile) IsHidden(fpath string) bool {
 				return true
 			}
 		} else if strings.HasPrefix(pattern, "?:/") {
-			for _, root := range prf.Roots {
-				if root[len(root)-1] != '/' {
-					root += "/"
-				}
-				if strings.HasPrefix(kpath, strings.ToLower(root)) {
-					if matched, _ = path.Match(pattern[3:], kpath[len(root):]); matched {
+			for _, dp := range prf.Roots {
+				if PathStarts(kpath, strings.ToLower(dp.Path)) {
+					if matched, _ = path.Match(pattern[3:], kpath[len(dp.Path):]); matched {
 						return true
 					}
 				}
@@ -210,8 +229,8 @@ func (prf *Profile) IsHidden(fpath string) bool {
 func (prf *Profile) IsLocal(syspath string) bool {
 	prf.mux.RLock()
 	defer prf.mux.RUnlock()
-	for _, root := range prf.Roots {
-		if root == syspath {
+	for _, dp := range prf.Roots {
+		if dp.Path == syspath {
 			return true
 		}
 	}
@@ -222,8 +241,8 @@ func (prf *Profile) IsLocal(syspath string) bool {
 func (prf *Profile) IsCloud(syspath string) bool {
 	prf.mux.RLock()
 	defer prf.mux.RUnlock()
-	for _, cloud := range prf.Remote {
-		if cloud == syspath {
+	for _, dp := range prf.Remote {
+		if dp.Path == syspath {
 			return true
 		}
 	}
@@ -234,8 +253,8 @@ func (prf *Profile) IsCloud(syspath string) bool {
 func (prf *Profile) IsShared(syspath string) bool {
 	prf.mux.RLock()
 	defer prf.mux.RUnlock()
-	for _, shr := range prf.Shares {
-		if shr == syspath {
+	for _, dp := range prf.Shares {
+		if dp.Path == syspath {
 			return true
 		}
 	}
@@ -247,12 +266,16 @@ func (prf *Profile) FindLocal() {
 	switch runtime.GOOS {
 	case "windows":
 		const windisks = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-		for _, d := range windisks {
-			var root = string(d) + ":/" // let's disk roots will be slash-terminated always
+		for i := range windisks {
+			var d = windisks[i : i+1]
+			var root = d + ":/" // let's disk roots will be slash-terminated always
 			if _, err := os.Stat(root); err == nil {
 				if !prf.IsLocal(root) {
 					prf.mux.Lock()
-					prf.Roots = append(prf.Roots, root)
+					prf.Roots = append(prf.Roots, DiskPath{
+						Path: root,
+						Name: "disk " + d,
+					})
 					prf.mux.Unlock()
 				}
 			}
@@ -269,7 +292,10 @@ func (prf *Profile) FindLocal() {
 				if _, err := os.Stat(root); err == nil {
 					if !prf.IsLocal(root) {
 						prf.mux.Lock()
-						prf.Roots = append(prf.Roots, root)
+						prf.Roots = append(prf.Roots, DiskPath{
+							Path: root,
+							Name: "disk " + strings.ToUpper(name),
+						})
 						prf.mux.Unlock()
 					}
 				}
@@ -281,7 +307,7 @@ func (prf *Profile) FindLocal() {
 // ScanLocal scans paths from local roots list.
 func (prf *Profile) ScanLocal(session *Session) (ret []any, err error) {
 	prf.mux.RLock()
-	var vfiles = make([]string, len(prf.Roots))
+	var vfiles = make([]DiskPath, len(prf.Roots))
 	copy(vfiles, prf.Roots)
 	prf.mux.RUnlock()
 
@@ -304,7 +330,7 @@ func (prf *Profile) ScanLocal(session *Session) (ret []any, err error) {
 // ScanRemote scans paths at network destination.
 func (prf *Profile) ScanRemote(session *Session) (ret []any, err error) {
 	prf.mux.RLock()
-	var vfiles = make([]string, len(prf.Remote))
+	var vfiles = make([]DiskPath, len(prf.Remote))
 	copy(vfiles, prf.Remote)
 	prf.mux.RUnlock()
 
@@ -327,7 +353,7 @@ func (prf *Profile) ScanRemote(session *Session) (ret []any, err error) {
 // ScanShares scans actual shares from shares list.
 func (prf *Profile) ScanShares(session *Session) (ret []any, err error) {
 	prf.mux.RLock()
-	var vfiles = make([]string, len(prf.Shares))
+	var vfiles = make([]DiskPath, len(prf.Shares))
 	copy(vfiles, prf.Shares)
 	prf.mux.RUnlock()
 
@@ -350,8 +376,8 @@ func (prf *Profile) ScanShares(session *Session) (ret []any, err error) {
 // Private function to update profile shares private data.
 func (prf *Profile) updateGrp() {
 	var is = func(fpath string) bool {
-		for _, shr := range prf.Shares {
-			if shr == fpath {
+		for _, dp := range prf.Shares {
+			if dp.Path == fpath {
 				return true
 			}
 		}
@@ -373,16 +399,16 @@ func (prf *Profile) updateGrp() {
 }
 
 // AddLocal adds system path to local roots list.
-func (prf *Profile) AddLocal(syspath string) bool {
+func (prf *Profile) AddLocal(syspath, name string) bool {
 	prf.mux.Lock()
 	defer prf.mux.Unlock()
 
-	for _, root := range prf.Roots {
-		if root == syspath {
+	for _, dp := range prf.Roots {
+		if dp.Path == syspath {
 			return false
 		}
 	}
-	prf.Roots = append(prf.Roots, syspath)
+	prf.Roots = append(prf.Roots, DiskPath{syspath, name})
 	return true
 }
 
@@ -391,8 +417,8 @@ func (prf *Profile) DelLocal(syspath string) bool {
 	prf.mux.Lock()
 	defer prf.mux.Unlock()
 
-	for i, root := range prf.Roots {
-		if root == syspath {
+	for i, dp := range prf.Roots {
+		if dp.Path == syspath {
 			prf.Roots = append(prf.Roots[:i], prf.Roots[i+1:]...)
 			return true
 		}
@@ -401,16 +427,16 @@ func (prf *Profile) DelLocal(syspath string) bool {
 }
 
 // AddCloud adds path to network roots list.
-func (prf *Profile) AddCloud(syspath string) bool {
+func (prf *Profile) AddCloud(syspath, name string) bool {
 	prf.mux.Lock()
 	defer prf.mux.Unlock()
 
-	for _, cloud := range prf.Remote {
-		if cloud == syspath {
+	for _, dp := range prf.Remote {
+		if dp.Path == syspath {
 			return false
 		}
 	}
-	prf.Remote = append(prf.Remote, syspath)
+	prf.Remote = append(prf.Remote, DiskPath{syspath, name})
 	return true
 }
 
@@ -419,8 +445,8 @@ func (prf *Profile) DelCloud(syspath string) bool {
 	prf.mux.Lock()
 	defer prf.mux.Unlock()
 
-	for i, cloud := range prf.Remote {
-		if cloud == syspath {
+	for i, dp := range prf.Remote {
+		if dp.Path == syspath {
 			prf.Remote = append(prf.Remote[:i], prf.Remote[i+1:]...)
 			return true
 		}
@@ -433,12 +459,12 @@ func (prf *Profile) AddShare(syspath string) bool {
 	prf.mux.Lock()
 	defer prf.mux.Unlock()
 
-	for _, shr := range prf.Shares {
-		if shr == syspath {
+	for _, dp := range prf.Shares {
+		if dp.Path == syspath {
 			return false
 		}
 	}
-	prf.Shares = append(prf.Shares, syspath)
+	prf.Shares = append(prf.Shares, DiskPath{syspath, prf.PathName(syspath)})
 	prf.updateGrp()
 	return true
 }
@@ -448,8 +474,8 @@ func (prf *Profile) DelShare(syspath string) bool {
 	prf.mux.Lock()
 	defer prf.mux.Unlock()
 
-	for i, shr := range prf.Shares {
-		if shr == syspath {
+	for i, dp := range prf.Shares {
+		if dp.Path == syspath {
 			prf.Shares = append(prf.Shares[:i], prf.Shares[i+1:]...)
 			prf.updateGrp()
 			return true
@@ -459,55 +485,59 @@ func (prf *Profile) DelShare(syspath string) bool {
 }
 
 // GetSharePath returns path in nearest shared folder that
-// contains given syspath.
-func (prf *Profile) GetSharePath(session *Session, syspath string) (shrpath string, shrpuid Puid_t) {
+// contains given syspath, and its name.
+func (prf *Profile) GetSharePath(session *Session, syspath string) (shrpath, shrname string) {
 	prf.mux.RLock()
 	defer prf.mux.RUnlock()
 
 	var base string
-	for _, fpath := range prf.Shares {
-		if PathStarts(syspath, fpath) {
-			if len(fpath) > len(base) {
-				base = fpath
+	for _, dp := range prf.Shares {
+		if PathStarts(syspath, dp.Path) {
+			if len(dp.Path) > len(base) {
+				base = dp.Path
+				shrname = dp.Name
 			}
 		}
 	}
 	if len(base) > 0 {
-		shrpuid = PathStoreCache(session, base)
-		shrpath = path.Join(shrpuid.String(), syspath[len(base):])
+		var puid = PathStoreCache(session, base)
+		shrpath = path.Join(puid.String(), syspath[len(base):])
 		return
 	}
 	return
 }
 
-// GetRootPath returns path to nearest root that contains given syspath.
-func (prf *Profile) GetRootPath(session *Session, syspath string) (rootpath string, rootpuid Puid_t) {
+// GetRootPath returns path to nearest root path that
+// contains given syspath, and its name.
+func (prf *Profile) GetRootPath(session *Session, syspath string) (rootpath, rootname string) {
 	prf.mux.RLock()
 	defer prf.mux.RUnlock()
 
 	var base string
-	for _, fpath := range prf.Roots {
-		if PathStarts(syspath, fpath) {
-			if len(fpath) > len(base) {
-				base = fpath
+	for _, dp := range prf.Roots {
+		if PathStarts(syspath, dp.Path) {
+			if len(dp.Path) > len(base) {
+				base = dp.Path
+				rootname = dp.Name
 			}
 		}
 	}
 	if len(base) > 0 {
-		rootpuid = PathStoreCache(session, base)
-		rootpath = path.Join(rootpuid.String(), syspath[len(base):])
+		var puid = PathStoreCache(session, base)
+		rootpath = path.Join(puid.String(), syspath[len(base):])
 		return
 	}
-	for _, fpath := range prf.Remote {
-		if PathStarts(syspath, fpath) {
-			if len(fpath) > len(base) {
-				base = fpath
+	for _, dp := range prf.Remote {
+		if PathStarts(syspath, dp.Path) {
+			if len(dp.Path) > len(base) {
+				base = dp.Path
+				rootname = dp.Name
 			}
 		}
 	}
 	if len(base) > 0 {
-		rootpuid = PathStoreCache(session, base)
-		rootpath = path.Join(rootpuid.String(), syspath[len(base):])
+		var puid = PathStoreCache(session, base)
+		rootpath = path.Join(puid.String(), syspath[len(base):])
 		return
 	}
 	return
@@ -518,13 +548,13 @@ func (prf *Profile) PathAccess(syspath string, isadmin bool) bool {
 	prf.mux.RLock()
 	defer prf.mux.RUnlock()
 
-	for _, fpath := range prf.Shares {
-		if PathStarts(syspath, fpath) {
+	for _, dp := range prf.Shares {
+		if PathStarts(syspath, dp.Path) {
 			return true
 		}
 	}
-	for _, root := range prf.Roots {
-		if PathStarts(syspath, root) {
+	for _, dp := range prf.Roots {
+		if PathStarts(syspath, dp.Path) {
 			if isadmin {
 				return true
 			} else {
@@ -533,8 +563,8 @@ func (prf *Profile) PathAccess(syspath string, isadmin bool) bool {
 			}
 		}
 	}
-	for _, cloud := range prf.Remote {
-		if PathStarts(syspath, cloud) {
+	for _, dp := range prf.Remote {
+		if PathStarts(syspath, dp.Path) {
 			if isadmin {
 				return true
 			} else {
@@ -554,18 +584,18 @@ func (prf *Profile) PathAdmin(syspath string) bool {
 	prf.mux.RLock()
 	defer prf.mux.RUnlock()
 
-	for _, fpath := range prf.Shares {
-		if PathStarts(syspath, fpath) {
+	for _, dp := range prf.Shares {
+		if PathStarts(syspath, dp.Path) {
 			return true
 		}
 	}
-	for _, root := range prf.Roots {
-		if PathStarts(syspath, root) {
+	for _, dp := range prf.Roots {
+		if PathStarts(syspath, dp.Path) {
 			return true
 		}
 	}
-	for _, cloud := range prf.Remote {
-		if PathStarts(syspath, cloud) {
+	for _, dp := range prf.Remote {
+		if PathStarts(syspath, dp.Path) {
 			return true
 		}
 	}

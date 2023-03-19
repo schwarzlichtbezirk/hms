@@ -2,7 +2,22 @@ package hms
 
 import (
 	"io/fs"
+	"path"
 )
+
+// DiskPath contains disk full path and icon label.
+type DiskPath struct {
+	Path string `xorm:"'path'" json:"path" yaml:"path" xml:"path"`
+	Name string `xorm:"'name'" json:"name" yaml:"name" xml:"name"`
+}
+
+// MakeFilePath creates DiskPath for file system path.
+func MakeFilePath(syspath string) DiskPath {
+	return DiskPath{
+		Path: syspath,
+		Name: path.Base(syspath),
+	}
+}
 
 // FileProp is common file properties chunk.
 type FileProp struct {

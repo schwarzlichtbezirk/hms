@@ -119,22 +119,8 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	}
 
 	ret.PUID = puid
-	var shrpath, shrpuid = acc.GetSharePath(session, syspath)
-	ret.SharePath = shrpath
-	if name, ok := CatNames[shrpuid]; ok {
-		ret.ShareName = name
-	} else if shrpuid != 0 {
-		var base, _ = PathStorePath(session, shrpuid)
-		ret.ShareName = path.Base(base)
-	}
-	var rootpath, rootpuid = acc.GetRootPath(session, syspath)
-	ret.RootPath = rootpath
-	if name, ok := CatNames[rootpuid]; ok {
-		ret.RootName = name
-	} else if rootpuid != 0 {
-		var base, _ = PathStorePath(session, rootpuid)
-		ret.RootName = path.Base(base)
-	}
+	ret.SharePath, ret.ShareName = acc.GetSharePath(session, syspath)
+	ret.RootPath, ret.RootName = acc.GetRootPath(session, syspath)
 
 	if uid == aid {
 		ret.HasHome = true
@@ -160,14 +146,14 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		}
 		switch puid {
 		case PUIDhome:
-			var vfiles []string
+			var vfiles []DiskPath
 			for puid := Puid_t(1); puid < PUIDcache; puid++ {
 				if puid == PUIDhome {
 					continue
 				}
 				if fpath, ok := CatKeyPath[puid]; ok {
 					if uid == aid || acc.IsShared(fpath) {
-						vfiles = append(vfiles, fpath)
+						vfiles = append(vfiles, DiskPath{fpath, CatNames[fpath]})
 					}
 				}
 			}
@@ -206,13 +192,13 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		case PUIDmap:
 			var n = 0
 			var vfiles []fs.FileInfo // verified file infos
-			var vpaths []string      // verified paths
+			var vpaths []DiskPath    // verified paths
 			gpscache.Enum(func(puid Puid_t, gps GpsInfo) bool {
 				if fpath, ok := pathcache.GetDir(puid); ok {
 					if !acc.IsHidden(fpath) && acc.PathAccess(fpath, uid == aid) {
 						if fi, _ := StatFile(fpath); fi != nil {
 							vfiles = append(vfiles, fi)
-							vpaths = append(vpaths, fpath)
+							vpaths = append(vpaths, MakeFilePath(fpath))
 							n++
 						}
 					}
@@ -290,13 +276,13 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			}
 
 			var vfiles []fs.FileInfo // verified file infos
-			var vpaths []string      // verified paths
+			var vpaths []DiskPath    // verified paths
 			for _, track := range pl.Tracks {
 				var fpath = ToSlash(track.Location)
 				if !acc.IsHidden(fpath) && acc.PathAccess(fpath, uid == aid) {
 					if fi, _ := StatFile(fpath); fi != nil {
 						vfiles = append(vfiles, fi)
-						vpaths = append(vpaths, fpath)
+						vpaths = append(vpaths, MakeFilePath(fpath))
 					}
 				}
 			}

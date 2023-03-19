@@ -9,7 +9,8 @@
   local:
   remote:
   shares:
-    - '<home>'
+    - path: '<home>'
+      name: Home
   hidden:
     - '**/*.sys'
     - '**/*.tmp'

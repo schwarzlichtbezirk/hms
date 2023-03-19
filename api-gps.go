@@ -136,7 +136,7 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	}
 
 	var vfiles []fs.FileInfo // verified file infos
-	var vpaths []string      // verified paths
+	var vpaths []DiskPath    // verified paths
 	gpscache.Enum(func(puid Puid_t, gps GpsInfo) bool {
 		var inc bool
 		for _, mp := range arg.Paths {
@@ -156,7 +156,7 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			if !acc.IsHidden(fpath) && acc.PathAccess(fpath, uid == aid) {
 				if fi, _ := StatFile(fpath); fi != nil {
 					vfiles = append(vfiles, fi)
-					vpaths = append(vpaths, fpath)
+					vpaths = append(vpaths, MakeFilePath(fpath))
 				}
 			}
 		}

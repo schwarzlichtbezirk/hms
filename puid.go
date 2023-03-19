@@ -54,18 +54,18 @@ const (
 	CPmap    = "<map>"
 )
 
-var CatNames = map[Puid_t]string{
-	PUIDhome:   "Home",
-	PUIDlocal:  "Drives list",
-	PUIDremote: "Network",
-	PUIDshares: "Shared resources",
-	PUIDmedia:  "Multimedia files",
-	PUIDvideo:  "Movie and video files",
-	PUIDaudio:  "Music and audio files",
-	PUIDimage:  "Photos and images",
-	PUIDbooks:  "Books",
-	PUIDtexts:  "Text files",
-	PUIDmap:    "Map",
+var CatNames = map[string]string{
+	CPhome:   "Home",
+	CPlocal:  "Drives list",
+	CPremote: "Network",
+	CPshares: "Shared resources",
+	CPmedia:  "Multimedia files",
+	CPvideo:  "Movie and video files",
+	CPaudio:  "Music and audio files",
+	CPimage:  "Photos and images",
+	CPbooks:  "Books",
+	CPtexts:  "Text files",
+	CPmap:    "Map",
 }
 
 // CatKeyPath is predefined read-only maps with PUIDs keys and categories values.

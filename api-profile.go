@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"path"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/jlaffaye/ftp"
@@ -19,6 +20,7 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
 		Path string `json:"path" yaml:"path" xml:"path"`
+		Name string `json:"name" yaml:"name" xml:"name"`
 	}
 	var ret struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
@@ -93,8 +95,16 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	fk.Size = fi.Size()
 	fk.Time = fi.ModTime()
 
+	var name = arg.Name
+	if len(name) == 0 {
+		if strings.HasSuffix(name, ":/") {
+			name = "disk " + strings.ToUpper(name[0:1])
+		} else {
+			name = path.Base(syspath)
+		}
+	}
 	ret.FP = fk
-	ret.Added = acc.AddLocal(syspath)
+	ret.Added = acc.AddLocal(syspath, name)
 
 	WriteOK(w, r, &ret)
 }
@@ -153,10 +163,11 @@ func cldaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
-		Host string `json:"host" yaml:"host" xml:"host"`
-		Port int    `json:"port" yaml:"port" xml:"port"`
-		Name string `json:"name,omitempty" yaml:"name,omitempty" xml:"name,omitempty"`
-		Pass string `json:"pass,omitempty" yaml:"pass,omitempty" xml:"pass,omitempty"`
+		Host     string `json:"host" yaml:"host" xml:"host"`
+		Port     int    `json:"port" yaml:"port" xml:"port"`
+		Login    string `json:"login,omitempty" yaml:"login,omitempty" xml:"login,omitempty"`
+		Password string `json:"password,omitempty" yaml:"password,omitempty" xml:"password,omitempty"`
+		Name     string `json:"name" yaml:"name" xml:"name"`
 	}
 	var ret struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
@@ -199,7 +210,7 @@ func cldaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	}
 	var u = url.URL{
 		Scheme: "ftp",
-		User:   url.UserPassword(arg.Name, arg.Pass),
+		User:   url.UserPassword(arg.Login, arg.Password),
 		Host:   host,
 	}
 	var syspath = u.String()
@@ -211,7 +222,7 @@ func cldaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	}
 	defer conn.Quit()
 
-	if err = conn.Login(arg.Name, arg.Pass); err != nil {
+	if err = conn.Login(arg.Login, arg.Password); err != nil {
 		WriteError(w, r, http.StatusNotFound, err, AECcldaddcred)
 		return
 	}
@@ -232,8 +243,12 @@ func cldaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	fk.Size = int64(root.Size)
 	fk.Time = root.Time
 
+	var name = arg.Name
+	if len(name) == 0 {
+		name = arg.Host
+	}
 	ret.FP = fk
-	ret.Added = acc.AddCloud(syspath)
+	ret.Added = acc.AddCloud(syspath, name)
 
 	WriteOK(w, r, &ret)
 }
