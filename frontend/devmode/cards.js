@@ -294,11 +294,12 @@ const VueCloudCard = {
 			selfile: null, // current selected cloud
 			host: "", // path to disk to add
 			port: 21,
+			login: "",
+			password: "",
 			name: "",
-			pass: "",
 			hoststate: 0,
 			portstate: 0,
-			namestate: 0,
+			loginstate: 0,
 			passstate: 0,
 			rootadd: null,
 
@@ -360,10 +361,10 @@ const VueCloudCard = {
 				'is-valid': this.portstate == 1
 			};
 		},
-		clsnameedt() {
+		clsloginedt() {
 			return {
-				'is-invalid': this.hoststate === -1,
-				'is-valid': this.hoststate == 1
+				'is-invalid': this.loginstate === -1,
+				'is-valid': this.loginstate == 1
 			};
 		},
 		clspassedt() {
@@ -427,8 +428,9 @@ const VueCloudCard = {
 					const response = await fetchjsonauth("POST", `/id${this.$root.aid}/api/cloud/add`, {
 						host: this.host,
 						port: this.port,
+						login: this.login,
+						password: this.password,
 						name: this.name,
-						pass: this.pass,
 					});
 					const data = await response.json();
 					traceajax(response, data);
@@ -477,7 +479,7 @@ const VueCloudCard = {
 		onchange(e) {
 			this.hoststate = 0;
 			this.portstate = 0;
-			this.namestate = 0;
+			this.loginstate = 0;
 			this.passstate = 0;
 		},
 
@@ -567,6 +569,7 @@ const VueDriveCard = {
 		return {
 			selfile: null, // current selected drive
 			rootpath: "", // path to disk to add
+			name: "",
 			rootpathstate: 0,
 			rootadd: null,
 
@@ -672,7 +675,8 @@ const VueDriveCard = {
 				eventHub.emit('ajax', +1);
 				try {
 					const response = await fetchjsonauth("POST", `/id${this.$root.aid}/api/drive/add`, {
-						path: this.rootpath
+						path: this.rootpath,
+						name: this.name,
 					});
 					const data = await response.json();
 					traceajax(response, data);

@@ -56,8 +56,8 @@ const (
 
 var CatNames = map[string]string{
 	CPhome:   "Home",
-	CPlocal:  "Drives list",
-	CPremote: "Network",
+	CPlocal:  "Local disks",
+	CPremote: "Network disks",
 	CPshares: "Shared resources",
 	CPmedia:  "Multimedia files",
 	CPvideo:  "Movie and video files",

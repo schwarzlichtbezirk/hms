@@ -56,16 +56,23 @@
 						</div>
 					</fieldset>
 					<fieldset>
-						<label v-bind:for="'name'+iid" class="small navbar-text">Connection credentials. Leave fields empty for anonymous access.</label>
+						<label v-bind:for="'login'+iid" class="small navbar-text">Connection credentials. Leave fields empty for anonymous access.</label>
 						<div class="row g-2">
 							<div class="form-floating col-md">
-								<input v-model.trim="name" v-bind:class="clsnameedt" v-bind:id="'name'+iid" v-on:keyup.enter.prevent="onadd" v-on:keyup="onchange" class="form-control toolinp bg-tool" type="text" maxlength="256">
-								<label v-bind:for="'name'+iid">login</label>
+								<input v-model.trim="login" v-bind:class="clsloginedt" v-bind:id="'login'+iid" v-on:keyup.enter.prevent="onadd" v-on:keyup="onchange" class="form-control toolinp bg-tool" type="text" maxlength="256">
+								<label v-bind:for="'login'+iid">login</label>
 							</div>
 							<div class="form-floating col-md">
-								<input v-model.trim="pass" v-bind:class="clspassedt" v-bind:id="'pass'+iid" v-on:keyup.enter.prevent="onadd" v-on:keyup="onchange" class="form-control toolinp bg-tool" type="password" maxlength="256">
+								<input v-model.trim="password" v-bind:class="clspassedt" v-bind:id="'pass'+iid" v-on:keyup.enter.prevent="onadd" v-on:keyup="onchange" class="form-control toolinp bg-tool" type="password" maxlength="256">
 								<label v-bind:for="'pass'+iid">password</label>
 							</div>
+						</div>
+					</fieldset>
+					<fieldset>
+						<label v-bind:for="'name'+iid" class="small navbar-text">Name of connection pointed under the icon.</label>
+						<div class="form-floating col-md">
+							<input v-model.trim="name" v-bind:id="'name'+iid" v-on:keyup.enter.prevent="onadd" class="form-control toolinp bg-tool" type="text" maxlength="256">
+							<label v-bind:for="'name'+iid">name</label>
 						</div>
 					</fieldset>
 				</div>

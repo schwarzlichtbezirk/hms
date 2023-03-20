@@ -38,16 +38,27 @@
 		<div class="modal-dialog modal-dialog-centered" role="document">
 			<form class="modal-content rounded p-2 bg-tool">
 				<div class="modal-header">
-					<div class="modal-title">New drive connecting</div>
+					<div class="modal-title">Local disk connecting</div>
 					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 				</div>
 				<div class="modal-body">
-					<label v-bind:for="'inp'+iid" class="small navbar-text form-label">Type here valid full path to resource that will be accessed as the disk. For example, <span class="bg-stat">C:/Music</span></label>
-					<div class="form-floating input-group">
-						<input v-model.trim="rootpath" v-bind:class="clsrootpathedt" v-bind:id="'inp'+iid" v-on:keyup.enter.prevent="onadd" v-on:keyup="onpathchange" v-bind:aria-describedby="'but'+iid" class="form-control toolinp bg-tool" type="text" maxlength="256" placeholder="c:/music" required>
-						<label v-bind:for="'inp'+iid">destination path</label>
-						<button v-bind:id="'but'+iid" class="btn toolbtn bg-high" v-bind:class="clsadd" v-on:click="onadd">Add disk</button>
-					</div>
+					<fieldset>
+						<label v-bind:for="'inp'+iid" class="small navbar-text form-label">Type here valid full path to resource that will be accessed as the disk. For example, <span class="bg-stat">C:/Music</span></label>
+						<div class="form-floating col-md">
+							<input v-model.trim="rootpath" v-bind:class="clsrootpathedt" v-bind:id="'inp'+iid" v-on:keyup.enter.prevent="onadd" v-on:keyup="onpathchange" v-bind:aria-describedby="'but'+iid" class="form-control toolinp bg-tool" type="text" maxlength="256" placeholder="c:/music" required>
+							<label v-bind:for="'inp'+iid">destination path</label>
+						</div>
+					</fieldset>
+					<fieldset>
+						<label v-bind:for="'name'+iid" class="small navbar-text">Name of connection pointed under the icon.</label>
+						<div class="form-floating col-md">
+							<input v-model.trim="name" v-bind:id="'name'+iid" v-on:keyup.enter.prevent="onadd" class="form-control toolinp bg-tool" type="text" maxlength="256">
+							<label v-bind:for="'name'+iid">name</label>
+						</div>
+					</fieldset>
+				</div>
+				<div class="modal-footer">
+					<button v-bind:id="'but'+iid" class="btn toolbtn bg-high px-4 py-2" v-bind:class="clsadd" v-on:click="onadd">Add disk</button>
 				</div>
 			</form>
 		</div>
