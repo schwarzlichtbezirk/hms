@@ -188,7 +188,6 @@ const (
 	AECcldaddnoacc
 	AECcldaddnodata
 	AECcldaddnodial
-	AECcldaddcred
 	AECcldaddroot
 
 	// cloud/del

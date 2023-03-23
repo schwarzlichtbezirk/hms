@@ -8,7 +8,6 @@ import (
 	"path"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/jlaffaye/ftp"
 )
@@ -197,8 +196,10 @@ func cldaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		WriteError400(w, r, ErrArgNoPuid, AECcldaddnodata)
 		return
 	}
-	if arg.Port == 0 {
-		arg.Port = 21
+
+	var name = arg.Name
+	if len(name) == 0 {
+		name = arg.Host
 	}
 
 	var session = xormStorage.NewSession()
@@ -208,22 +209,15 @@ func cldaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	if arg.Port > 0 {
 		host += ":" + strconv.Itoa(arg.Port)
 	}
-	var u = url.URL{
+	var ftpaddr = (&url.URL{
 		Scheme: "ftp",
 		User:   url.UserPassword(arg.Login, arg.Password),
 		Host:   host,
-	}
-	var syspath = u.String()
+	}).String()
 
 	var conn *ftp.ServerConn
-	if conn, err = ftp.Dial(u.Host, ftp.DialWithTimeout(5*time.Second)); err != nil {
+	if conn, err = FtpCacheGet(ftpaddr); err != nil {
 		WriteError(w, r, http.StatusNotFound, err, AECcldaddnodial)
-		return
-	}
-	defer conn.Quit()
-
-	if err = conn.Login(arg.Login, arg.Password); err != nil {
-		WriteError(w, r, http.StatusNotFound, err, AECcldaddcred)
 		return
 	}
 
@@ -234,21 +228,17 @@ func cldaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	}
 
 	var fk FileKit
-	fk.PUID = PathStoreCache(session, syspath)
-	fk.Free = acc.PathAccess(syspath, false)
-	fk.Shared = acc.IsShared(syspath)
+	fk.PUID = PathStoreCache(session, ftpaddr)
+	fk.Free = acc.PathAccess(ftpaddr, false)
+	fk.Shared = acc.IsShared(ftpaddr)
 	fk.Static = false
-	fk.Name = path.Base(syspath)
+	fk.Name = name
 	fk.Type = FTcld
 	fk.Size = int64(root.Size)
 	fk.Time = root.Time
 
-	var name = arg.Name
-	if len(name) == 0 {
-		name = arg.Host
-	}
 	ret.FP = fk
-	ret.Added = acc.AddCloud(syspath, name)
+	ret.Added = acc.AddCloud(ftpaddr, name)
 
 	WriteOK(w, r, &ret)
 }
