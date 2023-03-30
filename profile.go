@@ -501,7 +501,7 @@ func (prf *Profile) GetSharePath(session *Session, syspath string) (shrpath, shr
 	}
 	if len(base) > 0 {
 		var puid = PathStoreCache(session, base)
-		shrpath = path.Join(puid.String(), syspath[len(base):])
+		shrpath = JoinPath(puid.String(), syspath[len(base):])
 		return
 	}
 	return
@@ -524,7 +524,7 @@ func (prf *Profile) GetRootPath(session *Session, syspath string) (rootpath, roo
 	}
 	if len(base) > 0 {
 		var puid = PathStoreCache(session, base)
-		rootpath = path.Join(puid.String(), syspath[len(base):])
+		rootpath = JoinPath(puid.String(), syspath[len(base):])
 		return
 	}
 	for _, dp := range prf.Remote {
@@ -537,7 +537,7 @@ func (prf *Profile) GetRootPath(session *Session, syspath string) (rootpath, roo
 	}
 	if len(base) > 0 {
 		var puid = PathStoreCache(session, base)
-		rootpath = path.Join(puid.String(), syspath[len(base):])
+		rootpath = JoinPath(puid.String(), syspath[len(base):])
 		return
 	}
 	return

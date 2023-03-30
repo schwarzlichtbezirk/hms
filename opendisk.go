@@ -1,7 +1,6 @@
 package hms
 
 import (
-	"bytes"
 	"errors"
 	"io"
 	"io/fs"
@@ -18,11 +17,6 @@ import (
 	"github.com/diskfs/go-diskfs/filesystem/iso9660"
 	"github.com/jlaffaye/ftp"
 	"golang.org/x/text/encoding/charmap"
-)
-
-var (
-	ErrFtpWhence = errors.New("invalid whence at FTP seeker")
-	ErrFtpNegPos = errors.New("negative position at FTP seeker")
 )
 
 // DiskFS is ISO or FAT32 disk structure representation for quick access to nested files.
@@ -94,134 +88,15 @@ func (fi *FileInfoISO) Name() string {
 	return name
 }
 
-// FtpFileInfo encapsulates ftp.Entry structure and provides fs.FileInfo implementation.
-type FtpFileInfo struct {
-	*ftp.Entry
-}
-
-// fs.FileInfo implementation.
-func (fi *FtpFileInfo) Name() string {
-	return fi.Entry.Name
-}
-
-// fs.FileInfo implementation.
-func (fi *FtpFileInfo) Size() int64 {
-	return int64(fi.Entry.Size)
-}
-
-// fs.FileInfo implementation.
-func (fi *FtpFileInfo) Mode() fs.FileMode {
-	switch fi.Type {
-	case ftp.EntryTypeFile:
-		return 0444
-	case ftp.EntryTypeFolder:
-		return fs.ModeDir
-	case ftp.EntryTypeLink:
-		return fs.ModeSymlink
-	}
-	return 0
-}
-
-// fs.FileInfo implementation.
-func (fi *FtpFileInfo) ModTime() time.Time {
-	return fi.Entry.Time
-}
-
-// fs.FileInfo implementation.
-func (fi *FtpFileInfo) IsDir() bool {
-	return fi.Entry.Type == ftp.EntryTypeFolder
-}
-
-// fs.FileInfo implementation.
-func (fi *FtpFileInfo) Sys() interface{} {
-	return fi
-}
-
-type FtpIoSeeker struct {
-	path string
-	conn *ftp.ServerConn
-	resp *ftp.Response
-	pos  int64
-	end  int64
-}
-
-func (r *FtpIoSeeker) Close() (err error) {
-	if r.resp != nil {
-		err = r.resp.Close()
-		r.resp = nil
-	}
-	return
-}
-
-func (r *FtpIoSeeker) Size() int64 {
-	if r.end == 0 {
-		r.end, _ = r.conn.FileSize(r.path)
-	}
-	return r.end
-}
-
-func (r *FtpIoSeeker) Read(b []byte) (n int, err error) {
-	if r.pos >= r.Size() {
-		err = io.EOF
-	}
-	if r.resp == nil {
-		if r.resp, err = r.conn.RetrFrom(r.path, uint64(r.pos)); err != nil {
-			return
-		}
-	}
-	var written int64
-	written, err = io.Copy(bytes.NewBuffer(b), r.resp)
-	r.pos += written
-	n = int(written)
-	return
-}
-
-func (r *FtpIoSeeker) Seek(offset int64, whence int) (abs int64, err error) {
-	switch whence {
-	case io.SeekStart:
-		abs = offset
-	case io.SeekCurrent:
-		abs = r.pos + offset
-	case io.SeekEnd:
-		abs = r.Size() + offset
-	default:
-		err = ErrFtpWhence
-		return
-	}
-	if abs < 0 {
-		err = ErrFtpNegPos
-	}
-	if abs != r.pos && r.resp != nil {
-		err = r.resp.Close()
-		r.resp = nil
-		if err != nil {
-			return
-		}
-	}
-	r.pos = abs
-	return
-}
-
 // OpenFile opens file from file system, or looking for iso-disk in the given path,
 // opens it, and opens nested into iso-disk file.
 func OpenFile(syspath string) (r io.ReadSeekCloser, err error) {
 	if strings.HasPrefix(syspath, "ftp://") {
-		var u *url.URL
-		if u, err = url.Parse(syspath); err != nil {
+		var ff FtpFile
+		if err = ff.Open(syspath); err != nil {
 			return
 		}
-		var conn *ftp.ServerConn
-		if conn, err = FtpCacheGet((&url.URL{
-			Scheme: u.Scheme,
-			User:   u.User,
-			Host:   u.Host,
-		}).String()); err != nil {
-			return
-		}
-		r = &FtpIoSeeker{
-			path: u.Path,
-			conn: conn,
-		}
+		r = &ff
 		return
 	} else {
 		if r, err = os.Open(syspath); err == nil { // primary filesystem file
@@ -260,15 +135,22 @@ func StatFile(syspath string) (fi fs.FileInfo, err error) {
 			return
 		}
 		var conn *ftp.ServerConn
-		if conn, err = FtpCacheGet((&url.URL{
-			Scheme: u.Scheme,
-			User:   u.User,
-			Host:   u.Host,
-		}).String()); err != nil {
+		if conn, err = ftp.Dial(u.Host, ftp.DialWithTimeout(5*time.Second)); err != nil {
 			return
 		}
+		defer conn.Quit()
+		var pass, _ = u.User.Password()
+		if err = conn.Login(u.User.Username(), pass); err != nil {
+			return
+		}
+		var path string
+		if strings.HasPrefix(u.Path, "/") {
+			path = u.Path[1:]
+		} else {
+			path = u.Path
+		}
 		var ent *ftp.Entry
-		if ent, err = conn.GetEntry(u.Path); err != nil {
+		if ent, err = conn.GetEntry(path); err != nil {
 			return
 		}
 		fi = &FtpFileInfo{
@@ -329,56 +211,89 @@ func StatFile(syspath string) (fi fs.FileInfo, err error) {
 // or looking for iso-disk in the given path, opens it, and scan files nested
 // into iso-disk local directory.
 func ReadDir(dir string) (ret []fs.FileInfo, err error) {
-	var file *os.File
-	if file, err = os.Open(dir); err == nil { // primary filesystem file
-		defer file.Close()
-		var fi fs.FileInfo
-		if fi, err = file.Stat(); err != nil {
+	if strings.HasPrefix(dir, "ftp://") {
+		var u *url.URL
+		if u, err = url.Parse(dir); err != nil {
 			return
 		}
-		if fi.IsDir() { // get the list only for directory
-			return file.Readdir(-1)
+		var conn *ftp.ServerConn
+		if conn, err = ftp.Dial(u.Host, ftp.DialWithTimeout(5*time.Second)); err != nil {
+			return
 		}
-	}
-
-	// looking for nested file
-	var basepath = dir
-	var operr = err
-	for errors.Is(operr, fs.ErrNotExist) && basepath != "." && basepath != "/" {
-		basepath = path.Dir(basepath)
-		file, operr = os.Open(basepath)
-	}
-	if operr != nil {
-		err = operr
+		defer conn.Quit()
+		var pass, _ = u.User.Password()
+		if err = conn.Login(u.User.Username(), pass); err != nil {
+			return
+		}
+		var path string
+		if strings.HasPrefix(u.Path, "/") {
+			path = u.Path[1:]
+		} else {
+			path = u.Path
+		}
+		var entries []*ftp.Entry
+		if entries, err = conn.List(path); err != nil {
+			return
+		}
+		ret = make([]fs.FileInfo, 0, len(entries))
+		for _, ent := range entries {
+			if ent.Name != "." && ent.Name != ".." {
+				ret = append(ret, &FtpFileInfo{ent})
+			}
+		}
 		return
-	}
-	file.Close()
-
-	var disk *DiskFS
-	if disk, err = DiskCacheGet(basepath); err != nil {
-		return
-	}
-
-	var diskpath string
-	if basepath == dir {
-		diskpath = "/" // list root of disk
 	} else {
-		diskpath = dir[len(basepath):]
-	}
-	var _, isiso = disk.fs.(*iso9660.FileSystem)
-	if isiso {
-		var enc = charmap.Windows1251.NewEncoder()
-		diskpath, _ = enc.String(diskpath)
-	}
-	if ret, err = disk.fs.ReadDir(diskpath); err != nil {
+		var file *os.File
+		if file, err = os.Open(dir); err == nil { // primary filesystem file
+			defer file.Close()
+			var fi fs.FileInfo
+			if fi, err = file.Stat(); err != nil {
+				return
+			}
+			if fi.IsDir() { // get the list only for directory
+				return file.Readdir(-1)
+			}
+		}
+
+		// looking for nested file
+		var basepath = dir
+		var operr = err
+		for errors.Is(operr, fs.ErrNotExist) && basepath != "." && basepath != "/" {
+			basepath = path.Dir(basepath)
+			file, operr = os.Open(basepath)
+		}
+		if operr != nil {
+			err = operr
+			return
+		}
+		file.Close()
+
+		var disk *DiskFS
+		if disk, err = DiskCacheGet(basepath); err != nil {
+			return
+		}
+
+		var diskpath string
+		if basepath == dir {
+			diskpath = "/" // list root of disk
+		} else {
+			diskpath = dir[len(basepath):]
+		}
+		var _, isiso = disk.fs.(*iso9660.FileSystem)
+		if isiso {
+			var enc = charmap.Windows1251.NewEncoder()
+			diskpath, _ = enc.String(diskpath)
+		}
+		if ret, err = disk.fs.ReadDir(diskpath); err != nil {
+			return
+		}
+		if isiso {
+			for i, fi := range ret {
+				ret[i] = &FileInfoISO{fi}
+			}
+		}
 		return
 	}
-	if isiso {
-		for i, fi := range ret {
-			ret[i] = &FileInfoISO{fi}
-		}
-	}
-	return
 }
 
 // The End.

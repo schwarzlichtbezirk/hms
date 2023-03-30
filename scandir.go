@@ -3,7 +3,6 @@ package hms
 import (
 	"fmt"
 	"io/fs"
-	"path"
 	"time"
 )
 
@@ -162,7 +161,7 @@ func ScanDir(prf *Profile, session *Session, dir string, isadmin bool) (ret []an
 		if fi == nil {
 			continue
 		}
-		var fpath = path.Join(dir, fi.Name())
+		var fpath = JoinPath(dir, fi.Name())
 		if prf.IsHidden(fpath) {
 			continue
 		}

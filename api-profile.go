@@ -8,6 +8,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/jlaffaye/ftp"
 )
@@ -201,10 +202,6 @@ func cldaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	if len(name) == 0 {
 		name = arg.Host
 	}
-
-	var session = xormStorage.NewSession()
-	defer session.Close()
-
 	var host = arg.Host
 	if arg.Port > 0 {
 		host += ":" + strconv.Itoa(arg.Port)
@@ -215,9 +212,17 @@ func cldaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		Host:   host,
 	}).String()
 
+	var session = xormStorage.NewSession()
+	defer session.Close()
+
 	var conn *ftp.ServerConn
-	if conn, err = FtpCacheGet(ftpaddr); err != nil {
+	if conn, err = ftp.Dial(host, ftp.DialWithTimeout(5*time.Second)); err != nil {
 		WriteError(w, r, http.StatusNotFound, err, AECcldaddnodial)
+		return
+	}
+	defer conn.Quit()
+	if err = conn.Login(arg.Login, arg.Password); err != nil {
+		WriteError(w, r, http.StatusNotFound, err, AECcldaddnocred)
 		return
 	}
 

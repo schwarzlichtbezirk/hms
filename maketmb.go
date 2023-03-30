@@ -194,12 +194,6 @@ func CacheThumb(session *Session, syspath string) (md MediaData, err error) {
 		return // file is too big
 	}
 
-	var r io.ReadCloser
-	if r, err = OpenFile(syspath); err != nil {
-		return // can not open file
-	}
-	defer r.Close()
-
 	// try to extract orientation from EXIF
 	var orientation = OrientNormal
 	var puid = PathStoreCache(session, syspath)
@@ -208,6 +202,12 @@ func CacheThumb(session *Session, syspath string) (md MediaData, err error) {
 			orientation = ep.Orientation
 		}
 	}
+
+	var r io.ReadCloser
+	if r, err = OpenFile(syspath); err != nil {
+		return // can not open file
+	}
+	defer r.Close()
 
 	if md, err = MakeThumb(r, orientation); err != nil {
 		return

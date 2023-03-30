@@ -6,13 +6,11 @@ import (
 	"fmt"
 	"image"
 	"io"
-	"net/url"
 	"os"
 	"path"
 	"time"
 
 	"github.com/disintegration/gift"
-	"github.com/jlaffaye/ftp"
 	"github.com/schwarzlichtbezirk/wpk"
 	"github.com/schwarzlichtbezirk/wpk/fsys"
 	"xorm.io/xorm"
@@ -120,9 +118,8 @@ var (
 	mediacache = NewCache[Puid_t, MediaData]() // FIFO cache with processed media files.
 	hdcache    = NewCache[Puid_t, MediaData]() // FIFO cache with converted to HD resolution images.
 
-	diskcache = NewCache[string, TempCell[DiskFS]]()         // LRU cache with temporary opened ISO disks.
-	ftpcache  = NewCache[string, TempCell[ftp.ServerConn]]() // LRU cache with connection to FTP service.
-	pubkcache = NewCache[[32]byte, TempCell[struct{}]]()     // LRU cache with public keys.
+	diskcache = NewCache[string, TempCell[DiskFS]]()     // LRU cache with temporary opened ISO disks.
+	pubkcache = NewCache[[32]byte, TempCell[struct{}]]() // LRU cache with public keys.
 )
 
 // PathStorePUID returns cached PUID for specified system path.
@@ -439,46 +436,11 @@ func DiskCacheGet(syspath string) (disk *DiskFS, err error) {
 	return
 }
 
-func FtpCacheGet(ftpaddr string) (conn *ftp.ServerConn, err error) {
-	var cell TempCell[ftp.ServerConn]
-	var ok bool
-
-	var u *url.URL
-	if u, err = url.Parse(ftpaddr); err != nil {
-		return
-	}
-
-	if cell, ok = ftpcache.Get(ftpaddr); ok {
-		cell.Wait.Reset(cfg.DiskCacheExpire)
-		conn = cell.Data
-		return
-	}
-
-	if conn, err = ftp.Dial(u.Host, ftp.DialWithTimeout(5*time.Second)); err != nil {
-		return
-	}
-	var pass, _ = u.User.Password()
-	if err = conn.Login(u.User.Username(), pass); err != nil {
-		return
-	}
-
-	cell.Data = conn
-	cell.Wait = time.AfterFunc(cfg.DiskCacheExpire, func() {
-		ftpcache.Remove(ftpaddr)
-	})
-	ftpcache.Set(ftpaddr, cell)
-	return
-}
-
 // InitCaches prepares caches.
 func InitCaches() {
 	diskcache.OnRemove(func(syspath string, cell TempCell[DiskFS]) {
 		cell.Wait.Stop()
 		cell.Data.Close()
-	})
-	ftpcache.OnRemove(func(ftpaddr string, cell TempCell[ftp.ServerConn]) {
-		cell.Wait.Stop()
-		cell.Data.Quit()
 	})
 }
 

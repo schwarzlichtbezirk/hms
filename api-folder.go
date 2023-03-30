@@ -22,41 +22,61 @@ var catcolumn = map[Puid_t]string{
 	PUIDtexts: "texts",
 }
 
+func JoinPath(elem ...string) string {
+	var fpath = elem[0]
+	if i := strings.Index(fpath, "://"); i != -1 {
+		var pref, suff string
+		if j := strings.Index(fpath[i+3:], "/"); j != -1 {
+			pref, suff = fpath[:i+3+j], fpath[i+3+j:]
+		} else {
+			pref, suff = fpath, "/"
+		}
+		elem[0] = suff
+		return pref + path.Join(elem...)
+	} else {
+		return path.Join(elem...)
+	}
+}
+
 // UnfoldPath brings any share path to system file path.
 func UnfoldPath(session *Session, shrpath string) (syspath string, puid Puid_t, err error) {
-	shrpath = path.Clean(shrpath)
-	var pref, suff = shrpath, "."
+	var pref, suff string
 	if i := strings.IndexRune(shrpath, '/'); i != -1 {
-		pref, suff = shrpath[:i], shrpath[i+1:]
+		pref, suff = shrpath[:i], path.Clean(shrpath[i+1:])
 		if !fs.ValidPath(suff) { // prevent to modify original path
 			err = ErrPathOut
 			return
 		}
+		if suff == "." {
+			suff = ""
+		}
+	} else {
+		pref = shrpath
 	}
 	var ok bool
-	if puid, ok = CatPathKey[pref]; !ok {
-		if err = puid.Set(pref); err != nil {
-			err = fmt.Errorf("can not decode PUID value: %w", err)
+	if puid, ok = CatPathKey[pref]; ok {
+		if len(suff) > 0 {
+			err = ErrNotSys
 			return
 		}
-		if pref, ok = PathStorePath(session, puid); !ok {
-			err = ErrNoPath
-			return
-		}
-	} else if suff != "." {
-		err = ErrNotSys
+		syspath = pref
+		return // category
+	}
+	if err = puid.Set(pref); err != nil {
+		err = fmt.Errorf("can not decode PUID value: %w", err)
 		return
 	}
-	syspath = path.Join(pref, suff)
-	// append slash to disk root to prevent open current dir on this disk
-	if syspath[len(syspath)-1] == ':' { // syspath here is always have non zero length
-		syspath += "/"
+	if syspath, ok = PathStorePath(session, puid); !ok {
+		err = ErrNoPath
+		return
 	}
+	if len(suff) == 0 {
+		return // whole cached path
+	}
+	syspath = JoinPath(syspath, suff)
 	// get PUID if it not have
-	if suff != "." {
-		puid = PathStoreCache(session, syspath)
-	}
-	return
+	puid = PathStoreCache(session, syspath)
+	return // composite path
 }
 
 // APIHANDLER
