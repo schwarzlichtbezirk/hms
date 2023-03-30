@@ -8,7 +8,6 @@ import (
 	"path"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/jlaffaye/ftp"
 )
@@ -216,7 +215,7 @@ func cldaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	defer session.Close()
 
 	var conn *ftp.ServerConn
-	if conn, err = ftp.Dial(host, ftp.DialWithTimeout(5*time.Second)); err != nil {
+	if conn, err = ftp.Dial(host, ftp.DialWithTimeout(cfg.DialTimeout)); err != nil {
 		WriteError(w, r, http.StatusNotFound, err, AECcldaddnodial)
 		return
 	}

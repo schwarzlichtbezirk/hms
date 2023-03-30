@@ -63,6 +63,11 @@ type CfgWebServ struct {
 	ShutdownTimeout time.Duration `json:"shutdown-timeout" yaml:"shutdown-timeout" long:"st" description:"Maximum duration to wait for graceful shutdown."`
 }
 
+type CfgNetwork struct {
+	// Timeout to establish connection to FTP-server.
+	DialTimeout time.Duration `json:"dial-timeout" yaml:"dial-timeout" long:"dto" description:"Timeout to establish connection to FTP-server."`
+}
+
 type CfgImgProp struct {
 	// Maximum size of image to make thumbnail.
 	ThumbFileMaxSize int64 `json:"thumb-file-maxsize" yaml:"thumb-file-maxsize" long:"tfms" description:"Maximum size of image to make thumbnail."`
@@ -105,6 +110,7 @@ type CfgAppSets struct {
 type Config struct {
 	CfgJWTAuth `json:"authentication" yaml:"authentication" group:"Authentication"`
 	CfgWebServ `json:"web-server" yaml:"web-server" group:"Web server"`
+	CfgNetwork `json:"network" yaml:"network" group:"Network"`
 	CfgImgProp `json:"images-prop" yaml:"images-prop" group:"Images properties"`
 	CfgAppSets `json:"specification" yaml:"specification" group:"Application settings"`
 }
@@ -129,6 +135,9 @@ var cfg = Config{ // inits default values:
 		MaxHeaderBytes:    1 << 20,
 		OnlineTimeout:     3 * 60 * time.Second,
 		ShutdownTimeout:   15 * time.Second,
+	},
+	CfgNetwork: CfgNetwork{
+		DialTimeout: 5 * time.Second,
 	},
 	CfgImgProp: CfgImgProp{
 		ThumbFileMaxSize: 4096*3072*4 + 65536,

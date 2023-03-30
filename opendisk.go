@@ -9,7 +9,6 @@ import (
 	"path"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/diskfs/go-diskfs"
 	"github.com/diskfs/go-diskfs/disk"
@@ -135,7 +134,7 @@ func StatFile(syspath string) (fi fs.FileInfo, err error) {
 			return
 		}
 		var conn *ftp.ServerConn
-		if conn, err = ftp.Dial(u.Host, ftp.DialWithTimeout(5*time.Second)); err != nil {
+		if conn, err = ftp.Dial(u.Host, ftp.DialWithTimeout(cfg.DialTimeout)); err != nil {
 			return
 		}
 		defer conn.Quit()
@@ -217,7 +216,7 @@ func ReadDir(dir string) (ret []fs.FileInfo, err error) {
 			return
 		}
 		var conn *ftp.ServerConn
-		if conn, err = ftp.Dial(u.Host, ftp.DialWithTimeout(5*time.Second)); err != nil {
+		if conn, err = ftp.Dial(u.Host, ftp.DialWithTimeout(cfg.DialTimeout)); err != nil {
 			return
 		}
 		defer conn.Quit()

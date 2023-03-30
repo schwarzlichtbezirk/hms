@@ -43,6 +43,9 @@ web-server: # See https://golang.org/pkg/net/http/#Server for details.
   online-timeout: 180s # 3 minutes
   # Maximum duration to wait for graceful shutdown.
   shutdown-timeout: 15s
+network:
+  # Timeout to establish connection to FTP-server.
+  dial-timeout: 5s
 images-prop:
   # Maximum size of image to make thumbnail.
   thumb-file-maxsize: 50397184 # 4096*3072*4 + 65536, 48M, max 4K image + 64K exif metadata
@@ -61,7 +64,7 @@ images-prop:
   scan-threads-num: 4
 specification:
   # Name of wpk-file with program resources.
-  wpk-name: ["hms-app.wpk", "hms-full.wpk"]
+  wpk-name: ["hms-app.wpk", "hms-edge.wpk"]
   # On 'true' use memory mapping technology for access to wpk-package nested files.
   # On 'false' use wpk-package loaded into one solid byte slice.
   wpk-mmap: false

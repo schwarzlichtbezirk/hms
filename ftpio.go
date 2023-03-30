@@ -83,7 +83,7 @@ func (ff *FtpFile) Open(ftppath string) (err error) {
 	} else {
 		ff.path = u.Path
 	}
-	if ff.conn, err = ftp.Dial(u.Host, ftp.DialWithTimeout(5*time.Second)); err != nil {
+	if ff.conn, err = ftp.Dial(u.Host, ftp.DialWithTimeout(cfg.DialTimeout)); err != nil {
 		return
 	}
 	var pass, _ = u.User.Password()
