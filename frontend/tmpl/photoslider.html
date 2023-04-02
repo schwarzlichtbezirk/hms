@@ -1,7 +1,7 @@
 
 <div class="modal fade" tabindex="-1" role="dialog" aria-labelledby="photos" aria-hidden="true" v-on:keyup.stop="onkeyup">
 	<div class="modal-dialog modal-fullscreen" role="document">
-		<div class="modal-content position-relative" v-on:touchstart="ontouchstart" v-on:click="onclick" v-on:mousemove="onmove">
+		<div class="modal-content position-relative bg-tool" v-on:touchstart="ontouchstart" v-on:click="onclick" v-on:mousemove="onmove">
 			<img v-show="isimage" class="imgscale vw-100 vh-100" v-bind:src="selfileurl" v-on:load="onimgload" v-on:error="onimgerror" />
 			<video ref="video" v-show="isvideo" class="position-absolute top-50 start-50 translate-middle mw-100 mh-100"
 				v-on:load="onimgload" v-on:error="onimgerror" v-on:ended="onended"

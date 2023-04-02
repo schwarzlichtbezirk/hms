@@ -80,6 +80,15 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 
+	var name = arg.Name
+	if len(name) == 0 {
+		if strings.HasSuffix(name, ":/") {
+			name = "disk " + strings.ToUpper(name[0:1])
+		} else {
+			name = path.Base(syspath)
+		}
+	}
+
 	var fk FileKit
 	fk.PUID = puid
 	fk.Free = acc.PathAccess(syspath, false)
@@ -89,19 +98,11 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	} else {
 		fk.Static = true
 	}
-	fk.Name = path.Base(syspath)
+	fk.Name = name
 	fk.Type = FTdrv
 	fk.Size = fi.Size()
 	fk.Time = fi.ModTime()
 
-	var name = arg.Name
-	if len(name) == 0 {
-		if strings.HasSuffix(name, ":/") {
-			name = "disk " + strings.ToUpper(name[0:1])
-		} else {
-			name = path.Base(syspath)
-		}
-	}
 	ret.FP = fk
 	ret.Added = acc.AddLocal(syspath, name)
 

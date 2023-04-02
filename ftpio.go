@@ -138,7 +138,12 @@ func (ff *FtpFile) Seek(offset int64, whence int) (abs int64, err error) {
 	case io.SeekCurrent:
 		abs = ff.pos + offset
 	case io.SeekEnd:
-		abs = ff.Size() + offset
+		if ff.end == 0 {
+			if ff.end, err = ff.conn.FileSize(ff.path); err != nil {
+				return
+			}
+		}
+		abs = ff.end + offset
 	default:
 		err = ErrFtpWhence
 		return
@@ -147,11 +152,8 @@ func (ff *FtpFile) Seek(offset int64, whence int) (abs int64, err error) {
 		err = ErrFtpNegPos
 	}
 	if abs != ff.pos && ff.resp != nil {
-		err = ff.resp.Close()
+		ff.resp.Close()
 		ff.resp = nil
-		if err != nil {
-			return
-		}
 	}
 	ff.pos = abs
 	return

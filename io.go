@@ -136,7 +136,10 @@ func (pl *Profiles) ReadYaml(fname string) (err error) {
 	} else {
 		var prf = pl.NewProfile("admin", "dag qus fly in the sky")
 		prf.ID = 1
-		prf.SetDefaultHidden()
+		// set hidden files array to default predefined list
+		prf.Hidden = make([]string, len(DefHidden))
+		copy(prf.Hidden, DefHidden)
+		// set default "home" share
 		prf.Shares = []DiskPath{
 			{CPhome, CatNames[CPhome]},
 		}

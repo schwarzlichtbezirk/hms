@@ -427,7 +427,6 @@ const VueIconMenu = {
 							'.popover-header': this.file.name,
 							'.popover-body': fileinfo(this.file).map(e => `<b>${e[0]}</b>: ${e[1]}`).join('<br>')
 						})
-						this.scanned = true;
 					} else {
 						throw new HttpError(response.status, data);
 					}
@@ -437,6 +436,7 @@ const VueIconMenu = {
 		},
 		oninfo() {
 			if (!this.scanned) {
+				this.scanned = true;
 				this.scan();
 			}
 		},

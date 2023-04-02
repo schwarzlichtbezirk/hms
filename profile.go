@@ -2,6 +2,7 @@ package hms
 
 import (
 	"io/fs"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -139,23 +140,11 @@ func (pl *Profiles) Delete(prfid ID_t) (ok bool) {
 // Profiles list.
 var prflist Profiles
 
-// SetDefaultHidden sest hidden files array to default predefined list.
-func (prf *Profile) SetDefaultHidden() {
-	prf.mux.Lock()
-	defer prf.mux.Unlock()
-
-	prf.Hidden = make([]string, len(DefHidden))
-	copy(prf.Hidden, DefHidden)
-}
-
-// PathName returns label for given path.
-func (prf *Profile) PathName(syspath string) string {
+// pathName returns label for given path.
+func (prf *Profile) pathName(syspath string) string {
 	if name, ok := CatNames[syspath]; ok {
 		return name
 	}
-
-	prf.mux.RLock()
-	defer prf.mux.RUnlock()
 
 	for _, dp := range prf.Roots {
 		if syspath == dp.Path {
@@ -167,7 +156,11 @@ func (prf *Profile) PathName(syspath string) string {
 			return dp.Name
 		}
 	}
-	return path.Base(syspath)
+	var u, _ = url.Parse(syspath)
+	if len(u.Path) > 0 {
+		return path.Base(u.Path)
+	}
+	return u.Redacted()
 }
 
 // PathType returns type of file by given path.
@@ -464,7 +457,7 @@ func (prf *Profile) AddShare(syspath string) bool {
 			return false
 		}
 	}
-	prf.Shares = append(prf.Shares, DiskPath{syspath, prf.PathName(syspath)})
+	prf.Shares = append(prf.Shares, DiskPath{syspath, prf.pathName(syspath)})
 	prf.updateGrp()
 	return true
 }
