@@ -33,12 +33,12 @@ const makeauth = () => {
 			}
 		},
 		signin(ta, tr, ln) {
-			sessionStorage.setItem('token.access', ta);
-			sessionStorage.setItem('token.refrsh', tr);
+			storageSetItem('token.access', ta);
+			storageSetItem('token.refrsh', tr);
 			access = ta;
 			refrsh = tr;
 			if (ln) {
-				sessionStorage.setItem('login', ln);
+				storageSetItem('login', ln);
 				login = ln;
 			}
 			eventHub.emit('auth', this);
@@ -52,9 +52,9 @@ const makeauth = () => {
 			eventHub.emit('auth', this);
 		},
 		signload() {
-			access = storageGetString('token.access', null);
-			refrsh = storageGetString('token.refrsh', null);
-			login = storageGetString('login', "");
+			access = storageGetItem('token.access', null);
+			refrsh = storageGetItem('token.refrsh', null);
+			login = storageGetItem('login', "");
 			eventHub.emit('auth', this);
 		}
 	};

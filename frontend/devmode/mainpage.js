@@ -22,7 +22,7 @@ let iconmapping = {
 	wavebars: "",
 	iconfmt: []
 };
-let thumbmode = storageGetBoolean("thumbmode", true);
+let thumbmode = storageGetItem("thumbmode", true);
 
 // Category identifiers by names.
 const CNID = {
@@ -804,7 +804,7 @@ const VueMainApp = {
 				for (const v of this.resmodel.skinlist) {
 					if (v.id === skinid) {
 						document.getElementById('skinmodel')?.setAttribute('href', v.link);
-						sessionStorage.setItem('skinid', skinid);
+						storageSetItem('skinid', skinid);
 						this.skinid = skinid;
 					}
 				}
@@ -825,7 +825,7 @@ const VueMainApp = {
 								eventHub.emit('ajax', -1);
 							}
 						})();
-						sessionStorage.setItem('iconid', iconid);
+						storageSetItem('iconid', iconid);
 						this.iconid = iconid;
 					}
 				}
@@ -1144,7 +1144,7 @@ const VueMainApp = {
 				this.resmodel = await response.json();
 
 				// set skin
-				const skinid = storageGetString('skinid', this.resmodel.defskinid);
+				const skinid = storageGetItem('skinid', this.resmodel.defskinid);
 				for (const v of this.resmodel.skinlist) {
 					if (v.id === skinid) {
 						document.getElementById('skinmodel')?.setAttribute('href', v.link);
@@ -1153,7 +1153,7 @@ const VueMainApp = {
 				}
 
 				// load icons
-				const iconid = storageGetString('iconid', this.resmodel.deficonid);
+				const iconid = storageGetItem('iconid', this.resmodel.deficonid);
 				for (const v of this.resmodel.iconlist) {
 					if (v.id === iconid) {
 						await this.fetchicons(v.link);

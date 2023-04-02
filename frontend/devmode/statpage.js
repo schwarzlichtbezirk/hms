@@ -73,7 +73,7 @@ const VueStatApp = {
 				for (const v of this.resmodel.skinlist) {
 					if (v.id === skinid) {
 						document.getElementById('skinmodel')?.setAttribute('href', v.link);
-						sessionStorage.setItem('skinid', skinid);
+						storageSetItem('skinid', skinid);
 						this.skinid = skinid;
 					}
 				}
@@ -95,7 +95,7 @@ const VueStatApp = {
 				this.resmodel = await response.json();
 
 				// set skin
-				const skinid = storageGetString('skinid', this.resmodel.defskinid);
+				const skinid = storageGetItem('skinid', this.resmodel.defskinid);
 				for (const v of this.resmodel.skinlist) {
 					if (v.id === skinid) {
 						document.getElementById('skinmodel')?.setAttribute('href', v.link);
@@ -291,12 +291,12 @@ const VueSrvinfCard = {
 	methods: {
 		onexpand(e) {
 			this.expanded = true;
-			sessionStorage.setItem("card.srvinf.expanded", this.expanded);
+			storageSetItem("card.srvinf.expanded", this.expanded);
 			this.expand();
 		},
 		oncollapse(e) {
 			this.expanded = false;
-			sessionStorage.setItem("card.srvinf.expanded", this.expanded);
+			storageSetItem("card.srvinf.expanded", this.expanded);
 			this.collapse();
 		},
 		expand() {
@@ -305,7 +305,7 @@ const VueSrvinfCard = {
 		},
 	},
 	created() {
-		this.expanded = storageGetBoolean("card.srvinf.expanded", this.expanded);
+		this.expanded = storageGetItem("card.srvinf.expanded", this.expanded);
 	},
 	mounted() {
 		const el = document.getElementById('card' + this.iid);
@@ -403,12 +403,12 @@ const VueMemgcCard = {
 
 		onexpand(e) {
 			this.expanded = true;
-			sessionStorage.setItem("card.memgc.expanded", this.expanded);
+			storageSetItem("card.memgc.expanded", this.expanded);
 			this.expand();
 		},
 		oncollapse(e) {
 			this.expanded = false;
-			sessionStorage.setItem("card.memgc.expanded", this.expanded);
+			storageSetItem("card.memgc.expanded", this.expanded);
 			this.collapse();
 		},
 		expand() {
@@ -423,7 +423,7 @@ const VueMemgcCard = {
 		},
 	},
 	created() {
-		this.expanded = storageGetBoolean("card.memgc.expanded", this.expanded);
+		this.expanded = storageGetItem("card.memgc.expanded", this.expanded);
 	},
 	mounted() {
 		const el = document.getElementById('card' + this.iid);
@@ -519,12 +519,12 @@ const VueCchinfCard = {
 
 		onexpand(e) {
 			this.expanded = true;
-			sessionStorage.setItem("card.cchinf.expanded", this.expanded);
+			storageSetItem("card.cchinf.expanded", this.expanded);
 			this.expand();
 		},
 		oncollapse(e) {
 			this.expanded = false;
-			sessionStorage.setItem("card.cchinf.expanded", this.expanded);
+			storageSetItem("card.cchinf.expanded", this.expanded);
 			this.collapse();
 		},
 		expand() {
@@ -539,7 +539,7 @@ const VueCchinfCard = {
 		},
 	},
 	created() {
-		this.expanded = storageGetBoolean("card.cchinf.expanded", this.expanded);
+		this.expanded = storageGetItem("card.cchinf.expanded", this.expanded);
 	},
 	mounted() {
 		const el = document.getElementById('card' + this.iid);
@@ -632,19 +632,19 @@ const VueConsoleCard = {
 
 		onfitwdh() {
 			this.fitwdh = !this.fitwdh;
-			sessionStorage.setItem("card.console.fitwdh", this.fitwdh);
+			storageSetItem("card.console.fitwdh", this.fitwdh);
 		},
 		onvoid() {
 			this.timemode = 0;
-			sessionStorage.setItem("card.console.timemode", this.timemode);
+			storageSetItem("card.console.timemode", this.timemode);
 		},
 		ontime() {
 			this.timemode = 1;
-			sessionStorage.setItem("card.console.timemode", this.timemode);
+			storageSetItem("card.console.timemode", this.timemode);
 		},
 		ondate() {
 			this.timemode = 2;
-			sessionStorage.setItem("card.console.timemode", this.timemode);
+			storageSetItem("card.console.timemode", this.timemode);
 		},
 
 		onupdate() {
@@ -683,12 +683,12 @@ const VueConsoleCard = {
 
 		onexpand(e) {
 			this.expanded = true;
-			sessionStorage.setItem("card.console.expanded", this.expanded);
+			storageSetItem("card.console.expanded", this.expanded);
 			this.expand();
 		},
 		oncollapse(e) {
 			this.expanded = false;
-			sessionStorage.setItem("card.console.expanded", this.expanded);
+			storageSetItem("card.console.expanded", this.expanded);
 			this.collapse();
 		},
 		expand() {
@@ -703,9 +703,9 @@ const VueConsoleCard = {
 		},
 	},
 	created() {
-		this.timemode = storageGetBoolean("card.console.timemode", this.timemode);
-		this.fitwdh = storageGetBoolean("card.console.fitwdh", this.fitwdh);
-		this.expanded = storageGetBoolean("card.console.expanded", this.expanded);
+		this.timemode = storageGetItem("card.console.timemode", this.timemode);
+		this.fitwdh = storageGetItem("card.console.fitwdh", this.fitwdh);
+		this.expanded = storageGetItem("card.console.expanded", this.expanded);
 	},
 	mounted() {
 		const el = document.getElementById('card' + this.iid);
@@ -787,12 +787,12 @@ const VueUsercCard = {
 
 		onexpand(e) {
 			this.expanded = true;
-			sessionStorage.setItem("card.users.expanded", this.expanded);
+			storageSetItem("card.users.expanded", this.expanded);
 			this.expand();
 		},
 		oncollapse(e) {
 			this.expanded = false;
-			sessionStorage.setItem("card.users.expanded", this.expanded);
+			storageSetItem("card.users.expanded", this.expanded);
 			this.collapse();
 		},
 		expand() {
@@ -807,7 +807,7 @@ const VueUsercCard = {
 		},
 	},
 	created() {
-		this.expanded = storageGetBoolean("card.users.expanded", this.expanded);
+		this.expanded = storageGetItem("card.users.expanded", this.expanded);
 	},
 	mounted() {
 		const el = document.getElementById('card' + this.iid);

@@ -221,19 +221,19 @@ const VueCtgrCard = {
 	methods: {
 		onlistmodels() {
 			this.listmode = 'xs';
-			sessionStorage.setItem("card.ctgr.listmode", this.listmode);
+			storageSetItem("card.ctgr.listmode", this.listmode);
 		},
 		onlistmodesm() {
 			this.listmode = 'sm';
-			sessionStorage.setItem("card.ctgr.listmode", this.listmode);
+			storageSetItem("card.ctgr.listmode", this.listmode);
 		},
 		onlistmodemd() {
 			this.listmode = 'md';
-			sessionStorage.setItem("card.ctgr.listmode", this.listmode);
+			storageSetItem("card.ctgr.listmode", this.listmode);
 		},
 		onlistmodelg() {
 			this.listmode = 'lg';
-			sessionStorage.setItem("card.ctgr.listmode", this.listmode);
+			storageSetItem("card.ctgr.listmode", this.listmode);
 		},
 
 		onselect(file) {
@@ -247,12 +247,12 @@ const VueCtgrCard = {
 		},
 		onexpand(e) {
 			this.expanded = true;
-			sessionStorage.setItem("card.ctgr.expanded", this.expanded);
+			storageSetItem("card.ctgr.expanded", this.expanded);
 			this.expand();
 		},
 		oncollapse(e) {
 			this.expanded = false;
-			sessionStorage.setItem("card.ctgr.expanded", this.expanded);
+			storageSetItem("card.ctgr.expanded", this.expanded);
 			this.collapse();
 		},
 		expand() {
@@ -261,8 +261,8 @@ const VueCtgrCard = {
 		},
 	},
 	created() {
-		this.listmode = storageGetString("card.ctgr.listmode", this.listmode);
-		this.expanded = storageGetBoolean("card.ctgr.expanded", this.expanded);
+		this.listmode = storageGetItem("card.ctgr.listmode", this.listmode);
+		this.expanded = storageGetItem("card.ctgr.expanded", this.expanded);
 	},
 	mounted() {
 		const el = document.getElementById('card' + this.iid);
@@ -402,23 +402,23 @@ const VueCloudCard = {
 	methods: {
 		onorder() {
 			this.sortorder = -this.sortorder;
-			sessionStorage.setItem("card.cloud.sortorder", this.sortorder);
+			storageSetItem("card.cloud.sortorder", this.sortorder);
 		},
 		onlistmodels() {
 			this.listmode = 'xs';
-			sessionStorage.setItem("card.cloud.listmode", this.listmode);
+			storageSetItem("card.cloud.listmode", this.listmode);
 		},
 		onlistmodesm() {
 			this.listmode = 'sm';
-			sessionStorage.setItem("card.cloud.listmode", this.listmode);
+			storageSetItem("card.cloud.listmode", this.listmode);
 		},
 		onlistmodemd() {
 			this.listmode = 'md';
-			sessionStorage.setItem("card.cloud.listmode", this.listmode);
+			storageSetItem("card.cloud.listmode", this.listmode);
 		},
 		onlistmodelg() {
 			this.listmode = 'lg';
-			sessionStorage.setItem("card.cloud.listmode", this.listmode);
+			storageSetItem("card.cloud.listmode", this.listmode);
 		},
 
 		onadd() {
@@ -494,12 +494,12 @@ const VueCloudCard = {
 		},
 		onexpand(e) {
 			this.expanded = true;
-			sessionStorage.setItem("card.ctgr.expanded", this.expanded);
+			storageSetItem("card.ctgr.expanded", this.expanded);
 			this.expand();
 		},
 		oncollapse(e) {
 			this.expanded = false;
-			sessionStorage.setItem("card.ctgr.expanded", this.expanded);
+			storageSetItem("card.ctgr.expanded", this.expanded);
 			this.collapse();
 		},
 		expand() {
@@ -516,9 +516,9 @@ const VueCloudCard = {
 		},
 	},
 	created() {
-		this.sortorder = storageGetNumber("card.cloud.sortorder", this.sortorder);
-		this.listmode = storageGetString("card.cloud.listmode", this.listmode);
-		this.expanded = storageGetBoolean("card.cloud.expanded", this.expanded);
+		this.sortorder = storageGetItem("card.cloud.sortorder", this.sortorder);
+		this.listmode = storageGetItem("card.cloud.listmode", this.listmode);
+		this.expanded = storageGetItem("card.cloud.expanded", this.expanded);
 	},
 	mounted() {
 		eventHub.on('select', this.onanyselect);
@@ -651,23 +651,23 @@ const VueDriveCard = {
 	methods: {
 		onorder() {
 			this.sortorder = -this.sortorder;
-			sessionStorage.setItem("card.drive.sortorder", this.sortorder);
+			storageSetItem("card.drive.sortorder", this.sortorder);
 		},
 		onlistmodels() {
 			this.listmode = 'xs';
-			sessionStorage.setItem("card.drive.listmode", this.listmode);
+			storageSetItem("card.drive.listmode", this.listmode);
 		},
 		onlistmodesm() {
 			this.listmode = 'sm';
-			sessionStorage.setItem("card.drive.listmode", this.listmode);
+			storageSetItem("card.drive.listmode", this.listmode);
 		},
 		onlistmodemd() {
 			this.listmode = 'md';
-			sessionStorage.setItem("card.drive.listmode", this.listmode);
+			storageSetItem("card.drive.listmode", this.listmode);
 		},
 		onlistmodelg() {
 			this.listmode = 'lg';
-			sessionStorage.setItem("card.drive.listmode", this.listmode);
+			storageSetItem("card.drive.listmode", this.listmode);
 		},
 
 		onadd() {
@@ -757,12 +757,12 @@ const VueDriveCard = {
 		},
 		onexpand(e) {
 			this.expanded = true;
-			sessionStorage.setItem("card.ctgr.expanded", this.expanded);
+			storageSetItem("card.ctgr.expanded", this.expanded);
 			this.expand();
 		},
 		oncollapse(e) {
 			this.expanded = false;
-			sessionStorage.setItem("card.ctgr.expanded", this.expanded);
+			storageSetItem("card.ctgr.expanded", this.expanded);
 			this.collapse();
 		},
 		expand() {
@@ -779,9 +779,9 @@ const VueDriveCard = {
 		},
 	},
 	created() {
-		this.sortorder = storageGetNumber("card.drive.sortorder", this.sortorder);
-		this.listmode = storageGetString("card.drive.listmode", this.listmode);
-		this.expanded = storageGetBoolean("card.drive.expanded", this.expanded);
+		this.sortorder = storageGetItem("card.drive.sortorder", this.sortorder);
+		this.listmode = storageGetItem("card.drive.listmode", this.listmode);
+		this.expanded = storageGetItem("card.drive.expanded", this.expanded);
 	},
 	mounted() {
 		eventHub.on('select', this.onanyselect);
@@ -887,23 +887,23 @@ const VueDirCard = {
 	methods: {
 		onorder() {
 			this.sortorder = -this.sortorder;
-			sessionStorage.setItem("card.dir.sortorder", this.sortorder);
+			storageSetItem("card.dir.sortorder", this.sortorder);
 		},
 		onlistmodels() {
 			this.listmode = 'xs';
-			sessionStorage.setItem("card.dir.listmode", this.listmode);
+			storageSetItem("card.dir.listmode", this.listmode);
 		},
 		onlistmodesm() {
 			this.listmode = 'sm';
-			sessionStorage.setItem("card.dir.listmode", this.listmode);
+			storageSetItem("card.dir.listmode", this.listmode);
 		},
 		onlistmodemd() {
 			this.listmode = 'md';
-			sessionStorage.setItem("card.dir.listmode", this.listmode);
+			storageSetItem("card.dir.listmode", this.listmode);
 		},
 		onlistmodelg() {
 			this.listmode = 'lg';
-			sessionStorage.setItem("card.dir.listmode", this.listmode);
+			storageSetItem("card.dir.listmode", this.listmode);
 		},
 
 		onselect(file) {
@@ -917,12 +917,12 @@ const VueDirCard = {
 		},
 		onexpand(e) {
 			this.expanded = true;
-			sessionStorage.setItem("card.ctgr.expanded", this.expanded);
+			storageSetItem("card.ctgr.expanded", this.expanded);
 			this.expand();
 		},
 		oncollapse(e) {
 			this.expanded = false;
-			sessionStorage.setItem("card.ctgr.expanded", this.expanded);
+			storageSetItem("card.ctgr.expanded", this.expanded);
 			this.collapse();
 		},
 		expand() {
@@ -931,9 +931,9 @@ const VueDirCard = {
 		},
 	},
 	created() {
-		this.sortorder = storageGetNumber("card.dir.sortorder", this.sortorder);
-		this.listmode = storageGetString("card.dir.listmode", this.listmode);
-		this.expanded = storageGetBoolean("card.dir.expanded", this.expanded);
+		this.sortorder = storageGetItem("card.dir.sortorder", this.sortorder);
+		this.listmode = storageGetItem("card.dir.listmode", this.listmode);
+		this.expanded = storageGetItem("card.dir.expanded", this.expanded);
 	},
 	mounted() {
 		const el = document.getElementById('card' + this.iid);
@@ -1251,71 +1251,78 @@ const VueFileCard = {
 
 		onorder() {
 			this.sortorder = -this.sortorder;
-			sessionStorage.setItem("card.file.sortorder", this.sortorder);
+			storageSetItem("card.file.sortorder", this.sortorder);
 		},
 		onsortalpha() {
 			this.sortmode = 'byalpha';
-			sessionStorage.setItem("card.file.sortmode", this.sortmode);
+			storageSetItem("card.file.sortmode", this.sortmode);
 		},
 		onsorttime() {
 			this.sortmode = 'bytime';
-			sessionStorage.setItem("card.file.sortmode", this.sortmode);
+			storageSetItem("card.file.sortmode", this.sortmode);
 		},
 		onsortsize() {
 			this.sortmode = 'bysize';
-			sessionStorage.setItem("card.file.sortmode", this.sortmode);
+			storageSetItem("card.file.sortmode", this.sortmode);
 		},
 		onsortunsorted() {
 			this.sortmode = 'unsorted';
-			sessionStorage.setItem("card.file.sortmode", this.sortmode);
+			storageSetItem("card.file.sortmode", this.sortmode);
 		},
 		onlistmodels() {
 			this.listmode = 'xs';
-			sessionStorage.setItem("card.file.listmode", this.listmode);
+			storageSetItem("card.file.listmode", this.listmode);
 		},
 		onlistmodesm() {
 			this.listmode = 'sm';
-			sessionStorage.setItem("card.file.listmode", this.listmode);
+			storageSetItem("card.file.listmode", this.listmode);
 		},
 		onlistmodemd() {
 			this.listmode = 'md';
-			sessionStorage.setItem("card.file.listmode", this.listmode);
+			storageSetItem("card.file.listmode", this.listmode);
 		},
 		onlistmodelg() {
 			this.listmode = 'lg';
-			sessionStorage.setItem("card.file.listmode", this.listmode);
+			storageSetItem("card.file.listmode", this.listmode);
 		},
 
 		onthumbmode() {
 			thumbmode = !thumbmode;
-			sessionStorage.setItem('thumbmode', thumbmode);
+			storageSetItem('thumbmode', thumbmode);
 			eventHub.emit('thumbmode', thumbmode);
 		},
 		onheadset() {
-			sessionStorage.setItem('audioonly', !this.audioonly);
+			storageSetItem('audioonly', !this.audioonly);
 			eventHub.emit('audioonly', !this.audioonly);
 		},
 
 		onaudio() {
 			this.fgshow[FG.audio] = !this.fgshow[FG.audio];
+			storageSetItem('card.file.fgshow', this.fgshow);
 		},
 		onvideo() {
 			this.fgshow[FG.video] = !this.fgshow[FG.video];
+			storageSetItem('card.file.fgshow', this.fgshow);
 		},
 		onphoto() {
 			this.fgshow[FG.image] = !this.fgshow[FG.image];
+			storageSetItem('card.file.fgshow', this.fgshow);
 		},
 		onbooks() {
 			this.fgshow[FG.books] = !this.fgshow[FG.books];
+			storageSetItem('card.file.fgshow', this.fgshow);
 		},
 		ontexts() {
 			this.fgshow[FG.texts] = !this.fgshow[FG.texts];
+			storageSetItem('card.file.fgshow', this.fgshow);
 		},
 		onpacks() {
 			this.fgshow[FG.packs] = !this.fgshow[FG.packs];
+			storageSetItem('card.file.fgshow', this.fgshow);
 		},
 		onother() {
 			this.fgshow[FG.other] = !this.fgshow[FG.other];
+			storageSetItem('card.file.fgshow', this.fgshow);
 		},
 
 		onselect(file) {
@@ -1330,12 +1337,12 @@ const VueFileCard = {
 
 		onexpand(e) {
 			this.expanded = true;
-			sessionStorage.setItem("card.ctgr.expanded", this.expanded);
+			storageSetItem("card.ctgr.expanded", this.expanded);
 			this.expand();
 		},
 		oncollapse(e) {
 			this.expanded = false;
-			sessionStorage.setItem("card.ctgr.expanded", this.expanded);
+			storageSetItem("card.ctgr.expanded", this.expanded);
 			this.collapse();
 		},
 		expand() {
@@ -1358,12 +1365,13 @@ const VueFileCard = {
 		},
 	},
 	created() {
-		this.sortorder = storageGetNumber("card.file.sortorder", this.sortorder);
-		this.sortmode = storageGetString("card.file.sortmode", this.sortmode);
-		this.listmode = storageGetString("card.file.listmode", this.listmode);
-		this.expanded = storageGetBoolean("card.file.expanded", this.expanded);
-		this.thumbmode = storageGetBoolean("thumbmode", this.thumbmode);
-		this.audioonly = storageGetBoolean('audioonly', this.audioonly);
+		this.sortorder = storageGetItem("card.file.sortorder", this.sortorder);
+		this.sortmode = storageGetItem("card.file.sortmode", this.sortmode);
+		this.listmode = storageGetItem("card.file.listmode", this.listmode);
+		this.expanded = storageGetItem("card.file.expanded", this.expanded);
+		this.thumbmode = storageGetItem("thumbmode", this.thumbmode);
+		this.audioonly = storageGetItem('audioonly', this.audioonly);
+		this.fgshow = storageGetItem('card.file.fgshow', this.fgshow);
 	},
 	mounted() {
 		eventHub.on('thumbmode', this._thumbmode);
@@ -1787,39 +1795,39 @@ const VueTileCard = {
 
 		onorder() {
 			this.sortorder = -this.sortorder;
-			sessionStorage.setItem("card.tile.sortorder", this.sortorder);
+			storageSetItem("card.tile.sortorder", this.sortorder);
 		},
 		onsortalpha() {
 			this.sortmode = 'byalpha';
-			sessionStorage.setItem("card.tile.sortmode", this.sortmode);
+			storageSetItem("card.tile.sortmode", this.sortmode);
 		},
 		onsorttime() {
 			this.sortmode = 'bytime';
-			sessionStorage.setItem("card.tile.sortmode", this.sortmode);
+			storageSetItem("card.tile.sortmode", this.sortmode);
 		},
 		onsortsize() {
 			this.sortmode = 'bysize';
-			sessionStorage.setItem("card.tile.sortmode", this.sortmode);
+			storageSetItem("card.tile.sortmode", this.sortmode);
 		},
 		onsortunsorted() {
 			this.sortmode = 'unsorted';
-			sessionStorage.setItem("card.tile.sortmode", this.sortmode);
+			storageSetItem("card.tile.sortmode", this.sortmode);
 		},
 		onmode246() {
 			this.tilemode = 'mode-246';
-			sessionStorage.setItem("card.tile.tilemode", this.tilemode);
+			storageSetItem("card.tile.tilemode", this.tilemode);
 		},
 		onmode234() {
 			this.tilemode = 'mode-234';
-			sessionStorage.setItem("card.tile.tilemode", this.tilemode);
+			storageSetItem("card.tile.tilemode", this.tilemode);
 		},
 		onmode26() {
 			this.tilemode = 'mode-26';
-			sessionStorage.setItem("card.tile.tilemode", this.tilemode);
+			storageSetItem("card.tile.tilemode", this.tilemode);
 		},
 		onmode2346() {
 			this.tilemode = 'mode-2346';
-			sessionStorage.setItem("card.tile.tilemode", this.tilemode);
+			storageSetItem("card.tile.tilemode", this.tilemode);
 		},
 
 		onopen(file) {
@@ -1828,12 +1836,12 @@ const VueTileCard = {
 		},
 		onexpand(e) {
 			this.expanded = true;
-			sessionStorage.setItem("card.ctgr.expanded", this.expanded);
+			storageSetItem("card.ctgr.expanded", this.expanded);
 			this.expand();
 		},
 		oncollapse(e) {
 			this.expanded = false;
-			sessionStorage.setItem("card.ctgr.expanded", this.expanded);
+			storageSetItem("card.ctgr.expanded", this.expanded);
 			this.collapse();
 		},
 		expand() {
@@ -1849,10 +1857,10 @@ const VueTileCard = {
 		},
 	},
 	created() {
-		this.sortorder = storageGetNumber("card.tile.sortorder", this.sortorder);
-		this.sortmode = storageGetString("card.tile.sortmode", this.sortmode);
-		this.tilemode = storageGetString("card.tile.tilemode", this.tilemode);
-		this.expanded = storageGetBoolean("card.tile.expanded", this.expanded);
+		this.sortorder = storageGetItem("card.tile.sortorder", this.sortorder);
+		this.sortmode = storageGetItem("card.tile.sortmode", this.sortmode);
+		this.tilemode = storageGetItem("card.tile.tilemode", this.tilemode);
+		this.expanded = storageGetItem("card.tile.expanded", this.expanded);
 	},
 	mounted() {
 		eventHub.on('wdhmult', this.onwdhmult);
@@ -2304,7 +2312,7 @@ const VueMapCard = {
 		maketiles(id) {
 			if (this.styleid !== id) {
 				this.styleid = id;
-				sessionStorage.setItem("card.map.styleid", id);
+				storageSetItem("card.map.styleid", id);
 			}
 			switch (id) {
 				case 'mapbox-hybrid':
@@ -2601,7 +2609,7 @@ const VueMapCard = {
 					this.markermode = 'marker';
 					break;
 			}
-			sessionStorage.setItem("card.map.markermode", this.markermode);
+			storageSetItem("card.map.markermode", this.markermode);
 			// recreate markers layers
 			const gpslist = this.gpslist;
 			this.gpslist = [];
@@ -2638,12 +2646,12 @@ const VueMapCard = {
 		},
 		onexpand(e) {
 			this.expanded = true;
-			sessionStorage.setItem("card.ctgr.expanded", this.expanded);
+			storageSetItem("card.ctgr.expanded", this.expanded);
 			this.expand();
 		},
 		oncollapse(e) {
 			this.expanded = false;
-			sessionStorage.setItem("card.ctgr.expanded", this.expanded);
+			storageSetItem("card.ctgr.expanded", this.expanded);
 			this.collapse();
 		},
 		expand() {
@@ -2663,9 +2671,9 @@ const VueMapCard = {
 		},
 	},
 	created() {
-		this.styleid = storageGetString("card.map.styleid", this.styleid);
-		this.markermode = storageGetString("card.map.markermode", this.markermode);
-		this.expanded = storageGetBoolean("card.map.expanded", this.expanded);
+		this.styleid = storageGetItem("card.map.styleid", this.styleid);
+		this.markermode = storageGetItem("card.map.markermode", this.markermode);
+		this.expanded = storageGetItem("card.map.expanded", this.expanded);
 		this.im = iconmapping;
 	},
 	mounted() {
