@@ -3,6 +3,7 @@
 	<button class="btn btn-icon" type="button"><i class="material-icons">settings</i></button>
 	<ul class="iconmenu-list">
 		<button v-if="showinfo" class="btn btn-icon" type="button" ref="info" v-on:click="oninfo" v-on:mouseover="oninfo" data-bs-toggle="popover" data-bs-trigger="focus"><i class="material-icons">info_outline</i></button>
+		<button v-if="shownewtab" class="btn btn-icon" type="button" v-on:click="onnewtab" title="open image in new tab"><i class="material-icons">launch</i></button>
 		<button class="btn btn-icon" type="button" v-on:click="onlink" title="copy direct link to resource"><i class="material-icons">link</i></button>
 		<button class="btn btn-icon" type="button" v-on:click="onshare" v-bind:class="clsshared" title="share resource to get access from internet"><i class="material-icons">share</i></button>
 		<button v-if="showcopy" class="btn btn-icon" type="button" v-on:click="oncopy" title="copy"><i class="material-icons">file_copy</i></button>

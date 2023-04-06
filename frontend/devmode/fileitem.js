@@ -405,6 +405,14 @@ const VueIconMenu = {
 		showinfo() {
 			return this.file.type === FT.file;
 		},
+		shownewtab() {
+			if (this.file.type !== FT.file) {
+				return false;
+			}
+			const ext = pathext(this.file.name);
+			return extfmt.image[ext] || extfmt.video[ext] || extfmt.books[ext] || extfmt.texts[ext]
+				|| (extfmt.audio[ext] && this.file.etmb);
+		},
 		showcopy() {
 			return this.file.type === FT.file || this.file.type === FT.dir;
 		},
@@ -438,6 +446,16 @@ const VueIconMenu = {
 			if (!this.scanned) {
 				this.scanned = true;
 				this.scan();
+			}
+		},
+		onnewtab() {
+			const ext = pathext(this.file.name);
+			if (extfmt.image[ext] || extfmt.video[ext] || extfmt.books[ext] || extfmt.texts[ext]) {
+				const url = `/id${this.$root.aid}/file/${this.file.puid}?media=1&hd=0`;
+				window.open(url, this.file.name);
+			} else if (extfmt.audio[ext] && this.file.etmb) {
+				const url = `/id${this.$root.aid}/etmb/${this.file.puid}`;
+				window.open(url, this.file.name);
 			}
 		},
 		onlink() {
