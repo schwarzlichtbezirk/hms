@@ -7,7 +7,7 @@ import (
 	"io/fs"
 	"net/url"
 	"path"
-	"strings"
+	"sync"
 	"time"
 
 	"github.com/jlaffaye/ftp"
@@ -17,6 +17,29 @@ var (
 	ErrFtpWhence = errors.New("invalid whence at FTP seeker")
 	ErrFtpNegPos = errors.New("negative position at FTP seeker")
 )
+
+var (
+	pwdmap map[string]string
+	pwdmux sync.RWMutex
+)
+
+func PwdCache(ftpaddr string, conn *ftp.ServerConn) (pwd string) {
+	var ok bool
+	pwdmux.RLock()
+	pwd, ok = pwdmap[ftpaddr]
+	pwdmux.RUnlock()
+	if ok {
+		return
+	}
+	var err error
+	if pwd, err = conn.CurrentDir(); err == nil {
+		pwdmux.Lock()
+		pwdmap[ftpaddr] = pwd
+		pwdmux.Unlock()
+		return
+	}
+	return
+}
 
 // FtpFileInfo encapsulates ftp.Entry structure and provides fs.FileInfo implementation.
 type FtpFileInfo struct {
@@ -78,14 +101,14 @@ func (ff *FtpFile) Open(ftppath string) (err error) {
 	if u, err = url.Parse(ftppath); err != nil {
 		return
 	}
-	if strings.HasPrefix(u.Path, "/") {
-		ff.path = u.Path[1:]
-	} else {
-		ff.path = u.Path
-	}
 	if ff.conn, err = ftp.Dial(u.Host, ftp.DialWithTimeout(cfg.DialTimeout)); err != nil {
 		return
 	}
+	ff.path = path.Join(PwdCache((&url.URL{
+		Scheme: u.Scheme,
+		User:   u.User,
+		Host:   u.Host,
+	}).String(), ff.conn), u.Path)
 	var pass, _ = u.User.Password()
 	if err = ff.conn.Login(u.User.Username(), pass); err != nil {
 		return
