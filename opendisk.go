@@ -142,11 +142,10 @@ func StatFile(syspath string) (fi fs.FileInfo, err error) {
 		if err = conn.Login(u.User.Username(), pass); err != nil {
 			return
 		}
-		var path = path.Join(PwdCache((&url.URL{
-			Scheme: u.Scheme,
-			User:   u.User,
-			Host:   u.Host,
-		}).String(), conn), u.Path)
+		var path = FtpPwdPath(u, conn)
+		if strings.HasPrefix(path, "/") {
+			path = path[1:]
+		}
 		var ent *ftp.Entry
 		if ent, err = conn.GetEntry(path); err != nil {
 			return
@@ -223,11 +222,7 @@ func ReadDir(dir string) (ret []fs.FileInfo, err error) {
 		if err = conn.Login(u.User.Username(), pass); err != nil {
 			return
 		}
-		var path = path.Join(PwdCache((&url.URL{
-			Scheme: u.Scheme,
-			User:   u.User,
-			Host:   u.Host,
-		}).String(), conn), u.Path)
+		var path = FtpPwdPath(u, conn)
 		var entries []*ftp.Entry
 		if entries, err = conn.List(path); err != nil {
 			return

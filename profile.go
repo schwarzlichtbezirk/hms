@@ -300,8 +300,7 @@ func (prf *Profile) FindLocal() {
 // ScanLocal scans paths from local roots list.
 func (prf *Profile) ScanLocal(session *Session) (ret []any, err error) {
 	prf.mux.RLock()
-	var vfiles = make([]DiskPath, len(prf.Roots))
-	copy(vfiles, prf.Roots)
+	var vfiles = append([]DiskPath{}, prf.Roots...) // make non-nil copy
 	prf.mux.RUnlock()
 
 	var dp DirProp
@@ -323,8 +322,7 @@ func (prf *Profile) ScanLocal(session *Session) (ret []any, err error) {
 // ScanRemote scans paths at network destination.
 func (prf *Profile) ScanRemote(session *Session) (ret []any, err error) {
 	prf.mux.RLock()
-	var vfiles = make([]DiskPath, len(prf.Remote))
-	copy(vfiles, prf.Remote)
+	var vfiles = append([]DiskPath{}, prf.Remote...) // make non-nil copy
 	prf.mux.RUnlock()
 
 	var dp DirProp
@@ -346,8 +344,7 @@ func (prf *Profile) ScanRemote(session *Session) (ret []any, err error) {
 // ScanShares scans actual shares from shares list.
 func (prf *Profile) ScanShares(session *Session) (ret []any, err error) {
 	prf.mux.RLock()
-	var vfiles = make([]DiskPath, len(prf.Shares))
-	copy(vfiles, prf.Shares)
+	var vfiles = append([]DiskPath{}, prf.Shares...) // make non-nil copy
 	prf.mux.RUnlock()
 
 	var dp DirProp

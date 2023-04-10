@@ -131,9 +131,8 @@ func (c *Cache[K, T]) Remove(key K) (ok bool) {
 }
 
 func (c *Cache[K, T]) Enum(f func(K, T) bool) {
-	var s = make([]kvcell[K, T], len(c.s))
 	c.mux.Lock()
-	copy(s, c.s)
+	var s = append([]kvcell[K, T]{}, c.s...) // make non-nil copy
 	c.mux.Unlock()
 
 	for _, cell := range s {

@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"net/url"
 	"path"
+	"strings"
 	"sync"
 	"time"
 
@@ -19,24 +20,34 @@ var (
 )
 
 var (
-	pwdmap map[string]string
+	pwdmap = map[string]string{}
 	pwdmux sync.RWMutex
 )
 
-func PwdCache(ftpaddr string, conn *ftp.ServerConn) (pwd string) {
-	var ok bool
+// FtpPwdPath return path from given URL concatenated with FTP
+// current directory. It's used cache to avoid extra calls to
+// FTP-server to get current directory for every call.
+func FtpPwdPath(u *url.URL, conn *ftp.ServerConn) (fpath string) {
+	var ftpaddr = (&url.URL{
+		Scheme: u.Scheme,
+		User:   u.User,
+		Host:   u.Host,
+	}).String()
+
 	pwdmux.RLock()
-	pwd, ok = pwdmap[ftpaddr]
+	var pwd, ok = pwdmap[ftpaddr]
 	pwdmux.RUnlock()
-	if ok {
-		return
+	if !ok {
+		var err error
+		if pwd, err = conn.CurrentDir(); err == nil {
+			pwdmux.Lock()
+			pwdmap[ftpaddr] = pwd
+			pwdmux.Unlock()
+		}
 	}
-	var err error
-	if pwd, err = conn.CurrentDir(); err == nil {
-		pwdmux.Lock()
-		pwdmap[ftpaddr] = pwd
-		pwdmux.Unlock()
-		return
+	fpath = path.Join(pwd, u.Path)
+	if strings.HasPrefix(fpath, "/") {
+		fpath = fpath[1:]
 	}
 	return
 }
@@ -104,11 +115,7 @@ func (ff *FtpFile) Open(ftppath string) (err error) {
 	if ff.conn, err = ftp.Dial(u.Host, ftp.DialWithTimeout(cfg.DialTimeout)); err != nil {
 		return
 	}
-	ff.path = path.Join(PwdCache((&url.URL{
-		Scheme: u.Scheme,
-		User:   u.User,
-		Host:   u.Host,
-	}).String(), ff.conn), u.Path)
+	ff.path = FtpPwdPath(u, ff.conn)
 	var pass, _ = u.User.Password()
 	if err = ff.conn.Login(u.User.Username(), pass); err != nil {
 		return
