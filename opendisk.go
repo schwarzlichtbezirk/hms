@@ -204,6 +204,33 @@ func StatFile(syspath string) (fi fs.FileInfo, err error) {
 	}
 }
 
+// FtpEscapeBrackets escapes square brackets at FTP-path.
+// FTP-server does not recognize path with square brackets
+// as is to get a list of files, so such path should be escaped.
+func FtpEscapeBrackets(s string) string {
+	var b = s2b(s)
+	var n = 0
+	for _, c := range b {
+		if c == '[' || c == ']' {
+			n++
+		}
+	}
+	if n == 0 {
+		return s
+	}
+	var esc = make([]byte, 0, len(b)+n*2)
+	for _, c := range b {
+		if c == '[' {
+			esc = append(esc, '[', '[', ']')
+		} else if c == ']' {
+			esc = append(esc, '[', ']', ']')
+		} else {
+			esc = append(esc, c)
+		}
+	}
+	return string(esc)
+}
+
 // ReadDir returns directory files fs.FileInfo list. It scan file system path,
 // or looking for iso-disk in the given path, opens it, and scan files nested
 // into iso-disk local directory.
@@ -222,7 +249,7 @@ func ReadDir(dir string) (ret []fs.FileInfo, err error) {
 		if err = conn.Login(u.User.Username(), pass); err != nil {
 			return
 		}
-		var path = FtpPwdPath(u, conn)
+		var path = FtpEscapeBrackets(FtpPwdPath(u, conn))
 		var entries []*ftp.Entry
 		if entries, err = conn.List(path); err != nil {
 			return

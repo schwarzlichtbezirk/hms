@@ -31,7 +31,7 @@ require (
 
 require (
 	github.com/edsrzf/mmap-go v1.1.0 // indirect
-	github.com/frankban/quicktest v1.14.4 // indirect
+	github.com/frankban/quicktest v1.14.5 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
