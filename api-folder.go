@@ -99,6 +99,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		ShareName string `json:"sharename" yaml:"sharename" xml:"sharename,attr"`
 		RootPath  string `json:"rootpath" yaml:"rootpath" xml:"rootpath,attr"`
 		RootName  string `json:"rootname" yaml:"rootname" xml:"rootname,attr"`
+		Static    bool   `json:"static" yaml:"static" xml:"static,attr"`
 
 		HasHome bool `json:"hashome" yaml:"hashome" xml:"hashome,attr"`
 		Access  bool `json:"access" yaml:"access" xml:"access,attr"`
@@ -233,12 +234,14 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			WriteError(w, r, http.StatusNotFound, ErrNoCat, AECfoldernocat)
 			return
 		}
+		ret.Static = true
 	} else {
 		var fi fs.FileInfo
 		if fi, err = StatFile(syspath); err != nil {
 			WriteError500(w, r, err, AECfolderstat)
 			return
 		}
+		ret.Static = IsStatic(fi) || !fi.IsDir()
 
 		var ext = arg.Ext
 		if ext == "" && !fi.IsDir() {

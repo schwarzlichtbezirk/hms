@@ -142,12 +142,9 @@ func StatFile(syspath string) (fi fs.FileInfo, err error) {
 		if err = conn.Login(u.User.Username(), pass); err != nil {
 			return
 		}
-		var path = FtpPwdPath(u, conn)
-		if strings.HasPrefix(path, "/") {
-			path = path[1:]
-		}
+		var fpath = FtpPwdPath(syspath, conn)
 		var ent *ftp.Entry
-		if ent, err = conn.GetEntry(path); err != nil {
+		if ent, err = conn.GetEntry(fpath); err != nil {
 			return
 		}
 		fi = &FtpFileInfo{
@@ -249,9 +246,9 @@ func ReadDir(dir string) (ret []fs.FileInfo, err error) {
 		if err = conn.Login(u.User.Username(), pass); err != nil {
 			return
 		}
-		var path = FtpEscapeBrackets(FtpPwdPath(u, conn))
+		var fpath = FtpEscapeBrackets(FtpPwdPath(dir, conn))
 		var entries []*ftp.Entry
-		if entries, err = conn.List(path); err != nil {
+		if entries, err = conn.List(fpath); err != nil {
 			return
 		}
 		ret = make([]fs.FileInfo, 0, len(entries))

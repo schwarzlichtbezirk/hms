@@ -47,6 +47,17 @@ func (pp *PuidProp) Setup(session *Session, syspath string) {
 	pp.PUID = PathStoreCache(session, syspath)
 }
 
+func IsStatic(fi fs.FileInfo) (static bool) {
+	if fi != nil {
+		if _, static = fi.(*FileInfoISO); !static {
+			_, static = fi.(*FtpFileInfo)
+		}
+	} else {
+		static = true
+	}
+	return
+}
+
 // FileKit is common files properties kit.
 type FileKit struct {
 	PuidProp `xorm:"extends" yaml:",inline"`

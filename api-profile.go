@@ -93,11 +93,7 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	fk.PUID = puid
 	fk.Free = acc.PathAccess(syspath, false)
 	fk.Shared = acc.IsShared(syspath)
-	if fi != nil {
-		_, fk.Static = fi.(*FileInfoISO)
-	} else {
-		fk.Static = true
-	}
+	fk.Static = IsStatic(fi)
 	fk.Name = name
 	fk.Type = FTdrv
 	fk.Size = fi.Size()

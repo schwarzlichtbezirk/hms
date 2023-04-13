@@ -24,15 +24,22 @@ var (
 	pwdmux sync.RWMutex
 )
 
+// SplitUrl splits URL to address string and to path as is.
+func SplitUrl(urlpath string) (string, string) {
+	if i := strings.Index(urlpath, "://"); i != -1 {
+		if j := strings.Index(urlpath[i+3:], "/"); j != -1 {
+			return urlpath[:i+3+j], urlpath[i+3+j+1:]
+		}
+		return urlpath, ""
+	}
+	return "", urlpath
+}
+
 // FtpPwdPath return path from given URL concatenated with FTP
 // current directory. It's used cache to avoid extra calls to
 // FTP-server to get current directory for every call.
-func FtpPwdPath(u *url.URL, conn *ftp.ServerConn) (fpath string) {
-	var ftpaddr = (&url.URL{
-		Scheme: u.Scheme,
-		User:   u.User,
-		Host:   u.Host,
-	}).String()
+func FtpPwdPath(ftpfull string, conn *ftp.ServerConn) (fpath string) {
+	var ftpaddr, ftppath = SplitUrl(ftpfull)
 
 	pwdmux.RLock()
 	var pwd, ok = pwdmap[ftpaddr]
@@ -45,7 +52,7 @@ func FtpPwdPath(u *url.URL, conn *ftp.ServerConn) (fpath string) {
 			pwdmux.Unlock()
 		}
 	}
-	fpath = path.Join(pwd, u.Path)
+	fpath = path.Join(pwd, ftppath)
 	if strings.HasPrefix(fpath, "/") {
 		fpath = fpath[1:]
 	}
@@ -115,7 +122,7 @@ func (ff *FtpFile) Open(ftppath string) (err error) {
 	if ff.conn, err = ftp.Dial(u.Host, ftp.DialWithTimeout(cfg.DialTimeout)); err != nil {
 		return
 	}
-	ff.path = FtpPwdPath(u, ff.conn)
+	ff.path = FtpPwdPath(ftppath, ff.conn)
 	var pass, _ = u.User.Password()
 	if err = ff.conn.Login(u.User.Username(), pass); err != nil {
 		return

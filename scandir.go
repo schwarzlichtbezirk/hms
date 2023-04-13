@@ -99,11 +99,7 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 			PUID:   puid,
 			Free:   prf.PathAccess(fpath, false),
 			Shared: prf.IsShared(fpath),
-		}
-		if fi != nil {
-			_, pp.Static = fi.(*FileInfoISO)
-		} else {
-			pp.Static = true
+			Static: IsStatic(fi),
 		}
 		var fp FileProp
 		fp.Name = dp.Name

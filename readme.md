@@ -84,4 +84,4 @@ Other categories at home page contains list of folders with files of those categ
 
 If some category of files is shared, then anyone will see this category at home page, and have access to files of this category grouped into their folders. In this case there is no access to nested folders for anyone and no access to files of not shared categories in those folders. For example, if `Music and audio files` is shared, then anyone will see 10 mp3 files in some music folder, and does not see 2 jpg files in that folder.
 
-(c) schwarzlichtbezirk, 2021.
+(c) schwarzlichtbezirk, 2020-2023.

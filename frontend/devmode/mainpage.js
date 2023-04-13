@@ -474,6 +474,7 @@ const VueMainApp = {
 			sharename: "", // current folder share name
 			rootpath: "", // current folder root path
 			rootname: "", // current folder root name
+			static: false, // content of current folder can bs modified
 			copied: null, // copied item
 			cuted: null, // cuted item
 
@@ -625,12 +626,12 @@ const VueMainApp = {
 		showpastego() {
 		},
 		clscopy() {
-			return { 'disabled': !this.selfile || this.selfile.type === FT.drv || this.selfile.type === FT.ctgr };
+			return { 'disabled': !this.selfile || !(this.selfile.type === FT.file || this.selfile.type === FT.dir) };
 		},
 		clspaste() {
 			const sel = this.copied ?? this.cuted;
 			return {
-				'disabled': !sel || sel.static || (() => {
+				'disabled': !sel || this.static || (() => {
 					for (const file of this.flist) {
 						if (file.puid === sel.puid) {
 							return true;
@@ -643,7 +644,7 @@ const VueMainApp = {
 		clspastego() {
 			const sel = this.copied ?? this.cuted;
 			return {
-				'disabled': !sel || sel.static || !(() => {
+				'disabled': !sel || this.static || !(() => {
 					for (const file of this.flist) {
 						if (file.name === sel.name) {
 							return true;
@@ -730,6 +731,7 @@ const VueMainApp = {
 			this.sharename = data.sharename;
 			this.rootpath = data.rootpath;
 			this.rootname = data.rootname;
+			this.static = data.static;
 			this.hashome = data.hashome;
 			this.access = data.access;
 
@@ -751,6 +753,7 @@ const VueMainApp = {
 			this.sharename = "";
 			this.rootpath = "";
 			this.rootname = "";
+			this.static = true;
 			this.hashome = data.hashome;
 
 			await this.newfolder(data.list);

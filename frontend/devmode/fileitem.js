@@ -410,7 +410,8 @@ const VueIconMenu = {
 				return false;
 			}
 			const ext = pathext(this.file.name);
-			return extfmt.image[ext] || extfmt.video[ext] || extfmt.books[ext] || extfmt.texts[ext]
+			return extfmt.image[ext] || extfmt.video[ext]
+				|| extfmt.books[ext] || extfmt.texts[ext] || extfmt.playlist[ext]
 				|| (extfmt.audio[ext] && this.file.etmb);
 		},
 		showcopy() {
@@ -450,7 +451,7 @@ const VueIconMenu = {
 		},
 		onnewtab() {
 			const ext = pathext(this.file.name);
-			if (extfmt.image[ext] || extfmt.video[ext] || extfmt.books[ext] || extfmt.texts[ext]) {
+			if (extfmt.image[ext] || extfmt.video[ext] || extfmt.books[ext] || extfmt.texts[ext] || extfmt.playlist[ext]) {
 				const url = `/id${this.$root.aid}/file/${this.file.puid}?media=1&hd=0`;
 				window.open(url, this.file.name);
 			} else if (extfmt.audio[ext] && this.file.etmb) {
