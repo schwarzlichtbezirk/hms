@@ -17,6 +17,7 @@ require (
 	github.com/jlaffaye/ftp v0.1.0
 	github.com/mattn/go-sqlite3 v1.14.16
 	github.com/oov/psd v0.0.0-20220121172623-5db5eafcecbb
+	github.com/pkg/sftp v1.13.5
 	github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd
 	github.com/schwarzlichtbezirk/wpk v1.4.2
 	github.com/spate/glimage v0.0.0-20200505055513-fbdcc60a65e5
@@ -38,6 +39,7 @@ require (
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
+	github.com/kr/fs v0.1.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect

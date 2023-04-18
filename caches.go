@@ -410,35 +410,35 @@ func HdCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 	return
 }
 
-func DiskCacheGet(syspath string) (disk *DiskFS, err error) {
+func DiskCacheGet(isopath string) (disk *DiskFS, err error) {
 	var cell TempCell[DiskFS]
 	var ok bool
 
-	if cell, ok = diskcache.Get(syspath); ok {
+	if cell, ok = diskcache.Get(isopath); ok {
 		cell.Wait.Reset(cfg.DiskCacheExpire)
 		disk = cell.Data
 		return
 	}
-	var ext = GetFileExt(syspath)
+	var ext = GetFileExt(isopath)
 	if !IsTypeISO(ext) {
 		err = ErrNotDisk
 		return
 	}
-	if disk, err = NewDiskFS(syspath); err != nil {
+	if disk, err = NewDiskFS(isopath); err != nil {
 		return
 	}
 
 	cell.Data = disk
 	cell.Wait = time.AfterFunc(cfg.DiskCacheExpire, func() {
-		diskcache.Remove(syspath)
+		diskcache.Remove(isopath)
 	})
-	diskcache.Set(syspath, cell)
+	diskcache.Set(isopath, cell)
 	return
 }
 
 // InitCaches prepares caches.
 func InitCaches() {
-	diskcache.OnRemove(func(syspath string, cell TempCell[DiskFS]) {
+	diskcache.OnRemove(func(isopath string, cell TempCell[DiskFS]) {
 		cell.Wait.Stop()
 		cell.Data.Close()
 	})

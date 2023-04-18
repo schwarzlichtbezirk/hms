@@ -12,6 +12,8 @@ import (
 	"time"
 
 	"github.com/jlaffaye/ftp"
+	"github.com/pkg/sftp"
+	"golang.org/x/crypto/ssh"
 )
 
 var (
@@ -38,9 +40,7 @@ func SplitUrl(urlpath string) (string, string) {
 // FtpPwdPath return path from given URL concatenated with FTP
 // current directory. It's used cache to avoid extra calls to
 // FTP-server to get current directory for every call.
-func FtpPwdPath(ftpfull string, conn *ftp.ServerConn) (fpath string) {
-	var ftpaddr, ftppath = SplitUrl(ftpfull)
-
+func FtpPwdPath(ftpaddr, ftppath string, conn *ftp.ServerConn) (fpath string) {
 	pwdmux.RLock()
 	var pwd, ok = pwdmap[ftpaddr]
 	pwdmux.RUnlock()
@@ -56,6 +56,55 @@ func FtpPwdPath(ftpfull string, conn *ftp.ServerConn) (fpath string) {
 	if strings.HasPrefix(fpath, "/") {
 		fpath = fpath[1:]
 	}
+	return
+}
+
+// FtpPwdPath return path from given URL concatenated with SFTP
+// current directory. It's used cache to avoid extra calls to
+// FTP-server to get current directory for every call.
+func SftpPwdPath(ftpaddr, ftppath string, client *sftp.Client) (fpath string) {
+	pwdmux.RLock()
+	var pwd, ok = pwdmap[ftpaddr]
+	pwdmux.RUnlock()
+	if !ok {
+		var err error
+		if pwd, err = client.Getwd(); err == nil {
+			pwdmux.Lock()
+			pwdmap[ftpaddr] = pwd
+			pwdmux.Unlock()
+		}
+	}
+	fpath = path.Join(pwd, ftppath)
+	return
+}
+
+func SftpOpenFile(ftpurl string) (r io.ReadSeekCloser, err error) {
+	var ftpaddr, ftppath = SplitUrl(ftpurl)
+	var conn *ssh.Client
+	var config = &ssh.ClientConfig{
+		User: "music",
+		Auth: []ssh.AuthMethod{
+			ssh.Password("x"),
+		},
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+	}
+	if conn, err = ssh.Dial("tcp", "192.168.1.1:22", config); err != nil {
+		return
+	}
+	defer conn.Close()
+
+	var client *sftp.Client
+	if client, err = sftp.NewClient(conn); err != nil {
+		return
+	}
+	defer client.Close()
+
+	var fpath = SftpPwdPath(ftpaddr, ftppath, client)
+	var f *sftp.File
+	if f, err = client.Open(fpath); err != nil {
+		return
+	}
+	r = f
 	return
 }
 
@@ -114,19 +163,20 @@ type FtpFile struct {
 // Opens new connection for any some one file with given full FTP URL.
 // FTP-connection can serve only one file by the time, so it can not
 // be used for parallel reading group of files.
-func (ff *FtpFile) Open(ftppath string) (err error) {
+func (ff *FtpFile) Open(ftpurl string) (err error) {
+	var ftpaddr, ftppath = SplitUrl(ftpurl)
 	var u *url.URL
-	if u, err = url.Parse(ftppath); err != nil {
+	if u, err = url.Parse(ftpurl); err != nil {
 		return
 	}
 	if ff.conn, err = ftp.Dial(u.Host, ftp.DialWithTimeout(cfg.DialTimeout)); err != nil {
 		return
 	}
-	ff.path = FtpPwdPath(ftppath, ff.conn)
 	var pass, _ = u.User.Password()
 	if err = ff.conn.Login(u.User.Username(), pass); err != nil {
 		return
 	}
+	ff.path = FtpPwdPath(ftpaddr, ftppath, ff.conn)
 	ff.resp = nil
 	ff.pos, ff.end = 0, 0
 	return

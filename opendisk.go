@@ -4,7 +4,6 @@ import (
 	"errors"
 	"io"
 	"io/fs"
-	"net/url"
 	"os"
 	"path"
 	"strings"
@@ -129,20 +128,14 @@ func OpenFile(syspath string) (r io.ReadSeekCloser, err error) {
 // StatFile returns fs.FileInfo of file in file system, or file nested in disk image.
 func StatFile(syspath string) (fi fs.FileInfo, err error) {
 	if strings.HasPrefix(syspath, "ftp://") {
-		var u *url.URL
-		if u, err = url.Parse(syspath); err != nil {
-			return
-		}
+		var ftpaddr, ftppath = SplitUrl(syspath)
 		var conn *ftp.ServerConn
-		if conn, err = ftp.Dial(u.Host, ftp.DialWithTimeout(cfg.DialTimeout)); err != nil {
+		if conn, err = GetFtpConn(ftpaddr); err != nil {
 			return
 		}
-		defer conn.Quit()
-		var pass, _ = u.User.Password()
-		if err = conn.Login(u.User.Username(), pass); err != nil {
-			return
-		}
-		var fpath = FtpPwdPath(syspath, conn)
+		defer PutFtpConn(ftpaddr, conn)
+
+		var fpath = FtpPwdPath(ftpaddr, ftppath, conn)
 		var ent *ftp.Entry
 		if ent, err = conn.GetEntry(fpath); err != nil {
 			return
@@ -233,20 +226,14 @@ func FtpEscapeBrackets(s string) string {
 // into iso-disk local directory.
 func ReadDir(dir string) (ret []fs.FileInfo, err error) {
 	if strings.HasPrefix(dir, "ftp://") {
-		var u *url.URL
-		if u, err = url.Parse(dir); err != nil {
-			return
-		}
+		var ftpaddr, ftppath = SplitUrl(dir)
 		var conn *ftp.ServerConn
-		if conn, err = ftp.Dial(u.Host, ftp.DialWithTimeout(cfg.DialTimeout)); err != nil {
+		if conn, err = GetFtpConn(ftpaddr); err != nil {
 			return
 		}
-		defer conn.Quit()
-		var pass, _ = u.User.Password()
-		if err = conn.Login(u.User.Username(), pass); err != nil {
-			return
-		}
-		var fpath = FtpEscapeBrackets(FtpPwdPath(dir, conn))
+		defer PutFtpConn(ftpaddr, conn)
+
+		var fpath = FtpEscapeBrackets(FtpPwdPath(ftpaddr, ftppath, conn))
 		var entries []*ftp.Entry
 		if entries, err = conn.List(fpath); err != nil {
 			return
