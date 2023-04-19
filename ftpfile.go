@@ -5,7 +5,6 @@ import (
 	"errors"
 	"io"
 	"io/fs"
-	"net/url"
 	"path"
 	"strings"
 	"sync"
@@ -153,6 +152,7 @@ func (fi *FtpFileInfo) Sys() interface{} {
 
 // FtpFile implements for FTP-file io.Reader, io.Writer, io.Seeker, io.Closer.
 type FtpFile struct {
+	addr string
 	path string
 	conn *ftp.ServerConn
 	resp *ftp.Response
@@ -165,17 +165,10 @@ type FtpFile struct {
 // be used for parallel reading group of files.
 func (ff *FtpFile) Open(ftpurl string) (err error) {
 	var ftpaddr, ftppath = SplitUrl(ftpurl)
-	var u *url.URL
-	if u, err = url.Parse(ftpurl); err != nil {
+	if ff.conn, err = GetFtpConn(ftpaddr); err != nil {
 		return
 	}
-	if ff.conn, err = ftp.Dial(u.Host, ftp.DialWithTimeout(cfg.DialTimeout)); err != nil {
-		return
-	}
-	var pass, _ = u.User.Password()
-	if err = ff.conn.Login(u.User.Username(), pass); err != nil {
-		return
-	}
+	ff.addr = ftpaddr
 	ff.path = FtpPwdPath(ftpaddr, ftppath, ff.conn)
 	ff.resp = nil
 	ff.pos, ff.end = 0, 0
@@ -187,7 +180,7 @@ func (ff *FtpFile) Close() (err error) {
 		err = ff.resp.Close()
 		ff.resp = nil
 	}
-	ff.conn.Quit()
+	PutFtpConn(ff.addr, ff.conn)
 	return
 }
 

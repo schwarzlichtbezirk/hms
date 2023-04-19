@@ -49,7 +49,7 @@ func (pp *PuidProp) Setup(session *Session, syspath string) {
 
 func IsStatic(fi fs.FileInfo) (static bool) {
 	if fi != nil {
-		if _, static = fi.(*FileInfoISO); !static {
+		if _, static = fi.(*IsoFileInfo); !static {
 			_, static = fi.(*FtpFileInfo)
 		}
 	} else {
