@@ -8,20 +8,19 @@ import (
 	"path"
 	"strings"
 
-	"github.com/diskfs/go-diskfs/filesystem/iso9660"
 	"github.com/jlaffaye/ftp"
 	"golang.org/x/text/encoding/charmap"
 )
 
 // OpenFile opens file from file system, or looking for iso-disk in the given path,
 // opens it, and opens nested into iso-disk file.
-func OpenFile(syspath string) (r io.ReadSeekCloser, err error) {
+func OpenFile(syspath string) (r File, err error) {
 	if strings.HasPrefix(syspath, "ftp://") {
-		var ff FtpFile
-		if err = ff.Open(syspath); err != nil {
+		var f FtpFile
+		if err = f.Open(syspath); err != nil {
 			return
 		}
-		r = &ff
+		r = &f
 		return
 	} else {
 		if r, err = os.Open(syspath); err == nil { // primary filesystem file
@@ -30,25 +29,29 @@ func OpenFile(syspath string) (r io.ReadSeekCloser, err error) {
 		var file io.Closer = io.NopCloser(nil) // empty closer stub
 
 		// looking for nested file
-		var basepath = syspath
-		var operr = err
-		for errors.Is(operr, fs.ErrNotExist) && basepath != "." && basepath != "/" {
-			basepath = path.Dir(basepath)
-			file, operr = os.Open(basepath)
+		var isopath = syspath
+		for errors.Is(err, fs.ErrNotExist) && isopath != "." && isopath != "/" {
+			isopath = path.Dir(isopath)
+			file, err = os.Open(isopath)
 		}
-		if operr != nil {
-			err = operr
+		if err != nil {
 			return
 		}
 		file.Close()
 
-		var disk *DiskFS
-		if disk, err = DiskCacheGet(basepath); err != nil {
-			return
+		var fpath string
+		if isopath == syspath {
+			fpath = "/" // get root of disk
+		} else {
+			fpath = syspath[len(isopath):]
 		}
 
-		var diskpath = syspath[len(basepath):]
-		return disk.OpenFile(diskpath)
+		var f IsoFile
+		if err = f.Open(isopath, fpath); err != nil {
+			return
+		}
+		r = &f
+		return
 	}
 }
 
@@ -56,21 +59,13 @@ func OpenFile(syspath string) (r io.ReadSeekCloser, err error) {
 func StatFile(syspath string) (fi fs.FileInfo, err error) {
 	if strings.HasPrefix(syspath, "ftp://") {
 		var ftpaddr, ftppath = SplitUrl(syspath)
-		var conn *ftp.ServerConn
-		if conn, err = GetFtpConn(ftpaddr); err != nil {
+		var d *FtpJoint
+		if d, err = GetFtpJoint(ftpaddr); err != nil {
 			return
 		}
-		defer PutFtpConn(ftpaddr, conn)
+		defer PutFtpJoint(ftpaddr, d)
 
-		var fpath = FtpPwdPath(ftpaddr, ftppath, conn)
-		var ent *ftp.Entry
-		if ent, err = conn.GetEntry(fpath); err != nil {
-			return
-		}
-		fi = &FtpFileInfo{
-			ent,
-		}
-		return
+		return d.Stat(ftppath)
 	} else {
 		// check up file is at primary filesystem
 		var file *os.File
@@ -80,44 +75,30 @@ func StatFile(syspath string) (fi fs.FileInfo, err error) {
 		}
 
 		// looking for nested file
-		var basepath = syspath
-		for errors.Is(err, fs.ErrNotExist) && basepath != "." && basepath != "/" {
-			basepath = path.Dir(basepath)
-			file, err = os.Open(basepath)
+		var isopath = syspath
+		for errors.Is(err, fs.ErrNotExist) && isopath != "." && isopath != "/" {
+			isopath = path.Dir(isopath)
+			file, err = os.Open(isopath)
 		}
 		if err != nil {
 			return
 		}
 		file.Close()
 
-		var disk *DiskFS
-		if disk, err = DiskCacheGet(basepath); err != nil {
+		var fpath string
+		if isopath == syspath {
+			fpath = "/" // get root of disk
+		} else {
+			fpath = syspath[len(isopath):]
+		}
+
+		var d *IsoJoint
+		if d, err = GetIsoJoint(isopath); err != nil {
 			return
 		}
+		defer PutIsoJoint(isopath, d)
 
-		var diskpath = syspath[len(basepath):]
-		var _, isiso = disk.fs.(*iso9660.FileSystem)
-		if isiso {
-			var enc = charmap.Windows1251.NewEncoder()
-			diskpath, _ = enc.String(diskpath)
-		}
-
-		var list []fs.FileInfo
-		if list, err = disk.fs.ReadDir(path.Dir(diskpath)); err != nil {
-			return
-		}
-
-		var finame = path.Base(diskpath)
-		for _, fi = range list {
-			if fi.Name() == finame {
-				if isiso {
-					return &IsoFileInfo{fi}, nil
-				} else {
-					return fi, nil
-				}
-			}
-		}
-		return nil, ErrNotFound
+		return d.Stat(fpath)
 	}
 }
 
@@ -154,15 +135,15 @@ func FtpEscapeBrackets(s string) string {
 func ReadDir(dir string) (ret []fs.FileInfo, err error) {
 	if strings.HasPrefix(dir, "ftp://") {
 		var ftpaddr, ftppath = SplitUrl(dir)
-		var conn *ftp.ServerConn
-		if conn, err = GetFtpConn(ftpaddr); err != nil {
+		var d *FtpJoint
+		if d, err = GetFtpJoint(ftpaddr); err != nil {
 			return
 		}
-		defer PutFtpConn(ftpaddr, conn)
+		defer PutFtpJoint(ftpaddr, d)
 
-		var fpath = FtpEscapeBrackets(FtpPwdPath(ftpaddr, ftppath, conn))
+		var fpath = FtpEscapeBrackets(path.Join(d.pwd, ftppath))
 		var entries []*ftp.Entry
-		if entries, err = conn.List(fpath); err != nil {
+		if entries, err = d.conn.List(fpath); err != nil {
 			return
 		}
 		ret = make([]fs.FileInfo, 0, len(entries))
@@ -186,41 +167,36 @@ func ReadDir(dir string) (ret []fs.FileInfo, err error) {
 		}
 
 		// looking for nested file
-		var basepath = dir
-		var operr = err
-		for errors.Is(operr, fs.ErrNotExist) && basepath != "." && basepath != "/" {
-			basepath = path.Dir(basepath)
-			file, operr = os.Open(basepath)
+		var isopath = dir
+		for errors.Is(err, fs.ErrNotExist) && isopath != "." && isopath != "/" {
+			isopath = path.Dir(isopath)
+			file, err = os.Open(isopath)
 		}
-		if operr != nil {
-			err = operr
+		if err != nil {
 			return
 		}
 		file.Close()
 
-		var disk *DiskFS
-		if disk, err = DiskCacheGet(basepath); err != nil {
-			return
+		var fpath string
+		if isopath == dir {
+			fpath = "/" // get root of disk
+		} else {
+			fpath = dir[len(isopath):]
 		}
 
-		var diskpath string
-		if basepath == dir {
-			diskpath = "/" // list root of disk
-		} else {
-			diskpath = dir[len(basepath):]
-		}
-		var _, isiso = disk.fs.(*iso9660.FileSystem)
-		if isiso {
-			var enc = charmap.Windows1251.NewEncoder()
-			diskpath, _ = enc.String(diskpath)
-		}
-		if ret, err = disk.fs.ReadDir(diskpath); err != nil {
+		var d *IsoJoint
+		if d, err = GetIsoJoint(isopath); err != nil {
 			return
 		}
-		if isiso {
-			for i, fi := range ret {
-				ret[i] = &IsoFileInfo{fi}
-			}
+		defer PutIsoJoint(isopath, d)
+
+		var enc = charmap.Windows1251.NewEncoder()
+		fpath, _ = enc.String(fpath)
+		if ret, err = d.fs.ReadDir(fpath); err != nil {
+			return
+		}
+		for i, fi := range ret {
+			ret[i] = &IsoFileInfo{fi}
 		}
 		return
 	}

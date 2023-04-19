@@ -133,6 +133,11 @@ func cchinfAPI(w http.ResponseWriter, r *http.Request) {
 		return true
 	})
 
+	var isocount int
+	for _, cc := range IsoCaches {
+		isocount += len(cc.cache)
+	}
+
 	var ftpcount int
 	for _, cc := range FtpCaches {
 		ftpcount += len(cc.cache)
@@ -160,6 +165,7 @@ func cchinfAPI(w http.ResponseWriter, r *http.Request) {
 		"gifnum":       gif.num,
 		"gifsumsize1":  gif.size1,
 		"gifsumsize2":  gif.size2,
+		"isocount":     isocount,
 		"ftpcount":     ftpcount,
 	}
 

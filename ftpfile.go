@@ -36,29 +36,27 @@ func SplitUrl(urlpath string) (string, string) {
 	return "", urlpath
 }
 
-// FtpPwdPath return path from given URL concatenated with FTP
-// current directory. It's used cache to avoid extra calls to
-// FTP-server to get current directory for every call.
-func FtpPwdPath(ftpaddr, ftppath string, conn *ftp.ServerConn) (fpath string) {
+// FtpPwd return FTP current directory. It's used cache to avoid
+// extra calls to FTP-server to get current directory for every call.
+func FtpPwd(ftpaddr string, conn *ftp.ServerConn) (pwd string) {
 	pwdmux.RLock()
-	var pwd, ok = pwdmap[ftpaddr]
+	pwd, ok := pwdmap[ftpaddr]
 	pwdmux.RUnlock()
 	if !ok {
 		var err error
 		if pwd, err = conn.CurrentDir(); err == nil {
+			if strings.HasPrefix(pwd, "/") {
+				pwd = pwd[1:]
+			}
 			pwdmux.Lock()
 			pwdmap[ftpaddr] = pwd
 			pwdmux.Unlock()
 		}
 	}
-	fpath = path.Join(pwd, ftppath)
-	if strings.HasPrefix(fpath, "/") {
-		fpath = fpath[1:]
-	}
 	return
 }
 
-// FtpPwdPath return path from given URL concatenated with SFTP
+// SftpPwdPath return path from given URL concatenated with SFTP
 // current directory. It's used cache to avoid extra calls to
 // FTP-server to get current directory for every call.
 func SftpPwdPath(ftpaddr, ftppath string, client *sftp.Client) (fpath string) {
@@ -152,78 +150,87 @@ func (fi *FtpFileInfo) Sys() interface{} {
 
 // FtpFile implements for FTP-file io.Reader, io.Writer, io.Seeker, io.Closer.
 type FtpFile struct {
-	addr string
-	path string
-	conn *ftp.ServerConn
-	resp *ftp.Response
-	pos  int64
-	end  int64
+	addr  string
+	fpath string
+	d     *FtpJoint
+	resp  *ftp.Response
+	pos   int64
+	end   int64
 }
 
 // Opens new connection for any some one file with given full FTP URL.
 // FTP-connection can serve only one file by the time, so it can not
 // be used for parallel reading group of files.
-func (ff *FtpFile) Open(ftpurl string) (err error) {
-	var ftpaddr, ftppath = SplitUrl(ftpurl)
-	if ff.conn, err = GetFtpConn(ftpaddr); err != nil {
+func (f *FtpFile) Open(ftpurl string) (err error) {
+	f.addr, f.fpath = SplitUrl(ftpurl)
+	if f.d, err = GetFtpJoint(f.addr); err != nil {
 		return
 	}
-	ff.addr = ftpaddr
-	ff.path = FtpPwdPath(ftpaddr, ftppath, ff.conn)
-	ff.resp = nil
-	ff.pos, ff.end = 0, 0
+	f.resp = nil
+	f.pos, f.end = 0, 0
 	return
 }
 
-func (ff *FtpFile) Close() (err error) {
-	if ff.resp != nil {
-		err = ff.resp.Close()
-		ff.resp = nil
+func (f *FtpFile) Close() (err error) {
+	if f.resp != nil {
+		err = f.resp.Close()
+		f.resp = nil
 	}
-	PutFtpConn(ff.addr, ff.conn)
+	PutFtpJoint(f.addr, f.d)
 	return
 }
 
-func (ff *FtpFile) Size() int64 {
-	if ff.end == 0 {
-		ff.end, _ = ff.conn.FileSize(ff.path)
+func (f *FtpFile) Stat() (fi fs.FileInfo, err error) {
+	var ent *ftp.Entry
+	if ent, err = f.d.conn.GetEntry(path.Join(f.d.pwd, f.fpath)); err != nil {
+		return
 	}
-	return ff.end
+	fi = &FtpFileInfo{
+		ent,
+	}
+	return
 }
 
-func (ff *FtpFile) Read(b []byte) (n int, err error) {
-	if ff.resp == nil {
-		if ff.resp, err = ff.conn.RetrFrom(ff.path, uint64(ff.pos)); err != nil {
+func (f *FtpFile) Size() int64 {
+	if f.end == 0 {
+		f.end, _ = f.d.conn.FileSize(path.Join(f.d.pwd, f.fpath))
+	}
+	return f.end
+}
+
+func (f *FtpFile) Read(b []byte) (n int, err error) {
+	if f.resp == nil {
+		if f.resp, err = f.d.conn.RetrFrom(path.Join(f.d.pwd, f.fpath), uint64(f.pos)); err != nil {
 			return
 		}
 	}
-	n, err = ff.resp.Read(b)
-	ff.pos += int64(n)
+	n, err = f.resp.Read(b)
+	f.pos += int64(n)
 	return
 }
 
-func (ff *FtpFile) Write(p []byte) (n int, err error) {
+func (f *FtpFile) Write(p []byte) (n int, err error) {
 	var buf = bytes.NewReader(p)
-	err = ff.conn.StorFrom(ff.path, buf, uint64(ff.pos))
+	err = f.d.conn.StorFrom(path.Join(f.d.pwd, f.fpath), buf, uint64(f.pos))
 	var n64, _ = buf.Seek(0, io.SeekCurrent)
-	ff.pos += n64
+	f.pos += n64
 	n = int(n64)
 	return
 }
 
-func (ff *FtpFile) Seek(offset int64, whence int) (abs int64, err error) {
+func (f *FtpFile) Seek(offset int64, whence int) (abs int64, err error) {
 	switch whence {
 	case io.SeekStart:
 		abs = offset
 	case io.SeekCurrent:
-		abs = ff.pos + offset
+		abs = f.pos + offset
 	case io.SeekEnd:
-		if ff.end == 0 {
-			if ff.end, err = ff.conn.FileSize(ff.path); err != nil {
+		if f.end == 0 {
+			if f.end, err = f.d.conn.FileSize(path.Join(f.d.pwd, f.fpath)); err != nil {
 				return
 			}
 		}
-		abs = ff.end + offset
+		abs = f.end + offset
 	default:
 		err = ErrFtpWhence
 		return
@@ -231,11 +238,11 @@ func (ff *FtpFile) Seek(offset int64, whence int) (abs int64, err error) {
 	if abs < 0 {
 		err = ErrFtpNegPos
 	}
-	if abs != ff.pos && ff.resp != nil {
-		ff.resp.Close()
-		ff.resp = nil
+	if abs != f.pos && f.resp != nil {
+		f.resp.Close()
+		f.resp = nil
 	}
-	ff.pos = abs
+	f.pos = abs
 	return
 }
 
