@@ -149,9 +149,6 @@ func Init() {
 		Log.Fatal(err)
 	}
 
-	// build sqlite3 caches
-	InitCaches()
-
 	// init wpk caches
 	if err = InitPackages(); err != nil {
 		Log.Fatal(err)
@@ -343,8 +340,27 @@ func Shutdown() {
 		return
 	})
 
+	// close all opened ISO-disks joints
 	wg.Go(func() (err error) {
-		diskcache.ToLimit(0) // close all opened ISO-files
+		for _, dc := range IsoCaches {
+			dc.Close()
+		}
+		return
+	})
+
+	// close all opened FTP joints
+	wg.Go(func() (err error) {
+		for _, dc := range FtpCaches {
+			dc.Close()
+		}
+		return
+	})
+
+	// close all opened SFTP joints
+	wg.Go(func() (err error) {
+		for _, dc := range SftpCaches {
+			dc.Close()
+		}
 		return
 	})
 

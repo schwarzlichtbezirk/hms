@@ -12,7 +12,6 @@ import (
 
 	"github.com/jlaffaye/ftp"
 	"github.com/pkg/sftp"
-	"golang.org/x/crypto/ssh"
 )
 
 var (
@@ -71,79 +70,6 @@ func SftpPwd(ftpaddr string, client *sftp.Client) (pwd string) {
 		}
 	}
 	return
-}
-
-func SftpOpenFile(ftpurl string) (r io.ReadSeekCloser, err error) {
-	var ftpaddr, ftppath = SplitUrl(ftpurl)
-	var conn *ssh.Client
-	var config = &ssh.ClientConfig{
-		User: "music",
-		Auth: []ssh.AuthMethod{
-			ssh.Password("x"),
-		},
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-	}
-	if conn, err = ssh.Dial("tcp", "192.168.1.1:22", config); err != nil {
-		return
-	}
-	defer conn.Close()
-
-	var client *sftp.Client
-	if client, err = sftp.NewClient(conn); err != nil {
-		return
-	}
-	defer client.Close()
-
-	var pwd = SftpPwd(ftpaddr, client)
-	var f *sftp.File
-	if f, err = client.Open(path.Join(pwd, ftppath)); err != nil {
-		return
-	}
-	r = f
-	return
-}
-
-// FtpFileInfo encapsulates ftp.Entry structure and provides fs.FileInfo implementation.
-type FtpFileInfo struct {
-	*ftp.Entry
-}
-
-// fs.FileInfo implementation.
-func (fi *FtpFileInfo) Name() string {
-	return path.Base(fi.Entry.Name)
-}
-
-// fs.FileInfo implementation.
-func (fi *FtpFileInfo) Size() int64 {
-	return int64(fi.Entry.Size)
-}
-
-// fs.FileInfo implementation.
-func (fi *FtpFileInfo) Mode() fs.FileMode {
-	switch fi.Type {
-	case ftp.EntryTypeFile:
-		return 0444
-	case ftp.EntryTypeFolder:
-		return fs.ModeDir
-	case ftp.EntryTypeLink:
-		return fs.ModeSymlink
-	}
-	return 0
-}
-
-// fs.FileInfo implementation.
-func (fi *FtpFileInfo) ModTime() time.Time {
-	return fi.Entry.Time
-}
-
-// fs.FileInfo implementation.
-func (fi *FtpFileInfo) IsDir() bool {
-	return fi.Entry.Type == ftp.EntryTypeFolder
-}
-
-// fs.FileInfo implementation.
-func (fi *FtpFileInfo) Sys() interface{} {
-	return fi
 }
 
 // FtpFile implements for FTP-file io.Reader, io.Writer, io.Seeker, io.Closer.
@@ -242,6 +168,49 @@ func (f *FtpFile) Seek(offset int64, whence int) (abs int64, err error) {
 	}
 	f.pos = abs
 	return
+}
+
+// FtpFileInfo encapsulates ftp.Entry structure and provides fs.FileInfo implementation.
+type FtpFileInfo struct {
+	*ftp.Entry
+}
+
+// fs.FileInfo implementation.
+func (fi *FtpFileInfo) Name() string {
+	return path.Base(fi.Entry.Name)
+}
+
+// fs.FileInfo implementation.
+func (fi *FtpFileInfo) Size() int64 {
+	return int64(fi.Entry.Size)
+}
+
+// fs.FileInfo implementation.
+func (fi *FtpFileInfo) Mode() fs.FileMode {
+	switch fi.Type {
+	case ftp.EntryTypeFile:
+		return 0444
+	case ftp.EntryTypeFolder:
+		return fs.ModeDir
+	case ftp.EntryTypeLink:
+		return fs.ModeSymlink
+	}
+	return 0
+}
+
+// fs.FileInfo implementation.
+func (fi *FtpFileInfo) ModTime() time.Time {
+	return fi.Entry.Time
+}
+
+// fs.FileInfo implementation.
+func (fi *FtpFileInfo) IsDir() bool {
+	return fi.Entry.Type == ftp.EntryTypeFolder
+}
+
+// fs.FileInfo implementation. Returns structure pointer itself.
+func (fi *FtpFileInfo) Sys() interface{} {
+	return fi
 }
 
 // SftpFile implements for SFTP-file io.Reader, io.Writer, io.Seeker, io.Closer.

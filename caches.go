@@ -118,7 +118,6 @@ var (
 	mediacache = NewCache[Puid_t, MediaData]() // FIFO cache with processed media files.
 	hdcache    = NewCache[Puid_t, MediaData]() // FIFO cache with converted to HD resolution images.
 
-	diskcache = NewCache[string, TempCell[DiskFS]]()     // LRU cache with temporary opened ISO disks.
 	pubkcache = NewCache[[32]byte, TempCell[struct{}]]() // LRU cache with public keys.
 )
 
@@ -408,40 +407,6 @@ func HdCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 	hdcache.Poke(puid, md)
 	hdcache.ToLimit(cfg.HdCacheMaxNum)
 	return
-}
-
-func DiskCacheGet(isopath string) (disk *DiskFS, err error) {
-	var cell TempCell[DiskFS]
-	var ok bool
-
-	if cell, ok = diskcache.Get(isopath); ok {
-		cell.Wait.Reset(cfg.DiskCacheExpire)
-		disk = cell.Data
-		return
-	}
-	var ext = GetFileExt(isopath)
-	if !IsTypeISO(ext) {
-		err = ErrNotDisk
-		return
-	}
-	if disk, err = NewDiskFS(isopath); err != nil {
-		return
-	}
-
-	cell.Data = disk
-	cell.Wait = time.AfterFunc(cfg.DiskCacheExpire, func() {
-		diskcache.Remove(isopath)
-	})
-	diskcache.Set(isopath, cell)
-	return
-}
-
-// InitCaches prepares caches.
-func InitCaches() {
-	diskcache.OnRemove(func(isopath string, cell TempCell[DiskFS]) {
-		cell.Wait.Stop()
-		cell.Data.Close()
-	})
 }
 
 const (

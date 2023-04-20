@@ -110,6 +110,8 @@ var (
 	ErrNotIso = errors.New("filesystem is not ISO9660")
 )
 
+// IsoJoint opens file with ISO9660 disk and prepares disk-structure
+// to access to nested files.
 type IsoJoint struct {
 	file *os.File
 	fs   *iso9660.FileSystem
@@ -156,8 +158,12 @@ func (d *IsoJoint) Stat(fpath string) (fi fs.FileInfo, err error) {
 	return nil, ErrNotFound
 }
 
+// IsoCaches is map with ISO9660-disks joints.
+// Each key is path to ISO-disk, value - cached for this disk list of joints.
 var IsoCaches = map[string]*DiskCache[*IsoJoint]{}
 
+// GetIsoJoint gets cached joint for given path to ISO-disk,
+// or creates new one.
 func GetIsoJoint(isopath string) (d *IsoJoint, err error) {
 	var ok bool
 	var dc *DiskCache[*IsoJoint]
@@ -172,6 +178,7 @@ func GetIsoJoint(isopath string) (d *IsoJoint, err error) {
 	return
 }
 
+// PutSftpJoint puts to cache joint for ISO-disk with given path.
 func PutIsoJoint(isopath string, d *IsoJoint) {
 	var ok bool
 	var dc *DiskCache[*IsoJoint]
@@ -182,6 +189,9 @@ func PutIsoJoint(isopath string, d *IsoJoint) {
 	dc.Put(d)
 }
 
+// FtpJoint create connection to FTP-server, login with provided by
+// given URL credentials, and gets a once current directory.
+// Joint can be used for followed files access.
 type FtpJoint struct {
 	conn *ftp.ServerConn
 	pwd  string
@@ -218,8 +228,12 @@ func (d *FtpJoint) Stat(fpath string) (fi fs.FileInfo, err error) {
 	return
 }
 
+// FtpCaches is map with FTP-joints.
+// Each key is FTP-server address, value - cached on it's server list of joints.
 var FtpCaches = map[string]*DiskCache[*FtpJoint]{}
 
+// GetFtpJoint gets cached joint for given address to FTP-server,
+// or creates new one.
 func GetFtpJoint(ftpaddr string) (d *FtpJoint, err error) {
 	var ok bool
 	var dc *DiskCache[*FtpJoint]
@@ -234,6 +248,7 @@ func GetFtpJoint(ftpaddr string) (d *FtpJoint, err error) {
 	return
 }
 
+// PutSftpJoint puts to cache joint for FTP-server with given address.
 func PutFtpJoint(ftpaddr string, d *FtpJoint) {
 	var ok bool
 	var dc *DiskCache[*FtpJoint]
@@ -244,6 +259,9 @@ func PutFtpJoint(ftpaddr string, d *FtpJoint) {
 	dc.Put(d)
 }
 
+// SftpJoint create SSH-connection to SFTP-server, login with provided by
+// given URL credentials, and gets a once current directory.
+// Joint can be used for followed files access.
 type SftpJoint struct {
 	conn   *ssh.Client
 	client *sftp.Client
@@ -285,8 +303,12 @@ func (d *SftpJoint) Stat(fpath string) (fs.FileInfo, error) {
 	return d.client.Stat(path.Join(d.pwd, fpath))
 }
 
+// SftpCaches is map with SFTP-joints.
+// Each key is SFTP-server address, value - cached on it's server list of joints.
 var SftpCaches = map[string]*DiskCache[*SftpJoint]{}
 
+// GetSftpJoint gets cached joint for given address to SFTP-server,
+// or creates new one.
 func GetSftpJoint(sftpaddr string) (d *SftpJoint, err error) {
 	var ok bool
 	var dc *DiskCache[*SftpJoint]
@@ -301,6 +323,7 @@ func GetSftpJoint(sftpaddr string) (d *SftpJoint, err error) {
 	return
 }
 
+// PutSftpJoint puts to cache joint for SFTP-server with given address.
 func PutSftpJoint(sftpaddr string, d *SftpJoint) {
 	var ok bool
 	var dc *DiskCache[*SftpJoint]
