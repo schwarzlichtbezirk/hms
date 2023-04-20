@@ -13,23 +13,30 @@ import (
 )
 
 // OpenFile opens file from file system, or looking for iso-disk in the given path,
-// opens it, and opens nested into iso-disk file.
-func OpenFile(syspath string) (r File, err error) {
-	if strings.HasPrefix(syspath, "ftp://") {
+// opens it, and opens nested into iso-disk file. Or opens file at cloud.
+func OpenFile(anypath string) (r File, err error) {
+	if strings.HasPrefix(anypath, "ftp://") {
 		var f FtpFile
-		if err = f.Open(syspath); err != nil {
+		if err = f.Open(anypath); err != nil {
+			return
+		}
+		r = &f
+		return
+	} else if strings.HasPrefix(anypath, "sftp://") {
+		var f SftpFile
+		if err = f.Open(anypath); err != nil {
 			return
 		}
 		r = &f
 		return
 	} else {
-		if r, err = os.Open(syspath); err == nil { // primary filesystem file
+		if r, err = os.Open(anypath); err == nil { // primary filesystem file
 			return
 		}
 		var file io.Closer = io.NopCloser(nil) // empty closer stub
 
 		// looking for nested file
-		var isopath = syspath
+		var isopath = anypath
 		for errors.Is(err, fs.ErrNotExist) && isopath != "." && isopath != "/" {
 			isopath = path.Dir(isopath)
 			file, err = os.Open(isopath)
@@ -40,10 +47,10 @@ func OpenFile(syspath string) (r File, err error) {
 		file.Close()
 
 		var fpath string
-		if isopath == syspath {
+		if isopath == anypath {
 			fpath = "/" // get root of disk
 		} else {
-			fpath = syspath[len(isopath):]
+			fpath = anypath[len(isopath):]
 		}
 
 		var f IsoFile
@@ -55,10 +62,11 @@ func OpenFile(syspath string) (r File, err error) {
 	}
 }
 
-// StatFile returns fs.FileInfo of file in file system, or file nested in disk image.
-func StatFile(syspath string) (fi fs.FileInfo, err error) {
-	if strings.HasPrefix(syspath, "ftp://") {
-		var ftpaddr, ftppath = SplitUrl(syspath)
+// StatFile returns fs.FileInfo of file in file system,
+// or file nested in disk image, or cloud file.
+func StatFile(anypath string) (fi fs.FileInfo, err error) {
+	if strings.HasPrefix(anypath, "ftp://") {
+		var ftpaddr, ftppath = SplitUrl(anypath)
 		var d *FtpJoint
 		if d, err = GetFtpJoint(ftpaddr); err != nil {
 			return
@@ -66,16 +74,25 @@ func StatFile(syspath string) (fi fs.FileInfo, err error) {
 		defer PutFtpJoint(ftpaddr, d)
 
 		return d.Stat(ftppath)
+	} else if strings.HasPrefix(anypath, "sftp://") {
+		var sftpaddr, sftppath = SplitUrl(anypath)
+		var d *SftpJoint
+		if d, err = GetSftpJoint(sftpaddr); err != nil {
+			return
+		}
+		defer PutSftpJoint(sftpaddr, d)
+
+		return d.Stat(sftppath)
 	} else {
 		// check up file is at primary filesystem
 		var file *os.File
-		if file, err = os.Open(syspath); err == nil {
+		if file, err = os.Open(anypath); err == nil {
 			defer file.Close()
 			return file.Stat()
 		}
 
 		// looking for nested file
-		var isopath = syspath
+		var isopath = anypath
 		for errors.Is(err, fs.ErrNotExist) && isopath != "." && isopath != "/" {
 			isopath = path.Dir(isopath)
 			file, err = os.Open(isopath)
@@ -86,10 +103,10 @@ func StatFile(syspath string) (fi fs.FileInfo, err error) {
 		file.Close()
 
 		var fpath string
-		if isopath == syspath {
+		if isopath == anypath {
 			fpath = "/" // get root of disk
 		} else {
-			fpath = syspath[len(isopath):]
+			fpath = anypath[len(isopath):]
 		}
 
 		var d *IsoJoint
@@ -131,10 +148,10 @@ func FtpEscapeBrackets(s string) string {
 
 // ReadDir returns directory files fs.FileInfo list. It scan file system path,
 // or looking for iso-disk in the given path, opens it, and scan files nested
-// into iso-disk local directory.
-func ReadDir(dir string) (ret []fs.FileInfo, err error) {
-	if strings.HasPrefix(dir, "ftp://") {
-		var ftpaddr, ftppath = SplitUrl(dir)
+// into iso-disk local directory. Or reads directory at cloud path.
+func ReadDir(anypath string) (ret []fs.FileInfo, err error) {
+	if strings.HasPrefix(anypath, "ftp://") {
+		var ftpaddr, ftppath = SplitUrl(anypath)
 		var d *FtpJoint
 		if d, err = GetFtpJoint(ftpaddr); err != nil {
 			return
@@ -153,9 +170,22 @@ func ReadDir(dir string) (ret []fs.FileInfo, err error) {
 			}
 		}
 		return
+	} else if strings.HasPrefix(anypath, "sftp://") {
+		var sftpaddr, sftppath = SplitUrl(anypath)
+		var d *SftpJoint
+		if d, err = GetSftpJoint(sftpaddr); err != nil {
+			return
+		}
+		defer PutSftpJoint(sftpaddr, d)
+
+		var fpath = FtpEscapeBrackets(path.Join(d.pwd, sftppath))
+		if ret, err = d.client.ReadDir(fpath); err != nil {
+			return
+		}
+		return
 	} else {
 		var file *os.File
-		if file, err = os.Open(dir); err == nil { // primary filesystem file
+		if file, err = os.Open(anypath); err == nil { // primary filesystem file
 			defer file.Close()
 			var fi fs.FileInfo
 			if fi, err = file.Stat(); err != nil {
@@ -167,7 +197,7 @@ func ReadDir(dir string) (ret []fs.FileInfo, err error) {
 		}
 
 		// looking for nested file
-		var isopath = dir
+		var isopath = anypath
 		for errors.Is(err, fs.ErrNotExist) && isopath != "." && isopath != "/" {
 			isopath = path.Dir(isopath)
 			file, err = os.Open(isopath)
@@ -178,10 +208,10 @@ func ReadDir(dir string) (ret []fs.FileInfo, err error) {
 		file.Close()
 
 		var fpath string
-		if isopath == dir {
+		if isopath == anypath {
 			fpath = "/" // get root of disk
 		} else {
-			fpath = dir[len(isopath):]
+			fpath = anypath[len(isopath):]
 		}
 
 		var d *IsoJoint

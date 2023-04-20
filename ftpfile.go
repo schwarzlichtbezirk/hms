@@ -56,12 +56,11 @@ func FtpPwd(ftpaddr string, conn *ftp.ServerConn) (pwd string) {
 	return
 }
 
-// SftpPwdPath return path from given URL concatenated with SFTP
-// current directory. It's used cache to avoid extra calls to
-// FTP-server to get current directory for every call.
-func SftpPwdPath(ftpaddr, ftppath string, client *sftp.Client) (fpath string) {
+// SftpPwd return SFTP current directory. It's used cache to avoid
+// extra calls to SFTP-server to get current directory for every call.
+func SftpPwd(ftpaddr string, client *sftp.Client) (pwd string) {
 	pwdmux.RLock()
-	var pwd, ok = pwdmap[ftpaddr]
+	pwd, ok := pwdmap[ftpaddr]
 	pwdmux.RUnlock()
 	if !ok {
 		var err error
@@ -71,7 +70,6 @@ func SftpPwdPath(ftpaddr, ftppath string, client *sftp.Client) (fpath string) {
 			pwdmux.Unlock()
 		}
 	}
-	fpath = path.Join(pwd, ftppath)
 	return
 }
 
@@ -96,9 +94,9 @@ func SftpOpenFile(ftpurl string) (r io.ReadSeekCloser, err error) {
 	}
 	defer client.Close()
 
-	var fpath = SftpPwdPath(ftpaddr, ftppath, client)
+	var pwd = SftpPwd(ftpaddr, client)
 	var f *sftp.File
-	if f, err = client.Open(fpath); err != nil {
+	if f, err = client.Open(path.Join(pwd, ftppath)); err != nil {
 		return
 	}
 	r = f
@@ -243,6 +241,32 @@ func (f *FtpFile) Seek(offset int64, whence int) (abs int64, err error) {
 		f.resp = nil
 	}
 	f.pos = abs
+	return
+}
+
+// SftpFile implements for SFTP-file io.Reader, io.Writer, io.Seeker, io.Closer.
+type SftpFile struct {
+	addr  string
+	fpath string
+	d     *SftpJoint
+	*sftp.File
+}
+
+// Opens new connection for any some one file with given full SFTP URL.
+func (f *SftpFile) Open(sftpurl string) (err error) {
+	f.addr, f.fpath = SplitUrl(sftpurl)
+	if f.d, err = GetSftpJoint(f.addr); err != nil {
+		return
+	}
+	if f.File, err = f.d.client.Open(path.Join(f.d.pwd, f.fpath)); err != nil {
+		return
+	}
+	return
+}
+
+func (f *SftpFile) Close() (err error) {
+	err = f.File.Close()
+	PutSftpJoint(f.addr, f.d)
 	return
 }
 

@@ -62,6 +62,7 @@ func (d *DiskFS) OpenFile(fpath string) (r io.ReadSeekCloser, err error) {
 	return
 }
 
+// IsoFile implements for ISO9660-file io.Reader, io.Seeker, io.Closer.
 type IsoFile struct {
 	isofile string
 	fpath   string

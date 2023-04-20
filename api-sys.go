@@ -143,6 +143,11 @@ func cchinfAPI(w http.ResponseWriter, r *http.Request) {
 		ftpcount += len(cc.cache)
 	}
 
+	var sftpcount int
+	for _, cc := range SftpCaches {
+		sftpcount += len(cc.cache)
+	}
+
 	var ret = XmlMap{
 		"pathcount":    pathcount,
 		"dircount":     dircount,
@@ -167,6 +172,7 @@ func cchinfAPI(w http.ResponseWriter, r *http.Request) {
 		"gifsumsize2":  gif.size2,
 		"isocount":     isocount,
 		"ftpcount":     ftpcount,
+		"sftpcount":    sftpcount,
 	}
 
 	WriteOK(w, r, ret)
