@@ -292,10 +292,12 @@ const VueCloudCard = {
 	data() {
 		return {
 			selfile: null, // current selected cloud
+			scheme: "ftp",
 			host: "", // path to disk to add
 			port: 21,
 			login: "",
 			password: "",
+			showpswd: false,
 			name: "",
 			hoststate: 0,
 			portstate: 0,
@@ -316,6 +318,14 @@ const VueCloudCard = {
 				this.pinned = this.$root.curpuid === CNID.remote;
 			}
 		},
+		scheme: {
+			handler(newval, oldval) {
+				switch (newval) {
+					case 'ftp': this.port = 21; break;
+					case 'sftp': this.port = 22; break;
+				}
+			}
+		}
 	},
 	computed: {
 		drvlist() {
@@ -336,10 +346,16 @@ const VueCloudCard = {
 			});
 		},
 
+		pswdstate() {
+			return this.showpswd ? 'visibility' : 'visibility_off';
+		},
+		clspswdstate() {
+			return this.showpswd ? 'text' : 'password';
+		},
+
 		clsfilelist() {
 			return listmoderow[this.listmode];
 		},
-
 		clsorder() {
 			return this.sortorder > 0
 				? 'arrow_downward'
@@ -426,6 +442,7 @@ const VueCloudCard = {
 				eventHub.emit('ajax', +1);
 				try {
 					const response = await fetchjsonauth("POST", `/id${this.$root.aid}/api/cloud/add`, {
+						scheme: this.scheme,
 						host: this.host,
 						port: this.port,
 						login: this.login,
@@ -475,6 +492,9 @@ const VueCloudCard = {
 					eventHub.emit('ajax', -1);
 				}
 			})();
+		},
+		onshowpswd() {
+			this.showpswd = !this.showpswd;
 		},
 		onchange(e) {
 			this.hoststate = 0;

@@ -71,18 +71,28 @@ func StatFile(anypath string) (fi fs.FileInfo, err error) {
 		if d, err = GetFtpJoint(ftpaddr); err != nil {
 			return
 		}
-		defer PutFtpJoint(ftpaddr, d)
 
-		return d.Stat(ftppath)
+		fi, err = d.Stat(ftppath)
+		if err != nil { // on case connection was dropped
+			d.Close()
+		} else {
+			PutFtpJoint(ftpaddr, d)
+		}
+		return
 	} else if strings.HasPrefix(anypath, "sftp://") {
 		var sftpaddr, sftppath = SplitUrl(anypath)
 		var d *SftpJoint
 		if d, err = GetSftpJoint(sftpaddr); err != nil {
 			return
 		}
-		defer PutSftpJoint(sftpaddr, d)
 
-		return d.Stat(sftppath)
+		fi, err = d.Stat(sftppath)
+		if err != nil { // on case connection was dropped
+			d.Close()
+		} else {
+			PutSftpJoint(sftpaddr, d)
+		}
+		return
 	} else {
 		// check up file is at primary filesystem
 		var file *os.File
@@ -178,7 +188,7 @@ func ReadDir(anypath string) (ret []fs.FileInfo, err error) {
 		}
 		defer PutSftpJoint(sftpaddr, d)
 
-		var fpath = FtpEscapeBrackets(path.Join(d.pwd, sftppath))
+		var fpath = path.Join(d.pwd, sftppath)
 		if ret, err = d.client.ReadDir(fpath); err != nil {
 			return
 		}

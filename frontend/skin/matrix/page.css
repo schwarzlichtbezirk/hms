@@ -110,6 +110,10 @@ a, .btn-link {
 			background-color: rgba(24, 232, 24, 0.5);
 		}
 
+select.bg-tool {
+	color: #00a000;
+}
+
 .bg-high {
 	background-color: rgba(255, 255, 255, 0.25);
 }

@@ -8,8 +8,11 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/jlaffaye/ftp"
+	"github.com/pkg/sftp"
+	"golang.org/x/crypto/ssh"
 )
 
 // APIHANDLER
@@ -159,6 +162,7 @@ func cldaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
+		Scheme   string `json:"scheme" yaml:"scheme" xml:"scheme"`
 		Host     string `json:"host" yaml:"host" xml:"host"`
 		Port     int    `json:"port" yaml:"port" xml:"port"`
 		Login    string `json:"login,omitempty" yaml:"login,omitempty" xml:"login,omitempty"`
@@ -203,7 +207,7 @@ func cldaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		host += ":" + strconv.Itoa(arg.Port)
 	}
 	var ftpaddr = (&url.URL{
-		Scheme: "ftp",
+		Scheme: arg.Scheme,
 		User:   url.UserPassword(arg.Login, arg.Password),
 		Host:   host,
 	}).String()
@@ -211,21 +215,64 @@ func cldaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var session = xormStorage.NewSession()
 	defer session.Close()
 
-	var conn *ftp.ServerConn
-	if conn, err = ftp.Dial(host, ftp.DialWithTimeout(cfg.DialTimeout)); err != nil {
-		WriteError(w, r, http.StatusNotFound, err, AECcldaddnodial)
-		return
-	}
-	defer conn.Quit()
-	if err = conn.Login(arg.Login, arg.Password); err != nil {
-		WriteError(w, r, http.StatusNotFound, err, AECcldaddnocred)
-		return
-	}
+	var (
+		size  int64
+		mtime time.Time
+	)
+	switch arg.Scheme {
+	case "ftp":
+		var conn *ftp.ServerConn
+		if conn, err = ftp.Dial(host, ftp.DialWithTimeout(cfg.DialTimeout)); err != nil {
+			WriteError(w, r, http.StatusNotFound, err, AECcldaddftpdial)
+			return
+		}
+		defer conn.Quit()
+		if err = conn.Login(arg.Login, arg.Password); err != nil {
+			WriteError(w, r, http.StatusNotFound, err, AECcldaddftpcred)
+			return
+		}
 
-	var root *ftp.Entry
-	if root, err = conn.GetEntry(""); err != nil {
-		WriteError(w, r, http.StatusNotFound, err, AECcldaddroot)
-		return
+		var root *ftp.Entry
+		if root, err = conn.GetEntry(""); err != nil {
+			WriteError(w, r, http.StatusNotFound, err, AECcldaddftproot)
+			return
+		}
+		size, mtime = int64(root.Size), root.Time
+
+	case "sftp":
+		var conn *ssh.Client
+		var config = &ssh.ClientConfig{
+			User: arg.Login,
+			Auth: []ssh.AuthMethod{
+				ssh.Password(arg.Password),
+			},
+			HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+		}
+		if conn, err = ssh.Dial("tcp", host, config); err != nil {
+			WriteError(w, r, http.StatusNotFound, err, AECcldaddsftpdial)
+			return
+		}
+		defer conn.Close()
+
+		var client *sftp.Client
+		if client, err = sftp.NewClient(conn); err != nil {
+			WriteError(w, r, http.StatusNotFound, err, AECcldaddsftpcli)
+			return
+		}
+		defer client.Close()
+
+		var pwd string
+		if pwd, err = client.Getwd(); err != nil {
+			WriteError(w, r, http.StatusNotFound, err, AECcldaddsftppwd)
+			return
+		}
+
+		var root fs.FileInfo
+		if root, err = client.Lstat(path.Join(pwd, "/")); err != nil {
+			WriteError(w, r, http.StatusNotFound, err, AECcldaddsftproot)
+			return
+		}
+		size, mtime = int64(root.Size()), root.ModTime()
 	}
 
 	var fk FileKit
@@ -235,8 +282,8 @@ func cldaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	fk.Static = false
 	fk.Name = name
 	fk.Type = FTcld
-	fk.Size = int64(root.Size)
-	fk.Time = root.Time
+	fk.Size = size
+	fk.Time = mtime
 
 	ret.FP = fk
 	ret.Added = acc.AddCloud(ftpaddr, name)

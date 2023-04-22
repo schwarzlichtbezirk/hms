@@ -187,9 +187,13 @@ const (
 
 	AECcldaddnoacc
 	AECcldaddnodata
-	AECcldaddnodial
-	AECcldaddnocred
-	AECcldaddroot
+	AECcldaddftpdial
+	AECcldaddftpcred
+	AECcldaddftproot
+	AECcldaddsftpdial
+	AECcldaddsftpcli
+	AECcldaddsftppwd
+	AECcldaddsftproot
 
 	// cloud/del
 
