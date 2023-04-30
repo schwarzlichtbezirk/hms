@@ -48,7 +48,7 @@ func (f *IsoFile) Stat() (fi fs.FileInfo, err error) {
 	var fname = path.Base(fpath)
 	for _, fi = range list {
 		if fi.Name() == fname {
-			return &IsoFileInfo{fi}, nil
+			return IsoFileInfo{fi}, nil
 		}
 	}
 	return nil, ErrNotFound
@@ -59,7 +59,7 @@ type IsoFileInfo struct {
 	fs.FileInfo
 }
 
-func (fi *IsoFileInfo) Name() string {
+func (fi IsoFileInfo) Name() string {
 	var dec = charmap.Windows1251.NewDecoder()
 	var name, _ = dec.String(fi.FileInfo.Name())
 	return name

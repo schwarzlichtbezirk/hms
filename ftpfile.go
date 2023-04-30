@@ -109,7 +109,7 @@ func (f *FtpFile) Stat() (fi fs.FileInfo, err error) {
 	if ent, err = f.d.conn.GetEntry(path.Join(f.d.pwd, f.fpath)); err != nil {
 		return
 	}
-	fi = &FtpFileInfo{
+	fi = FtpFileInfo{
 		ent,
 	}
 	return
@@ -176,17 +176,17 @@ type FtpFileInfo struct {
 }
 
 // fs.FileInfo implementation.
-func (fi *FtpFileInfo) Name() string {
+func (fi FtpFileInfo) Name() string {
 	return path.Base(fi.Entry.Name)
 }
 
 // fs.FileInfo implementation.
-func (fi *FtpFileInfo) Size() int64 {
+func (fi FtpFileInfo) Size() int64 {
 	return int64(fi.Entry.Size)
 }
 
 // fs.FileInfo implementation.
-func (fi *FtpFileInfo) Mode() fs.FileMode {
+func (fi FtpFileInfo) Mode() fs.FileMode {
 	switch fi.Type {
 	case ftp.EntryTypeFile:
 		return 0444
@@ -199,17 +199,17 @@ func (fi *FtpFileInfo) Mode() fs.FileMode {
 }
 
 // fs.FileInfo implementation.
-func (fi *FtpFileInfo) ModTime() time.Time {
+func (fi FtpFileInfo) ModTime() time.Time {
 	return fi.Entry.Time
 }
 
 // fs.FileInfo implementation.
-func (fi *FtpFileInfo) IsDir() bool {
+func (fi FtpFileInfo) IsDir() bool {
 	return fi.Entry.Type == ftp.EntryTypeFolder
 }
 
 // fs.FileInfo implementation. Returns structure pointer itself.
-func (fi *FtpFileInfo) Sys() interface{} {
+func (fi FtpFileInfo) Sys() interface{} {
 	return fi
 }
 

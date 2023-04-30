@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io"
 	"io/fs"
+	"net/http"
 	"os"
 	"path"
 	"strings"
@@ -93,6 +94,26 @@ func StatFile(anypath string) (fi fs.FileInfo, err error) {
 			PutSftpJoint(sftpaddr, d)
 		}
 		return
+	} else if strings.HasPrefix(anypath, "http://") || strings.HasPrefix(anypath, "https://") {
+		var davaddr, davpath = SplitUrl(anypath)
+		var d *DavJoint
+		if d, err = GetDavJoint(davaddr); err != nil {
+			return
+		}
+
+		var ok bool
+		if davpath, ok = d.TruePath(davpath); !ok {
+			err = http.ErrAbortHandler
+			return
+		}
+
+		fi, err = d.Stat(davpath)
+		if err != nil { // on case connection was dropped
+			d.Close()
+		} else {
+			PutDavJoint(davaddr, d)
+		}
+		return
 	} else {
 		// check up file is at primary filesystem
 		var file *os.File
@@ -176,7 +197,7 @@ func ReadDir(anypath string) (ret []fs.FileInfo, err error) {
 		ret = make([]fs.FileInfo, 0, len(entries))
 		for _, ent := range entries {
 			if ent.Name != "." && ent.Name != ".." {
-				ret = append(ret, &FtpFileInfo{ent})
+				ret = append(ret, FtpFileInfo{ent})
 			}
 		}
 		return
@@ -190,6 +211,24 @@ func ReadDir(anypath string) (ret []fs.FileInfo, err error) {
 
 		var fpath = path.Join(d.pwd, sftppath)
 		if ret, err = d.client.ReadDir(fpath); err != nil {
+			return
+		}
+		return
+	} else if strings.HasPrefix(anypath, "http://") || strings.HasPrefix(anypath, "https://") {
+		var davaddr, davpath = SplitUrl(anypath)
+		var d *DavJoint
+		if d, err = GetDavJoint(davaddr); err != nil {
+			return
+		}
+		defer PutDavJoint(davaddr, d)
+
+		var ok bool
+		if davpath, ok = d.TruePath(davpath); !ok {
+			err = http.ErrAbortHandler
+			return
+		}
+
+		if ret, err = d.client.ReadDir(davpath); err != nil {
 			return
 		}
 		return
@@ -236,7 +275,7 @@ func ReadDir(anypath string) (ret []fs.FileInfo, err error) {
 			return
 		}
 		for i, fi := range ret {
-			ret[i] = &IsoFileInfo{fi}
+			ret[i] = IsoFileInfo{fi}
 		}
 		return
 	}

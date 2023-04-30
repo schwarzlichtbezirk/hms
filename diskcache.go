@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"strings"
 	"sync"
 	"time"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/diskfs/go-diskfs/filesystem/iso9660"
 	"github.com/jlaffaye/ftp"
 	"github.com/pkg/sftp"
+	"github.com/studio-b12/gowebdav"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/text/encoding/charmap"
 )
@@ -26,10 +28,13 @@ func IsStatic(fi fs.FileInfo) (static bool) {
 	if static = fi == nil; static {
 		return
 	}
-	if _, static = fi.(*IsoFileInfo); static {
+	if _, static = fi.(IsoFileInfo); static {
 		return
 	}
-	if _, static = fi.(*FtpFileInfo); static {
+	if _, static = fi.(gowebdav.File); static {
+		return
+	}
+	if _, static = fi.(FtpFileInfo); static {
 		return
 	}
 	if sys := fi.Sys(); sys != nil {
@@ -152,7 +157,7 @@ func (d *IsoJoint) Stat(fpath string) (fi fs.FileInfo, err error) {
 	var fname = path.Base(fpath)
 	for _, fi = range list {
 		if fi.Name() == fname {
-			return &IsoFileInfo{fi}, nil
+			return IsoFileInfo{fi}, nil
 		}
 	}
 	return nil, ErrNotFound
@@ -178,13 +183,87 @@ func GetIsoJoint(isopath string) (d *IsoJoint, err error) {
 	return
 }
 
-// PutSftpJoint puts to cache joint for ISO-disk with given path.
+// PutIsoJoint puts to cache joint for ISO-disk with given path.
 func PutIsoJoint(isopath string, d *IsoJoint) {
 	var ok bool
 	var dc *DiskCache[*IsoJoint]
 	if dc, ok = IsoCaches[isopath]; !ok {
 		dc = &DiskCache[*IsoJoint]{}
 		IsoCaches[isopath] = dc
+	}
+	dc.Put(d)
+}
+
+// DavJoint keeps gowebdav.Client object.
+type DavJoint struct {
+	prefix string
+	client *gowebdav.Client
+}
+
+func (d *DavJoint) Make(urladdr string) (err error) {
+	if i := strings.Index(urladdr, "://"); i != -1 {
+		if j := strings.Index(urladdr[i+3:], "/"); j != -1 {
+			d.prefix = urladdr[i+3+j+1:]
+			if urladdr[len(urladdr)-1] != '/' {
+				d.prefix += "/"
+			}
+		}
+	} else {
+		return io.EOF
+	}
+	d.client = gowebdav.NewClient(urladdr, "", "") // user & password gets from URL
+	err = d.client.Connect()
+	return
+}
+
+func (d *DavJoint) Close() error {
+	return nil
+}
+
+func (d *DavJoint) TruePath(fpath string) (string, bool) {
+	if len(fpath) < len(d.prefix) {
+		if fpath+"/" == d.prefix {
+			return "", true
+		}
+		return "", false
+	}
+	if fpath[:len(d.prefix)] != d.prefix {
+		return "", false
+	}
+	return fpath[len(d.prefix):], true
+}
+
+func (d *DavJoint) Stat(fpath string) (fi fs.FileInfo, err error) {
+	return d.client.Stat(fpath)
+}
+
+// DavCaches is map of gowebdav.Client joints.
+// Each key is address of WebDAV service, value - cached for this service list of joints.
+var DavCaches = map[string]*DiskCache[*DavJoint]{}
+
+// GetDavJoint gets cached joint for given path to ISO-disk,
+// or creates new one.
+func GetDavJoint(davpath string) (d *DavJoint, err error) {
+	var ok bool
+	var dc *DiskCache[*DavJoint]
+	if dc, ok = DavCaches[davpath]; !ok {
+		dc = &DiskCache[*DavJoint]{}
+		DavCaches[davpath] = dc
+	}
+	if d, ok = dc.Peek(); !ok {
+		d = &DavJoint{}
+		err = d.Make(davpath)
+	}
+	return
+}
+
+// PutDavJoint puts to cache joint for ISO-disk with given path.
+func PutDavJoint(davpath string, d *DavJoint) {
+	var ok bool
+	var dc *DiskCache[*DavJoint]
+	if dc, ok = DavCaches[davpath]; !ok {
+		dc = &DiskCache[*DavJoint]{}
+		DavCaches[davpath] = dc
 	}
 	dc.Put(d)
 }
@@ -222,7 +301,7 @@ func (d *FtpJoint) Stat(fpath string) (fi fs.FileInfo, err error) {
 	if ent, err = d.conn.GetEntry(path.Join(d.pwd, fpath)); err != nil {
 		return
 	}
-	fi = &FtpFileInfo{
+	fi = FtpFileInfo{
 		ent,
 	}
 	return

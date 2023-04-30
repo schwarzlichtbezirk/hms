@@ -194,6 +194,7 @@ const (
 	AECcldaddsftpcli
 	AECcldaddsftppwd
 	AECcldaddsftproot
+	AECcldadddavdial
 
 	// cloud/del
 

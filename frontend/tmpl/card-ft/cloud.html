@@ -42,6 +42,7 @@
 					<select v-model="scheme" class="form-select bg-tool w-auto mx-2">
 						<option value="ftp">FTP</option>
 						<option value="sftp">SFTP</option>
+						<option value="https">WebDAV</option>
 					</select>
 					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 				</div>
@@ -54,7 +55,7 @@
 								<label v-bind:for="'host'+iid">connection host</label>
 							</div>
 							<div class="form-floating col-md-4">
-								<input v-model.trim="port" v-bind:class="clsportedt" v-bind:id="'port'+iid" v-on:keyup.enter.prevent="onadd" v-on:keyup="onchange" class="form-control toolinp bg-tool" type="number" min="1" max="65535" required>
+								<input v-model.trim="port" v-bind:class="clsportedt" v-bind:id="'port'+iid" v-on:keyup.enter.prevent="onadd" v-on:keyup="onchange" class="form-control toolinp bg-tool" type="number" min="1" max="65535">
 								<label v-bind:for="'port'+iid">connection port</label>
 							</div>
 						</div>

@@ -12,6 +12,7 @@ import (
 
 	"github.com/jlaffaye/ftp"
 	"github.com/pkg/sftp"
+	"github.com/studio-b12/gowebdav"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -206,7 +207,7 @@ func cldaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	if arg.Port > 0 {
 		host += ":" + strconv.Itoa(arg.Port)
 	}
-	var ftpaddr = (&url.URL{
+	var urladdr = (&url.URL{
 		Scheme: arg.Scheme,
 		User:   url.UserPassword(arg.Login, arg.Password),
 		Host:   host,
@@ -273,12 +274,20 @@ func cldaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			return
 		}
 		size, mtime = int64(root.Size()), root.ModTime()
+
+	case "https":
+		var client = gowebdav.NewClient(urladdr, "", "") // user & password gets from URL
+		if err = client.Connect(); err != nil {
+			WriteError(w, r, http.StatusNotFound, err, AECcldadddavdial)
+			return
+		}
+		size, mtime = 0, time.Unix(0, 0) // DAV does not provides info for folders
 	}
 
 	var fk FileKit
-	fk.PUID = PathStoreCache(session, ftpaddr)
-	fk.Free = acc.PathAccess(ftpaddr, false)
-	fk.Shared = acc.IsShared(ftpaddr)
+	fk.PUID = PathStoreCache(session, urladdr)
+	fk.Free = acc.PathAccess(urladdr, false)
+	fk.Shared = acc.IsShared(urladdr)
 	fk.Static = false
 	fk.Name = name
 	fk.Type = FTcld
@@ -286,7 +295,7 @@ func cldaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	fk.Time = mtime
 
 	ret.FP = fk
-	ret.Added = acc.AddCloud(ftpaddr, name)
+	ret.Added = acc.AddCloud(urladdr, name)
 
 	WriteOK(w, r, &ret)
 }
