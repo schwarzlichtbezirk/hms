@@ -74,31 +74,31 @@ func SftpPwd(ftpaddr string, client *sftp.Client) (pwd string) {
 
 // FtpFile implements for FTP-file io.Reader, io.Writer, io.Seeker, io.Closer.
 type FtpFile struct {
-	addr  string
-	fpath string
-	d     *FtpJoint
-	resp  *ftp.Response
-	pos   int64
-	end   int64
+	addr string // address of FTP-service, i.e. ftp://user:pass@example.com
+	path string // path inside of FTP-service
+	d    *FtpJoint
+	io.ReadCloser
+	pos int64
+	end int64
 }
 
 // Opens new connection for any some one file with given full FTP URL.
 // FTP-connection can serve only one file by the time, so it can not
 // be used for parallel reading group of files.
 func (f *FtpFile) Open(ftpurl string) (err error) {
-	f.addr, f.fpath = SplitUrl(ftpurl)
+	f.addr, f.path = SplitUrl(ftpurl)
 	if f.d, err = GetFtpJoint(f.addr); err != nil {
 		return
 	}
-	f.resp = nil
+	f.ReadCloser = nil
 	f.pos, f.end = 0, 0
 	return
 }
 
 func (f *FtpFile) Close() (err error) {
-	if f.resp != nil {
-		err = f.resp.Close()
-		f.resp = nil
+	if f.ReadCloser != nil {
+		err = f.ReadCloser.Close()
+		f.ReadCloser = nil
 	}
 	PutFtpJoint(f.addr, f.d)
 	return
@@ -106,7 +106,7 @@ func (f *FtpFile) Close() (err error) {
 
 func (f *FtpFile) Stat() (fi fs.FileInfo, err error) {
 	var ent *ftp.Entry
-	if ent, err = f.d.conn.GetEntry(path.Join(f.d.pwd, f.fpath)); err != nil {
+	if ent, err = f.d.conn.GetEntry(path.Join(f.d.pwd, f.path)); err != nil {
 		return
 	}
 	fi = FtpFileInfo{
@@ -117,25 +117,25 @@ func (f *FtpFile) Stat() (fi fs.FileInfo, err error) {
 
 func (f *FtpFile) Size() int64 {
 	if f.end == 0 {
-		f.end, _ = f.d.conn.FileSize(path.Join(f.d.pwd, f.fpath))
+		f.end, _ = f.d.conn.FileSize(path.Join(f.d.pwd, f.path))
 	}
 	return f.end
 }
 
 func (f *FtpFile) Read(b []byte) (n int, err error) {
-	if f.resp == nil {
-		if f.resp, err = f.d.conn.RetrFrom(path.Join(f.d.pwd, f.fpath), uint64(f.pos)); err != nil {
+	if f.ReadCloser == nil {
+		if f.ReadCloser, err = f.d.conn.RetrFrom(path.Join(f.d.pwd, f.path), uint64(f.pos)); err != nil {
 			return
 		}
 	}
-	n, err = f.resp.Read(b)
+	n, err = f.ReadCloser.Read(b)
 	f.pos += int64(n)
 	return
 }
 
 func (f *FtpFile) Write(p []byte) (n int, err error) {
 	var buf = bytes.NewReader(p)
-	err = f.d.conn.StorFrom(path.Join(f.d.pwd, f.fpath), buf, uint64(f.pos))
+	err = f.d.conn.StorFrom(path.Join(f.d.pwd, f.path), buf, uint64(f.pos))
 	var n64, _ = buf.Seek(0, io.SeekCurrent)
 	f.pos += n64
 	n = int(n64)
@@ -150,7 +150,7 @@ func (f *FtpFile) Seek(offset int64, whence int) (abs int64, err error) {
 		abs = f.pos + offset
 	case io.SeekEnd:
 		if f.end == 0 {
-			if f.end, err = f.d.conn.FileSize(path.Join(f.d.pwd, f.fpath)); err != nil {
+			if f.end, err = f.d.conn.FileSize(path.Join(f.d.pwd, f.path)); err != nil {
 				return
 			}
 		}
@@ -162,9 +162,9 @@ func (f *FtpFile) Seek(offset int64, whence int) (abs int64, err error) {
 	if abs < 0 {
 		err = ErrFtpNegPos
 	}
-	if abs != f.pos && f.resp != nil {
-		f.resp.Close()
-		f.resp = nil
+	if abs != f.pos && f.ReadCloser != nil {
+		f.ReadCloser.Close()
+		f.ReadCloser = nil
 	}
 	f.pos = abs
 	return
@@ -215,19 +215,19 @@ func (fi FtpFileInfo) Sys() interface{} {
 
 // SftpFile implements for SFTP-file io.Reader, io.Writer, io.Seeker, io.Closer.
 type SftpFile struct {
-	addr  string
-	fpath string
-	d     *SftpJoint
+	addr string // address of SFTP-service, i.e. sftp://user:pass@example.com
+	path string // path inside of SFTP-service without PWD
+	d    *SftpJoint
 	*sftp.File
 }
 
 // Opens new connection for any some one file with given full SFTP URL.
 func (f *SftpFile) Open(sftpurl string) (err error) {
-	f.addr, f.fpath = SplitUrl(sftpurl)
+	f.addr, f.path = SplitUrl(sftpurl)
 	if f.d, err = GetSftpJoint(f.addr); err != nil {
 		return
 	}
-	if f.File, err = f.d.client.Open(path.Join(f.d.pwd, f.fpath)); err != nil {
+	if f.File, err = f.d.client.Open(path.Join(f.d.pwd, f.path)); err != nil {
 		return
 	}
 	return

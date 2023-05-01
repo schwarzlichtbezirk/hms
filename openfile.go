@@ -4,7 +4,6 @@ import (
 	"errors"
 	"io"
 	"io/fs"
-	"net/http"
 	"os"
 	"path"
 	"strings"
@@ -25,6 +24,13 @@ func OpenFile(anypath string) (r File, err error) {
 		return
 	} else if strings.HasPrefix(anypath, "sftp://") {
 		var f SftpFile
+		if err = f.Open(anypath); err != nil {
+			return
+		}
+		r = &f
+		return
+	} else if strings.HasPrefix(anypath, "http://") || strings.HasPrefix(anypath, "https://") {
+		var f DavFile
 		if err = f.Open(anypath); err != nil {
 			return
 		}
@@ -95,23 +101,22 @@ func StatFile(anypath string) (fi fs.FileInfo, err error) {
 		}
 		return
 	} else if strings.HasPrefix(anypath, "http://") || strings.HasPrefix(anypath, "https://") {
-		var davaddr, davpath = SplitUrl(anypath)
+		var addr, fpath, ok = GetDavPath(anypath)
+		if !ok {
+			err = ErrNotFound
+			return
+		}
+
 		var d *DavJoint
-		if d, err = GetDavJoint(davaddr); err != nil {
+		if d, err = GetDavJoint(addr); err != nil {
 			return
 		}
 
-		var ok bool
-		if davpath, ok = d.TruePath(davpath); !ok {
-			err = http.ErrAbortHandler
-			return
-		}
-
-		fi, err = d.Stat(davpath)
+		fi, err = d.Stat(fpath)
 		if err != nil { // on case connection was dropped
 			d.Close()
 		} else {
-			PutDavJoint(davaddr, d)
+			PutDavJoint(addr, d)
 		}
 		return
 	} else {
@@ -215,20 +220,19 @@ func ReadDir(anypath string) (ret []fs.FileInfo, err error) {
 		}
 		return
 	} else if strings.HasPrefix(anypath, "http://") || strings.HasPrefix(anypath, "https://") {
-		var davaddr, davpath = SplitUrl(anypath)
+		var addr, fpath, ok = GetDavPath(anypath)
+		if !ok {
+			err = ErrNotFound
+			return
+		}
+
 		var d *DavJoint
-		if d, err = GetDavJoint(davaddr); err != nil {
+		if d, err = GetDavJoint(addr); err != nil {
 			return
 		}
-		defer PutDavJoint(davaddr, d)
+		defer PutDavJoint(addr, d)
 
-		var ok bool
-		if davpath, ok = d.TruePath(davpath); !ok {
-			err = http.ErrAbortHandler
-			return
-		}
-
-		if ret, err = d.client.ReadDir(davpath); err != nil {
+		if ret, err = d.client.ReadDir(fpath); err != nil {
 			return
 		}
 		return

@@ -196,21 +196,10 @@ func PutIsoJoint(isopath string, d *IsoJoint) {
 
 // DavJoint keeps gowebdav.Client object.
 type DavJoint struct {
-	prefix string
 	client *gowebdav.Client
 }
 
 func (d *DavJoint) Make(urladdr string) (err error) {
-	if i := strings.Index(urladdr, "://"); i != -1 {
-		if j := strings.Index(urladdr[i+3:], "/"); j != -1 {
-			d.prefix = urladdr[i+3+j+1:]
-			if urladdr[len(urladdr)-1] != '/' {
-				d.prefix += "/"
-			}
-		}
-	} else {
-		return io.EOF
-	}
 	d.client = gowebdav.NewClient(urladdr, "", "") // user & password gets from URL
 	err = d.client.Connect()
 	return
@@ -220,50 +209,67 @@ func (d *DavJoint) Close() error {
 	return nil
 }
 
-func (d *DavJoint) TruePath(fpath string) (string, bool) {
-	if len(fpath) < len(d.prefix) {
-		if fpath+"/" == d.prefix {
-			return "", true
-		}
-		return "", false
-	}
-	if fpath[:len(d.prefix)] != d.prefix {
-		return "", false
-	}
-	return fpath[len(d.prefix):], true
-}
-
 func (d *DavJoint) Stat(fpath string) (fi fs.FileInfo, err error) {
 	return d.client.Stat(fpath)
 }
 
 // DavCaches is map of gowebdav.Client joints.
-// Each key is address of WebDAV service, value - cached for this service list of joints.
+// Each key is URL of WebDAV service, value - cached for this service list of joints.
 var DavCaches = map[string]*DiskCache[*DavJoint]{}
 
-// GetDavJoint gets cached joint for given path to ISO-disk,
-// or creates new one.
-func GetDavJoint(davpath string) (d *DavJoint, err error) {
-	var ok bool
-	var dc *DiskCache[*DavJoint]
-	if dc, ok = DavCaches[davpath]; !ok {
-		dc = &DiskCache[*DavJoint]{}
-		DavCaches[davpath] = dc
+// DavPath is map of WebDAV servises root paths by services URLs.
+var DavPath = map[string]string{}
+
+func GetDavPath(davurl string) (dpath, fpath string, ok bool) {
+	defer func() {
+		if ok && dpath != davurl+"/" {
+			fpath = davurl[len(dpath):]
+		}
+	}()
+	var addr, route = SplitUrl(davurl)
+	if dpath, ok = DavPath[addr]; ok {
+		return
 	}
-	if d, ok = dc.Peek(); !ok {
-		d = &DavJoint{}
-		err = d.Make(davpath)
+
+	dpath = addr
+	var chunks = strings.Split("/"+route, "/")
+	for _, chunk := range chunks {
+		dpath += chunk + "/"
+		var client = gowebdav.NewClient(dpath, "", "")
+		if ok = client.Connect() == nil; ok {
+			PutDavJoint(dpath, &DavJoint{
+				client: client,
+			})
+			DavPath[addr] = dpath
+			return
+		}
 	}
 	return
 }
 
-// PutDavJoint puts to cache joint for ISO-disk with given path.
-func PutDavJoint(davpath string, d *DavJoint) {
+// GetDavJoint gets cached joint for given URL to WebDAV service,
+// or creates new one.
+func GetDavJoint(davurl string) (d *DavJoint, err error) {
 	var ok bool
 	var dc *DiskCache[*DavJoint]
-	if dc, ok = DavCaches[davpath]; !ok {
+	if dc, ok = DavCaches[davurl]; !ok {
 		dc = &DiskCache[*DavJoint]{}
-		DavCaches[davpath] = dc
+		DavCaches[davurl] = dc
+	}
+	if d, ok = dc.Peek(); !ok {
+		d = &DavJoint{}
+		err = d.Make(davurl)
+	}
+	return
+}
+
+// PutDavJoint puts to cache joint for WebDAV service with given URL.
+func PutDavJoint(davurl string, d *DavJoint) {
+	var ok bool
+	var dc *DiskCache[*DavJoint]
+	if dc, ok = DavCaches[davurl]; !ok {
+		dc = &DiskCache[*DavJoint]{}
+		DavCaches[davurl] = dc
 	}
 	dc.Put(d)
 }
