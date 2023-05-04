@@ -187,6 +187,7 @@ const (
 
 	AECcldaddnoacc
 	AECcldaddnodata
+	AECcldaddbadhost
 	AECcldaddftpdial
 	AECcldaddftpcred
 	AECcldaddftproot

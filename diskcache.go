@@ -233,14 +233,18 @@ func GetDavPath(davurl string) (dpath, fpath string, ok bool) {
 
 	dpath = addr
 	var chunks = strings.Split("/"+route, "/")
+	if chunks[len(chunks)-1] == "" {
+		chunks = chunks[:len(chunks)-1]
+	}
 	for _, chunk := range chunks {
 		dpath += chunk + "/"
 		var client = gowebdav.NewClient(dpath, "", "")
-		if ok = client.Connect() == nil; ok {
+		if fi, err := client.Stat(""); err == nil && fi.IsDir() {
 			PutDavJoint(dpath, &DavJoint{
 				client: client,
 			})
 			DavPath[addr] = dpath
+			ok = true
 			return
 		}
 	}

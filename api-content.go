@@ -70,11 +70,6 @@ func fileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 
-	if strings.HasPrefix(syspath, "http://") || strings.HasPrefix(syspath, "https://") {
-		http.Redirect(w, r, syspath, http.StatusMovedPermanently)
-		return
-	}
-
 	if acc.IsHidden(syspath) {
 		WriteError(w, r, http.StatusForbidden, ErrHidden, AECmediahidden)
 		return
@@ -164,6 +159,13 @@ func fileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	var content io.ReadSeekCloser
 	if content, err = OpenFile(syspath); err != nil {
+		if errors.Is(err, ErrNotFound) {
+			// try to redirect to external shared file (not at DAV-disk)
+			if strings.HasPrefix(syspath, "http://") || strings.HasPrefix(syspath, "https://") {
+				http.Redirect(w, r, syspath, http.StatusMovedPermanently)
+				return
+			}
+		}
 		if errors.Is(err, fs.ErrNotExist) {
 			WriteError(w, r, http.StatusGone, err, AECmediafilegone)
 			return

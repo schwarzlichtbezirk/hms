@@ -286,13 +286,23 @@ const VueCtgrCard = {
 	},
 };
 
+const defcloudport = {
+	ftp: "21",
+	sftp: "22",
+	http: "",
+	https: "",
+};
+
 const VueCloudCard = {
 	template: '#cloud-card-tpl',
 	props: ["flist"],
 	data() {
 		return {
 			selfile: null, // current selected cloud
-			scheme: "ftp",
+			sortorder: 1,
+			listmode: 'sm',
+
+			scheme: 'ftp',
 			host: "", // path to disk to add
 			port: 21,
 			login: "",
@@ -305,8 +315,6 @@ const VueCloudCard = {
 			passstate: 0,
 			rootadd: null,
 
-			sortorder: 1,
-			listmode: 'sm',
 			pinned: false,
 			expanded: true,
 			iid: makestrid(10), // instance ID
@@ -320,10 +328,7 @@ const VueCloudCard = {
 		},
 		scheme: {
 			handler(newval, oldval) {
-				switch (newval) {
-					case 'ftp': this.port = 21; break;
-					case 'sftp': this.port = 22; break;
-				}
+				this.port = defcloudport[newval];
 			}
 		}
 	},
@@ -391,7 +396,7 @@ const VueCloudCard = {
 		},
 		clsadd() {
 			return {
-				'disabled': !this.host.length || !this.port ||
+				'disabled': !this.host.length || !(this.port || !defcloudport[this.scheme]) ||
 					this.hoststate < 0 || this.portstate < 0
 			};
 		},
@@ -497,8 +502,16 @@ const VueCloudCard = {
 			this.showpswd = !this.showpswd;
 		},
 		onchange(e) {
-			this.hoststate = 0;
-			this.portstate = 0;
+			if (!this.host.length) {
+				this.hoststate = -1;
+			} else {
+				this.hoststate = 0;
+			}
+			if (defcloudport[this.scheme] && !this.port) {
+				this.portstate = -1;
+			} else {
+				this.portstate = 0;
+			}
 			this.loginstate = 0;
 			this.passstate = 0;
 		},
@@ -588,13 +601,14 @@ const VueDriveCard = {
 	data() {
 		return {
 			selfile: null, // current selected drive
+			sortorder: 1,
+			listmode: 'sm',
+
 			rootpath: "", // path to disk to add
 			name: "",
 			rootpathstate: 0,
 			rootadd: null,
 
-			sortorder: 1,
-			listmode: 'sm',
 			pinned: false,
 			expanded: true,
 			iid: makestrid(10), // instance ID

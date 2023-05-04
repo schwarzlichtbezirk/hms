@@ -11,8 +11,9 @@ import (
 func ScanFileNameList(prf *Profile, session *Session, vpaths []DiskPath) (ret []any, lstp DirProp, err error) {
 	var files = make([]fs.FileInfo, len(vpaths))
 	for i, dp := range vpaths {
-		var fi, _ = StatFile(dp.Path)
-		files[i] = fi
+		if fi, _ := StatFile(dp.Path); fi != nil {
+			files[i] = fi
+		}
 	}
 
 	return ScanFileInfoList(prf, session, files, vpaths)

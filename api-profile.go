@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"net/url"
 	"path"
-	"strconv"
 	"strings"
 	"time"
 
@@ -165,7 +164,7 @@ func cldaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 		Scheme   string `json:"scheme" yaml:"scheme" xml:"scheme"`
 		Host     string `json:"host" yaml:"host" xml:"host"`
-		Port     int    `json:"port" yaml:"port" xml:"port"`
+		Port     string `json:"port" yaml:"port" xml:"port"`
 		Login    string `json:"login,omitempty" yaml:"login,omitempty" xml:"login,omitempty"`
 		Password string `json:"password,omitempty" yaml:"password,omitempty" xml:"password,omitempty"`
 		Name     string `json:"name" yaml:"name" xml:"name"`
@@ -199,19 +198,26 @@ func cldaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 
+	var argurl *url.URL
+	if argurl, err = url.Parse(arg.Host); err != nil {
+		WriteError400(w, r, err, AECcldaddbadhost)
+		return
+	}
+	if argurl.Scheme == "" {
+		argurl.Scheme = arg.Scheme
+	}
+	if i := strings.Index(argurl.Host, ":"); i == -1 && arg.Port != "" {
+		argurl.Host += ":" + arg.Port
+	}
+	if argurl.User.String() == "" {
+		argurl.User = url.UserPassword(arg.Login, arg.Password)
+	}
+	var surl = argurl.String()
+
 	var name = arg.Name
 	if len(name) == 0 {
-		name = arg.Host
+		name = argurl.Redacted()
 	}
-	var host = arg.Host
-	if arg.Port > 0 {
-		host += ":" + strconv.Itoa(arg.Port)
-	}
-	var urladdr = (&url.URL{
-		Scheme: arg.Scheme,
-		User:   url.UserPassword(arg.Login, arg.Password),
-		Host:   host,
-	}).String()
 
 	var session = xormStorage.NewSession()
 	defer session.Close()
@@ -223,7 +229,7 @@ func cldaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	switch arg.Scheme {
 	case "ftp":
 		var conn *ftp.ServerConn
-		if conn, err = ftp.Dial(host, ftp.DialWithTimeout(cfg.DialTimeout)); err != nil {
+		if conn, err = ftp.Dial(argurl.Host, ftp.DialWithTimeout(cfg.DialTimeout)); err != nil {
 			WriteError(w, r, http.StatusNotFound, err, AECcldaddftpdial)
 			return
 		}
@@ -249,7 +255,7 @@ func cldaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			},
 			HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 		}
-		if conn, err = ssh.Dial("tcp", host, config); err != nil {
+		if conn, err = ssh.Dial("tcp", argurl.Host, config); err != nil {
 			WriteError(w, r, http.StatusNotFound, err, AECcldaddsftpdial)
 			return
 		}
@@ -275,9 +281,10 @@ func cldaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		}
 		size, mtime = int64(root.Size()), root.ModTime()
 
-	case "https":
-		var client = gowebdav.NewClient(urladdr, "", "") // user & password gets from URL
-		if err = client.Connect(); err != nil {
+	case "http", "https":
+		var client = gowebdav.NewClient(surl, "", "") // user & password gets from URL
+		var fi fs.FileInfo
+		if fi, err = client.Stat(""); err != nil || !fi.IsDir() {
 			WriteError(w, r, http.StatusNotFound, err, AECcldadddavdial)
 			return
 		}
@@ -285,9 +292,9 @@ func cldaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	}
 
 	var fk FileKit
-	fk.PUID = PathStoreCache(session, urladdr)
-	fk.Free = acc.PathAccess(urladdr, false)
-	fk.Shared = acc.IsShared(urladdr)
+	fk.PUID = PathStoreCache(session, surl)
+	fk.Free = acc.PathAccess(surl, false)
+	fk.Shared = acc.IsShared(surl)
 	fk.Static = false
 	fk.Name = name
 	fk.Type = FTcld
@@ -295,7 +302,7 @@ func cldaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	fk.Time = mtime
 
 	ret.FP = fk
-	ret.Added = acc.AddCloud(urladdr, name)
+	ret.Added = acc.AddCloud(surl, name)
 
 	WriteOK(w, r, &ret)
 }
