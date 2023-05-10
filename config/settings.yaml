@@ -15,14 +15,11 @@ authentication:
   # Key to calculate user agent ID by xxhash algorithm.
   uaid-hmac-key: hms-ua
 web-server: # See https://golang.org/pkg/net/http/#Server for details.
-  # Indicates to get TLS-certificate from letsencrypt.org service
-  # if this value is true. Uses local TLS-certificate otherwise.
-  auto-cert: false
   # List of address:port values for non-encrypted connections.
   # Address is skipped in most common cases, port only remains.
   port-http:
   - :80
-  - :8080
+  - :8804
   # List of address:port values for encrypted connections.
   # Address is skipped in most common cases, port only remains.
   port-tls:
@@ -43,6 +40,17 @@ web-server: # See https://golang.org/pkg/net/http/#Server for details.
   online-timeout: 180s # 3 minutes
   # Maximum duration to wait for graceful shutdown.
   shutdown-timeout: 15s
+tls-certificates:
+  # Indicates to get TLS-certificate from letsencrypt.org service
+  # if this value is true. Uses local TLS-certificate otherwise.
+  use-auto-cert: false
+  # Email optionally specifies a contact email address. This is used by CAs,
+  # such as Let's Encrypt, to notify about problems with issued certificates.
+  email: example@example.org
+  # Creates policy where only the specified host names are allowed.
+  host-whitelist: 
+  - example.org
+  - www.example.org
 network:
   # Timeout to establish connection to FTP-server.
   dial-timeout: 5s

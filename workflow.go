@@ -233,10 +233,12 @@ func Run(gmux *Router) {
 
 				Log.Infof("start tls on %s", addr)
 				var config *tls.Config
-				if cfg.AutoCert { // get certificate from letsencrypt.org
+				if cfg.UseAutoCert { // get certificate from letsencrypt.org
 					var m = &autocert.Manager{
-						Prompt: autocert.AcceptTOS,
-						Cache:  autocert.DirCache(path.Join(ConfigPath, "cert")),
+						Prompt:     autocert.AcceptTOS,
+						Cache:      autocert.DirCache(path.Join(ConfigPath, "cert")),
+						Email:      cfg.Email,
+						HostPolicy: autocert.HostWhitelist(cfg.HostWhitelist...),
 					}
 					config = &tls.Config{
 						PreferServerCipherSuites: true,

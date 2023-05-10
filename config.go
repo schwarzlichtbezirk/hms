@@ -49,7 +49,6 @@ type CfgJWTAuth struct {
 
 // CfgWebServ is web server settings.
 type CfgWebServ struct {
-	AutoCert          bool          `json:"auto-cert" yaml:"auto-cert" long:"autocert" description:"Indicates to get TLS-certificate from letsencrypt.org service if this value is true. Uses local TLS-certificate otherwise."`
 	PortHTTP          []string      `json:"port-http" yaml:"port-http" env:"PORTHTTP" env-delim:";" short:"w" long:"http" description:"List of address:port values for non-encrypted connections. Address is skipped in most common cases, port only remains."`
 	PortTLS           []string      `json:"port-tls" yaml:"port-tls" env:"PORTTLS" env-delim:";" short:"s" long:"tls" description:"List of address:port values for encrypted connections. Address is skipped in most common cases, port only remains."`
 	ReadTimeout       time.Duration `json:"read-timeout" yaml:"read-timeout" long:"rt" description:"Maximum duration for reading the entire request, including the body."`
@@ -61,6 +60,15 @@ type CfgWebServ struct {
 	OnlineTimeout time.Duration `json:"online-timeout" yaml:"online-timeout" long:"ot" description:"Maximum duration between two ajax-calls to think client is online."`
 	// Maximum duration to wait for graceful shutdown.
 	ShutdownTimeout time.Duration `json:"shutdown-timeout" yaml:"shutdown-timeout" long:"st" description:"Maximum duration to wait for graceful shutdown."`
+}
+
+type CfgTlsCert struct {
+	// Indicates to get TLS-certificate from letsencrypt.org service if this value is true. Uses local TLS-certificate otherwise.
+	UseAutoCert bool `json:"use-auto-cert" yaml:"use-auto-cert" long:"autocert" description:"Indicates to get TLS-certificate from letsencrypt.org service if this value is true. Uses local TLS-certificate otherwise."`
+	// Email optionally specifies a contact email address. This is used by CAs, such as Let's Encrypt, to notify about problems with issued certificates.
+	Email string `json:"email" yaml:"email" long:"email" description:"Email optionally specifies a contact email address. This is used by CAs, such as Let's Encrypt, to notify about problems with issued certificates."`
+	// Creates policy where only the specified host names are allowed.
+	HostWhitelist []string `json:"host-whitelist" yaml:"host-whitelist" long:"hwl" description:"Creates policy where only the specified host names are allowed."`
 }
 
 type CfgNetwork struct {
@@ -110,6 +118,7 @@ type CfgAppSets struct {
 type Config struct {
 	CfgJWTAuth `json:"authentication" yaml:"authentication" group:"Authentication"`
 	CfgWebServ `json:"web-server" yaml:"web-server" group:"Web server"`
+	CfgTlsCert `json:"tls-certificates" yaml:"tls-certificates" group:"Automatic certificates"`
 	CfgNetwork `json:"network" yaml:"network" group:"Network"`
 	CfgImgProp `json:"images-prop" yaml:"images-prop" group:"Images properties"`
 	CfgAppSets `json:"specification" yaml:"specification" group:"Application settings"`
@@ -125,7 +134,6 @@ var cfg = Config{ // inits default values:
 		UaidHmacKey: "hms-ua",
 	},
 	CfgWebServ: CfgWebServ{
-		AutoCert:          false,
 		PortHTTP:          []string{":80"},
 		PortTLS:           []string{},
 		ReadTimeout:       15 * time.Second,
@@ -135,6 +143,11 @@ var cfg = Config{ // inits default values:
 		MaxHeaderBytes:    1 << 20,
 		OnlineTimeout:     3 * 60 * time.Second,
 		ShutdownTimeout:   15 * time.Second,
+	},
+	CfgTlsCert: CfgTlsCert{
+		UseAutoCert:   false,
+		Email:         "example@example.org",
+		HostWhitelist: []string{"example.org", "www.example.org"},
 	},
 	CfgNetwork: CfgNetwork{
 		DialTimeout: 5 * time.Second,
