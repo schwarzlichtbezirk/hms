@@ -7,63 +7,6 @@ import (
 	"github.com/schwarzlichtbezirk/wpk"
 )
 
-type Mime_t int16
-
-const (
-	MimeDis  Mime_t = -1 // file can not be cached for thumbnails.
-	MimeNil  Mime_t = 0  // file is not cached for thumbnails, have indeterminate state.
-	MimeUnk  Mime_t = 1  // image/*
-	MimeGif  Mime_t = 2  // image/gif
-	MimePng  Mime_t = 3  // image/png
-	MimeJpeg Mime_t = 4  // image/jpeg
-	MimeWebp Mime_t = 5  // image/webp
-)
-
-var MimeStr = map[Mime_t]string{
-	MimeNil:  "",
-	MimeUnk:  "image/*",
-	MimeGif:  "image/gif",
-	MimePng:  "image/png",
-	MimeJpeg: "image/jpeg",
-	MimeWebp: "image/webp",
-}
-
-var MimeVal = map[string]Mime_t{
-	"image/*":    MimeUnk,
-	"image/gif":  MimeGif,
-	"image/png":  MimePng,
-	"image/jpg":  MimeJpeg,
-	"image/jpeg": MimeJpeg,
-	"image/webp": MimeWebp,
-}
-
-var MimeExt = map[string]Mime_t{
-	"gif":  MimeGif,
-	"png":  MimePng,
-	"jpg":  MimeJpeg,
-	"jpeg": MimeJpeg,
-	"webp": MimeWebp,
-}
-
-func GetMimeVal(mime, ext string) Mime_t {
-	if mime, ok := MimeVal[mime]; ok {
-		return mime
-	}
-	if mime, ok := MimeExt[strings.ToLower(ext)]; ok {
-		return mime
-	}
-	if mime, ok := MimeExt[strings.ToLower(mime)]; ok {
-		return mime
-	}
-	return MimeUnk
-}
-
-// MediaData is thumbnails cache element.
-type MediaData struct {
-	Data []byte
-	Mime Mime_t
-}
-
 // Tiles multipliers:
 //  576px: 2,  4,  6,  8, 10, 12
 //  768px: 3,  6,  9, 12, 15, 18

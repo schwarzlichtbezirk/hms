@@ -241,7 +241,13 @@ func GetFileGroup(fpath string) FG_t {
 
 // IsTypeImage checks that file is some image format.
 func IsTypeImage(ext string) bool {
-	return extgrp[ext] == FGimage
+	switch ext {
+	case ".tga", ".bmp", ".dib", ".rle", ".dds", ".tif", ".tiff",
+		".jpg", ".jpe", ".jpeg", ".jfif", ".gif", ".png", ".webp", ".avif",
+		".psd", ".psb", ".jp2", ".jpg2", ".jpx", ".jpm", ".jxr":
+		return true
+	}
+	return false
 }
 
 // IsTypeNativeImg checks that image file is supported by any browser without format conversion.

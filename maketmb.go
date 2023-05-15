@@ -7,9 +7,10 @@ import (
 	"image"
 	_ "image/gif"
 	_ "image/jpeg"
-	"image/png"
+	_ "image/png"
 	"io"
 	"io/fs"
+	"strings"
 
 	"github.com/disintegration/gift"
 
@@ -21,6 +22,63 @@ import (
 
 	_ "github.com/ftrvxmtrx/tga" // put TGA to end, decoder does not register magic prefix
 )
+
+type Mime_t int16
+
+const (
+	MimeDis  Mime_t = -1 // file can not be cached for thumbnails.
+	MimeNil  Mime_t = 0  // file is not cached for thumbnails, have indeterminate state.
+	MimeUnk  Mime_t = 1  // image/*
+	MimeGif  Mime_t = 2  // image/gif
+	MimePng  Mime_t = 3  // image/png
+	MimeJpeg Mime_t = 4  // image/jpeg
+	MimeWebp Mime_t = 5  // image/webp
+)
+
+var MimeStr = map[Mime_t]string{
+	MimeNil:  "",
+	MimeUnk:  "image/*",
+	MimeGif:  "image/gif",
+	MimePng:  "image/png",
+	MimeJpeg: "image/jpeg",
+	MimeWebp: "image/webp",
+}
+
+var MimeVal = map[string]Mime_t{
+	"image/*":    MimeUnk,
+	"image/gif":  MimeGif,
+	"image/png":  MimePng,
+	"image/jpg":  MimeJpeg,
+	"image/jpeg": MimeJpeg,
+	"image/webp": MimeWebp,
+}
+
+var MimeExt = map[string]Mime_t{
+	"gif":  MimeGif,
+	"png":  MimePng,
+	"jpg":  MimeJpeg,
+	"jpeg": MimeJpeg,
+	"webp": MimeWebp,
+}
+
+func GetMimeVal(mime, ext string) Mime_t {
+	if mime, ok := MimeVal[mime]; ok {
+		return mime
+	}
+	if mime, ok := MimeExt[strings.ToLower(ext)]; ok {
+		return mime
+	}
+	if mime, ok := MimeExt[strings.ToLower(mime)]; ok {
+		return mime
+	}
+	return MimeUnk
+}
+
+// MediaData is thumbnails cache element.
+type MediaData struct {
+	Data []byte
+	Mime Mime_t
+}
 
 // EXIF image orientation constants.
 const (
@@ -64,11 +122,6 @@ func AddOrientFilter(flt []gift.Filter, orientation int) []gift.Filter {
 		flt = append(flt, gift.Rotate90())
 	}
 	return flt
-}
-
-// Encoder configures encoding PNG images for thumbnails and tiles.
-var tmbpngenc = png.Encoder{
-	CompressionLevel: png.BestCompression,
 }
 
 // Error messages
@@ -151,8 +204,13 @@ func EncodeRGBA2WebP(m image.Image) (md MediaData, err error) {
 // makes new one and put it to cache.
 func CacheThumb(session *Session, syspath string) (md MediaData, err error) {
 	// try to extract thumbnail from package
-	if md, err = thumbpkg.GetImage(syspath); err != nil || md.Mime != MimeNil {
-		return
+	var mime string
+	if md.Data, mime, err = thumbpkg.GetData(syspath); err != nil {
+		return // failure
+	}
+	var ok bool
+	if md.Mime, ok = MimeVal[mime]; ok {
+		return // found
 	}
 
 	var fi fs.FileInfo
@@ -175,7 +233,7 @@ func CacheThumb(session *Session, syspath string) (md MediaData, err error) {
 				return
 			}
 			// push thumbnail to package
-			err = thumbpkg.PutImage(syspath, md)
+			err = thumbpkg.PutFile(syspath, bytes.NewReader(md.Data), MimeStr[md.Mime])
 			return
 		} else {
 			err = ErrNotImg
@@ -214,7 +272,7 @@ func CacheThumb(session *Session, syspath string) (md MediaData, err error) {
 	}
 
 	// push thumbnail to package
-	err = thumbpkg.PutImage(syspath, md)
+	err = thumbpkg.PutFile(syspath, bytes.NewReader(md.Data), MimeStr[md.Mime])
 	return
 }
 
@@ -252,8 +310,13 @@ func CacheTile(session *Session, syspath string, wdh, hgt int) (md MediaData, er
 	var tilepath = fmt.Sprintf("%s?%dx%d", syspath, wdh, hgt)
 
 	// try to extract tile from package
-	if md, err = tilespkg.GetImage(tilepath); err != nil || md.Mime != MimeNil {
-		return
+	var mime string
+	if md.Data, mime, err = tilespkg.GetData(tilepath); err != nil {
+		return // failure
+	}
+	var ok bool
+	if md.Mime, ok = MimeVal[mime]; ok {
+		return // found
 	}
 
 	var fi fs.FileInfo
@@ -298,7 +361,7 @@ func CacheTile(session *Session, syspath string, wdh, hgt int) (md MediaData, er
 	}
 
 	// push tile to package
-	err = tilespkg.PutImage(tilepath, md)
+	err = tilespkg.PutFile(tilepath, bytes.NewReader(md.Data), MimeStr[md.Mime])
 	return
 }
 

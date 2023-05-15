@@ -265,17 +265,19 @@ func mtmbHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 
-	var md MediaData
-	if md, err = thumbpkg.GetImage(syspath); err != nil {
+	var file io.ReadSeekCloser
+	var mime string
+	if file, mime, err = thumbpkg.GetFile(syspath); err != nil {
 		WriteError500(w, r, err, AECmtmbbadcnt)
 		return
 	}
-	if md.Mime == MimeNil {
+	defer file.Close()
+	if mime == "" {
 		WriteError(w, r, http.StatusNoContent, ErrNotFound, AECmtmbnocnt)
 		return
 	}
-	w.Header().Set("Content-Type", MimeStr[md.Mime])
-	http.ServeContent(w, r, syspath, starttime, bytes.NewReader(md.Data))
+	w.Header().Set("Content-Type", mime)
+	http.ServeContent(w, r, syspath, starttime, file)
 }
 
 // Hands out thumbnails for given files if them cached.
@@ -321,17 +323,19 @@ func tileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	}
 
 	var tilepath = fmt.Sprintf("%s?%dx%d", syspath, wdh, hgt)
-	var md MediaData
-	if md, err = tilespkg.GetImage(tilepath); err != nil {
+	var file io.ReadSeekCloser
+	var mime string
+	if file, mime, err = tilespkg.GetFile(tilepath); err != nil {
 		WriteError500(w, r, err, AECtilebadcnt)
 		return
 	}
-	if md.Mime == MimeNil {
+	defer file.Close()
+	if mime == "" {
 		WriteError(w, r, http.StatusNoContent, ErrNotFound, AECtilenocnt)
 		return
 	}
-	w.Header().Set("Content-Type", MimeStr[md.Mime])
-	http.ServeContent(w, r, syspath, starttime, bytes.NewReader(md.Data))
+	w.Header().Set("Content-Type", mime)
+	http.ServeContent(w, r, syspath, starttime, file)
 }
 
 // The End.
