@@ -27,7 +27,7 @@ var (
 	tilespkg *FileCache
 )
 
-var xormStorage *xorm.Engine
+var XormStorage *xorm.Engine
 
 // Error messages
 var (
@@ -59,7 +59,7 @@ type Session = xorm.Session
 
 // SqlSession execute sql wrapped in a single session.
 func SqlSession(f func(*Session) (any, error)) (any, error) {
-	var session = xormStorage.NewSession()
+	var session = XormStorage.NewSession()
 	defer session.Close()
 	return f(session)
 }
@@ -579,17 +579,29 @@ func InitPackages() (err error) {
 	return nil
 }
 
+// ClosePackages closes all existing caches.
+func ClosePackages() (err error) {
+	var err1 error
+	if err1 = thumbpkg.Close(); err1 != nil {
+		err = err1
+	}
+	if err1 = tilespkg.Close(); err1 != nil {
+		err = err1
+	}
+	return
+}
+
 // InitStorage inits database caches engine.
 func InitStorage() (err error) {
-	if xormStorage, err = xorm.NewEngine(xormDriverName, path.Join(CachePath, dirfile)); err != nil {
+	if XormStorage, err = xorm.NewEngine(xormDriverName, path.Join(CachePath, dirfile)); err != nil {
 		return
 	}
-	xormStorage.SetMapper(names.GonicMapper{})
+	XormStorage.SetMapper(names.GonicMapper{})
 	var xlb = XormLoggerBridge{
 		Logger: Log,
 	}
 	xlb.ShowSQL(devmode)
-	xormStorage.SetLogger(&xlb)
+	XormStorage.SetLogger(&xlb)
 
 	_, err = SqlSession(func(session *Session) (res any, err error) {
 		if err = session.Sync(&PathStore{}, &DirStore{}, &ExifStore{}, &TagStore{}); err != nil {
@@ -625,7 +637,7 @@ func InitStorage() (err error) {
 
 // LoadPathCache loads whole path table from database into cache.
 func LoadPathCache() (err error) {
-	var session = xormStorage.NewSession()
+	var session = XormStorage.NewSession()
 	defer session.Close()
 
 	const limit = 256
@@ -648,7 +660,7 @@ func LoadPathCache() (err error) {
 
 // LoadDirCache loads whole directories table from database into cache.
 func LoadDirCache() (err error) {
-	var session = xormStorage.NewSession()
+	var session = XormStorage.NewSession()
 	defer session.Close()
 
 	const limit = 256
@@ -671,7 +683,7 @@ func LoadDirCache() (err error) {
 
 // LoadGpsCache loads all items with GPS information from EXIF table of storage into cache.
 func LoadGpsCache() (err error) {
-	var session = xormStorage.NewSession()
+	var session = XormStorage.NewSession()
 	defer session.Close()
 
 	const limit = 256

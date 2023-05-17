@@ -41,11 +41,11 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 
-	var session = xormStorage.NewSession()
+	var session = XormStorage.NewSession()
 	defer session.Close()
 
 	var prf *Profile
-	if prf = prflist.ByID(aid); prf == nil {
+	if prf = ProfileByID(aid); prf == nil {
 		WriteError400(w, r, ErrNoAcc, AECedtcopynoacc)
 		return
 	}
@@ -189,11 +189,11 @@ func edtrenameAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 
-	var session = xormStorage.NewSession()
+	var session = XormStorage.NewSession()
 	defer session.Close()
 
 	var prf *Profile
-	if prf = prflist.ByID(aid); prf == nil {
+	if prf = ProfileByID(aid); prf == nil {
 		WriteError400(w, r, ErrNoAcc, AECedtrennoacc)
 		return
 	}
@@ -276,11 +276,11 @@ func edtdeleteAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 
-	var session = xormStorage.NewSession()
+	var session = XormStorage.NewSession()
 	defer session.Close()
 
 	var prf *Profile
-	if prf = prflist.ByID(aid); prf == nil {
+	if prf = ProfileByID(aid); prf == nil {
 		WriteError400(w, r, ErrNoAcc, AECedtdelnoacc)
 		return
 	}

@@ -29,7 +29,7 @@ func tilechkAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	}
 
 	var acc *Profile
-	if acc = prflist.ByID(aid); acc == nil {
+	if acc = ProfileByID(aid); acc == nil {
 		WriteError400(w, r, ErrNoAcc, AECtilechknoacc)
 		return
 	}
@@ -43,7 +43,7 @@ func tilechkAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 
-	var session = xormStorage.NewSession()
+	var session = XormStorage.NewSession()
 	defer session.Close()
 
 	ret.List = make([]tilemime, len(arg.List))
@@ -78,7 +78,7 @@ func tilescnstartAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	}
 
 	var acc *Profile
-	if acc = prflist.ByID(aid); acc == nil {
+	if acc = ProfileByID(aid); acc == nil {
 		WriteError400(w, r, ErrNoAcc, AECscnstartnoacc)
 		return
 	}
@@ -92,7 +92,7 @@ func tilescnstartAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 
-	var session = xormStorage.NewSession()
+	var session = XormStorage.NewSession()
 	defer session.Close()
 
 	for _, ttm := range arg.List {
@@ -120,7 +120,7 @@ func tilescnbreakAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	}
 
 	var acc *Profile
-	if acc = prflist.ByID(aid); acc == nil {
+	if acc = ProfileByID(aid); acc == nil {
 		WriteError400(w, r, ErrNoAcc, AECscnbreaknoacc)
 		return
 	}
@@ -134,7 +134,7 @@ func tilescnbreakAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 
-	var session = xormStorage.NewSession()
+	var session = XormStorage.NewSession()
 	defer session.Close()
 
 	for _, ttm := range arg.List {

@@ -94,7 +94,7 @@ func memusgAPI(w http.ResponseWriter, r *http.Request) {
 
 // APIHANDLER
 func cchinfAPI(w http.ResponseWriter, r *http.Request) {
-	var session = xormStorage.NewSession()
+	var session = XormStorage.NewSession()
 	defer session.Close()
 
 	var pathcount, _ = session.Count(&PathStore{})
@@ -260,7 +260,7 @@ func tagsAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	}
 
 	var acc *Profile
-	if acc = prflist.ByID(aid); acc == nil {
+	if acc = ProfileByID(aid); acc == nil {
 		WriteError400(w, r, ErrNoAcc, AECtagsnoacc)
 		return
 	}
@@ -274,7 +274,7 @@ func tagsAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 
-	var session = xormStorage.NewSession()
+	var session = XormStorage.NewSession()
 	defer session.Close()
 
 	var syspath string
@@ -336,7 +336,7 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 	var acc *Profile
-	if acc = prflist.ByID(aid); acc == nil {
+	if acc = ProfileByID(aid); acc == nil {
 		WriteError400(w, r, ErrNoAcc, AECispathnoacc)
 		return
 	}
@@ -354,7 +354,7 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 
-	var session = xormStorage.NewSession()
+	var session = XormStorage.NewSession()
 	defer session.Close()
 
 	var fpath = ToSlash(arg.Path)

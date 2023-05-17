@@ -17,7 +17,7 @@ type Cacher interface {
 type EmbedPath string
 
 func (fpath EmbedPath) Cache() {
-	var session = xormStorage.NewSession()
+	var session = XormStorage.NewSession()
 	defer session.Close()
 
 	var puid = PathStoreCache(session, string(fpath))
@@ -40,7 +40,7 @@ type ThumbPath string
 
 // Cache is Cacher implementation for ThumbPath type.
 func (fpath ThumbPath) Cache() {
-	var session = xormStorage.NewSession()
+	var session = XormStorage.NewSession()
 	defer session.Close()
 
 	var puid = PathStoreCache(session, string(fpath))
@@ -67,7 +67,7 @@ type TilePath struct {
 
 // Cache is Cacher implementation for TilePath type.
 func (tile TilePath) Cache() {
-	var session = xormStorage.NewSession()
+	var session = XormStorage.NewSession()
 	defer session.Close()
 
 	var puid = PathStoreCache(session, tile.Path)

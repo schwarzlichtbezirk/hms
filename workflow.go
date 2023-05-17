@@ -132,10 +132,10 @@ func Init() {
 		Log.Fatal("can not init XORM user log: " + err.Error())
 	}
 	{
-		var uacount, _ = xormUserlog.Count(&AgentStore{})
+		var uacount, _ = XormUserlog.Count(&AgentStore{})
 		Log.Infof("user agent count %d items", uacount)
 		Log.Infof("clients count %d", maxcid)
-		var opencount, _ = xormUserlog.Count(&OpenStore{})
+		var opencount, _ = XormUserlog.Count(&OpenStore{})
 		Log.Infof("resources open count %d items", opencount)
 	}
 
@@ -155,7 +155,7 @@ func Init() {
 	}
 
 	// load profiles with roots, hidden and shares lists
-	if err = prflist.ReadYaml(prffile); err != nil {
+	if err = PrfReadYaml(prffile); err != nil {
 		Log.Fatal("error at profiles file: " + err.Error())
 	}
 
@@ -166,9 +166,6 @@ func Init() {
 
 	// run thumbnails scanner
 	go ImgScanner.Scan()
-
-	// EXIF parsers
-	exifparsers()
 }
 
 // Run launches server listeners.
@@ -330,7 +327,7 @@ func Shutdown() {
 	var wg errgroup.Group
 
 	wg.Go(func() (err error) {
-		if err := prflist.WriteYaml(prffile); err != nil {
+		if err := PrfWriteYaml(prffile); err != nil {
 			Log.Error("error on profiles list file: " + err.Error())
 		}
 		return
@@ -367,18 +364,20 @@ func Shutdown() {
 	})
 
 	wg.Go(func() (err error) {
-		thumbpkg.Close()
+		ClosePackages()
 		return
 	})
 
 	wg.Go(func() (err error) {
-		tilespkg.Close()
+		if XormStorage != nil {
+			XormStorage.Close()
+		}
 		return
 	})
 
 	wg.Go(func() (err error) {
-		if xormStorage != nil {
-			xormStorage.Close()
+		if XormUserlog != nil {
+			XormUserlog.Close()
 		}
 		return
 	})

@@ -529,7 +529,7 @@ func AjaxMiddleware(next http.Handler) http.Handler {
 			}
 			UaMap[uanew] = cid
 			go func() {
-				if _, err := xormUserlog.InsertOne(&AgentStore{
+				if _, err := XormUserlog.InsertOne(&AgentStore{
 					UAID: uanew,
 					CID:  cid,
 					Addr: addr,

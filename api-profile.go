@@ -35,7 +35,7 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 	var acc *Profile
-	if acc = prflist.ByID(aid); acc == nil {
+	if acc = ProfileByID(aid); acc == nil {
 		WriteError400(w, r, ErrNoAcc, AECdrvaddnoacc)
 		return
 	}
@@ -53,7 +53,7 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 
-	var session = xormStorage.NewSession()
+	var session = XormStorage.NewSession()
 	defer session.Close()
 
 	var fpath = ToSlash(arg.Path)
@@ -126,7 +126,7 @@ func drvdelAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 	var acc *Profile
-	if acc = prflist.ByID(aid); acc == nil {
+	if acc = ProfileByID(aid); acc == nil {
 		WriteError400(w, r, ErrNoAcc, AECdrvdelnoacc)
 		return
 	}
@@ -144,7 +144,7 @@ func drvdelAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 
-	var session = xormStorage.NewSession()
+	var session = XormStorage.NewSession()
 	defer session.Close()
 
 	var syspath, ok = PathStorePath(session, arg.PUID)
@@ -180,7 +180,7 @@ func cldaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 	var acc *Profile
-	if acc = prflist.ByID(aid); acc == nil {
+	if acc = ProfileByID(aid); acc == nil {
 		WriteError400(w, r, ErrNoAcc, AECcldaddnoacc)
 		return
 	}
@@ -219,7 +219,7 @@ func cldaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		name = argurl.Redacted()
 	}
 
-	var session = xormStorage.NewSession()
+	var session = XormStorage.NewSession()
 	defer session.Close()
 
 	var (
@@ -325,7 +325,7 @@ func clddelAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 	var acc *Profile
-	if acc = prflist.ByID(aid); acc == nil {
+	if acc = ProfileByID(aid); acc == nil {
 		WriteError400(w, r, ErrNoAcc, AECclddelnoacc)
 		return
 	}
@@ -343,7 +343,7 @@ func clddelAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 
-	var session = xormStorage.NewSession()
+	var session = XormStorage.NewSession()
 	defer session.Close()
 
 	var syspath, ok = PathStorePath(session, arg.PUID)
@@ -373,7 +373,7 @@ func shraddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 	var acc *Profile
-	if acc = prflist.ByID(aid); acc == nil {
+	if acc = ProfileByID(aid); acc == nil {
 		WriteError400(w, r, ErrNoAcc, AECshraddnoacc)
 		return
 	}
@@ -391,7 +391,7 @@ func shraddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 
-	var session = xormStorage.NewSession()
+	var session = XormStorage.NewSession()
 	defer session.Close()
 
 	var syspath string
@@ -427,7 +427,7 @@ func shrdelAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 	var acc *Profile
-	if acc = prflist.ByID(aid); acc == nil {
+	if acc = ProfileByID(aid); acc == nil {
 		WriteError400(w, r, ErrNoAcc, AECshrdelnoacc)
 		return
 	}
@@ -445,7 +445,7 @@ func shrdelAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 
-	var session = xormStorage.NewSession()
+	var session = XormStorage.NewSession()
 	defer session.Close()
 
 	var syspath string

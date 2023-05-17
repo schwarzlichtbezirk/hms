@@ -76,43 +76,40 @@ type Profile struct {
 	mux       sync.RWMutex
 }
 
-// Profiles is the list of Profile structures.
-type Profiles struct {
-	pm  map[ID_t]*Profile
-	mux sync.RWMutex
-}
+var prflist map[ID_t]*Profile
+var plmux sync.RWMutex
 
 // NewProfile make new profile and insert it to the list.
-func (pl *Profiles) NewProfile(login, password string) *Profile {
+func NewProfile(login, password string) *Profile {
 	var prf = &Profile{
 		Login:    login,
 		Password: password,
 	}
 
 	var mid ID_t
-	for id := range pl.pm {
+	for id := range prflist {
 		if id > mid {
 			mid = id
 		}
 	}
 	prf.ID = mid + 1
 
-	pl.Insert(prf)
+	ProfileInsert(prf)
 	return prf
 }
 
-// ByID finds profile with given identifier.
-func (pl *Profiles) ByID(prfid ID_t) *Profile {
-	pl.mux.RLock()
-	defer pl.mux.RUnlock()
-	return pl.pm[prfid]
+// ProfileByID finds profile with given identifier.
+func ProfileByID(prfid ID_t) *Profile {
+	plmux.RLock()
+	defer plmux.RUnlock()
+	return prflist[prfid]
 }
 
-// ByLogin finds profile with given login.
-func (pl *Profiles) ByLogin(login string) *Profile {
-	pl.mux.RLock()
-	defer pl.mux.RUnlock()
-	for _, prf := range pl.pm {
+// ProfileByUser finds profile with given login.
+func ProfileByUser(login string) *Profile {
+	plmux.RLock()
+	defer plmux.RUnlock()
+	for _, prf := range prflist {
 		if prf.Login == login {
 			return prf
 		}
@@ -120,25 +117,22 @@ func (pl *Profiles) ByLogin(login string) *Profile {
 	return nil
 }
 
-// Insert new profile to the list.
-func (pl *Profiles) Insert(prf *Profile) {
-	pl.mux.Lock()
-	defer pl.mux.Unlock()
-	pl.pm[prf.ID] = prf
+// ProfileInsert new profile to the list.
+func ProfileInsert(prf *Profile) {
+	plmux.Lock()
+	defer plmux.Unlock()
+	prflist[prf.ID] = prf
 }
 
-// Delete profile with "prfid" identifier from the list.
-func (pl *Profiles) Delete(prfid ID_t) (ok bool) {
-	pl.mux.RLock()
-	defer pl.mux.RUnlock()
-	if _, ok = pl.pm[prfid]; ok {
-		delete(pl.pm, prfid)
+// ProfileDelete profile with "prfid" identifier from the list.
+func ProfileDelete(prfid ID_t) (ok bool) {
+	plmux.RLock()
+	defer plmux.RUnlock()
+	if _, ok = prflist[prfid]; ok {
+		delete(prflist, prfid)
 	}
 	return
 }
-
-// Profiles list.
-var prflist Profiles
 
 // pathName returns label for given path.
 func (prf *Profile) pathName(syspath string) string {

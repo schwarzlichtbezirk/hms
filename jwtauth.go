@@ -151,7 +151,7 @@ func GetAuth(r *http.Request) (uid ID_t, aerr error) {
 		} else if !bearer {
 			aerr = MakeAjaxErr(ErrNoBearer, AECtokenless)
 			return
-		} else if prflist.ByID(claims.UID) == nil {
+		} else if ProfileByID(claims.UID) == nil {
 			aerr = MakeAjaxErr(ErrNoAcc, AECtokennoacc)
 			return
 		}
@@ -167,7 +167,7 @@ func GetAuth(r *http.Request) (uid ID_t, aerr error) {
 	if aid, err = ParseID(vars["aid"]); err != nil {
 		return // no authorization
 	}
-	if prflist.ByID(aid) == nil {
+	if ProfileByID(aid) == nil {
 		aerr = MakeAjaxErr(ErrNoAcc, AECtokennoaid)
 		return
 	}

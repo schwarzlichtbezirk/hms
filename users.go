@@ -13,7 +13,7 @@ import (
 	"xorm.io/xorm/names"
 )
 
-var xormUserlog *xorm.Engine
+var XormUserlog *xorm.Engine
 
 // AgentStore is storage record with user agent string and user host address.
 type AgentStore struct {
@@ -62,13 +62,13 @@ func RequestUAID(r *http.Request) ID_t {
 
 // InitUserlog inits database user log engine.
 func InitUserlog() (err error) {
-	if xormUserlog, err = xorm.NewEngine(xormDriverName, path.Join(CachePath, userlog)); err != nil {
+	if XormUserlog, err = xorm.NewEngine(xormDriverName, path.Join(CachePath, userlog)); err != nil {
 		return
 	}
-	xormUserlog.SetMapper(names.GonicMapper{})
-	xormUserlog.ShowSQL(false)
+	XormUserlog.SetMapper(names.GonicMapper{})
+	XormUserlog.ShowSQL(false)
 
-	if err = xormUserlog.Sync(&AgentStore{}, &OpenStore{}); err != nil {
+	if err = XormUserlog.Sync(&AgentStore{}, &OpenStore{}); err != nil {
 		return
 	}
 	return
@@ -76,7 +76,7 @@ func InitUserlog() (err error) {
 
 // LoadUaMap forms content of UaMap from database on server start.
 func LoadUaMap() (err error) {
-	var session = xormUserlog.NewSession()
+	var session = XormUserlog.NewSession()
 	defer session.Close()
 
 	var u64 uint64
@@ -136,11 +136,11 @@ func usrlstAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var session = xormUserlog.NewSession()
+	var session = XormUserlog.NewSession()
 	defer session.Close()
 
 	var asts []AgentStore
-	if err = xormUserlog.Limit(arg.Num, arg.Pos).Find(&asts); err != nil {
+	if err = XormUserlog.Limit(arg.Num, arg.Pos).Find(&asts); err != nil {
 		WriteError500(w, r, err, AECusrlstasts)
 		return
 	}
@@ -160,7 +160,7 @@ func usrlstAPI(w http.ResponseWriter, r *http.Request) {
 
 		var is bool
 		var fost, post OpenStore
-		if is, err = xormUserlog.Where("uaid=? AND latency<0", ast.UAID).Desc("time").Get(&fost); err != nil {
+		if is, err = XormUserlog.Where("uaid=? AND latency<0", ast.UAID).Desc("time").Get(&fost); err != nil {
 			WriteError500(w, r, err, AECusrlstfost)
 			return
 		}
@@ -169,7 +169,7 @@ func usrlstAPI(w http.ResponseWriter, r *http.Request) {
 			ui.AID = fost.AID
 			ui.UID = fost.UID
 		}
-		if is, err = xormUserlog.Where("uaid=? AND latency>=0", ast.UAID).Desc("time").Get(&post); err != nil {
+		if is, err = XormUserlog.Where("uaid=? AND latency>=0", ast.UAID).Desc("time").Get(&post); err != nil {
 			WriteError500(w, r, err, AECusrlstpost)
 			return
 		}

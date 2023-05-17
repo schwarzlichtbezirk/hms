@@ -82,16 +82,16 @@ func (cfg *Config) WriteYaml(fname string) error {
 	return WriteYaml(fname, intro, &cfg)
 }
 
-// ReadYaml reads content of Profiles structure from YAML-file
+// PrfReadYaml reads content of Profiles structure from YAML-file
 // with given file name.
-func (pl *Profiles) ReadYaml(fname string) (err error) {
+func PrfReadYaml(fname string) (err error) {
 	var list []*Profile
 	if err = ReadYaml(fname, &list); err != nil {
 		return
 	}
-	pl.pm = map[ID_t]*Profile{}
+	prflist = map[ID_t]*Profile{}
 	for _, prf := range list {
-		pl.pm[prf.ID] = prf
+		prflist[prf.ID] = prf
 	}
 
 	if len(list) > 0 {
@@ -134,7 +134,7 @@ func (pl *Profiles) ReadYaml(fname string) (err error) {
 			return
 		})
 	} else {
-		var prf = pl.NewProfile("admin", "dag qus fly in the sky")
+		var prf = NewProfile("admin", "dag qus fly in the sky")
 		prf.ID = 1
 		// set hidden files array to default predefined list
 		prf.Hidden = append([]string{}, DefHidden...)
@@ -151,9 +151,9 @@ func (pl *Profiles) ReadYaml(fname string) (err error) {
 	return
 }
 
-// WriteYaml writes content of Profiles object in YAML format
+// PrfWriteYaml writes content of Profiles object in YAML format
 // with header comment to file with given file name.
-func (pl *Profiles) WriteYaml(fname string) error {
+func PrfWriteYaml(fname string) error {
 	const intro = `
 # List of administration profiles. Each profile should be with
 # unique password, and allows to configure access to specified
@@ -161,7 +161,7 @@ func (pl *Profiles) WriteYaml(fname string) error {
 
 `
 	var list []*Profile
-	for _, prf := range pl.pm {
+	for _, prf := range prflist {
 		list = append(list, prf)
 	}
 	sort.Slice(list, func(i, j int) bool {

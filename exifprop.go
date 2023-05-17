@@ -222,7 +222,7 @@ func (ek *ExifKit) Setup(session *Session, syspath string, fi fs.FileInfo) {
 	ek.ExifProp, _ = ExifStoreGet(session, ek.PUID)
 }
 
-func exifparsers() {
+func init() {
 	// Optionally register camera makenote data parsing - currently
 	// Nikon and Canon are supported.
 	exif.RegisterParsers(mknote.All...)

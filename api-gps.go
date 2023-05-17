@@ -83,7 +83,7 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 	var acc *Profile
-	if acc = prflist.ByID(aid); acc == nil {
+	if acc = ProfileByID(aid); acc == nil {
 		WriteError400(w, r, ErrNoAcc, AECgpsrangenoacc)
 		return
 	}
@@ -118,7 +118,7 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		arg.Limit = cfg.RangeSearchLimit
 	}
 
-	var session = xormStorage.NewSession()
+	var session = XormStorage.NewSession()
 	defer session.Close()
 
 	if uid == aid {
@@ -185,7 +185,7 @@ func gpsscanAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	}
 
 	var acc *Profile
-	if acc = prflist.ByID(aid); acc == nil {
+	if acc = ProfileByID(aid); acc == nil {
 		WriteError400(w, r, ErrNoAcc, AECgpsscannoacc)
 		return
 	}
@@ -199,7 +199,7 @@ func gpsscanAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 
-	var session = xormStorage.NewSession()
+	var session = XormStorage.NewSession()
 	defer session.Close()
 
 	var ests []ExifStore

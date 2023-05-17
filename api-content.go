@@ -33,7 +33,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var err error
 
 	var acc *Profile
-	if acc = prflist.ByID(aid); acc == nil {
+	if acc = ProfileByID(aid); acc == nil {
 		WriteError(w, r, http.StatusNotFound, ErrNoAcc, AECmedianoacc)
 		return
 	}
@@ -60,7 +60,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	}
 	var fpath = strings.Join(chunks[3:], "/")
 
-	var session = xormStorage.NewSession()
+	var session = XormStorage.NewSession()
 	defer session.Close()
 
 	var syspath string
@@ -99,7 +99,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 			if HasRangeBegin(r) { // beginning of content
 				Log.Infof("id%d: media-hd %s", acc.ID, path.Base(syspath))
-				go xormUserlog.InsertOne(&OpenStore{
+				go XormUserlog.InsertOne(&OpenStore{
 					UAID:    RequestUAID(r),
 					AID:     aid,
 					UID:     uid,
@@ -132,7 +132,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 			if HasRangeBegin(r) { // beginning of content
 				Log.Infof("id%d: media %s", acc.ID, path.Base(syspath))
-				go xormUserlog.InsertOne(&OpenStore{
+				go XormUserlog.InsertOne(&OpenStore{
 					UAID:    RequestUAID(r),
 					AID:     aid,
 					UID:     uid,
@@ -148,7 +148,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	if HasRangeBegin(r) { // beginning of content
 		Log.Infof("id%d: serve %s", acc.ID, path.Base(syspath))
-		go xormUserlog.InsertOne(&OpenStore{
+		go XormUserlog.InsertOne(&OpenStore{
 			UAID:    RequestUAID(r),
 			AID:     aid,
 			UID:     uid,
@@ -184,7 +184,7 @@ func etmbHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var err error
 
 	var acc *Profile
-	if acc = prflist.ByID(aid); acc == nil {
+	if acc = ProfileByID(aid); acc == nil {
 		WriteError(w, r, http.StatusNotFound, ErrNoAcc, AECetmbnoacc)
 		return
 	}
@@ -197,7 +197,7 @@ func etmbHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 
-	var session = xormStorage.NewSession()
+	var session = XormStorage.NewSession()
 	defer session.Close()
 
 	var syspath, ok = PathStorePath(session, puid)
@@ -234,7 +234,7 @@ func mtmbHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var err error
 
 	var acc *Profile
-	if acc = prflist.ByID(aid); acc == nil {
+	if acc = ProfileByID(aid); acc == nil {
 		WriteError(w, r, http.StatusNotFound, ErrNoAcc, AECmtmbnoacc)
 		return
 	}
@@ -247,7 +247,7 @@ func mtmbHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 
-	var session = xormStorage.NewSession()
+	var session = XormStorage.NewSession()
 	defer session.Close()
 
 	var syspath, ok = PathStorePath(session, puid)
@@ -285,7 +285,7 @@ func tileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var err error
 
 	var acc *Profile
-	if acc = prflist.ByID(aid); acc == nil {
+	if acc = ProfileByID(aid); acc == nil {
 		WriteError(w, r, http.StatusNotFound, ErrNoAcc, AECtilenoacc)
 		return
 	}
@@ -304,7 +304,7 @@ func tileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 
-	var session = xormStorage.NewSession()
+	var session = XormStorage.NewSession()
 	defer session.Close()
 
 	var syspath, ok = PathStorePath(session, puid)

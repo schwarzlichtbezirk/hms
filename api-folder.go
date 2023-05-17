@@ -106,7 +106,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	}
 
 	var acc *Profile
-	if acc = prflist.ByID(aid); acc == nil {
+	if acc = ProfileByID(aid); acc == nil {
 		WriteError400(w, r, ErrNoAcc, AECfoldernoacc)
 		return
 	}
@@ -120,7 +120,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 
-	var session = xormStorage.NewSession()
+	var session = XormStorage.NewSession()
 	defer session.Close()
 
 	var syspath string
@@ -319,7 +319,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	var latency = time.Since(t)
 	Log.Infof("id%d: navigate to %s, items %d, timeout %s", acc.ID, syspath, len(ret.List), latency)
-	go xormUserlog.InsertOne(&OpenStore{
+	go XormUserlog.InsertOne(&OpenStore{
 		UAID:    RequestUAID(r),
 		AID:     aid,
 		UID:     uid,

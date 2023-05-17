@@ -55,7 +55,7 @@ func signinAPI(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var prf *Profile
-	if prf = prflist.ByLogin(arg.Name); prf == nil {
+	if prf = ProfileByUser(arg.Name); prf == nil {
 		WriteError(w, r, http.StatusForbidden, ErrNoAcc, AECsigninnoacc)
 		return
 	}
