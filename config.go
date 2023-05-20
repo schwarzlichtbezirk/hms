@@ -28,11 +28,6 @@ const (
 
 const xormDriverName = "sqlite3"
 
-const (
-	devmsuff = "devmode" // relative path to folder with development mode code files
-	relmsuff = "build"   // relative path to folder with compiled code files
-)
-
 // CfgJWTAuth is authentication settings.
 type CfgJWTAuth struct {
 	// Access token time to live.
@@ -210,6 +205,14 @@ func init() {
 	if ok, _ := wpk.PathExists(path.Join(exepath, "hms.go")); ok && strings.HasSuffix(exepath, "hms/cmd") {
 		devmode = true
 	}
+}
+
+// CheckPath is short variant of path existence check.
+func CheckPath(fpath string, fname string) (string, bool) {
+	if ok, _ := wpk.PathExists(path.Join(fpath, fname)); !ok {
+		return "", false
+	}
+	return fpath, true
 }
 
 // ConfigPath determines configuration path, depended on what directory is exist.

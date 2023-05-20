@@ -17,22 +17,22 @@ var XormUserlog *xorm.Engine
 
 // AgentStore is storage record with user agent string and user host address.
 type AgentStore struct {
-	UAID ID_t   `xorm:"unique"` // user agent ID
-	CID  ID_t   // client ID
-	Addr string // remote address
-	UA   string // user agent
-	Lang string // accept language
-	Time Time   `xorm:"created"`
+	UAID ID_t      `xorm:"unique"` // user agent ID
+	CID  ID_t      // client ID
+	Addr string    // remote address
+	UA   string    // user agent
+	Lang string    // accept language
+	Time time.Time `xorm:"created"`
 }
 
 // OpenStore is storage record with some opened file or opened folder.
 type OpenStore struct {
-	UAID    ID_t   // client ID
-	AID     ID_t   `xorm:"default 0"` // access profile ID
-	UID     ID_t   `xorm:"default 0"` // user profile ID
-	Path    string // system path
-	Latency int    // event latency, in milliseconds, or -1 if it file
-	Time    Time   `xorm:"created"` // time of event rise
+	UAID    ID_t      // client ID
+	AID     ID_t      `xorm:"default 0"` // access profile ID
+	UID     ID_t      `xorm:"default 0"` // user profile ID
+	Path    string    // system path
+	Latency int       // event latency, in milliseconds, or -1 if it file
+	Time    time.Time `xorm:"created"` // time of event rise
 }
 
 var (

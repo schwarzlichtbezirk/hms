@@ -282,7 +282,6 @@ var (
 	ErrNotSys   = errors.New("root PUID does not refers to file system path")
 	ErrPathOut  = errors.New("path cannot refers outside root PUID")
 
-	ErrNotFound  = errors.New("resource not found")
 	ErrArgNoNum  = errors.New("'num' parameter not recognized")
 	ErrArgNoTime = errors.New("unix time value not recognized")
 	ErrArgNoHD   = errors.New("'hd' parameter not recognized")

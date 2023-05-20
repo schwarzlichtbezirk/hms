@@ -354,6 +354,11 @@ func WriteError500(w http.ResponseWriter, r *http.Request, err error, code int) 
 // Routes table //
 //////////////////
 
+const (
+	devmsuff = "devmode" // relative path to folder with development mode code files
+	relmsuff = "build"   // relative path to folder with compiled code files
+)
+
 // HTTP distribution cache
 var pagecache = map[string][]byte{}
 

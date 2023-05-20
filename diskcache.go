@@ -22,6 +22,10 @@ import (
 	"golang.org/x/text/encoding/charmap"
 )
 
+var (
+	ErrNotFound = errors.New("resource not found")
+)
+
 // IsStatic returns whether file info refers to content
 // that can not be modified or moved.
 func IsStatic(fi fs.FileInfo) (static bool) {
@@ -63,6 +67,12 @@ type DiskCache[T MakeCloser] struct {
 	cache  []T
 	expire []*time.Timer
 	mux    sync.Mutex
+}
+
+func (dc *DiskCache[T]) Count() int {
+	dc.mux.Lock()
+	defer dc.mux.Unlock()
+	return len(dc.cache)
 }
 
 // Close performs close-call to all cached disk joints.

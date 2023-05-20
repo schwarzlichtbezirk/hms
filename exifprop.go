@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"time"
 
 	"github.com/rwcarlsen/goexif/exif"
 	"github.com/rwcarlsen/goexif/mknote"
@@ -15,25 +16,25 @@ type ExifProp struct {
 	Width  int `json:"width,omitempty" yaml:"width,omitempty" xml:"width,omitempty"`
 	Height int `json:"height,omitempty" yaml:"height,omitempty" xml:"height,omitempty"`
 	// Photo
-	Model        string  `xorm:"'model'" json:"model,omitempty" yaml:"model,omitempty" xml:"model,omitempty"`
-	Make         string  `xorm:"'make'" json:"make,omitempty" yaml:"make,omitempty" xml:"make,omitempty"`
-	Software     string  `xorm:"'software'" json:"software,omitempty" yaml:"software,omitempty" xml:"software,omitempty"`
-	DateTime     Time    `xorm:"'datetime'" json:"datetime,omitempty" yaml:"datetime,omitempty" xml:"datetime,omitempty"`
-	Orientation  int     `xorm:"'orientation'" json:"orientation,omitempty" yaml:"orientation,omitempty" xml:"orientation,omitempty"`
-	ExposureTime string  `xorm:"'exposure_time'" json:"exposuretime,omitempty" yaml:"exposuretime,omitempty" xml:"exposuretime,omitempty"`
-	ExposureProg int     `xorm:"'exposure_prog'" json:"exposureprog,omitempty" yaml:"exposureprog,omitempty" xml:"exposureprog,omitempty"`
-	FNumber      float32 `xorm:"'fnumber'" json:"fnumber,omitempty" yaml:"fnumber,omitempty" xml:"fnumber,omitempty"`
-	ISOSpeed     int     `xorm:"'iso_speed'" json:"isospeed,omitempty" yaml:"isospeed,omitempty" xml:"isospeed,omitempty"`
-	ShutterSpeed float32 `xorm:"'shutter_speed'" json:"shutterspeed,omitempty" yaml:"shutterspeed,omitempty" xml:"shutterspeed,omitempty"`
-	Aperture     float32 `xorm:"'aperture'" json:"aperture,omitempty" yaml:"aperture,omitempty" xml:"aperture,omitempty"`
-	ExposureBias float32 `xorm:"'exposure_bias'" json:"exposurebias,omitempty" yaml:"exposurebias,omitempty" xml:"exposurebias,omitempty"`
-	LightSource  int     `xorm:"'light_source'" json:"lightsource,omitempty" yaml:"lightsource,omitempty" xml:"lightsource,omitempty"`
-	Focal        float32 `xorm:"'focal'" json:"focal,omitempty" yaml:"focal,omitempty" xml:"focal,omitempty"`
-	Focal35mm    int     `xorm:"'focal35mm'" json:"focal35mm,omitempty" yaml:"focal35mm,omitempty" xml:"focal35mm,omitempty"`
-	DigitalZoom  float32 `xorm:"'digital_zoom'" json:"digitalzoom,omitempty" yaml:"digitalzoom,omitempty" xml:"digitalzoom,omitempty"`
-	Flash        int     `xorm:"'flash'" json:"flash,omitempty" yaml:"flash,omitempty" xml:"flash,omitempty"`
-	UniqueID     string  `xorm:"'unique_id'" json:"uniqueid,omitempty" yaml:"uniqueid,omitempty" xml:"uniqueid,omitempty"`
-	ThumbJpegLen int     `xorm:"'thumb_jpeg_len'" json:"thumbjpeglen,omitempty" yaml:"thumbjpeglen,omitempty" xml:"thumbjpeglen,omitempty"`
+	Model        string    `xorm:"'model'" json:"model,omitempty" yaml:"model,omitempty" xml:"model,omitempty"`
+	Make         string    `xorm:"'make'" json:"make,omitempty" yaml:"make,omitempty" xml:"make,omitempty"`
+	Software     string    `xorm:"'software'" json:"software,omitempty" yaml:"software,omitempty" xml:"software,omitempty"`
+	DateTime     time.Time `xorm:"'datetime'" json:"datetime,omitempty" yaml:"datetime,omitempty" xml:"datetime,omitempty"`
+	Orientation  int       `xorm:"'orientation'" json:"orientation,omitempty" yaml:"orientation,omitempty" xml:"orientation,omitempty"`
+	ExposureTime string    `xorm:"'exposure_time'" json:"exposuretime,omitempty" yaml:"exposuretime,omitempty" xml:"exposuretime,omitempty"`
+	ExposureProg int       `xorm:"'exposure_prog'" json:"exposureprog,omitempty" yaml:"exposureprog,omitempty" xml:"exposureprog,omitempty"`
+	FNumber      float32   `xorm:"'fnumber'" json:"fnumber,omitempty" yaml:"fnumber,omitempty" xml:"fnumber,omitempty"`
+	ISOSpeed     int       `xorm:"'iso_speed'" json:"isospeed,omitempty" yaml:"isospeed,omitempty" xml:"isospeed,omitempty"`
+	ShutterSpeed float32   `xorm:"'shutter_speed'" json:"shutterspeed,omitempty" yaml:"shutterspeed,omitempty" xml:"shutterspeed,omitempty"`
+	Aperture     float32   `xorm:"'aperture'" json:"aperture,omitempty" yaml:"aperture,omitempty" xml:"aperture,omitempty"`
+	ExposureBias float32   `xorm:"'exposure_bias'" json:"exposurebias,omitempty" yaml:"exposurebias,omitempty" xml:"exposurebias,omitempty"`
+	LightSource  int       `xorm:"'light_source'" json:"lightsource,omitempty" yaml:"lightsource,omitempty" xml:"lightsource,omitempty"`
+	Focal        float32   `xorm:"'focal'" json:"focal,omitempty" yaml:"focal,omitempty" xml:"focal,omitempty"`
+	Focal35mm    int       `xorm:"'focal35mm'" json:"focal35mm,omitempty" yaml:"focal35mm,omitempty" xml:"focal35mm,omitempty"`
+	DigitalZoom  float32   `xorm:"'digital_zoom'" json:"digitalzoom,omitempty" yaml:"digitalzoom,omitempty" xml:"digitalzoom,omitempty"`
+	Flash        int       `xorm:"'flash'" json:"flash,omitempty" yaml:"flash,omitempty" xml:"flash,omitempty"`
+	UniqueID     string    `xorm:"'unique_id'" json:"uniqueid,omitempty" yaml:"uniqueid,omitempty" xml:"uniqueid,omitempty"`
+	ThumbJpegLen int       `xorm:"'thumb_jpeg_len'" json:"thumbjpeglen,omitempty" yaml:"thumbjpeglen,omitempty" xml:"thumbjpeglen,omitempty"`
 	// GPS
 	Latitude   float64 `xorm:"'latitude'" json:"latitude,omitempty" yaml:"latitude,omitempty" xml:"latitude,omitempty"`
 	Longitude  float64 `xorm:"'longitude'" json:"longitude,omitempty" yaml:"longitude,omitempty" xml:"longitude,omitempty"`

@@ -3,6 +3,7 @@ package hms
 import (
 	"io/fs"
 	"path"
+	"time"
 )
 
 // DiskPath contains disk full path and icon label.
@@ -21,10 +22,10 @@ func MakeFilePath(syspath string) DiskPath {
 
 // FileProp is common file properties chunk.
 type FileProp struct {
-	Name string `xorm:"'name'" json:"name" yaml:"name" xml:"name"`
-	Type FT_t   `xorm:"'type'" json:"type" yaml:"type" xml:"type"` // do not omit empty
-	Size int64  `xorm:"'size' default 0" json:"size,omitempty" yaml:"size,omitempty" xml:"size,omitempty"`
-	Time Time   `xorm:"'time' DateTime default 0" json:"time,omitempty" yaml:"time,omitempty" xml:"time,omitempty"`
+	Name string    `xorm:"'name'" json:"name" yaml:"name" xml:"name"`
+	Type FT_t      `xorm:"'type'" json:"type" yaml:"type" xml:"type"` // do not omit empty
+	Size int64     `xorm:"'size' default 0" json:"size,omitempty" yaml:"size,omitempty" xml:"size,omitempty"`
+	Time time.Time `xorm:"'time' DateTime default 0" json:"time,omitempty" yaml:"time,omitempty" xml:"time,omitempty"`
 }
 
 // Setup fills fields from fs.FileInfo structure. Do not looks for share.
@@ -102,7 +103,7 @@ func (fg *FileGroup) IsZero() bool {
 
 // DirProp is directory properties chunk.
 type DirProp struct {
-	Scan    Time      `json:"scan,omitempty" yaml:"scan,omitempty" xml:"scan,omitempty"`                           // directory scanning time in UNIX format, milliseconds.
+	Scan    time.Time `json:"scan,omitempty" yaml:"scan,omitempty" xml:"scan,omitempty"`                           // directory scanning time in UNIX format, milliseconds.
 	FGrp    FileGroup `xorm:"extends" json:"fgrp,omitempty" yaml:"fgrp,flow,omitempty" xml:"fgrp,omitempty"`       // directory file groups counters.
 	Latency int       `xorm:"default 0" json:"latency,omitempty" yaml:"latency,omitempty" xml:"latency,omitempty"` // drive connection latency in ms, or -1 on error
 }

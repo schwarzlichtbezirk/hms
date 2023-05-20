@@ -3,13 +3,11 @@ package hms
 import (
 	"encoding/xml"
 	"errors"
-	"fmt"
 	"io"
 	"io/fs"
 	"net"
 	"net/http"
 	"path"
-	"strings"
 	"time"
 )
 
@@ -20,63 +18,6 @@ var catcolumn = map[Puid_t]string{
 	PUIDimage: "image",
 	PUIDbooks: "books",
 	PUIDtexts: "texts",
-}
-
-func JoinPath(elem ...string) string {
-	var fpath = elem[0]
-	if i := strings.Index(fpath, "://"); i != -1 {
-		var pref, suff string
-		if j := strings.Index(fpath[i+3:], "/"); j != -1 {
-			pref, suff = fpath[:i+3+j], fpath[i+3+j:]
-		} else {
-			pref, suff = fpath, "/"
-		}
-		elem[0] = suff
-		return pref + path.Join(elem...)
-	} else {
-		return path.Join(elem...)
-	}
-}
-
-// UnfoldPath brings any share path to system file path.
-func UnfoldPath(session *Session, shrpath string) (syspath string, puid Puid_t, err error) {
-	var pref, suff string
-	if i := strings.IndexRune(shrpath, '/'); i != -1 {
-		pref, suff = shrpath[:i], path.Clean(shrpath[i+1:])
-		if !fs.ValidPath(suff) { // prevent to modify original path
-			err = ErrPathOut
-			return
-		}
-		if suff == "." {
-			suff = ""
-		}
-	} else {
-		pref = shrpath
-	}
-	var ok bool
-	if puid, ok = CatPathKey[pref]; ok {
-		if len(suff) > 0 {
-			err = ErrNotSys
-			return
-		}
-		syspath = pref
-		return // category
-	}
-	if err = puid.Set(pref); err != nil {
-		err = fmt.Errorf("can not decode PUID value: %w", err)
-		return
-	}
-	if syspath, ok = PathStorePath(session, puid); !ok {
-		err = ErrNoPath
-		return
-	}
-	if len(suff) == 0 {
-		return // whole cached path
-	}
-	syspath = JoinPath(syspath, suff)
-	// get PUID if it not have
-	puid = PathStoreCache(session, syspath)
-	return // composite path
 }
 
 // APIHANDLER

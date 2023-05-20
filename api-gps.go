@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"math"
 	"net/http"
+	"time"
 )
 
 // Haversine uses formula to calculate the great-circle distance between
@@ -68,8 +69,8 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 		Paths []MapPath `json:"paths" yaml:"paths" xml:"paths>path"`
 		Limit int       `json:"limit,omitempty" yaml:"limit,omitempty" xml:"limit,omitempty"`
-		Time1 Time      `json:"time1,omitempty" yaml:"time1,omitempty" xml:"time1,omitempty"`
-		Time2 Time      `json:"time2,omitempty" yaml:"time2,omitempty" xml:"time2,omitempty"`
+		Time1 time.Time `json:"time1,omitempty" yaml:"time1,omitempty" xml:"time1,omitempty"`
+		Time2 time.Time `json:"time2,omitempty" yaml:"time2,omitempty" xml:"time2,omitempty"`
 	}
 	var ret struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`

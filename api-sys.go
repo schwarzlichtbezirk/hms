@@ -140,17 +140,17 @@ func cchinfAPI(w http.ResponseWriter, r *http.Request) {
 
 	var davcount int
 	for _, cc := range DavCaches {
-		davcount += len(cc.cache)
+		davcount += cc.Count()
 	}
 
 	var ftpcount int
 	for _, cc := range FtpCaches {
-		ftpcount += len(cc.cache)
+		ftpcount += cc.Count()
 	}
 
 	var sftpcount int
 	for _, cc := range SftpCaches {
-		sftpcount += len(cc.cache)
+		sftpcount += cc.Count()
 	}
 
 	var ret = XmlMap{

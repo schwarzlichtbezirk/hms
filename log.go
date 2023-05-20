@@ -49,12 +49,12 @@ const (
 // LogStore represents structured log fields for each log entry.
 // It's used to transmit the log items by network.
 type LogStore struct {
-	ID    uint   `xorm:"pk autoincr" json:"id" yaml:"id" xml:"id,attr"`
-	Time  Time   `json:"time" yaml:"time" xml:"time,attr"`
-	Level LL     `json:"level" yaml:"level" xml:"level,attr"`
-	Msg   string `json:"msg" yaml:"msg" xml:"msg"`
-	Line  int    `json:"line,omitempty" yaml:"line,omitempty" xml:"line,omitempty"`
-	File  string `json:"file,omitempty" yaml:"file,omitempty" xml:"file,omitempty"`
+	ID    uint      `xorm:"pk autoincr" json:"id" yaml:"id" xml:"id,attr"`
+	Time  time.Time `json:"time" yaml:"time" xml:"time,attr"`
+	Level LL        `json:"level" yaml:"level" xml:"level,attr"`
+	Msg   string    `json:"msg" yaml:"msg" xml:"msg"`
+	Line  int       `json:"line,omitempty" yaml:"line,omitempty" xml:"line,omitempty"`
+	File  string    `json:"file,omitempty" yaml:"file,omitempty" xml:"file,omitempty"`
 }
 
 // A Logger represents an active logging object that generates lines of
