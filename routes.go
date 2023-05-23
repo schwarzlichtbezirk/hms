@@ -390,7 +390,7 @@ var ResFS wpk.Union // resources packages root dir.
 
 // OpenPackage opens hms-package.
 func OpenPackage() (err error) {
-	for _, fname := range cfg.WPKName {
+	for _, fname := range Cfg.WPKName {
 		var fpath = path.Join(PackPath, fname)
 		var pkg *wpk.Package
 		if pkg, err = wpk.OpenPackage(fpath); err != nil {
@@ -404,7 +404,7 @@ func OpenPackage() (err error) {
 			dpath = fpath
 		}
 
-		if cfg.WPKmmap {
+		if Cfg.WPKmmap {
 			pkg.Tagger, err = mmap.MakeTagger(dpath)
 		} else {
 			pkg.Tagger, err = bulk.MakeTagger(dpath)

@@ -157,7 +157,7 @@ func ExtractThmub(session *Session, syspath string) (md MediaData, err error) {
 	// push successful result to cache, err != nil, md.Mime != MimeDis
 	if err != nil {
 		tmbcache.Poke(puid, md)
-		tmbcache.ToLimit(cfg.ThumbCacheMaxNum)
+		tmbcache.ToLimit(Cfg.ThumbCacheMaxNum)
 	}
 	return
 }
@@ -171,11 +171,11 @@ func MakeThumb(r io.Reader, orientation int) (data []byte, err error) {
 			return // can not decode file by any codec
 		}
 	}
-	if src.Bounds().In(image.Rect(0, 0, cfg.TmbResolution[0], cfg.TmbResolution[1])) {
+	if src.Bounds().In(image.Rect(0, 0, Cfg.TmbResolution[0], Cfg.TmbResolution[1])) {
 		dst = src
 	} else {
 		var fltlst = AddOrientFilter([]gift.Filter{
-			gift.ResizeToFit(cfg.TmbResolution[0], cfg.TmbResolution[1], gift.LinearResampling),
+			gift.ResizeToFit(Cfg.TmbResolution[0], Cfg.TmbResolution[1], gift.LinearResampling),
 		}, orientation)
 		var thumbfilter = gift.New(fltlst...)
 		var img = image.NewRGBA(thumbfilter.Bounds(src.Bounds()))
@@ -188,7 +188,7 @@ func MakeThumb(r io.Reader, orientation int) (data []byte, err error) {
 	}
 
 	// create valid thumbnail
-	if data, err = webp.EncodeRGBA(dst, cfg.TmbWebpQuality); err != nil {
+	if data, err = webp.EncodeRGBA(dst, Cfg.TmbWebpQuality); err != nil {
 		return // can not write webp
 	}
 	return
@@ -213,7 +213,7 @@ func CacheThumb(session *Session, syspath string) (md MediaData, err error) {
 
 	var ext = GetFileExt(syspath)
 	if IsTypeID3(ext) {
-		if cfg.FitEmbeddedTmb {
+		if Cfg.FitEmbeddedTmb {
 			var mdtag MediaData
 			if mdtag, err = ExtractThumbID3(syspath); err != nil {
 				return
@@ -238,7 +238,7 @@ func CacheThumb(session *Session, syspath string) (md MediaData, err error) {
 		return // file is not image
 	}
 
-	if fi.Size() > cfg.ThumbFileMaxSize {
+	if fi.Size() > Cfg.ThumbFileMaxSize {
 		err = ErrTooBig
 		return // file is too big
 	}
@@ -296,7 +296,7 @@ func MakeTile(r io.Reader, wdh, hgt int, orientation int) (data []byte, err erro
 	filter.Draw(img, src)
 	dst = img
 
-	if data, err = webp.EncodeRGBA(dst, cfg.TmbWebpQuality); err != nil {
+	if data, err = webp.EncodeRGBA(dst, Cfg.TmbWebpQuality); err != nil {
 		return // can not write webp
 	}
 	return
@@ -329,7 +329,7 @@ func CacheTile(session *Session, syspath string, wdh, hgt int) (md MediaData, er
 		return // file is not image
 	}
 
-	if fi.Size() > cfg.ThumbFileMaxSize {
+	if fi.Size() > Cfg.ThumbFileMaxSize {
 		err = ErrTooBig
 		return // file is too big
 	}

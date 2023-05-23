@@ -54,19 +54,19 @@ func (t *Tokens) Make(uid ID_t) {
 	t.Access, _ = jwt.NewWithClaims(jwt.SigningMethodHS256, &Claims{
 		StandardClaims: jwt.StandardClaims{
 			NotBefore: now.Unix(),
-			ExpiresAt: now.Add(cfg.AccessTTL).Unix(),
+			ExpiresAt: now.Add(Cfg.AccessTTL).Unix(),
 			Subject:   jwtsubject,
 		},
 		UID: uid,
-	}).SignedString([]byte(cfg.AccessKey))
+	}).SignedString([]byte(Cfg.AccessKey))
 	t.Refrsh, _ = jwt.NewWithClaims(jwt.SigningMethodHS256, &Claims{
 		StandardClaims: jwt.StandardClaims{
 			NotBefore: now.Unix(),
-			ExpiresAt: now.Add(cfg.RefreshTTL).Unix(),
+			ExpiresAt: now.Add(Cfg.RefreshTTL).Unix(),
 			Subject:   jwtsubject,
 		},
 		UID: uid,
-	}).SignedString([]byte(cfg.RefreshKey))
+	}).SignedString([]byte(Cfg.RefreshKey))
 }
 
 // StripPort makes fast IP-address extract from valid host:port string.
@@ -118,7 +118,7 @@ func GetAuth(r *http.Request) (uid ID_t, aerr error) {
 				bearer = true
 				if _, err = jwt.ParseWithClaims(val[7:], &claims, func(*jwt.Token) (any, error) {
 					if claims.UID > 0 {
-						return s2b(cfg.AccessKey), nil
+						return s2b(Cfg.AccessKey), nil
 					} else {
 						return nil, ErrNoUserID
 					}

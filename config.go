@@ -12,21 +12,10 @@ import (
 )
 
 const (
+	cfgbase = "config"
 	gitname = "hms"
 	gitpath = "github.com/schwarzlichtbezirk/" + gitname
-
-	cfgfile = "settings.yaml"
-	prffile = "profiles.yaml"
-	passlst = "passlist.yaml"
-
-	dirfile = "storage.sqlite"
-	userlog = "userlog.sqlite"
-
-	tmbfile = "thumb.wpt"
-	tilfile = "tiles.wpt"
 )
-
-const xormDriverName = "sqlite3"
 
 // CfgJWTAuth is authentication settings.
 type CfgJWTAuth struct {
@@ -69,6 +58,11 @@ type CfgTlsCert struct {
 type CfgNetwork struct {
 	// Timeout to establish connection to FTP-server.
 	DialTimeout time.Duration `json:"dial-timeout" yaml:"dial-timeout" long:"dto" description:"Timeout to establish connection to FTP-server."`
+}
+
+type CfgXormDrv struct {
+	// Provides XORM driver name.
+	XormDriverName string `json:"xorm-driver-name" yaml:"xorm-driver-name" long:"xdn" description:"Provides XORM driver name."`
 }
 
 type CfgImgProp struct {
@@ -115,12 +109,13 @@ type Config struct {
 	CfgWebServ `json:"web-server" yaml:"web-server" group:"Web server"`
 	CfgTlsCert `json:"tls-certificates" yaml:"tls-certificates" group:"Automatic certificates"`
 	CfgNetwork `json:"network" yaml:"network" group:"Network"`
+	CfgXormDrv `json:"xorm" yaml:"xorm" group:"XORM"`
 	CfgImgProp `json:"images-prop" yaml:"images-prop" group:"Images properties"`
 	CfgAppSets `json:"specification" yaml:"specification" group:"Application settings"`
 }
 
 // Instance of common service settings.
-var cfg = Config{ // inits default values:
+var Cfg = Config{ // inits default values:
 	CfgJWTAuth: CfgJWTAuth{
 		AccessTTL:   1 * 24 * time.Hour,
 		RefreshTTL:  3 * 24 * time.Hour,
@@ -146,6 +141,9 @@ var cfg = Config{ // inits default values:
 	},
 	CfgNetwork: CfgNetwork{
 		DialTimeout: 5 * time.Second,
+	},
+	CfgXormDrv: CfgXormDrv{
+		XormDriverName: "sqlite3",
 	},
 	CfgImgProp: CfgImgProp{
 		ThumbFileMaxSize: 4096*3072*4 + 65536,
@@ -176,8 +174,6 @@ var (
 	//    go build -ldflags="-X 'github.com/schwarzlichtbezirk/hms.BuildDate=%buildtime%'"
 	BuildTime string
 )
-
-const cfgbase = "config"
 
 var (
 	// Current path
@@ -220,7 +216,7 @@ var ErrNoCongig = errors.New("no configuration path was found")
 
 // DetectConfigPath finds configuration path with existing configuration file at least.
 func DetectConfigPath() (retpath string, err error) {
-	var detectname = cfgfile
+	var detectname = "settings.yaml"
 	var ok bool
 	var fpath string
 
@@ -304,7 +300,7 @@ var ErrNoPack = errors.New("no package path was found")
 
 // DetectConfigPath finds configuration path with existing configuration file at least.
 func DetectPackPath() (retpath string, err error) {
-	var detectname = cfg.WPKName[0]
+	var detectname = Cfg.WPKName[0]
 	var ok bool
 	var fpath string
 

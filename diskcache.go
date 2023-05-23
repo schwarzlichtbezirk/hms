@@ -114,7 +114,7 @@ func (dc *DiskCache[T]) Put(val T) {
 	dc.mux.Lock()
 	defer dc.mux.Unlock()
 	dc.cache = append(dc.cache, val)
-	dc.expire = append(dc.expire, time.AfterFunc(cfg.DiskCacheExpire, func() {
+	dc.expire = append(dc.expire, time.AfterFunc(Cfg.DiskCacheExpire, func() {
 		if val, ok := dc.Peek(); ok {
 			val.Close()
 		}
@@ -301,7 +301,7 @@ func (d *FtpJoint) Make(urladdr string) (err error) {
 	if u, err = url.Parse(urladdr); err != nil {
 		return
 	}
-	if d.conn, err = ftp.Dial(u.Host, ftp.DialWithTimeout(cfg.DialTimeout)); err != nil {
+	if d.conn, err = ftp.Dial(u.Host, ftp.DialWithTimeout(Cfg.DialTimeout)); err != nil {
 		return
 	}
 	var pass, _ = u.User.Password()

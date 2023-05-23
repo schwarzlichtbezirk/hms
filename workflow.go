@@ -16,6 +16,18 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+const (
+	cfgfile = "settings.yaml"
+	prffile = "profiles.yaml"
+	passlst = "passlist.yaml"
+
+	dirfile = "storage.sqlite"
+	userlog = "userlog.sqlite"
+
+	tmbfile = "thumb.wpt"
+	tilfile = "tiles.wpt"
+)
+
 var (
 	// context to indicate about service shutdown
 	exitctx context.Context
@@ -39,11 +51,11 @@ func Init() {
 		Log.Fatal(err)
 	}
 	// load content of Config structure from YAML-file.
-	if err = cfg.ReadYaml(cfgfile); err != nil {
+	if err = Cfg.ReadYaml(cfgfile); err != nil {
 		Log.Error("error at settings file: " + err.Error())
 	}
 	// rewrite settings from config file
-	if _, err := flags.Parse(&cfg); err != nil {
+	if _, err := flags.Parse(&Cfg); err != nil {
 		os.Exit(1)
 	}
 	Log.Infof("config path: %s", ConfigPath)
@@ -179,7 +191,7 @@ func Run(gmux *Router) {
 		var httpwg sync.WaitGroup
 
 		// starts HTTP listeners
-		for _, addr := range cfg.PortHTTP {
+		for _, addr := range Cfg.PortHTTP {
 			var addr = addr // localize
 			httpwg.Add(1)
 			exitwg.Add(1)
@@ -190,11 +202,11 @@ func Run(gmux *Router) {
 				var server = &http.Server{
 					Addr:              addr,
 					Handler:           gmux,
-					ReadTimeout:       cfg.ReadTimeout,
-					ReadHeaderTimeout: cfg.ReadHeaderTimeout,
-					WriteTimeout:      cfg.WriteTimeout,
-					IdleTimeout:       cfg.IdleTimeout,
-					MaxHeaderBytes:    cfg.MaxHeaderBytes,
+					ReadTimeout:       Cfg.ReadTimeout,
+					ReadHeaderTimeout: Cfg.ReadHeaderTimeout,
+					WriteTimeout:      Cfg.WriteTimeout,
+					IdleTimeout:       Cfg.IdleTimeout,
+					MaxHeaderBytes:    Cfg.MaxHeaderBytes,
 				}
 				go func() {
 					httpwg.Done()
@@ -208,7 +220,7 @@ func Run(gmux *Router) {
 				<-exitctx.Done()
 
 				// create a deadline to wait for.
-				var ctx, cancel = context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
+				var ctx, cancel = context.WithTimeout(context.Background(), Cfg.ShutdownTimeout)
 				defer cancel()
 
 				server.SetKeepAlivesEnabled(false)
@@ -221,7 +233,7 @@ func Run(gmux *Router) {
 		}
 
 		// starts HTTPS listeners
-		for _, addr := range cfg.PortTLS {
+		for _, addr := range Cfg.PortTLS {
 			var addr = addr // localize
 			httpwg.Add(1)
 			exitwg.Add(1)
@@ -230,12 +242,12 @@ func Run(gmux *Router) {
 
 				Log.Infof("start tls on %s", addr)
 				var config *tls.Config
-				if cfg.UseAutoCert { // get certificate from letsencrypt.org
+				if Cfg.UseAutoCert { // get certificate from letsencrypt.org
 					var m = &autocert.Manager{
 						Prompt:     autocert.AcceptTOS,
 						Cache:      autocert.DirCache(path.Join(ConfigPath, "cert")),
-						Email:      cfg.Email,
-						HostPolicy: autocert.HostWhitelist(cfg.HostWhitelist...),
+						Email:      Cfg.Email,
+						HostPolicy: autocert.HostWhitelist(Cfg.HostWhitelist...),
 					}
 					config = &tls.Config{
 						PreferServerCipherSuites: true,
@@ -250,11 +262,11 @@ func Run(gmux *Router) {
 					Addr:              addr,
 					Handler:           gmux,
 					TLSConfig:         config,
-					ReadTimeout:       cfg.ReadTimeout,
-					ReadHeaderTimeout: cfg.ReadHeaderTimeout,
-					WriteTimeout:      cfg.WriteTimeout,
-					IdleTimeout:       cfg.IdleTimeout,
-					MaxHeaderBytes:    cfg.MaxHeaderBytes,
+					ReadTimeout:       Cfg.ReadTimeout,
+					ReadHeaderTimeout: Cfg.ReadHeaderTimeout,
+					WriteTimeout:      Cfg.WriteTimeout,
+					IdleTimeout:       Cfg.IdleTimeout,
+					MaxHeaderBytes:    Cfg.MaxHeaderBytes,
 				}
 				go func() {
 					httpwg.Done()
@@ -270,7 +282,7 @@ func Run(gmux *Router) {
 				<-exitctx.Done()
 
 				// create a deadline to wait for.
-				var ctx, cancel = context.WithTimeout(context.Background(), cfg.ShutdownTimeout)
+				var ctx, cancel = context.WithTimeout(context.Background(), Cfg.ShutdownTimeout)
 				defer cancel()
 
 				server.SetKeepAlivesEnabled(false)
@@ -295,17 +307,17 @@ func Run(gmux *Router) {
 
 // WaitExit waits until all server threads will be stopped and all transactions will be done.
 func WaitExit() {
-	if len(cfg.PortHTTP) > 0 {
+	if len(Cfg.PortHTTP) > 0 {
 		var suff string
 		var has80 bool
-		for _, port := range cfg.PortHTTP {
+		for _, port := range Cfg.PortHTTP {
 			if port == ":80" {
 				has80 = true
 				break
 			}
 		}
 		if !has80 {
-			suff = cfg.PortHTTP[0]
+			suff = Cfg.PortHTTP[0]
 		}
 		Log.Infof("hint: Open http://localhost%[1]s page in browser to view the player. If you want to stop the server, press 'Ctrl+C' for graceful network shutdown. Use http://localhost%[1]s/stat for server state monitoring.", suff)
 	}

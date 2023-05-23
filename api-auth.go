@@ -96,7 +96,7 @@ func refrshAPI(w http.ResponseWriter, r *http.Request) {
 
 	var claims Claims
 	if _, err = jwt.ParseWithClaims(arg.Refrsh, &claims, func(token *jwt.Token) (any, error) {
-		return s2b(cfg.RefreshKey), nil
+		return s2b(Cfg.RefreshKey), nil
 	}); err != nil {
 		WriteError400(w, r, err, AECrefrshparse)
 		return

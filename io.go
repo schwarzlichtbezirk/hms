@@ -65,7 +65,7 @@ type YamlReadWriter interface {
 // ReadYaml reads content of Config structure from YAML-file
 // with given file name.
 func (cfg *Config) ReadYaml(fname string) (err error) {
-	if err = ReadYaml(fname, &cfg); err != nil {
+	if err = ReadYaml(fname, cfg); err != nil {
 		return
 	}
 	return
@@ -79,7 +79,7 @@ func (cfg *Config) WriteYaml(fname string) error {
 # "access-key" and "refresh-key" for tokens protection.
 
 `
-	return WriteYaml(fname, intro, &cfg)
+	return WriteYaml(fname, intro, cfg)
 }
 
 // PrfReadYaml reads content of Profiles structure from YAML-file

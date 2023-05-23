@@ -54,6 +54,9 @@ tls-certificates:
 network:
   # Timeout to establish connection to FTP-server.
   dial-timeout: 5s
+xorm:
+  # Provides XORM driver name.
+  xorm-driver-name: sqlite3
 images-prop:
   # Maximum size of image to make thumbnail.
   thumb-file-maxsize: 50397184 # 4096*3072*4 + 65536, 48M, max 4K image + 64K exif metadata

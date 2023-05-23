@@ -49,7 +49,7 @@ var (
 // CalcUAID calculate user agent ID by xxhash from given strings.
 func CalcUAID(addr, ua string) ID_t {
 	var h = xxhash.New()
-	h.Write(s2b(cfg.UaidHmacKey))
+	h.Write(s2b(Cfg.UaidHmacKey))
 	h.Write(s2b(addr))
 	h.Write(s2b(ua))
 	return ID_t(h.Sum64() & 0x7fff_ffff_ffff_ffff) // clear highest bit for xorm compatibility
@@ -62,7 +62,7 @@ func RequestUAID(r *http.Request) ID_t {
 
 // InitUserlog inits database user log engine.
 func InitUserlog() (err error) {
-	if XormUserlog, err = xorm.NewEngine(xormDriverName, path.Join(CachePath, userlog)); err != nil {
+	if XormUserlog, err = xorm.NewEngine(Cfg.XormDriverName, path.Join(CachePath, userlog)); err != nil {
 		return
 	}
 	XormUserlog.SetMapper(names.GonicMapper{})
@@ -149,7 +149,7 @@ func usrlstAPI(w http.ResponseWriter, r *http.Request) {
 	var now = time.Now()
 	for i, ast := range asts {
 		uamux.Lock()
-		var online = now.Sub(UserOnline[ast.UAID]) < cfg.OnlineTimeout
+		var online = now.Sub(UserOnline[ast.UAID]) < Cfg.OnlineTimeout
 		uamux.Unlock()
 		var ui = item{
 			Addr:   ast.Addr,

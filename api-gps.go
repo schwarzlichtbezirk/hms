@@ -116,7 +116,7 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		}
 	}
 	if arg.Limit < 0 {
-		arg.Limit = cfg.RangeSearchLimit
+		arg.Limit = Cfg.RangeSearchLimit
 	}
 
 	var session = XormStorage.NewSession()

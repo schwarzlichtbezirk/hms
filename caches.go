@@ -330,7 +330,7 @@ func MediaCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 		}
 	}
 
-	if md.Data, err = webp.EncodeRGBA(src, cfg.TmbWebpQuality); err != nil {
+	if md.Data, err = webp.EncodeRGBA(src, Cfg.TmbWebpQuality); err != nil {
 		return // can not write webp
 	}
 	md.Mime = MimeWebp
@@ -338,7 +338,7 @@ func MediaCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 		md.Time = fi.ModTime()
 	}
 	mediacache.Poke(puid, md)
-	mediacache.ToLimit(cfg.MediaCacheMaxNum)
+	mediacache.ToLimit(Cfg.MediaCacheMaxNum)
 	return
 }
 
@@ -364,9 +364,9 @@ func HdCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 		if ep.Width > 0 && ep.Height > 0 {
 			var wdh, hgt int
 			if ep.Width > ep.Height {
-				wdh, hgt = cfg.HDResolution[0], cfg.HDResolution[1]
+				wdh, hgt = Cfg.HDResolution[0], Cfg.HDResolution[1]
 			} else {
-				wdh, hgt = cfg.HDResolution[1], cfg.HDResolution[0]
+				wdh, hgt = Cfg.HDResolution[1], Cfg.HDResolution[0]
 			}
 			if ep.Width <= wdh && ep.Height <= hgt {
 				err = ErrNotHD
@@ -390,9 +390,9 @@ func HdCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 
 	var wdh, hgt int
 	if src.Bounds().Dx() > src.Bounds().Dy() {
-		wdh, hgt = cfg.HDResolution[0], cfg.HDResolution[1]
+		wdh, hgt = Cfg.HDResolution[0], Cfg.HDResolution[1]
 	} else {
-		wdh, hgt = cfg.HDResolution[1], cfg.HDResolution[0]
+		wdh, hgt = Cfg.HDResolution[1], Cfg.HDResolution[0]
 	}
 
 	if src.Bounds().In(image.Rect(0, 0, wdh, hgt)) {
@@ -412,7 +412,7 @@ func HdCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 	filter.Draw(img, src)
 	dst = img
 
-	if md.Data, err = webp.EncodeRGBA(dst, cfg.TmbWebpQuality); err != nil {
+	if md.Data, err = webp.EncodeRGBA(dst, Cfg.TmbWebpQuality); err != nil {
 		return // can not write webp
 	}
 	md.Mime = MimeWebp
@@ -420,7 +420,7 @@ func HdCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 		md.Time = fi.ModTime()
 	}
 	hdcache.Poke(puid, md)
-	hdcache.ToLimit(cfg.HdCacheMaxNum)
+	hdcache.ToLimit(Cfg.HdCacheMaxNum)
 	return
 }
 
@@ -630,7 +630,7 @@ func ClosePackages() (err error) {
 
 // InitStorage inits database caches engine.
 func InitStorage() (err error) {
-	if XormStorage, err = xorm.NewEngine(xormDriverName, path.Join(CachePath, dirfile)); err != nil {
+	if XormStorage, err = xorm.NewEngine(Cfg.XormDriverName, path.Join(CachePath, dirfile)); err != nil {
 		return
 	}
 	XormStorage.SetMapper(names.GonicMapper{})

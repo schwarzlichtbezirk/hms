@@ -229,7 +229,7 @@ func cldaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	switch arg.Scheme {
 	case "ftp":
 		var conn *ftp.ServerConn
-		if conn, err = ftp.Dial(argurl.Host, ftp.DialWithTimeout(cfg.DialTimeout)); err != nil {
+		if conn, err = ftp.Dial(argurl.Host, ftp.DialWithTimeout(Cfg.DialTimeout)); err != nil {
 			WriteError(w, r, http.StatusNotFound, err, AECcldaddftpdial)
 			return
 		}

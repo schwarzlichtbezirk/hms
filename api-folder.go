@@ -165,7 +165,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 						}
 					}
 				}
-				return cfg.RangeSearchAny <= 0 || n < cfg.RangeSearchAny
+				return Cfg.RangeSearchAny <= 0 || n < Cfg.RangeSearchAny
 			})
 			if ret.List, _, err = ScanFileInfoList(acc, session, vfiles, vpaths); err != nil {
 				WriteError500(w, r, err, AECfoldermap)

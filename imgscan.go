@@ -110,7 +110,7 @@ func (s *scanner) Scan() {
 		cancel()
 	}()
 
-	var thrnum = cfg.ScanThreadsNum
+	var thrnum = Cfg.ScanThreadsNum
 	if thrnum == 0 {
 		thrnum = runtime.GOMAXPROCS(0)
 	}

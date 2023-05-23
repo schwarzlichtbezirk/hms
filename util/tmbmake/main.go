@@ -183,7 +183,7 @@ func DrawTile(src image.Image, wdh, hgt int, orientation int) (md MediaData, err
 // EncodeRGBA2WebP converts Image to WebP file lossless format with alpha channel.
 func EncodeRGBA2WebP(m image.Image) (md MediaData, err error) {
 	var data []byte
-	if data, err = webp.EncodeRGBA(m, 80 /*cfg.TmbWebpQuality*/); err != nil {
+	if data, err = webp.EncodeRGBA(m, 80 /*Cfg.TmbWebpQuality*/); err != nil {
 		return // can not write webp
 	}
 	md.Data = data
@@ -220,7 +220,7 @@ func Convert(fpath string) (err error) {
 		return // file is not image
 	}
 
-	if fi.Size() > 50*1024*1024 /*cfg.ThumbFileMaxSize*/ {
+	if fi.Size() > 50*1024*1024 /*Cfg.ThumbFileMaxSize*/ {
 		err = ErrTooBig
 		return // file is too big
 	}
