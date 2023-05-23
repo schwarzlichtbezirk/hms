@@ -11,6 +11,7 @@ import (
 	"io"
 	"io/fs"
 	"strings"
+	"time"
 
 	"github.com/disintegration/gift"
 
@@ -78,6 +79,7 @@ func GetMimeVal(mime, ext string) Mime_t {
 type MediaData struct {
 	Data []byte
 	Mime Mime_t
+	Time time.Time
 }
 
 // EXIF image orientation constants.
@@ -161,7 +163,7 @@ func ExtractThmub(session *Session, syspath string) (md MediaData, err error) {
 }
 
 // MakeThumb produces new thumbnail object.
-func MakeThumb(r io.Reader, orientation int) (md MediaData, err error) {
+func MakeThumb(r io.Reader, orientation int) (data []byte, err error) {
 	// create sized image for thumbnail
 	var src, dst image.Image
 	if src, _, err = image.Decode(r); err != nil {
@@ -186,17 +188,9 @@ func MakeThumb(r io.Reader, orientation int) (md MediaData, err error) {
 	}
 
 	// create valid thumbnail
-	return EncodeRGBA2WebP(dst)
-}
-
-// EncodeRGBA2WebP converts Image to WebP file lossless format with alpha channel.
-func EncodeRGBA2WebP(m image.Image) (md MediaData, err error) {
-	var data []byte
-	if data, err = webp.EncodeRGBA(m, cfg.TmbWebpQuality); err != nil {
+	if data, err = webp.EncodeRGBA(dst, cfg.TmbWebpQuality); err != nil {
 		return // can not write webp
 	}
-	md.Data = data
-	md.Mime = MimeWebp
 	return
 }
 
@@ -204,13 +198,8 @@ func EncodeRGBA2WebP(m image.Image) (md MediaData, err error) {
 // makes new one and put it to cache.
 func CacheThumb(session *Session, syspath string) (md MediaData, err error) {
 	// try to extract thumbnail from package
-	var mime string
-	if md.Data, mime, err = thumbpkg.GetData(syspath); err != nil {
+	if md, err = thumbpkg.GetData(syspath); err != nil {
 		return // failure
-	}
-	var ok bool
-	if md.Mime, ok = MimeVal[mime]; ok {
-		return // found
 	}
 
 	var fi fs.FileInfo
@@ -229,11 +218,13 @@ func CacheThumb(session *Session, syspath string) (md MediaData, err error) {
 			if mdtag, err = ExtractThumbID3(syspath); err != nil {
 				return
 			}
-			if md, err = MakeThumb(bytes.NewReader(mdtag.Data), OrientNormal); err != nil {
+			if md.Data, err = MakeThumb(bytes.NewReader(mdtag.Data), OrientNormal); err != nil {
 				return
 			}
+			md.Mime = MimeWebp
+			md.Time = mdtag.Time
 			// push thumbnail to package
-			err = thumbpkg.PutFile(syspath, bytes.NewReader(md.Data), MimeStr[md.Mime])
+			err = thumbpkg.PutFile(syspath, md)
 			return
 		} else {
 			err = ErrNotImg
@@ -261,23 +252,27 @@ func CacheThumb(session *Session, syspath string) (md MediaData, err error) {
 		}
 	}
 
-	var r io.ReadCloser
-	if r, err = OpenFile(syspath); err != nil {
+	var file File
+	if file, err = OpenFile(syspath); err != nil {
 		return // can not open file
 	}
-	defer r.Close()
+	defer file.Close()
 
-	if md, err = MakeThumb(r, orientation); err != nil {
+	if md.Data, err = MakeThumb(file, orientation); err != nil {
 		return
+	}
+	md.Mime = MimeWebp
+	if fi, _ := file.Stat(); fi != nil {
+		md.Time = fi.ModTime()
 	}
 
 	// push thumbnail to package
-	err = thumbpkg.PutFile(syspath, bytes.NewReader(md.Data), MimeStr[md.Mime])
+	err = thumbpkg.PutFile(syspath, md)
 	return
 }
 
 // MakeTile produces new tile object.
-func MakeTile(r io.Reader, wdh, hgt int, orientation int) (md MediaData, err error) {
+func MakeTile(r io.Reader, wdh, hgt int, orientation int) (data []byte, err error) {
 	var src, dst image.Image
 	if src, _, err = image.Decode(r); err != nil {
 		if src == nil { // skip "short Huffman data" or others errors with partial results
@@ -301,7 +296,10 @@ func MakeTile(r io.Reader, wdh, hgt int, orientation int) (md MediaData, err err
 	filter.Draw(img, src)
 	dst = img
 
-	return EncodeRGBA2WebP(dst)
+	if data, err = webp.EncodeRGBA(dst, cfg.TmbWebpQuality); err != nil {
+		return // can not write webp
+	}
+	return
 }
 
 // CacheTile tries to extract existing tile from cache, otherwise
@@ -310,13 +308,8 @@ func CacheTile(session *Session, syspath string, wdh, hgt int) (md MediaData, er
 	var tilepath = fmt.Sprintf("%s?%dx%d", syspath, wdh, hgt)
 
 	// try to extract tile from package
-	var mime string
-	if md.Data, mime, err = tilespkg.GetData(tilepath); err != nil {
+	if md, err = tilespkg.GetData(tilepath); err != nil {
 		return // failure
-	}
-	var ok bool
-	if md.Mime, ok = MimeVal[mime]; ok {
-		return // found
 	}
 
 	var fi fs.FileInfo
@@ -341,11 +334,11 @@ func CacheTile(session *Session, syspath string, wdh, hgt int) (md MediaData, er
 		return // file is too big
 	}
 
-	var r io.ReadCloser
-	if r, err = OpenFile(syspath); err != nil {
+	var file File
+	if file, err = OpenFile(syspath); err != nil {
 		return // can not open file
 	}
-	defer r.Close()
+	defer file.Close()
 
 	// try to extract orientation from EXIF
 	var orientation = OrientNormal
@@ -356,12 +349,16 @@ func CacheTile(session *Session, syspath string, wdh, hgt int) (md MediaData, er
 		}
 	}
 
-	if md, err = MakeTile(r, wdh, hgt, orientation); err != nil {
+	if md.Data, err = MakeTile(file, wdh, hgt, orientation); err != nil {
 		return
+	}
+	md.Mime = MimeWebp
+	if fi, _ := file.Stat(); fi != nil {
+		md.Time = fi.ModTime()
 	}
 
 	// push tile to package
-	err = tilespkg.PutFile(tilepath, bytes.NewReader(md.Data), MimeStr[md.Mime])
+	err = tilespkg.PutFile(tilepath, md)
 	return
 }
 

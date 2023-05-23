@@ -2,7 +2,6 @@ package hms
 
 import (
 	"encoding/xml"
-	"fmt"
 	"io"
 	"io/fs"
 	"net/http"
@@ -13,6 +12,9 @@ import (
 
 	"github.com/schwarzlichtbezirk/wpk"
 )
+
+// save server start time
+var starttime = time.Now()
 
 //////////////////////////
 // API request handlers //
@@ -104,32 +106,16 @@ func cchinfAPI(w http.ResponseWriter, r *http.Request) {
 	var gpscount = gpscache.Len()
 	var etmbcount = tmbcache.Len()
 
-	type stat struct {
+	var (
 		size1 float64
 		size2 float64
 		num   int
-	}
-	var webp, jpg, png, gif stat
+	)
 	thumbpkg.Enum(func(fkey string, ts *wpk.TagsetRaw) bool {
 		var l = float64(ts.Size())
-		if str, ok := ts.TagStr(wpk.TIDmime); ok {
-			var s *stat
-			switch MimeVal[str] {
-			case MimeGif:
-				s = &gif
-			case MimePng:
-				s = &png
-			case MimeJpeg:
-				s = &jpg
-			case MimeWebp:
-				s = &webp
-			default:
-				panic(fmt.Sprintf("unexpected MIME type in cache %s", str))
-			}
-			s.size1 += l
-			s.size2 += l * l
-			s.num++
-		}
+		size1 += l
+		size2 += l * l
+		num++
 		return true
 	})
 
@@ -160,21 +146,9 @@ func cchinfAPI(w http.ResponseWriter, r *http.Request) {
 		"tagcount":     tagcount,
 		"gpscount":     gpscount,
 		"etmbcount":    etmbcount,
-		"mtmbcount":    gif.num + png.num + jpg.num + webp.num,
-		"mtmbsumsize1": gif.size1 + png.size1 + jpg.size1 + webp.size1,
-		"mtmbsumsize2": gif.size2 + png.size2 + jpg.size2 + webp.size2,
-		"webpnum":      webp.num,
-		"webpsumsize1": webp.size1,
-		"webpsumsize2": webp.size2,
-		"jpgnum":       jpg.num,
-		"jpgsumsize1":  jpg.size1,
-		"jpgsumsize2":  jpg.size2,
-		"pngnum":       png.num,
-		"pngsumsize1":  png.size1,
-		"pngsumsize2":  png.size2,
-		"gifnum":       gif.num,
-		"gifsumsize1":  gif.size1,
-		"gifsumsize2":  gif.size2,
+		"mtmbcount":    num,
+		"mtmbsumsize1": size1,
+		"mtmbsumsize2": size2,
 		"isocount":     isocount,
 		"davcount":     davcount,
 		"ftpcount":     ftpcount,

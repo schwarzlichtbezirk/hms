@@ -1,6 +1,7 @@
 package hms
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"image"
@@ -9,6 +10,7 @@ import (
 	"path"
 	"time"
 
+	"github.com/chai2010/webp"
 	"github.com/disintegration/gift"
 	"github.com/schwarzlichtbezirk/wpk"
 	"github.com/schwarzlichtbezirk/wpk/fsys"
@@ -35,6 +37,8 @@ var (
 	ErrUncacheable = errors.New("file format is uncacheable")
 	ErrNotHD       = errors.New("image resolution does not fit to full HD")
 	ErrNotDisk     = errors.New("file is not image of supported format")
+	ErrNoMTime     = errors.New("modify time tag does not found")
+	ErrNoMime      = errors.New("MIME tag does not found")
 )
 
 // ToSlash brings filenames to true slashes.
@@ -313,7 +317,7 @@ func MediaCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 		return // uncacheable type
 	}
 
-	var file io.ReadCloser
+	var file File
 	if file, err = OpenFile(syspath); err != nil {
 		return // can not open file
 	}
@@ -326,7 +330,13 @@ func MediaCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 		}
 	}
 
-	md, err = EncodeRGBA2WebP(src)
+	if md.Data, err = webp.EncodeRGBA(src, cfg.TmbWebpQuality); err != nil {
+		return // can not write webp
+	}
+	md.Mime = MimeWebp
+	if fi, _ := file.Stat(); fi != nil {
+		md.Time = fi.ModTime()
+	}
 	mediacache.Poke(puid, md)
 	mediacache.ToLimit(cfg.MediaCacheMaxNum)
 	return
@@ -365,7 +375,7 @@ func HdCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 		}
 	}
 
-	var file io.ReadCloser
+	var file File
 	if file, err = OpenFile(syspath); err != nil {
 		return // can not open file
 	}
@@ -402,7 +412,13 @@ func HdCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 	filter.Draw(img, src)
 	dst = img
 
-	md, err = EncodeRGBA2WebP(dst)
+	if md.Data, err = webp.EncodeRGBA(dst, cfg.TmbWebpQuality); err != nil {
+		return // can not write webp
+	}
+	md.Mime = MimeWebp
+	if fi, _ := file.Stat(); fi != nil {
+		md.Time = fi.ModTime()
+	}
 	hdcache.Poke(puid, md)
 	hdcache.ToLimit(cfg.HdCacheMaxNum)
 	return
@@ -506,9 +522,14 @@ func (fc *FileCache) Close() (err error) {
 }
 
 // GetFile extracts file from the cache with given file name.
-func (fc *FileCache) GetFile(fpath string) (file wpk.NestedFile, mime string, err error) {
+func (fc *FileCache) GetFile(fpath string) (file wpk.NestedFile, mime string, t time.Time, err error) {
 	if ts, ok := fc.Tagset(fpath); ok {
+		if t, ok = ts.TagTime(wpk.TIDmtime); !ok {
+			err = ErrNoMTime
+			return
+		}
 		if mime, ok = ts.TagStr(wpk.TIDmime); !ok {
+			err = ErrNoMime
 			return
 		}
 		if file, err = fc.OpenTagset(ts); err != nil {
@@ -519,36 +540,52 @@ func (fc *FileCache) GetFile(fpath string) (file wpk.NestedFile, mime string, er
 }
 
 // GetData extracts file from the cache with given file name.
-func (fc *FileCache) GetData(fpath string) (data []byte, mime string, err error) {
+func (fc *FileCache) GetData(fpath string) (md MediaData, err error) {
 	if ts, ok := fc.Tagset(fpath); ok {
+		var t time.Time
+		if t, ok = ts.TagTime(wpk.TIDmtime); !ok {
+			err = ErrNoMTime
+			return
+		}
+		md.Time = t
+
+		var mime string
 		if mime, ok = ts.TagStr(wpk.TIDmime); !ok {
+			err = ErrNoMime
+			return
+		}
+		if md.Mime, ok = MimeVal[mime]; !ok {
+			err = ErrNotImg
 			return
 		}
 
-		var file io.ReadCloser
+		var file File
 		if file, err = fc.OpenTagset(ts); err != nil {
 			return
 		}
 		defer file.Close()
 
-		data = make([]byte, ts.Size())
+		var data = make([]byte, ts.Size())
 		if _, err = file.Read(data); err != nil {
 			return
 		}
+		md.Data = data
 	}
 	return
 }
 
 // PutFile puts file to package.
-func (fc *FileCache) PutFile(fpath string, r io.Reader, mime string) (err error) {
+func (fc *FileCache) PutFile(fpath string, md MediaData) (err error) {
 	var ts *wpk.TagsetRaw
-	if ts, err = fc.PackData(fc.wpf, r, fpath); err != nil {
+	if ts, err = fc.PackData(fc.wpf, bytes.NewReader(md.Data), fpath); err != nil {
 		return
 	}
-	var now = time.Now()
-	ts.Put(wpk.TIDmtime, wpk.UnixTag(now))
-	ts.Put(wpk.TIDatime, wpk.UnixTag(now))
-	ts.Put(wpk.TIDmime, wpk.StrTag(mime))
+	if md.Time.IsZero() {
+		md.Time = time.Now()
+	}
+	ts.Put(wpk.TIDmtime, wpk.UnixTag(md.Time))
+	ts.Put(wpk.TIDatime, wpk.UnixTag(md.Time))
+	ts.Put(wpk.TIDmime, wpk.StrTag(MimeStr[md.Mime]))
 	return
 }
 

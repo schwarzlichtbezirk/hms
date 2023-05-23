@@ -68,7 +68,6 @@ const (
 	AECmtmbhidden
 	AECmtmbaccess
 	AECmtmbbadcnt
-	AECmtmbnocnt
 
 	// tile
 
@@ -79,7 +78,6 @@ const (
 	AECtilehidden
 	AECtileaccess
 	AECtilebadcnt
-	AECtilenocnt
 
 	// reload
 

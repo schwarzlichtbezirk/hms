@@ -307,6 +307,14 @@ func (prf *Profile) IsShared(syspath string) bool {
 	return false
 }
 
+// IsRemote returns true is resource is hosted anywhere outside.
+func IsRemote(syspath string) bool {
+	return strings.HasPrefix(syspath, "http://") ||
+		strings.HasPrefix(syspath, "https://") ||
+		strings.HasPrefix(syspath, "ftp://") ||
+		strings.HasPrefix(syspath, "sftp://")
+}
+
 // FindLocal scans all available drives installed on local machine.
 func (prf *Profile) FindLocal() {
 	switch runtime.GOOS {

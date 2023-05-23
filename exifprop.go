@@ -183,14 +183,14 @@ func ExtractThumbEXIF(syspath string) (md MediaData, err error) {
 		}
 	}()
 
-	var r io.ReadSeekCloser
-	if r, err = OpenFile(syspath); err != nil {
+	var file File
+	if file, err = OpenFile(syspath); err != nil {
 		return
 	}
-	defer r.Close()
+	defer file.Close()
 
 	var x *exif.Exif
-	if x, err = exif.Decode(r); err != nil {
+	if x, err = exif.Decode(file); err != nil {
 		return
 	}
 
@@ -202,6 +202,9 @@ func ExtractThumbEXIF(syspath string) (md MediaData, err error) {
 
 	md.Data = pic
 	md.Mime = MimeJpeg
+	if fi, _ := file.Stat(); fi != nil {
+		md.Time = fi.ModTime()
+	}
 	return
 }
 

@@ -468,26 +468,6 @@ const VueCchinfCard = {
 				? (this.cchinf.mtmbsumsize1 / this.cchinf.mtmbcount).toFixed()
 				: "N/A";
 		},
-		avrtmbwebpsize() {
-			return this.cchinf.webpnum
-				? (this.cchinf.webpsumsize1 / this.cchinf.webpnum).toFixed()
-				: "N/A";
-		},
-		avrtmbjpgsize() {
-			return this.cchinf.jpgnum
-				? (this.cchinf.jpgsumsize1 / this.cchinf.jpgnum).toFixed()
-				: "N/A";
-		},
-		avrtmbpngsize() {
-			return this.cchinf.pngnum
-				? (this.cchinf.pngsumsize1 / this.cchinf.pngnum).toFixed()
-				: "N/A";
-		},
-		avrtmbgifsize() {
-			return this.cchinf.gifnum
-				? (this.cchinf.gifsumsize1 / this.cchinf.gifnum).toFixed()
-				: "N/A";
-		},
 
 		expandchevron() {
 			return this.expanded ? 'expand_more' : 'chevron_right';

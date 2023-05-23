@@ -177,9 +177,6 @@ var (
 	BuildTime string
 )
 
-// save server start time
-var starttime = time.Now()
-
 const cfgbase = "config"
 
 var (

@@ -71,14 +71,14 @@ func ExtractThumbID3(syspath string) (md MediaData, err error) {
 		}
 	}()
 
-	var r io.ReadSeekCloser
-	if r, err = OpenFile(syspath); err != nil {
+	var file File
+	if file, err = OpenFile(syspath); err != nil {
 		return
 	}
-	defer r.Close()
+	defer file.Close()
 
 	var m tag.Metadata
-	if m, err = tag.ReadFrom(r); err != nil {
+	if m, err = tag.ReadFrom(file); err != nil {
 		return
 	}
 
@@ -90,6 +90,9 @@ func ExtractThumbID3(syspath string) (md MediaData, err error) {
 
 	md.Data = pic.Data
 	md.Mime = GetMimeVal(pic.MIMEType, pic.Ext)
+	if fi, _ := file.Stat(); fi != nil {
+		md.Time = fi.ModTime()
+	}
 	return
 }
 

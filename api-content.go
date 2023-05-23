@@ -10,6 +10,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -108,7 +109,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 				})
 			}
 			w.Header().Set("Content-Type", MimeStr[md.Mime])
-			http.ServeContent(w, r, syspath, starttime, bytes.NewReader(md.Data))
+			http.ServeContent(w, r, syspath, md.Time, bytes.NewReader(md.Data))
 			return
 		}
 	}
@@ -141,7 +142,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 				})
 			}
 			w.Header().Set("Content-Type", MimeStr[md.Mime])
-			http.ServeContent(w, r, syspath, starttime, bytes.NewReader(md.Data))
+			http.ServeContent(w, r, syspath, md.Time, bytes.NewReader(md.Data))
 			return
 		}
 	}
@@ -157,11 +158,11 @@ func fileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		})
 	}
 
-	var content io.ReadSeekCloser
+	var content File
 	if content, err = OpenFile(syspath); err != nil {
 		if errors.Is(err, ErrNotFound) {
 			// try to redirect to external shared file (not at DAV-disk)
-			if strings.HasPrefix(syspath, "http://") || strings.HasPrefix(syspath, "https://") {
+			if IsRemote(syspath) {
 				http.Redirect(w, r, syspath, http.StatusMovedPermanently)
 				return
 			}
@@ -175,8 +176,17 @@ func fileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	}
 	defer content.Close()
 
+	var t time.Time
+	if IsRemote(syspath) {
+		t = starttime
+	} else {
+		if fi, _ := content.Stat(); fi != nil {
+			t = fi.ModTime()
+		}
+	}
+
 	WriteStdHeader(w)
-	http.ServeContent(w, r, syspath, starttime, content)
+	http.ServeContent(w, r, syspath, t, content)
 }
 
 // Hands out embedded thumbnails for given files if any.
@@ -226,7 +236,7 @@ func etmbHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		}
 	}
 	w.Header().Set("Content-Type", MimeStr[md.Mime])
-	http.ServeContent(w, r, syspath, starttime, bytes.NewReader(md.Data))
+	http.ServeContent(w, r, syspath, md.Time, bytes.NewReader(md.Data))
 }
 
 // Hands out cached thumbnails for given files.
@@ -267,17 +277,15 @@ func mtmbHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	var file io.ReadSeekCloser
 	var mime string
-	if file, mime, err = thumbpkg.GetFile(syspath); err != nil {
+	var t time.Time
+	if file, mime, t, err = thumbpkg.GetFile(syspath); err != nil {
 		WriteError500(w, r, err, AECmtmbbadcnt)
 		return
 	}
 	defer file.Close()
-	if mime == "" {
-		WriteError(w, r, http.StatusNoContent, ErrNotFound, AECmtmbnocnt)
-		return
-	}
+
 	w.Header().Set("Content-Type", mime)
-	http.ServeContent(w, r, syspath, starttime, file)
+	http.ServeContent(w, r, syspath, t, file)
 }
 
 // Hands out thumbnails for given files if them cached.
@@ -325,17 +333,15 @@ func tileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var tilepath = fmt.Sprintf("%s?%dx%d", syspath, wdh, hgt)
 	var file io.ReadSeekCloser
 	var mime string
-	if file, mime, err = tilespkg.GetFile(tilepath); err != nil {
+	var t time.Time
+	if file, mime, t, err = tilespkg.GetFile(tilepath); err != nil {
 		WriteError500(w, r, err, AECtilebadcnt)
 		return
 	}
 	defer file.Close()
-	if mime == "" {
-		WriteError(w, r, http.StatusNoContent, ErrNotFound, AECtilenocnt)
-		return
-	}
+
 	w.Header().Set("Content-Type", mime)
-	http.ServeContent(w, r, syspath, starttime, file)
+	http.ServeContent(w, r, syspath, t, file)
 }
 
 // The End.
