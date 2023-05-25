@@ -9,6 +9,9 @@ import (
 	"strings"
 	"time"
 
+	. "github.com/schwarzlichtbezirk/hms/config"
+	. "github.com/schwarzlichtbezirk/hms/joint"
+
 	"github.com/jlaffaye/ftp"
 	"github.com/pkg/sftp"
 	"github.com/studio-b12/gowebdav"

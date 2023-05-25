@@ -6,6 +6,9 @@ import (
 	"math"
 	"net/http"
 	"time"
+
+	. "github.com/schwarzlichtbezirk/hms/config"
+	. "github.com/schwarzlichtbezirk/hms/joint"
 )
 
 // Haversine uses formula to calculate the great-circle distance between

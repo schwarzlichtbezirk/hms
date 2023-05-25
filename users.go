@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	. "github.com/schwarzlichtbezirk/hms/config"
+
 	uas "github.com/avct/uasurfer"
 	"github.com/cespare/xxhash"
 	"xorm.io/xorm"

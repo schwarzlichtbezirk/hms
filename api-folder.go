@@ -9,6 +9,9 @@ import (
 	"net/http"
 	"path"
 	"time"
+
+	. "github.com/schwarzlichtbezirk/hms/config"
+	. "github.com/schwarzlichtbezirk/hms/joint"
 )
 
 var catcolumn = map[Puid_t]string{

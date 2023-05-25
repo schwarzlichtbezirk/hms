@@ -1,4 +1,4 @@
-package hms
+package config
 
 import (
 	"container/ring"
@@ -75,6 +75,9 @@ type XormLoggerBridge struct {
 	*Logger
 	showSQL bool // show SQL messages
 }
+
+// Log is global static ring logger object.
+var Log = NewLogger(os.Stderr, LstdFlags, 300)
 
 // NewLogger creates a new Logger. The out variable sets the
 // destination to which log data will be written.

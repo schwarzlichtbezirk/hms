@@ -10,14 +10,16 @@ import (
 	"path"
 	"time"
 
+	. "github.com/schwarzlichtbezirk/hms/config"
+	. "github.com/schwarzlichtbezirk/hms/joint"
+
 	"github.com/chai2010/webp"
 	"github.com/disintegration/gift"
+	_ "github.com/mattn/go-sqlite3"
 	"github.com/schwarzlichtbezirk/wpk"
 	"github.com/schwarzlichtbezirk/wpk/fsys"
 	"xorm.io/xorm"
 	"xorm.io/xorm/names"
-
-	_ "github.com/mattn/go-sqlite3"
 )
 
 // package caches
@@ -40,9 +42,6 @@ var (
 	ErrNoMTime     = errors.New("modify time tag does not found")
 	ErrNoMime      = errors.New("MIME tag does not found")
 )
-
-// ToSlash brings filenames to true slashes.
-var ToSlash = wpk.ToSlash
 
 // PathStarts check up that given file path has given parental path.
 func PathStarts(fpath, prefix string) bool {
@@ -637,7 +636,7 @@ func InitStorage() (err error) {
 	var xlb = XormLoggerBridge{
 		Logger: Log,
 	}
-	xlb.ShowSQL(devmode)
+	xlb.ShowSQL(DevMode)
 	XormStorage.SetLogger(&xlb)
 
 	_, err = SqlSession(func(session *Session) (res any, err error) {

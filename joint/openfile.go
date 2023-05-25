@@ -1,4 +1,4 @@
-package hms
+package joint
 
 import (
 	"errors"
@@ -11,6 +11,12 @@ import (
 	"github.com/jlaffaye/ftp"
 	"golang.org/x/text/encoding/charmap"
 )
+
+// File combines fs.File interface and io.Seeker interface.
+type File interface {
+	io.ReadSeekCloser
+	Stat() (fs.FileInfo, error)
+}
 
 // OpenFile opens file from file system, or looking for iso-disk in the given path,
 // opens it, and opens nested into iso-disk file. Or opens file at cloud.
@@ -159,9 +165,8 @@ func StatFile(anypath string) (fi fs.FileInfo, err error) {
 // FTP-server does not recognize path with square brackets
 // as is to get a list of files, so such path should be escaped.
 func FtpEscapeBrackets(s string) string {
-	var b = s2b(s)
 	var n = 0
-	for _, c := range b {
+	for _, c := range s {
 		if c == '[' || c == ']' {
 			n++
 		}
@@ -169,8 +174,8 @@ func FtpEscapeBrackets(s string) string {
 	if n == 0 {
 		return s
 	}
-	var esc = make([]byte, 0, len(b)+n*2)
-	for _, c := range b {
+	var esc = make([]rune, 0, len(s)+n*2)
+	for _, c := range s {
 		if c == '[' {
 			esc = append(esc, '[', '[', ']')
 		} else if c == ']' {

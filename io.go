@@ -8,11 +8,10 @@ import (
 	"sort"
 	"strings"
 
+	. "github.com/schwarzlichtbezirk/hms/config"
+
 	"gopkg.in/yaml.v3"
 )
-
-// Log is global static ring logger object.
-var Log = NewLogger(os.Stderr, LstdFlags, 300)
 
 const utf8bom = "\xef\xbb\xbf"
 
@@ -62,24 +61,24 @@ type YamlReadWriter interface {
 	WriteYaml(string) error
 }
 
-// ReadYaml reads content of Config structure from YAML-file
+// CfgReadYaml reads content of Config structure from YAML-file
 // with given file name.
-func (cfg *Config) ReadYaml(fname string) (err error) {
-	if err = ReadYaml(fname, cfg); err != nil {
+func CfgReadYaml(fname string) (err error) {
+	if err = ReadYaml(fname, &Cfg); err != nil {
 		return
 	}
 	return
 }
 
-// WriteYaml writes content of Config object in YAML format
+// CfgWriteYaml writes content of Config object in YAML format
 // with header comment to file with given file name.
-func (cfg *Config) WriteYaml(fname string) error {
+func CfgWriteYaml(fname string) error {
 	const intro = `
 # Server configuration file. First of all you can change
 # "access-key" and "refresh-key" for tokens protection.
 
 `
-	return WriteYaml(fname, intro, cfg)
+	return WriteYaml(fname, intro, &Cfg)
 }
 
 // PrfReadYaml reads content of Profiles structure from YAML-file

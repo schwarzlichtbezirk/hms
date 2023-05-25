@@ -11,6 +11,9 @@ import (
 	"sync"
 	"syscall"
 
+	. "github.com/schwarzlichtbezirk/hms/config"
+	. "github.com/schwarzlichtbezirk/hms/joint"
+
 	"github.com/jessevdk/go-flags"
 	"golang.org/x/crypto/acme/autocert"
 	"golang.org/x/sync/errgroup"
@@ -51,7 +54,7 @@ func Init() {
 		Log.Fatal(err)
 	}
 	// load content of Config structure from YAML-file.
-	if err = Cfg.ReadYaml(cfgfile); err != nil {
+	if err = CfgReadYaml(cfgfile); err != nil {
 		Log.Error("error at settings file: " + err.Error())
 	}
 	// rewrite settings from config file

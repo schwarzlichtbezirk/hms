@@ -6,6 +6,8 @@ import (
 	"io/fs"
 	"time"
 
+	. "github.com/schwarzlichtbezirk/hms/joint"
+
 	"github.com/rwcarlsen/goexif/exif"
 	"github.com/rwcarlsen/goexif/mknote"
 	"github.com/rwcarlsen/goexif/tiff"

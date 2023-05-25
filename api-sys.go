@@ -10,6 +10,9 @@ import (
 	"strconv"
 	"time"
 
+	. "github.com/schwarzlichtbezirk/hms/config"
+	. "github.com/schwarzlichtbezirk/hms/joint"
+
 	"github.com/schwarzlichtbezirk/wpk"
 )
 
@@ -63,8 +66,8 @@ func srvinfAPI(w http.ResponseWriter, r *http.Request) {
 		"os":        runtime.GOOS,
 		"numcpu":    runtime.NumCPU(),
 		"maxprocs":  runtime.GOMAXPROCS(0),
-		"curpath":   curpath,
-		"exepath":   exepath,
+		"CurPath":   CurPath,
+		"ExePath":   ExePath,
 		"cfgpath":   ConfigPath,
 		"wpkpath":   PackPath,
 		"cchpath":   CachePath,
@@ -121,7 +124,7 @@ func cchinfAPI(w http.ResponseWriter, r *http.Request) {
 
 	var isocount int
 	for _, cc := range IsoCaches {
-		isocount += len(cc.cache)
+		isocount += cc.Count()
 	}
 
 	var davcount int

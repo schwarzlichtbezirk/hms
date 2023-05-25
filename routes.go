@@ -16,6 +16,8 @@ import (
 	"sync"
 	"time"
 
+	. "github.com/schwarzlichtbezirk/hms/config"
+
 	"github.com/gorilla/mux"
 	"github.com/schwarzlichtbezirk/wpk"
 	"github.com/schwarzlichtbezirk/wpk/bulk"

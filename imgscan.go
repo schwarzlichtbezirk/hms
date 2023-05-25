@@ -6,6 +6,8 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	. "github.com/schwarzlichtbezirk/hms/config"
 )
 
 // Cacher provides function to perform image converting.
@@ -114,7 +116,7 @@ func (s *scanner) Scan() {
 	if thrnum == 0 {
 		thrnum = runtime.GOMAXPROCS(0)
 	}
-	if devmode { // only one thread under the debugger
+	if DevMode { // only one thread under the debugger
 		thrnum = 1
 	}
 	var busy = make([]bool, thrnum)

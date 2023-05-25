@@ -1,4 +1,4 @@
-package hms
+package joint
 
 import (
 	"errors"
@@ -10,6 +10,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	. "github.com/schwarzlichtbezirk/hms/config"
 
 	"github.com/diskfs/go-diskfs"
 	"github.com/diskfs/go-diskfs/disk"
@@ -54,12 +56,6 @@ func IsStatic(fi fs.FileInfo) (static bool) {
 type MakeCloser interface {
 	Make(urladdr string) error
 	io.Closer
-}
-
-// File combines fs.File interface and io.Seeker interface.
-type File interface {
-	io.ReadSeekCloser
-	Stat() (fs.FileInfo, error)
 }
 
 // DiskCache implements cache with opened joints to some disk resource.

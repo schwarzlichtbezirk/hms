@@ -12,6 +12,9 @@ import (
 	"strings"
 	"time"
 
+	. "github.com/schwarzlichtbezirk/hms/config"
+	. "github.com/schwarzlichtbezirk/hms/joint"
+
 	"github.com/gorilla/mux"
 )
 
@@ -282,6 +285,10 @@ func mtmbHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		WriteError500(w, r, err, AECmtmbbadcnt)
 		return
 	}
+	if file == nil {
+		WriteError(w, r, http.StatusNotFound, ErrNotFound, AECmtmbabsent)
+		return
+	}
 	defer file.Close()
 
 	w.Header().Set("Content-Type", mime)
@@ -336,6 +343,10 @@ func tileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var t time.Time
 	if file, mime, t, err = tilespkg.GetFile(tilepath); err != nil {
 		WriteError500(w, r, err, AECtilebadcnt)
+		return
+	}
+	if file == nil {
+		WriteError(w, r, http.StatusNotFound, ErrNotFound, AECtileabsent)
 		return
 	}
 	defer file.Close()

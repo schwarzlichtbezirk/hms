@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io/fs"
 	"time"
+
+	. "github.com/schwarzlichtbezirk/hms/joint"
 )
 
 // ScanFileNameList returns file properties list for given list of

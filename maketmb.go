@@ -13,6 +13,9 @@ import (
 	"strings"
 	"time"
 
+	. "github.com/schwarzlichtbezirk/hms/config"
+	. "github.com/schwarzlichtbezirk/hms/joint"
+
 	"github.com/disintegration/gift"
 
 	"github.com/chai2010/webp"       // register WebP

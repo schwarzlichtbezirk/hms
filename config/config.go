@@ -1,4 +1,4 @@
-package hms
+package config
 
 import (
 	"errors"
@@ -12,7 +12,8 @@ import (
 )
 
 const (
-	cfgbase = "config"
+	cfgdest = "config"
+	cfgbase = "confdata"
 	gitname = "hms"
 	gitpath = "github.com/schwarzlichtbezirk/" + gitname
 )
@@ -177,26 +178,29 @@ var (
 
 var (
 	// Current path
-	curpath string
+	CurPath string
 	// Executable path
-	exepath string
+	ExePath string
 	// developer mode, running at debugger
-	devmode bool
+	DevMode bool
 )
+
+// ToSlash brings filenames to true slashes.
+var ToSlash = wpk.ToSlash
 
 func init() {
 	if str, err := filepath.Abs("."); err == nil {
-		curpath = ToSlash(str)
+		CurPath = ToSlash(str)
 	} else {
-		curpath = "."
+		CurPath = "."
 	}
 	if str, err := os.Executable(); err == nil {
-		exepath = path.Dir(ToSlash(str))
+		ExePath = path.Dir(ToSlash(str))
 	} else {
-		exepath = path.Dir(ToSlash(os.Args[0]))
+		ExePath = path.Dir(ToSlash(os.Args[0]))
 	}
-	if ok, _ := wpk.PathExists(path.Join(exepath, "hms.go")); ok && strings.HasSuffix(exepath, "hms/cmd") {
-		devmode = true
+	if ok, _ := wpk.PathExists(path.Join(ExePath, "hms.go")); ok && strings.HasSuffix(ExePath, "hms/cmd") {
+		DevMode = true
 	}
 }
 
@@ -228,18 +232,18 @@ func DetectConfigPath() (retpath string, err error) {
 			return
 		}
 		// try to find relative from executable path
-		if retpath, ok = CheckPath(path.Join(exepath, fpath), detectname); ok {
+		if retpath, ok = CheckPath(path.Join(ExePath, fpath), detectname); ok {
 			return
 		}
 		Log.Warnf("no access to pointed configuration path '%s'", fpath)
 	}
 
 	// try to get from config subdirectory on executable path
-	if retpath, ok = CheckPath(path.Join(exepath, cfgbase), detectname); ok {
+	if retpath, ok = CheckPath(path.Join(ExePath, cfgdest), detectname); ok {
 		return
 	}
 	// try to find in executable path
-	if retpath, ok = CheckPath(exepath, detectname); ok {
+	if retpath, ok = CheckPath(ExePath, detectname); ok {
 		return
 	}
 
@@ -252,7 +256,7 @@ func DetectConfigPath() (retpath string, err error) {
 	if ok {
 		fpath = ToSlash(fpath)
 		// try to get from go bin config
-		if retpath, ok = CheckPath(path.Join(fpath, cfgbase), detectname); ok {
+		if retpath, ok = CheckPath(path.Join(fpath, cfgdest), detectname); ok {
 			return
 		}
 		// try to get from go bin root
@@ -262,17 +266,17 @@ func DetectConfigPath() (retpath string, err error) {
 	}
 
 	// try to find in config subdirectory of current path
-	if retpath, ok = CheckPath(path.Join(curpath, cfgbase), detectname); ok {
+	if retpath, ok = CheckPath(path.Join(CurPath, cfgdest), detectname); ok {
 		return
 	}
 	// try to find in current path
-	if retpath, ok = CheckPath(curpath, detectname); ok {
+	if retpath, ok = CheckPath(CurPath, detectname); ok {
 		return
 	}
 
 	// check up running from debugger
-	if devmode {
-		retpath = path.Join(exepath, "..", cfgbase)
+	if DevMode {
+		retpath = path.Join(ExePath, "..", cfgbase)
 		return
 	}
 	// check up running in devcontainer workspace
@@ -312,18 +316,18 @@ func DetectPackPath() (retpath string, err error) {
 			return
 		}
 		// try to find relative from executable path
-		if retpath, ok = CheckPath(path.Join(exepath, fpath), detectname); ok {
+		if retpath, ok = CheckPath(path.Join(ExePath, fpath), detectname); ok {
 			return
 		}
 		Log.Warnf("no access to pointed package path '%s'", fpath)
 	}
 
 	// try to find in executable path
-	if retpath, ok = CheckPath(exepath, detectname); ok {
+	if retpath, ok = CheckPath(ExePath, detectname); ok {
 		return
 	}
 	// try to find in current path
-	if retpath, ok = CheckPath(curpath, detectname); ok {
+	if retpath, ok = CheckPath(CurPath, detectname); ok {
 		return
 	}
 	// try to find at parental of cofiguration path
@@ -366,7 +370,7 @@ func DetectCachePath() (retpath string, err error) {
 			return
 		}
 		// try to find relative from executable path
-		if retpath, ok = CheckPath(path.Join(exepath, fpath), ""); ok {
+		if retpath, ok = CheckPath(path.Join(ExePath, fpath), ""); ok {
 			return
 		}
 		Log.Warnf("no access to pointed cache path '%s'", fpath)
