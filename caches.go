@@ -22,6 +22,14 @@ import (
 	"xorm.io/xorm/names"
 )
 
+const (
+	dirfile = "storage.sqlite"
+	userlog = "userlog.sqlite"
+
+	tmbfile = "thumb.wpt"
+	tilfile = "tiles.wpt"
+)
+
 // package caches
 var (
 	// cache with images thumbnails which are placed in box 256x256.
@@ -691,6 +699,8 @@ func LoadPathCache() (err error) {
 			break
 		}
 	}
+
+	Log.Infof("loaded %d items into path cache", pathcache.Len())
 	return
 }
 
@@ -714,6 +724,8 @@ func LoadDirCache() (err error) {
 			break
 		}
 	}
+
+	Log.Infof("loaded %d items into dir cache", dircache.Len())
 	return
 }
 
@@ -739,6 +751,8 @@ func LoadGpsCache() (err error) {
 			break
 		}
 	}
+
+	Log.Infof("loaded %d items into GPS cache", gpscache.Len())
 	return
 }
 

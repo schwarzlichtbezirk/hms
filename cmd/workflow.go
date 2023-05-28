@@ -1,4 +1,4 @@
-package hms
+package main
 
 import (
 	"context"
@@ -11,6 +11,7 @@ import (
 	"sync"
 	"syscall"
 
+	. "github.com/schwarzlichtbezirk/hms"
 	. "github.com/schwarzlichtbezirk/hms/config"
 	. "github.com/schwarzlichtbezirk/hms/joint"
 
@@ -23,12 +24,6 @@ const (
 	cfgfile = "settings.yaml"
 	prffile = "profiles.yaml"
 	passlst = "passlist.yaml"
-
-	dirfile = "storage.sqlite"
-	userlog = "userlog.sqlite"
-
-	tmbfile = "thumb.wpt"
-	tilfile = "tiles.wpt"
 )
 
 var (
@@ -133,28 +128,16 @@ func Init() {
 	if err = LoadPathCache(); err != nil {
 		Log.Fatal("path cache loading failure: " + err.Error())
 	}
-	Log.Infof("loaded %d items into path cache", pathcache.Len())
 	if err = LoadDirCache(); err != nil {
 		Log.Fatal("dir cache loading failure: " + err.Error())
 	}
-	Log.Infof("loaded %d items into dir cache", dircache.Len())
 	if err = LoadGpsCache(); err != nil {
 		Log.Fatal("GPS cache loading failure: " + err.Error())
 	}
-	Log.Infof("loaded %d items into GPS cache", gpscache.Len())
 
 	if err = InitUserlog(); err != nil {
 		Log.Fatal("can not init XORM user log: " + err.Error())
 	}
-	{
-		var uacount, _ = XormUserlog.Count(&AgentStore{})
-		Log.Infof("user agent count %d items", uacount)
-		Log.Infof("clients count %d", maxcid)
-		var opencount, _ = XormUserlog.Count(&OpenStore{})
-		Log.Infof("resources open count %d items", opencount)
-	}
-
-	// load UaMap
 	if err = LoadUaMap(); err != nil {
 		Log.Fatal("user agent map loading failure: " + err.Error())
 	}
@@ -333,7 +316,7 @@ func WaitExit() {
 	Log.Info("server threads completed")
 
 	// wait until all transactions will be done.
-	handwg.Wait()
+	WaitHandlers()
 	Log.Info("transactions completed")
 }
 

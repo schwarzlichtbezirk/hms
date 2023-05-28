@@ -168,9 +168,6 @@ func (m *XmlMap) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 // Router is local alias for router type.
 type Router = mux.Router
 
-// NewRouter is local alias for router creation function.
-var NewRouter = mux.NewRouter
-
 // "Server" field for HTTP headers.
 var serverlabel = fmt.Sprintf("hms/%s (%s)", BuildVers, runtime.GOOS)
 
@@ -481,6 +478,10 @@ func LoadTemplates() (err error) {
 var handwg sync.WaitGroup
 
 const alias_cond = "(cid1=? AND cid2=?) OR (cid1=? AND cid2=?)"
+
+func WaitHandlers() {
+	handwg.Wait()
+}
 
 // AjaxMiddleware is base handler middleware for AJAX API calls.
 func AjaxMiddleware(next http.Handler) http.Handler {

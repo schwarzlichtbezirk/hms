@@ -1,16 +1,17 @@
 package main
 
 import (
+	"github.com/gorilla/mux"
 	"github.com/schwarzlichtbezirk/hms"
 )
 
 func main() {
-	hms.Init()
-	var gmux = hms.NewRouter()
+	Init()
+	var gmux = mux.NewRouter()
 	hms.RegisterRoutes(gmux)
-	hms.Run(gmux)
-	hms.WaitExit()
-	hms.Shutdown()
+	Run(gmux)
+	WaitExit()
+	Shutdown()
 }
 
 // The End.

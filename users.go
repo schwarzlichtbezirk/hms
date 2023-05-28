@@ -73,6 +73,11 @@ func InitUserlog() (err error) {
 	if err = XormUserlog.Sync(&AgentStore{}, &OpenStore{}); err != nil {
 		return
 	}
+
+	var uacount, _ = XormUserlog.Count(&AgentStore{})
+	Log.Infof("user agent count %d items", uacount)
+	var opencount, _ = XormUserlog.Count(&OpenStore{})
+	Log.Infof("resources open count %d items", opencount)
 	return
 }
 
@@ -102,6 +107,8 @@ func LoadUaMap() (err error) {
 			break
 		}
 	}
+
+	Log.Infof("clients count %d", maxcid)
 	return
 }
 
