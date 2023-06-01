@@ -3,30 +3,30 @@ rem This script downloads all javascript dependencies used on frontend.
 set plugdir=%~dp0..\frontend\plugin
 mkdir %plugdir%\images
 
-rem bootstrap 5.2.3
+rem bootstrap 5.3.0
 rem https://cdnjs.com/libraries/bootstrap
-set vers=5.2.3
+set vers=5.3.0
 curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/%vers%/js/bootstrap.min.js --output %plugdir%/bootstrap.min.js
 curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/%vers%/js/bootstrap.min.js.map --output %plugdir%/bootstrap.min.js.map
 curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/%vers%/css/bootstrap.min.css --output %plugdir%/bootstrap.min.css
 curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/%vers%/css/bootstrap.min.css.map --output %plugdir%/bootstrap.min.css.map
 
-rem popper 2.11.6
+rem popper 2.11.8
 rem https://cdnjs.com/libraries/popper.js
-set vers=2.11.6
+set vers=2.11.8
 curl https://cdnjs.cloudflare.com/ajax/libs/popper.js/%vers%/umd/popper.min.js --output %plugdir%/popper.min.js
 curl https://cdnjs.cloudflare.com/ajax/libs/popper.js/%vers%/umd/popper.min.js.map --output %plugdir%/popper.min.js.map
 
-rem Vue 3.2.47
+rem Vue 3.3.4
 rem https://cdnjs.com/libraries/vue
 rem https://unpkg.com/vue@next
-set vers=3.2.47
+set vers=3.3.4
 curl https://unpkg.com/vue@%vers%/dist/vue.global.js --output %plugdir%/vue.global.js
 curl https://unpkg.com/vue@%vers%/dist/vue.global.prod.js --output %plugdir%/vue.global.prod.js
 
-rem leaflet 1.9.3
+rem leaflet 1.9.4
 rem https://cdnjs.com/libraries/leaflet
-set vers=1.9.3
+set vers=1.9.4
 curl https://cdnjs.cloudflare.com/ajax/libs/leaflet/%vers%/leaflet.js --output %plugdir%/leaflet.js
 curl https://cdnjs.cloudflare.com/ajax/libs/leaflet/%vers%/leaflet.js.map --output %plugdir%/leaflet.js.map
 curl https://cdnjs.cloudflare.com/ajax/libs/leaflet/%vers%/leaflet.min.css --output %plugdir%/leaflet.min.css

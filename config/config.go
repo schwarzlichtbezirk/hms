@@ -5,7 +5,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/schwarzlichtbezirk/wpk"
@@ -15,8 +14,12 @@ const (
 	cfgdest = "config"
 	cfgbase = "confdata"
 	gitname = "hms"
-	gitpath = "github.com/schwarzlichtbezirk/" + gitname
 )
+
+// CfgAppMode is set of applications running modes.
+type CfgAppMode struct {
+	CacherMode bool `long:"cm" description:"Run application in mode to cache thumbnails at all shares."`
+}
 
 // CfgJWTAuth is authentication settings.
 type CfgJWTAuth struct {
@@ -116,7 +119,7 @@ type Config struct {
 }
 
 // Instance of common service settings.
-var Cfg = Config{ // inits default values:
+var Cfg = &Config{ // inits default values:
 	CfgJWTAuth: CfgJWTAuth{
 		AccessTTL:   1 * 24 * time.Hour,
 		RefreshTTL:  3 * 24 * time.Hour,
@@ -181,6 +184,8 @@ var (
 	CurPath string
 	// Executable path
 	ExePath string
+	// Path to deployed project
+	GitPath string
 	// developer mode, running at debugger
 	DevMode bool
 )
@@ -199,8 +204,15 @@ func init() {
 	} else {
 		ExePath = path.Dir(ToSlash(os.Args[0]))
 	}
-	if ok, _ := wpk.PathExists(path.Join(ExePath, "hms.go")); ok && strings.HasSuffix(ExePath, "hms/cmd") {
-		DevMode = true
+	var fpath, fname, i = ExePath, "", 0
+	for fpath != "." && i < 2 {
+		if fpath, fname = path.Dir(fpath), path.Base(fpath); fname == gitname {
+			if ok, _ := wpk.PathExists(path.Join(fpath, "go.mod")); ok {
+				GitPath, DevMode = fpath, true
+				break
+			}
+		}
+		i++
 	}
 }
 
@@ -285,8 +297,8 @@ func DetectConfigPath() (retpath string, err error) {
 	}
 
 	// check up git source path
-	if fpath, ok = os.LookupEnv("GOPATH"); ok {
-		if retpath, ok = CheckPath(path.Join(ToSlash(fpath), "src", gitpath, cfgbase), detectname); ok {
+	if DevMode {
+		if retpath, ok = CheckPath(path.Join(GitPath, cfgbase), detectname); ok {
 			return
 		}
 	}

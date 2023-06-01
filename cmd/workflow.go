@@ -40,6 +40,9 @@ var (
 
 // Init performs global data initialization. Loads configuration files, initializes file cache.
 func Init() {
+	if DevMode {
+		Log.Infof("*running in developer mode*")
+	}
 	Log.Infof("version: %s, builton: %s", BuildVers, BuildTime)
 
 	var err error
@@ -53,7 +56,7 @@ func Init() {
 		Log.Error("error at settings file: " + err.Error())
 	}
 	// rewrite settings from config file
-	if _, err := flags.Parse(&Cfg); err != nil {
+	if _, err := flags.Parse(Cfg); err != nil {
 		os.Exit(1)
 	}
 	Log.Infof("config path: %s", ConfigPath)

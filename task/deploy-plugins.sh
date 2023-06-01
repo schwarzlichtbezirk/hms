@@ -4,30 +4,30 @@
 plugdir=$(realpath -s "$(dirname $0)/../frontend/plugin")
 mkdir -pv "$plugdir/images"
 
-# bootstrap 5.2.3
+# bootstrap 5.3.0
 # https://cdnjs.com/libraries/
-vers="5.2.3"
+vers="5.3.0"
 curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/$vers/js/bootstrap.min.js --output $plugdir/bootstrap.min.js
 curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/$vers/js/bootstrap.min.js.map --output $plugdir/bootstrap.min.js.map
 curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/$vers/css/bootstrap.min.css --output $plugdir/bootstrap.min.css
 curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/$vers/css/bootstrap.min.css.map --output $plugdir/bootstrap.min.css.map
 
-# popper 2.11.6
+# popper 2.11.8
 # https://cdnjs.com/libraries/popper.js
-vers="2.11.6"
+vers="2.11.8"
 curl https://cdnjs.cloudflare.com/ajax/libs/popper.js/$vers/umd/popper.min.js --output $plugdir/popper.min.js
 curl https://cdnjs.cloudflare.com/ajax/libs/popper.js/$vers/umd/popper.min.js.map --output $plugdir/popper.min.js.map
 
-# Vue 3.2.47
+# Vue 3.3.4
 # https://cdnjs.com/libraries/vue
 # https://unpkg.com/vue@next
-vers="3.2.47"
+vers="3.3.4"
 curl https://unpkg.com/vue@$vers/dist/vue.global.js --output $plugdir/vue.global.js
 curl https://unpkg.com/vue@$vers/dist/vue.global.prod.js --output $plugdir/vue.global.prod.js
 
-# leaflet 1.9.3
+# leaflet 1.9.4
 # https://cdnjs.com/libraries/leaflet
-vers="1.9.3"
+vers="1.9.4"
 curl https://cdnjs.cloudflare.com/ajax/libs/leaflet/$vers/leaflet.js --output $plugdir/leaflet.js
 curl https://cdnjs.cloudflare.com/ajax/libs/leaflet/$vers/leaflet.js.map --output $plugdir/leaflet.js.map
 curl https://cdnjs.cloudflare.com/ajax/libs/leaflet/$vers/leaflet.min.css --output $plugdir/leaflet.min.css

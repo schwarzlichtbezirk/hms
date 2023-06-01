@@ -8,4 +8,4 @@ buildvers=$(git describe --tags)
 buildtime=$(go run "$wd/task/timenow.go") # $(date -u +'%FT%TZ')
 
 go env -w GOOS=windows GOARCH=386 CGO_ENABLED=1
-go build -o $GOPATH/bin/hms.win.x86.exe -v -ldflags="-linkmode external -extldflags -static -X 'github.com/schwarzlichtbezirk/hms/cfg.BuildVers=$buildvers' -X 'github.com/schwarzlichtbezirk/hms/cfg.BuildTime=$buildtime'" $wd/cmd
+go build -o $GOPATH/bin/hms.win.x86.exe -v -ldflags="-linkmode external -extldflags -static -X 'github.com/schwarzlichtbezirk/hms/config.BuildVers=$buildvers' -X 'github.com/schwarzlichtbezirk/hms/config.BuildTime=$buildtime'" $wd/cmd
