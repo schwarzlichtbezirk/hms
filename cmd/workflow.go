@@ -11,6 +11,7 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/gorilla/mux"
 	. "github.com/schwarzlichtbezirk/hms"
 	. "github.com/schwarzlichtbezirk/hms/config"
 	. "github.com/schwarzlichtbezirk/hms/joint"
@@ -169,8 +170,19 @@ func Init() {
 	go ImgScanner.Scan()
 }
 
-// Run launches server listeners.
-func Run(gmux *Router) {
+// Run starts main application body.
+func Run() {
+	if Cfg.CacherMode {
+		defer exitfn()
+	} else {
+		var gmux = mux.NewRouter()
+		RegisterRoutes(gmux)
+		RunWeb(gmux)
+	}
+}
+
+// RunWeb launches server listeners.
+func RunWeb(gmux *Router) {
 	// helpers for graceful startup to prevent call to uninitialized data
 	var httpctx, httpcancel = context.WithCancel(context.Background())
 
@@ -292,10 +304,7 @@ func Run(gmux *Router) {
 	case <-exitctx.Done():
 		return
 	}
-}
 
-// WaitExit waits until all server threads will be stopped and all transactions will be done.
-func WaitExit() {
 	if len(Cfg.PortHTTP) > 0 {
 		var suff string
 		var has80 bool
@@ -310,6 +319,10 @@ func WaitExit() {
 		}
 		Log.Infof("hint: Open http://localhost%[1]s page in browser to view the player. If you want to stop the server, press 'Ctrl+C' for graceful network shutdown. Use http://localhost%[1]s/stat for server state monitoring.", suff)
 	}
+}
+
+// WaitExit waits until all server threads will be stopped and all transactions will be done.
+func WaitExit() {
 	// wait for exit signal
 	<-exitctx.Done()
 	Log.Info("shutting down begin")

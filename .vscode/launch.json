@@ -5,11 +5,19 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
-			"name": "hms",
+			"name": "web",
 			"type": "go",
 			"request": "launch",
-			"mode": "auto",
 			"program": "${workspaceFolder}/cmd",
+			"args": [],
+			"cwd": "${workspaceFolder}"
+		},
+		{
+			"name": "cacher",
+			"type": "go",
+			"request": "launch",
+			"program": "${workspaceFolder}/cmd",
+			"args": ["--cm"],
 			"cwd": "${workspaceFolder}"
 		}
 	]

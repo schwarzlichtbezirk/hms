@@ -54,6 +54,8 @@ tls-certificates:
 network:
   # Timeout to establish connection to FTP-server.
   dial-timeout: 5s
+  # Expiration duration to keep opened iso-disk structures in cache from last access to it.
+  disk-cache-expire: 2m
 xorm:
   # Provides XORM driver name.
   xorm-driver-name: sqlite3
@@ -85,8 +87,6 @@ specification:
   media-cache-maxnum: 64
   # Maximum number of images converted to HD resolution at memory cache.
   hd-cache-maxnum: 256
-  # Expiration duration to keep opened iso-disk structures in cache from last access to it.
-  disk-cache-expire: 2m
   # Maximum number of photos to get on default map state.
   range-search-any: 20
   # Limit of range search.

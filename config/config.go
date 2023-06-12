@@ -62,6 +62,8 @@ type CfgTlsCert struct {
 type CfgNetwork struct {
 	// Timeout to establish connection to FTP-server.
 	DialTimeout time.Duration `json:"dial-timeout" yaml:"dial-timeout" long:"dto" description:"Timeout to establish connection to FTP-server."`
+	// Expiration duration to keep opened iso-disk structures in cache from last access to it.
+	DiskCacheExpire time.Duration `json:"disk-cache-expire" yaml:"disk-cache-expire" long:"dce" description:"Expiration duration to keep opened iso-disk structures in cache from last access to it."`
 }
 
 type CfgXormDrv struct {
@@ -99,8 +101,6 @@ type CfgAppSets struct {
 	MediaCacheMaxNum int `json:"media-cache-maxnum" yaml:"media-cache-maxnum" long:"mcmn" description:"Maximum number of converted media files at memory cache."`
 	// Maximum number of images converted to HD resolution at memory cache.
 	HdCacheMaxNum int `json:"hd-cache-maxnum" yaml:"hd-cache-maxnum" long:"hcmn" description:"Maximum number of images converted to HD resolution at memory cache."`
-	// Expiration duration to keep opened iso-disk structures in cache from last access to it.
-	DiskCacheExpire time.Duration `json:"disk-cache-expire" yaml:"disk-cache-expire" long:"dce" description:"Expiration duration to keep opened iso-disk structures in cache from last access to it."`
 	// Maximum number of photos to get on default map state.
 	RangeSearchAny int `json:"range-search-any" yaml:"range-search-any" long:"rsa" description:"Maximum number of photos to get on default map state."`
 	// Limit of range search.
@@ -109,6 +109,7 @@ type CfgAppSets struct {
 
 // Config is common service settings.
 type Config struct {
+	CfgAppMode `json:"-" yaml:"-" group:"Application mode"`
 	CfgJWTAuth `json:"authentication" yaml:"authentication" group:"Authentication"`
 	CfgWebServ `json:"web-server" yaml:"web-server" group:"Web server"`
 	CfgTlsCert `json:"tls-certificates" yaml:"tls-certificates" group:"Automatic certificates"`
@@ -144,7 +145,8 @@ var Cfg = &Config{ // inits default values:
 		HostWhitelist: []string{"example.org", "www.example.org"},
 	},
 	CfgNetwork: CfgNetwork{
-		DialTimeout: 5 * time.Second,
+		DialTimeout:     5 * time.Second,
+		DiskCacheExpire: 2 * time.Minute,
 	},
 	CfgXormDrv: CfgXormDrv{
 		XormDriverName: "sqlite3",
@@ -163,7 +165,6 @@ var Cfg = &Config{ // inits default values:
 		ThumbCacheMaxNum: 16 * 1024,
 		MediaCacheMaxNum: 64,
 		HdCacheMaxNum:    256,
-		DiskCacheExpire:  2 * time.Minute,
 		RangeSearchAny:   20,
 		RangeSearchLimit: 100,
 	},

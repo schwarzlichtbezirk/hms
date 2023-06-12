@@ -8,7 +8,6 @@ import (
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
-	"io"
 	"io/fs"
 	"strings"
 	"time"
@@ -165,15 +164,9 @@ func ExtractThmub(session *Session, syspath string) (md MediaData, err error) {
 	return
 }
 
-// MakeThumb produces new thumbnail object.
-func MakeThumb(r io.Reader, orientation int) (data []byte, err error) {
-	// create sized image for thumbnail
-	var src, dst image.Image
-	if src, _, err = image.Decode(r); err != nil {
-		if src == nil { // skip "short Huffman data" or others errors with partial results
-			return // can not decode file by any codec
-		}
-	}
+// DrawThumb produces new thumbnail object.
+func DrawThumb(src image.Image, orientation int) (data []byte, err error) {
+	var dst image.Image
 	if src.Bounds().In(image.Rect(0, 0, Cfg.TmbResolution[0], Cfg.TmbResolution[1])) {
 		dst = src
 	} else {
@@ -221,7 +214,14 @@ func CacheThumb(session *Session, syspath string) (md MediaData, err error) {
 			if mdtag, err = ExtractThumbID3(syspath); err != nil {
 				return
 			}
-			if md.Data, err = MakeThumb(bytes.NewReader(mdtag.Data), OrientNormal); err != nil {
+			// create sized image for thumbnail
+			var src image.Image
+			if src, _, err = image.Decode(bytes.NewReader(mdtag.Data)); err != nil {
+				if src == nil { // skip "short Huffman data" or others errors with partial results
+					return // can not decode file by any codec
+				}
+			}
+			if md.Data, err = DrawThumb(src, OrientNormal); err != nil {
 				return
 			}
 			md.Mime = MimeWebp
@@ -261,7 +261,14 @@ func CacheThumb(session *Session, syspath string) (md MediaData, err error) {
 	}
 	defer file.Close()
 
-	if md.Data, err = MakeThumb(file, orientation); err != nil {
+	// create sized image for thumbnail
+	var src image.Image
+	if src, _, err = image.Decode(file); err != nil {
+		if src == nil { // skip "short Huffman data" or others errors with partial results
+			return // can not decode file by any codec
+		}
+	}
+	if md.Data, err = DrawThumb(src, orientation); err != nil {
 		return
 	}
 	md.Mime = MimeWebp
@@ -274,15 +281,8 @@ func CacheThumb(session *Session, syspath string) (md MediaData, err error) {
 	return
 }
 
-// MakeTile produces new tile object.
-func MakeTile(r io.Reader, wdh, hgt int, orientation int) (data []byte, err error) {
-	var src, dst image.Image
-	if src, _, err = image.Decode(r); err != nil {
-		if src == nil { // skip "short Huffman data" or others errors with partial results
-			return // can not decode file by any codec
-		}
-	}
-
+// DrawTile produces new tile object.
+func DrawTile(src image.Image, wdh, hgt int, orientation int) (data []byte, err error) {
 	switch orientation {
 	case OrientCwHorzReversed, OrientCw, OrientAcwHorzReversed, OrientAcw:
 		wdh, hgt = hgt, wdh
@@ -291,13 +291,12 @@ func MakeTile(r io.Reader, wdh, hgt int, orientation int) (data []byte, err erro
 		gift.ResizeToFill(wdh, hgt, gift.LinearResampling, gift.CenterAnchor),
 	}, orientation)
 	var filter = gift.New(fltlst...)
-	var img = image.NewRGBA(filter.Bounds(src.Bounds()))
-	if img.Pix == nil {
+	var dst = image.NewRGBA(filter.Bounds(src.Bounds()))
+	if dst.Pix == nil {
 		err = ErrImgNil
 		return // out of memory
 	}
-	filter.Draw(img, src)
-	dst = img
+	filter.Draw(dst, src)
 
 	if data, err = webp.EncodeRGBA(dst, Cfg.TmbWebpQuality); err != nil {
 		return // can not write webp
@@ -352,7 +351,13 @@ func CacheTile(session *Session, syspath string, wdh, hgt int) (md MediaData, er
 		}
 	}
 
-	if md.Data, err = MakeTile(file, wdh, hgt, orientation); err != nil {
+	var src image.Image
+	if src, _, err = image.Decode(file); err != nil {
+		if src == nil { // skip "short Huffman data" or others errors with partial results
+			return // can not decode file by any codec
+		}
+	}
+	if md.Data, err = DrawTile(src, wdh, hgt, orientation); err != nil {
 		return
 	}
 	md.Mime = MimeWebp

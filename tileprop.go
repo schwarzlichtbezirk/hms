@@ -19,6 +19,8 @@ import (
 // 1280px:  96, 192, 288, 384, 480, 576
 // 1920px: 144, 288, 432, 576, 720, 864
 
+// https://go.dev/play/p/U5i5M-TfIkM
+
 // TileProp is thumbnails properties.
 type TileProp struct {
 	ETmbVal Mime_t `json:"etmb" yaml:"etmb" xml:"etmb"`
