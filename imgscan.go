@@ -88,6 +88,19 @@ func (tile TilePath) Cache() {
 	tilecache.Poke(puid, tp)
 }
 
+// GetScanThreadsNum returns number of scanning threads
+// depended of settings and developer mode.
+func GetScanThreadsNum() int {
+	var thrnum = Cfg.ScanThreadsNum
+	if thrnum == 0 {
+		thrnum = runtime.GOMAXPROCS(0)
+	}
+	if DevMode { // only one thread under the debugger
+		thrnum = 1
+	}
+	return thrnum
+}
+
 // ImgScanner is singleton for thumbnails producing
 // with single queue to prevent overload.
 var ImgScanner scanner
@@ -112,13 +125,7 @@ func (s *scanner) Scan() {
 		cancel()
 	}()
 
-	var thrnum = Cfg.ScanThreadsNum
-	if thrnum == 0 {
-		thrnum = runtime.GOMAXPROCS(0)
-	}
-	if DevMode { // only one thread under the debugger
-		thrnum = 1
-	}
+	var thrnum = GetScanThreadsNum()
 	var busy = make([]bool, thrnum)
 	var free = make(chan int)
 	var args = make([]chan Cacher, thrnum)

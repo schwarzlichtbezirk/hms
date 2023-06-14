@@ -138,6 +138,21 @@ var (
 	ErrImgNil   = errors.New("can not allocate image")
 )
 
+// CheckImageSize compares given image size with maximum for image type
+// (plain bitmap or compresed image).
+func CheckImageSize(ext string, size int64) bool {
+	switch ext {
+	case ".tga", ".bmp", ".dib", ".rle", ".dds",
+		".tif", ".tiff", ".psd", ".psb":
+		return size < Cfg.BitmapMaxSize
+	case ".jpg", ".jpe", ".jpeg", ".jfif",
+		".jp2", ".jpg2", ".jpx", ".jpm", ".jxr",
+		".gif", ".png", ".webp", ".avif":
+		return size < Cfg.JpegMaxSize
+	}
+	return false
+}
+
 // ExtractThmub extract thumbnail from embedded file tags.
 func ExtractThmub(session *Session, syspath string) (md MediaData, err error) {
 	var puid = PathStoreCache(session, syspath)
@@ -244,7 +259,7 @@ func CacheThumb(session *Session, syspath string) (md MediaData, err error) {
 		return // file is not image
 	}
 
-	if fi.Size() > Cfg.ThumbFileMaxSize {
+	if !CheckImageSize(ext, fi.Size()) {
 		err = ErrTooBig
 		return // file is too big
 	}
@@ -337,7 +352,7 @@ func CacheTile(session *Session, syspath string, wdh, hgt int) (md MediaData, er
 		return // file is not image
 	}
 
-	if fi.Size() > Cfg.ThumbFileMaxSize {
+	if !CheckImageSize(ext, fi.Size()) {
 		err = ErrTooBig
 		return // file is too big
 	}

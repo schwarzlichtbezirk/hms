@@ -19,6 +19,8 @@ import (
 	"github.com/rwcarlsen/goexif/tiff"
 )
 
+var root = "D:/test/imggps"
+
 func FileList(fsys fs.FS) (list []string, err error) {
 	fs.WalkDir(fsys, ".", func(fpath string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -31,13 +33,14 @@ func FileList(fsys fs.FS) (list []string, err error) {
 		if fi.IsDir() {
 			return nil // file is directory
 		}
-		if !IsTypeImage(GetFileExt(fpath)) {
+		var ext = GetFileExt(fpath)
+		if !IsTypeImage(ext) {
 			return nil // file is not image
 		}
-		if fi.Size() > 50*1024*1024 /*Cfg.ThumbFileMaxSize*/ {
+		if !CheckImageSize(ext, fi.Size()) {
 			return nil // file is too big
 		}
-		list = append(list, fpath)
+		list = append(list, path.Join(root, fpath))
 		return nil
 	})
 	return
@@ -72,7 +75,7 @@ func Convert(fpath string) (count int, err error) {
 		return // file is not image
 	}
 
-	if fi.Size() > 50*1024*1024 /*Cfg.ThumbFileMaxSize*/ {
+	if !CheckImageSize(ext, fi.Size()) {
 		err = ErrTooBig
 		return // file is too big
 	}
@@ -132,30 +135,68 @@ func Convert(fpath string) (count int, err error) {
 	return
 }
 
-var root = "D:/test/imggps"
-
 func RunCacher() {
 	var err error
 	var list []string
-	var total, ready, drawcount, errcount int64
 
-	var wg sync.WaitGroup
-	defer wg.Wait()
+	if list, err = FileList(os.DirFS(root)); err != nil {
+		log.Fatal(err)
+	}
+	BatchCacher(list)
+}
 
-	var ctx, cancel = context.WithCancel(context.Background())
-	defer cancel()
+func BatchCacher(list []string) {
+	var ready, drawcount, errcount int64
+	var thrnum = GetScanThreadsNum()
 
-	wg.Add(1)
+	// manager thread that distributes task portions
+	var cpath = make(chan string, thrnum)
 	go func() {
-		defer wg.Done()
+		defer close(cpath)
+		for _, s := range list {
+			select {
+			case cpath <- s:
+				continue
+			case <-exitctx.Done():
+				return
+			}
+		}
+	}()
+
+	// working threads, runs until 'cpath' not closed
+	fmt.Fprintf(os.Stdout, "start processing %d files with %d threads...\n", len(list), thrnum)
+	var workwg sync.WaitGroup
+	workwg.Add(thrnum)
+	for i := 0; i < thrnum; i++ {
+		go func() {
+			defer workwg.Done()
+			for fpath := range cpath {
+				var err error
+				var count int
+				if count, err = Convert(fpath); err != nil {
+					atomic.AddInt64(&errcount, 1)
+				}
+				atomic.AddInt64(&drawcount, int64(count))
+				atomic.AddInt64(&ready, 1)
+			}
+		}()
+	}
+
+	// information thread
+	var ctx, cancel = context.WithCancel(context.Background())
+	var infowg sync.WaitGroup
+	infowg.Add(1)
+	go func() {
+		defer infowg.Done()
 		for {
 			select {
 			case <-ctx.Done():
-				fmt.Fprintf(os.Stdout, "processing complete            \n")
+				fmt.Fprintf(os.Stdout, "processed %d files\n", ready)
 				fmt.Fprintf(os.Stdout, "produced %d tiles and thumbnails\n", drawcount)
 				if errcount > 0 {
 					fmt.Fprintf(os.Stdout, "gets %d failures on files\n", errcount)
 				}
+				fmt.Fprintf(os.Stdout, "processing complete\n")
 				return
 			case <-time.After(time.Second):
 				fmt.Fprintf(os.Stdout, "processed %d files\r", atomic.LoadInt64(&ready))
@@ -163,31 +204,9 @@ func RunCacher() {
 		}
 	}()
 
-	var cpath = make(chan string)
-	go func() {
-		for len(list) > 0 {
-			var s = list[len(list)-1]
-			list = list[:len(list)-1]
-			select {
-			case cpath <- s:
-			}
-		}
-		close(cpath)
-	}()
-
-	if list, err = FileList(os.DirFS(root)); err != nil {
-		log.Fatal(err)
-	}
-	total = int64(len(list))
-	fmt.Fprintf(os.Stdout, "total files to process: %d\n", total)
-	for fpath := range cpath {
-		var count int
-		if count, err = Convert(path.Join(root, fpath)); err != nil {
-			atomic.AddInt64(&errcount, 1)
-		}
-		atomic.AddInt64(&drawcount, int64(count))
-		atomic.AddInt64(&ready, 1)
-	}
+	workwg.Wait()
+	cancel()
+	infowg.Wait()
 }
 
 // The End.

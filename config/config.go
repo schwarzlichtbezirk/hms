@@ -72,8 +72,10 @@ type CfgXormDrv struct {
 }
 
 type CfgImgProp struct {
-	// Maximum size of image to make thumbnail.
-	ThumbFileMaxSize int64 `json:"thumb-file-maxsize" yaml:"thumb-file-maxsize" long:"tfms" description:"Maximum size of image to make thumbnail."`
+	// Maximum size of plain bitmap image to make thumbnail (BMP, TGA, TIFF).
+	BitmapMaxSize int64 `json:"bitmap-maxsize" yaml:"bitmap-maxsize" long:"bmpms" description:"Maximum size of plain bitmap image to make thumbnail (BMP, TGA, TIFF)."`
+	// Maximum size of compressed image to make thumbnail (JPEG, WebP).
+	JpegMaxSize int64 `json:"jpeg-maxsize" yaml:"jpeg-maxsize" long:"jpgms" description:"Maximum size of compressed image to make thumbnail (JPEG, WebP)."`
 	// Stretch big image embedded into mp3-file to fit into standard icon size.
 	FitEmbeddedTmb bool `json:"fit-embedded-tmb" yaml:"fit-embedded-tmb" long:"fet" description:"Stretch big image embedded into mp3-file to fit into standard icon size."`
 	// Thumbnails width and height.
@@ -152,12 +154,13 @@ var Cfg = &Config{ // inits default values:
 		XormDriverName: "sqlite3",
 	},
 	CfgImgProp: CfgImgProp{
-		ThumbFileMaxSize: 4096*3072*4 + 65536,
-		FitEmbeddedTmb:   true,
-		TmbResolution:    [2]int{256, 256},
-		TmbJpegQuality:   80,
-		TmbWebpQuality:   80,
-		ScanThreadsNum:   4,
+		BitmapMaxSize:  24*1024*1024*3 + 65536, // 24Mpx + 64K tiff metadata
+		JpegMaxSize:    20 * 1024 * 1024,
+		FitEmbeddedTmb: true,
+		TmbResolution:  [2]int{256, 256},
+		TmbJpegQuality: 80,
+		TmbWebpQuality: 80,
+		ScanThreadsNum: 4,
 	},
 	CfgAppSets: CfgAppSets{
 		WPKName:          []string{"hms-full.wpk"},

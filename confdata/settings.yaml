@@ -60,8 +60,10 @@ xorm:
   # Provides XORM driver name.
   xorm-driver-name: sqlite3
 images-prop:
-  # Maximum size of image to make thumbnail.
-  thumb-file-maxsize: 50397184 # 4096*3072*4 + 65536, 48M, max 4K image + 64K exif metadata
+  # Maximum size of plain bitmap image to make thumbnail (BMP, TGA, TIFF).
+  bitmap-maxsize: 75563008 # 24*1024*1024*3 + 65536, 24Mpx + 64K tiff metadata
+  # Maximum size of compressed image to make thumbnail (JPEG, WebP).
+  jpeg-maxsize: 20971520
   # Stretch big image embedded into mp3-file to fit into standard icon size.
   fit-embedded-tmb: false
   # Thumbnails width and height.

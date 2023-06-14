@@ -242,9 +242,11 @@ func GetFileGroup(fpath string) FG_t {
 // IsTypeImage checks that file is some image format.
 func IsTypeImage(ext string) bool {
 	switch ext {
-	case ".tga", ".bmp", ".dib", ".rle", ".dds", ".tif", ".tiff",
-		".jpg", ".jpe", ".jpeg", ".jfif", ".gif", ".png", ".webp", ".avif",
-		".psd", ".psb", ".jp2", ".jpg2", ".jpx", ".jpm", ".jxr":
+	case ".tga", ".bmp", ".dib", ".rle", ".dds",
+		".tif", ".tiff", ".psd", ".psb",
+		".jpg", ".jpe", ".jpeg", ".jfif",
+		".jp2", ".jpg2", ".jpx", ".jpm", ".jxr",
+		".gif", ".png", ".webp", ".avif":
 		return true
 	}
 	return false
@@ -260,30 +262,21 @@ func IsTypeNativeImg(ext string) bool {
 	return false
 }
 
+// IsTypeProcessed checks that file extension belongs to images that can be decoded.
+func IsTypeProcessed(ext string) bool {
+	switch ext {
+	case ".jpg", ".jpe", ".jpeg", ".jfif", ".webp", ".png", ".gif",
+		".tga", ".bmp", ".dib", ".rle", ".dds",
+		".tif", ".tiff", ".psd", ".psb":
+		return true
+	}
+	return false
+}
+
 // IsTypeJPEG checks that file extension is in JPEG group.
 func IsTypeJPEG(ext string) bool {
 	switch ext {
 	case ".jpg", ".jpe", ".jpeg", ".jfif":
-		return true
-	}
-	return false
-}
-
-// IsTypeAlpha checks that file extension belongs to images with alpha channel.
-func IsTypeAlpha(ext string) bool {
-	switch ext {
-	case ".avif", ".webp", ".png", ".gif",
-		".dds", ".psd", ".psb":
-		return true
-	}
-	return false
-}
-
-// IsTypeNonalpha checks that file extension belongs to images without alpha channel.
-func IsTypeNonalpha(ext string) bool {
-	switch ext {
-	case ".jpg", ".jpe", ".jpeg", ".jfif",
-		".tga", ".bmp", ".dib", ".rle", ".tif", ".tiff":
 		return true
 	}
 	return false
