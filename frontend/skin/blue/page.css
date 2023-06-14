@@ -27,6 +27,7 @@ body {
 }
 
 .hms-breadcrumb > .breadcrumb-item.active {
+	color: #4477c4;
 	font-size: 1.5rem;
 }
 

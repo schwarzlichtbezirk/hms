@@ -40,6 +40,7 @@ a, .btn-link {
 }
 
 .hms-breadcrumb > .breadcrumb-item.active {
+	color: #7380bf;
 	font-size: 1.5rem;
 }
 

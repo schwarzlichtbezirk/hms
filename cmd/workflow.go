@@ -174,6 +174,7 @@ func Init() {
 func Run() {
 	if Cfg.CacherMode {
 		defer exitfn()
+		RunCacher()
 	} else {
 		var gmux = mux.NewRouter()
 		RegisterRoutes(gmux)

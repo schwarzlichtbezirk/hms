@@ -33,10 +33,10 @@ const (
 // package caches
 var (
 	// cache with images thumbnails which are placed in box 256x256.
-	thumbpkg *FileCache
+	ThumbPkg *FileCache
 	// cache with images tiles, size of each tile is placed as sufix
 	// of path in format "full/path/to/file.ext?144x108".
-	tilespkg *FileCache
+	TilesPkg *FileCache
 )
 
 var XormStorage *xorm.Engine
@@ -608,17 +608,17 @@ func PackInfo(fname string, pkg *wpk.Package) {
 
 // InitPackages opens all existing caches.
 func InitPackages() (err error) {
-	if thumbpkg, err = InitCacheWriter(path.Join(CachePath, tmbfile)); err != nil {
+	if ThumbPkg, err = InitCacheWriter(path.Join(CachePath, tmbfile)); err != nil {
 		err = fmt.Errorf("inits thumbnails database: %w", err)
 		return
 	}
-	PackInfo(tmbfile, &thumbpkg.Package)
+	PackInfo(tmbfile, &ThumbPkg.Package)
 
-	if tilespkg, err = InitCacheWriter(path.Join(CachePath, tilfile)); err != nil {
+	if TilesPkg, err = InitCacheWriter(path.Join(CachePath, tilfile)); err != nil {
 		err = fmt.Errorf("inits tiles database: %w", err)
 		return
 	}
-	PackInfo(tilfile, &tilespkg.Package)
+	PackInfo(tilfile, &TilesPkg.Package)
 
 	return nil
 }
@@ -626,10 +626,10 @@ func InitPackages() (err error) {
 // ClosePackages closes all existing caches.
 func ClosePackages() (err error) {
 	var err1 error
-	if err1 = thumbpkg.Close(); err1 != nil {
+	if err1 = ThumbPkg.Close(); err1 != nil {
 		err = err1
 	}
-	if err1 = tilespkg.Close(); err1 != nil {
+	if err1 = TilesPkg.Close(); err1 != nil {
 		err = err1
 	}
 	return

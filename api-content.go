@@ -281,7 +281,7 @@ func mtmbHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var file io.ReadSeekCloser
 	var mime string
 	var t time.Time
-	if file, mime, t, err = thumbpkg.GetFile(syspath); err != nil {
+	if file, mime, t, err = ThumbPkg.GetFile(syspath); err != nil {
 		WriteError500(w, r, err, AECmtmbbadcnt)
 		return
 	}
@@ -341,7 +341,7 @@ func tileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var file io.ReadSeekCloser
 	var mime string
 	var t time.Time
-	if file, mime, t, err = tilespkg.GetFile(tilepath); err != nil {
+	if file, mime, t, err = TilesPkg.GetFile(tilepath); err != nil {
 		WriteError500(w, r, err, AECtilebadcnt)
 		return
 	}

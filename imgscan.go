@@ -190,10 +190,10 @@ func (s *scanner) Scan() {
 							defer atomic.StoreUint32(&issync, 0)
 							time.Sleep(500 * time.Millisecond)
 							// sync file tags tables of caches
-							if err := thumbpkg.Sync(); err != nil {
+							if err := ThumbPkg.Sync(); err != nil {
 								Log.Error(err)
 							}
-							if err := tilespkg.Sync(); err != nil {
+							if err := TilesPkg.Sync(); err != nil {
 								Log.Error(err)
 							}
 							Log.Info("caches synced")

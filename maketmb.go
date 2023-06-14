@@ -194,8 +194,11 @@ func DrawThumb(src image.Image, orientation int) (data []byte, err error) {
 // makes new one and put it to cache.
 func CacheThumb(session *Session, syspath string) (md MediaData, err error) {
 	// try to extract thumbnail from package
-	if md, err = thumbpkg.GetData(syspath); err != nil {
+	if md, err = ThumbPkg.GetData(syspath); err != nil {
 		return // failure
+	}
+	if md.Data != nil {
+		return // extracted
 	}
 
 	var fi fs.FileInfo
@@ -227,7 +230,7 @@ func CacheThumb(session *Session, syspath string) (md MediaData, err error) {
 			md.Mime = MimeWebp
 			md.Time = mdtag.Time
 			// push thumbnail to package
-			err = thumbpkg.PutFile(syspath, md)
+			err = ThumbPkg.PutFile(syspath, md)
 			return
 		} else {
 			err = ErrNotImg
@@ -277,7 +280,7 @@ func CacheThumb(session *Session, syspath string) (md MediaData, err error) {
 	}
 
 	// push thumbnail to package
-	err = thumbpkg.PutFile(syspath, md)
+	err = ThumbPkg.PutFile(syspath, md)
 	return
 }
 
@@ -310,8 +313,11 @@ func CacheTile(session *Session, syspath string, wdh, hgt int) (md MediaData, er
 	var tilepath = fmt.Sprintf("%s?%dx%d", syspath, wdh, hgt)
 
 	// try to extract tile from package
-	if md, err = tilespkg.GetData(tilepath); err != nil {
+	if md, err = TilesPkg.GetData(tilepath); err != nil {
 		return // failure
+	}
+	if md.Data != nil {
+		return // extracted
 	}
 
 	var fi fs.FileInfo
@@ -366,7 +372,7 @@ func CacheTile(session *Session, syspath string, wdh, hgt int) (md MediaData, er
 	}
 
 	// push tile to package
-	err = tilespkg.PutFile(tilepath, md)
+	err = TilesPkg.PutFile(tilepath, md)
 	return
 }
 
