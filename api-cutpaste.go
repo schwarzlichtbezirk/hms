@@ -66,7 +66,7 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		WriteError(w, r, http.StatusNotFound, err, AECedtcopynodest)
 		return
 	}
-	dstpath = JoinPath(dstpath, path.Base(srcpath))
+	dstpath = JoinFast(dstpath, path.Base(srcpath))
 
 	// copies file or dir from source to destination
 	var filecopy func(srcpath, dstpath string) (err error)
@@ -129,7 +129,7 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			}
 			for _, file := range files {
 				var name = file.Name()
-				if err = filecopy(JoinPath(srcpath, name), JoinPath(dstpath, name)); err != nil {
+				if err = filecopy(JoinFast(srcpath, name), JoinFast(dstpath, name)); err != nil {
 					return // error already written
 				}
 			}
@@ -214,7 +214,7 @@ func edtrenameAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		WriteError(w, r, http.StatusNotFound, err, AECedtrennodest)
 		return
 	}
-	dstpath = JoinPath(dstpath, path.Base(srcpath))
+	dstpath = JoinFast(dstpath, path.Base(srcpath))
 
 	// generate unique destination filename
 	if !arg.Ovw {

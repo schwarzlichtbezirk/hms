@@ -72,10 +72,10 @@ type CfgXormDrv struct {
 }
 
 type CfgImgProp struct {
-	// Maximum size of plain bitmap image to make thumbnail (BMP, TGA, TIFF).
-	BitmapMaxSize int64 `json:"bitmap-maxsize" yaml:"bitmap-maxsize" long:"bmpms" description:"Maximum size of plain bitmap image to make thumbnail (BMP, TGA, TIFF)."`
-	// Maximum size of compressed image to make thumbnail (JPEG, WebP).
-	JpegMaxSize int64 `json:"jpeg-maxsize" yaml:"jpeg-maxsize" long:"jpgms" description:"Maximum size of compressed image to make thumbnail (JPEG, WebP)."`
+	// Maximum size of plain bitmap image to make thumbnail (BMP, TGA, TIFF), 0 on no limits.
+	BitmapMaxSize int64 `json:"bitmap-maxsize" yaml:"bitmap-maxsize" long:"bmpms" description:"Maximum size of plain bitmap image to make thumbnail (BMP, TGA, TIFF), 0 on no limits."`
+	// Maximum size of compressed image to make thumbnail (JPEG, WebP), 0 on no limits.
+	JpegMaxSize int64 `json:"jpeg-maxsize" yaml:"jpeg-maxsize" long:"jpgms" description:"Maximum size of compressed image to make thumbnail (JPEG, WebP), 0 on no limits."`
 	// Stretch big image embedded into mp3-file to fit into standard icon size.
 	FitEmbeddedTmb bool `json:"fit-embedded-tmb" yaml:"fit-embedded-tmb" long:"fet" description:"Stretch big image embedded into mp3-file to fit into standard icon size."`
 	// Thumbnails width and height.
@@ -158,8 +158,8 @@ var Cfg = &Config{ // inits default values:
 		JpegMaxSize:    20 * 1024 * 1024,
 		FitEmbeddedTmb: true,
 		TmbResolution:  [2]int{256, 256},
-		TmbJpegQuality: 80,
-		TmbWebpQuality: 80,
+		TmbJpegQuality: 75,
+		TmbWebpQuality: 60,
 		ScanThreadsNum: 4,
 	},
 	CfgAppSets: CfgAppSets{

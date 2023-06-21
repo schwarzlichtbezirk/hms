@@ -57,6 +57,28 @@ func JoinPath(elem ...string) string {
 	}
 }
 
+// JoinFast performs fast join of two path chunks.
+func JoinFast(dir, base string) string {
+	if dir == "" || dir == "." {
+		return base
+	}
+	if base == "" || base == "." {
+		return dir
+	}
+	var base1, dir1 string
+	if dir[len(dir)-1] == '/' {
+		dir1 = dir[:len(dir)-1]
+	} else {
+		dir1 = dir
+	}
+	if base[0] == '/' {
+		base1 = base[1:]
+	} else {
+		base1 = base
+	}
+	return dir1 + "/" + base1
+}
+
 // UnfoldPath brings any share path to system file path.
 func UnfoldPath(session *Session, shrpath string) (syspath string, puid Puid_t, err error) {
 	var pref, suff string
@@ -92,7 +114,7 @@ func UnfoldPath(session *Session, shrpath string) (syspath string, puid Puid_t, 
 	if len(suff) == 0 {
 		return // whole cached path
 	}
-	syspath = JoinPath(syspath, suff)
+	syspath = JoinFast(syspath, suff)
 	// get PUID if it not have
 	puid = PathStoreCache(session, syspath)
 	return // composite path
@@ -552,7 +574,7 @@ func (prf *Profile) GetSharePath(session *Session, syspath string) (shrpath, shr
 	}
 	if len(base) > 0 {
 		var puid = PathStoreCache(session, base)
-		shrpath = JoinPath(puid.String(), syspath[len(base):])
+		shrpath = JoinFast(puid.String(), syspath[len(base):])
 		return
 	}
 	return
@@ -575,7 +597,7 @@ func (prf *Profile) GetRootPath(session *Session, syspath string) (rootpath, roo
 	}
 	if len(base) > 0 {
 		var puid = PathStoreCache(session, base)
-		rootpath = JoinPath(puid.String(), syspath[len(base):])
+		rootpath = JoinFast(puid.String(), syspath[len(base):])
 		return
 	}
 	for _, dp := range prf.Remote {
@@ -588,7 +610,7 @@ func (prf *Profile) GetRootPath(session *Session, syspath string) (rootpath, roo
 	}
 	if len(base) > 0 {
 		var puid = PathStoreCache(session, base)
-		rootpath = JoinPath(puid.String(), syspath[len(base):])
+		rootpath = JoinFast(puid.String(), syspath[len(base):])
 		return
 	}
 	return

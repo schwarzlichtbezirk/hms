@@ -290,4 +290,48 @@ func ReadDir(anypath string) (ret []fs.FileInfo, err error) {
 	}
 }
 
+type FS string
+
+// joinfast performs fast join of two path chunks.
+func joinfast(dir, base string) string {
+	if dir == "" || dir == "." {
+		return base
+	}
+	if base == "" || base == "." {
+		return dir
+	}
+	var base1, dir1 string
+	if dir[len(dir)-1] == '/' {
+		dir1 = dir[:len(dir)-1]
+	} else {
+		dir1 = dir
+	}
+	if base[0] == '/' {
+		base1 = base[1:]
+	} else {
+		base1 = base
+	}
+	return dir1 + "/" + base1
+}
+
+func (fsys FS) Open(fpath string) (r fs.File, err error) {
+	return OpenFile(joinfast(string(fsys), fpath))
+}
+
+func (fsys FS) Stat() (fi fs.FileInfo, err error) {
+	return StatFile(string(fsys))
+}
+
+func (fsys FS) ReadDir(fpath string) (ret []fs.DirEntry, err error) {
+	var fis []fs.FileInfo
+	if fis, err = ReadDir(joinfast(string(fsys), fpath)); err != nil {
+		return
+	}
+	ret = make([]fs.DirEntry, len(fis))
+	for i, fi := range fis {
+		ret[i] = fs.FileInfoToDirEntry(fi)
+	}
+	return
+}
+
 // The End.

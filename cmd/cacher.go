@@ -14,14 +14,17 @@ import (
 	"time"
 
 	. "github.com/schwarzlichtbezirk/hms"
+	. "github.com/schwarzlichtbezirk/hms/joint"
 
 	"github.com/rwcarlsen/goexif/exif"
 	"github.com/rwcarlsen/goexif/tiff"
 )
 
-var root = "D:/test/imggps"
+type FileMap = map[string]struct{}
 
-func FileList(fsys fs.FS) (list []string, err error) {
+var root = "F:/Photos/Places/2023-06-06 Караташлар (Pixel 6)"
+
+func FileList(fsys FS, list FileMap) (err error) {
 	fs.WalkDir(fsys, ".", func(fpath string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -40,10 +43,19 @@ func FileList(fsys fs.FS) (list []string, err error) {
 		if !CheckImageSize(ext, fi.Size()) {
 			return nil // file is too big
 		}
-		list = append(list, path.Join(root, fpath))
+		list[path.Join(string(fsys), fpath)] = struct{}{}
 		return nil
 	})
 	return
+}
+
+type ConvStat struct {
+	filecount uint64
+	tilecount uint64
+	tmbcount  uint64
+	filesize  uint64
+	tilesize  uint64
+	tmbsize   uint64
 }
 
 // Tiles multipliers:
@@ -51,7 +63,7 @@ var tilemult = [...]int{
 	2, 3, 4, 6, 8, 9, 10, 12, 15, 16, 18, 20, 24, 30, 36,
 }
 
-func Convert(fpath string) (count int, err error) {
+func Convert(fpath string, cs *ConvStat) (err error) {
 	var file *os.File
 	if file, err = os.Open(fpath); err != nil {
 		return // can not open file
@@ -80,21 +92,26 @@ func Convert(fpath string) (count int, err error) {
 		return // file is too big
 	}
 
+	// lazy decode
 	var orientation = OrientNormal
-	if x, err := exif.Decode(file); err == nil {
-		var t *tiff.Tag
-		if t, err = x.Get(exif.Orientation); err == nil {
-			orientation, _ = t.Int(0)
-		}
-	}
-	if _, err = file.Seek(0, io.SeekStart); err != nil {
-		return // can not seek to start
-	}
-
 	var src image.Image
-	if src, _, err = image.Decode(file); err != nil {
-		if src == nil { // skip "short Huffman data" or others errors with partial results
-			return // can not decode file by any codec
+	var decode = func() {
+		if src != nil {
+			return
+		}
+		if x, err := exif.Decode(file); err == nil {
+			var t *tiff.Tag
+			if t, err = x.Get(exif.Orientation); err == nil {
+				orientation, _ = t.Int(0)
+			}
+		}
+		if _, err = file.Seek(0, io.SeekStart); err != nil {
+			return // can not seek to start
+		}
+		if src, _, err = image.Decode(file); err != nil {
+			if src == nil { // skip "short Huffman data" or others errors with partial results
+				return // can not decode file by any codec
+			}
 		}
 	}
 
@@ -109,6 +126,9 @@ func Convert(fpath string) (count int, err error) {
 			var wdh, hgt = tm * 24, tm * 18
 			var tilepath = fmt.Sprintf("%s?%dx%d", fpath, wdh, hgt)
 			if !TilesPkg.HasTagset(tilepath) {
+				if decode(); err != nil {
+					return
+				}
 				if md.Data, err = DrawTile(src, wdh, hgt, orientation); err != nil {
 					return
 				}
@@ -116,12 +136,16 @@ func Convert(fpath string) (count int, err error) {
 				if err = TilesPkg.PutFile(tilepath, md); err != nil {
 					return
 				}
-				count++
+				atomic.AddUint64(&cs.tilecount, 1)
+				atomic.AddUint64(&cs.tilesize, uint64(len(md.Data)))
 			}
 		}
 	}
 
 	if !ThumbPkg.HasTagset(fpath) {
+		if decode(); err != nil {
+			return
+		}
 		if md.Data, err = DrawThumb(src, orientation); err != nil {
 			return
 		}
@@ -129,31 +153,36 @@ func Convert(fpath string) (count int, err error) {
 		if err = ThumbPkg.PutFile(fpath, md); err != nil {
 			return
 		}
-		count++
+		atomic.AddUint64(&cs.tmbcount, 1)
+		atomic.AddUint64(&cs.tmbsize, uint64(len(md.Data)))
 	}
+
+	atomic.AddUint64(&cs.filecount, 1)
+	atomic.AddUint64(&cs.filesize, uint64(fi.Size()))
 
 	return
 }
 
 func RunCacher() {
 	var err error
-	var list []string
+	var list = FileMap{}
 
-	if list, err = FileList(os.DirFS(root)); err != nil {
+	if err = FileList(FS(root), list); err != nil {
 		log.Fatal(err)
 	}
 	BatchCacher(list)
 }
 
-func BatchCacher(list []string) {
-	var ready, drawcount, errcount int64
+func BatchCacher(list FileMap) {
+	var errcount int64
+	var cs ConvStat
 	var thrnum = GetScanThreadsNum()
 
 	// manager thread that distributes task portions
 	var cpath = make(chan string, thrnum)
 	go func() {
 		defer close(cpath)
-		for _, s := range list {
+		for s := range list {
 			select {
 			case cpath <- s:
 				continue
@@ -172,12 +201,9 @@ func BatchCacher(list []string) {
 			defer workwg.Done()
 			for fpath := range cpath {
 				var err error
-				var count int
-				if count, err = Convert(fpath); err != nil {
+				if err = Convert(fpath, &cs); err != nil {
 					atomic.AddInt64(&errcount, 1)
 				}
-				atomic.AddInt64(&drawcount, int64(count))
-				atomic.AddInt64(&ready, 1)
 			}
 		}()
 	}
@@ -188,18 +214,27 @@ func BatchCacher(list []string) {
 	infowg.Add(1)
 	go func() {
 		defer infowg.Done()
+
+		var t0 = time.Now()
 		for {
 			select {
 			case <-ctx.Done():
-				fmt.Fprintf(os.Stdout, "processed %d files\n", ready)
-				fmt.Fprintf(os.Stdout, "produced %d tiles and thumbnails\n", drawcount)
+				var d = time.Now().Sub(t0) / time.Second * time.Second
+				fmt.Fprintf(os.Stdout, "processed %d files\n", cs.filecount)
+				fmt.Fprintf(os.Stdout, "processing complete, %v\n", d)
+				fmt.Fprintf(os.Stdout, "produced %d tiles and %d thumbnails\n", cs.tilecount, cs.tmbcount)
+				if cs.tilesize > 0 {
+					fmt.Fprintf(os.Stdout, "tiles size: %d, ratio: %.4g\n", cs.tilesize, float64(cs.filesize)/float64(cs.tilesize))
+				}
+				if cs.tmbsize > 0 {
+					fmt.Fprintf(os.Stdout, "thumbnails size: %d, ratio: %.4g\n", cs.tmbsize, float64(cs.filesize)/float64(cs.tmbsize))
+				}
 				if errcount > 0 {
 					fmt.Fprintf(os.Stdout, "gets %d failures on files\n", errcount)
 				}
-				fmt.Fprintf(os.Stdout, "processing complete\n")
 				return
 			case <-time.After(time.Second):
-				fmt.Fprintf(os.Stdout, "processed %d files\r", atomic.LoadInt64(&ready))
+				fmt.Fprintf(os.Stdout, "processed %d files\r", atomic.LoadUint64(&cs.filecount))
 			}
 		}
 	}()

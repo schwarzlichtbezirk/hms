@@ -144,11 +144,11 @@ func CheckImageSize(ext string, size int64) bool {
 	switch ext {
 	case ".tga", ".bmp", ".dib", ".rle", ".dds",
 		".tif", ".tiff", ".psd", ".psb":
-		return size < Cfg.BitmapMaxSize
+		return size < Cfg.BitmapMaxSize || Cfg.BitmapMaxSize == 0
 	case ".jpg", ".jpe", ".jpeg", ".jfif",
 		".jp2", ".jpg2", ".jpx", ".jpm", ".jxr",
 		".gif", ".png", ".webp", ".avif":
-		return size < Cfg.JpegMaxSize
+		return size < Cfg.JpegMaxSize || Cfg.JpegMaxSize == 0
 	}
 	return false
 }

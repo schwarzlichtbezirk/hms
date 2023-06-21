@@ -160,7 +160,7 @@ func ScanDir(prf *Profile, session *Session, dir string, isadmin bool) (ret []an
 		if fi == nil {
 			continue
 		}
-		var fpath = JoinPath(dir, fi.Name())
+		var fpath = JoinFast(dir, fi.Name())
 		if prf.IsHidden(fpath) {
 			continue
 		}
