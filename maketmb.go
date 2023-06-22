@@ -316,7 +316,7 @@ func DrawTile(src image.Image, wdh, hgt int, orientation int) (data []byte, err 
 	}
 	filter.Draw(dst, src)
 
-	if data, err = webp.EncodeRGBA(dst, Cfg.TmbWebpQuality); err != nil {
+	if data, err = webp.EncodeRGBA(dst, Cfg.TileWebpQuality); err != nil {
 		return // can not write webp
 	}
 	return

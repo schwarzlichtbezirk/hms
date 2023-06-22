@@ -70,10 +70,14 @@ images-prop:
   tmb-resolution: [256, 256]
   # HD images width and height.
   hd-resolution: [1920, 1080]
-  # Thumbnails JPEG quality, ranges from 1 to 100 inclusive.
-  tmb-jpeg-quality: 75
-  # Thumbnails WebP quality, ranges from 1 to 100 inclusive.
-  tmb-webp-quality: 60
+  # WebP quality of converted images from another format with original resolution, ranges from 1 to 100 inclusive.
+  media-webp-quality: 80
+  # WebP quality of converted to HD-resolution images, ranges from 1 to 100 inclusive.
+  hd-webp-quality: 75
+  # WebP quality of any tiles, ranges from 1 to 100 inclusive.
+  tile-webp-quality: 60
+  # WebP quality of thumbnails, ranges from 1 to 100 inclusive.
+  tmb-webp-quality: 75
   # Number of image processing threads in which performs converting to
   # tiles and thumbnails. Zero sets this number to GOMAXPROCS value.
   scan-threads-num: 4

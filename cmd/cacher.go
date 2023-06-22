@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -21,8 +22,6 @@ import (
 )
 
 type FileMap = map[string]struct{}
-
-var root = "F:/Photos/Places/2023-06-06 Караташлар (Pixel 6)"
 
 func FileList(fsys FS, list FileMap) (err error) {
 	fs.WalkDir(fsys, ".", func(fpath string, d fs.DirEntry, err error) error {
@@ -163,16 +162,6 @@ func Convert(fpath string, cs *ConvStat) (err error) {
 	return
 }
 
-func RunCacher() {
-	var err error
-	var list = FileMap{}
-
-	if err = FileList(FS(root), list); err != nil {
-		log.Fatal(err)
-	}
-	BatchCacher(list)
-}
-
 func BatchCacher(list FileMap) {
 	var errcount int64
 	var cs ConvStat
@@ -220,8 +209,7 @@ func BatchCacher(list FileMap) {
 			select {
 			case <-ctx.Done():
 				var d = time.Now().Sub(t0) / time.Second * time.Second
-				fmt.Fprintf(os.Stdout, "processed %d files\n", cs.filecount)
-				fmt.Fprintf(os.Stdout, "processing complete, %v\n", d)
+				fmt.Fprintf(os.Stdout, "processed %d files, spent %v, processing complete\n", cs.filecount, d)
 				fmt.Fprintf(os.Stdout, "produced %d tiles and %d thumbnails\n", cs.tilecount, cs.tmbcount)
 				if cs.tilesize > 0 {
 					fmt.Fprintf(os.Stdout, "tiles size: %d, ratio: %.4g\n", cs.tilesize, float64(cs.filesize)/float64(cs.tilesize))
@@ -234,7 +222,12 @@ func BatchCacher(list FileMap) {
 				}
 				return
 			case <-time.After(time.Second):
-				fmt.Fprintf(os.Stdout, "processed %d files\r", atomic.LoadUint64(&cs.filecount))
+				var ready = atomic.LoadUint64(&cs.filecount)
+				var d time.Duration
+				if ready > 0 {
+					d = time.Duration(float64(time.Now().Sub(t0))/float64(ready)*float64(uint64(len(list))-ready)) / time.Second * time.Second
+				}
+				fmt.Fprintf(os.Stdout, "processed %d files, remains about %v            \r", ready, d)
 			}
 		}
 	}()
@@ -242,6 +235,47 @@ func BatchCacher(list FileMap) {
 	workwg.Wait()
 	cancel()
 	infowg.Wait()
+}
+
+func RunCacher() {
+	var shares []string
+	for _, acc := range PrfList {
+	prfshr:
+		for _, shr := range acc.Shares {
+			for i, p := range shares {
+				if strings.HasPrefix(shr.Path, p) {
+					continue prfshr
+				}
+				if strings.HasPrefix(p, shr.Path) {
+					shares[i] = shr.Path
+					continue prfshr
+				}
+			}
+			if _, ok := CatPathKey[shr.Path]; !ok {
+				shares = append(shares, shr.Path)
+			}
+		}
+	}
+
+	fmt.Fprintf(os.Stdout, "found %d unical shares\n", len(shares))
+	var list = FileMap{}
+	var sum int
+	for i, p := range shares {
+		fmt.Fprintf(os.Stdout, "scan %d share with path %s\n", i+1, p)
+		if err := FileList(FS(p), list); err != nil {
+			log.Fatal(err)
+		}
+		fmt.Fprintf(os.Stdout, "found %d files to process\n", len(list)-sum)
+		sum = len(list)
+
+		select {
+		case <-exitctx.Done():
+			return
+		default:
+		}
+	}
+
+	BatchCacher(list)
 }
 
 // The End.

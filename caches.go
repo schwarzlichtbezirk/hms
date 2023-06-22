@@ -331,7 +331,7 @@ func MediaCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 		}
 	}
 
-	if md.Data, err = webp.EncodeRGBA(src, Cfg.TmbWebpQuality); err != nil {
+	if md.Data, err = webp.EncodeRGBA(src, Cfg.MediaWebpQuality); err != nil {
 		return // can not write webp
 	}
 	md.Mime = MimeWebp
@@ -413,7 +413,7 @@ func HdCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 	filter.Draw(img, src)
 	dst = img
 
-	if md.Data, err = webp.EncodeRGBA(dst, Cfg.TmbWebpQuality); err != nil {
+	if md.Data, err = webp.EncodeRGBA(dst, Cfg.HDWebpQuality); err != nil {
 		return // can not write webp
 	}
 	md.Mime = MimeWebp

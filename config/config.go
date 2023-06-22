@@ -82,10 +82,14 @@ type CfgImgProp struct {
 	TmbResolution [2]int `json:"tmb-resolution" yaml:"tmb-resolution" long:"tr" description:"Thumbnails width and height."`
 	// HD images width and height.
 	HDResolution [2]int `json:"hd-resolution" yaml:"hd-resolution" long:"hd" description:"HD images width and height."`
-	// Thumbnails JPEG quality, ranges from 1 to 100 inclusive.
-	TmbJpegQuality int `json:"tmb-jpeg-quality" yaml:"tmb-jpeg-quality" long:"tjq" description:"Thumbnails JPEG quality, ranges from 1 to 100 inclusive."`
-	// Thumbnails WebP quality, ranges from 1 to 100 inclusive.
-	TmbWebpQuality float32 `json:"tmb-webp-quality" yaml:"tmb-webp-quality" long:"twq" description:"Thumbnails WebP quality, ranges from 1 to 100 inclusive."`
+	// WebP quality of converted images from another format with original resolution, ranges from 1 to 100 inclusive.
+	MediaWebpQuality float32 `json:"media-webp-quality" yaml:"media-webp-quality" long:"mediawq" description:"WebP quality of converted images from another format with original resolution, ranges from 1 to 100 inclusive."`
+	// WebP quality of converted to HD-resolution images, ranges from 1 to 100 inclusive.
+	HDWebpQuality float32 `json:"hd-webp-quality" yaml:"hd-webp-quality" long:"hdwq" description:"WebP quality of converted to HD-resolution images, ranges from 1 to 100 inclusive."`
+	// WebP quality of any tiles, ranges from 1 to 100 inclusive.
+	TileWebpQuality float32 `json:"tile-webp-quality" yaml:"tile-webp-quality" long:"tilewq" description:"WebP quality of any tiles, ranges from 1 to 100 inclusive."`
+	// WebP quality of thumbnails, ranges from 1 to 100 inclusive.
+	TmbWebpQuality float32 `json:"tmb-webp-quality" yaml:"tmb-webp-quality" long:"tmbwq" description:"WebP quality of thumbnails, ranges from 1 to 100 inclusive."`
 	// Number of image processing threads in which performs converting to
 	// tiles and thumbnails. Zero sets this number to GOMAXPROCS value.
 	ScanThreadsNum int `json:"scan-threads-num" yaml:"scan-threads-num" long:"stn" description:"Number of image processing threads in which performs converting to tiles and thumbnails."`
@@ -154,13 +158,15 @@ var Cfg = &Config{ // inits default values:
 		XormDriverName: "sqlite3",
 	},
 	CfgImgProp: CfgImgProp{
-		BitmapMaxSize:  24*1024*1024*3 + 65536, // 24Mpx + 64K tiff metadata
-		JpegMaxSize:    20 * 1024 * 1024,
-		FitEmbeddedTmb: true,
-		TmbResolution:  [2]int{256, 256},
-		TmbJpegQuality: 75,
-		TmbWebpQuality: 60,
-		ScanThreadsNum: 4,
+		BitmapMaxSize:    24*1024*1024*3 + 65536, // 24Mpx + 64K tiff metadata
+		JpegMaxSize:      20 * 1024 * 1024,
+		FitEmbeddedTmb:   true,
+		TmbResolution:    [2]int{256, 256},
+		MediaWebpQuality: 80,
+		HDWebpQuality:    75,
+		TileWebpQuality:  60,
+		TmbWebpQuality:   75,
+		ScanThreadsNum:   4,
 	},
 	CfgAppSets: CfgAppSets{
 		WPKName:          []string{"hms-full.wpk"},

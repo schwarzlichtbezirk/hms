@@ -157,7 +157,7 @@ type Profile struct {
 	mux       sync.RWMutex
 }
 
-var prflist map[ID_t]*Profile
+var PrfList map[ID_t]*Profile
 var plmux sync.RWMutex
 
 // NewProfile make new profile and insert it to the list.
@@ -168,7 +168,7 @@ func NewProfile(login, password string) *Profile {
 	}
 
 	var mid ID_t
-	for id := range prflist {
+	for id := range PrfList {
 		if id > mid {
 			mid = id
 		}
@@ -183,14 +183,14 @@ func NewProfile(login, password string) *Profile {
 func ProfileByID(prfid ID_t) *Profile {
 	plmux.RLock()
 	defer plmux.RUnlock()
-	return prflist[prfid]
+	return PrfList[prfid]
 }
 
 // ProfileByUser finds profile with given login.
 func ProfileByUser(login string) *Profile {
 	plmux.RLock()
 	defer plmux.RUnlock()
-	for _, prf := range prflist {
+	for _, prf := range PrfList {
 		if prf.Login == login {
 			return prf
 		}
@@ -202,15 +202,15 @@ func ProfileByUser(login string) *Profile {
 func ProfileInsert(prf *Profile) {
 	plmux.Lock()
 	defer plmux.Unlock()
-	prflist[prf.ID] = prf
+	PrfList[prf.ID] = prf
 }
 
 // ProfileDelete profile with "prfid" identifier from the list.
 func ProfileDelete(prfid ID_t) (ok bool) {
 	plmux.RLock()
 	defer plmux.RUnlock()
-	if _, ok = prflist[prfid]; ok {
-		delete(prflist, prfid)
+	if _, ok = PrfList[prfid]; ok {
+		delete(PrfList, prfid)
 	}
 	return
 }

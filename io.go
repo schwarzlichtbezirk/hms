@@ -88,9 +88,9 @@ func PrfReadYaml(fname string) (err error) {
 	if err = ReadYaml(fname, &list); err != nil {
 		return
 	}
-	prflist = map[ID_t]*Profile{}
+	PrfList = map[ID_t]*Profile{}
 	for _, prf := range list {
-		prflist[prf.ID] = prf
+		PrfList[prf.ID] = prf
 	}
 
 	if len(list) > 0 {
@@ -160,7 +160,7 @@ func PrfWriteYaml(fname string) error {
 
 `
 	var list []*Profile
-	for _, prf := range prflist {
+	for _, prf := range PrfList {
 		list = append(list, prf)
 	}
 	sort.Slice(list, func(i, j int) bool {
