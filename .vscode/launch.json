@@ -17,7 +17,7 @@
 			"type": "go",
 			"request": "launch",
 			"program": "${workspaceFolder}/cmd",
-			"args": ["--cm"],
+			"args": ["--cm=2"],
 			"cwd": "${workspaceFolder}"
 		}
 	]

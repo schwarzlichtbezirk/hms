@@ -51,12 +51,18 @@ const mm = {
 	remove: 'remove',
 };
 
-// TypeEXIF checks that file extension belongs to images with EXIF tags.
+// typeEXIF checks that file extension belongs to images with EXIF tags.
 const typeEXIF = {
 	".tif": true, ".tiff": true,
 	".jpg": true, ".jpe": true, ".jpeg": true, ".jfif": true,
 	".png": true, ".webp": true,
 };
+
+// typeTile checks that file with this extension can be used to build tiles sheet.
+const typeTile = {
+	".jpg": true, ".jpe": true, ".jpeg": true, ".jfif": true,
+	/*".avif": true,*/ ".png": true, ".webp": true, ".gif": true,
+}
 
 const gpxcolors = [
 	'#6495ED', // CornflowerBlue
@@ -1626,7 +1632,7 @@ const VueTileCard = {
 			const res = [];
 			for (const file of this.flist) {
 				const ext = pathext(file.name);
-				if (file.size > 512*1024 && (ext === ".jpg" || ext === ".webp")) {
+				if (typeTile[ext] && file.size > 512*1024) {
 					res.push(file);
 				}
 			}

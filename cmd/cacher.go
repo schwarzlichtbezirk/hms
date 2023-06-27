@@ -63,7 +63,7 @@ var tilemult = [...]int{
 }
 
 func Convert(fpath string, cs *ConvStat) (err error) {
-	var file *os.File
+	var file File
 	if file, err = os.Open(fpath); err != nil {
 		return // can not open file
 	}
@@ -120,7 +120,7 @@ func Convert(fpath string, cs *ConvStat) (err error) {
 		md.Time = fi.ModTime()
 	}
 
-	if (ext == ".jpg" || ext == ".webp") && fi.Size() > 512*1024 {
+	if IsTypeTileImg(ext) && fi.Size() > 512*1024 {
 		for _, tm := range tilemult {
 			var wdh, hgt = tm * 24, tm * 18
 			var tilepath = fmt.Sprintf("%s?%dx%d", fpath, wdh, hgt)

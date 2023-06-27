@@ -3,8 +3,7 @@ package main
 func main() {
 	Init()
 	Run()
-	WaitExit()
-	Shutdown()
+	Done()
 }
 
 // The End.

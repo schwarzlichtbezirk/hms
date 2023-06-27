@@ -262,6 +262,16 @@ func IsTypeNativeImg(ext string) bool {
 	return false
 }
 
+// IsTypeTileImg checks that image file can be used to build tiles sheet.
+func IsTypeTileImg(ext string) bool {
+	switch ext {
+	case ".jpg", ".jpe", ".jpeg", ".jfif",
+		/*".avif",*/ ".webp", ".png", ".gif":
+		return true
+	}
+	return false
+}
+
 // IsTypeProcessed checks that file extension belongs to images that can be decoded.
 func IsTypeProcessed(ext string) bool {
 	switch ext {

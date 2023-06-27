@@ -58,6 +58,7 @@ func Init() {
 	}
 	// rewrite settings from config file
 	if _, err := flags.Parse(Cfg); err != nil {
+		Log.Error("error at command line flags: " + err.Error())
 		os.Exit(1)
 	}
 	Log.Infof("config path: %s", ConfigPath)
@@ -172,13 +173,19 @@ func Init() {
 
 // Run starts main application body.
 func Run() {
-	if Cfg.CacherMode {
-		defer exitfn()
+	if Cfg.CacherMode&CmCacher != 0 {
 		RunCacher()
-	} else {
+		select {
+		case <-exitctx.Done():
+			return
+		default:
+		}
+	}
+	if Cfg.CacherMode&CmWebserver != 0 {
 		var gmux = mux.NewRouter()
 		RegisterRoutes(gmux)
 		RunWeb(gmux)
+		WaitExit()
 	}
 }
 
@@ -337,8 +344,8 @@ func WaitExit() {
 	Log.Info("transactions completed")
 }
 
-// Shutdown performs graceful network shutdown.
-func Shutdown() {
+// Done performs graceful network shutdown.
+func Done() {
 	var wg errgroup.Group
 
 	wg.Go(func() (err error) {
