@@ -23,7 +23,9 @@ const (
 
 // CfgAppMode is set of applications running modes.
 type CfgAppMode struct {
-	CacherMode uint `long:"cm" default:"1" description:"Run application in mode to cache thumbnails at all shares."`
+	CacherMode uint     `long:"cm" default:"1" description:"Run application in mode to cache thumbnails at all shares."`
+	CacherPath []string `long:"cp" description:"Cache thumbnails and tiles at given paths in addition to shared paths, can be several same arguments."`
+	ExceptPath []string `long:"ep" description:"Paths to exclude from scanning, can be several same arguments."`
 }
 
 // CfgJWTAuth is authentication settings.

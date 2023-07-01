@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"image"
 	"io"
@@ -15,6 +14,7 @@ import (
 	"time"
 
 	. "github.com/schwarzlichtbezirk/hms"
+	. "github.com/schwarzlichtbezirk/hms/config"
 	. "github.com/schwarzlichtbezirk/hms/joint"
 
 	"github.com/rwcarlsen/goexif/exif"
@@ -167,14 +167,45 @@ func BatchCacher(list FileMap) {
 	var cs ConvStat
 	var thrnum = GetScanThreadsNum()
 
+	var t0 = time.Now()
+	fmt.Fprintf(os.Stdout, "start processing %d files with %d threads...\n", len(list), thrnum)
+
 	// manager thread that distributes task portions
 	var cpath = make(chan string, thrnum)
 	go func() {
 		defer close(cpath)
+
+		var total = float64(len(list))
+		var tsync = time.NewTicker(4 * time.Minute)
+		defer tsync.Stop()
+		var tinfo = time.NewTicker(time.Second)
+		defer tinfo.Stop()
 		for s := range list {
 			select {
 			case cpath <- s:
 				continue
+			case <-tsync.C:
+				// sync file tags tables of caches
+				if err := ThumbPkg.Sync(); err != nil {
+					Log.Error(err)
+					return
+				}
+				if err := TilesPkg.Sync(); err != nil {
+					Log.Error(err)
+					return
+				}
+			case <-tinfo.C:
+				// information thread
+				if ready := float64(atomic.LoadUint64(&cs.filecount)); ready > 0 {
+					var remain = time.Duration(float64(time.Now().Sub(t0)) / ready * (total - ready))
+					if remain < time.Hour {
+						remain = remain / time.Second * time.Second
+					} else {
+						remain = remain / time.Minute * time.Minute
+					}
+					fmt.Fprintf(os.Stdout, "processed %d files, remains about %v            \r",
+						ready, remain)
+				}
 			case <-exitctx.Done():
 				return
 			}
@@ -182,7 +213,6 @@ func BatchCacher(list FileMap) {
 	}()
 
 	// working threads, runs until 'cpath' not closed
-	fmt.Fprintf(os.Stdout, "start processing %d files with %d threads...\n", len(list), thrnum)
 	var workwg sync.WaitGroup
 	workwg.Add(thrnum)
 	for i := 0; i < thrnum; i++ {
@@ -196,63 +226,69 @@ func BatchCacher(list FileMap) {
 			}
 		}()
 	}
-
-	// information thread
-	var ctx, cancel = context.WithCancel(context.Background())
-	var infowg sync.WaitGroup
-	infowg.Add(1)
-	go func() {
-		defer infowg.Done()
-
-		var t0 = time.Now()
-		for {
-			select {
-			case <-ctx.Done():
-				var d = time.Now().Sub(t0) / time.Second * time.Second
-				fmt.Fprintf(os.Stdout, "processed %d files, spent %v, processing complete\n", cs.filecount, d)
-				fmt.Fprintf(os.Stdout, "produced %d tiles and %d thumbnails\n", cs.tilecount, cs.tmbcount)
-				if cs.tilesize > 0 {
-					fmt.Fprintf(os.Stdout, "tiles size: %d, ratio: %.4g\n", cs.tilesize, float64(cs.filesize)/float64(cs.tilesize))
-				}
-				if cs.tmbsize > 0 {
-					fmt.Fprintf(os.Stdout, "thumbnails size: %d, ratio: %.4g\n", cs.tmbsize, float64(cs.filesize)/float64(cs.tmbsize))
-				}
-				if errcount > 0 {
-					fmt.Fprintf(os.Stdout, "gets %d failures on files\n", errcount)
-				}
-				return
-			case <-time.After(time.Second):
-				var ready = atomic.LoadUint64(&cs.filecount)
-				var d time.Duration
-				if ready > 0 {
-					d = time.Duration(float64(time.Now().Sub(t0))/float64(ready)*float64(uint64(len(list))-ready)) / time.Second * time.Second
-				}
-				fmt.Fprintf(os.Stdout, "processed %d files, remains about %v            \r", ready, d)
-			}
-		}
-	}()
-
 	workwg.Wait()
-	cancel()
-	infowg.Wait()
+
+	var d = time.Now().Sub(t0) / time.Second * time.Second
+	fmt.Fprintf(os.Stdout, "processed %d files, spent %v, processing complete\n", cs.filecount, d)
+	fmt.Fprintf(os.Stdout, "produced %d tiles and %d thumbnails\n", cs.tilecount, cs.tmbcount)
+	if cs.tilesize > 0 {
+		fmt.Fprintf(os.Stdout, "tiles size: %d, ratio: %.4g\n", cs.tilesize, float64(cs.filesize)/float64(cs.tilesize))
+	}
+	if cs.tmbsize > 0 {
+		fmt.Fprintf(os.Stdout, "thumbnails size: %d, ratio: %.4g\n", cs.tmbsize, float64(cs.filesize)/float64(cs.tmbsize))
+	}
+	if errcount > 0 {
+		fmt.Fprintf(os.Stdout, "gets %d failures on files\n", errcount)
+	}
 }
 
 func RunCacher() {
 	var shares []string
 	for _, acc := range PrfList {
-	prfshr:
 		for _, shr := range acc.Shares {
+			var add = true
 			for i, p := range shares {
 				if strings.HasPrefix(shr.Path, p) {
-					continue prfshr
+					add = false
+					break
 				}
 				if strings.HasPrefix(p, shr.Path) {
 					shares[i] = shr.Path
-					continue prfshr
+					add = false
+					break
 				}
 			}
-			if _, ok := CatPathKey[shr.Path]; !ok {
-				shares = append(shares, shr.Path)
+			if add {
+				if _, ok := CatPathKey[shr.Path]; !ok {
+					shares = append(shares, shr.Path)
+				}
+			}
+		}
+	}
+	for _, fpath := range Cfg.ExceptPath {
+		for i, p := range shares {
+			if strings.HasPrefix(p, fpath) {
+				shares = append(shares[:i], shares[i+1:]...)
+				break
+			}
+		}
+	}
+	for _, fpath := range Cfg.CacherPath {
+		var add = true
+		for i, p := range shares {
+			if strings.HasPrefix(fpath, p) {
+				add = false
+				break
+			}
+			if strings.HasPrefix(p, fpath) {
+				shares[i] = fpath
+				add = false
+				break
+			}
+		}
+		if add {
+			if _, ok := CatPathKey[fpath]; !ok {
+				shares = append(shares, fpath)
 			}
 		}
 	}

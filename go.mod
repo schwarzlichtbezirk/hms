@@ -7,7 +7,7 @@ require (
 	github.com/cespare/xxhash v1.1.0
 	github.com/chai2010/webp v1.1.1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
-	github.com/dhowden/tag v0.0.0-20220618230019-adf36e896086
+	github.com/dhowden/tag v0.0.0-20230630033851-978a0926ee25
 	github.com/disintegration/gift v1.2.1
 	github.com/diskfs/go-diskfs v1.3.0
 	github.com/ftrvxmtrx/tga v0.0.0-20150524081124-bd8e8d5be13a

@@ -1489,11 +1489,31 @@ const tilemode2346 = [
 	[0, 1, 2, 4], // 6
 	[0, 1, 2], // 7
 ];
+const tilemode444 = [
+	[2], // for all
+	[], // 1
+	[], // 2
+	[], // 3
+	[2], // 4
+	[], // 5
+	[], // 6
+];
+const tilemode3333 = [
+	[1], // for all
+	[], // 1
+	[], // 2
+	[1], // 3
+	[], // 4
+	[], // 5
+	[1], // 6
+];
 const tilemodetype = {
 	'mode-246': tilemode246,
 	'mode-234': tilemode234,
 	'mode-26': tilemode26,
 	'mode-2346': tilemode2346,
+	'mode-444': tilemode444,
+	'mode-3333': tilemode3333,
 };
 const rollbacktiles = 11;
 
@@ -1715,6 +1735,12 @@ const VueTileCard = {
 		clsmode2346() {
 			return { active: this.tilemode === 'mode-2346' };
 		},
+		clsmode444() {
+			return { active: this.tilemode === 'mode-444' };
+		},
+		clsmode3333() {
+			return { active: this.tilemode === 'mode-3333' };
+		},
 		expandchevron() {
 			return this.expanded ? 'expand_more' : 'chevron_right';
 		},
@@ -1867,6 +1893,14 @@ const VueTileCard = {
 		},
 		onmode2346() {
 			this.tilemode = 'mode-2346';
+			storageSetItem("card.tile.tilemode", this.tilemode);
+		},
+		onmode444() {
+			this.tilemode = 'mode-444';
+			storageSetItem("card.tile.tilemode", this.tilemode);
+		},
+		onmode3333() {
+			this.tilemode = 'mode-3333';
 			storageSetItem("card.tile.tilemode", this.tilemode);
 		},
 
