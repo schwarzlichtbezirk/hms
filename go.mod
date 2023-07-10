@@ -22,10 +22,10 @@ require (
 	github.com/schwarzlichtbezirk/wpk v1.4.2
 	github.com/spate/glimage v0.0.0-20200505055513-fbdcc60a65e5
 	github.com/studio-b12/gowebdav v0.9.0
-	golang.org/x/crypto v0.10.0
-	golang.org/x/image v0.8.0
+	golang.org/x/crypto v0.11.0
+	golang.org/x/image v0.9.0
 	golang.org/x/sync v0.3.0
-	golang.org/x/text v0.10.0
+	golang.org/x/text v0.11.0
 	gopkg.in/ini.v1 v1.67.0
 	gopkg.in/yaml.v3 v3.0.1
 	xorm.io/xorm v1.3.2
@@ -48,8 +48,8 @@ require (
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/syndtr/goleveldb v1.0.0 // indirect
 	github.com/ulikunitz/xz v0.5.11 // indirect
-	golang.org/x/net v0.11.0 // indirect
-	golang.org/x/sys v0.9.0 // indirect
+	golang.org/x/net v0.12.0 // indirect
+	golang.org/x/sys v0.10.0 // indirect
 	gopkg.in/djherbis/times.v1 v1.3.0 // indirect
 	xorm.io/builder v0.3.12 // indirect
 )

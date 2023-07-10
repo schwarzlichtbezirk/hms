@@ -108,6 +108,7 @@
 			".xcf": "/fs/icon/papirus/file-xcf",
 			".tif": "/fs/icon/papirus/file-xcf",
 			".tiff": "/fs/icon/papirus/file-xcf",
+			".dng": "/fs/icon/papirus/file-xcf",
 			".rpm": "/fs/icon/papirus/file-rpm",
 			".css": "/fs/icon/papirus/file-css",
 			".r": "/fs/icon/papirus/file-r",

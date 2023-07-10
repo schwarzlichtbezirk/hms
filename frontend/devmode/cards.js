@@ -53,7 +53,7 @@ const mm = {
 
 // typeEXIF checks that file extension belongs to images with EXIF tags.
 const typeEXIF = {
-	".tif": true, ".tiff": true,
+	".tif": true, ".tiff": true, ".dng": true,
 	".jpg": true, ".jpe": true, ".jpeg": true, ".jfif": true,
 	".png": true, ".webp": true,
 };
@@ -157,14 +157,16 @@ const photoinfotmpl = (file, src) => `
 				${src}
 				<img class="rounded thumb" alt="${file.name}">
 			</picture>
-			<div class="d-flex flex-wrap latlng">
-				<div><div class="name">lat:</div> <div class="value">${file.latitude.toFixed(6)}</div></div>
-				<div><div class="name">lon:</div> <div class="value">${file.longitude.toFixed(6)}</div></div>
-				<div><div class="name">alt:</div> <div class="value">${file.altitude ?? "N/A"}</div></div>
-			</div>
+			<ul class="d-flex flex-wrap list-inline latlng">
+				<li><div class="name">lat:</div> <div class="value">${file.latitude.toFixed(6)}</div></li>
+				<li><div class="name">lon:</div> <div class="value">${file.longitude.toFixed(6)}</div></li>
+				${file.altitude ? `<li><div class="name">alt:</div> <div class="value">` + file.altitude + `</div></li>` : ""}
+			</ul>
 		</div>
 		<div class="tab-pane fade" id="prop">
-			<ul class="prop p-0 m-0"><li>${filehint(file).join("</li><li>")}</li></ul>
+			<ul class="list-unstyled prop"><li>${
+				fileinfo(file).map(e => `<div class="name">${e[0]}:</div> <div class="value">${e[1]}</div>`).join("</li><li>")
+			}</li></ul>
 		</div>
 	</div>
 </div>
@@ -2358,7 +2360,7 @@ const VueMapCard = {
 			} else if (Number(file.etmb) > 0 && thumbmode) {
 				src = `<source srcset="/id${this.$root.aid}/etmb/${file.puid}" type="${MimeStr[file.etmb]}">`;
 			} else {
-				for (fmt of this.im.iconfmt) {
+				for (const fmt of this.im.iconfmt) {
 					src += `<source srcset="${icp + fmt.ext}" type="${fmt.mime}">`;
 				}
 			}
@@ -2374,7 +2376,7 @@ const VueMapCard = {
 			} else if (Number(file.etmb) > 0 && thumbmode) {
 				src = `<source srcset="/id${this.$root.aid}/etmb/${file.puid}" type="${MimeStr[file.etmb]}">`;
 			} else {
-				for (fmt of this.im.iconfmt) {
+				for (const fmt of this.im.iconfmt) {
 					src += `<source srcset="${icp + fmt.ext}" type="${fmt.mime}">`;
 				}
 			}

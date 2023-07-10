@@ -81,17 +81,17 @@
 	overflow-y: auto;
 }
 
-.photoinfo .latlng > div {
+.photoinfo ul.latlng > li {
 	padding-left: 0.5rem;
 	padding-right: 0.5rem;
 }
 
-	.photoinfo .latlng > div > .name {
-		display: inline-block;
-		font-weight: bolder;
-	}
+.photoinfo li > .name {
+	display: inline-block;
+	font-weight: bolder;
+}
 
-	.photoinfo .latlng > div > .value {
-		display: inline-block;
-		font-weight: normal;
-	}
+.photoinfo li > .value {
+	display: inline-block;
+	font-weight: normal;
+}

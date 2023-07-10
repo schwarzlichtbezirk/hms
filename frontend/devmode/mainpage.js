@@ -134,7 +134,7 @@ const extfmt = {
 		".tga": 1, ".bmp": 1, ".dib": 1, ".rle": 1, ".dds": 1
 	},
 	"tiff": {
-		".tiff": 1, ".tif": 1
+		".tiff": 1, ".tif": 1, ".dng": 1
 	},
 	"jpeg": {
 		".jpg": 1, ".jpe": 1, ".jpeg": 1, ".jfif": 1
@@ -222,7 +222,7 @@ const extfmt = {
 
 	"image": {
 		".tga": 1, ".bmp": 1, ".dib": 1, ".rle": 1, ".dds": 1,
-		".tif": 1, ".tiff": 1, ".jpg": 1, ".jpe": 1, ".jpeg": 1, ".jfif": 1,
+		".tif": 1, ".tiff": 1, ".dng": 1, ".jpg": 1, ".jpe": 1, ".jpeg": 1, ".jfif": 1,
 		".gif": 1, ".png": 1, ".webp": 1, ".avif": 1, ".psd": 1, ".psb": 1,
 		".jp2": 1, ".jpg2": 1, ".jpx": 1, ".jpm": 1, ".jxr": 1
 	},

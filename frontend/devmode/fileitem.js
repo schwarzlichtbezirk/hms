@@ -2,7 +2,7 @@
 
 const isMainImage = ext => ({
 	".tga": true, ".bmp": true, ".dib": true, ".rle": true, ".dds": true,
-	".tif": true, ".tiff": true, ".jpg": true, ".jpe": true, ".jpeg": true, ".jfif": true,
+	".tif": true, ".tiff": true, ".dng": true, ".jpg": true, ".jpe": true, ".jpeg": true, ".jfif": true,
 	".gif": true, ".png": true, ".avif": true, ".webp": true, ".psd": true, ".psb": true
 })[ext];
 

@@ -81,6 +81,7 @@ var extgrp = map[string]FG_t{
 	".dds":  FGimage,
 	".tif":  FGimage,
 	".tiff": FGimage,
+	".dng":  FGimage,
 	".jpg":  FGimage,
 	".jpe":  FGimage,
 	".jpeg": FGimage,
@@ -243,7 +244,7 @@ func GetFileGroup(fpath string) FG_t {
 func IsTypeImage(ext string) bool {
 	switch ext {
 	case ".tga", ".bmp", ".dib", ".rle", ".dds",
-		".tif", ".tiff", ".psd", ".psb",
+		".tif", ".tiff", ".dng", ".psd", ".psb",
 		".jpg", ".jpe", ".jpeg", ".jfif",
 		".jp2", ".jpg2", ".jpx", ".jpm", ".jxr",
 		".gif", ".png", ".webp", ".avif":
@@ -277,7 +278,7 @@ func IsTypeProcessed(ext string) bool {
 	switch ext {
 	case ".jpg", ".jpe", ".jpeg", ".jfif", ".webp", ".png", ".gif",
 		".tga", ".bmp", ".dib", ".rle", ".dds",
-		".tif", ".tiff", ".psd", ".psb":
+		".tif", ".tiff", ".dng", ".psd", ".psb":
 		return true
 	}
 	return false
@@ -305,7 +306,7 @@ func IsTypeID3(ext string) bool {
 // IsTypeEXIF checks that file extension belongs to images with EXIF tags.
 func IsTypeEXIF(ext string) bool {
 	switch ext {
-	case ".tif", ".tiff",
+	case ".tif", ".tiff", ".dng",
 		".jpg", ".jpe", ".jpeg", ".jfif",
 		".png", ".webp":
 		return true
