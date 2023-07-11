@@ -919,7 +919,7 @@ const VueMainApp = {
 		},
 
 		onlink() {
-			copyTextToClipboard(window.location.origin + `/id${this.aid}/file/${this.selfile.puid}`);
+			navigator.clipboard.writeText(window.location.origin + `/id${this.aid}/file/${this.selfile.puid}`);
 		},
 		onshare() {
 			(async () => {

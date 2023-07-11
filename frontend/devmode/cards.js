@@ -82,25 +82,6 @@ const gpxcolors = [
 	'#4169E1', // RoyalBlue
 ];
 
-const copyTextToClipboard = text => {
-	const elem = document.createElement("textarea");
-	elem.value = text;
-	elem.style.position = 'fixed'; // prevent to scroll content to the end
-	elem.style.left = '0px';
-	elem.style.top = '0px';
-	document.body.appendChild(elem);
-	elem.focus();
-	elem.select();
-
-	try {
-		return !document.execCommand('copy') && "copying text command was failed";
-	} catch (err) {
-		return err;
-	} finally {
-		document.body.removeChild(elem);
-	}
-};
-
 ///////////////////////////
 // Full screen functions //
 ///////////////////////////
@@ -2517,7 +2498,7 @@ const VueMapCard = {
 				const size = 60;
 				for (const file of gpslist) {
 					const opt = {
-						title: file.name,
+						title: filehint(file).map(e => `${e[0]}: ${e[1]}`).join('\n'),
 						riseOnHover: true
 					};
 					if (this.markermode === 'thumb' && file.puid) {

@@ -390,6 +390,7 @@ var ResFS wpk.Union // resources packages root dir.
 // OpenPackage opens hms-package.
 func OpenPackage() (err error) {
 	for _, fname := range Cfg.WPKName {
+		var t0 = time.Now()
 		var fpath = path.Join(PackPath, fname)
 		var pkg *wpk.Package
 		if pkg, err = wpk.OpenPackage(fpath); err != nil {
@@ -408,7 +409,7 @@ func OpenPackage() (err error) {
 		} else {
 			pkg.Tagger, err = bulk.MakeTagger(dpath)
 		}
-		PackInfo(fname, pkg)
+		PackInfo(fname, pkg, time.Since(t0))
 		ResFS.List = append(ResFS.List, pkg)
 	}
 	return

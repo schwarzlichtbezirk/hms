@@ -7,7 +7,7 @@
 	</div>
 	<div ref="slide" class="d-flex flex-nowrap align-items-center overflow-hidden" v-on:wheel="onwheel">
 		<template v-for="file in list">
-			<icon-tag v-bind:file="file" size="sm" v-bind:class="{active:file===selfile}" class="thumb" v-on:click="oniconclick(file)" v-bind:title="file.name" />
+			<icon-tag v-bind:file="file" size="sm" v-bind:class="{active:file===selfile}" class="thumb" v-on:click="oniconclick(file)" />
 		</template>
 	</div>
 	<div class="page-item ms-1">

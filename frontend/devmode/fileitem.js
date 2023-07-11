@@ -330,6 +330,9 @@ const VueIcon = {
 		};
 	},
 	computed: {
+		fmttitle() {
+			return filehint(this.file).map(e => `${e[0]}: ${e[1]}`).join('\n');
+		},
 		fmtalt() {
 			return pathext(this.file.name);
 		},
@@ -460,7 +463,7 @@ const VueIconMenu = {
 			}
 		},
 		onlink() {
-			copyTextToClipboard(window.location.origin + `/id${this.$root.aid}/file/${this.file.puid}`);
+			navigator.clipboard.writeText(window.location.origin + `/id${this.$root.aid}/file/${this.file.puid}`);
 		},
 		onshare() {
 			(async () => {

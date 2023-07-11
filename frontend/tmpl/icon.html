@@ -9,5 +9,5 @@
 	<template v-else v-for="fmt in im.iconfmt">
 		<source v-bind:srcset="iconsrc+fmt.ext" v-bind:type="fmt.mime">
 	</template>
-	<img v-bind:class="clsicon" v-bind:alt="fmtalt">
+	<img v-bind:class="clsicon" v-bind:alt="fmtalt" v-bind:title="fmttitle">
 </picture>

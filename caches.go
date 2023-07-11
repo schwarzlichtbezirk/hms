@@ -442,7 +442,12 @@ type FileCache struct {
 
 // InitCacheWriter opens existing cache with given file path placed in
 // cache directory, or creates new cache file if no one found.
-func InitCacheWriter(fpath string) (fc *FileCache, err error) {
+func InitCacheWriter(fpath string) (fc *FileCache, d time.Duration, err error) {
+	var t0 = time.Now()
+	defer func() {
+		d = time.Since(t0)
+	}()
+
 	var pkgpath = wpk.MakeTagsPath(fpath)
 	var datpath = wpk.MakeDataPath(fpath)
 	fc = &FileCache{
@@ -591,28 +596,29 @@ func (fc *FileCache) PutFile(fpath string, md MediaData) (err error) {
 }
 
 // PackInfo writes info to log about opened cache.
-func PackInfo(fname string, pkg *wpk.Package) {
+func PackInfo(fname string, pkg *wpk.Package, d time.Duration) {
 	var num int64
 	pkg.Enum(func(fkey string, ts *wpk.TagsetRaw) bool {
 		num++
 		return true
 	})
-	Log.Infof("package '%s': cached %d files on %d bytes", fname, num, pkg.DataSize())
+	Log.Infof("package '%s': cached %d files on %d bytes, %v", fname, num, pkg.DataSize(), d)
 }
 
 // InitPackages opens all existing caches.
 func InitPackages() (err error) {
-	if ThumbPkg, err = InitCacheWriter(path.Join(CachePath, tmbfile)); err != nil {
+	var d time.Duration
+	if ThumbPkg, d, err = InitCacheWriter(path.Join(CachePath, tmbfile)); err != nil {
 		err = fmt.Errorf("inits thumbnails database: %w", err)
 		return
 	}
-	PackInfo(tmbfile, &ThumbPkg.Package)
+	PackInfo(tmbfile, &ThumbPkg.Package, d)
 
-	if TilesPkg, err = InitCacheWriter(path.Join(CachePath, tilfile)); err != nil {
+	if TilesPkg, d, err = InitCacheWriter(path.Join(CachePath, tilfile)); err != nil {
 		err = fmt.Errorf("inits tiles database: %w", err)
 		return
 	}
-	PackInfo(tilfile, &TilesPkg.Package)
+	PackInfo(tilfile, &TilesPkg.Package, d)
 
 	return nil
 }
