@@ -139,31 +139,6 @@ var (
 	ErrImgNil   = errors.New("can not allocate image")
 )
 
-// CheckImageSize compares given image size with maximum for image type
-// (plain bitmap or compresed image).
-func CheckImageSize(ext string, size int64) bool {
-	switch ext {
-	case ".tga", ".bmp", ".dib", ".rle", ".dds",
-		".tif", ".tiff", ".dng", ".psd", ".psb":
-		return size < Cfg.BitmapMaxSize || Cfg.BitmapMaxSize == 0
-	case ".jpg", ".jpe", ".jpeg", ".jfif",
-		".jp2", ".jpg2", ".jpx", ".jpm", ".jxr",
-		".gif", ".png", ".webp", ".avif":
-		return size < Cfg.JpegMaxSize || Cfg.JpegMaxSize == 0
-	}
-	return false
-}
-
-// CheckImageDim compares dimensions of image at given stream with predefined limit.
-func CheckImageDim(ext string, r io.Reader) bool {
-	var err error
-	var imc image.Config
-	if imc, _, err = image.DecodeConfig(r); err != nil {
-		return false
-	}
-	return float32(imc.Width*imc.Height+5e5)/1e6 < Cfg.ImageMaxMpx
-}
-
 // ExtractThmub extract thumbnail from embedded file tags.
 func ExtractThmub(session *Session, syspath string) (md MediaData, err error) {
 	var puid = PathStoreCache(session, syspath)

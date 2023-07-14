@@ -81,17 +81,13 @@ type CfgXormDrv struct {
 type CfgImgProp struct {
 	// Maximum dimension of image (width x height) in megapixels.
 	ImageMaxMpx float32 `json:"image-max-mpx" yaml:"image-max-mpx" long:"imm" description:"Maximum dimension of image (width x height) in megapixels."`
-	// Maximum size of plain bitmap image to make thumbnail (BMP, TGA, TIFF), 0 on no limits.
-	BitmapMaxSize int64 `json:"bitmap-maxsize" yaml:"bitmap-maxsize" long:"bmpms" description:"Maximum size of plain bitmap image to make thumbnail (BMP, TGA, TIFF), 0 on no limits."`
-	// Maximum size of compressed image to make thumbnail (JPEG, WebP), 0 on no limits.
-	JpegMaxSize int64 `json:"jpeg-maxsize" yaml:"jpeg-maxsize" long:"jpgms" description:"Maximum size of compressed image to make thumbnail (JPEG, WebP), 0 on no limits."`
 	// Stretch big image embedded into mp3-file to fit into standard icon size.
 	FitEmbeddedTmb bool `json:"fit-embedded-tmb" yaml:"fit-embedded-tmb" long:"fet" description:"Stretch big image embedded into mp3-file to fit into standard icon size."`
 	// Thumbnails width and height.
 	TmbResolution [2]int `json:"tmb-resolution" yaml:"tmb-resolution" long:"tr" description:"Thumbnails width and height."`
 	// HD images width and height.
 	HDResolution [2]int `json:"hd-resolution" yaml:"hd-resolution" long:"hd" description:"HD images width and height."`
-	// WebP quality of converted images from another format with original resolution, ranges from 1 to 100 inclusive.
+	// WebP quality of converted images from another format with original dimensions, ranges from 1 to 100 inclusive.
 	MediaWebpQuality float32 `json:"media-webp-quality" yaml:"media-webp-quality" long:"mediawq" description:"WebP quality of converted images from another format with original resolution, ranges from 1 to 100 inclusive."`
 	// WebP quality of converted to HD-resolution images, ranges from 1 to 100 inclusive.
 	HDWebpQuality float32 `json:"hd-webp-quality" yaml:"hd-webp-quality" long:"hdwq" description:"WebP quality of converted to HD-resolution images, ranges from 1 to 100 inclusive."`
@@ -170,9 +166,7 @@ var Cfg = &Config{ // inits default values:
 		XormDriverName: "sqlite3",
 	},
 	CfgImgProp: CfgImgProp{
-		ImageMaxMpx:      41.9,                   // 8K photos, 16:10
-		BitmapMaxSize:    24*1024*1024*3 + 65536, // 24Mpx + 64K tiff metadata
-		JpegMaxSize:      20 * 1024 * 1024,
+		ImageMaxMpx:      46.8, // 8K photos, 8368 x 5584 (Leica Q2)
 		FitEmbeddedTmb:   true,
 		TmbResolution:    [2]int{256, 256},
 		MediaWebpQuality: 80,

@@ -106,7 +106,7 @@ const fileinfo = file => {
 	}
 	// EXIF tags properties
 	if (file.width && file.height) {
-		lst.push(['resolution', `${file.width}x${file.height}`]);
+		lst.push(['dimensions', `${file.width}x${file.height}`]);
 	}
 	if (file.model) {
 		lst.push(['model', file.model]);

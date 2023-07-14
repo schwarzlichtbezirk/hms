@@ -74,7 +74,7 @@ const (
 
 	AECtilenoacc
 	AECtilenopuid
-	AECtilebadres
+	AECtilebaddim
 	AECtilenopath
 	AECtilehidden
 	AECtileaccess
@@ -286,7 +286,7 @@ var (
 	ErrArgNoTime = errors.New("unix time value not recognized")
 	ErrArgNoHD   = errors.New("'hd' parameter not recognized")
 	ErrArgNoPuid = errors.New("'puid' argument required")
-	ErrArgNoRes  = errors.New("bad tiles resolution")
+	ErrArgNoDim  = errors.New("bad tiles dimensions")
 	ErrNotDir    = errors.New("path is not directory")
 	ErrNoPath    = errors.New("path is not found")
 	ErrDeny      = errors.New("access denied for specified authorization")

@@ -28,20 +28,28 @@ func FileList(fsys FS, list FileMap) (err error) {
 		if err != nil {
 			return err
 		}
-		var fi fs.FileInfo
-		if fi, err = d.Info(); err != nil {
-			return nil
-		}
-		if fi.IsDir() {
+		if d.IsDir() {
 			return nil // file is directory
 		}
 		var ext = GetFileExt(fpath)
-		if !IsTypeImage(ext) {
+		if !IsTypeProcessed(ext) {
 			return nil // file is not image
 		}
-		if !CheckImageSize(ext, fi.Size()) {
+
+		var file File
+		if file, err = OpenFile(fpath); err != nil {
+			return err // can not open file
+		}
+		defer file.Close()
+
+		var imc image.Config
+		if imc, _, err = image.DecodeConfig(file); err != nil {
+			return nil // can not recognize format or decode config
+		}
+		if float32(imc.Width*imc.Height+5e5)/1e6 > Cfg.ImageMaxMpx {
 			return nil // file is too big
 		}
+
 		list[path.Join(string(fsys), fpath)] = struct{}{}
 		return nil
 	})
@@ -69,28 +77,6 @@ func Convert(fpath string, cs *ConvStat) (err error) {
 	}
 	defer file.Close()
 
-	var fi fs.FileInfo
-	if fi, err = file.Stat(); err != nil {
-		return
-	}
-	if fi.IsDir() {
-		err = ErrNotFile // file is directory
-		return
-	}
-
-	var ext = GetFileExt(fpath)
-
-	// check that file is image
-	if !IsTypeImage(ext) {
-		err = ErrNotImg
-		return // file is not image
-	}
-
-	if !CheckImageSize(ext, fi.Size()) {
-		err = ErrTooBig
-		return // file is too big
-	}
-
 	// lazy decode
 	var orientation = OrientNormal
 	var src image.Image
@@ -115,12 +101,15 @@ func Convert(fpath string, cs *ConvStat) (err error) {
 	}
 
 	var md MediaData
+	var size int64
 	md.Mime = MimeWebp
 	if fi, _ := file.Stat(); fi != nil {
 		md.Time = fi.ModTime()
+		size = fi.Size()
 	}
 
-	if IsTypeTileImg(ext) && fi.Size() > 512*1024 {
+	var ext = GetFileExt(fpath)
+	if IsTypeTileImg(ext) && size > 512*1024 {
 		for _, tm := range tilemult {
 			var wdh, hgt = tm * 24, tm * 18
 			var tilepath = fmt.Sprintf("%s?%dx%d", fpath, wdh, hgt)
@@ -157,7 +146,7 @@ func Convert(fpath string, cs *ConvStat) (err error) {
 	}
 
 	atomic.AddUint64(&cs.filecount, 1)
-	atomic.AddUint64(&cs.filesize, uint64(fi.Size()))
+	atomic.AddUint64(&cs.filesize, uint64(size))
 
 	return
 }

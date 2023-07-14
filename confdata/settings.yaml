@@ -61,18 +61,14 @@ xorm:
   xorm-driver-name: sqlite3
 images-prop:
   # Maximum dimension of image (width x height) in megapixels.
-  image-max-mpx: 41.9 # 8K photos, 16:10
-  # Maximum size of plain bitmap image to make thumbnail (BMP, TGA, TIFF), 0 on no limits.
-  bitmap-maxsize: 75563008 # 24*1024*1024*3 + 65536, 24Mpx + 64K tiff metadata
-  # Maximum size of compressed image to make thumbnail (JPEG, WebP), 0 on no limits.
-  jpeg-maxsize: 20971520
+  image-max-mpx: 46.8 # 8K photos, 8368 x 5584 (Leica Q2)
   # Stretch big image embedded into mp3-file to fit into standard icon size.
   fit-embedded-tmb: false
   # Thumbnails width and height.
   tmb-resolution: [256, 256]
   # HD images width and height.
   hd-resolution: [1920, 1080]
-  # WebP quality of converted images from another format with original resolution, ranges from 1 to 100 inclusive.
+  # WebP quality of converted images from another format with original dimensions, ranges from 1 to 100 inclusive.
   media-webp-quality: 80
   # WebP quality of converted to HD-resolution images, ranges from 1 to 100 inclusive.
   hd-webp-quality: 75

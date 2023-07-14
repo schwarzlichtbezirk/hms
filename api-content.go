@@ -315,7 +315,7 @@ func tileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var wdh, _ = strconv.Atoi(vars["wdh"])
 	var hgt, _ = strconv.Atoi(vars["hgt"])
 	if wdh == 0 || hgt == 0 {
-		WriteError400(w, r, ErrArgNoRes, AECtilebadres)
+		WriteError400(w, r, ErrArgNoDim, AECtilebaddim)
 		return
 	}
 
