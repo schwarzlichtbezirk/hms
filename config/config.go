@@ -79,6 +79,8 @@ type CfgXormDrv struct {
 }
 
 type CfgImgProp struct {
+	// Maximum dimension of image (width x height) in megapixels.
+	ImageMaxMpx float32 `json:"image-max-mpx" yaml:"image-max-mpx" long:"imm" description:"Maximum dimension of image (width x height) in megapixels."`
 	// Maximum size of plain bitmap image to make thumbnail (BMP, TGA, TIFF), 0 on no limits.
 	BitmapMaxSize int64 `json:"bitmap-maxsize" yaml:"bitmap-maxsize" long:"bmpms" description:"Maximum size of plain bitmap image to make thumbnail (BMP, TGA, TIFF), 0 on no limits."`
 	// Maximum size of compressed image to make thumbnail (JPEG, WebP), 0 on no limits.
@@ -168,6 +170,7 @@ var Cfg = &Config{ // inits default values:
 		XormDriverName: "sqlite3",
 	},
 	CfgImgProp: CfgImgProp{
+		ImageMaxMpx:      41.9,                   // 8K photos, 16:10
 		BitmapMaxSize:    24*1024*1024*3 + 65536, // 24Mpx + 64K tiff metadata
 		JpegMaxSize:      20 * 1024 * 1024,
 		FitEmbeddedTmb:   true,

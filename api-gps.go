@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/rwcarlsen/goexif/exif"
 	. "github.com/schwarzlichtbezirk/hms/config"
 	. "github.com/schwarzlichtbezirk/hms/joint"
 )
@@ -225,19 +226,34 @@ func gpsscanAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 					continue // there are tags without GPS
 				}
 				// try to get from database
+				var err error
 				var est ExifStore
-				est.Puid = puid
-				if ok, _ = session.Get(&est); ok { // skip errors
+				if ok, err = session.ID(puid).Get(&est); err != nil {
+					continue
+				}
+				if ok {
 					exifcache.Poke(puid, est.Prop) // update cache
 					if est.Prop.IsZero() {
 						continue
 					}
 				} else {
 					// try to extract from file
-					if err := est.Prop.Extract(syspath); err != nil {
-						continue
-					}
-					if est.Prop.IsZero() {
+					func() (err error) {
+						var file File
+						if file, err = OpenFile(syspath); err != nil {
+							return
+						}
+						defer file.Close()
+
+						var x *exif.Exif
+						if x, err = exif.Decode(file); err != nil {
+							return
+						}
+
+						est.Prop.Setup(x)
+						return
+					}()
+					if err != nil || est.Prop.IsZero() {
 						continue
 					}
 					// set to memory cache

@@ -8,6 +8,7 @@ import (
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
+	"io"
 	"io/fs"
 	"strings"
 	"time"
@@ -153,6 +154,16 @@ func CheckImageSize(ext string, size int64) bool {
 	return false
 }
 
+// CheckImageDim compares dimensions of image at given stream with predefined limit.
+func CheckImageDim(ext string, r io.Reader) bool {
+	var err error
+	var imc image.Config
+	if imc, _, err = image.DecodeConfig(r); err != nil {
+		return false
+	}
+	return float32(imc.Width*imc.Height+5e5)/1e6 < Cfg.ImageMaxMpx
+}
+
 // ExtractThmub extract thumbnail from embedded file tags.
 func ExtractThmub(session *Session, syspath string) (md MediaData, err error) {
 	var puid = PathStoreCache(session, syspath)
@@ -259,25 +270,32 @@ func CacheThumb(session *Session, syspath string) (md MediaData, err error) {
 		return // file is not image
 	}
 
-	if !CheckImageSize(ext, fi.Size()) {
-		err = ErrTooBig
-		return // file is too big
-	}
-
-	// try to extract orientation from EXIF
-	var orientation = OrientNormal
-	var puid = PathStoreCache(session, syspath)
-	if ep, ok := ExifStoreGet(session, puid); ok { // skip non-EXIF properties
-		if ep.Orientation > 0 {
-			orientation = ep.Orientation
-		}
-	}
-
 	var file File
 	if file, err = OpenFile(syspath); err != nil {
 		return // can not open file
 	}
 	defer file.Close()
+
+	var imc image.Config
+	if imc, _, err = image.DecodeConfig(file); err != nil {
+		return // can not recognize format or decode config
+	}
+	if float32(imc.Width*imc.Height+5e5)/1e6 > Cfg.ImageMaxMpx {
+		err = ErrTooBig
+		return // file is too big
+	}
+	if _, err = file.Seek(io.SeekStart, 0); err != nil {
+		return // can not seek to start
+	}
+
+	// try to extract orientation from EXIF
+	var puid = PathStoreCache(session, syspath)
+	var orientation = OrientNormal
+	if ep, ok := ExifStoreGet(session, puid); ok && ep.Orientation > 0 {
+		orientation = ep.Orientation
+	} else if ep, err := ExifExtract(session, file, puid); err == nil && ep.Orientation > 0 {
+		orientation = ep.Orientation
+	}
 
 	// create sized image for thumbnail
 	var src image.Image
@@ -352,24 +370,31 @@ func CacheTile(session *Session, syspath string, wdh, hgt int) (md MediaData, er
 		return // file is not image
 	}
 
-	if !CheckImageSize(ext, fi.Size()) {
-		err = ErrTooBig
-		return // file is too big
-	}
-
 	var file File
 	if file, err = OpenFile(syspath); err != nil {
 		return // can not open file
 	}
 	defer file.Close()
 
+	var imc image.Config
+	if imc, _, err = image.DecodeConfig(file); err != nil {
+		return // can not recognize format or decode config
+	}
+	if float32(imc.Width*imc.Height+5e5)/1e6 > Cfg.ImageMaxMpx {
+		err = ErrTooBig
+		return // file is too big
+	}
+	if _, err = file.Seek(io.SeekStart, 0); err != nil {
+		return // can not seek to start
+	}
+
 	// try to extract orientation from EXIF
-	var orientation = OrientNormal
 	var puid = PathStoreCache(session, syspath)
-	if ep, ok := ExifStoreGet(session, puid); ok { // skip non-EXIF properties
-		if ep.Orientation > 0 {
-			orientation = ep.Orientation
-		}
+	var orientation = OrientNormal
+	if ep, ok := ExifStoreGet(session, puid); ok && ep.Orientation > 0 {
+		orientation = ep.Orientation
+	} else if ep, err := ExifExtract(session, file, puid); err == nil && ep.Orientation > 0 {
+		orientation = ep.Orientation
 	}
 
 	var src image.Image

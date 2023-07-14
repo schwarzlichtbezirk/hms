@@ -2,7 +2,6 @@ package hms
 
 import (
 	"io"
-	"io/fs"
 
 	. "github.com/schwarzlichtbezirk/hms/joint"
 
@@ -104,17 +103,6 @@ type TagKit struct {
 	FileProp `xorm:"extends" yaml:",inline"`
 	TileProp `xorm:"extends" yaml:",inline"`
 	TagProp  `xorm:"extends" yaml:",inline"`
-}
-
-// Setup fills fields with given path.
-// Puts into the cache nested at the tags thumbnail if it present.
-func (tk *TagKit) Setup(session *Session, syspath string, fi fs.FileInfo) {
-	tk.PuidProp.Setup(session, syspath)
-	tk.FileProp.Setup(fi)
-	if tp, ok := tilecache.Peek(tk.PUID); ok {
-		tk.TileProp = *tp
-	}
-	tk.TagProp, _ = TagStoreGet(session, tk.PUID)
 }
 
 // The End.

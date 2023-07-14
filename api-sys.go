@@ -273,9 +273,17 @@ func tagsAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var ext = GetFileExt(syspath)
 	if IsTypeEXIF(ext) {
 		var ep ExifProp
-		if err = ep.Extract(syspath); err != nil {
-			WriteError(w, r, http.StatusNoContent, err, AECtagsnoexif)
-			return
+		if ep, ok = ExifStoreGet(session, arg.PUID); !ok {
+			var file File
+			if file, err = OpenFile(syspath); err != nil {
+				return
+			}
+			defer file.Close()
+
+			if ep, err = ExifExtract(session, file, arg.PUID); err != nil {
+				WriteError(w, r, http.StatusNoContent, err, AECtagsnoexif)
+				return
+			}
 		}
 		ret.Prop = &ep
 	} else if IsTypeID3(ext) {

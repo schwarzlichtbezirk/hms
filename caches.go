@@ -10,6 +10,7 @@ import (
 	"path"
 	"time"
 
+	"github.com/rwcarlsen/goexif/exif"
 	. "github.com/schwarzlichtbezirk/hms/config"
 	. "github.com/schwarzlichtbezirk/hms/joint"
 
@@ -49,6 +50,7 @@ var (
 	ErrNotDisk     = errors.New("file is not image of supported format")
 	ErrNoMTime     = errors.New("modify time tag does not found")
 	ErrNoMime      = errors.New("MIME tag does not found")
+	ErrEmptyExif   = errors.New("Exif metadata is empty")
 )
 
 // PathStarts check up that given file path has given parental path.
@@ -214,28 +216,43 @@ func ExifStoreGet(session *Session, puid Puid_t) (ep ExifProp, ok bool) {
 	if ep, ok = exifcache.Peek(puid); ok {
 		return
 	}
+
 	// try to get from database
+	var err error
 	var est ExifStore
-	if ok, _ = session.ID(puid).Get(&est); ok { // skip errors
+	if ok, err = session.ID(puid).Get(&est); err != nil {
+		return
+	}
+	if ok {
 		ep = est.Prop
 		exifcache.Poke(puid, ep) // update cache
 		return
 	}
-	// try to extract from file
-	var syspath string
-	if syspath, ok = PathStorePath(session, puid); !ok {
+	return
+}
+
+// ExifExtract trys to extract EXIF metadata from file.
+func ExifExtract(session *Session, file io.ReadSeekCloser, puid Puid_t) (ep ExifProp, err error) {
+	var pos int64
+	if pos, err = file.Seek(0, io.SeekCurrent); err != nil {
 		return
 	}
-	if err := ep.Extract(syspath); err != nil {
-		ok = false
+	defer file.Seek(pos, io.SeekStart)
+
+	var x *exif.Exif
+	if x, err = exif.Decode(file); err != nil {
 		return
 	}
-	if ok = !ep.IsZero(); ok {
-		ExifStoreSet(session, &ExifStore{ // update database
-			Puid: puid,
-			Prop: ep,
-		})
+
+	if ep.IsZero() {
+		err = ErrEmptyExif
+		return
 	}
+	ExifStoreSet(session, &ExifStore{ // update database
+		Puid: puid,
+		Prop: ep,
+	})
+	ep.Setup(x)
 	return
 }
 
@@ -357,48 +374,48 @@ func HdCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 		return // file path not found
 	}
 
-	var orientation = OrientNormal
-	if ep, ok := ExifStoreGet(session, puid); ok { // skip non-EXIF properties
-		if ep.Orientation > 0 {
-			orientation = ep.Orientation
-		}
-		if ep.Width > 0 && ep.Height > 0 {
-			var wdh, hgt int
-			if ep.Width > ep.Height {
-				wdh, hgt = Cfg.HDResolution[0], Cfg.HDResolution[1]
-			} else {
-				wdh, hgt = Cfg.HDResolution[1], Cfg.HDResolution[0]
-			}
-			if ep.Width <= wdh && ep.Height <= hgt {
-				err = ErrNotHD
-				return // does not fit to HD
-			}
-		}
-	}
-
 	var file File
 	if file, err = OpenFile(syspath); err != nil {
 		return // can not open file
 	}
 	defer file.Close()
 
+	var imc image.Config
+	if imc, _, err = image.DecodeConfig(file); err != nil {
+		return // can not recognize format or decode config
+	}
+	if float32(imc.Width*imc.Height+5e5)/1e6 > Cfg.ImageMaxMpx {
+		err = ErrTooBig
+		return // file is too big
+	}
+	if _, err = file.Seek(io.SeekStart, 0); err != nil {
+		return // can not seek to start
+	}
+
+	var wdh, hgt int
+	if imc.Width > imc.Height {
+		wdh, hgt = Cfg.HDResolution[0], Cfg.HDResolution[1]
+	} else {
+		wdh, hgt = Cfg.HDResolution[1], Cfg.HDResolution[0]
+	}
+	if imc.Width <= wdh && imc.Height <= hgt {
+		err = ErrNotHD
+		return // does not fit to HD
+	}
+
+	// try to extract orientation from EXIF
+	var orientation = OrientNormal
+	if ep, ok := ExifStoreGet(session, puid); ok && ep.Orientation > 0 {
+		orientation = ep.Orientation
+	} else if ep, err := ExifExtract(session, file, puid); err == nil && ep.Orientation > 0 {
+		orientation = ep.Orientation
+	}
+
 	var src, dst image.Image
 	if src, _, err = image.Decode(file); err != nil {
 		if src == nil { // skip "short Huffman data" or others errors with partial results
 			return // can not decode file by any codec
 		}
-	}
-
-	var wdh, hgt int
-	if src.Bounds().Dx() > src.Bounds().Dy() {
-		wdh, hgt = Cfg.HDResolution[0], Cfg.HDResolution[1]
-	} else {
-		wdh, hgt = Cfg.HDResolution[1], Cfg.HDResolution[0]
-	}
-
-	if src.Bounds().In(image.Rect(0, 0, wdh, hgt)) {
-		err = ErrNotHD
-		return // does not fit to HD
 	}
 
 	var fltlst = AddOrientFilter([]gift.Filter{

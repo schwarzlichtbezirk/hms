@@ -2,8 +2,6 @@ package hms
 
 import (
 	"fmt"
-	"io"
-	"io/fs"
 	"time"
 
 	. "github.com/schwarzlichtbezirk/hms/joint"
@@ -161,22 +159,6 @@ func (ep *ExifProp) Setup(x *exif.Exif) {
 	}
 }
 
-func (ep *ExifProp) Extract(syspath string) (err error) {
-	var r io.ReadSeekCloser
-	if r, err = OpenFile(syspath); err != nil {
-		return
-	}
-	defer r.Close()
-
-	var x *exif.Exif
-	if x, err = exif.Decode(r); err != nil {
-		return
-	}
-
-	ep.Setup(x)
-	return
-}
-
 func ExtractThumbEXIF(syspath string) (md MediaData, err error) {
 	// disable thumbnail if it not found
 	defer func() {
@@ -216,16 +198,6 @@ type ExifKit struct {
 	FileProp `xorm:"extends" yaml:",inline"`
 	TileProp `xorm:"extends" yaml:",inline"`
 	ExifProp `xorm:"extends" yaml:",inline"`
-}
-
-// Setup fills fields with given path.
-func (ek *ExifKit) Setup(session *Session, syspath string, fi fs.FileInfo) {
-	ek.PuidProp.Setup(session, syspath)
-	ek.FileProp.Setup(fi)
-	if tp, ok := tilecache.Peek(ek.PUID); ok {
-		ek.TileProp = *tp
-	}
-	ek.ExifProp, _ = ExifStoreGet(session, ek.PUID)
 }
 
 func init() {

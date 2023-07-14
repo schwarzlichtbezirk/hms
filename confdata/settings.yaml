@@ -60,6 +60,8 @@ xorm:
   # Provides XORM driver name.
   xorm-driver-name: sqlite3
 images-prop:
+  # Maximum dimension of image (width x height) in megapixels.
+  image-max-mpx: 41.9 # 8K photos, 16:10
   # Maximum size of plain bitmap image to make thumbnail (BMP, TGA, TIFF), 0 on no limits.
   bitmap-maxsize: 75563008 # 24*1024*1024*3 + 65536, 24Mpx + 64K tiff metadata
   # Maximum size of compressed image to make thumbnail (JPEG, WebP), 0 on no limits.
