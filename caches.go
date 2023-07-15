@@ -10,7 +10,6 @@ import (
 	"path"
 	"time"
 
-	"github.com/rwcarlsen/goexif/exif"
 	. "github.com/schwarzlichtbezirk/hms/config"
 	. "github.com/schwarzlichtbezirk/hms/joint"
 
@@ -51,6 +50,7 @@ var (
 	ErrNoMTime     = errors.New("modify time tag does not found")
 	ErrNoMime      = errors.New("MIME tag does not found")
 	ErrEmptyExif   = errors.New("Exif metadata is empty")
+	ErrEmptyID3    = errors.New("ID3 metadata is empty")
 )
 
 // PathStarts check up that given file path has given parental path.
@@ -231,31 +231,6 @@ func ExifStoreGet(session *Session, puid Puid_t) (ep ExifProp, ok bool) {
 	return
 }
 
-// ExifExtract trys to extract EXIF metadata from file.
-func ExifExtract(session *Session, file io.ReadSeekCloser, puid Puid_t) (ep ExifProp, err error) {
-	var pos int64
-	if pos, err = file.Seek(0, io.SeekCurrent); err != nil {
-		return
-	}
-	defer file.Seek(pos, io.SeekStart)
-
-	var x *exif.Exif
-	if x, err = exif.Decode(file); err != nil {
-		return
-	}
-
-	if ep.IsZero() {
-		err = ErrEmptyExif
-		return
-	}
-	ExifStoreSet(session, &ExifStore{ // update database
-		Puid: puid,
-		Prop: ep,
-	})
-	ep.Setup(x)
-	return
-}
-
 // ExifStoreSet puts value to EXIF cache.
 func ExifStoreSet(session *Session, est *ExifStore) (err error) {
 	// set to GPS cache
@@ -279,27 +254,17 @@ func TagStoreGet(session *Session, puid Puid_t) (tp TagProp, ok bool) {
 	if tp, ok = tagcache.Peek(puid); ok {
 		return
 	}
+
 	// try to get from database
+	var err error
 	var tst TagStore
-	if ok, _ = session.ID(puid).Get(&tst); ok { // skip errors
+	if ok, err = session.ID(puid).Get(&tst); err != nil {
+		return
+	}
+	if ok {
 		tp = tst.Prop
 		tagcache.Poke(puid, tp) // update cache
 		return
-	}
-	// try to extract from file
-	var syspath string
-	if syspath, ok = PathStorePath(session, puid); !ok {
-		return
-	}
-	if err := tp.Extract(syspath); err != nil {
-		ok = false
-		return
-	}
-	if ok = !tp.IsZero(); ok {
-		TagStoreSet(session, &TagStore{ // update database
-			Puid: puid,
-			Prop: tp,
-		})
 	}
 	return
 }

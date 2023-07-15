@@ -48,18 +48,27 @@ func (tp *TagProp) Setup(m tag.Metadata) {
 	tp.Comment = m.Comment()
 }
 
-func (tp *TagProp) Extract(syspath string) (err error) {
-	var r io.ReadSeekCloser
-	if r, err = OpenFile(syspath); err != nil {
+// TagExtract trys to extract ID3 metadata from file.
+func TagExtract(session *Session, file io.ReadSeekCloser, puid Puid_t) (tp TagProp, err error) {
+	var pos int64
+	if pos, err = file.Seek(0, io.SeekCurrent); err != nil {
 		return
 	}
-	defer r.Close()
+	defer file.Seek(pos, io.SeekStart)
 
 	var m tag.Metadata
-	if m, err = tag.ReadFrom(r); err != nil {
+	if m, err = tag.ReadFrom(file); err != nil {
 		return
 	}
 
+	if tp.IsZero() {
+		err = ErrEmptyID3
+		return
+	}
+	TagStoreSet(session, &TagStore{ // update database
+		Puid: puid,
+		Prop: tp,
+	})
 	tp.Setup(m)
 	return
 }

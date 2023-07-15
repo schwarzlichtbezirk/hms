@@ -2,6 +2,7 @@ package hms
 
 import (
 	"fmt"
+	"io"
 	"time"
 
 	. "github.com/schwarzlichtbezirk/hms/joint"
@@ -157,6 +158,31 @@ func (ep *ExifProp) Setup(x *exif.Exif) {
 	if t, err = x.Get(exif.GPSSatelites); err == nil {
 		ep.Satellites, _ = t.StringVal()
 	}
+}
+
+// ExifExtract trys to extract EXIF metadata from file.
+func ExifExtract(session *Session, file io.ReadSeekCloser, puid Puid_t) (ep ExifProp, err error) {
+	var pos int64
+	if pos, err = file.Seek(0, io.SeekCurrent); err != nil {
+		return
+	}
+	defer file.Seek(pos, io.SeekStart)
+
+	var x *exif.Exif
+	if x, err = exif.Decode(file); err != nil {
+		return
+	}
+
+	if ep.IsZero() {
+		err = ErrEmptyExif
+		return
+	}
+	ExifStoreSet(session, &ExifStore{ // update database
+		Puid: puid,
+		Prop: ep,
+	})
+	ep.Setup(x)
+	return
 }
 
 func ExtractThumbEXIF(syspath string) (md MediaData, err error) {

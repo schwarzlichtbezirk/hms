@@ -79,8 +79,8 @@ type CfgXormDrv struct {
 }
 
 type CfgImgProp struct {
-	// Maximum dimension of image (width x height) in megapixels.
-	ImageMaxMpx float32 `json:"image-max-mpx" yaml:"image-max-mpx" long:"imm" description:"Maximum dimension of image (width x height) in megapixels."`
+	// Maximum dimension of image (width x height) in megapixels to build tiles and thumbnails.
+	ImageMaxMpx float32 `json:"image-max-mpx" yaml:"image-max-mpx" long:"imm" description:"Maximum dimension of image (width x height) in megapixels to build tiles and thumbnails."`
 	// Stretch big image embedded into mp3-file to fit into standard icon size.
 	FitEmbeddedTmb bool `json:"fit-embedded-tmb" yaml:"fit-embedded-tmb" long:"fet" description:"Stretch big image embedded into mp3-file to fit into standard icon size."`
 	// Thumbnails width and height.

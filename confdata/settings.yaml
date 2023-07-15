@@ -60,7 +60,7 @@ xorm:
   # Provides XORM driver name.
   xorm-driver-name: sqlite3
 images-prop:
-  # Maximum dimension of image (width x height) in megapixels.
+  # Maximum dimension of image (width x height) in megapixels to build tiles and thumbnails.
   image-max-mpx: 46.8 # 8K photos, 8368 x 5584 (Leica Q2)
   # Stretch big image embedded into mp3-file to fit into standard icon size.
   fit-embedded-tmb: false

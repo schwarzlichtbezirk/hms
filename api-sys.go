@@ -288,9 +288,17 @@ func tagsAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		ret.Prop = &ep
 	} else if IsTypeID3(ext) {
 		var tp TagProp
-		if err = tp.Extract(syspath); err != nil {
-			WriteError(w, r, http.StatusNoContent, err, AECtagsnoid3)
-			return
+		if tp, ok = TagStoreGet(session, arg.PUID); !ok {
+			var file File
+			if file, err = OpenFile(syspath); err != nil {
+				return
+			}
+			defer file.Close()
+
+			if tp, err = TagExtract(session, file, arg.PUID); err != nil {
+				WriteError(w, r, http.StatusNoContent, err, AECtagsnoid3)
+				return
+			}
 		}
 		ret.Prop = &tp
 	} else {
