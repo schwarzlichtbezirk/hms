@@ -32,7 +32,7 @@ func FileList(fsys FS, list FileMap) (err error) {
 			return nil // file is directory
 		}
 		var ext = GetFileExt(fpath)
-		if !IsTypeProcessed(ext) {
+		if !IsTypeDecoded(ext) {
 			return nil // file is not image
 		}
 
@@ -185,8 +185,8 @@ func BatchCacher(list FileMap) {
 				}
 			case <-tinfo.C:
 				// information thread
-				if ready := float64(atomic.LoadUint64(&cs.filecount)); ready > 0 {
-					var remain = time.Duration(float64(time.Now().Sub(t0)) / ready * (total - ready))
+				if ready := atomic.LoadUint64(&cs.filecount); ready > 0 {
+					var remain = time.Duration(float64(time.Now().Sub(t0)) / float64(ready) * (total - float64(ready)))
 					if remain < time.Hour {
 						remain = remain / time.Second * time.Second
 					} else {

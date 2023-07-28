@@ -273,8 +273,8 @@ func IsTypeTileImg(ext string) bool {
 	return false
 }
 
-// IsTypeProcessed checks that file extension belongs to images that can be decoded.
-func IsTypeProcessed(ext string) bool {
+// IsTypeDecoded checks that file extension belongs to images that can be decoded.
+func IsTypeDecoded(ext string) bool {
 	switch ext {
 	case ".jpg", ".jpe", ".jpeg", ".jfif", ".webp", ".png", ".gif",
 		".tga", ".bmp", ".dib", ".rle", ".dds",

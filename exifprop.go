@@ -2,6 +2,7 @@ package hms
 
 import (
 	"fmt"
+	"image"
 	"io"
 	"time"
 
@@ -12,10 +13,20 @@ import (
 	"github.com/rwcarlsen/goexif/tiff"
 )
 
-// ExifProp is EXIF tags properties chunk.
-type ExifProp struct {
+// ImgProp is base properties for all recognized images formats.
+type ImgProp struct {
 	Width  int `json:"width,omitempty" yaml:"width,omitempty" xml:"width,omitempty"`
 	Height int `json:"height,omitempty" yaml:"height,omitempty" xml:"height,omitempty"`
+}
+
+// Setup fills fields from given image.Config structure.
+func (ip *ImgProp) Setup(imc image.Config) {
+	ip.Width, ip.Height = imc.Width, imc.Height
+}
+
+// ExifProp is EXIF tags properties chunk.
+type ExifProp struct {
+	ImgProp `xorm:"extends" yaml:",inline"`
 	// Photo
 	Model        string    `xorm:"'model'" json:"model,omitempty" yaml:"model,omitempty" xml:"model,omitempty"`
 	Make         string    `xorm:"'make'" json:"make,omitempty" yaml:"make,omitempty" xml:"make,omitempty"`
@@ -161,7 +172,7 @@ func (ep *ExifProp) Setup(x *exif.Exif) {
 }
 
 // ExifExtract trys to extract EXIF metadata from file.
-func ExifExtract(session *Session, file io.ReadSeekCloser, puid Puid_t) (ep ExifProp, err error) {
+func ExifExtract(session *Session, file io.ReadSeeker, puid Puid_t) (ep ExifProp, err error) {
 	var pos int64
 	if pos, err = file.Seek(0, io.SeekCurrent); err != nil {
 		return

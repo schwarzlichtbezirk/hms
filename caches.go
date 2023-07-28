@@ -295,7 +295,7 @@ func MediaCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 	}
 
 	var ext = GetFileExt(syspath)
-	if IsTypeNativeImg(ext) || !IsTypeProcessed(ext) {
+	if IsTypeNativeImg(ext) || !IsTypeDecoded(ext) {
 		err = ErrUncacheable
 		return // uncacheable type
 	}

@@ -141,7 +141,12 @@ const (
 	AECtagsbadpath
 	AECtagshidden
 	AECtagsaccess
+	AECtagsopexif
 	AECtagsnoexif
+	AECtagsgoexif
+	AECtagsopconf
+	AECtagsnoconf
+	AECtagsopid3
 	AECtagsnoid3
 	AECtagsnotags
 

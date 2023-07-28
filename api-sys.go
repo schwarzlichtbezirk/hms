@@ -2,6 +2,7 @@ package hms
 
 import (
 	"encoding/xml"
+	"image"
 	"io"
 	"io/fs"
 	"net/http"
@@ -276,21 +277,46 @@ func tagsAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		if ep, ok = ExifStoreGet(session, arg.PUID); !ok {
 			var file File
 			if file, err = OpenFile(syspath); err != nil {
+				WriteError500(w, r, err, AECtagsopexif)
 				return
 			}
 			defer file.Close()
 
-			if ep, err = ExifExtract(session, file, arg.PUID); err != nil {
+			var imc image.Config
+			if imc, _, err = image.DecodeConfig(file); err != nil {
 				WriteError(w, r, http.StatusNoContent, err, AECtagsnoexif)
 				return
 			}
+			if _, err = file.Seek(io.SeekStart, 0); err != nil {
+				WriteError500(w, r, err, AECtagsgoexif)
+				return
+			}
+			ep, _ = ExifExtract(session, file, arg.PUID)
+			ep.ImgProp.Setup(imc)
 		}
 		ret.Prop = &ep
+	} else if IsTypeDecoded(ext) {
+		var file File
+		if file, err = OpenFile(syspath); err != nil {
+			WriteError500(w, r, err, AECtagsopconf)
+			return
+		}
+		defer file.Close()
+
+		var imc image.Config
+		if imc, _, err = image.DecodeConfig(file); err != nil {
+			WriteError(w, r, http.StatusNoContent, err, AECtagsnoconf)
+			return
+		}
+		var ip ImgProp
+		ip.Setup(imc)
+		ret.Prop = &ip
 	} else if IsTypeID3(ext) {
 		var tp TagProp
 		if tp, ok = TagStoreGet(session, arg.PUID); !ok {
 			var file File
 			if file, err = OpenFile(syspath); err != nil {
+				WriteError500(w, r, err, AECtagsopid3)
 				return
 			}
 			defer file.Close()
