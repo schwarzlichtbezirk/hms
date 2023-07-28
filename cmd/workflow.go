@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"path"
 	"sync"
 	"syscall"
 
@@ -186,6 +185,7 @@ func Run() {
 		RegisterRoutes(gmux)
 		RunWeb(gmux)
 		WaitExit()
+		WaitHandlers()
 	}
 }
 
@@ -254,7 +254,7 @@ func RunWeb(gmux *Router) {
 				if Cfg.UseAutoCert { // get certificate from letsencrypt.org
 					var m = &autocert.Manager{
 						Prompt:     autocert.AcceptTOS,
-						Cache:      autocert.DirCache(path.Join(ConfigPath, "cert")),
+						Cache:      autocert.DirCache(JoinFast(ConfigPath, "cert")),
 						Email:      Cfg.Email,
 						HostPolicy: autocert.HostWhitelist(Cfg.HostWhitelist...),
 					}
@@ -280,8 +280,8 @@ func RunWeb(gmux *Router) {
 				go func() {
 					httpwg.Done()
 					if err := server.ListenAndServeTLS(
-						path.Join(ConfigPath, "serv.crt"),
-						path.Join(ConfigPath, "prvk.pem")); err != http.ErrServerClosed {
+						JoinFast(ConfigPath, "serv.crt"),
+						JoinFast(ConfigPath, "prvk.pem")); err != http.ErrServerClosed {
 						Log.Fatalf("failed to serve on %s: %v", addr, err)
 						return
 					}
@@ -338,10 +338,6 @@ func WaitExit() {
 	// wait until all server threads will be stopped.
 	exitwg.Wait()
 	Log.Info("server threads completed")
-
-	// wait until all transactions will be done.
-	WaitHandlers()
-	Log.Info("transactions completed")
 }
 
 // Done performs graceful network shutdown.

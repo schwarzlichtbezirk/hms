@@ -7,7 +7,6 @@ import (
 	"io/fs"
 	"log"
 	"os"
-	"path"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -23,6 +22,7 @@ import (
 
 type FileMap = map[string]struct{}
 
+// FileList forms list of files to process by caching algorithm.
 func FileList(fsys FS, list FileMap) (err error) {
 	fs.WalkDir(fsys, ".", func(fpath string, d fs.DirEntry, err error) error {
 		if err != nil {
@@ -35,22 +35,10 @@ func FileList(fsys FS, list FileMap) (err error) {
 		if !IsTypeDecoded(ext) {
 			return nil // file is not image
 		}
-
-		var file File
-		if file, err = OpenFile(fpath); err != nil {
-			return err // can not open file
+		var fullpath = JoinFast(string(fsys), fpath)
+		if !IsCached(fullpath) {
+			list[fullpath] = struct{}{}
 		}
-		defer file.Close()
-
-		var imc image.Config
-		if imc, _, err = image.DecodeConfig(file); err != nil {
-			return nil // can not recognize format or decode config
-		}
-		if float32(imc.Width*imc.Height+5e5)/1e6 > Cfg.ImageMaxMpx {
-			return nil // file is too big
-		}
-
-		list[path.Join(string(fsys), fpath)] = struct{}{}
 		return nil
 	})
 	return
@@ -70,6 +58,23 @@ var tilemult = [...]int{
 	2, 3, 4, 6, 8, 9, 10, 12, 15, 16, 18, 20, 24, 30, 36,
 }
 
+// IsCached returns "true" if thumbnail and all tiles are cached for given filename.
+func IsCached(fpath string) bool {
+	if !ThumbPkg.HasTagset(fpath) {
+		return false
+	}
+
+	for _, tm := range tilemult {
+		var wdh, hgt = tm * 24, tm * 18
+		var tilepath = fmt.Sprintf("%s?%dx%d", fpath, wdh, hgt)
+		if !TilesPkg.HasTagset(tilepath) {
+			return false
+		}
+	}
+
+	return true
+}
+
 func Convert(fpath string, cs *ConvStat) (err error) {
 	var file File
 	if file, err = os.Open(fpath); err != nil {
@@ -83,6 +88,19 @@ func Convert(fpath string, cs *ConvStat) (err error) {
 	var decode = func() {
 		if src != nil {
 			return
+		}
+
+		var imc image.Config
+		if imc, _, err = image.DecodeConfig(file); err != nil {
+			return // can not recognize format or decode config
+		}
+		if float32(imc.Width*imc.Height+5e5)/1e6 > Cfg.ImageMaxMpx {
+			err = ErrTooBig
+			return // file is too big
+		}
+
+		if _, err = file.Seek(0, io.SeekStart); err != nil {
+			return // can not seek to start
 		}
 		if x, err := exif.Decode(file); err == nil {
 			var t *tiff.Tag
@@ -156,8 +174,8 @@ func BatchCacher(list FileMap) {
 	var cs ConvStat
 	var thrnum = GetScanThreadsNum()
 
-	var t0 = time.Now()
 	fmt.Fprintf(os.Stdout, "start processing %d files with %d threads...\n", len(list), thrnum)
+	var t0 = time.Now()
 
 	// manager thread that distributes task portions
 	var cpath = make(chan string, thrnum)
@@ -221,10 +239,10 @@ func BatchCacher(list FileMap) {
 	fmt.Fprintf(os.Stdout, "processed %d files, spent %v, processing complete\n", cs.filecount, d)
 	fmt.Fprintf(os.Stdout, "produced %d tiles and %d thumbnails\n", cs.tilecount, cs.tmbcount)
 	if cs.tilesize > 0 {
-		fmt.Fprintf(os.Stdout, "tiles size: %d, ratio: %.4g\n", cs.tilesize, float64(cs.filesize)/float64(cs.tilesize))
+		fmt.Fprintf(os.Stdout, "tiles size: %d, ratio: %.4f\n", cs.tilesize, float64(cs.filesize)/float64(cs.tilesize))
 	}
 	if cs.tmbsize > 0 {
-		fmt.Fprintf(os.Stdout, "thumbnails size: %d, ratio: %.4g\n", cs.tmbsize, float64(cs.filesize)/float64(cs.tmbsize))
+		fmt.Fprintf(os.Stdout, "thumbnails size: %d, ratio: %.4f\n", cs.tmbsize, float64(cs.filesize)/float64(cs.tmbsize))
 	}
 	if errcount > 0 {
 		fmt.Fprintf(os.Stdout, "gets %d failures on files\n", errcount)
@@ -287,10 +305,12 @@ func RunCacher() {
 	var sum int
 	for i, p := range shares {
 		fmt.Fprintf(os.Stdout, "scan %d share with path %s\n", i+1, p)
+		var t0 = time.Now()
 		if err := FileList(FS(p), list); err != nil {
 			log.Fatal(err)
 		}
-		fmt.Fprintf(os.Stdout, "found %d files to process\n", len(list)-sum)
+		var d = time.Now().Sub(t0)
+		fmt.Fprintf(os.Stdout, "found %d files to process, spent %v\n", len(list)-sum, d)
 		sum = len(list)
 
 		select {

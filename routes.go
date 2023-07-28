@@ -399,7 +399,7 @@ var ResFS wpk.Union // resources packages root dir.
 func OpenPackage() (err error) {
 	for _, fname := range Cfg.WPKName {
 		var t0 = time.Now()
-		var fpath = path.Join(PackPath, fname)
+		var fpath = JoinFast(PackPath, fname)
 		var pkg *wpk.Package
 		if pkg, err = wpk.OpenPackage(fpath); err != nil {
 			return
@@ -488,8 +488,10 @@ var handwg sync.WaitGroup
 
 const alias_cond = "(cid1=? AND cid2=?) OR (cid1=? AND cid2=?)"
 
+// WaitHandlers waits until all transactions will be done.
 func WaitHandlers() {
 	handwg.Wait()
+	Log.Info("transactions completed")
 }
 
 // AjaxMiddleware is base handler middleware for AJAX API calls.

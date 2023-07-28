@@ -4,7 +4,6 @@ import (
 	"io"
 	"net"
 	"os"
-	"path"
 	"sort"
 	"strings"
 
@@ -19,7 +18,7 @@ const utf8bom = "\xef\xbb\xbf"
 // File writes in UTF-8 format with BOM, and "intro" comment.
 func WriteYaml(fname, intro string, data any) (err error) {
 	var w io.WriteCloser
-	if w, err = os.OpenFile(path.Join(ConfigPath, fname), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644); err != nil {
+	if w, err = os.OpenFile(JoinFast(ConfigPath, fname), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644); err != nil {
 		return
 	}
 	defer w.Close()
@@ -45,7 +44,7 @@ func WriteYaml(fname, intro string, data any) (err error) {
 // with given file name.
 func ReadYaml(fname string, data any) (err error) {
 	var body []byte
-	if body, err = os.ReadFile(path.Join(ConfigPath, fname)); err != nil {
+	if body, err = os.ReadFile(JoinFast(ConfigPath, fname)); err != nil {
 		return
 	}
 	if err = yaml.Unmarshal(body, data); err != nil {

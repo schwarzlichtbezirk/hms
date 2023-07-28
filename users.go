@@ -3,7 +3,6 @@ package hms
 import (
 	"encoding/xml"
 	"net/http"
-	"path"
 	"sync"
 	"time"
 
@@ -64,7 +63,7 @@ func RequestUAID(r *http.Request) ID_t {
 
 // InitUserlog inits database user log engine.
 func InitUserlog() (err error) {
-	if XormUserlog, err = xorm.NewEngine(Cfg.XormDriverName, path.Join(CachePath, userlog)); err != nil {
+	if XormUserlog, err = xorm.NewEngine(Cfg.XormDriverName, JoinFast(CachePath, userlog)); err != nil {
 		return
 	}
 	XormUserlog.SetMapper(names.GonicMapper{})
