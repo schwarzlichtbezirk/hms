@@ -85,6 +85,10 @@ type MediaData struct {
 	Time time.Time
 }
 
+func (md MediaData) Size() int64 {
+	return int64(len(md.Data))
+}
+
 // EXIF image orientation constants.
 const (
 	// orientation: normal
@@ -143,7 +147,7 @@ var (
 func ExtractThmub(session *Session, syspath string) (md MediaData, err error) {
 	var puid = PathStoreCache(session, syspath)
 	var ok bool
-	if md, ok = tmbcache.Peek(puid); ok {
+	if md, ok = etmbcache.Peek(puid); ok {
 		return
 	}
 
@@ -157,10 +161,10 @@ func ExtractThmub(session *Session, syspath string) (md MediaData, err error) {
 		err = ErrNoThumb
 	}
 
-	// push successful result to cache, err != nil, md.Mime != MimeDis
-	if err != nil {
-		tmbcache.Poke(puid, md)
-		tmbcache.ToLimit(Cfg.ThumbCacheMaxNum)
+	// push successful result to cache
+	if err == nil {
+		etmbcache.Poke(puid, md)
+		etmbcache.ToLimit(Cfg.ThumbCacheMaxNum)
 	}
 	return
 }

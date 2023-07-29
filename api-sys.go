@@ -67,8 +67,8 @@ func srvinfAPI(w http.ResponseWriter, r *http.Request) {
 		"os":        runtime.GOOS,
 		"numcpu":    runtime.NumCPU(),
 		"maxprocs":  runtime.GOMAXPROCS(0),
-		"CurPath":   CurPath,
-		"ExePath":   ExePath,
+		"curpath":   CurPath,
+		"exepath":   ExePath,
 		"cfgpath":   ConfigPath,
 		"wpkpath":   PackPath,
 		"cchpath":   CachePath,
@@ -103,12 +103,19 @@ func cchinfAPI(w http.ResponseWriter, r *http.Request) {
 	var session = XormStorage.NewSession()
 	defer session.Close()
 
-	var pathcount, _ = session.Count(&PathStore{})
-	var dircount, _ = session.Count(&DirStore{})
-	var exifcount, _ = session.Count(&ExifStore{})
-	var tagcount, _ = session.Count(&TagStore{})
-	var gpscount = gpscache.Len()
-	var etmbcount = tmbcache.Len()
+	var (
+		pathcount, _ = session.Count(&PathStore{})
+		dircount, _  = session.Count(&DirStore{})
+		exifcount, _ = session.Count(&ExifStore{})
+		tagcount, _  = session.Count(&TagStore{})
+		gpscount     = gpscache.Len()
+		etmbcount    = etmbcache.Len()
+		etmbsize     = CacheSize(etmbcache)
+		mediacount   = mediacache.Len()
+		mediasize    = CacheSize(mediacache)
+		hdcount      = hdcache.Len()
+		hdsize       = CacheSize(hdcache)
+	)
 
 	var (
 		size1 float64
@@ -150,6 +157,11 @@ func cchinfAPI(w http.ResponseWriter, r *http.Request) {
 		"tagcount":     tagcount,
 		"gpscount":     gpscount,
 		"etmbcount":    etmbcount,
+		"etmbsize":     etmbsize,
+		"mediacount":   mediacount,
+		"mediasize":    mediasize,
+		"hdcount":      hdcount,
+		"hdsize":       hdsize,
 		"mtmbcount":    num,
 		"mtmbsumsize1": size1,
 		"mtmbsumsize2": size2,

@@ -130,7 +130,7 @@ func (c *Cache[K, T]) Remove(key K) (ok bool) {
 	return
 }
 
-func (c *Cache[K, T]) Enum(f func(K, T) bool) {
+func (c *Cache[K, T]) Range(f func(K, T) bool) {
 	c.mux.Lock()
 	var s = append([]kvcell[K, T]{}, c.s...) // make non-nil copy
 	c.mux.Unlock()
@@ -142,6 +142,36 @@ func (c *Cache[K, T]) Enum(f func(K, T) bool) {
 	}
 }
 
+// Until removes first some entries from cache until given func returns true.
+func (c *Cache[K, T]) Until(f func(K, T) bool) {
+	c.mux.Lock()
+	defer c.mux.Unlock()
+
+	var n = 0
+	if c.ef != nil {
+		for _, cell := range c.s {
+			if f(cell.key, cell.val) {
+				c.ef(cell.key, cell.val)
+				delete(c.m, cell.key)
+				n++
+			} else {
+				break
+			}
+		}
+	} else {
+		for _, cell := range c.s {
+			if f(cell.key, cell.val) {
+				delete(c.m, cell.key)
+				n++
+			} else {
+				break
+			}
+		}
+	}
+	c.s = c.s[n:]
+}
+
+// Free removes n first entries from cache.
 func (c *Cache[K, T]) Free(n int) {
 	c.mux.Lock()
 	defer c.mux.Unlock()
@@ -173,6 +203,7 @@ func (c *Cache[K, T]) Free(n int) {
 	c.s = c.s[n:]
 }
 
+// ToLimit brings cache to limited count of entries.
 func (c *Cache[K, T]) ToLimit(limit int) {
 	c.mux.Lock()
 	defer c.mux.Unlock()

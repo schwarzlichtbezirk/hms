@@ -13,28 +13,48 @@
 	<div v-bind:id="'card'+iid" class="collapse">
 		<div class="card-body stattable">
 			<div class="row">
-				<div class="col-sm-6 field-name">path cache database size:</div>
+				<div class="col-sm-6 field-name">path cache database number items:</div>
 				<div class="col-md-6 field-value">{{cchinf.pathcount}}</div>
 			</div>
 			<div class="row">
-				<div class="col-sm-6 field-name">directories properties database size:</div>
+				<div class="col-sm-6 field-name">directories properties database number items:</div>
 				<div class="col-md-6 field-value">{{cchinf.dircount}}</div>
 			</div>
 			<div class="row">
-				<div class="col-sm-6 field-name">EXIF tags database size:</div>
+				<div class="col-sm-6 field-name">EXIF tags database number items:</div>
 				<div class="col-md-6 field-value">{{cchinf.exifcount}}</div>
 			</div>
 			<div class="row">
-				<div class="col-sm-6 field-name">ID3 tags database size:</div>
+				<div class="col-sm-6 field-name">ID3 tags database number items:</div>
 				<div class="col-md-6 field-value">{{cchinf.tagcount}}</div>
 			</div>
 			<div class="row">
-				<div class="col-sm-6 field-name">GPS cache size:</div>
+				<div class="col-sm-6 field-name">GPS cache number items:</div>
 				<div class="col-md-6 field-value">{{cchinf.gpscount}}</div>
 			</div>
 			<div class="row">
-				<div class="col-sm-6 field-name">embedded thumbnails cache size:</div>
+				<div class="col-sm-6 field-name">embedded thumbnails cache number items:</div>
 				<div class="col-md-6 field-value">{{cchinf.etmbcount}}</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-6 field-name">embedded thumbnails cache total size, bytes:</div>
+				<div class="col-md-6 field-value">{{cchinf.etmbsize}}</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-6 field-name">converted media files cache number items:</div>
+				<div class="col-md-6 field-value">{{cchinf.mediacount}}</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-6 field-name">converted media files cache total size, bytes:</div>
+				<div class="col-md-6 field-value">{{cchinf.mediasize}}</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-6 field-name">images in HD-resolution cache number items:</div>
+				<div class="col-md-6 field-value">{{cchinf.hdcount}}</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-6 field-name">images in HD-resolution cache total size, bytes:</div>
+				<div class="col-md-6 field-value">{{cchinf.hdsize}}</div>
 			</div>
 			<div class="row">
 				<div class="col-sm-6 field-name">thumbnails cache number items:</div>

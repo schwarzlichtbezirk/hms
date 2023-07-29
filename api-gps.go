@@ -142,7 +142,7 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	var vfiles []fs.FileInfo // verified file infos
 	var vpaths []DiskPath    // verified paths
-	gpscache.Enum(func(puid Puid_t, gps GpsInfo) bool {
+	gpscache.Range(func(puid Puid_t, gps GpsInfo) bool {
 		var inc bool
 		for _, mp := range arg.Paths {
 			if !mp.Contains(gps.Latitude, gps.Longitude) {

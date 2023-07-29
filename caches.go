@@ -124,7 +124,7 @@ var (
 	tagcache  = NewCache[Puid_t, TagProp]()  // FIFO cache for ID3 tags.
 
 	gpscache  = NewCache[Puid_t, GpsInfo]()   // FIFO cache with GPS coordinates.
-	tmbcache  = NewCache[Puid_t, MediaData]() // FIFO cache with files embedded thumbnails.
+	etmbcache = NewCache[Puid_t, MediaData]() // FIFO cache with files embedded thumbnails.
 	tilecache = NewCache[Puid_t, *TileProp]() // FIFO cache with set of available tiles.
 
 	mediacache = NewCache[Puid_t, MediaData]() // FIFO cache with processed media files.
@@ -132,6 +132,20 @@ var (
 
 	pubkcache = NewCache[[32]byte, TempCell[struct{}]]() // LRU cache with public keys.
 )
+
+// Sizer is interface that determine structure size itself.
+type Sizer interface {
+	Size() int64
+}
+
+// CacheSize returns size of given cache.
+func CacheSize[K comparable, T Sizer](cache *Cache[K, T]) (size int64) {
+	cache.Range(func(key K, val T) bool {
+		size += val.Size()
+		return true
+	})
+	return
+}
 
 // PathStorePUID returns cached PUID for specified system path.
 func PathStorePUID(session *Session, fpath string) (puid Puid_t, ok bool) {
