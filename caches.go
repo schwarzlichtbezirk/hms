@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path"
+	"sync"
 	"time"
 
 	. "github.com/schwarzlichtbezirk/hms/config"
@@ -294,6 +295,41 @@ func TagStoreSet(session *Session, tst *TagStore) (err error) {
 	return
 }
 
+var tmbmux, medmux, hdmux sync.Mutex
+
+func ThumbCacheTrim() {
+	tmbmux.Lock()
+	defer tmbmux.Unlock()
+	var size = CacheSize(etmbcache)
+	var sum int64
+	etmbcache.Until(func(puid Puid_t, md MediaData) bool {
+		sum += md.Size()
+		return float32(size-sum)/1048576 > Cfg.ThumbCacheMaxSize
+	})
+}
+
+func MediaCacheTrim() {
+	medmux.Lock()
+	defer medmux.Unlock()
+	var size = CacheSize(mediacache)
+	var sum int64
+	mediacache.Until(func(puid Puid_t, md MediaData) bool {
+		sum += md.Size()
+		return float32(size-sum)/1048576 > Cfg.MediaCacheMaxSize
+	})
+}
+
+func HdCacheTrim() {
+	hdmux.Lock()
+	defer hdmux.Unlock()
+	var size = CacheSize(hdcache)
+	var sum int64
+	hdcache.Until(func(puid Puid_t, md MediaData) bool {
+		sum += md.Size()
+		return float32(size-sum)/1048576 > Cfg.HdCacheMaxSize
+	})
+}
+
 // MediaCacheGet returns media file with given PUID converted to acceptable
 // for browser format, with media cache usage.
 func MediaCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
@@ -335,7 +371,7 @@ func MediaCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 		md.Time = fi.ModTime()
 	}
 	mediacache.Poke(puid, md)
-	mediacache.ToLimit(Cfg.MediaCacheMaxNum)
+	go MediaCacheTrim()
 	return
 }
 
@@ -417,7 +453,7 @@ func HdCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 		md.Time = fi.ModTime()
 	}
 	hdcache.Poke(puid, md)
-	hdcache.ToLimit(Cfg.HdCacheMaxNum)
+	go HdCacheTrim()
 	return
 }
 

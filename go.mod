@@ -51,5 +51,5 @@ require (
 	golang.org/x/net v0.12.0 // indirect
 	golang.org/x/sys v0.10.0 // indirect
 	gopkg.in/djherbis/times.v1 v1.3.0 // indirect
-	xorm.io/builder v0.3.12 // indirect
+	xorm.io/builder v0.3.13 // indirect
 )

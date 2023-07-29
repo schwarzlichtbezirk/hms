@@ -106,12 +106,12 @@ type CfgAppSets struct {
 	WPKName []string `json:"wpk-name" yaml:"wpk-name,flow" long:"wpk" description:"Name of wpk-file with program resources."`
 	// Memory mapping technology for WPK, or load into one solid byte slice otherwise.
 	WPKmmap bool `json:"wpk-mmap" yaml:"wpk-mmap" long:"mmap" description:"Memory mapping technology for WPK, or load into one solid byte slice otherwise."`
-	// Maximum number of cached embedded thumbnails.
-	ThumbCacheMaxNum int `json:"thumb-cache-maxnum" yaml:"thumb-cache-maxnum" long:"pcmn" description:"Maximum number of cached embedded thumbnails."`
-	// Maximum number of converted media files at memory cache.
-	MediaCacheMaxNum int `json:"media-cache-maxnum" yaml:"media-cache-maxnum" long:"mcmn" description:"Maximum number of converted media files at memory cache."`
-	// Maximum number of images converted to HD resolution at memory cache.
-	HdCacheMaxNum int `json:"hd-cache-maxnum" yaml:"hd-cache-maxnum" long:"hcmn" description:"Maximum number of images converted to HD resolution at memory cache."`
+	// Maximum size in megabytes of embedded thumbnails memory cache.
+	ThumbCacheMaxSize float32 `json:"thumb-cache-max-size" yaml:"thumb-cache-max-size" long:"pcmn" description:"Maximum size in megabytes of embedded thumbnails memory cache."`
+	// Maximum size in megabytes of converted media files memory cache.
+	MediaCacheMaxSize float32 `json:"media-cache-max-size" yaml:"media-cache-max-size" long:"mcmn" description:"Maximum size in megabytes of converted media files memory cache."`
+	// Maximum size in megabytes of memory cache for images converted to HD resolution.
+	HdCacheMaxSize float32 `json:"hd-cache-max-size" yaml:"hd-cache-max-size" long:"hcmn" description:"Maximum size in megabytes of memory cache for images converted to HD resolution."`
 	// Maximum number of photos to get on default map state.
 	RangeSearchAny int `json:"range-search-any" yaml:"range-search-any" long:"rsa" description:"Maximum number of photos to get on default map state."`
 	// Limit of range search.
@@ -176,13 +176,13 @@ var Cfg = &Config{ // inits default values:
 		ScanThreadsNum:   4,
 	},
 	CfgAppSets: CfgAppSets{
-		WPKName:          []string{"hms-full.wpk"},
-		WPKmmap:          false,
-		ThumbCacheMaxNum: 16 * 1024,
-		MediaCacheMaxNum: 64,
-		HdCacheMaxNum:    256,
-		RangeSearchAny:   20,
-		RangeSearchLimit: 100,
+		WPKName:           []string{"hms-app.wpk", "hms-edge.wpk"},
+		WPKmmap:           false,
+		ThumbCacheMaxSize: 64,
+		MediaCacheMaxSize: 256,
+		HdCacheMaxSize:    256,
+		RangeSearchAny:    20,
+		RangeSearchLimit:  100,
 	},
 }
 

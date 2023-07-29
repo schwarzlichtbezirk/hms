@@ -85,12 +85,12 @@ specification:
   # On 'true' use memory mapping technology for access to wpk-package nested files.
   # On 'false' use wpk-package loaded into one solid byte slice.
   wpk-mmap: false
-  # Maximum number of cached embedded thumbnails.
-  thumb-cache-maxnum: 16384
-  # Maximum number of converted media files at memory cache.
-  media-cache-maxnum: 64
-  # Maximum number of images converted to HD resolution at memory cache.
-  hd-cache-maxnum: 256
+  # Maximum size in megabytes of embedded thumbnails memory cache.
+  thumb-cache-max-size: 64
+  # Maximum size in megabytes of converted media files memory cache.
+  media-cache-max-size: 256
+  # Maximum size in megabytes of memory cache for images converted to HD resolution.
+  hd-cache-max-size: 256
   # Maximum number of photos to get on default map state.
   range-search-any: 20
   # Limit of range search.
