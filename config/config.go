@@ -108,10 +108,8 @@ type CfgAppSets struct {
 	WPKmmap bool `json:"wpk-mmap" yaml:"wpk-mmap" long:"mmap" description:"Memory mapping technology for WPK, or load into one solid byte slice otherwise."`
 	// Maximum size in megabytes of embedded thumbnails memory cache.
 	ThumbCacheMaxSize float32 `json:"thumb-cache-max-size" yaml:"thumb-cache-max-size" long:"pcmn" description:"Maximum size in megabytes of embedded thumbnails memory cache."`
-	// Maximum size in megabytes of converted media files memory cache.
-	MediaCacheMaxSize float32 `json:"media-cache-max-size" yaml:"media-cache-max-size" long:"mcmn" description:"Maximum size in megabytes of converted media files memory cache."`
-	// Maximum size in megabytes of memory cache for images converted to HD resolution.
-	HdCacheMaxSize float32 `json:"hd-cache-max-size" yaml:"hd-cache-max-size" long:"hcmn" description:"Maximum size in megabytes of memory cache for images converted to HD resolution."`
+	// Maximum size in megabytes of memory cache for converted images.
+	ImgCacheMaxSize float32 `json:"img-cache-max-size" yaml:"img-cache-max-size" long:"hcmn" description:"Maximum size in megabytes of memory cache for converted images."`
 	// Maximum number of photos to get on default map state.
 	RangeSearchAny int `json:"range-search-any" yaml:"range-search-any" long:"rsa" description:"Maximum number of photos to get on default map state."`
 	// Limit of range search.
@@ -179,8 +177,7 @@ var Cfg = &Config{ // inits default values:
 		WPKName:           []string{"hms-app.wpk", "hms-edge.wpk"},
 		WPKmmap:           false,
 		ThumbCacheMaxSize: 64,
-		MediaCacheMaxSize: 256,
-		HdCacheMaxSize:    256,
+		ImgCacheMaxSize:   256,
 		RangeSearchAny:    20,
 		RangeSearchLimit:  100,
 	},

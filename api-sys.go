@@ -111,10 +111,8 @@ func cchinfAPI(w http.ResponseWriter, r *http.Request) {
 		gpscount     = gpscache.Len()
 		etmbcount    = etmbcache.Len()
 		etmbsize     = CacheSize(etmbcache)
-		mediacount   = mediacache.Len()
-		mediasize    = CacheSize(mediacache)
-		hdcount      = hdcache.Len()
-		hdsize       = CacheSize(hdcache)
+		imgcount     = imgcache.Len()
+		imgsize      = CacheSize(imgcache)
 	)
 
 	var (
@@ -158,10 +156,8 @@ func cchinfAPI(w http.ResponseWriter, r *http.Request) {
 		"gpscount":     gpscount,
 		"etmbcount":    etmbcount,
 		"etmbsize":     etmbsize,
-		"mediacount":   mediacount,
-		"mediasize":    mediasize,
-		"hdcount":      hdcount,
-		"hdsize":       hdsize,
+		"imgcount":     imgcount,
+		"imgsize":      imgsize,
 		"mtmbcount":    num,
 		"mtmbsumsize1": size1,
 		"mtmbsumsize2": size2,

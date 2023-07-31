@@ -87,10 +87,8 @@ specification:
   wpk-mmap: false
   # Maximum size in megabytes of embedded thumbnails memory cache.
   thumb-cache-max-size: 64
-  # Maximum size in megabytes of converted media files memory cache.
-  media-cache-max-size: 256
-  # Maximum size in megabytes of memory cache for images converted to HD resolution.
-  hd-cache-max-size: 256
+  # Maximum size in megabytes of memory cache for converted images.
+  img-cache-max-size: 256
   # Maximum number of photos to get on default map state.
   range-search-any: 20
   # Limit of range search.

@@ -128,10 +128,15 @@ var (
 	etmbcache = NewCache[Puid_t, MediaData]() // FIFO cache with files embedded thumbnails.
 	tilecache = NewCache[Puid_t, *TileProp]() // FIFO cache with set of available tiles.
 
-	mediacache = NewCache[Puid_t, MediaData]() // FIFO cache with processed media files.
-	hdcache    = NewCache[Puid_t, MediaData]() // FIFO cache with converted to HD resolution images.
+	imgcache = NewCache[Puid_t, MediaData]() // FIFO cache with converted to HD resolution images, processed media files and embedded thumbnails.
 
 	pubkcache = NewCache[[32]byte, TempCell[struct{}]]() // LRU cache with public keys.
+)
+
+const (
+	PuidTmb Puid_t = 0x1000_0000_0000_0000 // Embedded thumbnails qualifier
+	PuidHD  Puid_t = 0x2000_0000_0000_0000 // HD-dimensions qualifier
+	PuidImg Puid_t = 0x4000_0000_0000_0000 // Converted to acceptable browser format qualifier
 )
 
 // Sizer is interface that determine structure size itself.
@@ -295,7 +300,7 @@ func TagStoreSet(session *Session, tst *TagStore) (err error) {
 	return
 }
 
-var tmbmux, medmux, hdmux sync.Mutex
+var tmbmux, imgmux sync.Mutex
 
 func ThumbCacheTrim() {
 	tmbmux.Lock()
@@ -308,33 +313,22 @@ func ThumbCacheTrim() {
 	})
 }
 
-func MediaCacheTrim() {
-	medmux.Lock()
-	defer medmux.Unlock()
-	var size = CacheSize(mediacache)
+func ImgCacheTrim() {
+	imgmux.Lock()
+	defer imgmux.Unlock()
+	var size = CacheSize(imgcache)
 	var sum int64
-	mediacache.Until(func(puid Puid_t, md MediaData) bool {
+	imgcache.Until(func(puid Puid_t, md MediaData) bool {
 		sum += md.Size()
-		return float32(size-sum)/1048576 > Cfg.MediaCacheMaxSize
-	})
-}
-
-func HdCacheTrim() {
-	hdmux.Lock()
-	defer hdmux.Unlock()
-	var size = CacheSize(hdcache)
-	var sum int64
-	hdcache.Until(func(puid Puid_t, md MediaData) bool {
-		sum += md.Size()
-		return float32(size-sum)/1048576 > Cfg.HdCacheMaxSize
+		return float32(size-sum)/1048576 > Cfg.ImgCacheMaxSize
 	})
 }
 
 // MediaCacheGet returns media file with given PUID converted to acceptable
-// for browser format, with media cache usage.
+// for browser format from memory cache.
 func MediaCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 	var ok bool
-	if md, ok = mediacache.Peek(puid); ok {
+	if md, ok = imgcache.Peek(puid | PuidImg); ok {
 		return
 	}
 
@@ -370,16 +364,16 @@ func MediaCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 	if fi, _ := file.Stat(); fi != nil {
 		md.Time = fi.ModTime()
 	}
-	mediacache.Poke(puid, md)
-	go MediaCacheTrim()
+	imgcache.Poke(puid|PuidImg, md)
+	go ImgCacheTrim()
 	return
 }
 
-// HdCacheGet returns image with given PUID converted to HD resolution,
-// with HD-images cache usage.
+// HdCacheGet returns image with given PUID converted to HD resolution
+// from memory cache.
 func HdCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 	var ok bool
-	if md, ok = hdcache.Peek(puid); ok {
+	if md, ok = imgcache.Peek(puid | PuidHD); ok {
 		return
 	}
 
@@ -452,8 +446,8 @@ func HdCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 	if fi, _ := file.Stat(); fi != nil {
 		md.Time = fi.ModTime()
 	}
-	hdcache.Poke(puid, md)
-	go HdCacheTrim()
+	imgcache.Poke(puid|PuidHD, md)
+	go ImgCacheTrim()
 	return
 }
 
