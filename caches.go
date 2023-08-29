@@ -125,33 +125,19 @@ var (
 	tagcache  = NewCache[Puid_t, TagProp]()  // FIFO cache for ID3 tags.
 
 	gpscache  = NewCache[Puid_t, GpsInfo]()   // FIFO cache with GPS coordinates.
-	etmbcache = NewCache[Puid_t, MediaData]() // FIFO cache with files embedded thumbnails.
 	tilecache = NewCache[Puid_t, *TileProp]() // FIFO cache with set of available tiles.
 
-	imgcache = NewCache[Puid_t, MediaData]() // FIFO cache with converted to HD resolution images, processed media files and embedded thumbnails.
+	etmbcache = NewCache[Puid_t, MediaData]() // FIFO cache with files embedded thumbnails.
+	imgcache  = NewCache[Puid_t, MediaData]() // FIFO cache with converted to HD resolution images, processed media files and embedded thumbnails.
 
 	pubkcache = NewCache[[32]byte, TempCell[struct{}]]() // LRU cache with public keys.
 )
 
 const (
-	PuidTmb Puid_t = 0x1000_0000_0000_0000 // Embedded thumbnails qualifier
-	PuidHD  Puid_t = 0x2000_0000_0000_0000 // HD-dimensions qualifier
-	PuidImg Puid_t = 0x4000_0000_0000_0000 // Converted to acceptable browser format qualifier
+	PuidTmb Puid_t = 0x2000_0000_0000_0000 // Embedded thumbnails qualifier
+	PuidHD  Puid_t = 0x4000_0000_0000_0000 // HD-dimensions qualifier
+	PuidImg Puid_t = 0x8000_0000_0000_0000 // Converted to acceptable browser format qualifier
 )
-
-// Sizer is interface that determine structure size itself.
-type Sizer interface {
-	Size() int64
-}
-
-// CacheSize returns size of given cache.
-func CacheSize[K comparable, T Sizer](cache *Cache[K, T]) (size int64) {
-	cache.Range(func(key K, val T) bool {
-		size += val.Size()
-		return true
-	})
-	return
-}
 
 // PathStorePUID returns cached PUID for specified system path.
 func PathStorePUID(session *Session, fpath string) (puid Puid_t, ok bool) {
@@ -451,12 +437,6 @@ func HdCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 	return
 }
 
-const (
-	tidsz  = 2
-	tagsz  = 2
-	tssize = 2
-)
-
 // FileCache describes package with cache functionality.
 // Package splitted in two files - tags table file and
 // data file with cached nested files.
@@ -517,15 +497,13 @@ func InitCacheWriter(fpath string) (fc *FileCache, d time.Duration, err error) {
 			return
 		}
 	} else {
-		fc.Init(wpk.TypeSize{
-			tidsz, tagsz, tssize,
-		})
+		fc.Init(0)
 
 		if err = fc.Begin(fc.wpt, fc.wpf); err != nil {
 			return
 		}
-		fc.Package.SetInfo().
-			Put(wpk.TIDlabel, wpk.StrTag(path.Base(fpath)))
+		fc.Package.SetInfo(wpk.TagsetRaw{}.
+			Put(wpk.TIDlabel, wpk.StrTag(path.Base(fpath))))
 	}
 	if fc.Tagger, err = fsys.MakeTagger(datpath); err != nil {
 		return
@@ -554,8 +532,8 @@ func (fc *FileCache) Close() (err error) {
 }
 
 // GetFile extracts file from the cache with given file name.
-func (fc *FileCache) GetFile(fpath string) (file wpk.NestedFile, mime string, t time.Time, err error) {
-	if ts, ok := fc.Tagset(fpath); ok {
+func (fc *FileCache) GetFile(fpath string) (file wpk.PkgFile, mime string, t time.Time, err error) {
+	if ts, ok := fc.GetTagset(fpath); ok {
 		if t, ok = ts.TagTime(wpk.TIDmtime); !ok {
 			err = ErrNoMTime
 			return
@@ -573,7 +551,7 @@ func (fc *FileCache) GetFile(fpath string) (file wpk.NestedFile, mime string, t 
 
 // GetData extracts file from the cache with given file name.
 func (fc *FileCache) GetData(fpath string) (md MediaData, err error) {
-	if ts, ok := fc.Tagset(fpath); ok {
+	if ts, ok := fc.GetTagset(fpath); ok {
 		var t time.Time
 		if t, ok = ts.TagTime(wpk.TIDmtime); !ok {
 			err = ErrNoMTime
@@ -608,23 +586,24 @@ func (fc *FileCache) GetData(fpath string) (md MediaData, err error) {
 
 // PutFile puts file to package.
 func (fc *FileCache) PutFile(fpath string, md MediaData) (err error) {
-	var ts *wpk.TagsetRaw
+	var ts wpk.TagsetRaw
 	if ts, err = fc.PackData(fc.wpf, bytes.NewReader(md.Data), fpath); err != nil {
 		return
 	}
 	if md.Time.IsZero() {
 		md.Time = time.Now()
 	}
-	ts.Put(wpk.TIDmtime, wpk.UnixTag(md.Time))
-	ts.Put(wpk.TIDatime, wpk.UnixTag(md.Time))
-	ts.Put(wpk.TIDmime, wpk.StrTag(MimeStr[md.Mime]))
+	fc.SetTagset(fpath, ts.
+		Put(wpk.TIDmtime, wpk.UnixTag(md.Time)).
+		Put(wpk.TIDatime, wpk.UnixTag(md.Time)).
+		Put(wpk.TIDmime, wpk.StrTag(MimeStr[md.Mime])))
 	return
 }
 
 // PackInfo writes info to log about opened cache.
 func PackInfo(fname string, pkg *wpk.Package, d time.Duration) {
 	var num int64
-	pkg.Enum(func(fkey string, ts *wpk.TagsetRaw) bool {
+	pkg.Enum(func(fkey string, ts wpk.TagsetRaw) bool {
 		num++
 		return true
 	})

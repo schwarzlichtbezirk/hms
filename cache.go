@@ -236,6 +236,20 @@ func (c *Cache[K, T]) ToLimit(limit int) {
 	c.s = c.s[n:]
 }
 
+// Sizer is interface that determine structure size itself.
+type Sizer interface {
+	Size() int64
+}
+
+// CacheSize returns size of given cache.
+func CacheSize[K comparable, T Sizer](cache *Cache[K, T]) (size int64) {
+	cache.Range(func(key K, val T) bool {
+		size += val.Size()
+		return true
+	})
+	return
+}
+
 type Bimap[K comparable, T comparable] struct {
 	direct  map[K]T
 	reverse map[T]K

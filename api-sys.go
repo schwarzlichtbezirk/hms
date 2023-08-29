@@ -120,7 +120,7 @@ func cchinfAPI(w http.ResponseWriter, r *http.Request) {
 		size2 float64
 		num   int
 	)
-	ThumbPkg.Enum(func(fkey string, ts *wpk.TagsetRaw) bool {
+	ThumbPkg.Enum(func(fkey string, ts wpk.TagsetRaw) bool {
 		var l = float64(ts.Size())
 		size1 += l
 		size2 += l * l

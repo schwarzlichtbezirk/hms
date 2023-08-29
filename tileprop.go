@@ -72,7 +72,7 @@ const (
 // CachedThumbMime returns MIME type of rendered thumbnail in package,
 // or MimeNil if it not present.
 func CachedThumbMime(syspath string) Mime_t {
-	if ts, ok := ThumbPkg.Tagset(syspath); ok {
+	if ts, ok := ThumbPkg.GetTagset(syspath); ok {
 		if str, ok := ts.TagStr(wpk.TIDmime); ok {
 			if strings.HasPrefix(str, "image/") {
 				return MimeVal[str]
@@ -91,7 +91,7 @@ func CachedThumbMime(syspath string) Mime_t {
 // given tile multiplier, or MimeNil if it not present.
 func CachedTileMime(syspath string, tm TM_t) Mime_t {
 	var tilepath = fmt.Sprintf("%s?%dx%d", syspath, tm*htcell, tm*vtcell)
-	if ts, ok := TilesPkg.Tagset(tilepath); ok {
+	if ts, ok := TilesPkg.GetTagset(tilepath); ok {
 		if str, ok := ts.TagStr(wpk.TIDmime); ok {
 			if strings.HasPrefix(str, "image/") {
 				return MimeVal[str]
