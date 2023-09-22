@@ -3,9 +3,9 @@ package hms
 import (
 	"bytes"
 	"crypto/hmac"
+	"crypto/rand"
 	"crypto/sha256"
 	"encoding/xml"
-	"math/rand"
 	"net/http"
 	"time"
 

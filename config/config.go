@@ -185,11 +185,11 @@ var Cfg = &Config{ // inits default values:
 
 var (
 	// compiled binary version, sets by compiler with command
-	//    go build -ldflags="-X 'github.com/schwarzlichtbezirk/hms.BuildVers=%buildvers%'"
+	//    go build -ldflags="-X 'github.com/schwarzlichtbezirk/hms/config.BuildVers=%buildvers%'"
 	BuildVers string
 
 	// compiled binary build date, sets by compiler with command
-	//    go build -ldflags="-X 'github.com/schwarzlichtbezirk/hms.BuildDate=%buildtime%'"
+	//    go build -ldflags="-X 'github.com/schwarzlichtbezirk/hms/config.BuildTime=%buildtime%'"
 	BuildTime string
 )
 

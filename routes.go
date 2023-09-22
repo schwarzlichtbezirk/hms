@@ -400,8 +400,8 @@ func OpenPackage() (err error) {
 	for _, fname := range Cfg.WPKName {
 		var t0 = time.Now()
 		var fpath = JoinFast(PackPath, fname)
-		var pkg *wpk.Package
-		if pkg, err = wpk.OpenPackage(fpath); err != nil {
+		var pkg = wpk.NewPackage()
+		if err = pkg.OpenFile(fpath); err != nil {
 			return
 		}
 

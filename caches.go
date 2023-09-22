@@ -489,21 +489,26 @@ func InitCacheWriter(fpath string) (fc *FileCache, d time.Duration, err error) {
 		}
 		defer r.Close()
 
-		if err = fc.ReadFTT(r); err != nil {
+		if err = fc.OpenStream(r); err != nil {
 			return
 		}
 
 		if err = fc.Append(fc.wpt, fc.wpf); err != nil {
 			return
 		}
+		var ts = fc.Package.GetInfo()
+		ts, _ = ts.Set(wpk.TIDmtime, wpk.UnixTag(t0))
+		fc.Package.SetInfo(ts)
 	} else {
-		fc.Init(0)
+		fc.Init(&wpk.Header{})
 
 		if err = fc.Begin(fc.wpt, fc.wpf); err != nil {
 			return
 		}
 		fc.Package.SetInfo(wpk.TagsetRaw{}.
-			Put(wpk.TIDlabel, wpk.StrTag(path.Base(fpath))))
+			Put(wpk.TIDlabel, wpk.StrTag(path.Base(fpath))).
+			Put(wpk.TIDmtime, wpk.UnixTag(t0)).
+			Put(wpk.TIDbtime, wpk.UnixTag(t0)))
 	}
 	if fc.Tagger, err = fsys.MakeTagger(datpath); err != nil {
 		return
@@ -602,12 +607,7 @@ func (fc *FileCache) PutFile(fpath string, md MediaData) (err error) {
 
 // PackInfo writes info to log about opened cache.
 func PackInfo(fname string, pkg *wpk.Package, d time.Duration) {
-	var num int64
-	pkg.Enum(func(fkey string, ts wpk.TagsetRaw) bool {
-		num++
-		return true
-	})
-	Log.Infof("package '%s': cached %d files on %d bytes, %v", fname, num, pkg.DataSize(), d)
+	Log.Infof("package '%s': cached %d files on %d bytes, %v", fname, pkg.TagsetNum(), pkg.DataSize(), d)
 }
 
 // InitPackages opens all existing caches.
