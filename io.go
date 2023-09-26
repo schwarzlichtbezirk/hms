@@ -5,7 +5,6 @@ import (
 	"net"
 	"os"
 	"sort"
-	"strings"
 
 	. "github.com/schwarzlichtbezirk/hms/config"
 
@@ -110,7 +109,7 @@ func PrfReadYaml(fname string) (err error) {
 
 				// bring all hidden to lowercase
 				for i, fpath := range prf.Hidden {
-					prf.Hidden[i] = strings.ToLower(ToSlash(fpath))
+					prf.Hidden[i] = ToLower(ToSlash(fpath))
 				}
 
 				// build shares tables

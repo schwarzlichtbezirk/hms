@@ -116,7 +116,7 @@ func GetAuth(r *http.Request) (uid ID_t, aerr error) {
 		var bearer = false
 		// at least one authorization field should have valid bearer access
 		for _, val := range pool {
-			if strings.HasPrefix(strings.ToLower(val), "bearer ") {
+			if strings.HasPrefix(ToLower(val), "bearer ") {
 				bearer = true
 				if _, err = jwt.ParseWithClaims(val[7:], &claims, func(*jwt.Token) (any, error) {
 					if claims.UID > 0 {

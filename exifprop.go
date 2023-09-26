@@ -172,13 +172,7 @@ func (ep *ExifProp) Setup(x *exif.Exif) {
 }
 
 // ExifExtract trys to extract EXIF metadata from file.
-func ExifExtract(session *Session, file io.ReadSeeker, puid Puid_t) (ep ExifProp, err error) {
-	var pos int64
-	if pos, err = file.Seek(0, io.SeekCurrent); err != nil {
-		return
-	}
-	defer file.Seek(pos, io.SeekStart)
-
+func ExifExtract(session *Session, file io.Reader, puid Puid_t) (ep ExifProp, err error) {
 	var x *exif.Exif
 	if x, err = exif.Decode(file); err != nil {
 		return

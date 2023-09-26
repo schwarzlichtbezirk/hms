@@ -3,7 +3,6 @@ package hms
 import (
 	"encoding/xml"
 	"io/fs"
-	"math"
 	"net/http"
 	"time"
 
@@ -12,27 +11,15 @@ import (
 	. "github.com/schwarzlichtbezirk/hms/joint"
 )
 
-// Haversine uses formula to calculate the great-circle distance between
-// two points – that is, the shortest distance over the earth’s surface –
-// giving an ‘as-the-crow-flies’ distance between the points (ignoring
-// any hills they fly over, of course!).
-//
-// See https://www.movable-type.co.uk/scripts/latlong.html
-func Haversine(lat1, lon1, lat2, lon2 float64) float64 {
-	const R = 6371e3 // metres
-	const πrad = math.Pi / 180
-	var (
-		φ1 = lat1 * πrad // φ, λ in radians
-		φ2 = lat2 * πrad
-		Δφ = (lat2 - lat1) * πrad
-		Δλ = (lon2 - lon1) * πrad
-		a  = math.Sin(Δφ/2)*math.Sin(Δφ/2) +
-			math.Cos(φ1)*math.Cos(φ2)*math.Sin(Δλ/2)*math.Sin(Δλ/2)
-		c = 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
-		d = R * c // in metres
-	)
-	return d
-}
+/*
+
+#include <stdio.h>
+#include <stdlib.h>
+
+extern double haversine(double lat1, double lon1, double lat2, double lon2);
+
+*/
+import "C"
 
 type Point struct {
 	Latitude  float64 `json:"lat" yaml:"lat" xml:"lat,attr"`
@@ -58,7 +45,7 @@ type MapPath struct {
 func (mp *MapPath) Contains(lat, lon float64) bool {
 	switch mp.Shape {
 	case Circle:
-		var d = Haversine(mp.Coord[0].Latitude, mp.Coord[0].Longitude, lat, lon)
+		var d = float64(C.haversine(C.double(mp.Coord[0].Latitude), C.double(mp.Coord[0].Longitude), C.double(lat), C.double(lon)))
 		return d <= mp.Radius
 	default:
 		panic(ErrShapeBad)

@@ -405,6 +405,9 @@ func HdCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 	} else if ep, err := ExifExtract(session, file, puid); err == nil && ep.Orientation > 0 {
 		orientation = ep.Orientation
 	}
+	if _, err = file.Seek(io.SeekStart, 0); err != nil {
+		return
+	}
 
 	var src, dst image.Image
 	if src, _, err = image.Decode(file); err != nil {

@@ -18,6 +18,7 @@ import (
 
 	"github.com/rwcarlsen/goexif/exif"
 	"github.com/rwcarlsen/goexif/tiff"
+	"xorm.io/xorm"
 )
 
 type FileMap = map[string]struct{}
@@ -73,6 +74,29 @@ func IsCached(fpath string) bool {
 	}
 
 	return true
+}
+
+func CacheTags(fpath string, session *xorm.Session, cs *ConvStat) (err error) {
+	var ext = GetFileExt(fpath)
+	if !IsTypeEXIF(ext) {
+		return
+	}
+
+	var puid = PathStoreCache(session, fpath)
+	if _, ok := ExifStoreGet(session, puid); ok {
+		return
+	}
+
+	var file File
+	if file, err = OpenFile(fpath); err != nil {
+		return
+	}
+	defer file.Close()
+
+	if _, err = ExifExtract(session, file, puid); err != nil {
+		return
+	}
+	return
 }
 
 func Convert(fpath string, cs *ConvStat) (err error) {

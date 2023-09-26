@@ -10,7 +10,6 @@ import (
 	_ "image/png"
 	"io"
 	"io/fs"
-	"strings"
 	"time"
 
 	. "github.com/schwarzlichtbezirk/hms/config"
@@ -69,10 +68,10 @@ func GetMimeVal(mime, ext string) Mime_t {
 	if mime, ok := MimeVal[mime]; ok {
 		return mime
 	}
-	if mime, ok := MimeExt[strings.ToLower(ext)]; ok {
+	if mime, ok := MimeExt[ToLower(ext)]; ok {
 		return mime
 	}
-	if mime, ok := MimeExt[strings.ToLower(mime)]; ok {
+	if mime, ok := MimeExt[ToLower(mime)]; ok {
 		return mime
 	}
 	return MimeUnk
@@ -275,6 +274,9 @@ func CacheThumb(session *Session, syspath string) (md MediaData, err error) {
 	} else if ep, err := ExifExtract(session, file, puid); err == nil && ep.Orientation > 0 {
 		orientation = ep.Orientation
 	}
+	if _, err = file.Seek(io.SeekStart, 0); err != nil {
+		return
+	}
 
 	// create sized image for thumbnail
 	var src image.Image
@@ -374,6 +376,9 @@ func CacheTile(session *Session, syspath string, wdh, hgt int) (md MediaData, er
 		orientation = ep.Orientation
 	} else if ep, err := ExifExtract(session, file, puid); err == nil && ep.Orientation > 0 {
 		orientation = ep.Orientation
+	}
+	if _, err = file.Seek(io.SeekStart, 0); err != nil {
+		return
 	}
 
 	var src image.Image

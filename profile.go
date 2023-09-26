@@ -265,7 +265,7 @@ func (prf *Profile) GetPathGroup(fpath string, fi fs.FileInfo) (grp FG_t) {
 // IsHidden do check up that file path is in hidden list.
 func (prf *Profile) IsHidden(fpath string) bool {
 	var matched bool
-	var kpath = strings.ToLower(fpath)
+	var kpath = ToLower(fpath)
 
 	prf.mux.RLock()
 	defer prf.mux.RUnlock()
@@ -278,7 +278,7 @@ func (prf *Profile) IsHidden(fpath string) bool {
 			}
 		} else if strings.HasPrefix(pattern, "?:/") {
 			for _, dp := range prf.Roots {
-				if PathStarts(kpath, strings.ToLower(dp.Path)) {
+				if PathStarts(kpath, ToLower(dp.Path)) {
 					if matched, _ = path.Match(pattern[3:], kpath[len(dp.Path):]); matched {
 						return true
 					}
