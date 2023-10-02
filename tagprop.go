@@ -22,6 +22,7 @@ type TagProp struct {
 	DiscSum  int    `xorm:"'discsum'" json:"discsum,omitempty" yaml:"discsum,flow,omitempty" xml:"discsum,omitempty,attr"`
 	Lyrics   string `json:"lyrics,omitempty" yaml:"lyrics,omitempty" xml:"lyrics,omitempty"`
 	Comment  string `json:"comment,omitempty" yaml:"comment,omitempty" xml:"comment,omitempty"`
+	ThumbLen int    `xorm:"'thumblen'" json:"thumblen,omitempty" yaml:"thumblen,omitempty" xml:"thumblen,omitempty"`
 }
 
 // IsZero used to check whether an object is zero to determine whether
@@ -31,7 +32,8 @@ func (tp *TagProp) IsZero() bool {
 		tp.Composer == "" && tp.Genre == "" && tp.Year == 0 &&
 		tp.TrackNum == 0 && tp.TrackSum == 0 &&
 		tp.DiscNum == 0 && tp.DiscSum == 0 &&
-		tp.Lyrics == "" && tp.Comment == ""
+		tp.Lyrics == "" && tp.Comment == "" &&
+		tp.ThumbLen == 0
 }
 
 // Setup fills fields from tags metadata.
@@ -46,21 +48,19 @@ func (tp *TagProp) Setup(m tag.Metadata) {
 	tp.DiscNum, tp.DiscSum = m.Disc()
 	tp.Lyrics = m.Lyrics()
 	tp.Comment = m.Comment()
+	if pic := m.Picture(); pic != nil {
+		tp.ThumbLen = len(pic.Data)
+	}
 }
 
 // TagExtract trys to extract ID3 metadata from file.
-func TagExtract(session *Session, file io.ReadSeekCloser, puid Puid_t) (tp TagProp, err error) {
-	var pos int64
-	if pos, err = file.Seek(0, io.SeekCurrent); err != nil {
-		return
-	}
-	defer file.Seek(pos, io.SeekStart)
-
+func TagExtract(session *Session, file io.ReadSeeker, puid Puid_t) (tp TagProp, err error) {
 	var m tag.Metadata
 	if m, err = tag.ReadFrom(file); err != nil {
 		return
 	}
 
+	tp.Setup(m)
 	if tp.IsZero() {
 		err = ErrEmptyID3
 		return
@@ -69,7 +69,6 @@ func TagExtract(session *Session, file io.ReadSeekCloser, puid Puid_t) (tp TagPr
 		Puid: puid,
 		Prop: tp,
 	})
-	tp.Setup(m)
 	return
 }
 

@@ -144,7 +144,7 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			inc = !mp.Eject
 		}
 		if inc {
-			var fpath, _ = pathcache.GetDir(puid)
+			var fpath, _ = PathCache.GetDir(puid)
 			if !acc.IsHidden(fpath) && acc.PathAccess(fpath, uid == aid) {
 				if fi, _ := StatFile(fpath); fi != nil {
 					vfiles = append(vfiles, fi)
@@ -208,10 +208,6 @@ func gpsscanAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 				}
 				ret.List = append(ret.List, gst)
 			} else {
-				// check memory cache
-				if exifcache.Has(puid) {
-					continue // there are tags without GPS
-				}
 				// try to get from database
 				var err error
 				var est ExifStore
@@ -219,7 +215,6 @@ func gpsscanAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 					continue
 				}
 				if ok {
-					exifcache.Poke(puid, est.Prop) // update cache
 					if est.Prop.IsZero() {
 						continue
 					}
@@ -243,8 +238,6 @@ func gpsscanAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 					if err != nil || est.Prop.IsZero() {
 						continue
 					}
-					// set to memory cache
-					exifcache.Poke(puid, est.Prop)
 					// prepare to set to database
 					ests = append(ests, est)
 				}

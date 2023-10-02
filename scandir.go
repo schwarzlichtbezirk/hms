@@ -13,9 +13,8 @@ import (
 func ScanFileNameList(prf *Profile, session *Session, vpaths []DiskPath) (ret []any, lstp DirProp, err error) {
 	var files = make([]fs.FileInfo, len(vpaths))
 	for i, dp := range vpaths {
-		if fi, _ := StatFile(dp.Path); fi != nil {
-			files[i] = fi
-		}
+		fi, _ := StatFile(dp.Path)
+		files[i] = fi
 	}
 
 	return ScanFileInfoList(prf, session, files, vpaths)
@@ -28,9 +27,9 @@ func ScanFileNameList(prf *Profile, session *Session, vpaths []DiskPath) (ret []
 func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpaths []DiskPath) (ret []any, lstp DirProp, err error) {
 	var tscan = time.Now()
 
-	var dpaths []string // database paths
+	var dpaths = make([]string, 0, len(vpaths)) // database paths
 	for _, dp := range vpaths {
-		if _, ok := pathcache.GetRev(dp.Path); !ok {
+		if _, ok := PathCache.GetRev(dp.Path); !ok {
 			dpaths = append(dpaths, dp.Path)
 		}
 	}
@@ -43,20 +42,20 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 			return
 		}
 		for _, ps := range nps {
-			pathcache.Set(ps.Puid, ps.Path)
+			PathCache.Set(ps.Puid, ps.Path)
 		}
 		// insert new paths into database
-		nps = nil
-		var npaths []string // new paths
+		nps = make([]PathStore, 0, len(dpaths))
+		var npaths = make([]string, 0, len(dpaths)) // new paths
 		for _, fpath := range dpaths {
-			if _, ok := pathcache.GetRev(fpath); !ok {
+			if _, ok := PathCache.GetRev(fpath); !ok {
 				nps = append(nps, PathStore{
 					Path: fpath,
 				})
 				npaths = append(npaths, fpath)
 			}
 		}
-		if _, err = session.Insert(nps); err != nil {
+		if _, err = session.Insert(&nps); err != nil {
 			return
 		}
 		// get PUIDs of inserted paths
@@ -65,21 +64,23 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 			return
 		}
 		for _, ps := range nps {
-			pathcache.Set(ps.Puid, ps.Path)
+			if ps.Puid != 0 {
+				PathCache.Set(ps.Puid, ps.Path)
+			}
 		}
 	}
 
 	// make vpuids array
-	var vpuids []Puid_t // verified PUIDs
-	for _, dp := range vpaths {
-		var puid, _ = pathcache.GetRev(dp.Path)
-		vpuids = append(vpuids, puid)
+	var vpuids = make([]Puid_t, len(vpaths)) // verified PUIDs
+	for i, dp := range vpaths {
+		var puid, _ = PathCache.GetRev(dp.Path)
+		vpuids[i] = puid
 	}
 
 	// get directories, ISO-files and playlists as folder properties
-	var idds []Puid_t
+	var idds = make([]Puid_t, 0, len(vpuids))
 	for _, puid := range vpuids {
-		if !dircache.Has(puid) {
+		if !DirCache.Has(puid) {
 			idds = append(idds, puid)
 		}
 	}
@@ -89,11 +90,12 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 			return
 		}
 		for _, ds := range dss {
-			dircache.Poke(ds.Puid, ds.Prop)
+			DirCache.Poke(ds.Puid, ds.Prop)
 		}
 	}
 
 	// format response
+	ret = make([]any, len(vpaths))
 	for i, dp := range vpaths {
 		var fpath = dp.Path
 		var puid = vpuids[i]
@@ -114,7 +116,7 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 		var grp = prf.GetPathGroup(fpath, fi)
 		*lstp.FGrp.Field(grp)++
 
-		if dp, ok := dircache.Peek(puid); ok || fp.Type != FTfile {
+		if dp, ok := DirCache.Peek(puid); ok || fp.Type != FTfile {
 			var dk = DirKit{
 				PuidProp: pp,
 				FileProp: fp,
@@ -123,7 +125,7 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 			if vfiles[i] == nil && dk.Type != FTctgr {
 				dk.Latency = -1
 			}
-			ret = append(ret, &dk)
+			ret[i] = &dk
 		} else {
 			var fk = FileKit{
 				PuidProp: pp,
@@ -132,7 +134,7 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 			if tp, ok := tilecache.Peek(puid); ok {
 				fk.TileProp = *tp
 			}
-			ret = append(ret, &fk)
+			ret[i] = &fk
 		}
 	}
 
@@ -154,8 +156,8 @@ func ScanDir(prf *Profile, session *Session, dir string, isadmin bool) (ret []an
 	// define files to display //
 	/////////////////////////////
 
-	var vfiles []fs.FileInfo // verified file infos
-	var vpaths []DiskPath    // verified paths
+	var vfiles = make([]fs.FileInfo, 0, len(files)) // verified file infos
+	var vpaths = make([]DiskPath, 0, len(files))    // verified paths
 	for _, fi := range files {
 		if fi == nil {
 			continue
@@ -201,8 +203,8 @@ func ScanCat(prf *Profile, session *Session, puid Puid_t, cat string, percent fl
 	var newpuids []uint64
 	var vpaths []DiskPath
 	for _, ds := range dss {
-		dircache.Set(ds.Puid, ds.Prop)
-		if fpath, ok := pathcache.GetDir(ds.Puid); ok {
+		DirCache.Set(ds.Puid, ds.Prop)
+		if fpath, ok := PathCache.GetDir(ds.Puid); ok {
 			vpaths = append(vpaths, MakeFilePath(fpath))
 		} else {
 			newpuids = append(newpuids, uint64(ds.Puid))
@@ -215,7 +217,7 @@ func ScanCat(prf *Profile, session *Session, puid Puid_t, cat string, percent fl
 			return
 		}
 		for _, ps := range nps {
-			pathcache.Set(ps.Puid, ps.Path)
+			PathCache.Set(ps.Puid, ps.Path)
 			vpaths = append(vpaths, MakeFilePath(ps.Path))
 		}
 	}

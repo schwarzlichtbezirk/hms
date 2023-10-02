@@ -121,7 +121,7 @@ func PrfReadYaml(fname string) (err error) {
 
 				// print shares list for each
 				for _, dp := range prf.Shares {
-					if puid, ok := pathcache.GetRev(dp.Path); ok {
+					if puid, ok := PathCache.GetRev(dp.Path); ok {
 						Log.Infof("id%d: shared '%s' as %s", prf.ID, dp.Name, puid)
 					} else {
 						Log.Warnf("id%d: can not share '%s'", prf.ID, dp.Name)

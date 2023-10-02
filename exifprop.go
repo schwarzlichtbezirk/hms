@@ -178,6 +178,7 @@ func ExifExtract(session *Session, file io.Reader, puid Puid_t) (ep ExifProp, er
 		return
 	}
 
+	ep.Setup(x)
 	if ep.IsZero() {
 		err = ErrEmptyExif
 		return
@@ -186,7 +187,6 @@ func ExifExtract(session *Session, file io.Reader, puid Puid_t) (ep ExifProp, er
 		Puid: puid,
 		Prop: ep,
 	})
-	ep.Setup(x)
 	return
 }
 
