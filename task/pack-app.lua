@@ -33,7 +33,7 @@ pkg.automime = true -- put MIME type for each file if it is not given explicit
 pkg.secret = "hms-package" -- private key to sign cryptographic hashes for each file
 pkg.crc32 = true -- generate CRC32 Castagnoli code for each file
 pkg.sha256 = true -- generate SHA256 hash for each file
-pkg:setinfo({ -- set package info
+pkg:setupinfo({ -- set package info
 	label = "hms-app",
 	link = "github.com/schwarzlichtbezirk/hms"
 })
@@ -43,9 +43,9 @@ pkg:begin(envfmt("${GOPATH}/bin/hms-app.wpk"))
 
 -- write record log
 local fnum = 1
-local function logfile(kpath)
-	logfmt("#%d %s, %d bytes, %s", fnum, kpath,
-		pkg:filesize(kpath), pkg:gettag(kpath, "mime").string)
+local function logfile(fkey)
+	logfmt("#%d %s, %d bytes, %s", fnum, fkey,
+		pkg:filesize(fkey), pkg:gettag(fkey, "mime").string)
 	fnum = fnum+1
 end
 -- patterns for ignored files
@@ -79,25 +79,26 @@ local function checkname(name)
 	return true
 end
 -- pack given directory and add to each file name given prefix
-local function commonput(kpath, fpath)
-	pkg:putfile(kpath, fpath)
-	if logrec then logfile(kpath) end
+local function commonput(fkey, fpath)
+	pkg:putfile(fkey, fpath)
+	if logrec then logfile(fkey) end
 end
-local function authput(kpath, fpath)
-	pkg:putfile(kpath, fpath)
-	pkg:settag(kpath, "author", "schwarzlichtbezirk")
-	if logrec then logfile(kpath) end
+local function authput(fkey, fpath)
+	pkg:putfile(fkey, fpath, {
+		author = "schwarzlichtbezirk",
+	})
+	if logrec then logfile(fkey) end
 end
 local function packdir(prefix, dir, putfunc)
 	for i, name in ipairs(path.enum(dir)) do
-		local kpath = path.join(prefix, name)
+		local fkey = path.join(prefix, name)
 		local fpath = path.join(dir, name)
 		local access, isdir = checkfile(fpath)
 		if access and checkname(name) then
 			if isdir then
-				packdir(kpath, fpath, putfunc)
+				packdir(fkey, fpath, putfunc)
 			else
-				putfunc(kpath, fpath)
+				putfunc(fkey, fpath)
 			end
 		end
 	end

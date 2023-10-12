@@ -69,6 +69,13 @@ func PathStarts(fpath, prefix string) bool {
 	return false
 }
 
+// JoinFast performs fast join of two path chunks.
+var JoinFast = wpk.JoinFast
+
+// ToLower is high performance function to bring filenames to lower case in ASCII
+// without superfluous allocations if it possible.
+var ToLower = wpk.ToLower
+
 type Session = xorm.Session
 
 // SqlSession execute sql wrapped in a single session.
@@ -513,10 +520,8 @@ func InitCacheWriter(fpath string) (fc *FileCache, d time.Duration, err error) {
 		if err = fc.Append(fc.wpt, fc.wpf); err != nil {
 			return
 		}
-		// append prevents rewriting data at solid slice with FTT
-		var ts = append(wpk.TagsetRaw{}, fc.Package.GetInfo()...)
-		ts, _ = ts.Set(wpk.TIDmtime, wpk.UnixTag(t0))
-		fc.Package.SetInfo(ts)
+		fc.Package.SetInfo(wpk.CopyTagset(fc.Package.GetInfo()).
+			Set(wpk.TIDmtime, wpk.UnixmsTag(t0)))
 	} else {
 		fc.Init(&wpk.Header{})
 
@@ -525,8 +530,8 @@ func InitCacheWriter(fpath string) (fc *FileCache, d time.Duration, err error) {
 		}
 		fc.Package.SetInfo(wpk.TagsetRaw{}.
 			Put(wpk.TIDlabel, wpk.StrTag(path.Base(fpath))).
-			Put(wpk.TIDmtime, wpk.UnixTag(t0)).
-			Put(wpk.TIDbtime, wpk.UnixTag(t0)))
+			Put(wpk.TIDmtime, wpk.UnixmsTag(t0)).
+			Put(wpk.TIDbtime, wpk.UnixmsTag(t0)))
 	}
 	if fc.Tagger, err = fsys.MakeTagger(datpath); err != nil {
 		return
@@ -617,8 +622,8 @@ func (fc *FileCache) PutFile(fpath string, md MediaData) (err error) {
 		md.Time = time.Now()
 	}
 	fc.SetTagset(fpath, ts.
-		Put(wpk.TIDmtime, wpk.UnixTag(md.Time)).
-		Put(wpk.TIDatime, wpk.UnixTag(md.Time)).
+		Put(wpk.TIDmtime, wpk.UnixmsTag(md.Time)).
+		Put(wpk.TIDatime, wpk.UnixmsTag(md.Time)).
 		Put(wpk.TIDmime, wpk.StrTag(MimeStr[md.Mime])))
 	return
 }

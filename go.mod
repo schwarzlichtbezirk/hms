@@ -19,12 +19,12 @@ require (
 	github.com/oov/psd v0.0.0-20220121172623-5db5eafcecbb
 	github.com/pkg/sftp v1.13.6
 	github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd
-	github.com/schwarzlichtbezirk/wpk v1.5.0
+	github.com/schwarzlichtbezirk/wpk v1.6.0
 	github.com/spate/glimage v0.0.0-20200505055513-fbdcc60a65e5
 	github.com/studio-b12/gowebdav v0.9.0
-	golang.org/x/crypto v0.13.0
-	golang.org/x/image v0.12.0
-	golang.org/x/sync v0.3.0
+	golang.org/x/crypto v0.14.0
+	golang.org/x/image v0.13.0
+	golang.org/x/sync v0.4.0
 	golang.org/x/text v0.13.0
 	gopkg.in/ini.v1 v1.67.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -49,8 +49,8 @@ require (
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/syndtr/goleveldb v1.0.0 // indirect
 	github.com/ulikunitz/xz v0.5.11 // indirect
-	golang.org/x/net v0.15.0 // indirect
-	golang.org/x/sys v0.12.0 // indirect
+	golang.org/x/net v0.17.0 // indirect
+	golang.org/x/sys v0.13.0 // indirect
 	gopkg.in/djherbis/times.v1 v1.3.0 // indirect
 	xorm.io/builder v0.3.13 // indirect
 )

@@ -96,16 +96,16 @@ pkg.automime = true -- put MIME type for each file if it is not given explicit
 pkg.secret = "hms-package" -- private key to sign cryptographic hashes for each file
 pkg.crc32 = true -- generate CRC32 Castagnoli code for each file
 pkg.sha256 = true -- generate SHA256 hash for each file
-pkg:setinfo(cfg.info) -- set package info
+pkg:setupinfo(cfg.info) -- set package info
 
 -- open wpk-file for write
 pkg:begin(envfmt("${GOPATH}/bin/"..cfg.info.label..".wpk"))
 
 -- write record log
 local fnum = 1
-local function logfile(kpath)
-	logfmt("#%d %s, %d bytes, %s", fnum, kpath,
-		pkg:filesize(kpath), pkg:gettag(kpath, "mime").string)
+local function logfile(fkey)
+	logfmt("#%d %s, %d bytes, %s", fnum, fkey,
+		pkg:filesize(fkey), pkg:gettag(fkey, "mime").string)
 	fnum = fnum+1
 end
 -- patterns for ignored files
@@ -139,25 +139,26 @@ local function checkname(name)
 	return true
 end
 -- pack given directory and add to each file name given prefix
-local function commonput(kpath, fpath)
-	pkg:putfile(kpath, fpath)
-	if logrec then logfile(kpath) end
+local function commonput(fkey, fpath)
+	pkg:putfile(fkey, fpath)
+	if logrec then logfile(fkey) end
 end
-local function authput(kpath, fpath)
-	pkg:putfile(kpath, fpath)
-	pkg:settag(kpath, "author", "schwarzlichtbezirk")
-	if logrec then logfile(kpath) end
+local function authput(fkey, fpath)
+	pkg:putfile(fkey, fpath, {
+		author = "schwarzlichtbezirk",
+	})
+	if logrec then logfile(fkey) end
 end
 local function packdir(prefix, dir, putfunc)
 	for i, name in ipairs(path.enum(dir)) do
-		local kpath = path.join(prefix, name)
+		local fkey = path.join(prefix, name)
 		local fpath = path.join(dir, name)
 		local access, isdir = checkfile(fpath)
 		if access and checkname(name) then
 			if isdir then
-				packdir(kpath, fpath, putfunc)
+				packdir(fkey, fpath, putfunc)
 			else
-				putfunc(kpath, fpath)
+				putfunc(fkey, fpath)
 			end
 		end
 	end
@@ -170,31 +171,30 @@ if logdir then logfmt("writes %s package", pkg.pkgpath) end
 packdir("assets", rootdir.."assets", commonput)
 -- put skins
 for i, id in ipairs(cfg.skinset) do
-	local kpath = path.join("skin", id)
-	packdir(kpath, rootdir..kpath, commonput)
-	authput(kpath..".css", rootdir..kpath..".css")
+	local fkey = path.join("skin", id)
+	packdir(fkey, rootdir..fkey, commonput)
+	authput(fkey..".css", rootdir..fkey..".css")
 end
 -- put icons
 for id, fmtlst in pairs(cfg.iconset) do
-	local function iconput(kpath, fpath)
+	local function iconput(fkey, fpath)
 		local is = false
 		for i, name in ipairs(fmtlst) do
-			if string.lower(string.sub(kpath, -string.len(name)-1)) == "."..name then
+			if string.lower(string.sub(fkey, -string.len(name)-1)) == "."..name then
 				is = true
 				break
 			end
 		end
 		if is then
-			pkg:putfile(kpath, fpath)
-			if logrec then logfile(kpath) end
+			commonput(fkey, fpath)
 		end
 	end
 	-- put icons with specified formats
-	local kpath = "icon/"..id
-	packdir(kpath, rootdir..kpath, iconput)
+	local fkey = "icon/"..id
+	packdir(fkey, rootdir..fkey, iconput)
 	-- read iconset json file
-	local kpath = "icon/"..id..".json"
-	local f = assert(io.open(rootdir..kpath, "rb"))
+	local fkey = "icon/"..id..".json"
+	local f = assert(io.open(rootdir..fkey, "rb"))
 	local content = f:read("*all")
 	f:close()
 	-- make iconset content
@@ -205,9 +205,10 @@ for id, fmtlst in pairs(cfg.iconset) do
 	-- modify file content to put available formats
 	content = string.gsub(content, '\t"iconfmt": %[%]', '\t"iconfmt": ['..table.concat(fmts, ",")..'\n\t]')
 	-- write modified iconset json file to package
-	pkg:putdata(kpath, content)
-	pkg:settag(kpath, "author", "schwarzlichtbezirk")
-	if logrec then logfile(kpath) end
+	pkg:putdata(fkey, content, {
+		author = "schwarzlichtbezirk",
+	})
+	if logrec then logfile(fkey) end
 end
 
 -- put modified resmodel.json

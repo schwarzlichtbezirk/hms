@@ -57,28 +57,6 @@ func JoinPath(elem ...string) string {
 	}
 }
 
-// JoinFast performs fast join of two path chunks.
-func JoinFast(dir, base string) string {
-	if dir == "" || dir == "." {
-		return base
-	}
-	if base == "" || base == "." {
-		return dir
-	}
-	var base1, dir1 string
-	if dir[len(dir)-1] == '/' {
-		dir1 = dir[:len(dir)-1]
-	} else {
-		dir1 = dir
-	}
-	if base[0] == '/' {
-		base1 = base[1:]
-	} else {
-		base1 = base
-	}
-	return dir1 + "/" + base1
-}
-
 // UnfoldPath brings any share path to system file path.
 func UnfoldPath(session *Session, shrpath string) (syspath string, puid Puid_t, err error) {
 	var pref, suff string

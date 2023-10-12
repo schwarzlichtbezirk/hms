@@ -300,18 +300,17 @@ func joinfast(dir, base string) string {
 	if base == "" || base == "." {
 		return dir
 	}
-	var base1, dir1 string
 	if dir[len(dir)-1] == '/' {
-		dir1 = dir[:len(dir)-1]
-	} else {
-		dir1 = dir
+		if base[0] == '/' {
+			return dir + base[1:]
+		} else {
+			return dir + base
+		}
 	}
 	if base[0] == '/' {
-		base1 = base[1:]
-	} else {
-		base1 = base
+		return dir + base
 	}
-	return dir1 + "/" + base1
+	return dir + "/" + base
 }
 
 func (fsys FS) Open(fpath string) (r fs.File, err error) {

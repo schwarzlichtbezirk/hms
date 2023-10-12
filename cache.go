@@ -4,40 +4,114 @@ import (
 	"sync"
 )
 
-type kvcell[K comparable, T any] struct {
+type kvpair[K comparable, T any] struct {
 	key K
 	val T
 }
 
+type RWMap[K comparable, T any] struct {
+	m   map[K]T
+	mux sync.RWMutex
+}
+
+func (rwm *RWMap[K, T]) Init(c int) {
+	if c < 8 {
+		c = 8
+	}
+	rwm.mux.Lock()
+	defer rwm.mux.Unlock()
+	rwm.m = make(map[K]T, c)
+}
+
+func (rwm *RWMap[K, T]) Len() int {
+	rwm.mux.RLock()
+	defer rwm.mux.RUnlock()
+	return len(rwm.m)
+}
+
+func (rwm *RWMap[K, T]) Has(key K) (ok bool) {
+	rwm.mux.RLock()
+	defer rwm.mux.RUnlock()
+	_, ok = rwm.m[key]
+	return
+}
+
+func (rwm *RWMap[K, T]) Get(key K) (ret T, ok bool) {
+	rwm.mux.RLock()
+	defer rwm.mux.RUnlock()
+	ret, ok = rwm.m[key]
+	return
+}
+
+func (rwm *RWMap[K, T]) Set(key K, val T) {
+	rwm.mux.Lock()
+	defer rwm.mux.Unlock()
+	rwm.m[key] = val
+}
+
+func (rwm *RWMap[K, T]) Delete(key K) {
+	rwm.mux.Lock()
+	defer rwm.mux.Unlock()
+	delete(rwm.m, key)
+}
+
+func (rwm *RWMap[K, T]) GetAndDelete(key K) (ret T, ok bool) {
+	rwm.mux.Lock()
+	defer rwm.mux.Unlock()
+	if ret, ok = rwm.m[key]; ok {
+		delete(rwm.m, key)
+	}
+	return
+}
+
+func (rwm *RWMap[K, T]) Range(f func(K, T) bool) {
+	var buf []kvpair[K, T]
+	func() {
+		rwm.mux.RLock()
+		defer rwm.mux.RUnlock()
+		buf = make([]kvpair[K, T], len(rwm.m))
+		var i int
+		for k, v := range rwm.m {
+			buf[i].key, buf[i].val = k, v
+			i++
+		}
+	}()
+	for _, pair := range buf {
+		if !f(pair.key, pair.val) {
+			return
+		}
+	}
+}
+
 type Cache[K comparable, T any] struct {
-	s   []kvcell[K, T]
-	m   map[K]int
-	ef  func(K, T)
+	seq []kvpair[K, T]
+	idx map[K]int
+	efn func(K, T)
 	mux sync.Mutex
 }
 
 func NewCache[K comparable, T any]() *Cache[K, T] {
 	return &Cache[K, T]{
-		m: map[K]int{},
+		idx: map[K]int{},
 	}
 }
 
-func (c *Cache[K, T]) OnRemove(ef func(K, T)) {
+func (c *Cache[K, T]) OnRemove(efn func(K, T)) {
 	c.mux.Lock()
 	defer c.mux.Unlock()
-	c.ef = ef
+	c.efn = efn
 }
 
 func (c *Cache[K, T]) Len() int {
 	c.mux.Lock()
 	defer c.mux.Unlock()
-	return len(c.s)
+	return len(c.seq)
 }
 
 func (c *Cache[K, T]) Has(key K) (ok bool) {
 	c.mux.Lock()
 	defer c.mux.Unlock()
-	_, ok = c.m[key]
+	_, ok = c.idx[key]
 	return
 }
 
@@ -45,8 +119,8 @@ func (c *Cache[K, T]) Peek(key K) (ret T, ok bool) {
 	c.mux.Lock()
 	defer c.mux.Unlock()
 	var n int
-	if n, ok = c.m[key]; ok {
-		ret = c.s[n].val
+	if n, ok = c.idx[key]; ok {
+		ret = c.seq[n].val
 	}
 	return
 }
@@ -57,14 +131,14 @@ func (c *Cache[K, T]) Get(key K) (ret T, ok bool) {
 	c.mux.Lock()
 	defer c.mux.Unlock()
 
-	n, ok = c.m[key]
+	n, ok = c.idx[key]
 	if ok {
-		var cell = c.s[n]
-		ret = cell.val
-		copy(c.s[n:], c.s[n+1:])
-		c.s[len(c.s)-1] = cell
-		for i := n; i < len(c.s); i++ {
-			c.m[c.s[i].key] = i
+		var pair = c.seq[n]
+		ret = pair.val
+		copy(c.seq[n:], c.seq[n+1:])
+		c.seq[len(c.seq)-1] = pair
+		for i := n; i < len(c.seq); i++ {
+			c.idx[c.seq[i].key] = i
 		}
 	}
 	return
@@ -74,12 +148,12 @@ func (c *Cache[K, T]) Poke(key K, val T) {
 	c.mux.Lock()
 	defer c.mux.Unlock()
 
-	var n, ok = c.m[key]
+	var n, ok = c.idx[key]
 	if ok {
-		c.s[n].val = val
+		c.seq[n].val = val
 	} else {
-		c.m[key] = len(c.s)
-		c.s = append(c.s, kvcell[K, T]{
+		c.idx[key] = len(c.seq)
+		c.seq = append(c.seq, kvpair[K, T]{
 			key: key,
 			val: val,
 		})
@@ -90,18 +164,18 @@ func (c *Cache[K, T]) Set(key K, val T) {
 	c.mux.Lock()
 	defer c.mux.Unlock()
 
-	var n, ok = c.m[key]
+	var n, ok = c.idx[key]
 	if ok {
-		var cell = c.s[n]
-		cell.val = val
-		copy(c.s[n:], c.s[n+1:])
-		c.s[len(c.s)-1] = cell
-		for i := n; i < len(c.s); i++ {
-			c.m[c.s[i].key] = i
+		var pair = c.seq[n]
+		pair.val = val
+		copy(c.seq[n:], c.seq[n+1:])
+		c.seq[len(c.seq)-1] = pair
+		for i := n; i < len(c.seq); i++ {
+			c.idx[c.seq[i].key] = i
 		}
 	} else {
-		c.m[key] = len(c.s)
-		c.s = append(c.s, kvcell[K, T]{
+		c.idx[key] = len(c.seq)
+		c.seq = append(c.seq, kvpair[K, T]{
 			key: key,
 			val: val,
 		})
@@ -114,17 +188,17 @@ func (c *Cache[K, T]) Remove(key K) (ok bool) {
 	c.mux.Lock()
 	defer c.mux.Unlock()
 
-	n, ok = c.m[key]
+	n, ok = c.idx[key]
 	if ok {
-		var cell = c.s[n]
-		if c.ef != nil {
-			c.ef(cell.key, cell.val)
+		var pair = c.seq[n]
+		if c.efn != nil {
+			c.efn(pair.key, pair.val)
 		}
-		delete(c.m, key)
-		copy(c.s[n:], c.s[n+1:])
-		c.s = c.s[:len(c.s)-1]
-		for i := n; i < len(c.s); i++ {
-			c.m[c.s[i].key] = i
+		delete(c.idx, key)
+		copy(c.seq[n:], c.seq[n+1:])
+		c.seq = c.seq[:len(c.seq)-1]
+		for i := n; i < len(c.seq); i++ {
+			c.idx[c.seq[i].key] = i
 		}
 	}
 	return
@@ -132,11 +206,11 @@ func (c *Cache[K, T]) Remove(key K) (ok bool) {
 
 func (c *Cache[K, T]) Range(f func(K, T) bool) {
 	c.mux.Lock()
-	var s = append([]kvcell[K, T]{}, c.s...) // make non-nil copy
+	var s = append([]kvpair[K, T]{}, c.seq...) // make non-nil copy
 	c.mux.Unlock()
 
-	for _, cell := range s {
-		if !f(cell.key, cell.val) {
+	for _, pair := range s {
+		if !f(pair.key, pair.val) {
 			return
 		}
 	}
@@ -148,27 +222,27 @@ func (c *Cache[K, T]) Until(f func(K, T) bool) {
 	defer c.mux.Unlock()
 
 	var n = 0
-	if c.ef != nil {
-		for _, cell := range c.s {
-			if f(cell.key, cell.val) {
-				c.ef(cell.key, cell.val)
-				delete(c.m, cell.key)
+	if c.efn != nil {
+		for _, pair := range c.seq {
+			if f(pair.key, pair.val) {
+				c.efn(pair.key, pair.val)
+				delete(c.idx, pair.key)
 				n++
 			} else {
 				break
 			}
 		}
 	} else {
-		for _, cell := range c.s {
-			if f(cell.key, cell.val) {
-				delete(c.m, cell.key)
+		for _, pair := range c.seq {
+			if f(pair.key, pair.val) {
+				delete(c.idx, pair.key)
 				n++
 			} else {
 				break
 			}
 		}
 	}
-	c.s = c.s[n:]
+	c.seq = c.seq[n:]
 }
 
 // Free removes n first entries from cache.
@@ -179,28 +253,28 @@ func (c *Cache[K, T]) Free(n int) {
 	if n <= 0 {
 		return
 	}
-	if n >= len(c.s) {
-		if c.ef != nil {
-			for _, cell := range c.s {
-				c.ef(cell.key, cell.val)
+	if n >= len(c.seq) {
+		if c.efn != nil {
+			for _, pair := range c.seq {
+				c.efn(pair.key, pair.val)
 			}
 		}
-		c.m = map[K]int{}
-		c.s = nil
+		c.idx = map[K]int{}
+		c.seq = nil
 		return
 	}
 
-	if c.ef != nil {
+	if c.efn != nil {
 		for i := 0; i < n; i++ {
-			c.ef(c.s[i].key, c.s[i].val)
-			delete(c.m, c.s[i].key)
+			c.efn(c.seq[i].key, c.seq[i].val)
+			delete(c.idx, c.seq[i].key)
 		}
 	} else {
 		for i := 0; i < n; i++ {
-			delete(c.m, c.s[i].key)
+			delete(c.idx, c.seq[i].key)
 		}
 	}
-	c.s = c.s[n:]
+	c.seq = c.seq[n:]
 }
 
 // ToLimit brings cache to limited count of entries.
@@ -208,32 +282,32 @@ func (c *Cache[K, T]) ToLimit(limit int) {
 	c.mux.Lock()
 	defer c.mux.Unlock()
 
-	if limit >= len(c.s) {
+	if limit >= len(c.seq) {
 		return
 	}
 	if limit <= 0 {
-		if c.ef != nil {
-			for _, cell := range c.s {
-				c.ef(cell.key, cell.val)
+		if c.efn != nil {
+			for _, pair := range c.seq {
+				c.efn(pair.key, pair.val)
 			}
 		}
-		c.m = map[K]int{}
-		c.s = nil
+		c.idx = map[K]int{}
+		c.seq = nil
 		return
 	}
 
-	var n = len(c.s) - limit
-	if c.ef != nil {
+	var n = len(c.seq) - limit
+	if c.efn != nil {
 		for i := 0; i < n; i++ {
-			c.ef(c.s[i].key, c.s[i].val)
-			delete(c.m, c.s[i].key)
+			c.efn(c.seq[i].key, c.seq[i].val)
+			delete(c.idx, c.seq[i].key)
 		}
 	} else {
 		for i := 0; i < n; i++ {
-			delete(c.m, c.s[i].key)
+			delete(c.idx, c.seq[i].key)
 		}
 	}
-	c.s = c.s[n:]
+	c.seq = c.seq[n:]
 }
 
 // Sizer is interface that determine structure size itself.
@@ -251,51 +325,51 @@ func CacheSize[K comparable, T Sizer](cache *Cache[K, T]) (size int64) {
 }
 
 type Bimap[K comparable, T comparable] struct {
-	direct  map[K]T
-	reverse map[T]K
-	mux     sync.RWMutex
+	dir map[K]T // direct order
+	rev map[T]K // reverse order
+	mux sync.RWMutex
 }
 
 func NewBimap[K comparable, T comparable]() *Bimap[K, T] {
 	return &Bimap[K, T]{
-		direct:  map[K]T{},
-		reverse: map[T]K{},
+		dir: map[K]T{},
+		rev: map[T]K{},
 	}
 }
 
 func (m *Bimap[K, T]) Len() int {
 	m.mux.RLock()
 	defer m.mux.RUnlock()
-	return len(m.direct)
+	return len(m.dir)
 }
 
 func (m *Bimap[K, T]) GetDir(key K) (val T, ok bool) {
 	m.mux.RLock()
-	val, ok = m.direct[key]
+	val, ok = m.dir[key]
 	m.mux.RUnlock()
 	return
 }
 
 func (m *Bimap[K, T]) GetRev(val T) (key K, ok bool) {
 	m.mux.RLock()
-	key, ok = m.reverse[val]
+	key, ok = m.rev[val]
 	m.mux.RUnlock()
 	return
 }
 
 func (m *Bimap[K, T]) Set(key K, val T) {
 	m.mux.Lock()
-	m.direct[key] = val
-	m.reverse[val] = key
+	m.dir[key] = val
+	m.rev[val] = key
 	m.mux.Unlock()
 }
 
 func (m *Bimap[K, T]) DeleteDir(key K) (ok bool) {
 	var val T
 	m.mux.Lock()
-	if val, ok = m.direct[key]; ok {
-		delete(m.direct, key)
-		delete(m.reverse, val)
+	if val, ok = m.dir[key]; ok {
+		delete(m.dir, key)
+		delete(m.rev, val)
 	}
 	m.mux.Unlock()
 	return
@@ -304,9 +378,9 @@ func (m *Bimap[K, T]) DeleteDir(key K) (ok bool) {
 func (m *Bimap[K, T]) DeleteRev(val T) (ok bool) {
 	var key K
 	m.mux.Lock()
-	if key, ok = m.reverse[val]; ok {
-		delete(m.direct, key)
-		delete(m.reverse, val)
+	if key, ok = m.rev[val]; ok {
+		delete(m.dir, key)
+		delete(m.rev, val)
 	}
 	m.mux.Unlock()
 	return

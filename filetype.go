@@ -229,23 +229,6 @@ var extgrp = map[string]FG_t{
 	".asx":  FGpacks,
 }
 
-// ToSlash is high performance function to bring filenames to lower case in ASCII
-// without superfluous allocations if it possible.
-func ToLower(s string) string {
-	var b = s2b(s)
-	var bc = b
-	var c bool
-	for i, v := range b {
-		if v >= 'A' && v <= 'Z' {
-			if !c {
-				bc, c = []byte(s), true
-			}
-			bc[i] |= 0x20
-		}
-	}
-	return b2s(bc)
-}
-
 // GetFileExt returns file extension converted to lowercase.
 func GetFileExt(fname string) string {
 	return ToLower(path.Ext(fname))

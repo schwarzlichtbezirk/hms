@@ -481,7 +481,6 @@ func BatchExtractor(extlist FileMap) {
 			for c := range pathchan {
 				if err = Extract(c.fpath, &buf, &es); err != nil {
 					atomic.AddUint64(&es.errcount, 1)
-					fmt.Fprintf(os.Stdout, "error on file %s: %s\n", c.fpath, err.Error())
 				}
 				buf.Overflow(session)
 			}
@@ -636,15 +635,16 @@ func RunCacher() {
 	var extlist, cnvlist = FileMap{}, FileMap{}
 	var extsum, cnvsum int
 	for i, p := range shares {
-		fmt.Fprintf(os.Stdout, "scan %d share with path %s\n", i+1, p)
+		fmt.Fprintf(os.Stdout, "starts scan %d share with path %s\n", i+1, p)
 		var t0 = time.Now()
 		if err := FileList(FS(p), &pathlist, extlist, cnvlist); err != nil {
 			Log.Fatal(err)
 		}
 		var d = time.Now().Sub(t0)
-		fmt.Fprintf(os.Stdout, "found %d files to extract embedded info, spent %v\n", len(extlist)-extsum, d)
+		fmt.Fprintf(os.Stdout, "scan %d share complete, spent %v\n", i+1, d)
+		fmt.Fprintf(os.Stdout, "found %d files to extract embedded info\n", len(extlist)-extsum)
 		extsum = len(extlist)
-		fmt.Fprintf(os.Stdout, "found %d files to prepare tiles and thumbnails, spent %v\n", len(cnvlist)-cnvsum, d)
+		fmt.Fprintf(os.Stdout, "found %d files to prepare tiles and thumbnails\n", len(cnvlist)-cnvsum)
 		cnvsum = len(cnvlist)
 
 		select {
