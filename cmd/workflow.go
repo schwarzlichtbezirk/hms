@@ -123,7 +123,7 @@ func Init() {
 		Log.Infof("found %d items at directories cache", dircount)
 		var exifcount, _ = session.Count(&ExifStore{})
 		Log.Infof("found %d items at EXIF cache", exifcount)
-		var tagcount, _ = session.Count(&TagStore{})
+		var tagcount, _ = session.Count(&Id3Store{})
 		Log.Infof("found %d items at ID3-tags cache", tagcount)
 		return
 	})

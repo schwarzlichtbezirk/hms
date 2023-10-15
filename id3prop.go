@@ -1,15 +1,18 @@
 package hms
 
 import (
+	"errors"
 	"io"
+	"time"
 
 	. "github.com/schwarzlichtbezirk/hms/joint"
 
 	"github.com/dhowden/tag"
+	"github.com/tcolgate/mp3"
 )
 
-// TagProp is Music file tags properties chunk.
-type TagProp struct {
+// Id3Prop is Music file tags properties chunk.
+type Id3Prop struct {
 	Title    string `json:"title,omitempty" yaml:"title,omitempty" xml:"title,omitempty"`
 	Album    string `json:"album,omitempty" yaml:"album,omitempty" xml:"album,omitempty"`
 	Artist   string `json:"artist,omitempty" yaml:"artist,omitempty" xml:"artist,omitempty"`
@@ -27,7 +30,7 @@ type TagProp struct {
 
 // IsZero used to check whether an object is zero to determine whether
 // it should be omitted when marshaling to yaml.
-func (tp *TagProp) IsZero() bool {
+func (tp *Id3Prop) IsZero() bool {
 	return tp.Title == "" && tp.Album == "" && tp.Artist == "" &&
 		tp.Composer == "" && tp.Genre == "" && tp.Year == 0 &&
 		tp.TrackNum == 0 && tp.TrackSum == 0 &&
@@ -37,7 +40,7 @@ func (tp *TagProp) IsZero() bool {
 }
 
 // Setup fills fields from tags metadata.
-func (tp *TagProp) Setup(m tag.Metadata) {
+func (tp *Id3Prop) Setup(m tag.Metadata) {
 	tp.Title = m.Title()
 	tp.Album = m.Album()
 	tp.Artist = m.Artist()
@@ -53,8 +56,8 @@ func (tp *TagProp) Setup(m tag.Metadata) {
 	}
 }
 
-// TagExtract trys to extract ID3 metadata from file.
-func TagExtract(session *Session, file io.ReadSeeker, puid Puid_t) (tp TagProp, err error) {
+// Id3Extract trys to extract ID3 metadata from file.
+func Id3Extract(session *Session, file io.ReadSeeker, puid Puid_t) (tp Id3Prop, err error) {
 	var m tag.Metadata
 	if m, err = tag.ReadFrom(file); err != nil {
 		return
@@ -65,14 +68,15 @@ func TagExtract(session *Session, file io.ReadSeeker, puid Puid_t) (tp TagProp, 
 		err = ErrEmptyID3
 		return
 	}
-	TagStoreSet(session, &TagStore{ // update database
+	Id3StoreSet(session, &Id3Store{ // update database
 		Puid: puid,
 		Prop: tp,
 	})
 	return
 }
 
-func ExtractThumbID3(syspath string) (md MediaData, err error) {
+// Id3ExtractThumb trys to extract thumbnail from file ID3 metadata.
+func Id3ExtractThumb(syspath string) (md MediaData, err error) {
 	// disable thumbnail if it not found
 	defer func() {
 		if md.Mime == MimeNil {
@@ -105,12 +109,43 @@ func ExtractThumbID3(syspath string) (md MediaData, err error) {
 	return
 }
 
-// TagKit is music file tags properties kit.
-type TagKit struct {
+// Mp3ExtractLength scans file to calculate length of play and average bitrate.
+// Bitrate is rounded up to kilobits.
+func Mp3ExtractLength(r io.Reader) (length time.Duration, bitrate int, err error) {
+	var d = mp3.NewDecoder(r)
+	var brm = map[mp3.FrameBitRate]int{}
+	var f mp3.Frame
+	var skipped int
+	var ms float64
+
+	for {
+		if err = d.Decode(&f, &skipped); err != nil {
+			if errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) {
+				err = nil // end of file is reached in any case
+			}
+			break
+		}
+		var h = f.Header()
+		brm[h.BitRate()]++
+		ms += (1000 / float64(f.Header().SampleRate())) * float64(f.Samples())
+	}
+	length = time.Duration(ms * float64(time.Millisecond))
+
+	var n, ws float64
+	for br, sn := range brm {
+		n += float64(sn)
+		ws += float64(br) * float64(sn)
+	}
+	bitrate = int(ws/n+500) / 1000
+	return
+}
+
+// Id3Kit is music file tags properties kit.
+type Id3Kit struct {
 	PuidProp `xorm:"extends" yaml:",inline"`
 	FileProp `xorm:"extends" yaml:",inline"`
 	TileProp `xorm:"extends" yaml:",inline"`
-	TagProp  `xorm:"extends" yaml:",inline"`
+	Id3Prop  `xorm:"extends" yaml:",inline"`
 }
 
 // The End.

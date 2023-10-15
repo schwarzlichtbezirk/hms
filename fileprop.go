@@ -48,11 +48,28 @@ func (pp *PuidProp) Setup(session *Session, syspath string) {
 	pp.PUID = PathStoreCache(session, syspath)
 }
 
+type ExtTag uint
+
+const (
+	TagThumb ExtTag = 1 << iota
+	TagExif
+	TagID3
+)
+
+type ExtProp struct {
+	Tags    ExtTag        `json:"tags" yaml:"tags" xml:"tags"`
+	Width   int           `json:"width,omitempty" yaml:"width,omitempty" xml:"width,omitempty"`
+	Height  int           `json:"height,omitempty" yaml:"height,omitempty" xml:"height,omitempty"`
+	Length  time.Duration `json:"length,omitempty" yaml:"length,omitempty" xml:"length,omitempty"`
+	BitRate int           `xorm:"bitrate" json:"bitrate,omitempty" yaml:"bitrate,omitempty" xml:"bitrate,omitempty"`
+}
+
 // FileKit is common files properties kit.
 type FileKit struct {
 	PuidProp `xorm:"extends" yaml:",inline"`
 	FileProp `xorm:"extends" yaml:",inline"`
 	TileProp `xorm:"extends" yaml:",inline"`
+	ExtProp  `xorm:"extends" yaml:",inline"`
 }
 
 type FileGroup struct {

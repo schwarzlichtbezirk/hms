@@ -302,6 +302,15 @@ func IsTypeID3(ext string) bool {
 	return false
 }
 
+// IsTypeMp3 checks that file is MP3.
+func IsTypeMp3(ext string) bool {
+	switch ext {
+	case ".mp3":
+		return true
+	}
+	return false
+}
+
 // IsTypeEXIF checks that file extension belongs to images with EXIF tags.
 func IsTypeEXIF(ext string) bool {
 	switch ext {

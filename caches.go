@@ -95,26 +95,11 @@ type GpsInfo struct {
 }
 
 // FromProp fills fields with values from ExifProp.
-func (gi *GpsInfo) FromProp(ep *ExifProp) {
-	gi.DateTime = ep.DateTime
-	gi.Latitude = ep.Latitude
-	gi.Longitude = ep.Longitude
-	gi.Altitude = ep.Altitude
-}
-
-type ExtCnt uint
-
-const (
-	CntThumb ExtCnt = 1 << iota
-	CntExif
-	CntID3
-)
-
-type ExtProp struct {
-	Content ExtCnt        `json:"content" yaml:"content" xml:"content"`
-	Width   int           `json:"width,omitempty" yaml:"width,omitempty" xml:"width,omitempty"`
-	Height  int           `json:"height,omitempty" yaml:"height,omitempty" xml:"height,omitempty"`
-	Length  time.Duration `json:"length,omitempty" yaml:"length,omitempty" xml:"length,omitempty"`
+func (gi *GpsInfo) FromProp(tp *ExifProp) {
+	gi.DateTime = tp.DateTime
+	gi.Latitude = tp.Latitude
+	gi.Longitude = tp.Longitude
+	gi.Altitude = tp.Altitude
 }
 
 type TempCell[T any] struct {
@@ -138,7 +123,7 @@ type (
 	DirStore  Store[DirProp]
 	ExtStore  Store[ExtProp]
 	ExifStore Store[ExifProp]
-	TagStore  Store[TagProp]
+	Id3Store  Store[Id3Prop]
 )
 
 var (
@@ -257,20 +242,20 @@ func ExtStoreSet(session *Session, xst *ExtStore) (err error) {
 	return
 }
 
-func GpsCachePut(puid Puid_t, ep ExifProp) {
-	if ep.Latitude != 0 || ep.Longitude != 0 {
+func GpsCachePut(puid Puid_t, tp ExifProp) {
+	if tp.Latitude != 0 || tp.Longitude != 0 {
 		var gi GpsInfo
-		gi.FromProp(&ep)
+		gi.FromProp(&tp)
 		gpscache.Poke(puid, gi)
 	}
 }
 
 // ExifStoreGet returns value from EXIF database.
-func ExifStoreGet(session *Session, puid Puid_t) (ep ExifProp, ok bool) {
+func ExifStoreGet(session *Session, puid Puid_t) (tp ExifProp, ok bool) {
 	// try to get from database
 	var est ExifStore
 	if ok, _ = session.ID(puid).Get(&est); ok {
-		ep = est.Prop
+		tp = est.Prop
 		return
 	}
 	return
@@ -287,10 +272,10 @@ func ExifStoreSet(session *Session, est *ExifStore) (err error) {
 	return
 }
 
-// TagStoreGet returns value from tags database.
-func TagStoreGet(session *Session, puid Puid_t) (tp TagProp, ok bool) {
+// Id3StoreGet returns value from tags database.
+func Id3StoreGet(session *Session, puid Puid_t) (tp Id3Prop, ok bool) {
 	// try to get from database
-	var tst TagStore
+	var tst Id3Store
 	if ok, _ = session.ID(puid).Get(&tst); ok {
 		tp = tst.Prop
 		return
@@ -298,8 +283,8 @@ func TagStoreGet(session *Session, puid Puid_t) (tp TagProp, ok bool) {
 	return
 }
 
-// TagStoreSet puts value to tags database.
-func TagStoreSet(session *Session, tst *TagStore) (err error) {
+// Id3StoreSet puts value to tags database.
+func Id3StoreSet(session *Session, tst *Id3Store) (err error) {
 	// set to database
 	if affected, _ := session.InsertOne(tst); affected == 0 {
 		_, err = session.ID(tst.Puid).AllCols().Omit("puid").Update(tst)
@@ -421,10 +406,10 @@ func HdCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 
 	// try to extract orientation from EXIF
 	var orientation = OrientNormal
-	if ep, ok := ExifStoreGet(session, puid); ok && ep.Orientation > 0 {
-		orientation = ep.Orientation
-	} else if ep, err := ExifExtract(session, file, puid); err == nil && ep.Orientation > 0 {
-		orientation = ep.Orientation
+	if tp, ok := ExifStoreGet(session, puid); ok && tp.Orientation > 0 {
+		orientation = tp.Orientation
+	} else if tp, err := ExifExtract(session, file, puid); err == nil && tp.Orientation > 0 {
+		orientation = tp.Orientation
 	}
 	if _, err = file.Seek(io.SeekStart, 0); err != nil {
 		return
@@ -676,7 +661,7 @@ func InitStorage() (err error) {
 	XormStorage.SetLogger(&xlb)
 
 	_, err = SqlSession(func(session *Session) (res any, err error) {
-		if err = session.Sync(&PathStore{}, &DirStore{}, &ExtStore{}, &ExifStore{}, &TagStore{}); err != nil {
+		if err = session.Sync(&PathStore{}, &DirStore{}, &ExtStore{}, &ExifStore{}, &Id3Store{}); err != nil {
 			return
 		}
 

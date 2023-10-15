@@ -107,7 +107,7 @@ func cchinfAPI(w http.ResponseWriter, r *http.Request) {
 		pathcount, _ = session.Count(&PathStore{})
 		dircount, _  = session.Count(&DirStore{})
 		exifcount, _ = session.Count(&ExifStore{})
-		tagcount, _  = session.Count(&TagStore{})
+		tagcount, _  = session.Count(&Id3Store{})
 		gpscount     = gpscache.Len()
 		etmbcount    = etmbcache.Len()
 		etmbsize     = CacheSize(etmbcache)
@@ -281,8 +281,8 @@ func tagsAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	var ext = GetFileExt(syspath)
 	if IsTypeEXIF(ext) {
-		var ep ExifProp
-		if ep, ok = ExifStoreGet(session, arg.PUID); !ok {
+		var tp ExifProp
+		if tp, ok = ExifStoreGet(session, arg.PUID); !ok {
 			var file File
 			if file, err = OpenFile(syspath); err != nil {
 				WriteError500(w, r, err, AECtagsopexif)
@@ -299,10 +299,10 @@ func tagsAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 				WriteError500(w, r, err, AECtagsgoexif)
 				return
 			}
-			ep, _ = ExifExtract(session, file, arg.PUID)
-			ep.ImgProp.Setup(imc)
+			tp, _ = ExifExtract(session, file, arg.PUID)
+			tp.ImgProp.Setup(imc)
 		}
-		ret.Prop = &ep
+		ret.Prop = &tp
 	} else if IsTypeDecoded(ext) {
 		var file File
 		if file, err = OpenFile(syspath); err != nil {
@@ -320,8 +320,8 @@ func tagsAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		ip.Setup(imc)
 		ret.Prop = &ip
 	} else if IsTypeID3(ext) {
-		var tp TagProp
-		if tp, ok = TagStoreGet(session, arg.PUID); !ok {
+		var tp Id3Prop
+		if tp, ok = Id3StoreGet(session, arg.PUID); !ok {
 			var file File
 			if file, err = OpenFile(syspath); err != nil {
 				WriteError500(w, r, err, AECtagsopid3)
@@ -329,7 +329,7 @@ func tagsAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			}
 			defer file.Close()
 
-			if tp, err = TagExtract(session, file, arg.PUID); err != nil {
+			if tp, err = Id3Extract(session, file, arg.PUID); err != nil {
 				WriteError(w, r, http.StatusNoContent, err, AECtagsnoid3)
 				return
 			}

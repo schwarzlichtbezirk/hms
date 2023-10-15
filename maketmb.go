@@ -152,7 +152,7 @@ func ExtractThmub(session *Session, syspath string) (md MediaData, err error) {
 
 	var ext = GetFileExt(syspath)
 	if IsTypeID3(ext) {
-		md, err = ExtractThumbID3(syspath)
+		md, err = Id3ExtractThumb(syspath)
 	} else if IsTypeEXIF(ext) {
 		md, err = ExtractThumbEXIF(syspath)
 	} else {
@@ -218,7 +218,7 @@ func CacheThumb(session *Session, syspath string) (md MediaData, err error) {
 	if IsTypeID3(ext) {
 		if Cfg.FitEmbeddedTmb {
 			var mdtag MediaData
-			if mdtag, err = ExtractThumbID3(syspath); err != nil {
+			if mdtag, err = Id3ExtractThumb(syspath); err != nil {
 				return
 			}
 			// create sized image for thumbnail
@@ -269,10 +269,10 @@ func CacheThumb(session *Session, syspath string) (md MediaData, err error) {
 	// try to extract orientation from EXIF
 	var puid = PathStoreCache(session, syspath)
 	var orientation = OrientNormal
-	if ep, ok := ExifStoreGet(session, puid); ok && ep.Orientation > 0 {
-		orientation = ep.Orientation
-	} else if ep, err := ExifExtract(session, file, puid); err == nil && ep.Orientation > 0 {
-		orientation = ep.Orientation
+	if tp, ok := ExifStoreGet(session, puid); ok && tp.Orientation > 0 {
+		orientation = tp.Orientation
+	} else if tp, err := ExifExtract(session, file, puid); err == nil && tp.Orientation > 0 {
+		orientation = tp.Orientation
 	}
 	if _, err = file.Seek(io.SeekStart, 0); err != nil {
 		return
@@ -372,10 +372,10 @@ func CacheTile(session *Session, syspath string, wdh, hgt int) (md MediaData, er
 	// try to extract orientation from EXIF
 	var puid = PathStoreCache(session, syspath)
 	var orientation = OrientNormal
-	if ep, ok := ExifStoreGet(session, puid); ok && ep.Orientation > 0 {
-		orientation = ep.Orientation
-	} else if ep, err := ExifExtract(session, file, puid); err == nil && ep.Orientation > 0 {
-		orientation = ep.Orientation
+	if tp, ok := ExifStoreGet(session, puid); ok && tp.Orientation > 0 {
+		orientation = tp.Orientation
+	} else if tp, err := ExifExtract(session, file, puid); err == nil && tp.Orientation > 0 {
+		orientation = tp.Orientation
 	}
 	if _, err = file.Seek(io.SeekStart, 0); err != nil {
 		return

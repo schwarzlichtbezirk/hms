@@ -22,6 +22,7 @@ require (
 	github.com/schwarzlichtbezirk/wpk v1.6.0
 	github.com/spate/glimage v0.0.0-20200505055513-fbdcc60a65e5
 	github.com/studio-b12/gowebdav v0.9.0
+	github.com/tcolgate/mp3 v0.0.0-20170426193717-e79c5a46d300
 	golang.org/x/crypto v0.14.0
 	golang.org/x/image v0.13.0
 	golang.org/x/sync v0.4.0

@@ -30,6 +30,7 @@ type ExtStat struct {
 	extcount  uint64
 	exifcount uint64
 	id3count  uint64
+	mp3count  uint64
 }
 
 type CnvStat struct {
@@ -45,7 +46,7 @@ type CnvStat struct {
 type ExtBuf struct {
 	extbuf  []ExtStore
 	exifbuf []ExifStore
-	id3buf  []TagStore
+	id3buf  []Id3Store
 }
 
 var (
@@ -56,7 +57,7 @@ func (buf *ExtBuf) Init() {
 	const limit = 256
 	buf.extbuf = make([]ExtStore, 0, limit)
 	buf.exifbuf = make([]ExifStore, 0, limit)
-	buf.id3buf = make([]TagStore, 0, limit)
+	buf.id3buf = make([]Id3Store, 0, limit)
 }
 
 func (buf *ExtBuf) Push(val any) {
@@ -65,7 +66,7 @@ func (buf *ExtBuf) Push(val any) {
 		buf.extbuf = append(buf.extbuf, st)
 	case ExifStore:
 		buf.exifbuf = append(buf.exifbuf, st)
-	case TagStore:
+	case Id3Store:
 		buf.id3buf = append(buf.id3buf, st)
 	default:
 		panic(ErrBadType)
@@ -185,18 +186,18 @@ func Extract(fpath string, buf *ExtBuf, es *ExtStat) (err error) {
 		defer file.Close()
 
 		var xp ExtProp
-		var ep ExifProp
+		var tp ExifProp
 		var imc image.Config
 
 		if x, err := exif.Decode(file); err == nil {
-			ep.Setup(x)
-			if !ep.IsZero() {
-				GpsCachePut(puid, ep)
+			tp.Setup(x)
+			if !tp.IsZero() {
+				GpsCachePut(puid, tp)
 				buf.Push(ExifStore{
 					Puid: puid,
-					Prop: ep,
+					Prop: tp,
 				})
-				xp.Content = CntExif // EXIF is exist
+				xp.Tags = TagExif // EXIF is exist
 				atomic.AddUint64(&es.exifcount, 1)
 			}
 		}
@@ -208,8 +209,8 @@ func Extract(fpath string, buf *ExtBuf, es *ExtStat) (err error) {
 			return
 		}
 		xp.Width, xp.Height = imc.Width, imc.Height
-		if ep.ThumbJpegLen > 0 {
-			xp.Content |= CntThumb
+		if tp.ThumbJpegLen > 0 {
+			xp.Tags |= TagThumb
 		}
 		buf.Push(ExtStore{
 			Puid: puid,
@@ -229,7 +230,7 @@ func Extract(fpath string, buf *ExtBuf, es *ExtStat) (err error) {
 		if imc, _, err = image.DecodeConfig(file); err != nil {
 			return
 		}
-		xp.Content = 0
+		xp.Tags = 0
 		xp.Width, xp.Height = imc.Width, imc.Height
 		buf.Push(ExtStore{
 			Puid: puid,
@@ -244,22 +245,32 @@ func Extract(fpath string, buf *ExtBuf, es *ExtStat) (err error) {
 		defer file.Close()
 
 		var xp ExtProp
-		var tp TagProp
+		var tp Id3Prop
 
 		if m, err := tag.ReadFrom(file); err == nil {
 			tp.Setup(m)
 			if !tp.IsZero() {
-				buf.Push(TagStore{
+				buf.Push(Id3Store{
 					Puid: puid,
 					Prop: tp,
 				})
-				xp.Content = CntID3
+				xp.Tags = TagID3
 				atomic.AddUint64(&es.id3count, 1)
 			}
 		}
 
+		if IsTypeMp3(ext) {
+			if _, err = file.Seek(io.SeekStart, 0); err != nil {
+				return
+			}
+			if xp.Length, xp.BitRate, err = Mp3ExtractLength(file); err != nil {
+				return
+			}
+			atomic.AddUint64(&es.mp3count, 1)
+		}
+
 		if tp.ThumbLen > 0 {
-			xp.Content |= CntThumb
+			xp.Tags |= TagThumb
 		}
 		buf.Push(ExtStore{
 			Puid: puid,

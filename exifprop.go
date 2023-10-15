@@ -56,16 +56,16 @@ type ExifProp struct {
 
 // IsZero used to check whether an object is zero to determine whether
 // it should be omitted when marshaling to yaml.
-func (ep *ExifProp) IsZero() bool {
-	return ep.Width == 0 && ep.Height == 0 && ep.Model == "" &&
-		ep.Make == "" && ep.Software == "" && ep.DateTime.IsZero() &&
-		ep.Orientation == 0 && ep.ExposureTime == "" && ep.ExposureProg == 0 &&
-		ep.FNumber == 0 && ep.ISOSpeed == 0 && ep.ShutterSpeed == 0 &&
-		ep.Aperture == 0 && ep.ExposureBias == 0 && ep.LightSource == 0 &&
-		ep.Focal == 0 && ep.Focal35mm == 0 && ep.DigitalZoom == 0 &&
-		ep.Flash == 0 && ep.UniqueID == "" && ep.ThumbJpegLen == 0 &&
-		ep.Latitude == 0 && ep.Longitude == 0 && ep.Altitude == 0 &&
-		ep.Satellites == ""
+func (tp *ExifProp) IsZero() bool {
+	return tp.Width == 0 && tp.Height == 0 && tp.Model == "" &&
+		tp.Make == "" && tp.Software == "" && tp.DateTime.IsZero() &&
+		tp.Orientation == 0 && tp.ExposureTime == "" && tp.ExposureProg == 0 &&
+		tp.FNumber == 0 && tp.ISOSpeed == 0 && tp.ShutterSpeed == 0 &&
+		tp.Aperture == 0 && tp.ExposureBias == 0 && tp.LightSource == 0 &&
+		tp.Focal == 0 && tp.Focal35mm == 0 && tp.DigitalZoom == 0 &&
+		tp.Flash == 0 && tp.UniqueID == "" && tp.ThumbJpegLen == 0 &&
+		tp.Latitude == 0 && tp.Longitude == 0 && tp.Altitude == 0 &&
+		tp.Satellites == ""
 }
 
 func RatFloat32(t *tiff.Tag) float32 {
@@ -83,109 +83,109 @@ func RatFloat64(t *tiff.Tag) float64 {
 }
 
 // Setup fills fields from given EXIF structure.
-func (ep *ExifProp) Setup(x *exif.Exif) {
+func (tp *ExifProp) Setup(x *exif.Exif) {
 	var err error
 	var t *tiff.Tag
 
 	if t, err = x.Get(exif.PixelXDimension); err == nil {
-		ep.Width, _ = t.Int(0)
+		tp.Width, _ = t.Int(0)
 	}
 	if t, err = x.Get(exif.PixelYDimension); err == nil {
-		ep.Height, _ = t.Int(0)
+		tp.Height, _ = t.Int(0)
 	}
 	if t, err = x.Get(exif.Model); err == nil {
-		ep.Model, _ = t.StringVal()
+		tp.Model, _ = t.StringVal()
 	}
 	if t, err = x.Get(exif.Make); err == nil {
-		ep.Make, _ = t.StringVal()
+		tp.Make, _ = t.StringVal()
 	}
 	if t, err = x.Get(exif.Software); err == nil {
-		ep.Software, _ = t.StringVal()
+		tp.Software, _ = t.StringVal()
 	}
 	if tm, err := x.DateTime(); err == nil {
-		ep.DateTime = tm
+		tp.DateTime = tm
 	}
 	if t, err = x.Get(exif.Orientation); err == nil {
-		ep.Orientation, _ = t.Int(0)
+		tp.Orientation, _ = t.Int(0)
 	}
 	if t, err = x.Get(exif.ExposureTime); err == nil {
 		var numer, denom, _ = t.Rat2(0)
-		ep.ExposureTime = fmt.Sprintf("%d/%d", numer, denom)
+		tp.ExposureTime = fmt.Sprintf("%d/%d", numer, denom)
 	}
 	if t, err = x.Get(exif.ExposureProgram); err == nil {
-		ep.ExposureProg, _ = t.Int(0)
+		tp.ExposureProg, _ = t.Int(0)
 	}
 	if t, err = x.Get(exif.FNumber); err == nil {
-		ep.FNumber = RatFloat32(t)
+		tp.FNumber = RatFloat32(t)
 	}
 	if t, err = x.Get(exif.ISOSpeedRatings); err == nil {
-		ep.ISOSpeed, _ = t.Int(0)
+		tp.ISOSpeed, _ = t.Int(0)
 	}
 	if t, err = x.Get(exif.ShutterSpeedValue); err == nil {
-		ep.ShutterSpeed = RatFloat32(t)
+		tp.ShutterSpeed = RatFloat32(t)
 	}
 	if t, err = x.Get(exif.ApertureValue); err == nil {
-		ep.Aperture = RatFloat32(t)
+		tp.Aperture = RatFloat32(t)
 	}
 	if t, err = x.Get(exif.ExposureBiasValue); err == nil {
-		ep.ExposureBias = RatFloat32(t)
+		tp.ExposureBias = RatFloat32(t)
 	}
 	if t, err = x.Get(exif.LightSource); err == nil {
-		ep.LightSource, _ = t.Int(0)
+		tp.LightSource, _ = t.Int(0)
 	}
 	if t, err = x.Get(exif.FocalLength); err == nil {
-		ep.Focal = RatFloat32(t)
+		tp.Focal = RatFloat32(t)
 	}
 	if t, err = x.Get(exif.FocalLengthIn35mmFilm); err == nil {
-		ep.Focal35mm, _ = t.Int(0)
+		tp.Focal35mm, _ = t.Int(0)
 	}
 	if t, err = x.Get(exif.DigitalZoomRatio); err == nil {
-		ep.DigitalZoom = RatFloat32(t)
+		tp.DigitalZoom = RatFloat32(t)
 	}
 	if t, err = x.Get(exif.ImageLength); err == nil {
-		ep.Height, _ = t.Int(0)
+		tp.Height, _ = t.Int(0)
 	}
 	if t, err = x.Get(exif.Flash); err == nil {
-		ep.Flash, _ = t.Int(0)
+		tp.Flash, _ = t.Int(0)
 	}
 	if t, err = x.Get(exif.ImageUniqueID); err == nil {
-		ep.UniqueID, _ = t.StringVal()
+		tp.UniqueID, _ = t.StringVal()
 	}
 	if t, err = x.Get(exif.ThumbJPEGInterchangeFormatLength); err == nil {
-		ep.ThumbJpegLen, _ = t.Int(0)
+		tp.ThumbJpegLen, _ = t.Int(0)
 	}
 	if lat, lon, err := x.LatLong(); err == nil {
-		ep.Latitude, ep.Longitude = lat, lon
+		tp.Latitude, tp.Longitude = lat, lon
 	}
 	if t, err = x.Get(exif.GPSAltitude); err == nil {
-		ep.Altitude = RatFloat32(t)
+		tp.Altitude = RatFloat32(t)
 		if t, err = x.Get(exif.GPSAltitudeRef); err == nil {
 			var ref, _ = t.Int(0)
 			if ref == 1 {
-				ep.Altitude *= -1.0
+				tp.Altitude *= -1.0
 			}
 		}
 	}
 	if t, err = x.Get(exif.GPSSatelites); err == nil {
-		ep.Satellites, _ = t.StringVal()
+		tp.Satellites, _ = t.StringVal()
 	}
 }
 
 // ExifExtract trys to extract EXIF metadata from file.
-func ExifExtract(session *Session, file io.Reader, puid Puid_t) (ep ExifProp, err error) {
+func ExifExtract(session *Session, file io.Reader, puid Puid_t) (tp ExifProp, err error) {
 	var x *exif.Exif
 	if x, err = exif.Decode(file); err != nil {
 		return
 	}
 
-	ep.Setup(x)
-	if ep.IsZero() {
+	tp.Setup(x)
+	if tp.IsZero() {
 		err = ErrEmptyExif
 		return
 	}
 	ExifStoreSet(session, &ExifStore{ // update database
 		Puid: puid,
-		Prop: ep,
+		Prop: tp,
 	})
 	return
 }
