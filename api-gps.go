@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/rwcarlsen/goexif/exif"
-	. "github.com/schwarzlichtbezirk/hms/config"
 	. "github.com/schwarzlichtbezirk/hms/joint"
 )
 

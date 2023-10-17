@@ -2,7 +2,6 @@ package hms
 
 import (
 	"fmt"
-	"image"
 	"io"
 	"time"
 
@@ -12,17 +11,6 @@ import (
 	"github.com/rwcarlsen/goexif/mknote"
 	"github.com/rwcarlsen/goexif/tiff"
 )
-
-// ImgProp is base properties for all recognized images formats.
-type ImgProp struct {
-	Width  int `json:"width,omitempty" yaml:"width,omitempty" xml:"width,omitempty"`
-	Height int `json:"height,omitempty" yaml:"height,omitempty" xml:"height,omitempty"`
-}
-
-// Setup fills fields from given image.Config structure.
-func (ip *ImgProp) Setup(imc image.Config) {
-	ip.Width, ip.Height = imc.Width, imc.Height
-}
 
 // ExifProp is EXIF tags properties chunk.
 type ExifProp struct {

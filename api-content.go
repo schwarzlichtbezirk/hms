@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	. "github.com/schwarzlichtbezirk/hms/config"
 	. "github.com/schwarzlichtbezirk/hms/joint"
 
 	"github.com/gorilla/mux"

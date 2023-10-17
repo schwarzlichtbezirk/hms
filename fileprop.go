@@ -48,18 +48,24 @@ func (pp *PuidProp) Setup(session *Session, syspath string) {
 	pp.PUID = PathStoreCache(session, syspath)
 }
 
-type ExtTag uint
+// ImgProp is base properties for all recognized images formats.
+type ImgProp struct {
+	Width  int `json:"width,omitempty" yaml:"width,omitempty" xml:"width,omitempty"`
+	Height int `json:"height,omitempty" yaml:"height,omitempty" xml:"height,omitempty"`
+}
+
+type ExtTag int
 
 const (
-	TagThumb ExtTag = 1 << iota
-	TagExif
-	TagID3
+	TagDis  ExtTag = -1
+	TagExif ExtTag = 1
+	TagID3  ExtTag = 2
 )
 
 type ExtProp struct {
-	Tags    ExtTag        `json:"tags" yaml:"tags" xml:"tags"`
-	Width   int           `json:"width,omitempty" yaml:"width,omitempty" xml:"width,omitempty"`
-	Height  int           `json:"height,omitempty" yaml:"height,omitempty" xml:"height,omitempty"`
+	Tags    ExtTag `json:"tags" yaml:"tags" xml:"tags"`
+	Thumb   Mime_t `json:"thumb" yaml:"thumb" xml:"thumb"`
+	ImgProp `xorm:"extends" yaml:",inline"`
 	Length  time.Duration `json:"length,omitempty" yaml:"length,omitempty" xml:"length,omitempty"`
 	BitRate int           `xorm:"bitrate" json:"bitrate,omitempty" yaml:"bitrate,omitempty" xml:"bitrate,omitempty"`
 }

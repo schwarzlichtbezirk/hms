@@ -1,7 +1,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"image"
 	"io"
@@ -12,14 +11,12 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/dhowden/tag"
-	. "github.com/schwarzlichtbezirk/hms"
-	. "github.com/schwarzlichtbezirk/hms/config"
-	. "github.com/schwarzlichtbezirk/hms/joint"
+	hms "github.com/schwarzlichtbezirk/hms"
+	jnt "github.com/schwarzlichtbezirk/hms/joint"
 
+	"github.com/dhowden/tag"
 	"github.com/rwcarlsen/goexif/exif"
 	"github.com/rwcarlsen/goexif/tiff"
-	"xorm.io/xorm"
 )
 
 type FileMap = map[string]fs.FileInfo
@@ -43,80 +40,6 @@ type CnvStat struct {
 	tmbsize   uint64
 }
 
-type ExtBuf struct {
-	extbuf  []ExtStore
-	exifbuf []ExifStore
-	id3buf  []Id3Store
-}
-
-var (
-	ErrBadType = errors.New("type does not supported to insert into database")
-)
-
-func (buf *ExtBuf) Init() {
-	const limit = 256
-	buf.extbuf = make([]ExtStore, 0, limit)
-	buf.exifbuf = make([]ExifStore, 0, limit)
-	buf.id3buf = make([]Id3Store, 0, limit)
-}
-
-func (buf *ExtBuf) Push(val any) {
-	switch st := val.(type) {
-	case ExtStore:
-		buf.extbuf = append(buf.extbuf, st)
-	case ExifStore:
-		buf.exifbuf = append(buf.exifbuf, st)
-	case Id3Store:
-		buf.id3buf = append(buf.id3buf, st)
-	default:
-		panic(ErrBadType)
-	}
-}
-
-func (buf *ExtBuf) Overflow(session *xorm.Session) (err error) {
-	if len(buf.extbuf) == cap(buf.extbuf) {
-		if _, err = session.Insert(&buf.extbuf); err != nil {
-			return
-		}
-		buf.extbuf = buf.extbuf[:0]
-	}
-	if len(buf.exifbuf) == cap(buf.exifbuf) {
-		if _, err = session.Insert(&buf.exifbuf); err != nil {
-			return
-		}
-		buf.exifbuf = buf.exifbuf[:0]
-	}
-	if len(buf.id3buf) == cap(buf.id3buf) {
-		if _, err = session.Insert(&buf.id3buf); err != nil {
-			return
-		}
-		buf.id3buf = buf.id3buf[:0]
-	}
-	return
-}
-
-func (buf *ExtBuf) Flush(session *xorm.Session) (err error) {
-	if len(buf.extbuf) > 0 {
-		if _, err = session.Insert(&buf.extbuf); err != nil {
-			return
-		}
-		buf.extbuf = buf.extbuf[:0]
-	}
-	if len(buf.exifbuf) > 0 {
-		if _, err = session.Insert(&buf.exifbuf); err != nil {
-			return
-		}
-		buf.exifbuf = buf.exifbuf[:0]
-	}
-	if len(buf.id3buf) > 0 {
-		if _, err = session.Insert(&buf.id3buf); err != nil {
-			return
-		}
-		buf.id3buf = buf.id3buf[:0]
-	}
-	return
-}
-
 // Tiles multipliers:
 var tilemult = [...]int{
 	2, 3, 4, 6, 8, 9, 10, 12, 15, 16, 18, 20, 24, 30, 36,
@@ -129,14 +52,14 @@ type pathpair struct {
 
 // IsCached returns "true" if thumbnail and all tiles are cached for given filename.
 func IsCached(fpath string) bool {
-	if !ThumbPkg.HasTagset(fpath) {
+	if !hms.ThumbPkg.HasTagset(fpath) {
 		return false
 	}
 
 	for _, tm := range tilemult {
 		var wdh, hgt = tm * 24, tm * 18
 		var tilepath = fmt.Sprintf("%s?%dx%d", fpath, wdh, hgt)
-		if !TilesPkg.HasTagset(tilepath) {
+		if !hms.TilesPkg.HasTagset(tilepath) {
 			return false
 		}
 	}
@@ -145,27 +68,27 @@ func IsCached(fpath string) bool {
 }
 
 // FileList forms list of files to process by caching algorithm.
-func FileList(fsys FS, pathlist *[]string, extlist, cnvlist FileMap) (err error) {
+func FileList(fsys jnt.FS, pathlist *[]string, extlist, cnvlist FileMap) (err error) {
 	fs.WalkDir(fsys, ".", func(fpath string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-		var fullpath = JoinFast(string(fsys), fpath)
+		var fullpath = hms.JoinFast(string(fsys), fpath)
 		if d.Name() != "." && d.Name() != ".." {
-			if _, ok := PathCache.GetRev(fullpath); !ok {
+			if _, ok := hms.PathCache.GetRev(fullpath); !ok {
 				*pathlist = append(*pathlist, fullpath)
 			}
 		}
 		if d.IsDir() {
 			return nil // file is directory
 		}
-		var ext = GetFileExt(fpath)
-		if IsTypeDecoded(ext) {
+		var ext = hms.GetFileExt(fpath)
+		if hms.IsTypeDecoded(ext) {
 			if !IsCached(fullpath) {
 				cnvlist[fullpath], _ = d.Info()
 			}
 		}
-		if IsTypeEXIF(ext) || IsTypeDecoded(ext) || IsTypeID3(ext) {
+		if hms.IsTypeEXIF(ext) || hms.IsTypeDecoded(ext) || hms.IsTypeID3(ext) {
 			extlist[fullpath], _ = d.Info()
 		}
 		return nil
@@ -173,58 +96,58 @@ func FileList(fsys FS, pathlist *[]string, extlist, cnvlist FileMap) (err error)
 	return
 }
 
-func Extract(fpath string, buf *ExtBuf, es *ExtStat) (err error) {
+func Extract(fpath string, session *hms.Session, buf *hms.StoreBuf, es *ExtStat) (err error) {
 	atomic.AddUint64(&es.filecount, 1)
 
-	var puid, _ = PathCache.GetRev(fpath)
-	var ext = GetFileExt(fpath)
-	if IsTypeEXIF(ext) {
-		var file File
+	var puid, _ = hms.PathCache.GetRev(fpath)
+	var ext = hms.GetFileExt(fpath)
+	if hms.IsTypeEXIF(ext) {
+		var file jnt.File
 		if file, err = os.Open(fpath); err != nil {
 			return // can not open file
 		}
 		defer file.Close()
 
-		var xp ExtProp
-		var tp ExifProp
+		var xp hms.ExtProp
+		var tp hms.ExifProp
 		var imc image.Config
 
 		if x, err := exif.Decode(file); err == nil {
 			tp.Setup(x)
 			if !tp.IsZero() {
-				GpsCachePut(puid, tp)
-				buf.Push(ExifStore{
+				hms.GpsCachePut(puid, tp)
+				buf.Push(session, hms.ExifStore{
 					Puid: puid,
 					Prop: tp,
 				})
-				xp.Tags = TagExif // EXIF is exist
+				xp.Tags = hms.TagExif // EXIF is exist
+				if tp.ThumbJpegLen > 0 {
+					xp.Thumb = hms.MimeJpeg
+				}
 				atomic.AddUint64(&es.exifcount, 1)
 			}
 		}
 
-		if _, err = file.Seek(io.SeekStart, 0); err != nil {
+		if _, err = file.Seek(0, io.SeekStart); err != nil {
 			return
 		}
 		if imc, _, err = image.DecodeConfig(file); err != nil {
 			return
 		}
 		xp.Width, xp.Height = imc.Width, imc.Height
-		if tp.ThumbJpegLen > 0 {
-			xp.Tags |= TagThumb
-		}
-		buf.Push(ExtStore{
+		buf.Push(session, hms.ExtStore{
 			Puid: puid,
 			Prop: xp,
 		})
 		atomic.AddUint64(&es.extcount, 1)
-	} else if IsTypeDecoded(ext) {
-		var file File
+	} else if hms.IsTypeDecoded(ext) {
+		var file jnt.File
 		if file, err = os.Open(fpath); err != nil {
 			return // can not open file
 		}
 		defer file.Close()
 
-		var xp ExtProp
+		var xp hms.ExtProp
 		var imc image.Config
 
 		if imc, _, err = image.DecodeConfig(file); err != nil {
@@ -232,47 +155,45 @@ func Extract(fpath string, buf *ExtBuf, es *ExtStat) (err error) {
 		}
 		xp.Tags = 0
 		xp.Width, xp.Height = imc.Width, imc.Height
-		buf.Push(ExtStore{
+		buf.Push(session, hms.ExtStore{
 			Puid: puid,
 			Prop: xp,
 		})
 		atomic.AddUint64(&es.extcount, 1)
-	} else if IsTypeID3(ext) {
-		var file File
+	} else if hms.IsTypeID3(ext) {
+		var file jnt.File
 		if file, err = os.Open(fpath); err != nil {
 			return // can not open file
 		}
 		defer file.Close()
 
-		var xp ExtProp
-		var tp Id3Prop
+		var xp hms.ExtProp
+		var tp hms.Id3Prop
 
 		if m, err := tag.ReadFrom(file); err == nil {
 			tp.Setup(m)
 			if !tp.IsZero() {
-				buf.Push(Id3Store{
+				buf.Push(session, hms.Id3Store{
 					Puid: puid,
 					Prop: tp,
 				})
-				xp.Tags = TagID3
+				xp.Tags = hms.TagID3
+				xp.Thumb = tp.TmbMime
 				atomic.AddUint64(&es.id3count, 1)
 			}
 		}
 
-		if IsTypeMp3(ext) {
-			if _, err = file.Seek(io.SeekStart, 0); err != nil {
+		if hms.IsTypeMp3(ext) {
+			if _, err = file.Seek(0, io.SeekStart); err != nil {
 				return
 			}
-			if xp.Length, xp.BitRate, err = Mp3ExtractLength(file); err != nil {
+			if xp.Length, xp.BitRate, err = hms.Mp3ExtractLength(file); err != nil {
 				return
 			}
 			atomic.AddUint64(&es.mp3count, 1)
 		}
 
-		if tp.ThumbLen > 0 {
-			xp.Tags |= TagThumb
-		}
-		buf.Push(ExtStore{
+		buf.Push(session, hms.ExtStore{
 			Puid: puid,
 			Prop: xp,
 		})
@@ -284,14 +205,14 @@ func Extract(fpath string, buf *ExtBuf, es *ExtStat) (err error) {
 
 func Convert(fpath string, fi fs.FileInfo, cs *CnvStat) (err error) {
 	// lazy decode
-	var orientation = OrientNormal
+	var orientation = hms.OrientNormal
 	var src image.Image
 	var decode = func() {
 		if src != nil {
 			return
 		}
 
-		var file File
+		var file jnt.File
 		if file, err = os.Open(fpath); err != nil {
 			return // can not open file
 		}
@@ -302,7 +223,7 @@ func Convert(fpath string, fi fs.FileInfo, cs *CnvStat) (err error) {
 			return // can not recognize format or decode config
 		}
 		if float32(imc.Width*imc.Height+5e5)/1e6 > Cfg.ImageMaxMpx {
-			err = ErrTooBig
+			err = hms.ErrTooBig
 			return // file is too big
 		}
 
@@ -326,28 +247,28 @@ func Convert(fpath string, fi fs.FileInfo, cs *CnvStat) (err error) {
 		}
 	}
 
-	var md MediaData
-	md.Mime = MimeWebp
+	var md hms.MediaData
+	md.Mime = hms.MimeWebp
 	md.Time = fi.ModTime()
 	var size = fi.Size()
 
 	atomic.AddUint64(&cs.filecount, 1)
 	atomic.AddUint64(&cs.filesize, uint64(size))
 
-	var ext = GetFileExt(fpath)
-	if IsTypeTileImg(ext) && size > 512*1024 {
+	var ext = hms.GetFileExt(fpath)
+	if hms.IsTypeTileImg(ext) && size > 512*1024 {
 		for _, tm := range tilemult {
 			var wdh, hgt = tm * 24, tm * 18
 			var tilepath = fmt.Sprintf("%s?%dx%d", fpath, wdh, hgt)
-			if !TilesPkg.HasTagset(tilepath) {
+			if !hms.TilesPkg.HasTagset(tilepath) {
 				if decode(); err != nil {
 					return
 				}
-				if md.Data, err = DrawTile(src, wdh, hgt, orientation); err != nil {
+				if md.Data, err = hms.DrawTile(src, wdh, hgt, orientation); err != nil {
 					return
 				}
 				// push tile to package
-				if err = TilesPkg.PutFile(tilepath, md); err != nil {
+				if err = hms.TilesPkg.PutFile(tilepath, md); err != nil {
 					return
 				}
 				atomic.AddUint64(&cs.tilecount, 1)
@@ -356,15 +277,15 @@ func Convert(fpath string, fi fs.FileInfo, cs *CnvStat) (err error) {
 		}
 	}
 
-	if !ThumbPkg.HasTagset(fpath) {
+	if !hms.ThumbPkg.HasTagset(fpath) {
 		if decode(); err != nil {
 			return
 		}
-		if md.Data, err = DrawThumb(src, orientation); err != nil {
+		if md.Data, err = hms.DrawThumb(src, orientation); err != nil {
 			return
 		}
 		// push thumbnail to package
-		if err = ThumbPkg.PutFile(fpath, md); err != nil {
+		if err = hms.ThumbPkg.PutFile(fpath, md); err != nil {
 			return
 		}
 		atomic.AddUint64(&cs.tmbcount, 1)
@@ -379,7 +300,7 @@ func BatchPathList(pathlist []string) {
 	fmt.Fprintf(os.Stdout, "start caching %d file paths\n", len(pathlist))
 	var t0 = time.Now()
 
-	var session = XormStorage.NewSession()
+	var session = hms.XormStorage.NewSession()
 	defer session.Close()
 
 	const limit = 256
@@ -390,7 +311,7 @@ func BatchPathList(pathlist []string) {
 		} else {
 			pc = pathlist[i:]
 		}
-		var nps = make([]PathStore, len(pc))
+		var nps = make([]hms.PathStore, len(pc))
 		for i, fpath := range pc {
 			nps[i].Path = fpath
 			nps[i].Puid = 0
@@ -404,17 +325,17 @@ func BatchPathList(pathlist []string) {
 		}
 		for _, ps := range nps {
 			if ps.Puid != 0 {
-				PathCache.Set(ps.Puid, ps.Path)
+				hms.PathCache.Set(ps.Puid, ps.Path)
 			}
 		}
 	}
 
-	var d = time.Now().Sub(t0) / time.Second * time.Second
+	var d = time.Since(t0) / time.Second * time.Second
 	fmt.Fprintf(os.Stdout, "file paths caching complete, spent %v\n", d)
 }
 
 func UpdateExtList(extlist FileMap) {
-	var session = XormStorage.NewSession()
+	var session = hms.XormStorage.NewSession()
 	defer session.Close()
 
 	const limit = 256
@@ -426,7 +347,7 @@ func UpdateExtList(extlist FileMap) {
 		}
 		offset += limit
 		for _, puid := range puids {
-			if fpath, ok := PathCache.GetDir(Puid_t(puid)); ok {
+			if fpath, ok := hms.PathCache.GetDir(hms.Puid_t(puid)); ok {
 				delete(extlist, fpath)
 			} else {
 				fmt.Fprintf(os.Stdout, "found unlinked PUID in ext_store: %d\n", puid)
@@ -440,7 +361,7 @@ func UpdateExtList(extlist FileMap) {
 
 func BatchExtractor(extlist FileMap) {
 	var es ExtStat
-	var thrnum = GetScanThreadsNum()
+	var thrnum = hms.GetScanThreadsNum()
 
 	fmt.Fprintf(os.Stdout, "start processing %d files with %d threads...\n", len(extlist), thrnum)
 	var t0 = time.Now()
@@ -460,7 +381,7 @@ func BatchExtractor(extlist FileMap) {
 			case <-tinfo.C:
 				// information thread
 				if ready := atomic.LoadUint64(&es.filecount); ready > 0 {
-					var remain = time.Duration(float64(time.Now().Sub(t0)) / float64(ready) * (total - float64(ready)))
+					var remain = time.Duration(float64(time.Since(t0)) / float64(ready) * (total - float64(ready)))
 					if remain < time.Hour {
 						remain = remain / time.Second * time.Second
 					} else {
@@ -482,25 +403,24 @@ func BatchExtractor(extlist FileMap) {
 		go func() {
 			defer workwg.Done()
 
-			var session = XormStorage.NewSession()
+			var session = hms.XormStorage.NewSession()
 			defer session.Close()
 
 			var err error
-			var buf ExtBuf
+			var buf hms.StoreBuf
 			buf.Init()
 
 			for c := range pathchan {
-				if err = Extract(c.fpath, &buf, &es); err != nil {
+				if err = Extract(c.fpath, session, &buf, &es); err != nil {
 					atomic.AddUint64(&es.errcount, 1)
 				}
-				buf.Overflow(session)
 			}
 			buf.Flush(session)
 		}()
 	}
 	workwg.Wait()
 
-	var d = time.Now().Sub(t0) / time.Second * time.Second
+	var d = time.Since(t0) / time.Second * time.Second
 	fmt.Fprintf(os.Stdout, "processed %d files, spent %v, processing complete\n", es.filecount, d)
 	fmt.Fprintf(os.Stdout, "total %d files with embedded info processed, %d of them with EXIF, %d of them with ID3 tags\n", es.extcount, es.exifcount, es.id3count)
 	if es.errcount > 0 {
@@ -510,7 +430,7 @@ func BatchExtractor(extlist FileMap) {
 
 func BatchCacher(cnvlist FileMap) {
 	var cs CnvStat
-	var thrnum = GetScanThreadsNum()
+	var thrnum = hms.GetScanThreadsNum()
 
 	fmt.Fprintf(os.Stdout, "start processing %d files with %d threads to prepare tiles and thumbnails...\n", len(cnvlist), thrnum)
 	var t0 = time.Now()
@@ -531,18 +451,18 @@ func BatchCacher(cnvlist FileMap) {
 				continue
 			case <-tsync.C:
 				// sync file tags tables of caches
-				if err := ThumbPkg.Sync(); err != nil {
+				if err := hms.ThumbPkg.Sync(); err != nil {
 					Log.Error(err)
 					return
 				}
-				if err := TilesPkg.Sync(); err != nil {
+				if err := hms.TilesPkg.Sync(); err != nil {
 					Log.Error(err)
 					return
 				}
 			case <-tinfo.C:
 				// information thread
 				if ready := atomic.LoadUint64(&cs.filecount); ready > 0 {
-					var remain = time.Duration(float64(time.Now().Sub(t0)) / float64(ready) * (total - float64(ready)))
+					var remain = time.Duration(float64(time.Since(t0)) / float64(ready) * (total - float64(ready)))
 					if remain < time.Hour {
 						remain = remain / time.Second * time.Second
 					} else {
@@ -574,7 +494,7 @@ func BatchCacher(cnvlist FileMap) {
 	}
 	workwg.Wait()
 
-	var d = time.Now().Sub(t0) / time.Second * time.Second
+	var d = time.Since(t0) / time.Second * time.Second
 	fmt.Fprintf(os.Stdout, "processed %d files, spent %v, processing complete\n", cs.filecount, d)
 	fmt.Fprintf(os.Stdout, "produced %d tiles and %d thumbnails\n", cs.tilecount, cs.tmbcount)
 	if cs.tilesize > 0 {
@@ -592,7 +512,7 @@ func RunCacher() {
 	fmt.Fprintf(os.Stdout, "starts caching processing\n")
 
 	var shares []string
-	for _, acc := range PrfList {
+	for _, acc := range hms.PrfList {
 		for _, shr := range acc.Shares {
 			var add = true
 			for i, p := range shares {
@@ -607,7 +527,7 @@ func RunCacher() {
 				}
 			}
 			if add {
-				if _, ok := CatPathKey[shr.Path]; !ok {
+				if _, ok := hms.CatPathKey[shr.Path]; !ok {
 					shares = append(shares, shr.Path)
 				}
 			}
@@ -635,7 +555,7 @@ func RunCacher() {
 			}
 		}
 		if add {
-			if _, ok := CatPathKey[fpath]; !ok {
+			if _, ok := hms.CatPathKey[fpath]; !ok {
 				shares = append(shares, fpath)
 			}
 		}
@@ -648,10 +568,10 @@ func RunCacher() {
 	for i, p := range shares {
 		fmt.Fprintf(os.Stdout, "starts scan %d share with path %s\n", i+1, p)
 		var t0 = time.Now()
-		if err := FileList(FS(p), &pathlist, extlist, cnvlist); err != nil {
+		if err := FileList(jnt.FS(p), &pathlist, extlist, cnvlist); err != nil {
 			Log.Fatal(err)
 		}
-		var d = time.Now().Sub(t0)
+		var d = time.Since(t0)
 		fmt.Fprintf(os.Stdout, "scan %d share complete, spent %v\n", i+1, d)
 		fmt.Fprintf(os.Stdout, "found %d files to extract embedded info\n", len(extlist)-extsum)
 		extsum = len(extlist)

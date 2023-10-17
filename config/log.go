@@ -71,11 +71,6 @@ type Logger struct {
 	level LL         // log level
 }
 
-type XormLoggerBridge struct {
-	*Logger
-	showSQL bool // show SQL messages
-}
-
 // Log is global static ring logger object.
 var Log = NewLogger(os.Stderr, LstdFlags, 300)
 
@@ -351,6 +346,11 @@ var levBridgeRev = map[xlog.LogLevel]LL{
 	xlog.LOG_INFO:    LLinfo,
 	xlog.LOG_WARNING: LLwarn,
 	xlog.LOG_ERR:     LLerror,
+}
+
+type XormLoggerBridge struct {
+	*Logger
+	showSQL bool // show SQL messages
 }
 
 // Level implement xorm.ILogger.

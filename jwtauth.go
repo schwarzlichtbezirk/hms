@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	. "github.com/schwarzlichtbezirk/hms/config"
-
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 )

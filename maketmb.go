@@ -12,7 +12,6 @@ import (
 	"io/fs"
 	"time"
 
-	. "github.com/schwarzlichtbezirk/hms/config"
 	. "github.com/schwarzlichtbezirk/hms/joint"
 
 	"github.com/disintegration/gift"
@@ -29,7 +28,7 @@ import (
 type Mime_t int16
 
 const (
-	MimeDis  Mime_t = -1 // file can not be cached for thumbnails.
+	MimeDis  Mime_t = -1 // thumbnail is absent or file can not be cached for thumbnails.
 	MimeNil  Mime_t = 0  // file is not cached for thumbnails, have indeterminate state.
 	MimeUnk  Mime_t = 1  // image/*
 	MimeGif  Mime_t = 2  // image/gif
@@ -171,7 +170,10 @@ func ExtractThmub(session *Session, syspath string) (md MediaData, err error) {
 // DrawThumb produces new thumbnail object.
 func DrawThumb(src image.Image, orientation int) (data []byte, err error) {
 	var dst image.Image
-	if src.Bounds().In(image.Rect(0, 0, Cfg.TmbResolution[0], Cfg.TmbResolution[1])) {
+	src.Bounds()
+	if src.Bounds().In(image.Rectangle{
+		Max: image.Point{Cfg.TmbResolution[0], Cfg.TmbResolution[1]},
+	}) {
 		dst = src
 	} else {
 		var fltlst = AddOrientFilter([]gift.Filter{
@@ -262,7 +264,7 @@ func CacheThumb(session *Session, syspath string) (md MediaData, err error) {
 		err = ErrTooBig
 		return // file is too big
 	}
-	if _, err = file.Seek(io.SeekStart, 0); err != nil {
+	if _, err = file.Seek(0, io.SeekStart); err != nil {
 		return // can not seek to start
 	}
 
@@ -274,7 +276,7 @@ func CacheThumb(session *Session, syspath string) (md MediaData, err error) {
 	} else if tp, err := ExifExtract(session, file, puid); err == nil && tp.Orientation > 0 {
 		orientation = tp.Orientation
 	}
-	if _, err = file.Seek(io.SeekStart, 0); err != nil {
+	if _, err = file.Seek(0, io.SeekStart); err != nil {
 		return
 	}
 
@@ -365,7 +367,7 @@ func CacheTile(session *Session, syspath string, wdh, hgt int) (md MediaData, er
 		err = ErrTooBig
 		return // file is too big
 	}
-	if _, err = file.Seek(io.SeekStart, 0); err != nil {
+	if _, err = file.Seek(0, io.SeekStart); err != nil {
 		return // can not seek to start
 	}
 
@@ -377,7 +379,7 @@ func CacheTile(session *Session, syspath string, wdh, hgt int) (md MediaData, er
 	} else if tp, err := ExifExtract(session, file, puid); err == nil && tp.Orientation > 0 {
 		orientation = tp.Orientation
 	}
-	if _, err = file.Seek(io.SeekStart, 0); err != nil {
+	if _, err = file.Seek(0, io.SeekStart); err != nil {
 		return
 	}
 

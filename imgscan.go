@@ -7,7 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	. "github.com/schwarzlichtbezirk/hms/config"
+	cfg "github.com/schwarzlichtbezirk/hms/config"
 )
 
 // Cacher provides function to perform image converting.
@@ -95,7 +95,7 @@ func GetScanThreadsNum() int {
 	if thrnum == 0 {
 		thrnum = runtime.GOMAXPROCS(0)
 	}
-	if DevMode { // only one thread under the debugger
+	if cfg.DevMode { // only one thread under the debugger
 		thrnum = 1
 	}
 	return thrnum

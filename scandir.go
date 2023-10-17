@@ -78,20 +78,13 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 	}
 
 	// get directories, ISO-files and playlists as folder properties
-	var idds = make([]Puid_t, 0, len(vpuids))
-	for _, puid := range vpuids {
-		if !DirCache.Has(puid) {
-			idds = append(idds, puid)
-		}
+	var dss []DirStore
+	if err = session.In("puid", vpuids).Find(&dss); err != nil {
+		return
 	}
-	if len(idds) > 0 {
-		var dss []DirStore
-		if err = session.In("puid", idds).Find(&dss); err != nil {
-			return
-		}
-		for _, ds := range dss {
-			DirCache.Poke(ds.Puid, ds.Prop)
-		}
+	var dirmap = map[Puid_t]DirProp{}
+	for _, ds := range dss {
+		dirmap[ds.Puid] = ds.Prop
 	}
 
 	// format response
@@ -116,7 +109,7 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 		var grp = prf.GetPathGroup(fpath, fi)
 		*lstp.FGrp.Field(grp)++
 
-		if dp, ok := DirCache.Peek(puid); ok || fp.Type != FTfile {
+		if dp, ok := dirmap[puid]; ok || fp.Type != FTfile {
 			var dk = DirKit{
 				PuidProp: pp,
 				FileProp: fp,
@@ -203,7 +196,6 @@ func ScanCat(prf *Profile, session *Session, puid Puid_t, cat string, percent fl
 	var newpuids []uint64
 	var vpaths []DiskPath
 	for _, ds := range dss {
-		DirCache.Set(ds.Puid, ds.Prop)
 		if fpath, ok := PathCache.GetDir(ds.Puid); ok {
 			vpaths = append(vpaths, MakeFilePath(fpath))
 		} else {

@@ -16,16 +16,14 @@ import (
 	"sync"
 	"time"
 
-	. "github.com/schwarzlichtbezirk/hms/config"
-
-	"github.com/gorilla/mux"
+	cfg "github.com/schwarzlichtbezirk/hms/config"
 	"github.com/schwarzlichtbezirk/wpk"
 	"github.com/schwarzlichtbezirk/wpk/bulk"
 	"github.com/schwarzlichtbezirk/wpk/mmap"
+
+	"github.com/gorilla/mux"
 	"gopkg.in/yaml.v3"
 )
-
-type void = struct{}
 
 type jerr struct {
 	error
@@ -165,11 +163,8 @@ func (m *XmlMap) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 // Routes API //
 ////////////////
 
-// Router is local alias for router type.
-type Router = mux.Router
-
 // "Server" field for HTTP headers.
-var serverlabel = fmt.Sprintf("hms/%s (%s)", BuildVers, runtime.GOOS)
+var serverlabel = fmt.Sprintf("hms/%s (%s)", cfg.BuildVers, runtime.GOOS)
 
 // ParseBody fetch and unmarshal request argument.
 func ParseBody(w http.ResponseWriter, r *http.Request, arg any) (err error) {
@@ -399,7 +394,7 @@ var ResFS wpk.Union // resources packages root dir.
 func OpenPackage() (err error) {
 	for _, fname := range Cfg.WPKName {
 		var t0 = time.Now()
-		var fpath = JoinFast(PackPath, fname)
+		var fpath = JoinFast(cfg.PackPath, fname)
 		var pkg = wpk.NewPackage()
 		if err = pkg.OpenFile(fpath); err != nil {
 			return
@@ -486,8 +481,6 @@ func LoadTemplates() (err error) {
 // Transaction locker, locks until handler will be done.
 var handwg sync.WaitGroup
 
-const alias_cond = "(cid1=? AND cid2=?) OR (cid1=? AND cid2=?)"
-
 // WaitHandlers waits until all transactions will be done.
 func WaitHandlers() {
 	handwg.Wait()
@@ -568,7 +561,7 @@ func AjaxMiddleware(next http.Handler) http.Handler {
 }
 
 // RegisterRoutes puts application routes to given router.
-func RegisterRoutes(gmux *Router) {
+func RegisterRoutes(gmux *mux.Router) {
 	gmux.Use(AjaxMiddleware)
 
 	// UI pages

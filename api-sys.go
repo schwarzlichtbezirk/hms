@@ -11,7 +11,7 @@ import (
 	"strconv"
 	"time"
 
-	. "github.com/schwarzlichtbezirk/hms/config"
+	cfg "github.com/schwarzlichtbezirk/hms/config"
 	. "github.com/schwarzlichtbezirk/hms/joint"
 
 	"github.com/schwarzlichtbezirk/wpk"
@@ -60,18 +60,18 @@ func reloadAPI(w http.ResponseWriter, r *http.Request) {
 // APIHANDLER
 func srvinfAPI(w http.ResponseWriter, r *http.Request) {
 	var ret = XmlMap{
-		"buildvers": BuildVers,
-		"buildtime": BuildTime,
+		"buildvers": cfg.BuildVers,
+		"buildtime": cfg.BuildTime,
 		"started":   starttime,
 		"govers":    runtime.Version(),
 		"os":        runtime.GOOS,
 		"numcpu":    runtime.NumCPU(),
 		"maxprocs":  runtime.GOMAXPROCS(0),
-		"curpath":   CurPath,
-		"exepath":   ExePath,
-		"cfgpath":   ConfigPath,
-		"wpkpath":   PackPath,
-		"cchpath":   CachePath,
+		"curpath":   cfg.CurPath,
+		"exepath":   cfg.ExePath,
+		"cfgpath":   cfg.ConfigPath,
+		"wpkpath":   cfg.PackPath,
+		"cchpath":   cfg.CachePath,
 	}
 
 	WriteOK(w, r, ret)
@@ -83,8 +83,8 @@ func memusgAPI(w http.ResponseWriter, r *http.Request) {
 	runtime.ReadMemStats(&mem)
 
 	var ret = XmlMap{
-		"buildvers":     BuildVers,
-		"buildtime":     BuildTime,
+		"buildvers":     cfg.BuildVers,
+		"buildtime":     cfg.BuildTime,
 		"running":       time.Since(starttime) / time.Millisecond,
 		"heapalloc":     mem.HeapAlloc,
 		"heapsys":       mem.HeapSys,
@@ -176,7 +176,7 @@ func getlogAPI(w http.ResponseWriter, r *http.Request) {
 	var ret struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
 
-		List []LogStore `json:"list" yaml:"list" xml:"list>item"`
+		List []cfg.LogStore `json:"list" yaml:"list" xml:"list>item"`
 	}
 
 	var size = Log.Size()
@@ -215,16 +215,16 @@ func getlogAPI(w http.ResponseWriter, r *http.Request) {
 	if !from.IsZero() {
 		var h = Log.Ring()
 		for i := 0; i < num; i++ {
-			if from.After(h.Value.(LogStore).Time) {
+			if from.After(h.Value.(cfg.LogStore).Time) {
 				num = i
 				break
 			}
 		}
 	}
-	ret.List = make([]LogStore, num)
+	ret.List = make([]cfg.LogStore, num)
 	var h = Log.Ring()
 	for i := 0; i < num; i++ {
-		ret.List[num-i-1] = h.Value.(LogStore)
+		ret.List[num-i-1] = h.Value.(cfg.LogStore)
 		h = h.Prev()
 	}
 
@@ -295,12 +295,12 @@ func tagsAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 				WriteError(w, r, http.StatusNoContent, err, AECtagsnoexif)
 				return
 			}
-			if _, err = file.Seek(io.SeekStart, 0); err != nil {
+			if _, err = file.Seek(0, io.SeekStart); err != nil {
 				WriteError500(w, r, err, AECtagsgoexif)
 				return
 			}
 			tp, _ = ExifExtract(session, file, arg.PUID)
-			tp.ImgProp.Setup(imc)
+			tp.Width, tp.Height = imc.Width, imc.Height
 		}
 		ret.Prop = &tp
 	} else if IsTypeDecoded(ext) {
@@ -317,7 +317,7 @@ func tagsAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			return
 		}
 		var ip ImgProp
-		ip.Setup(imc)
+		ip.Width, ip.Height = imc.Width, imc.Height
 		ret.Prop = &ip
 	} else if IsTypeID3(ext) {
 		var tp Id3Prop

@@ -11,14 +11,14 @@ import (
 	"sync"
 	"time"
 
-	. "github.com/schwarzlichtbezirk/hms/config"
+	cfg "github.com/schwarzlichtbezirk/hms/config"
 	. "github.com/schwarzlichtbezirk/hms/joint"
+	"github.com/schwarzlichtbezirk/wpk"
+	"github.com/schwarzlichtbezirk/wpk/fsys"
 
 	"github.com/chai2010/webp"
 	"github.com/disintegration/gift"
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/schwarzlichtbezirk/wpk"
-	"github.com/schwarzlichtbezirk/wpk/fsys"
 	"xorm.io/xorm"
 	"xorm.io/xorm/names"
 )
@@ -29,6 +29,12 @@ const (
 
 	tmbfile = "thumb.wpt"
 	tilfile = "tiles.wpt"
+)
+
+var (
+	ToSlash = wpk.ToSlash
+	Cfg     = cfg.Cfg
+	Log     = cfg.Log
 )
 
 // package caches
@@ -127,9 +133,7 @@ type (
 )
 
 var (
-	PathCache = NewBimap[Puid_t, string]()  // Bidirectional map for PUIDs and system paths.
-	DirCache  = NewCache[Puid_t, DirProp]() // LRU cache for directories.
-
+	PathCache = NewBimap[Puid_t, string]()    // Bidirectional map for PUIDs and system paths.
 	gpscache  = NewCache[Puid_t, GpsInfo]()   // FIFO cache with GPS coordinates.
 	tilecache = NewCache[Puid_t, *TileProp]() // FIFO cache with set of available tiles.
 
@@ -195,26 +199,8 @@ func PathStoreCache(session *Session, fpath string) (puid Puid_t) {
 	return
 }
 
-// DirStoreGet returns value from directories cache.
-func DirStoreGet(session *Session, puid Puid_t) (dp DirProp, ok bool) {
-	// try to get from memory cache
-	if dp, ok = DirCache.Get(puid); ok {
-		return
-	}
-	// try to get from database
-	var dst DirStore
-	if ok, _ = session.ID(puid).Get(&dst); ok { // skip errors
-		dp = dst.Prop
-		DirCache.Set(puid, dp) // update cache
-		return
-	}
-	return
-}
-
 // DirStoreSet puts value to directories cache.
 func DirStoreSet(session *Session, dst *DirStore) (err error) {
-	// set to memory cache
-	DirCache.Set(dst.Puid, dst.Prop)
 	// set to database
 	if affected, _ := session.InsertOne(dst); affected == 0 {
 		_, err = session.ID(dst.Puid).AllCols().Omit("puid").Update(dst)
@@ -389,7 +375,7 @@ func HdCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 		err = ErrTooBig
 		return // file is too big
 	}
-	if _, err = file.Seek(io.SeekStart, 0); err != nil {
+	if _, err = file.Seek(0, io.SeekStart); err != nil {
 		return // can not seek to start
 	}
 
@@ -411,7 +397,7 @@ func HdCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 	} else if tp, err := ExifExtract(session, file, puid); err == nil && tp.Orientation > 0 {
 		orientation = tp.Orientation
 	}
-	if _, err = file.Seek(io.SeekStart, 0); err != nil {
+	if _, err = file.Seek(0, io.SeekStart); err != nil {
 		return
 	}
 
@@ -621,13 +607,13 @@ func PackInfo(fname string, pkg *wpk.Package, d time.Duration) {
 // InitPackages opens all existing caches.
 func InitPackages() (err error) {
 	var d time.Duration
-	if ThumbPkg, d, err = InitCacheWriter(JoinFast(CachePath, tmbfile)); err != nil {
+	if ThumbPkg, d, err = InitCacheWriter(JoinFast(cfg.CachePath, tmbfile)); err != nil {
 		err = fmt.Errorf("inits thumbnails database: %w", err)
 		return
 	}
 	PackInfo(tmbfile, &ThumbPkg.Package, d)
 
-	if TilesPkg, d, err = InitCacheWriter(JoinFast(CachePath, tilfile)); err != nil {
+	if TilesPkg, d, err = InitCacheWriter(JoinFast(cfg.CachePath, tilfile)); err != nil {
 		err = fmt.Errorf("inits tiles database: %w", err)
 		return
 	}
@@ -650,14 +636,14 @@ func ClosePackages() (err error) {
 
 // InitStorage inits database caches engine.
 func InitStorage() (err error) {
-	if XormStorage, err = xorm.NewEngine(Cfg.XormDriverName, JoinFast(CachePath, dirfile)); err != nil {
+	if XormStorage, err = xorm.NewEngine(Cfg.XormDriverName, JoinFast(cfg.CachePath, dirfile)); err != nil {
 		return
 	}
 	XormStorage.SetMapper(names.GonicMapper{})
-	var xlb = XormLoggerBridge{
+	var xlb = cfg.XormLoggerBridge{
 		Logger: Log,
 	}
-	xlb.ShowSQL(DevMode)
+	xlb.ShowSQL(cfg.DevMode)
 	XormStorage.SetLogger(&xlb)
 
 	_, err = SqlSession(func(session *Session) (res any, err error) {
@@ -714,31 +700,6 @@ func LoadPathCache() (err error) {
 	}
 
 	Log.Infof("loaded %d items into path cache", PathCache.Len())
-	return
-}
-
-// LoadDirCache loads whole directories table from database into cache.
-func LoadDirCache() (err error) {
-	var session = XormStorage.NewSession()
-	defer session.Close()
-
-	const limit = 256
-	var offset int
-	for {
-		var chunk []DirStore
-		if err = session.Limit(limit, offset).Find(&chunk); err != nil {
-			return
-		}
-		offset += limit
-		for _, ds := range chunk {
-			DirCache.Poke(ds.Puid, ds.Prop)
-		}
-		if limit > len(chunk) {
-			break
-		}
-	}
-
-	Log.Infof("loaded %d items into dir cache", DirCache.Len())
 	return
 }
 

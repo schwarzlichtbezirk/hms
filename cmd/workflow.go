@@ -10,11 +10,11 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/gorilla/mux"
-	. "github.com/schwarzlichtbezirk/hms"
-	. "github.com/schwarzlichtbezirk/hms/config"
-	. "github.com/schwarzlichtbezirk/hms/joint"
+	hms "github.com/schwarzlichtbezirk/hms"
+	cfg "github.com/schwarzlichtbezirk/hms/config"
+	jnt "github.com/schwarzlichtbezirk/hms/joint"
 
+	"github.com/gorilla/mux"
 	"github.com/jessevdk/go-flags"
 	"golang.org/x/crypto/acme/autocert"
 	"golang.org/x/sync/errgroup"
@@ -34,25 +34,30 @@ var (
 	exitwg sync.WaitGroup
 )
 
+var (
+	Cfg = cfg.Cfg
+	Log = cfg.Log
+)
+
 //////////////////////
 // Start web server //
 //////////////////////
 
 // Init performs global data initialization. Loads configuration files, initializes file cache.
 func Init() {
-	if DevMode {
+	if cfg.DevMode {
 		Log.Infof("*running in developer mode*")
 	}
-	Log.Infof("version: %s, builton: %s", BuildVers, BuildTime)
+	Log.Infof("version: %s, builton: %s", cfg.BuildVers, cfg.BuildTime)
 
 	var err error
 
 	// get confiruration path
-	if ConfigPath, err = DetectConfigPath(); err != nil {
+	if cfg.ConfigPath, err = cfg.DetectConfigPath(); err != nil {
 		Log.Fatal(err)
 	}
 	// load content of Config structure from YAML-file.
-	if err = CfgReadYaml(cfgfile); err != nil {
+	if err = hms.CfgReadYaml(cfgfile); err != nil {
 		Log.Error("error at settings file: " + err.Error())
 	}
 	// rewrite settings from config file
@@ -60,19 +65,19 @@ func Init() {
 		Log.Error("error at command line flags: " + err.Error())
 		os.Exit(1)
 	}
-	Log.Infof("config path: %s", ConfigPath)
+	Log.Infof("config path: %s", cfg.ConfigPath)
 
 	// get package path
-	if PackPath, err = DetectPackPath(); err != nil {
+	if cfg.PackPath, err = cfg.DetectPackPath(); err != nil {
 		Log.Fatal(err)
 	}
-	Log.Infof("package path: %s", PackPath)
+	Log.Infof("package path: %s", cfg.PackPath)
 
 	// get cache path
-	if CachePath, err = DetectCachePath(); err != nil {
+	if cfg.CachePath, err = cfg.DetectCachePath(); err != nil {
 		Log.Fatal(err)
 	}
-	Log.Infof("cache path: %s", CachePath)
+	Log.Infof("cache path: %s", cfg.CachePath)
 
 	Log.Info("starts")
 
@@ -108,71 +113,68 @@ func Init() {
 	}()
 
 	// load package with data files
-	if err = OpenPackage(); err != nil {
+	if err = hms.OpenPackage(); err != nil {
 		Log.Fatal("can not load wpk-package: " + err.Error())
 	}
 
 	// init database caches
-	if err = InitStorage(); err != nil {
+	if err = hms.InitStorage(); err != nil {
 		Log.Fatal("can not init XORM storage: " + err.Error())
 	}
-	SqlSession(func(session *Session) (res any, err error) {
-		var pathcount, _ = session.Count(&PathStore{})
+	hms.SqlSession(func(session *hms.Session) (res any, err error) {
+		var pathcount, _ = session.Count(&hms.PathStore{})
 		Log.Infof("found %d items at system path cache", pathcount)
-		var dircount, _ = session.Count(&DirStore{})
+		var dircount, _ = session.Count(&hms.DirStore{})
 		Log.Infof("found %d items at directories cache", dircount)
-		var exifcount, _ = session.Count(&ExifStore{})
+		var exifcount, _ = session.Count(&hms.ExifStore{})
 		Log.Infof("found %d items at EXIF cache", exifcount)
-		var tagcount, _ = session.Count(&Id3Store{})
+		var tagcount, _ = session.Count(&hms.Id3Store{})
 		Log.Infof("found %d items at ID3-tags cache", tagcount)
 		return
 	})
 
 	// load path, directories and GPS caches
-	if err = LoadPathCache(); err != nil {
+	if err = hms.LoadPathCache(); err != nil {
 		Log.Fatal("path cache loading failure: " + err.Error())
 	}
-	if err = LoadDirCache(); err != nil {
-		Log.Fatal("dir cache loading failure: " + err.Error())
-	}
-	if err = LoadGpsCache(); err != nil {
+	if err = hms.LoadGpsCache(); err != nil {
 		Log.Fatal("GPS cache loading failure: " + err.Error())
 	}
 
-	if err = InitUserlog(); err != nil {
+	if err = hms.InitUserlog(); err != nil {
 		Log.Fatal("can not init XORM user log: " + err.Error())
 	}
-	if err = LoadUaMap(); err != nil {
+	if err = hms.LoadUaMap(); err != nil {
 		Log.Fatal("user agent map loading failure: " + err.Error())
 	}
 
 	// insert components templates into pages
-	if err = LoadTemplates(); err != nil {
+	if err = hms.LoadTemplates(); err != nil {
 		Log.Fatal(err)
 	}
 
 	// init wpk caches
-	if err = InitPackages(); err != nil {
+	if err = hms.InitPackages(); err != nil {
 		Log.Fatal(err)
 	}
 
 	// load profiles with roots, hidden and shares lists
-	if err = PrfReadYaml(prffile); err != nil {
+	if err = hms.PrfReadYaml(prffile); err != nil {
 		Log.Fatal("error at profiles file: " + err.Error())
 	}
 
 	// load white list
-	if err = ReadPasslist(passlst); err != nil {
+	if err = hms.ReadPasslist(passlst); err != nil {
 		Log.Fatal("error at white list file: " + err.Error())
 	}
 
 	// run thumbnails scanner
-	go ImgScanner.Scan()
+	go hms.ImgScanner.Scan()
 }
 
 // Run starts main application body.
 func Run() {
-	if Cfg.CacherMode&CmCacher != 0 {
+	if Cfg.CacherMode&cfg.CmCacher != 0 {
 		RunCacher()
 		select {
 		case <-exitctx.Done():
@@ -180,17 +182,17 @@ func Run() {
 		default:
 		}
 	}
-	if Cfg.CacherMode&CmWebserver != 0 {
+	if Cfg.CacherMode&cfg.CmWebserver != 0 {
 		var gmux = mux.NewRouter()
-		RegisterRoutes(gmux)
+		hms.RegisterRoutes(gmux)
 		RunWeb(gmux)
 		WaitExit()
-		WaitHandlers()
+		hms.WaitHandlers()
 	}
 }
 
 // RunWeb launches server listeners.
-func RunWeb(gmux *Router) {
+func RunWeb(gmux *mux.Router) {
 	// helpers for graceful startup to prevent call to uninitialized data
 	var httpctx, httpcancel = context.WithCancel(context.Background())
 
@@ -254,7 +256,7 @@ func RunWeb(gmux *Router) {
 				if Cfg.UseAutoCert { // get certificate from letsencrypt.org
 					var m = &autocert.Manager{
 						Prompt:     autocert.AcceptTOS,
-						Cache:      autocert.DirCache(JoinFast(ConfigPath, "cert")),
+						Cache:      autocert.DirCache(hms.JoinFast(cfg.ConfigPath, "cert")),
 						Email:      Cfg.Email,
 						HostPolicy: autocert.HostWhitelist(Cfg.HostWhitelist...),
 					}
@@ -280,8 +282,8 @@ func RunWeb(gmux *Router) {
 				go func() {
 					httpwg.Done()
 					if err := server.ListenAndServeTLS(
-						JoinFast(ConfigPath, "serv.crt"),
-						JoinFast(ConfigPath, "prvk.pem")); err != http.ErrServerClosed {
+						hms.JoinFast(cfg.ConfigPath, "serv.crt"),
+						hms.JoinFast(cfg.ConfigPath, "prvk.pem")); err != http.ErrServerClosed {
 						Log.Fatalf("failed to serve on %s: %v", addr, err)
 						return
 					}
@@ -345,21 +347,21 @@ func Done() {
 	var wg errgroup.Group
 
 	wg.Go(func() (err error) {
-		if err := PrfWriteYaml(prffile); err != nil {
+		if err := hms.PrfWriteYaml(prffile); err != nil {
 			Log.Error("error on profiles list file: " + err.Error())
 		}
 		return
 	})
 
 	wg.Go(func() (err error) {
-		var ctx = ImgScanner.Stop()
+		var ctx = hms.ImgScanner.Stop()
 		<-ctx.Done()
 		return
 	})
 
 	// close all opened ISO-disks joints
 	wg.Go(func() (err error) {
-		for _, dc := range IsoCaches {
+		for _, dc := range jnt.IsoCaches {
 			dc.Close()
 		}
 		return
@@ -367,7 +369,7 @@ func Done() {
 
 	// close all opened FTP joints
 	wg.Go(func() (err error) {
-		for _, dc := range FtpCaches {
+		for _, dc := range jnt.FtpCaches {
 			dc.Close()
 		}
 		return
@@ -375,33 +377,33 @@ func Done() {
 
 	// close all opened SFTP joints
 	wg.Go(func() (err error) {
-		for _, dc := range SftpCaches {
+		for _, dc := range jnt.SftpCaches {
 			dc.Close()
 		}
 		return
 	})
 
 	wg.Go(func() (err error) {
-		ClosePackages()
+		hms.ClosePackages()
 		return
 	})
 
 	wg.Go(func() (err error) {
-		if XormStorage != nil {
-			XormStorage.Close()
+		if hms.XormStorage != nil {
+			hms.XormStorage.Close()
 		}
 		return
 	})
 
 	wg.Go(func() (err error) {
-		if XormUserlog != nil {
-			XormUserlog.Close()
+		if hms.XormUserlog != nil {
+			hms.XormUserlog.Close()
 		}
 		return
 	})
 
 	wg.Go(func() (err error) {
-		ResFS.Close()
+		hms.ResFS.Close()
 		return
 	})
 

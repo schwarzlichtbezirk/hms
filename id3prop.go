@@ -26,6 +26,7 @@ type Id3Prop struct {
 	Lyrics   string `json:"lyrics,omitempty" yaml:"lyrics,omitempty" xml:"lyrics,omitempty"`
 	Comment  string `json:"comment,omitempty" yaml:"comment,omitempty" xml:"comment,omitempty"`
 	ThumbLen int    `xorm:"'thumblen'" json:"thumblen,omitempty" yaml:"thumblen,omitempty" xml:"thumblen,omitempty"`
+	TmbMime  Mime_t `xorm:"'tmbmime'" json:"tmbmime,omitempty" yaml:"tmbmime,omitempty" xml:"tmbmime,omitempty"`
 }
 
 // IsZero used to check whether an object is zero to determine whether
@@ -53,6 +54,10 @@ func (tp *Id3Prop) Setup(m tag.Metadata) {
 	tp.Comment = m.Comment()
 	if pic := m.Picture(); pic != nil {
 		tp.ThumbLen = len(pic.Data)
+		tp.TmbMime = GetMimeVal(pic.MIMEType, pic.Ext)
+	} else {
+		tp.ThumbLen = 0
+		tp.TmbMime = MimeDis
 	}
 }
 
