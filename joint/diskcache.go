@@ -26,6 +26,7 @@ import (
 
 var (
 	ErrNotFound = errors.New("resource not found")
+	ErrNotIso   = errors.New("filesystem is not ISO9660")
 )
 
 // IsStatic returns whether file info refers to content
@@ -116,10 +117,6 @@ func (dc *DiskCache[T]) Put(val T) {
 		}
 	}))
 }
-
-var (
-	ErrNotIso = errors.New("filesystem is not ISO9660")
-)
 
 // IsoJoint opens file with ISO9660 disk and prepares disk-structure
 // to access to nested files.

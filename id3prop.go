@@ -5,7 +5,7 @@ import (
 	"io"
 	"time"
 
-	. "github.com/schwarzlichtbezirk/hms/joint"
+	jnt "github.com/schwarzlichtbezirk/hms/joint"
 
 	"github.com/dhowden/tag"
 	"github.com/tcolgate/mp3"
@@ -89,8 +89,8 @@ func Id3ExtractThumb(syspath string) (md MediaData, err error) {
 		}
 	}()
 
-	var file File
-	if file, err = OpenFile(syspath); err != nil {
+	var file jnt.File
+	if file, err = jnt.OpenFile(syspath); err != nil {
 		return
 	}
 	defer file.Close()

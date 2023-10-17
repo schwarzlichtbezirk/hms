@@ -3,14 +3,13 @@ package hms
 import (
 	"encoding/xml"
 	"errors"
-	"io"
 	"io/fs"
 	"net"
 	"net/http"
 	"path"
 	"time"
 
-	. "github.com/schwarzlichtbezirk/hms/joint"
+	jnt "github.com/schwarzlichtbezirk/hms/joint"
 )
 
 var catcolumn = map[Puid_t]string{
@@ -160,7 +159,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			gpscache.Range(func(puid Puid_t, gps GpsInfo) bool {
 				if fpath, ok := PathCache.GetDir(puid); ok {
 					if !acc.IsHidden(fpath) && acc.PathAccess(fpath, uid == aid) {
-						if fi, _ := StatFile(fpath); fi != nil {
+						if fi, _ := jnt.StatFile(fpath); fi != nil {
 							vfiles = append(vfiles, fi)
 							vpaths = append(vpaths, MakeFilePath(fpath))
 							n++
@@ -180,11 +179,11 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		ret.Static = true
 	} else {
 		var fi fs.FileInfo
-		if fi, err = StatFile(syspath); err != nil {
+		if fi, err = jnt.StatFile(syspath); err != nil {
 			WriteError500(w, r, err, AECfolderstat)
 			return
 		}
-		ret.Static = IsStatic(fi) || !fi.IsDir()
+		ret.Static = jnt.IsStatic(fi) || !fi.IsDir()
 
 		var ext = arg.Ext
 		if ext == "" && !fi.IsDir() {
@@ -201,8 +200,8 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 				return
 			}
 		} else if IsTypePlaylist(ext) {
-			var file io.ReadCloser
-			if file, err = OpenFile(syspath); err != nil {
+			var file jnt.File
+			if file, err = jnt.OpenFile(syspath); err != nil {
 				WriteError500(w, r, err, AECfolderopen)
 				return
 			}
@@ -246,7 +245,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			for _, track := range pl.Tracks {
 				var fpath = ToSlash(track.Location)
 				if !acc.IsHidden(fpath) && acc.PathAccess(fpath, uid == aid) {
-					if fi, _ := StatFile(fpath); fi != nil {
+					if fi, _ := jnt.StatFile(fpath); fi != nil {
 						vfiles = append(vfiles, fi)
 						vpaths = append(vpaths, MakeFilePath(fpath))
 					}

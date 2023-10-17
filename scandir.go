@@ -5,7 +5,7 @@ import (
 	"io/fs"
 	"time"
 
-	. "github.com/schwarzlichtbezirk/hms/joint"
+	jnt "github.com/schwarzlichtbezirk/hms/joint"
 )
 
 // ScanFileNameList returns file properties list for given list of
@@ -13,7 +13,7 @@ import (
 func ScanFileNameList(prf *Profile, session *Session, vpaths []DiskPath) (ret []any, lstp DirProp, err error) {
 	var files = make([]fs.FileInfo, len(vpaths))
 	for i, dp := range vpaths {
-		fi, _ := StatFile(dp.Path)
+		fi, _ := jnt.StatFile(dp.Path)
 		files[i] = fi
 	}
 
@@ -97,7 +97,7 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 			PUID:   puid,
 			Free:   prf.PathAccess(fpath, false),
 			Shared: prf.IsShared(fpath),
-			Static: IsStatic(fi),
+			Static: jnt.IsStatic(fi),
 		}
 		var fp FileProp
 		fp.Name = dp.Name
@@ -141,7 +141,7 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 // or directory in iso-disk.
 func ScanDir(prf *Profile, session *Session, dir string, isadmin bool) (ret []any, skipped int, err error) {
 	var files []fs.FileInfo
-	if files, err = ReadDir(dir); err != nil && len(files) == 0 {
+	if files, err = jnt.ReadDir(dir); err != nil && len(files) == 0 {
 		return
 	}
 

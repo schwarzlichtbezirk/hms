@@ -35,8 +35,9 @@ var (
 )
 
 var (
-	Cfg = cfg.Cfg
-	Log = cfg.Log
+	JoinFast = hms.JoinFast
+	Cfg      = cfg.Cfg
+	Log      = cfg.Log
 )
 
 //////////////////////
@@ -256,7 +257,7 @@ func RunWeb(gmux *mux.Router) {
 				if Cfg.UseAutoCert { // get certificate from letsencrypt.org
 					var m = &autocert.Manager{
 						Prompt:     autocert.AcceptTOS,
-						Cache:      autocert.DirCache(hms.JoinFast(cfg.ConfigPath, "cert")),
+						Cache:      autocert.DirCache(JoinFast(cfg.ConfigPath, "cert")),
 						Email:      Cfg.Email,
 						HostPolicy: autocert.HostWhitelist(Cfg.HostWhitelist...),
 					}
@@ -282,8 +283,8 @@ func RunWeb(gmux *mux.Router) {
 				go func() {
 					httpwg.Done()
 					if err := server.ListenAndServeTLS(
-						hms.JoinFast(cfg.ConfigPath, "serv.crt"),
-						hms.JoinFast(cfg.ConfigPath, "prvk.pem")); err != http.ErrServerClosed {
+						JoinFast(cfg.ConfigPath, "serv.crt"),
+						JoinFast(cfg.ConfigPath, "prvk.pem")); err != http.ErrServerClosed {
 						Log.Fatalf("failed to serve on %s: %v", addr, err)
 						return
 					}

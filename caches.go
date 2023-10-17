@@ -12,7 +12,7 @@ import (
 	"time"
 
 	cfg "github.com/schwarzlichtbezirk/hms/config"
-	. "github.com/schwarzlichtbezirk/hms/joint"
+	jnt "github.com/schwarzlichtbezirk/hms/joint"
 	"github.com/schwarzlichtbezirk/wpk"
 	"github.com/schwarzlichtbezirk/wpk/fsys"
 
@@ -32,9 +32,15 @@ const (
 )
 
 var (
-	ToSlash = wpk.ToSlash
-	Cfg     = cfg.Cfg
-	Log     = cfg.Log
+	JoinFast = wpk.JoinFast
+	ToSlash  = wpk.ToSlash
+	ToLower  = wpk.ToLower
+	Cfg      = cfg.Cfg
+	Log      = cfg.Log
+)
+
+type (
+	Session = xorm.Session
 )
 
 // package caches
@@ -56,7 +62,7 @@ var (
 	ErrNotDisk     = errors.New("file is not image of supported format")
 	ErrNoMTime     = errors.New("modify time tag does not found")
 	ErrNoMime      = errors.New("MIME tag does not found")
-	ErrEmptyExif   = errors.New("Exif metadata is empty")
+	ErrEmptyExif   = errors.New("EXIF metadata is empty")
 	ErrEmptyID3    = errors.New("ID3 metadata is empty")
 )
 
@@ -74,15 +80,6 @@ func PathStarts(fpath, prefix string) bool {
 	}
 	return false
 }
-
-// JoinFast performs fast join of two path chunks.
-var JoinFast = wpk.JoinFast
-
-// ToLower is high performance function to bring filenames to lower case in ASCII
-// without superfluous allocations if it possible.
-var ToLower = wpk.ToLower
-
-type Session = xorm.Session
 
 // SqlSession execute sql wrapped in a single session.
 func SqlSession(f func(*Session) (any, error)) (any, error) {
@@ -322,8 +319,8 @@ func MediaCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 		return // uncacheable type
 	}
 
-	var file File
-	if file, err = OpenFile(syspath); err != nil {
+	var file jnt.File
+	if file, err = jnt.OpenFile(syspath); err != nil {
 		return // can not open file
 	}
 	defer file.Close()
@@ -361,8 +358,8 @@ func HdCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 		return // file path not found
 	}
 
-	var file File
-	if file, err = OpenFile(syspath); err != nil {
+	var file jnt.File
+	if file, err = jnt.OpenFile(syspath); err != nil {
 		return // can not open file
 	}
 	defer file.Close()
@@ -568,7 +565,7 @@ func (fc *FileCache) GetData(fpath string) (md MediaData, err error) {
 			return
 		}
 
-		var file File
+		var file jnt.File
 		if file, err = fc.OpenTagset(ts); err != nil {
 			return
 		}

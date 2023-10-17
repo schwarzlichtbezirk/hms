@@ -73,7 +73,7 @@ func FileList(fsys jnt.FS, pathlist *[]string, extlist, cnvlist FileMap) (err er
 		if err != nil {
 			return err
 		}
-		var fullpath = hms.JoinFast(string(fsys), fpath)
+		var fullpath = JoinFast(string(fsys), fpath)
 		if d.Name() != "." && d.Name() != ".." {
 			if _, ok := hms.PathCache.GetRev(fullpath); !ok {
 				*pathlist = append(*pathlist, fullpath)

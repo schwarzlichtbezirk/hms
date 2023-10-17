@@ -12,8 +12,7 @@ import (
 	"time"
 
 	cfg "github.com/schwarzlichtbezirk/hms/config"
-	. "github.com/schwarzlichtbezirk/hms/joint"
-
+	jnt "github.com/schwarzlichtbezirk/hms/joint"
 	"github.com/schwarzlichtbezirk/wpk"
 )
 
@@ -129,22 +128,22 @@ func cchinfAPI(w http.ResponseWriter, r *http.Request) {
 	})
 
 	var isocount int
-	for _, cc := range IsoCaches {
+	for _, cc := range jnt.IsoCaches {
 		isocount += cc.Count()
 	}
 
 	var davcount int
-	for _, cc := range DavCaches {
+	for _, cc := range jnt.DavCaches {
 		davcount += cc.Count()
 	}
 
 	var ftpcount int
-	for _, cc := range FtpCaches {
+	for _, cc := range jnt.FtpCaches {
 		ftpcount += cc.Count()
 	}
 
 	var sftpcount int
-	for _, cc := range SftpCaches {
+	for _, cc := range jnt.SftpCaches {
 		sftpcount += cc.Count()
 	}
 
@@ -283,8 +282,8 @@ func tagsAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	if IsTypeEXIF(ext) {
 		var tp ExifProp
 		if tp, ok = ExifStoreGet(session, arg.PUID); !ok {
-			var file File
-			if file, err = OpenFile(syspath); err != nil {
+			var file jnt.File
+			if file, err = jnt.OpenFile(syspath); err != nil {
 				WriteError500(w, r, err, AECtagsopexif)
 				return
 			}
@@ -304,8 +303,8 @@ func tagsAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		}
 		ret.Prop = &tp
 	} else if IsTypeDecoded(ext) {
-		var file File
-		if file, err = OpenFile(syspath); err != nil {
+		var file jnt.File
+		if file, err = jnt.OpenFile(syspath); err != nil {
 			WriteError500(w, r, err, AECtagsopconf)
 			return
 		}
@@ -322,8 +321,8 @@ func tagsAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	} else if IsTypeID3(ext) {
 		var tp Id3Prop
 		if tp, ok = Id3StoreGet(session, arg.PUID); !ok {
-			var file File
-			if file, err = OpenFile(syspath); err != nil {
+			var file jnt.File
+			if file, err = jnt.OpenFile(syspath); err != nil {
 				WriteError500(w, r, err, AECtagsopid3)
 				return
 			}
@@ -387,7 +386,7 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var fpath = ToSlash(arg.Path)
 	var syspath string
 	var fi fs.FileInfo
-	if fi, _ = StatFile(fpath); fi != nil {
+	if fi, _ = jnt.StatFile(fpath); fi != nil {
 		syspath = path.Clean(fpath)
 		// append slash to disk root to prevent open current dir on this disk
 		if syspath[len(syspath)-1] == ':' { // syspath here is always have non zero length
@@ -399,7 +398,7 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			WriteOK(w, r, &ret)
 			return
 		}
-		if fi, err = StatFile(syspath); err != nil {
+		if fi, err = jnt.StatFile(syspath); err != nil {
 			ret.Valid = false
 			WriteOK(w, r, &ret)
 			return

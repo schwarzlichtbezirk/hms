@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	. "github.com/schwarzlichtbezirk/hms/joint"
+	jnt "github.com/schwarzlichtbezirk/hms/joint"
 
 	"github.com/jlaffaye/ftp"
 	"github.com/pkg/sftp"
@@ -62,7 +62,7 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var syspath string
 	var puid Puid_t
 	var fi fs.FileInfo
-	if fi, _ = StatFile(fpath); fi != nil {
+	if fi, _ = jnt.StatFile(fpath); fi != nil {
 		syspath = path.Clean(fpath)
 		// append slash to disk root to prevent open current dir on this disk
 		if syspath[len(syspath)-1] == ':' { // syspath here is always have non zero length
@@ -74,7 +74,7 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			WriteError400(w, r, err, AECdrvaddbadpath)
 			return
 		}
-		if fi, err = StatFile(syspath); err != nil {
+		if fi, err = jnt.StatFile(syspath); err != nil {
 			WriteError(w, r, http.StatusNotFound, http.ErrMissingFile, AECdrvaddmiss)
 			return
 		}
@@ -98,7 +98,7 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	fk.PUID = puid
 	fk.Free = acc.PathAccess(syspath, false)
 	fk.Shared = acc.IsShared(syspath)
-	fk.Static = IsStatic(fi)
+	fk.Static = jnt.IsStatic(fi)
 	fk.Name = name
 	fk.Type = FTdrv
 	fk.Size = fi.Size()

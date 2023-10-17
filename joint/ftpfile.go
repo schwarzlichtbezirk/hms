@@ -44,9 +44,7 @@ func FtpPwd(ftpaddr string, conn *ftp.ServerConn) (pwd string) {
 	if !ok {
 		var err error
 		if pwd, err = conn.CurrentDir(); err == nil {
-			if strings.HasPrefix(pwd, "/") {
-				pwd = pwd[1:]
-			}
+			pwd = strings.TrimPrefix(pwd, "/")
 			pwdmux.Lock()
 			pwdmap[ftpaddr] = pwd
 			pwdmux.Unlock()

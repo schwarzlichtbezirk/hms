@@ -10,7 +10,7 @@ import (
 	"os"
 	"path"
 
-	. "github.com/schwarzlichtbezirk/hms/joint"
+	jnt "github.com/schwarzlichtbezirk/hms/joint"
 )
 
 // APIHANDLER
@@ -243,7 +243,7 @@ func edtrenameAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	// get returned file properties at last
 	var fi fs.FileInfo
-	if fi, err = StatFile(dstpath); err != nil {
+	if fi, err = jnt.StatFile(dstpath); err != nil {
 		WriteError500(w, r, err, AECedtrenstat)
 		return
 	}

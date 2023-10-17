@@ -5,7 +5,7 @@ import (
 	"io"
 	"time"
 
-	. "github.com/schwarzlichtbezirk/hms/joint"
+	jnt "github.com/schwarzlichtbezirk/hms/joint"
 
 	"github.com/rwcarlsen/goexif/exif"
 	"github.com/rwcarlsen/goexif/mknote"
@@ -186,8 +186,8 @@ func ExtractThumbEXIF(syspath string) (md MediaData, err error) {
 		}
 	}()
 
-	var file File
-	if file, err = OpenFile(syspath); err != nil {
+	var file jnt.File
+	if file, err = jnt.OpenFile(syspath); err != nil {
 		return
 	}
 	defer file.Close()
