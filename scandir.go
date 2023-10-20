@@ -87,6 +87,23 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 		dirmap[ds.Puid] = ds.Prop
 	}
 
+	// get extension info
+	var ess []ExtStore
+	var epuids = make([]Puid_t, len(vpaths)) // ext
+	for i, dp := range vpaths {
+		var ext = GetFileExt(dp.Path)
+		if IsTypeEXIF(ext) || IsTypeDecoded(ext) || IsTypeID3(ext) {
+			epuids = append(epuids, vpuids[i])
+		}
+	}
+	if err = session.In("puid", epuids).Find(&ess); err != nil {
+		return
+	}
+	var extmap = map[Puid_t]ExtProp{}
+	for _, es := range ess {
+		extmap[es.Puid] = es.Prop
+	}
+
 	// format response
 	ret = make([]any, len(vpaths))
 	for i, dp := range vpaths {
@@ -126,6 +143,9 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 			}
 			if tp, ok := tilecache.Peek(puid); ok {
 				fk.TileProp = *tp
+			}
+			if ep, ok := extmap[puid]; ok {
+				fk.ExtProp = ep
 			}
 			ret[i] = &fk
 		}

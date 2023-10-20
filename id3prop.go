@@ -114,9 +114,9 @@ func Id3ExtractThumb(syspath string) (md MediaData, err error) {
 	return
 }
 
-// Mp3ExtractLength scans file to calculate length of play and average bitrate.
+// Mp3Scan scans file to calculate length of play and average bitrate.
 // Bitrate is rounded up to kilobits.
-func Mp3ExtractLength(r io.Reader) (length time.Duration, bitrate int, err error) {
+func Mp3Scan(r io.Reader) (length time.Duration, bitrate int, err error) {
 	var d = mp3.NewDecoder(r)
 	var brm = map[mp3.FrameBitRate]int{}
 	var f mp3.Frame
@@ -147,10 +147,8 @@ func Mp3ExtractLength(r io.Reader) (length time.Duration, bitrate int, err error
 
 // Id3Kit is music file tags properties kit.
 type Id3Kit struct {
-	PuidProp `xorm:"extends" yaml:",inline"`
-	FileProp `xorm:"extends" yaml:",inline"`
-	TileProp `xorm:"extends" yaml:",inline"`
-	Id3Prop  `xorm:"extends" yaml:",inline"`
+	ExtProp `xorm:"extends" yaml:",inline"`
+	Id3Prop `xorm:"extends" yaml:",inline"`
 }
 
 // The End.

@@ -9,7 +9,6 @@ var (
 )
 
 type StoreBuf struct {
-	dirbuf  []DirStore
 	extbuf  []ExtStore
 	exifbuf []ExifStore
 	id3buf  []Id3Store
@@ -17,22 +16,16 @@ type StoreBuf struct {
 
 func (buf *StoreBuf) Init() {
 	const limit = 256
-	buf.dirbuf = make([]DirStore, 0, limit)
 	buf.extbuf = make([]ExtStore, 0, limit)
 	buf.exifbuf = make([]ExifStore, 0, limit)
 	buf.id3buf = make([]Id3Store, 0, limit)
 }
 
 func (buf *StoreBuf) Push(session *Session, val any) (err error) {
+	if buf == nil {
+		return
+	}
 	switch st := val.(type) {
-	case DirStore:
-		buf.dirbuf = append(buf.dirbuf, st)
-		if len(buf.dirbuf) == cap(buf.dirbuf) {
-			if _, err = session.Insert(&buf.dirbuf); err != nil {
-				return
-			}
-			buf.dirbuf = buf.dirbuf[:0]
-		}
 	case ExtStore:
 		buf.extbuf = append(buf.extbuf, st)
 		if len(buf.extbuf) == cap(buf.extbuf) {
@@ -64,11 +57,8 @@ func (buf *StoreBuf) Push(session *Session, val any) (err error) {
 }
 
 func (buf *StoreBuf) Flush(session *Session) (err error) {
-	if len(buf.dirbuf) > 0 {
-		if _, err = session.Insert(&buf.dirbuf); err != nil {
-			return
-		}
-		buf.dirbuf = buf.dirbuf[:0]
+	if buf == nil {
+		return
 	}
 	if len(buf.extbuf) > 0 {
 		if _, err = session.Insert(&buf.extbuf); err != nil {

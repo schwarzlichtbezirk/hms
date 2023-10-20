@@ -98,6 +98,57 @@ const fmttime = (tval, tmax) => {
 	}
 };
 
+const dur_µs = 1000;
+const dur_ms = 1000 * dur_µs;
+const dur_sec = 1000 * dur_ms;
+const dur_min = 60 * dur_sec;
+const dur_hour = 60 * dur_min;
+const dur_day = 24 * dur_hour;
+const fmtduration = (d, prec) => {
+	const t = [];
+	const day = Math.floor(d / dur_day);
+	if (day) {
+		t.push(day + "d");
+		d -= day * dur_day;
+	}
+	if (d >= prec) {
+		const hour = Math.floor(d / dur_hour);
+		if (hour) {
+			t.push(hour + "h");
+			d -= hour * dur_hour;
+		}
+		if (d >= prec) {
+			const min = Math.floor(d / dur_min);
+			if (min) {
+				t.push(min + "m");
+				d -= min * dur_min;
+			}
+			if (d >= prec) {
+				const sec = Math.floor(d / dur_sec);
+				if (sec) {
+					t.push(sec + "s");
+					d -= sec * dur_sec;
+				}
+				if (d >= prec) {
+					const ms = Math.floor(d / dur_ms);
+					if (ms) {
+						t.push(ms + "ms");
+						d -= ms * dur_ms;
+					}
+					if (d >= prec) {
+						const µs = Math.floor(d / dur_µs);
+						if (µs) {
+							t.push(µs + "µs");
+							d -= µs * dur_µs;
+						}
+					}
+				}
+			}
+		}
+	}
+	return t.join("");
+};
+
 const makestrid = length => {
 	const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
 	const len = chars.length;

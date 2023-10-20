@@ -90,10 +90,11 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			}
 		}
 
-		var src, dst *os.File
+		var src jnt.File
+		var dst *os.File
 		var fi fs.FileInfo
 		// open source file
-		if src, err = os.Open(srcpath); err != nil {
+		if src, err = jnt.OpenFile(srcpath); err != nil {
 			WriteError500(w, r, err, AECedtcopyopsrc)
 			return
 		}
@@ -122,8 +123,8 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			}
 
 			// copy dir content
-			var files []fs.DirEntry
-			if files, err = src.ReadDir(-1); err != nil {
+			var files []fs.FileInfo
+			if files, err = jnt.ReadDir(srcpath); err != nil {
 				WriteError500(w, r, err, AECedtcopyrd)
 				return
 			}

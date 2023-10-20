@@ -120,15 +120,17 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 					}
 				}
 			}
-			var lstp DirProp
-			if ret.List, lstp, err = ScanFileNameList(acc, session, vfiles); err != nil {
+
+			var dp DirProp
+			if ret.List, dp, err = ScanFileNameList(acc, session, vfiles); err != nil {
 				WriteError500(w, r, err, AECfolderhome)
 				return
 			}
+
 			go SqlSession(func(session *Session) (res any, err error) {
 				DirStoreSet(session, &DirStore{
 					Puid: puid,
-					Prop: lstp,
+					Prop: dp,
 				})
 				return
 			})

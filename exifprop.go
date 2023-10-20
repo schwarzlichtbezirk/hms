@@ -14,7 +14,8 @@ import (
 
 // ExifProp is EXIF tags properties chunk.
 type ExifProp struct {
-	ImgProp `xorm:"extends" yaml:",inline"`
+	ImgWdh int `json:"imgwdh,omitempty" yaml:"imgwdh,omitempty" xml:"imgwdh,omitempty"`
+	ImgHgt int `json:"imghgt,omitempty" yaml:"imghgt,omitempty" xml:"imghgt,omitempty"`
 	// Photo
 	Model        string    `xorm:"'model'" json:"model,omitempty" yaml:"model,omitempty" xml:"model,omitempty"`
 	Make         string    `xorm:"'make'" json:"make,omitempty" yaml:"make,omitempty" xml:"make,omitempty"`
@@ -45,7 +46,7 @@ type ExifProp struct {
 // IsZero used to check whether an object is zero to determine whether
 // it should be omitted when marshaling to yaml.
 func (tp *ExifProp) IsZero() bool {
-	return tp.Width == 0 && tp.Height == 0 && tp.Model == "" &&
+	return tp.ImgWdh == 0 && tp.ImgHgt == 0 && tp.Model == "" &&
 		tp.Make == "" && tp.Software == "" && tp.DateTime.IsZero() &&
 		tp.Orientation == 0 && tp.ExposureTime == "" && tp.ExposureProg == 0 &&
 		tp.FNumber == 0 && tp.ISOSpeed == 0 && tp.ShutterSpeed == 0 &&
@@ -75,11 +76,11 @@ func (tp *ExifProp) Setup(x *exif.Exif) {
 	var err error
 	var t *tiff.Tag
 
-	if t, err = x.Get(exif.PixelXDimension); err == nil {
-		tp.Width, _ = t.Int(0)
+	if t, err = x.Get(exif.ImageWidth); err == nil {
+		tp.ImgWdh, _ = t.Int(0)
 	}
-	if t, err = x.Get(exif.PixelYDimension); err == nil {
-		tp.Height, _ = t.Int(0)
+	if t, err = x.Get(exif.ImageLength); err == nil {
+		tp.ImgHgt, _ = t.Int(0)
 	}
 	if t, err = x.Get(exif.Model); err == nil {
 		tp.Model, _ = t.StringVal()
@@ -129,9 +130,6 @@ func (tp *ExifProp) Setup(x *exif.Exif) {
 	}
 	if t, err = x.Get(exif.DigitalZoomRatio); err == nil {
 		tp.DigitalZoom = RatFloat32(t)
-	}
-	if t, err = x.Get(exif.ImageLength); err == nil {
-		tp.Height, _ = t.Int(0)
 	}
 	if t, err = x.Get(exif.Flash); err == nil {
 		tp.Flash, _ = t.Int(0)
@@ -213,9 +211,7 @@ func ExtractThumbEXIF(syspath string) (md MediaData, err error) {
 
 // ExifKit is file with EXIF tags.
 type ExifKit struct {
-	PuidProp `xorm:"extends" yaml:",inline"`
-	FileProp `xorm:"extends" yaml:",inline"`
-	TileProp `xorm:"extends" yaml:",inline"`
+	ExtProp  `xorm:"extends" yaml:",inline"`
 	ExifProp `xorm:"extends" yaml:",inline"`
 }
 

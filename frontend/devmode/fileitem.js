@@ -29,6 +29,12 @@ const filehint = file => {
 	if (file.time > "0001-01-01T00:00:00Z") {
 		lst.push(['time', (new Date(file.time)).toLocaleString('en-GB')]);
 	}
+	if (file.length) {
+		lst.push(['length', fmtduration(file.length, dur_sec)]);
+	}
+	if (file.bitrate) {
+		lst.push(['bitrate', `${file.bitrate} kbps`]);
+	}
 	// Dir properties
 	if (file.fgrp) {
 		if (file.fgrp.group) {
@@ -65,8 +71,14 @@ const fileinfo = file => {
 	if (file.type === FT.file) {
 		lst.push(['size', fmtitemsize(file.size ?? 0)]);
 	}
-	if (file.time) {
+	if (file.time > "0001-01-01T00:00:00Z") {
 		lst.push(['time', (new Date(file.time)).toLocaleString('en-GB')]);
+	}
+	if (file.length) {
+		lst.push(['length', fmtduration(file.length, dur_sec)]);
+	}
+	if (file.bitrate) {
+		lst.push(['bitrate', `${file.bitrate} kbps`]);
 	}
 	// MP3 tags properties
 	if (file.title) {
