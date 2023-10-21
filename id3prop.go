@@ -73,10 +73,7 @@ func Id3Extract(session *Session, file io.ReadSeeker, puid Puid_t) (tp Id3Prop, 
 		err = ErrEmptyID3
 		return
 	}
-	Id3StoreSet(session, &Id3Store{ // update database
-		Puid: puid,
-		Prop: tp,
-	})
+	Id3StoreSet(session, puid, tp) // update database
 	return
 }
 

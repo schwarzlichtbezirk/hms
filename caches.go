@@ -197,7 +197,11 @@ func PathStoreCache(session *Session, fpath string) (puid Puid_t) {
 }
 
 // DirStoreSet puts value to directories cache.
-func DirStoreSet(session *Session, dst *DirStore) (err error) {
+func DirStoreSet(session *Session, puid Puid_t, dp DirProp) (err error) {
+	var dst = &DirStore{
+		Puid: puid,
+		Prop: dp,
+	}
 	// set to database
 	if affected, _ := session.InsertOne(dst); affected == 0 {
 		_, err = session.ID(dst.Puid).AllCols().Omit("puid").Update(dst)
@@ -217,7 +221,11 @@ func ExtStoreGet(session *Session, puid Puid_t) (xp ExtProp, ok bool) {
 }
 
 // ExtStoreSet puts value to embedded info database.
-func ExtStoreSet(session *Session, xst *ExtStore) (err error) {
+func ExtStoreSet(session *Session, puid Puid_t, xp ExtProp) (err error) {
+	var xst = &ExtStore{
+		Puid: puid,
+		Prop: xp,
+	}
 	// set to database
 	if affected, _ := session.InsertOne(xst); affected == 0 {
 		_, err = session.ID(xst.Puid).AllCols().Omit("puid").Update(xst)
@@ -245,7 +253,11 @@ func ExifStoreGet(session *Session, puid Puid_t) (tp ExifProp, ok bool) {
 }
 
 // ExifStoreSet puts value to EXIF database.
-func ExifStoreSet(session *Session, est *ExifStore) (err error) {
+func ExifStoreSet(session *Session, puid Puid_t, tp ExifProp) (err error) {
+	var est = &ExifStore{
+		Puid: puid,
+		Prop: tp,
+	}
 	// set to GPS cache
 	GpsCachePut(est.Puid, est.Prop)
 	// set to database
@@ -267,7 +279,11 @@ func Id3StoreGet(session *Session, puid Puid_t) (tp Id3Prop, ok bool) {
 }
 
 // Id3StoreSet puts value to tags database.
-func Id3StoreSet(session *Session, tst *Id3Store) (err error) {
+func Id3StoreSet(session *Session, puid Puid_t, tp Id3Prop) (err error) {
+	var tst = &Id3Store{
+		Puid: puid,
+		Prop: tp,
+	}
 	// set to database
 	if affected, _ := session.InsertOne(tst); affected == 0 {
 		_, err = session.ID(tst.Puid).AllCols().Omit("puid").Update(tst)

@@ -21,5 +21,11 @@
 		<div v-if="isfile"><span class="key">size</span><span class="val">{{filesize}}</span></div>
 		<div><span class="key">date</span><span class="val">{{filedate}}</span></div>
 		<div><span class="key">time</span><span class="val">{{filetime}}</span></div>
+		<div v-if="isdir" class="d-flex flex-row flex-nowrap">
+			<div class="material-icons itemfont pe-1">folder</div>
+			<div class="val pe-1">{{dircount}}</div>
+			<div class="material-icons itemfont pe-1">insert_drive_file</div>
+			<div class="val">{{filecount}}</div>
+		</div>
 	</div>
 </div>

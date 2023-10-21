@@ -38,7 +38,7 @@ type ExtStat struct {
 	Mp3Count  uint64
 }
 
-func TagsExtract(fpath string, session *Session, buf *StoreBuf, es *ExtStat) (p any, err error) {
+func TagsExtract(fpath string, session *Session, buf *StoreBuf, es *ExtStat) (p any, xp ExtProp, err error) {
 	defer func() {
 		if err != nil {
 			atomic.AddUint64(&es.ErrCount, 1)
@@ -86,7 +86,7 @@ func TagsExtract(fpath string, session *Session, buf *StoreBuf, es *ExtStat) (p 
 			Prop: ek.ExtProp,
 		})
 		atomic.AddUint64(&es.ExtCount, 1)
-		p = ek
+		p, xp = ek, ek.ExtProp
 	} else if IsTypeDecoded(ext) {
 		var file jnt.File
 		if file, err = jnt.OpenFile(fpath); err != nil {
@@ -94,7 +94,6 @@ func TagsExtract(fpath string, session *Session, buf *StoreBuf, es *ExtStat) (p 
 		}
 		defer file.Close()
 
-		var xp ExtProp
 		var imc image.Config
 
 		if imc, _, err = image.DecodeConfig(file); err != nil {
@@ -145,7 +144,7 @@ func TagsExtract(fpath string, session *Session, buf *StoreBuf, es *ExtStat) (p 
 			Prop: ik.ExtProp,
 		})
 		atomic.AddUint64(&es.ExtCount, 1)
-		p = ik
+		p, xp = ik, ik.ExtProp
 	}
 
 	return

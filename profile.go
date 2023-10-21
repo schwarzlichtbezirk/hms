@@ -370,10 +370,7 @@ func (prf *Profile) ScanLocal(session *Session) (ret []any, err error) {
 	}
 
 	go SqlSession(func(session *Session) (res any, err error) {
-		DirStoreSet(session, &DirStore{
-			Puid: PUIDlocal,
-			Prop: dp,
-		})
+		DirStoreSet(session, PUIDlocal, dp)
 		return
 	})
 
@@ -392,10 +389,7 @@ func (prf *Profile) ScanRemote(session *Session) (ret []any, err error) {
 	}
 
 	go SqlSession(func(session *Session) (res any, err error) {
-		DirStoreSet(session, &DirStore{
-			Puid: PUIDremote,
-			Prop: dp,
-		})
+		DirStoreSet(session, PUIDremote, dp)
 		return
 	})
 
@@ -414,10 +408,7 @@ func (prf *Profile) ScanShares(session *Session) (ret []any, err error) {
 	}
 
 	go SqlSession(func(session *Session) (res any, err error) {
-		DirStoreSet(session, &DirStore{
-			Puid: PUIDshares,
-			Prop: dp,
-		})
+		DirStoreSet(session, PUIDshares, dp)
 		return
 	})
 

@@ -195,10 +195,7 @@ func ScanDir(prf *Profile, session *Session, dir string, isadmin bool) (ret []an
 
 	go SqlSession(func(session *Session) (res any, err error) {
 		var puid = PathStoreCache(session, dir)
-		DirStoreSet(session, &DirStore{
-			Puid: puid,
-			Prop: dp,
-		})
+		DirStoreSet(session, puid, dp)
 		return
 	})
 
@@ -240,10 +237,7 @@ func ScanCat(prf *Profile, session *Session, puid Puid_t, cat string, percent fl
 	}
 
 	go SqlSession(func(session *Session) (res any, err error) {
-		DirStoreSet(session, &DirStore{
-			Puid: puid,
-			Prop: dp,
-		})
+		DirStoreSet(session, puid, dp)
 		return
 	})
 

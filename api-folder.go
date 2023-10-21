@@ -128,10 +128,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			}
 
 			go SqlSession(func(session *Session) (res any, err error) {
-				DirStoreSet(session, &DirStore{
-					Puid: puid,
-					Prop: dp,
-				})
+				DirStoreSet(session, puid, dp)
 				return
 			})
 		case PUIDlocal:

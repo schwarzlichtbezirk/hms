@@ -169,10 +169,7 @@ func ExifExtract(session *Session, file io.Reader, puid Puid_t) (tp ExifProp, er
 		err = ErrEmptyExif
 		return
 	}
-	ExifStoreSet(session, &ExifStore{ // update database
-		Puid: puid,
-		Prop: tp,
-	})
+	ExifStoreSet(session, puid, tp) // update database
 	return
 }
 

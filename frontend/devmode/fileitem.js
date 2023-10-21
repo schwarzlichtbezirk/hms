@@ -29,6 +29,9 @@ const filehint = file => {
 	if (file.time > "0001-01-01T00:00:00Z") {
 		lst.push(['time', (new Date(file.time)).toLocaleString('en-GB')]);
 	}
+	if (file.width && file.height) {
+		lst.push(['dimensions', `${file.width}x${file.height}`]);
+	}
 	if (file.length) {
 		lst.push(['length', fmtduration(file.length, dur_sec)]);
 	}
@@ -74,6 +77,9 @@ const fileinfo = file => {
 	if (file.time > "0001-01-01T00:00:00Z") {
 		lst.push(['time', (new Date(file.time)).toLocaleString('en-GB')]);
 	}
+	if (file.width && file.height) {
+		lst.push(['dimensions', `${file.width}x${file.height}`]);
+	}
 	if (file.length) {
 		lst.push(['length', fmtduration(file.length, dur_sec)]);
 	}
@@ -117,9 +123,6 @@ const fileinfo = file => {
 		lst.push(['comment', file.comment.substring(0, 80)]);
 	}
 	// EXIF tags properties
-	if (file.width && file.height) {
-		lst.push(['dimensions', `${file.width}x${file.height}`]);
-	}
 	if (file.model) {
 		lst.push(['model', file.model]);
 	}
@@ -565,6 +568,28 @@ const VueListItem = {
 		// manage items classes
 		isfile() {
 			return this.file.type === FT.file;
+		},
+		isdir() {
+			return !!this.file.fgrp && (this.file.fgrp.group || this.file.fgrp.other ||
+				this.file.fgrp.video || this.file.fgrp.audio || this.file.fgrp.image ||
+				this.file.fgrp.books || this.file.fgrp.texts || this.file.fgrp.packs);
+		},
+		dircount() {
+			if (this.file.fgrp) {
+				return this.file.fgrp.group ?? 0;
+			} else {
+				return 0;
+			}
+		},
+		filecount() {
+			if (this.file.fgrp) {
+				return (this.file.fgrp.other ?? 0) +
+					(this.file.fgrp.video ?? 0) + (this.file.fgrp.audio ?? 0) +
+					(this.file.fgrp.image ?? 0) + (this.file.fgrp.books ?? 0) +
+					(this.file.fgrp.texts ?? 0) + (this.file.fgrp.packs ?? 0);
+			} else {
+				return 0;
+			}
 		},
 		itemview() {
 			return { 'selected': this.file.selected };
