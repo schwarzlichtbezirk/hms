@@ -10,21 +10,21 @@ import (
 
 // ScanFileNameList returns file properties list for given list of
 // full file system paths. File paths can be in different folders.
-func ScanFileNameList(prf *Profile, session *Session, vpaths []DiskPath) (ret []any, lstp DirProp, err error) {
+func ScanFileNameList(prf *Profile, session *Session, vpaths []DiskPath, scanembed bool) (ret []any, lstp DirProp, err error) {
 	var files = make([]fs.FileInfo, len(vpaths))
 	for i, dp := range vpaths {
 		fi, _ := jnt.StatFile(dp.Path)
 		files[i] = fi
 	}
 
-	return ScanFileInfoList(prf, session, files, vpaths)
+	return ScanFileInfoList(prf, session, files, vpaths, scanembed)
 }
 
 // ScanFileInfoList returns file properties list for given list of
 // []fs.FileInfo and associated list of full file system paths.
 // Elements of []fs.FileInfo list can be nil in case if file is
 // unavailable, or if it categoty item.
-func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpaths []DiskPath) (ret []any, lstp DirProp, err error) {
+func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpaths []DiskPath, scanembed bool) (ret []any, lstp DirProp, err error) {
 	var tscan = time.Now()
 
 	var dpaths = make([]string, 0, len(vpaths)) // database paths
@@ -88,20 +88,39 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 	}
 
 	// get extension info
+	var extmap = map[Puid_t]ExtProp{}
 	var ess []ExtStore
 	var epuids = make([]Puid_t, len(vpaths)) // ext
-	for i, dp := range vpaths {
-		var ext = GetFileExt(dp.Path)
-		if IsTypeEXIF(ext) || IsTypeDecoded(ext) || IsTypeID3(ext) {
-			epuids = append(epuids, vpuids[i])
+	for i, puid := range vpuids {
+		if xp, ok := extcache.Peek(puid); ok {
+			extmap[puid] = xp
+		} else {
+			var ext = GetFileExt(vpaths[i].Path)
+			if IsTypeEXIF(ext) || IsTypeDecoded(ext) || IsTypeID3(ext) {
+				epuids = append(epuids, puid)
+			} else {
+				extmap[puid] = ExtProp{
+					Tags:  TagNil,
+					Thumb: MimeDis,
+				}
+			}
 		}
 	}
-	if err = session.In("puid", epuids).Find(&ess); err != nil {
-		return
+	if len(epuids) > 0 {
+		if err = session.In("puid", epuids).Find(&ess); err != nil {
+			return
+		}
+		for _, es := range ess {
+			extcache.Poke(es.Puid, es.Prop)
+			extmap[es.Puid] = es.Prop
+		}
 	}
-	var extmap = map[Puid_t]ExtProp{}
-	for _, es := range ess {
-		extmap[es.Puid] = es.Prop
+	// scan not cached
+	if scanembed {
+		for _, puid := range epuids {
+			var fpath, _ = PathCache.GetDir(puid)
+			ImgScanner.AddTile(fpath, tme)
+		}
 	}
 
 	// format response
@@ -142,10 +161,10 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 				FileProp: fp,
 			}
 			if tp, ok := tilecache.Peek(puid); ok {
-				fk.TileProp = *tp
+				fk.TileProp = tp
 			}
-			if ep, ok := extmap[puid]; ok {
-				fk.ExtProp = ep
+			if xp, ok := extmap[puid]; ok {
+				fk.ExtProp = xp
 			}
 			ret[i] = &fk
 		}
@@ -159,7 +178,7 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 
 // ScanDir returns file properties list for given file system directory,
 // or directory in iso-disk.
-func ScanDir(prf *Profile, session *Session, dir string, isadmin bool) (ret []any, skipped int, err error) {
+func ScanDir(prf *Profile, session *Session, dir string, isadmin bool, scanembed bool) (ret []any, skipped int, err error) {
 	var files []fs.FileInfo
 	if files, err = jnt.ReadDir(dir); err != nil && len(files) == 0 {
 		return
@@ -189,7 +208,7 @@ func ScanDir(prf *Profile, session *Session, dir string, isadmin bool) (ret []an
 	skipped = len(files) - len(vfiles)
 
 	var dp DirProp
-	if ret, dp, err = ScanFileInfoList(prf, session, vfiles, vpaths); err != nil {
+	if ret, dp, err = ScanFileInfoList(prf, session, vfiles, vpaths, scanembed); err != nil {
 		return
 	}
 
@@ -204,7 +223,7 @@ func ScanDir(prf *Profile, session *Session, dir string, isadmin bool) (ret []an
 
 // ScanCat returns file properties list where number of files
 // of given category is more then given percent.
-func ScanCat(prf *Profile, session *Session, puid Puid_t, cat string, percent float64) (ret []any, err error) {
+func ScanCat(prf *Profile, session *Session, puid Puid_t, cat string, percent float64, scanembed bool) (ret []any, err error) {
 	const categoryCond = "(%s)/(other+video+audio+image+books+texts+packs) > %f"
 	var dss []DirStore
 	if err = session.Where(fmt.Sprintf(categoryCond, cat, percent)).Find(&dss); err != nil {
@@ -232,7 +251,7 @@ func ScanCat(prf *Profile, session *Session, puid Puid_t, cat string, percent fl
 	}
 
 	var dp DirProp
-	if ret, dp, err = ScanFileNameList(prf, session, vpaths); err != nil {
+	if ret, dp, err = ScanFileNameList(prf, session, vpaths, scanembed); err != nil {
 		return
 	}
 

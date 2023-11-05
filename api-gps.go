@@ -154,7 +154,7 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		}
 		return arg.Limit == 0 || len(ret.List) < arg.Limit
 	})
-	if ret.List, _, err = ScanFileInfoList(acc, session, vfiles, vpaths); err != nil {
+	if ret.List, _, err = ScanFileInfoList(acc, session, vfiles, vpaths, true); err != nil {
 		WriteError500(w, r, err, AECgpsrangelist)
 		return
 	}

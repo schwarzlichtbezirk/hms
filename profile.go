@@ -359,13 +359,13 @@ func (prf *Profile) FindLocal() {
 }
 
 // ScanLocal scans paths from local roots list.
-func (prf *Profile) ScanLocal(session *Session) (ret []any, err error) {
+func (prf *Profile) ScanLocal(session *Session, scanembed bool) (ret []any, err error) {
 	prf.mux.RLock()
 	var vfiles = append([]DiskPath{}, prf.Roots...) // make non-nil copy
 	prf.mux.RUnlock()
 
 	var dp DirProp
-	if ret, dp, err = ScanFileNameList(prf, session, vfiles); err != nil {
+	if ret, dp, err = ScanFileNameList(prf, session, vfiles, scanembed); err != nil {
 		return
 	}
 
@@ -378,13 +378,13 @@ func (prf *Profile) ScanLocal(session *Session) (ret []any, err error) {
 }
 
 // ScanRemote scans paths at network destination.
-func (prf *Profile) ScanRemote(session *Session) (ret []any, err error) {
+func (prf *Profile) ScanRemote(session *Session, scanembed bool) (ret []any, err error) {
 	prf.mux.RLock()
 	var vfiles = append([]DiskPath{}, prf.Remote...) // make non-nil copy
 	prf.mux.RUnlock()
 
 	var dp DirProp
-	if ret, dp, err = ScanFileNameList(prf, session, vfiles); err != nil {
+	if ret, dp, err = ScanFileNameList(prf, session, vfiles, scanembed); err != nil {
 		return
 	}
 
@@ -397,13 +397,13 @@ func (prf *Profile) ScanRemote(session *Session) (ret []any, err error) {
 }
 
 // ScanShares scans actual shares from shares list.
-func (prf *Profile) ScanShares(session *Session) (ret []any, err error) {
+func (prf *Profile) ScanShares(session *Session, scanembed bool) (ret []any, err error) {
 	prf.mux.RLock()
 	var vfiles = append([]DiskPath{}, prf.Shares...) // make non-nil copy
 	prf.mux.RUnlock()
 
 	var dp DirProp
-	if ret, dp, err = ScanFileNameList(prf, session, vfiles); err != nil {
+	if ret, dp, err = ScanFileNameList(prf, session, vfiles, scanembed); err != nil {
 		return
 	}
 

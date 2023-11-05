@@ -15,7 +15,7 @@ import (
 type ExtTag int
 
 const (
-	TagDis  ExtTag = -1
+	TagNil  ExtTag = 0
 	TagExif ExtTag = 1
 	TagID3  ExtTag = 2
 )
@@ -35,10 +35,11 @@ type ExtStat struct {
 	ExtCount  uint64
 	ExifCount uint64
 	Id3Count  uint64
+	TmbCount  uint64
 	Mp3Count  uint64
 }
 
-func TagsExtract(fpath string, session *Session, buf *StoreBuf, es *ExtStat) (p any, xp ExtProp, err error) {
+func TagsExtract(fpath string, session *Session, buf *StoreBuf, es *ExtStat, gettmb bool) (p any, xp ExtProp, err error) {
 	defer func() {
 		if err != nil {
 			atomic.AddUint64(&es.ErrCount, 1)
@@ -49,14 +50,24 @@ func TagsExtract(fpath string, session *Session, buf *StoreBuf, es *ExtStat) (p 
 	var puid, _ = PathCache.GetRev(fpath)
 	var ext = GetFileExt(fpath)
 	if IsTypeEXIF(ext) {
+		var ek ExifKit
+		var imc image.Config
+		ek.Tags = TagNil
+		ek.Thumb = MimeDis
+		defer func() {
+			p, xp = ek, ek.ExtProp
+			buf.Push(session, ExtStore{
+				Puid: puid,
+				Prop: xp,
+			})
+			atomic.AddUint64(&es.ExtCount, 1)
+		}()
+
 		var file jnt.File
 		if file, err = jnt.OpenFile(fpath); err != nil {
 			return // can not open file
 		}
 		defer file.Close()
-
-		var ek ExifKit
-		var imc image.Config
 
 		if x, err := exif.Decode(file); err == nil {
 			ek.Setup(x)
@@ -69,6 +80,20 @@ func TagsExtract(fpath string, session *Session, buf *StoreBuf, es *ExtStat) (p 
 				ek.Tags = TagExif // EXIF is exist
 				if ek.ThumbJpegLen > 0 {
 					ek.Thumb = MimeJpeg
+					atomic.AddUint64(&es.TmbCount, 1)
+					if gettmb {
+						if pic, _ := x.JpegThumbnail(); pic != nil {
+							var md = MediaData{
+								Data: pic,
+								Mime: MimeJpeg,
+							}
+							if fi, _ := file.Stat(); fi != nil {
+								md.Time = fi.ModTime()
+							}
+							etmbcache.Poke(puid, md)
+							ThumbCacheTrim()
+						}
+					}
 				}
 				atomic.AddUint64(&es.ExifCount, 1)
 			}
@@ -81,40 +106,47 @@ func TagsExtract(fpath string, session *Session, buf *StoreBuf, es *ExtStat) (p 
 			return
 		}
 		ek.Width, ek.Height = imc.Width, imc.Height
-		buf.Push(session, ExtStore{
-			Puid: puid,
-			Prop: ek.ExtProp,
-		})
-		atomic.AddUint64(&es.ExtCount, 1)
-		p, xp = ek, ek.ExtProp
 	} else if IsTypeDecoded(ext) {
+		var imc image.Config
+		xp.Tags = TagNil
+		xp.Thumb = MimeDis
+		defer func() {
+			p = xp
+			buf.Push(session, ExtStore{
+				Puid: puid,
+				Prop: xp,
+			})
+			atomic.AddUint64(&es.ExtCount, 1)
+		}()
+
 		var file jnt.File
 		if file, err = jnt.OpenFile(fpath); err != nil {
 			return // can not open file
 		}
 		defer file.Close()
-
-		var imc image.Config
 
 		if imc, _, err = image.DecodeConfig(file); err != nil {
 			return
 		}
-		xp.Tags = 0
 		xp.Width, xp.Height = imc.Width, imc.Height
-		buf.Push(session, ExtStore{
-			Puid: puid,
-			Prop: xp,
-		})
-		atomic.AddUint64(&es.ExtCount, 1)
-		p = xp
 	} else if IsTypeID3(ext) {
+		var ik Id3Kit
+		ik.Tags = TagNil
+		ik.Thumb = MimeDis
+		defer func() {
+			p, xp = ik, ik.ExtProp
+			buf.Push(session, ExtStore{
+				Puid: puid,
+				Prop: xp,
+			})
+			atomic.AddUint64(&es.ExtCount, 1)
+		}()
+
 		var file jnt.File
 		if file, err = jnt.OpenFile(fpath); err != nil {
 			return // can not open file
 		}
 		defer file.Close()
-
-		var ik Id3Kit
 
 		if m, err := tag.ReadFrom(file); err == nil {
 			ik.Setup(m)
@@ -123,8 +155,24 @@ func TagsExtract(fpath string, session *Session, buf *StoreBuf, es *ExtStat) (p 
 					Puid: puid,
 					Prop: ik.Id3Prop,
 				})
-				ik.Tags = TagID3
+				ik.Tags = TagID3 // ID3 is exist
 				ik.Thumb = ik.TmbMime
+				if ik.Thumb != MimeDis {
+					atomic.AddUint64(&es.TmbCount, 1)
+					if gettmb {
+						if pic := m.Picture(); pic != nil {
+							var md = MediaData{
+								Data: pic.Data,
+								Mime: GetMimeVal(pic.MIMEType, pic.Ext),
+							}
+							if fi, _ := file.Stat(); fi != nil {
+								md.Time = fi.ModTime()
+							}
+							etmbcache.Poke(puid, md)
+							ThumbCacheTrim()
+						}
+					}
+				}
 				atomic.AddUint64(&es.Id3Count, 1)
 			}
 		}
@@ -138,13 +186,6 @@ func TagsExtract(fpath string, session *Session, buf *StoreBuf, es *ExtStat) (p 
 			}
 			atomic.AddUint64(&es.Mp3Count, 1)
 		}
-
-		buf.Push(session, ExtStore{
-			Puid: puid,
-			Prop: ik.ExtProp,
-		})
-		atomic.AddUint64(&es.ExtCount, 1)
-		p, xp = ik, ik.ExtProp
 	}
 
 	return

@@ -251,7 +251,10 @@ func edtrenameAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	ret.Prop.PuidProp.Setup(session, dstpath)
 	ret.Prop.FileProp.Setup(fi)
 	if tp, ok := tilecache.Peek(ret.Prop.PUID); ok {
-		ret.Prop.TileProp = *tp
+		ret.Prop.TileProp = tp
+	}
+	if xp, ok := extcache.Peek(ret.Prop.PUID); ok {
+		ret.Prop.ExtProp = xp
 	}
 
 	WriteOK(w, r, &ret)

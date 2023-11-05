@@ -273,11 +273,11 @@ func CacheThumb(session *Session, syspath string) (md MediaData, err error) {
 	var orientation = OrientNormal
 	if tp, ok := ExifStoreGet(session, puid); ok && tp.Orientation > 0 {
 		orientation = tp.Orientation
-	} else if tp, err := ExifExtract(session, file, puid); err == nil && tp.Orientation > 0 {
+	} else if tp, err = ExifExtract(session, file, puid); err == nil && tp.Orientation > 0 {
 		orientation = tp.Orientation
-	}
-	if _, err = file.Seek(0, io.SeekStart); err != nil {
-		return
+		if _, err = file.Seek(0, io.SeekStart); err != nil {
+			return
+		}
 	}
 
 	// create sized image for thumbnail
@@ -376,11 +376,11 @@ func CacheTile(session *Session, syspath string, wdh, hgt int) (md MediaData, er
 	var orientation = OrientNormal
 	if tp, ok := ExifStoreGet(session, puid); ok && tp.Orientation > 0 {
 		orientation = tp.Orientation
-	} else if tp, err := ExifExtract(session, file, puid); err == nil && tp.Orientation > 0 {
+	} else if tp, err = ExifExtract(session, file, puid); err == nil && tp.Orientation > 0 {
 		orientation = tp.Orientation
-	}
-	if _, err = file.Seek(0, io.SeekStart); err != nil {
-		return
+		if _, err = file.Seek(0, io.SeekStart); err != nil {
+			return
+		}
 	}
 
 	var src image.Image

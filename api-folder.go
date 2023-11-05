@@ -28,6 +28,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
 		Path string `json:"path,omitempty" yaml:"path,omitempty" xml:"path,omitempty,attr"`
+		Scan bool   `json:"scan,omitempty" yaml:"scan,omitempty" xml:"scan,omitempty"`
 		Ext  string `json:"ext,omitempty" yaml:"ext,omitempty" xml:"ext,omitempty,attr"`
 	}
 	var ret struct {
@@ -122,7 +123,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			}
 
 			var dp DirProp
-			if ret.List, dp, err = ScanFileNameList(acc, session, vfiles); err != nil {
+			if ret.List, dp, err = ScanFileNameList(acc, session, vfiles, arg.Scan); err != nil {
 				WriteError500(w, r, err, AECfolderhome)
 				return
 			}
@@ -132,22 +133,22 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 				return
 			})
 		case PUIDlocal:
-			if ret.List, err = acc.ScanLocal(session); err != nil {
+			if ret.List, err = acc.ScanLocal(session, arg.Scan); err != nil {
 				WriteError500(w, r, err, AECfolderdrives)
 				return
 			}
 		case PUIDremote:
-			if ret.List, err = acc.ScanRemote(session); err != nil {
+			if ret.List, err = acc.ScanRemote(session, arg.Scan); err != nil {
 				WriteError500(w, r, err, AECfolderremote)
 				return
 			}
 		case PUIDshares:
-			if ret.List, err = acc.ScanShares(session); err != nil {
+			if ret.List, err = acc.ScanShares(session, arg.Scan); err != nil {
 				WriteError500(w, r, err, AECfoldershares)
 				return
 			}
 		case PUIDmedia, PUIDvideo, PUIDaudio, PUIDimage, PUIDbooks, PUIDtexts:
-			if ret.List, err = ScanCat(acc, session, puid, catcolumn[puid], 0.5); err != nil {
+			if ret.List, err = ScanCat(acc, session, puid, catcolumn[puid], 0.5, arg.Scan); err != nil {
 				WriteError500(w, r, err, AECfoldermedia)
 				return
 			}
@@ -167,7 +168,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 				}
 				return Cfg.RangeSearchAny <= 0 || n < Cfg.RangeSearchAny
 			})
-			if ret.List, _, err = ScanFileInfoList(acc, session, vfiles, vpaths); err != nil {
+			if ret.List, _, err = ScanFileInfoList(acc, session, vfiles, vpaths, arg.Scan); err != nil {
 				WriteError500(w, r, err, AECfoldermap)
 				return
 			}
@@ -190,7 +191,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		}
 
 		if fi.IsDir() || IsTypeISO(ext) {
-			if ret.List, ret.Skipped, err = ScanDir(acc, session, syspath, uid == aid); err != nil && len(ret.List) == 0 {
+			if ret.List, ret.Skipped, err = ScanDir(acc, session, syspath, uid == aid, arg.Scan); err != nil && len(ret.List) == 0 {
 				if errors.Is(err, fs.ErrNotExist) {
 					WriteError(w, r, http.StatusNotFound, err, AECfolderabsent)
 				} else {
@@ -250,7 +251,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 					}
 				}
 			}
-			if ret.List, _, err = ScanFileInfoList(acc, session, vfiles, vpaths); err != nil {
+			if ret.List, _, err = ScanFileInfoList(acc, session, vfiles, vpaths, arg.Scan); err != nil {
 				WriteError500(w, r, err, AECfoldertracks)
 				return
 			}

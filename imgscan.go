@@ -22,18 +22,17 @@ func (fpath EmbedPath) Cache() {
 	var session = XormStorage.NewSession()
 	defer session.Close()
 
-	var puid = PathStoreCache(session, string(fpath))
-	var err error
-	var md MediaData
-	if md, err = ExtractThmub(session, string(fpath)); err != nil {
-		md.Mime = MimeDis
-	}
+	var es ExtStat
+	var buf StoreBuf
+	buf.Init()
+	var _, xp, _ = TagsExtract(string(fpath), session, &buf, &es, true)
+	buf.Flush(session)
 
-	var tp, ok = tilecache.Peek(puid)
-	if !ok {
-		tp = &TileProp{}
-	}
-	tp.SetTile(tme, md.Mime)
+	var puid, _ = PathCache.GetRev(string(fpath))
+	extcache.Poke(puid, xp)
+
+	var tp, _ = tilecache.Peek(puid)
+	tp.SetTile(tme, xp.Thumb)
 	tilecache.Poke(puid, tp)
 }
 
@@ -45,17 +44,14 @@ func (fpath ThumbPath) Cache() {
 	var session = XormStorage.NewSession()
 	defer session.Close()
 
-	var puid = PathStoreCache(session, string(fpath))
+	var puid, _ = PathCache.GetRev(string(fpath))
 	var err error
 	var md MediaData
 	if md, err = CacheThumb(session, string(fpath)); err != nil {
 		md.Mime = MimeDis
 	}
 
-	var tp, ok = tilecache.Peek(puid)
-	if !ok {
-		tp = &TileProp{}
-	}
+	var tp, _ = tilecache.Peek(puid)
 	tp.SetTile(tm0, md.Mime)
 	tilecache.Poke(puid, tp)
 }
@@ -72,17 +68,14 @@ func (tile TilePath) Cache() {
 	var session = XormStorage.NewSession()
 	defer session.Close()
 
-	var puid = PathStoreCache(session, tile.Path)
+	var puid, _ = PathCache.GetRev(tile.Path)
 	var err error
 	var md MediaData
 	if md, err = CacheTile(session, tile.Path, tile.Wdh, tile.Hgt); err != nil {
 		md.Mime = MimeDis
 	}
 
-	var tp, ok = tilecache.Peek(puid)
-	if !ok {
-		tp = &TileProp{}
-	}
+	var tp, _ = tilecache.Peek(puid)
 	var tm = TM_t(tile.Wdh / htcell)
 	tp.SetTile(tm, md.Mime)
 	tilecache.Poke(puid, tp)

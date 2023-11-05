@@ -299,7 +299,7 @@ func BatchExtractor(extlist FileMap) {
 			buf.Init()
 
 			for c := range pathchan {
-				hms.TagsExtract(c.fpath, session, &buf, &es)
+				hms.TagsExtract(c.fpath, session, &buf, &es, false)
 			}
 			buf.Flush(session)
 		}()
@@ -308,8 +308,8 @@ func BatchExtractor(extlist FileMap) {
 
 	var d = time.Since(t0) / time.Second * time.Second
 	fmt.Fprintf(os.Stdout, "processed %d files, spent %v, processing complete\n", es.FileCount, d)
-	fmt.Fprintf(os.Stdout, "total %d files with embedded info processed, %d of them with EXIF, %d of them with ID3 tags, %d mp3-files\n",
-		es.ExtCount, es.ExifCount, es.Id3Count, es.Mp3Count)
+	fmt.Fprintf(os.Stdout, "total %d files with embedded info processed, %d of them with EXIF, %d of them with ID3 tags, %d embedded thumbnails, %d mp3-files\n",
+		es.ExtCount, es.ExifCount, es.Id3Count, es.TmbCount, es.Mp3Count)
 	if es.ErrCount > 0 {
 		fmt.Fprintf(os.Stdout, "gets %d failures on embedded info extract\n", es.ErrCount)
 	}

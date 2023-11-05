@@ -130,9 +130,10 @@ type (
 )
 
 var (
-	PathCache = NewBimap[Puid_t, string]()    // Bidirectional map for PUIDs and system paths.
-	gpscache  = NewCache[Puid_t, GpsInfo]()   // FIFO cache with GPS coordinates.
-	tilecache = NewCache[Puid_t, *TileProp]() // FIFO cache with set of available tiles.
+	PathCache = NewBimap[Puid_t, string]()   // Bidirectional map for PUIDs and system paths.
+	gpscache  = NewCache[Puid_t, GpsInfo]()  // FIFO cache with GPS coordinates.
+	tilecache = NewCache[Puid_t, TileProp]() // FIFO cache with set of available tiles.
+	extcache  = NewCache[Puid_t, ExtProp]()  // FIFO cache with set of base extension properties.
 
 	etmbcache = NewCache[Puid_t, MediaData]() // FIFO cache with files embedded thumbnails.
 	imgcache  = NewCache[Puid_t, MediaData]() // FIFO cache with converted to HD resolution images, processed media files and embedded thumbnails.
@@ -407,11 +408,11 @@ func HdCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 	var orientation = OrientNormal
 	if tp, ok := ExifStoreGet(session, puid); ok && tp.Orientation > 0 {
 		orientation = tp.Orientation
-	} else if tp, err := ExifExtract(session, file, puid); err == nil && tp.Orientation > 0 {
+	} else if tp, err = ExifExtract(session, file, puid); err == nil && tp.Orientation > 0 {
 		orientation = tp.Orientation
-	}
-	if _, err = file.Seek(0, io.SeekStart); err != nil {
-		return
+		if _, err = file.Seek(0, io.SeekStart); err != nil {
+			return
+		}
 	}
 
 	var src, dst image.Image
