@@ -28,13 +28,14 @@ import (
 type Mime_t int16
 
 const (
-	MimeDis  Mime_t = -1 // thumbnail is absent or file can not be cached for thumbnails.
-	MimeNil  Mime_t = 0  // file is not cached for thumbnails, have indeterminate state.
-	MimeUnk  Mime_t = 1  // image/*
-	MimeGif  Mime_t = 2  // image/gif
-	MimePng  Mime_t = 3  // image/png
-	MimeJpeg Mime_t = 4  // image/jpeg
-	MimeWebp Mime_t = 5  // image/webp
+	MimeDis Mime_t = iota - 1 // thumbnail is absent or file can not be cached for thumbnails.
+
+	MimeNil  // file is not cached for thumbnails, have indeterminate state.
+	MimeUnk  // image/*
+	MimeGif  // image/gif
+	MimePng  // image/png
+	MimeJpeg // image/jpeg
+	MimeWebp // image/webp
 )
 
 var MimeStr = map[Mime_t]string{
@@ -275,9 +276,9 @@ func CacheThumb(session *Session, syspath string) (md MediaData, err error) {
 		orientation = tp.Orientation
 	} else if tp, err = ExifExtract(session, file, puid); err == nil && tp.Orientation > 0 {
 		orientation = tp.Orientation
-		if _, err = file.Seek(0, io.SeekStart); err != nil {
-			return
-		}
+	}
+	if _, err = file.Seek(0, io.SeekStart); err != nil {
+		return
 	}
 
 	// create sized image for thumbnail
@@ -378,9 +379,9 @@ func CacheTile(session *Session, syspath string, wdh, hgt int) (md MediaData, er
 		orientation = tp.Orientation
 	} else if tp, err = ExifExtract(session, file, puid); err == nil && tp.Orientation > 0 {
 		orientation = tp.Orientation
-		if _, err = file.Seek(0, io.SeekStart); err != nil {
-			return
-		}
+	}
+	if _, err = file.Seek(0, io.SeekStart); err != nil {
+		return
 	}
 
 	var src image.Image

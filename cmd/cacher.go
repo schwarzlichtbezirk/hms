@@ -59,13 +59,16 @@ func IsCached(fpath string) bool {
 
 // FileList forms list of files to process by caching algorithm.
 func FileList(fsys jnt.FS, pathlist *[]string, extlist, cnvlist FileMap) (err error) {
+	var session = hms.XormStorage.NewSession()
+	defer session.Close()
+
 	fs.WalkDir(fsys, ".", func(fpath string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 		var fullpath = JoinFast(string(fsys), fpath)
 		if d.Name() != "." && d.Name() != ".." {
-			if _, ok := hms.PathCache.GetRev(fullpath); !ok {
+			if _, ok := hms.PathStorePUID(session, fullpath); !ok {
 				*pathlist = append(*pathlist, fullpath)
 			}
 		}
@@ -236,7 +239,7 @@ func UpdateExtList(extlist FileMap) {
 		}
 		offset += limit
 		for _, puid := range puids {
-			if fpath, ok := hms.PathCache.GetDir(hms.Puid_t(puid)); ok {
+			if fpath, ok := hms.PathStorePath(session, hms.Puid_t(puid)); ok {
 				delete(extlist, fpath)
 			} else {
 				fmt.Fprintf(os.Stdout, "found unlinked PUID in ext_store: %d\n", puid)

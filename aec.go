@@ -149,21 +149,35 @@ const (
 	AECispathdeny
 	AECispathnodata
 
+	// tags/chk
+
+	AECtagschknoacc
+	AECtagschknodata
+
+	// tags/start
+
+	AECtagsstartnoacc
+	AECtagsstartnodata
+
+	// tags/break
+
+	AECtagsbreaknoacc
+	AECtagsbreaknodata
+
 	// tile/chk
 
 	AECtilechknoacc
 	AECtilechknodata
 
-	// tile/scnstart
+	// tile/start
 
-	AECscnstartnoacc
-	AECscnstartnodata
+	AECtilestartnoacc
+	AECtilestartnodata
 
-	// tile/scnbreak
+	// tile/break
 
-	AECscnbreaknoacc
-	AECscnbreaknoaid
-	AECscnbreaknodata
+	AECtilebreaknoacc
+	AECtilebreaknodata
 
 	// drive/add
 

@@ -29,7 +29,7 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 
 	var dpaths = make([]string, 0, len(vpaths)) // database paths
 	for _, dp := range vpaths {
-		if _, ok := PathCache.GetRev(dp.Path); !ok {
+		if _, ok := PathStorePUID(session, dp.Path); !ok {
 			dpaths = append(dpaths, dp.Path)
 		}
 	}
@@ -48,7 +48,7 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 		nps = make([]PathStore, 0, len(dpaths))
 		var npaths = make([]string, 0, len(dpaths)) // new paths
 		for _, fpath := range dpaths {
-			if _, ok := PathCache.GetRev(fpath); !ok {
+			if _, ok := PathStorePUID(session, fpath); !ok {
 				nps = append(nps, PathStore{
 					Path: fpath,
 				})
@@ -73,7 +73,7 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 	// make vpuids array
 	var vpuids = make([]Puid_t, len(vpaths)) // verified PUIDs
 	for i, dp := range vpaths {
-		var puid, _ = PathCache.GetRev(dp.Path)
+		var puid, _ = PathStorePUID(session, dp.Path)
 		vpuids[i] = puid
 	}
 
@@ -100,8 +100,8 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 				epuids = append(epuids, puid)
 			} else {
 				extmap[puid] = ExtProp{
-					Tags:  TagNil,
-					Thumb: MimeDis,
+					Tags: TagDis,
+					ETmb: MimeDis,
 				}
 			}
 		}
@@ -118,8 +118,8 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 	// scan not cached
 	if scanembed {
 		for _, puid := range epuids {
-			var fpath, _ = PathCache.GetDir(puid)
-			ImgScanner.AddTile(fpath, tme)
+			var fpath, _ = PathStorePath(session, puid)
+			ImgScanner.AddTags(fpath)
 		}
 	}
 
@@ -232,7 +232,7 @@ func ScanCat(prf *Profile, session *Session, puid Puid_t, cat string, percent fl
 	var newpuids []uint64
 	var vpaths []DiskPath
 	for _, ds := range dss {
-		if fpath, ok := PathCache.GetDir(ds.Puid); ok {
+		if fpath, ok := PathStorePath(session, ds.Puid); ok {
 			vpaths = append(vpaths, MakeFilePath(fpath))
 		} else {
 			newpuids = append(newpuids, uint64(ds.Puid))

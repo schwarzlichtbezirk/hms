@@ -6,6 +6,131 @@ import (
 )
 
 // APIHANDLER
+func extchkAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
+	type store struct {
+		PUID    Puid_t `xorm:"puid" json:"puid" yaml:"puid" xml:"puid,attr"`
+		ExtProp `xorm:"extends" yaml:",inline"`
+	}
+	var err error
+	var arg struct {
+		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
+		List    []Puid_t `json:"list" yaml:"list" xml:"list>puid"`
+	}
+	var ret struct {
+		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
+		List    []store  `json:"list" yaml:"list" xml:"list>tile"`
+	}
+
+	var acc *Profile
+	if acc = ProfileByID(aid); acc == nil {
+		WriteError400(w, r, ErrNoAcc, AECtagschknoacc)
+		return
+	}
+
+	// get arguments
+	if err = ParseBody(w, r, &arg); err != nil {
+		return
+	}
+	if len(arg.List) == 0 {
+		WriteError400(w, r, ErrNoData, AECtagschknodata)
+		return
+	}
+
+	var session = XormStorage.NewSession()
+	defer session.Close()
+
+	ret.List = make([]store, len(arg.List))
+	for i, puid := range arg.List {
+		var xp ExtProp
+		xp.ETmb = MimeDis // disable if no access
+		if syspath, ok := PathStorePath(session, puid); ok {
+			if acc.PathAccess(syspath, uid == aid) {
+				if xp, ok = extcache.Peek(puid); !ok {
+					xp.ETmb = MimeNil // not cached yet
+				}
+			}
+		}
+		ret.List[i] = store{puid, xp}
+	}
+
+	WriteOK(w, r, &ret)
+}
+
+// APIHANDLER
+func extstartAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
+	var err error
+	var arg struct {
+		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
+		List    []Puid_t `json:"list" yaml:"list" xml:"list>tiletm"`
+	}
+
+	var acc *Profile
+	if acc = ProfileByID(aid); acc == nil {
+		WriteError400(w, r, ErrNoAcc, AECtagsstartnoacc)
+		return
+	}
+
+	// get arguments
+	if err = ParseBody(w, r, &arg); err != nil {
+		return
+	}
+	if len(arg.List) == 0 {
+		WriteError400(w, r, ErrNoData, AECtagsstartnodata)
+		return
+	}
+
+	var session = XormStorage.NewSession()
+	defer session.Close()
+
+	for _, puid := range arg.List {
+		if syspath, ok := PathStorePath(session, puid); ok {
+			if acc.PathAccess(syspath, uid == aid) {
+				ImgScanner.AddTags(syspath)
+			}
+		}
+	}
+
+	WriteOK(w, r, nil)
+}
+
+// APIHANDLER
+func extbreakAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
+	var err error
+	var arg struct {
+		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
+		List    []Puid_t `json:"list" yaml:"list" xml:"list>tiletm"`
+	}
+
+	var acc *Profile
+	if acc = ProfileByID(aid); acc == nil {
+		WriteError400(w, r, ErrNoAcc, AECtagsbreaknoacc)
+		return
+	}
+
+	// get arguments
+	if err = ParseBody(w, r, &arg); err != nil {
+		return
+	}
+	if len(arg.List) == 0 {
+		WriteError400(w, r, ErrNoData, AECtagsbreaknodata)
+		return
+	}
+
+	var session = XormStorage.NewSession()
+	defer session.Close()
+
+	for _, puid := range arg.List {
+		if syspath, ok := PathStorePath(session, puid); ok {
+			if acc.PathAccess(syspath, uid == aid) {
+				ImgScanner.RemoveTags(syspath)
+			}
+		}
+	}
+
+	WriteOK(w, r, nil)
+}
+
+// APIHANDLER
 func tilechkAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	type tiletm struct {
 		PUID Puid_t `json:"puid" yaml:"puid" xml:"puid,attr"`
@@ -19,13 +144,11 @@ func tilechkAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var err error
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
-
-		List []tiletm `json:"list" yaml:"list" xml:"list>puid"`
+		List    []tiletm `json:"list" yaml:"list" xml:"list>puid"`
 	}
 	var ret struct {
-		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
-
-		List []tilemime `json:"list" yaml:"list" xml:"list>tile"`
+		XMLName xml.Name   `json:"-" yaml:"-" xml:"ret"`
+		List    []tilemime `json:"list" yaml:"list" xml:"list>tile"`
 	}
 
 	var acc *Profile
@@ -65,7 +188,7 @@ func tilechkAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 }
 
 // APIHANDLER
-func tilescnstartAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
+func tilestartAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	type tiletm struct {
 		PUID Puid_t `json:"puid" yaml:"puid" xml:"puid,attr"`
 		TM   TM_t   `json:"tm,omitempty" yaml:"tm,omitempty" xml:"tm,omitempty,attr"`
@@ -73,13 +196,12 @@ func tilescnstartAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var err error
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
-
-		List []tiletm `json:"list" yaml:"list" xml:"list>tiletm"`
+		List    []tiletm `json:"list" yaml:"list" xml:"list>tiletm"`
 	}
 
 	var acc *Profile
 	if acc = ProfileByID(aid); acc == nil {
-		WriteError400(w, r, ErrNoAcc, AECscnstartnoacc)
+		WriteError400(w, r, ErrNoAcc, AECtilestartnoacc)
 		return
 	}
 
@@ -88,7 +210,7 @@ func tilescnstartAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 	if len(arg.List) == 0 {
-		WriteError400(w, r, ErrNoData, AECscnstartnodata)
+		WriteError400(w, r, ErrNoData, AECtilestartnodata)
 		return
 	}
 
@@ -107,7 +229,7 @@ func tilescnstartAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 }
 
 // APIHANDLER
-func tilescnbreakAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
+func tilebreakAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	type tiletm struct {
 		PUID Puid_t `json:"puid" yaml:"puid" xml:"puid,attr"`
 		TM   TM_t   `json:"tm,omitempty" yaml:"tm,omitempty" xml:"tm,omitempty,attr"`
@@ -115,13 +237,12 @@ func tilescnbreakAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var err error
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
-
-		List []tiletm `json:"list" yaml:"list" xml:"list>tiletm"`
+		List    []tiletm `json:"list" yaml:"list" xml:"list>tiletm"`
 	}
 
 	var acc *Profile
 	if acc = ProfileByID(aid); acc == nil {
-		WriteError400(w, r, ErrNoAcc, AECscnbreaknoacc)
+		WriteError400(w, r, ErrNoAcc, AECtilebreaknoacc)
 		return
 	}
 
@@ -130,7 +251,7 @@ func tilescnbreakAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 	if len(arg.List) == 0 {
-		WriteError400(w, r, ErrNoData, AECscnbreaknodata)
+		WriteError400(w, r, ErrNoData, AECtilebreaknodata)
 		return
 	}
 

@@ -12,7 +12,7 @@ require (
 	github.com/diskfs/go-diskfs v1.4.0
 	github.com/ftrvxmtrx/tga v0.0.0-20150524081124-bd8e8d5be13a
 	github.com/google/uuid v1.4.0
-	github.com/gorilla/mux v1.8.0
+	github.com/gorilla/mux v1.8.1
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/jlaffaye/ftp v0.2.0
 	github.com/mattn/go-sqlite3 v1.14.18
@@ -23,8 +23,8 @@ require (
 	github.com/spate/glimage v0.0.0-20200505055513-fbdcc60a65e5
 	github.com/studio-b12/gowebdav v0.9.0
 	github.com/tcolgate/mp3 v0.0.0-20170426193717-e79c5a46d300
-	golang.org/x/crypto v0.14.0
-	golang.org/x/image v0.13.0
+	golang.org/x/crypto v0.15.0
+	golang.org/x/image v0.14.0
 	golang.org/x/sync v0.5.0
 	golang.org/x/text v0.14.0
 	gopkg.in/ini.v1 v1.67.0
@@ -50,7 +50,7 @@ require (
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/syndtr/goleveldb v1.0.0 // indirect
 	github.com/ulikunitz/xz v0.5.11 // indirect
-	golang.org/x/net v0.17.0 // indirect
+	golang.org/x/net v0.18.0 // indirect
 	golang.org/x/sys v0.14.0 // indirect
 	gopkg.in/djherbis/times.v1 v1.3.0 // indirect
 	xorm.io/builder v0.3.13 // indirect

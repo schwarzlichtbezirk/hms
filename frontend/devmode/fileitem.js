@@ -32,8 +32,8 @@ const filehint = file => {
 	if (file.width && file.height) {
 		lst.push(['dimensions', `${file.width}x${file.height}`]);
 	}
-	if (file.length) {
-		lst.push(['length', fmtduration(file.length, dur_sec)]);
+	if (file.pblen) {
+		lst.push(['pblen', fmtduration(file.pblen, dur_sec)]);
 	}
 	if (file.bitrate) {
 		lst.push(['bitrate', `${file.bitrate} kbps`]);
@@ -80,8 +80,8 @@ const fileinfo = file => {
 	if (file.width && file.height) {
 		lst.push(['dimensions', `${file.width}x${file.height}`]);
 	}
-	if (file.length) {
-		lst.push(['length', fmtduration(file.length, dur_sec)]);
+	if (file.pblen) {
+		lst.push(['length', fmtduration(file.pblen, dur_sec)]);
 	}
 	if (file.bitrate) {
 		lst.push(['bitrate', `${file.bitrate} kbps`]);

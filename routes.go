@@ -618,9 +618,12 @@ func RegisterRoutes(gmux *mux.Router) {
 	usr.Path("/res/tags").HandlerFunc(AuthWrap(tagsAPI))
 	usr.Path("/res/ispath").HandlerFunc(AuthWrap(ispathAPI)) // authorized only
 
+	usr.Path("/tags/chk").HandlerFunc(AuthWrap(extchkAPI))
+	usr.Path("/tags/start").HandlerFunc(AuthWrap(extstartAPI))
+	usr.Path("/tags/break").HandlerFunc(AuthWrap(extbreakAPI))
 	usr.Path("/tile/chk").HandlerFunc(AuthWrap(tilechkAPI))
-	usr.Path("/tile/scnstart").HandlerFunc(AuthWrap(tilescnstartAPI))
-	usr.Path("/tile/scnbreak").HandlerFunc(AuthWrap(tilescnbreakAPI))
+	usr.Path("/tile/start").HandlerFunc(AuthWrap(tilestartAPI))
+	usr.Path("/tile/break").HandlerFunc(AuthWrap(tilebreakAPI))
 
 	usr.Path("/drive/add").HandlerFunc(AuthWrap(drvaddAPI)) // authorized only
 	usr.Path("/drive/del").HandlerFunc(AuthWrap(drvdelAPI)) // authorized only

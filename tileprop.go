@@ -23,7 +23,6 @@ import (
 
 // TileProp is thumbnails properties.
 type TileProp struct {
-	ETmbVal Mime_t `json:"etmb" yaml:"etmb" xml:"etmb"`
 	MTmbVal Mime_t `json:"mtmb" yaml:"mtmb" xml:"mtmb"`
 	MT02Val Mime_t `json:"mt02,omitempty" yaml:"mt02,omitempty" xml:"mt02,omitempty"`
 	MT03Val Mime_t `json:"mt03,omitempty" yaml:"mt03,omitempty" xml:"mt03,omitempty"`
@@ -50,7 +49,6 @@ const (
 type TM_t int
 
 const (
-	tme  TM_t = -1
 	tm0  TM_t = 0
 	tm2  TM_t = 2
 	tm3  TM_t = 3
@@ -110,8 +108,6 @@ func CachedTileMime(syspath string, tm TM_t) Mime_t {
 func (tp *TileProp) Tile(tm TM_t) (mime Mime_t, ok bool) {
 	ok = true
 	switch tm {
-	case tme:
-		mime = tp.ETmbVal
 	case tm0:
 		mime = tp.MTmbVal
 	case tm2:
@@ -156,8 +152,6 @@ func (tp *TileProp) Tile(tm TM_t) (mime Mime_t, ok bool) {
 func (tp *TileProp) SetTile(tm TM_t, mime Mime_t) (ok bool) {
 	ok = true
 	switch tm {
-	case tme:
-		tp.ETmbVal = mime
 	case tm0:
 		tp.MTmbVal = mime
 	case tm2:

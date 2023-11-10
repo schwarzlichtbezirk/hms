@@ -755,6 +755,7 @@ const VueMainApp = {
 			this.rootname = "";
 			this.static = true;
 			this.hashome = data.hashome;
+			this.access = true;
 
 			await this.newfolder(data.list);
 		},
@@ -847,7 +848,7 @@ const VueMainApp = {
 				eventHub.emit('ajax', +1);
 				try {
 					// open route and push history step
-					const hist = { path: CNID.home };
+					const hist = { path: CNID.home, scan: true };
 					await this.fetchfolder(hist);
 					this.pushhist(hist);
 				} catch (e) {
@@ -894,7 +895,7 @@ const VueMainApp = {
 				try {
 					// open route and push history step
 					const path = this.curpathway[this.curpathway.length - 1].path || CNID.home;
-					const hist = { path: path };
+					const hist = { path: path, scan: true };
 					await this.fetchfolder(hist);
 					this.pushhist(hist);
 				} catch (e) {
@@ -909,7 +910,10 @@ const VueMainApp = {
 			(async () => {
 				eventHub.emit('ajax', +1);
 				try {
-					await this.fetchfolder({ path: this.curpuid ?? this.curpath });
+					await this.fetchfolder({
+						path: this.curpuid ?? this.curpath,
+						scan: true,
+					});
 				} catch (e) {
 					ajaxfail(e);
 				} finally {
@@ -1061,7 +1065,10 @@ const VueMainApp = {
 						eventHub.emit('ajax', +1);
 						try {
 							// open route and push history step
-							const hist = { path: file.puid ?? file.path };
+							const hist = {
+								path: file.puid ?? file.path,
+								scan: true,
+							};
 							await this.fetchfolder(hist);
 							this.pushhist(hist);
 						} catch (e) {
@@ -1120,7 +1127,7 @@ const VueMainApp = {
 			this.aid = 1;
 		}
 
-		const hist = {};
+		const hist = { scan: true };
 		// get route
 		const route = chunks[0];
 		chunks.shift();
