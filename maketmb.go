@@ -169,12 +169,9 @@ func ExtractThmub(session *Session, syspath string) (md MediaData, err error) {
 }
 
 // DrawThumb produces new thumbnail object.
-func DrawThumb(src image.Image, orientation int) (data []byte, err error) {
+func DrawThumb(src image.Image, wdh, hgt int, orientation int) (data []byte, err error) {
 	var dst image.Image
-	src.Bounds()
-	if src.Bounds().In(image.Rectangle{
-		Max: image.Point{Cfg.TmbResolution[0], Cfg.TmbResolution[1]},
-	}) {
+	if wdh <= Cfg.TmbResolution[0] && hgt <= Cfg.TmbResolution[1] {
 		dst = src
 	} else {
 		var fltlst = AddOrientFilter([]gift.Filter{
@@ -224,6 +221,11 @@ func CacheThumb(session *Session, syspath string) (md MediaData, err error) {
 			if mdtag, err = Id3ExtractThumb(syspath); err != nil {
 				return
 			}
+			// get dimensions
+			var imc image.Config
+			if imc, _, err = image.DecodeConfig(bytes.NewReader(mdtag.Data)); err != nil {
+				return // can not recognize format or decode config
+			}
 			// create sized image for thumbnail
 			var src image.Image
 			if src, _, err = image.Decode(bytes.NewReader(mdtag.Data)); err != nil {
@@ -231,7 +233,7 @@ func CacheThumb(session *Session, syspath string) (md MediaData, err error) {
 					return // can not decode file by any codec
 				}
 			}
-			if md.Data, err = DrawThumb(src, OrientNormal); err != nil {
+			if md.Data, err = DrawThumb(src, imc.Width, imc.Height, OrientNormal); err != nil {
 				return
 			}
 			md.Mime = MimeWebp
@@ -288,7 +290,7 @@ func CacheThumb(session *Session, syspath string) (md MediaData, err error) {
 			return // can not decode file by any codec
 		}
 	}
-	if md.Data, err = DrawThumb(src, orientation); err != nil {
+	if md.Data, err = DrawThumb(src, imc.Width, imc.Height, orientation); err != nil {
 		return
 	}
 	md.Mime = MimeWebp

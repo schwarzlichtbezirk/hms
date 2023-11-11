@@ -16,45 +16,45 @@ type Cacher interface {
 }
 
 // EmbedPath is path to get embedded JPEG thumbnail.
-type EmbedPath string
+type EmbedPath Puid_t
 
-func (fpath EmbedPath) Cache() {
+func (puid EmbedPath) Cache() {
 	var session = XormStorage.NewSession()
 	defer session.Close()
 
+	var fpath, _ = PathStorePath(session, Puid_t(puid))
 	var es ExtStat
 	var buf StoreBuf
 	buf.Init()
-	var _, xp, _ = TagsExtract(string(fpath), session, &buf, &es, true)
+	var _, xp, _ = TagsExtract(fpath, session, &buf, &es, true)
 	buf.Flush(session)
 
-	var puid, _ = PathStorePUID(session, string(fpath))
-	extcache.Poke(puid, xp)
+	extcache.Poke(Puid_t(puid), xp)
 }
 
 // ThumbPath is thumbnail path type for cache processing.
-type ThumbPath string
+type ThumbPath Puid_t
 
 // Cache is Cacher implementation for ThumbPath type.
-func (fpath ThumbPath) Cache() {
+func (puid ThumbPath) Cache() {
 	var session = XormStorage.NewSession()
 	defer session.Close()
 
-	var puid, _ = PathStorePUID(session, string(fpath))
+	var fpath, _ = PathStorePath(session, Puid_t(puid))
 	var err error
 	var md MediaData
-	if md, err = CacheThumb(session, string(fpath)); err != nil {
+	if md, err = CacheThumb(session, fpath); err != nil {
 		md.Mime = MimeDis
 	}
 
-	var tp, _ = tilecache.Peek(puid)
+	var tp, _ = tilecache.Peek(Puid_t(puid))
 	tp.SetTile(tm0, md.Mime)
-	tilecache.Poke(puid, tp)
+	tilecache.Poke(Puid_t(puid), tp)
 }
 
 // TilePath is tile path type for cache processing.
 type TilePath struct {
-	Path string
+	Puid Puid_t
 	Wdh  int
 	Hgt  int
 }
@@ -64,17 +64,17 @@ func (tile TilePath) Cache() {
 	var session = XormStorage.NewSession()
 	defer session.Close()
 
-	var puid, _ = PathStorePUID(session, tile.Path)
+	var fpath, _ = PathStorePath(session, tile.Puid)
 	var err error
 	var md MediaData
-	if md, err = CacheTile(session, tile.Path, tile.Wdh, tile.Hgt); err != nil {
+	if md, err = CacheTile(session, fpath, tile.Wdh, tile.Hgt); err != nil {
 		md.Mime = MimeDis
 	}
 
-	var tp, _ = tilecache.Peek(puid)
+	var tp, _ = tilecache.Peek(tile.Puid)
 	var tm = TM_t(tile.Wdh / htcell)
 	tp.SetTile(tm, md.Mime)
-	tilecache.Poke(puid, tp)
+	tilecache.Poke(tile.Puid, tp)
 }
 
 // GetScanThreadsNum returns number of scanning threads
@@ -216,33 +216,33 @@ func (s *scanner) Stop() (ctx context.Context) {
 }
 
 // AddTags adds system path to queue to extract embedded thumbnail and tags.
-func (s *scanner) AddTags(syspath string) {
-	s.put <- EmbedPath(syspath)
+func (s *scanner) AddTags(puid Puid_t) {
+	s.put <- EmbedPath(puid)
 }
 
 // RemoveTags removes system path for embedded thumbnail from queue.
-func (s *scanner) RemoveTags(syspath string) {
-	s.del <- EmbedPath(syspath)
+func (s *scanner) RemoveTags(puid Puid_t) {
+	s.del <- EmbedPath(puid)
 }
 
 // AddTile adds system path to queue to render thumbnail from image
 // source (on tm == tm0), or to render tile with given tile multiplier
 // (on any other tm case).
-func (s *scanner) AddTile(syspath string, tm TM_t) {
+func (s *scanner) AddTile(puid Puid_t, tm TM_t) {
 	if tm == tm0 {
-		s.put <- ThumbPath(syspath)
+		s.put <- ThumbPath(puid)
 	} else {
-		s.put <- TilePath{syspath, int(tm * htcell), int(tm * vtcell)}
+		s.put <- TilePath{puid, int(tm * htcell), int(tm * vtcell)}
 	}
 }
 
 // RemoveTile removes system path for thumbnail render (on tm == tm0),
 // or for tile render from queue (on any other tm case).
-func (s *scanner) RemoveTile(syspath string, tm TM_t) {
+func (s *scanner) RemoveTile(puid Puid_t, tm TM_t) {
 	if tm == tm0 {
-		s.del <- ThumbPath(syspath)
+		s.del <- ThumbPath(puid)
 	} else {
-		s.del <- TilePath{syspath, int(tm * htcell), int(tm * vtcell)}
+		s.del <- TilePath{puid, int(tm * htcell), int(tm * vtcell)}
 	}
 }
 

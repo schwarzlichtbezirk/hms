@@ -33,7 +33,7 @@ const filehint = file => {
 		lst.push(['dimensions', `${file.width}x${file.height}`]);
 	}
 	if (file.pblen) {
-		lst.push(['pblen', fmtduration(file.pblen, dur_sec)]);
+		lst.push(['length', fmtduration(file.pblen, dur_sec)]);
 	}
 	if (file.bitrate) {
 		lst.push(['bitrate', `${file.bitrate} kbps`]);

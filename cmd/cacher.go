@@ -99,6 +99,7 @@ func Convert(fpath string, fi fs.FileInfo, cs *CnvStat) (err error) {
 	// lazy decode
 	var orientation = hms.OrientNormal
 	var src image.Image
+	var imc image.Config
 	var decode = func() {
 		if src != nil {
 			return
@@ -110,7 +111,6 @@ func Convert(fpath string, fi fs.FileInfo, cs *CnvStat) (err error) {
 		}
 		defer file.Close()
 
-		var imc image.Config
 		if imc, _, err = image.DecodeConfig(file); err != nil {
 			return // can not recognize format or decode config
 		}
@@ -173,7 +173,7 @@ func Convert(fpath string, fi fs.FileInfo, cs *CnvStat) (err error) {
 		if decode(); err != nil {
 			return
 		}
-		if md.Data, err = hms.DrawThumb(src, orientation); err != nil {
+		if md.Data, err = hms.DrawThumb(src, imc.Width, imc.Height, orientation); err != nil {
 			return
 		}
 		// push thumbnail to package

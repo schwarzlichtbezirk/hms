@@ -90,7 +90,7 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 	// get extension info
 	var extmap = map[Puid_t]ExtProp{}
 	var ess []ExtStore
-	var epuids = make([]Puid_t, len(vpaths)) // ext
+	var epuids = make([]Puid_t, 0, len(vpuids)) // ext
 	for i, puid := range vpuids {
 		if xp, ok := extcache.Peek(puid); ok {
 			extmap[puid] = xp
@@ -118,8 +118,9 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 	// scan not cached
 	if scanembed {
 		for _, puid := range epuids {
-			var fpath, _ = PathStorePath(session, puid)
-			ImgScanner.AddTags(fpath)
+			if _, ok := extmap[puid]; !ok {
+				ImgScanner.AddTags(puid)
+			}
 		}
 	}
 

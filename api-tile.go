@@ -79,15 +79,8 @@ func extstartAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 
-	var session = XormStorage.NewSession()
-	defer session.Close()
-
 	for _, puid := range arg.List {
-		if syspath, ok := PathStorePath(session, puid); ok {
-			if acc.PathAccess(syspath, uid == aid) {
-				ImgScanner.AddTags(syspath)
-			}
-		}
+		ImgScanner.AddTags(puid)
 	}
 
 	WriteOK(w, r, nil)
@@ -116,15 +109,8 @@ func extbreakAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 
-	var session = XormStorage.NewSession()
-	defer session.Close()
-
 	for _, puid := range arg.List {
-		if syspath, ok := PathStorePath(session, puid); ok {
-			if acc.PathAccess(syspath, uid == aid) {
-				ImgScanner.RemoveTags(syspath)
-			}
-		}
+		ImgScanner.RemoveTags(puid)
 	}
 
 	WriteOK(w, r, nil)
@@ -214,15 +200,8 @@ func tilestartAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 
-	var session = XormStorage.NewSession()
-	defer session.Close()
-
 	for _, ttm := range arg.List {
-		if syspath, ok := PathStorePath(session, ttm.PUID); ok {
-			if acc.PathAccess(syspath, uid == aid) {
-				ImgScanner.AddTile(syspath, ttm.TM)
-			}
-		}
+		ImgScanner.AddTile(ttm.PUID, ttm.TM)
 	}
 
 	WriteOK(w, r, nil)
@@ -255,15 +234,8 @@ func tilebreakAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 
-	var session = XormStorage.NewSession()
-	defer session.Close()
-
 	for _, ttm := range arg.List {
-		if syspath, ok := PathStorePath(session, ttm.PUID); ok {
-			if acc.PathAccess(syspath, uid == aid) {
-				ImgScanner.RemoveTile(syspath, ttm.TM)
-			}
-		}
+		ImgScanner.RemoveTile(ttm.PUID, ttm.TM)
 	}
 
 	WriteOK(w, r, nil)

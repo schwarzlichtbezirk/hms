@@ -44,6 +44,8 @@ const circulartimeout = 3 * 1000;
 const circularmindist = 5; // minimum distance in points
 const circularmaxradius = 112 * 1000;
 
+const scansteps = [1200, 1300, 1500, 2000, 2500, 3000, 4000, 5000, 7500, 10000]
+
 // map modes states
 const mm = {
 	view: 'view',
@@ -1156,6 +1158,7 @@ const VueFileCard = {
 			const onnewlist = () => {
 				stop = true;
 			}
+			let ssi = 0
 
 			const self = this;
 			const gen = (async function* () {
@@ -1175,7 +1178,7 @@ const VueFileCard = {
 				}
 				if (euncached.length) {
 					let ul = euncached.length;
-					let uc = 0;
+					ssi = 0;
 					// cache folder thumnails
 					while (true) {
 						if (stop || !self.expanded) {
@@ -1215,13 +1218,13 @@ const VueFileCard = {
 						}
 						// check for some files remains uncached
 						if (euncached.length >= ul) {
-							uc++;
-							if (uc > 9) {
+							ssi++;
+							if (ssi >= scansteps.length) {
 								break;
 							}
 						} else {
 							ul = euncached.length;
-							uc = 0;
+							ssi = 0;
 						}
 
 						yield;
@@ -1248,7 +1251,7 @@ const VueFileCard = {
 					yield;
 
 					let ul = muncached.length;
-					let uc = 0;
+					ssi = 0;
 					// cache folder thumnails
 					while (true) {
 						if (stop || !self.expanded) {
@@ -1294,13 +1297,13 @@ const VueFileCard = {
 						}
 						// check for some files remains uncached
 						if (muncached.length >= ul) {
-							uc++;
-							if (uc > 9) {
+							ssi++;
+							if (ssi >= scansteps.length) {
 								break;
 							}
 						} else {
 							ul = muncached.length;
-							uc = 0;
+							ssi = 0;
 						}
 
 						yield;
@@ -1316,7 +1319,7 @@ const VueFileCard = {
 						return;
 					}
 					// waits before new checkup iteration
-					await new Promise(resolve => setTimeout(resolve, 1500));
+					await new Promise(resolve => setTimeout(resolve, scansteps[ssi]));
 				}
 			})();
 			this.flisthub.off(null, onnewlist);
@@ -2203,6 +2206,7 @@ const VueMapCard = {
 			const onnewlist = () => {
 				stop = true;
 			}
+			let ssi = 0
 
 			const self = this;
 			const gen = (async function* () {
@@ -2224,7 +2228,7 @@ const VueMapCard = {
 				}
 				if (euncached.length) {
 					let ul = euncached.length;
-					let uc = 0;
+					ssi = 0;
 					// cache folder thumnails
 					while (true) {
 						if (stop || !self.expanded) {
@@ -2264,13 +2268,13 @@ const VueMapCard = {
 						}
 						// check for some files remains uncached
 						if (euncached.length >= ul) {
-							uc++;
-							if (uc > 9) {
+							ssi++;
+							if (ssi >= scansteps.length) {
 								break;
 							}
 						} else {
 							ul = euncached.length;
-							uc = 0;
+							ssi = 0;
 						}
 
 						yield;
@@ -2297,7 +2301,7 @@ const VueMapCard = {
 					yield;
 
 					let ul = muncached.length;
-					let uc = 0;
+					ssi = 0;
 					// cache folder thumnails
 					while (true) {
 						if (stop || !self.expanded) {
@@ -2346,8 +2350,8 @@ const VueMapCard = {
 						}
 						// check for some files remains uncached
 						if (muncached.length >= ul) {
-							uc++;
-							if (uc > 9) {
+							ssi++;
+							if (ssi >= scansteps.length) {
 								// add remains markers without thumbnails as is
 								const gpslist = [];
 								for (const tp of uncached) {
@@ -2363,7 +2367,7 @@ const VueMapCard = {
 							}
 						} else {
 							ul = muncached.length;
-							uc = 0;
+							ssi = 0;
 						}
 
 						yield;
@@ -2379,7 +2383,7 @@ const VueMapCard = {
 						return;
 					}
 					// waits before new checkup iteration
-					await new Promise(resolve => setTimeout(resolve, 1500));
+					await new Promise(resolve => setTimeout(resolve, scansteps[ssi]));
 				}
 			})();
 			this.flisthub.off(null, onnewlist);
