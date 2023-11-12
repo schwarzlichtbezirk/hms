@@ -200,7 +200,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 				return
 			}
 		} else if IsTypePlaylist(ext) {
-			var file jnt.File
+			var file jnt.RFile
 			if file, err = jnt.OpenFile(syspath); err != nil {
 				WriteError500(w, r, err, AECfolderopen)
 				return

@@ -221,7 +221,7 @@ func gpsscanAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 				} else {
 					// try to extract from file
 					func() (err error) {
-						var file jnt.File
+						var file jnt.RFile
 						if file, err = jnt.OpenFile(syspath); err != nil {
 							return
 						}

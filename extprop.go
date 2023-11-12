@@ -68,7 +68,7 @@ func TagsExtract(fpath string, session *Session, buf *StoreBuf, es *ExtStat, get
 			atomic.AddUint64(&es.ExtCount, 1)
 		}()
 
-		var file jnt.File
+		var file jnt.RFile
 		if file, err = jnt.OpenFile(fpath); err != nil {
 			return // can not open file
 		}
@@ -132,7 +132,7 @@ func TagsExtract(fpath string, session *Session, buf *StoreBuf, es *ExtStat, get
 			atomic.AddUint64(&es.ExtCount, 1)
 		}()
 
-		var file jnt.File
+		var file jnt.RFile
 		if file, err = jnt.OpenFile(fpath); err != nil {
 			return // can not open file
 		}
@@ -157,7 +157,7 @@ func TagsExtract(fpath string, session *Session, buf *StoreBuf, es *ExtStat, get
 			atomic.AddUint64(&es.ExtCount, 1)
 		}()
 
-		var file jnt.File
+		var file jnt.RFile
 		if file, err = jnt.OpenFile(fpath); err != nil {
 			return // can not open file
 		}

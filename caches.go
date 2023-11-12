@@ -336,7 +336,7 @@ func MediaCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 		return // uncacheable type
 	}
 
-	var file jnt.File
+	var file jnt.RFile
 	if file, err = jnt.OpenFile(syspath); err != nil {
 		return // can not open file
 	}
@@ -375,7 +375,7 @@ func HdCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 		return // file path not found
 	}
 
-	var file jnt.File
+	var file jnt.RFile
 	if file, err = jnt.OpenFile(syspath); err != nil {
 		return // can not open file
 	}
@@ -582,7 +582,7 @@ func (fc *FileCache) GetData(fpath string) (md MediaData, err error) {
 			return
 		}
 
-		var file jnt.File
+		var file jnt.RFile
 		if file, err = fc.OpenTagset(ts); err != nil {
 			return
 		}

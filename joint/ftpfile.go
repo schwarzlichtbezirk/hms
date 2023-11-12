@@ -159,6 +159,7 @@ func (f *FtpFile) Seek(offset int64, whence int) (abs int64, err error) {
 	}
 	if abs < 0 {
 		err = ErrFtpNegPos
+		return
 	}
 	if abs != f.pos && f.ReadCloser != nil {
 		f.ReadCloser.Close()
@@ -166,6 +167,19 @@ func (f *FtpFile) Seek(offset int64, whence int) (abs int64, err error) {
 	}
 	f.pos = abs
 	return
+}
+
+func (f *FtpFile) ReadAt(b []byte, off int64) (n int, err error) {
+	if off < 0 {
+		err = ErrFtpNegPos
+		return
+	}
+	if off != f.pos && f.ReadCloser != nil {
+		f.ReadCloser.Close()
+		f.ReadCloser = nil
+	}
+	f.pos = off
+	return f.Read(b)
 }
 
 // FtpFileInfo encapsulates ftp.Entry structure and provides fs.FileInfo implementation.

@@ -36,6 +36,13 @@ func (f *IsoFile) Close() (err error) {
 	return
 }
 
+func (f *IsoFile) ReadAt(b []byte, off int64) (n int, err error) {
+	if _, err = f.ReadSeekCloser.Seek(off, io.SeekStart); err != nil {
+		return
+	}
+	return f.Read(b)
+}
+
 func (f *IsoFile) Stat() (fi fs.FileInfo, err error) {
 	var enc = charmap.Windows1251.NewEncoder()
 	var fpath, _ = enc.String(f.fpath)
@@ -130,6 +137,7 @@ func (f *DavFile) Seek(offset int64, whence int) (abs int64, err error) {
 	}
 	if abs < 0 {
 		err = ErrFtpNegPos
+		return
 	}
 	if abs != f.pos && f.ReadCloser != nil {
 		f.ReadCloser.Close()
@@ -137,6 +145,19 @@ func (f *DavFile) Seek(offset int64, whence int) (abs int64, err error) {
 	}
 	f.pos = abs
 	return
+}
+
+func (f *DavFile) ReadAt(b []byte, off int64) (n int, err error) {
+	if off < 0 {
+		err = ErrFtpNegPos
+		return
+	}
+	if off != f.pos && f.ReadCloser != nil {
+		f.ReadCloser.Close()
+		f.ReadCloser = nil
+	}
+	f.pos = off
+	return f.Read(b)
 }
 
 func (f *DavFile) Stat() (fi fs.FileInfo, err error) {

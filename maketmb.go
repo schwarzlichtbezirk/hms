@@ -253,7 +253,7 @@ func CacheThumb(session *Session, syspath string) (md MediaData, err error) {
 		return // file is not image
 	}
 
-	var file jnt.File
+	var file jnt.RFile
 	if file, err = jnt.OpenFile(syspath); err != nil {
 		return // can not open file
 	}
@@ -356,7 +356,7 @@ func CacheTile(session *Session, syspath string, wdh, hgt int) (md MediaData, er
 		return // file is not image
 	}
 
-	var file jnt.File
+	var file jnt.RFile
 	if file, err = jnt.OpenFile(syspath); err != nil {
 		return // can not open file
 	}

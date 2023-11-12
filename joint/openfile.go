@@ -12,15 +12,17 @@ import (
 	"golang.org/x/text/encoding/charmap"
 )
 
-// File combines fs.File interface and io.Seeker interface.
-type File interface {
-	io.ReadSeekCloser
-	Stat() (fs.FileInfo, error)
+// RFile combines fs.File interface and io.Seeker interface.
+type RFile interface {
+	io.Reader
+	io.ReaderAt
+	io.Seeker
+	fs.File
 }
 
 // OpenFile opens file from file system, or looking for iso-disk in the given path,
 // opens it, and opens nested into iso-disk file. Or opens file at cloud.
-func OpenFile(anypath string) (r File, err error) {
+func OpenFile(anypath string) (r RFile, err error) {
 	if strings.HasPrefix(anypath, "ftp://") {
 		var f FtpFile
 		if err = f.Open(anypath); err != nil {

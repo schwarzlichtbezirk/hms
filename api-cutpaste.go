@@ -90,7 +90,7 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			}
 		}
 
-		var src jnt.File
+		var src jnt.RFile
 		var dst *os.File
 		var fi fs.FileInfo
 		// open source file

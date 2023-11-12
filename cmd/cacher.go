@@ -105,7 +105,7 @@ func Convert(fpath string, fi fs.FileInfo, cs *CnvStat) (err error) {
 			return
 		}
 
-		var file jnt.File
+		var file jnt.RFile
 		if file, err = os.Open(fpath); err != nil {
 			return // can not open file
 		}

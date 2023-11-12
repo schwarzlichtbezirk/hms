@@ -86,7 +86,7 @@ func Id3ExtractThumb(syspath string) (md MediaData, err error) {
 		}
 	}()
 
-	var file jnt.File
+	var file jnt.RFile
 	if file, err = jnt.OpenFile(syspath); err != nil {
 		return
 	}

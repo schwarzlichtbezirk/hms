@@ -160,7 +160,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		})
 	}
 
-	var content jnt.File
+	var content jnt.RFile
 	if content, err = jnt.OpenFile(syspath); err != nil {
 		if errors.Is(err, jnt.ErrNotFound) {
 			// try to redirect to external shared file (not at DAV-disk)
