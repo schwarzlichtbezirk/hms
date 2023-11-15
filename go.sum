@@ -42,8 +42,6 @@ github.com/edsrzf/mmap-go v1.1.0/go.mod h1:19H/e8pUPLicwkyNgOykDXkJ9F0MHE+Z52B8E
 github.com/elliotwutingfeng/asciiset v0.0.0-20230905005145-03469a5e6723 h1:5NV4VYUVfpKnS0rNIvz6KUbpp0DSupqBl9Ebdu6v2II=
 github.com/elliotwutingfeng/asciiset v0.0.0-20230905005145-03469a5e6723/go.mod h1:GLo/8fDswSAniFG+BFIaiSPcK610jyzgEhWYPQwuQdw=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
-github.com/ftrvxmtrx/tga v0.0.0-20150524081124-bd8e8d5be13a h1:eSqaRmdlZ9JsJ7JuWfDr3ym3monToXRczohBOL+heVQ=
-github.com/ftrvxmtrx/tga v0.0.0-20150524081124-bd8e8d5be13a/go.mod h1:US5WvgEHtG+BvWNNs6gk937h0QL2g2x+r7RH8m3g80Y=
 github.com/go-kit/log v0.1.0/go.mod h1:zbhenjAZHb184qTLMA9ZjW7ThYL0H2mk7Q6pNt4vbaY=
 github.com/go-logfmt/logfmt v0.5.0/go.mod h1:wCYkCAKZfumFQihp8CzCvQ3paCTfi41vtzG1KdI/P7A=
 github.com/go-sql-driver/mysql v1.7.0 h1:ueSltNNllEqE3qcWBTD0iQd3IpL/6U+mJxLkazJ7YPc=
@@ -193,6 +191,8 @@ github.com/rs/zerolog v1.15.0/go.mod h1:xYTKnLHcpfU2225ny5qZjxnj9NvkumZYjJHlAThC
 github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd h1:CmH9+J6ZSsIjUK3dcGsnCnO41eRBOnY12zwkn5qVwgc=
 github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd/go.mod h1:hPqNNc0+uJM6H+SuU8sEs5K5IQeKccPqeSjfgcKGgPk=
 github.com/satori/go.uuid v1.2.0/go.mod h1:dA0hQrYB0VpLJoorglMZABFdXlWrHn1NEOzdhQKdks0=
+github.com/schwarzlichtbezirk/tga v1.0.0 h1:iy2AFv+TQgVK5u703VLlKhqew8F90LJfyOfa36uVFQk=
+github.com/schwarzlichtbezirk/tga v1.0.0/go.mod h1:cUwm7hlnqqQx/y8kQ0BLPFVnyibAAZ5vAzH4+S5ln4U=
 github.com/schwarzlichtbezirk/wpk v1.6.0 h1:lRIN7wOrlrv1zE4dOa2TOIFfjh2QPdj5UiksAqpmzHQ=
 github.com/schwarzlichtbezirk/wpk v1.6.0/go.mod h1:9BtlDCEJwnVXvALCx3stF23eCoSH+JbC/lBoxH8kED4=
 github.com/shopspring/decimal v0.0.0-20180709203117-cd690d0c9e24/go.mod h1:M+9NzErvs504Cn4c5DxATwIqPbtswREoFCre64PpcG4=

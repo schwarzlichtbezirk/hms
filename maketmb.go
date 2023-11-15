@@ -16,14 +16,19 @@ import (
 
 	"github.com/disintegration/gift"
 
-	"github.com/chai2010/webp"       // register WebP
-	_ "github.com/oov/psd"           // register PSD format
+	"github.com/chai2010/webp" // register WebP
+	_ "github.com/oov/psd"     // register PSD format
+	"github.com/schwarzlichtbezirk/tga"
 	_ "github.com/spate/glimage/dds" // register DDS format
 	_ "golang.org/x/image/bmp"       // register BMP format
 	_ "golang.org/x/image/tiff"      // register TIFF format
-
-	_ "github.com/ftrvxmtrx/tga" // put TGA to end, decoder does not register magic prefix
 )
+
+// Register TGA after all others to put format to the end of list,
+// because decoder does not have magic prefix.
+func init() {
+	tga.RegisterFormat()
+}
 
 type Mime_t int16
 

@@ -4,9 +4,9 @@
 plugdir=$(realpath -s "$(dirname $0)/../frontend/plugin")
 mkdir -pv "$plugdir/images"
 
-# bootstrap 5.3.0
+# bootstrap 5.3.2
 # https://cdnjs.com/libraries/
-vers="5.3.0"
+vers="5.3.2"
 curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/$vers/js/bootstrap.min.js --output $plugdir/bootstrap.min.js
 curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/$vers/js/bootstrap.min.js.map --output $plugdir/bootstrap.min.js.map
 curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/$vers/css/bootstrap.min.css --output $plugdir/bootstrap.min.css
@@ -18,10 +18,10 @@ vers="2.11.8"
 curl https://cdnjs.cloudflare.com/ajax/libs/popper.js/$vers/umd/popper.min.js --output $plugdir/popper.min.js
 curl https://cdnjs.cloudflare.com/ajax/libs/popper.js/$vers/umd/popper.min.js.map --output $plugdir/popper.min.js.map
 
-# Vue 3.3.4
+# Vue 3.3.8
 # https://cdnjs.com/libraries/vue
 # https://unpkg.com/vue@next
-vers="3.3.4"
+vers="3.3.8"
 curl https://unpkg.com/vue@$vers/dist/vue.global.js --output $plugdir/vue.global.js
 curl https://unpkg.com/vue@$vers/dist/vue.global.prod.js --output $plugdir/vue.global.prod.js
 

@@ -3,9 +3,9 @@ rem This script downloads all javascript dependencies used on frontend.
 set plugdir=%~dp0..\frontend\plugin
 mkdir %plugdir%\images
 
-rem bootstrap 5.3.0
+rem bootstrap 5.3.2
 rem https://cdnjs.com/libraries/bootstrap
-set vers=5.3.0
+set vers=5.3.2
 curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/%vers%/js/bootstrap.min.js --output %plugdir%/bootstrap.min.js
 curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/%vers%/js/bootstrap.min.js.map --output %plugdir%/bootstrap.min.js.map
 curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/%vers%/css/bootstrap.min.css --output %plugdir%/bootstrap.min.css
@@ -17,10 +17,10 @@ set vers=2.11.8
 curl https://cdnjs.cloudflare.com/ajax/libs/popper.js/%vers%/umd/popper.min.js --output %plugdir%/popper.min.js
 curl https://cdnjs.cloudflare.com/ajax/libs/popper.js/%vers%/umd/popper.min.js.map --output %plugdir%/popper.min.js.map
 
-rem Vue 3.3.4
+rem Vue 3.3.8
 rem https://cdnjs.com/libraries/vue
 rem https://unpkg.com/vue@next
-set vers=3.3.4
+set vers=3.3.8
 curl https://unpkg.com/vue@%vers%/dist/vue.global.js --output %plugdir%/vue.global.js
 curl https://unpkg.com/vue@%vers%/dist/vue.global.prod.js --output %plugdir%/vue.global.prod.js
 
