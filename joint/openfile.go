@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/jlaffaye/ftp"
-	"golang.org/x/text/encoding/charmap"
+	iso "github.com/kdomanski/iso9660"
 )
 
 // RFile combines fs.File interface and io.Seeker interface.
@@ -63,9 +63,9 @@ func OpenFile(anypath string) (r RFile, err error) {
 
 		var fpath string
 		if isopath == anypath {
-			fpath = "/" // get root of disk
+			fpath = "" // get root of disk
 		} else {
-			fpath = anypath[len(isopath):]
+			fpath = anypath[len(isopath)+1:] // without slash prefix
 		}
 
 		var f IsoFile
@@ -148,18 +148,23 @@ func StatFile(anypath string) (fi fs.FileInfo, err error) {
 
 		var fpath string
 		if isopath == anypath {
-			fpath = "/" // get root of disk
+			fpath = "" // get root of disk
 		} else {
-			fpath = anypath[len(isopath):]
+			fpath = anypath[len(isopath)+1:] // without slash prefix
 		}
 
 		var d *IsoJoint
 		if d, err = GetIsoJoint(isopath); err != nil {
 			return
 		}
-		defer PutIsoJoint(isopath, d)
 
-		return d.Stat(fpath)
+		fi, err = d.Stat(fpath)
+		if err != nil { // on case connection was dropped
+			d.Close()
+		} else {
+			PutIsoJoint(isopath, d)
+		}
+		return
 	}
 }
 
@@ -269,9 +274,9 @@ func ReadDir(anypath string) (ret []fs.FileInfo, err error) {
 
 		var fpath string
 		if isopath == anypath {
-			fpath = "/" // get root of disk
+			fpath = "" // get root of disk
 		} else {
-			fpath = anypath[len(isopath):]
+			fpath = anypath[len(isopath)+1:] // without slash prefix
 		}
 
 		var d *IsoJoint
@@ -280,13 +285,19 @@ func ReadDir(anypath string) (ret []fs.FileInfo, err error) {
 		}
 		defer PutIsoJoint(isopath, d)
 
-		var enc = charmap.Windows1251.NewEncoder()
-		fpath, _ = enc.String(fpath)
-		if ret, err = d.fs.ReadDir(fpath); err != nil {
+		var f IsoFile
+		if err = f.Open(isopath, fpath); err != nil {
 			return
 		}
-		for i, fi := range ret {
-			ret[i] = IsoFileInfo{fi}
+		var files []*iso.File
+		if files, err = f.GetChildren(); err != nil {
+			return
+		}
+		ret = make([]fs.FileInfo, len(files))
+		for i, file := range files {
+			ret[i] = &IsoFile{
+				File: file,
+			}
 		}
 		return
 	}

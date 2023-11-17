@@ -3,79 +3,58 @@ package joint
 import (
 	"io"
 	"io/fs"
-	"os"
-	"path"
 
+	iso "github.com/kdomanski/iso9660"
 	"golang.org/x/text/encoding/charmap"
 )
 
 // IsoFile implements for ISO9660-file io.Reader, io.Seeker, io.Closer.
 type IsoFile struct {
-	isofile string // path to ISO9660-file disk image at local filesystem
-	fpath   string // path inside of disk image
-	d       *IsoJoint
-	io.ReadSeekCloser
+	extpath string // external path, to ISO9660-file disk image at local filesystem
+	jnt     *IsoJoint
+	*iso.File
+	*io.SectionReader
 }
 
-func (f *IsoFile) Open(isofile, fpath string) (err error) {
-	f.isofile, f.fpath = isofile, fpath
-	if f.d, err = GetIsoJoint(isofile); err != nil {
+func (f *IsoFile) Open(extpath, intpath string) (err error) {
+	f.extpath = extpath
+	if f.jnt, err = GetIsoJoint(extpath); err != nil {
 		return
 	}
-	var enc = charmap.Windows1251.NewEncoder()
-	fpath, _ = enc.String(fpath)
-	if f.ReadSeekCloser, err = f.d.fs.OpenFile(fpath, os.O_RDONLY); err != nil {
+	if f.File, err = f.jnt.OpenFile(intpath); err != nil {
 		return
+	}
+	if sr := f.File.Reader(); sr != nil {
+		f.SectionReader = sr.(*io.SectionReader)
 	}
 	return
 }
 
-func (f *IsoFile) Close() (err error) {
-	err = f.ReadSeekCloser.Close()
-	PutIsoJoint(f.isofile, f.d)
-	return
-}
-
-func (f *IsoFile) ReadAt(b []byte, off int64) (n int, err error) {
-	if _, err = f.ReadSeekCloser.Seek(off, io.SeekStart); err != nil {
-		return
+func (f *IsoFile) Close() error {
+	if f.jnt != nil {
+		PutIsoJoint(f.extpath, f.jnt)
 	}
-	return f.Read(b)
+	return nil
 }
 
-func (f *IsoFile) Stat() (fi fs.FileInfo, err error) {
-	var enc = charmap.Windows1251.NewEncoder()
-	var fpath, _ = enc.String(f.fpath)
-
-	var list []fs.FileInfo
-	if list, err = f.d.fs.ReadDir(path.Dir(fpath)); err != nil {
-		return
-	}
-
-	var fname = path.Base(fpath)
-	for _, fi = range list {
-		if fi.Name() == fname {
-			return IsoFileInfo{fi}, nil
-		}
-	}
-	return nil, ErrNotFound
-}
-
-// IsoFileInfo is wrapper to convert file names in code page 1251 to UTF.
-type IsoFileInfo struct {
-	fs.FileInfo
-}
-
-func (fi IsoFileInfo) Name() string {
+func (f *IsoFile) Name() string {
 	var dec = charmap.Windows1251.NewDecoder()
-	var name, _ = dec.String(fi.FileInfo.Name())
+	var name, _ = dec.String(f.File.Name())
 	return name
+}
+
+func (f *IsoFile) Size() int64 {
+	return f.File.Size()
+}
+
+func (f *IsoFile) Stat() (fs.FileInfo, error) {
+	return f.File, nil
 }
 
 type DavFile struct {
 	addr string // URL to service, address + service route, i.e. https://user:pass@example.com/webdav/
 	path string // truncated file path from full URL
-	d    *DavJoint
+	jnt  *DavJoint
 	io.ReadCloser
 	pos int64
 	end int64
@@ -87,7 +66,7 @@ func (f *DavFile) Open(davurl string) (err error) {
 		err = ErrNotFound
 		return
 	}
-	if f.d, err = GetDavJoint(f.addr); err != nil {
+	if f.jnt, err = GetDavJoint(f.addr); err != nil {
 		return
 	}
 
@@ -101,13 +80,13 @@ func (f *DavFile) Close() (err error) {
 		f.ReadCloser.Close()
 		f.ReadCloser = nil
 	}
-	PutDavJoint(f.addr, f.d)
+	PutDavJoint(f.addr, f.jnt)
 	return
 }
 
 func (f *DavFile) Read(b []byte) (n int, err error) {
 	if f.ReadCloser == nil {
-		if f.ReadCloser, err = f.d.client.ReadStreamRange(f.path, f.pos, 0); err != nil {
+		if f.ReadCloser, err = f.jnt.client.ReadStreamRange(f.path, f.pos, 0); err != nil {
 			return
 		}
 	}
@@ -125,7 +104,7 @@ func (f *DavFile) Seek(offset int64, whence int) (abs int64, err error) {
 	case io.SeekEnd:
 		if f.end == 0 {
 			var fi fs.FileInfo
-			if fi, err = f.d.client.Stat(f.path); err != nil {
+			if fi, err = f.jnt.client.Stat(f.path); err != nil {
 				return
 			}
 			f.end = fi.Size()
@@ -161,7 +140,7 @@ func (f *DavFile) ReadAt(b []byte, off int64) (n int, err error) {
 }
 
 func (f *DavFile) Stat() (fi fs.FileInfo, err error) {
-	fi, err = f.d.Stat(f.path)
+	fi, err = f.jnt.Stat(f.path)
 	return
 }
 

@@ -9,11 +9,11 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/dhowden/tag v0.0.0-20230630033851-978a0926ee25
 	github.com/disintegration/gift v1.2.1
-	github.com/diskfs/go-diskfs v1.4.0
 	github.com/google/uuid v1.4.0
 	github.com/gorilla/mux v1.8.1
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/jlaffaye/ftp v0.2.0
+	github.com/kdomanski/iso9660 v0.4.0
 	github.com/mattn/go-sqlite3 v1.14.18
 	github.com/oov/psd v0.0.0-20220121172623-5db5eafcecbb
 	github.com/pkg/sftp v1.13.6
@@ -34,7 +34,6 @@ require (
 
 require (
 	github.com/edsrzf/mmap-go v1.1.0 // indirect
-	github.com/elliotwutingfeng/asciiset v0.0.0-20230905005145-03469a5e6723 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
@@ -45,11 +44,7 @@ require (
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
-	github.com/pierrec/lz4/v4 v4.1.18 // indirect
-	github.com/pkg/xattr v0.4.9 // indirect
-	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/syndtr/goleveldb v1.0.0 // indirect
-	github.com/ulikunitz/xz v0.5.11 // indirect
 	golang.org/x/net v0.18.0 // indirect
 	golang.org/x/sys v0.14.0 // indirect
 	gopkg.in/djherbis/times.v1 v1.3.0 // indirect

@@ -5,7 +5,6 @@ import (
 	"io"
 	"io/fs"
 	"net/url"
-	"os"
 	"path"
 	"strings"
 	"sync"
@@ -13,11 +12,8 @@ import (
 
 	cfg "github.com/schwarzlichtbezirk/hms/config"
 
-	"github.com/diskfs/go-diskfs"
-	"github.com/diskfs/go-diskfs/disk"
-	"github.com/diskfs/go-diskfs/filesystem"
-	"github.com/diskfs/go-diskfs/filesystem/iso9660"
 	"github.com/jlaffaye/ftp"
+	iso "github.com/kdomanski/iso9660"
 	"github.com/pkg/sftp"
 	"github.com/studio-b12/gowebdav"
 	"golang.org/x/crypto/ssh"
@@ -26,6 +22,7 @@ import (
 
 var (
 	ErrNotFound = errors.New("resource not found")
+	ErrUnexpDir = errors.New("unexpected directory instead the file")
 	ErrNotIso   = errors.New("filesystem is not ISO9660")
 )
 
@@ -35,7 +32,7 @@ func IsStatic(fi fs.FileInfo) (static bool) {
 	if static = fi == nil; static {
 		return
 	}
-	if _, static = fi.(IsoFileInfo); static {
+	if _, static = fi.(*IsoFile); static {
 		return
 	}
 	if _, static = fi.(gowebdav.File); static {
@@ -121,24 +118,20 @@ func (dc *DiskCache[T]) Put(val T) {
 // IsoJoint opens file with ISO9660 disk and prepares disk-structure
 // to access to nested files.
 type IsoJoint struct {
-	file *os.File
-	fs   *iso9660.FileSystem
+	file  RFile
+	img   *iso.Image
+	cache map[string]*iso.File
 }
 
 func (d *IsoJoint) Make(isopath string) (err error) {
-	var disk *disk.Disk
-	if disk, err = diskfs.Open(isopath, diskfs.WithOpenMode(diskfs.ReadOnly)); err != nil {
+	if d.file, err = OpenFile(isopath); err != nil {
 		return
 	}
-	d.file = disk.File
-	var fs filesystem.FileSystem
-	if fs, err = disk.GetFilesystem(0); err != nil { // assuming it is the whole disk, so partition = 0
-		disk.File.Close()
+	if d.img, err = iso.OpenImage(d.file); err != nil {
 		return
 	}
-	var ok bool
-	if d.fs, ok = fs.(*iso9660.FileSystem); !ok {
-		err = ErrNotIso
+	d.cache = map[string]*iso.File{}
+	if d.cache[""], err = d.img.RootDir(); err != nil {
 		return
 	}
 	return
@@ -148,22 +141,56 @@ func (d *IsoJoint) Close() error {
 	return d.file.Close()
 }
 
-func (d *IsoJoint) Stat(fpath string) (fi fs.FileInfo, err error) {
-	var enc = charmap.Windows1251.NewEncoder()
-	fpath, _ = enc.String(fpath)
+func (jnt *IsoJoint) OpenFile(intpath string) (file *iso.File, err error) {
+	if file, ok := jnt.cache[intpath]; ok {
+		return file, nil
+	}
 
-	var list []fs.FileInfo
-	if list, err = d.fs.ReadDir(path.Dir(fpath)); err != nil {
+	var dec = charmap.Windows1251.NewDecoder()
+	var curdir string
+	var chunks = strings.Split(intpath, "/")
+	file = jnt.cache[curdir] // get root directory
+	for _, chunk := range chunks {
+		if !file.IsDir() {
+			err = ErrNotFound
+			return
+		}
+		var curpath = joinfast(curdir, chunk)
+		if f, ok := jnt.cache[curpath]; ok {
+			file = f
+		} else {
+			var list []*iso.File
+			if list, err = file.GetChildren(); err != nil {
+				return
+			}
+			var found = false
+			for _, file = range list {
+				var name, _ = dec.String(file.Name())
+				jnt.cache[joinfast(curdir, name)] = file
+				if name == chunk {
+					found = true
+					break
+				}
+			}
+			if !found {
+				err = ErrNotFound
+				return
+			}
+		}
+		curdir = curpath
+	}
+	return
+}
+
+func (d *IsoJoint) Stat(fpath string) (fi fs.FileInfo, err error) {
+	var file *iso.File
+	if file, err = d.OpenFile(fpath); err != nil {
 		return
 	}
-
-	var fname = path.Base(fpath)
-	for _, fi = range list {
-		if fi.Name() == fname {
-			return IsoFileInfo{fi}, nil
-		}
+	fi = &IsoFile{
+		File: file,
 	}
-	return nil, ErrNotFound
+	return
 }
 
 // IsoCaches is map with ISO9660-disks joints.
