@@ -27,34 +27,26 @@ func ScanFileNameList(prf *Profile, session *Session, vpaths []DiskPath, scanemb
 func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpaths []DiskPath, scanembed bool) (ret []any, lstp DirProp, err error) {
 	var tscan = time.Now()
 
-	var dpaths = make([]string, 0, len(vpaths)) // database paths
-	for _, dp := range vpaths {
-		if _, ok := PathStorePUID(session, dp.Path); !ok {
-			dpaths = append(dpaths, dp.Path)
-		}
-	}
+	var vpuids = make([]Puid_t, len(vpaths)) // verified PUIDs
 
-	if len(dpaths) > 0 {
-		var nps []PathStore
-		// get not cached paths from database
-		nps = nil
-		if err = session.In("path", dpaths).Find(&nps); err != nil {
-			return
-		}
-		for _, ps := range nps {
-			PathCache.Set(ps.Puid, ps.Path)
-		}
-		// insert new paths into database
-		nps = make([]PathStore, 0, len(dpaths))
-		var npaths = make([]string, 0, len(dpaths)) // new paths
-		for _, fpath := range dpaths {
-			if _, ok := PathStorePUID(session, fpath); !ok {
+	var npaths = make([]string, 0, len(vpaths)) // new paths
+	var nps = make([]PathStore, 0, len(vpaths))
+	var pm = map[string]struct{}{}
+	for i, dp := range vpaths {
+		if puid, ok := PathStorePUID(session, dp.Path); ok {
+			vpuids[i] = puid
+		} else {
+			npaths = append(npaths, dp.Path)
+			if _, ok := pm[dp.Path]; !ok {
 				nps = append(nps, PathStore{
-					Path: fpath,
+					Path: dp.Path,
 				})
-				npaths = append(npaths, fpath)
+				pm[dp.Path] = struct{}{}
 			}
 		}
+	}
+	if len(nps) > 0 {
+		// insert new paths into database
 		if _, err = session.Insert(&nps); err != nil {
 			return
 		}
@@ -64,17 +56,15 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 			return
 		}
 		for _, ps := range nps {
-			if ps.Puid != 0 {
-				PathCache.Set(ps.Puid, ps.Path)
+			PathCache.Set(ps.Puid, ps.Path)
+		}
+		// get remained vpuids
+		for i, dp := range vpaths {
+			if vpuids[i] == 0 {
+				var puid, _ = PathCache.GetRev(dp.Path)
+				vpuids[i] = puid
 			}
 		}
-	}
-
-	// make vpuids array
-	var vpuids = make([]Puid_t, len(vpaths)) // verified PUIDs
-	for i, dp := range vpaths {
-		var puid, _ = PathStorePUID(session, dp.Path)
-		vpuids[i] = puid
 	}
 
 	// get directories, ISO-files and playlists as folder properties

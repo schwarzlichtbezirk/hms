@@ -9,26 +9,26 @@ type kvpair[K comparable, T any] struct {
 	val T
 }
 
+// RWMap is threads safe map.
 type RWMap[K comparable, T any] struct {
 	m   map[K]T
 	mux sync.RWMutex
 }
 
-func (rwm *RWMap[K, T]) Init(c int) {
-	if c < 8 {
-		c = 8
-	}
+func (rwm *RWMap[K, T]) Init(capacity int) {
 	rwm.mux.Lock()
 	defer rwm.mux.Unlock()
-	rwm.m = make(map[K]T, c)
+	rwm.m = make(map[K]T, capacity)
 }
 
+// Len returns number of key-value pairs.
 func (rwm *RWMap[K, T]) Len() int {
 	rwm.mux.RLock()
 	defer rwm.mux.RUnlock()
 	return len(rwm.m)
 }
 
+// Has detects whether pair is present.
 func (rwm *RWMap[K, T]) Has(key K) (ok bool) {
 	rwm.mux.RLock()
 	defer rwm.mux.RUnlock()
@@ -36,6 +36,7 @@ func (rwm *RWMap[K, T]) Has(key K) (ok bool) {
 	return
 }
 
+// Get returns value by pointed key.
 func (rwm *RWMap[K, T]) Get(key K) (ret T, ok bool) {
 	rwm.mux.RLock()
 	defer rwm.mux.RUnlock()
@@ -43,18 +44,21 @@ func (rwm *RWMap[K, T]) Get(key K) (ret T, ok bool) {
 	return
 }
 
+// Set inserts given key-value pair.
 func (rwm *RWMap[K, T]) Set(key K, val T) {
 	rwm.mux.Lock()
 	defer rwm.mux.Unlock()
 	rwm.m[key] = val
 }
 
+// Delete removes pair from map.
 func (rwm *RWMap[K, T]) Delete(key K) {
 	rwm.mux.Lock()
 	defer rwm.mux.Unlock()
 	delete(rwm.m, key)
 }
 
+// GetAndDelete removes pair from map and returns the value if it was.
 func (rwm *RWMap[K, T]) GetAndDelete(key K) (ret T, ok bool) {
 	rwm.mux.Lock()
 	defer rwm.mux.Unlock()
@@ -64,6 +68,8 @@ func (rwm *RWMap[K, T]) GetAndDelete(key K) (ret T, ok bool) {
 	return
 }
 
+// Range makes copy of the state and then call given function for each pair
+// until `false` returned.
 func (rwm *RWMap[K, T]) Range(f func(K, T) bool) {
 	var buf []kvpair[K, T]
 	func() {
@@ -75,7 +81,7 @@ func (rwm *RWMap[K, T]) Range(f func(K, T) bool) {
 			buf[i].key, buf[i].val = k, v
 			i++
 		}
-	}()
+	}() // unlock when copy is ready
 	for _, pair := range buf {
 		if !f(pair.key, pair.val) {
 			return
@@ -83,31 +89,36 @@ func (rwm *RWMap[K, T]) Range(f func(K, T) bool) {
 	}
 }
 
+// Cache is LRU & FIFO threads safe cache.
 type Cache[K comparable, T any] struct {
-	seq []kvpair[K, T]
-	idx map[K]int
-	efn func(K, T)
+	seq []kvpair[K, T] // sequence of key-value pairs
+	idx map[K]int      // map with pairs positions pointed by keys
+	efn func(K, T)     // exit function, called on pair remove
 	mux sync.Mutex
 }
 
+// NewCache returns pointer to new Cache object.
 func NewCache[K comparable, T any]() *Cache[K, T] {
 	return &Cache[K, T]{
 		idx: map[K]int{},
 	}
 }
 
+// OnRemove changes callback function that is called when removing a pair.
 func (c *Cache[K, T]) OnRemove(efn func(K, T)) {
 	c.mux.Lock()
 	defer c.mux.Unlock()
 	c.efn = efn
 }
 
+// Len returns number of key-value pairs.
 func (c *Cache[K, T]) Len() int {
 	c.mux.Lock()
 	defer c.mux.Unlock()
 	return len(c.seq)
 }
 
+// Has detects whether pair is present.
 func (c *Cache[K, T]) Has(key K) (ok bool) {
 	c.mux.Lock()
 	defer c.mux.Unlock()
@@ -115,6 +126,7 @@ func (c *Cache[K, T]) Has(key K) (ok bool) {
 	return
 }
 
+// Peek returns value pointed by given key.
 func (c *Cache[K, T]) Peek(key K) (ret T, ok bool) {
 	c.mux.Lock()
 	defer c.mux.Unlock()
@@ -125,6 +137,7 @@ func (c *Cache[K, T]) Peek(key K) (ret T, ok bool) {
 	return
 }
 
+// Get returns value pointed by given key, and brings the pair to top of cache.
 func (c *Cache[K, T]) Get(key K) (ret T, ok bool) {
 	var n int
 
@@ -204,6 +217,8 @@ func (c *Cache[K, T]) Remove(key K) (ok bool) {
 	return
 }
 
+// Range makes copy of the state and then call given function for each pair
+// until `false` returned.
 func (c *Cache[K, T]) Range(f func(K, T) bool) {
 	c.mux.Lock()
 	var s = append([]kvpair[K, T]{}, c.seq...) // make non-nil copy
@@ -324,12 +339,14 @@ func CacheSize[K comparable, T Sizer](cache *Cache[K, T]) (size int64) {
 	return
 }
 
+// Bimap is bidirectional threads safe map.
 type Bimap[K comparable, T comparable] struct {
 	dir map[K]T // direct order
 	rev map[T]K // reverse order
 	mux sync.RWMutex
 }
 
+// NewBimap returns pointer to new Bimap object.
 func NewBimap[K comparable, T comparable]() *Bimap[K, T] {
 	return &Bimap[K, T]{
 		dir: map[K]T{},
@@ -337,12 +354,14 @@ func NewBimap[K comparable, T comparable]() *Bimap[K, T] {
 	}
 }
 
+// Len returns number of key-value pairs.
 func (m *Bimap[K, T]) Len() int {
 	m.mux.RLock()
 	defer m.mux.RUnlock()
 	return len(m.dir)
 }
 
+// GetDir returns element in direct order, i.e. value pointed by key.
 func (m *Bimap[K, T]) GetDir(key K) (val T, ok bool) {
 	m.mux.RLock()
 	val, ok = m.dir[key]
@@ -350,6 +369,7 @@ func (m *Bimap[K, T]) GetDir(key K) (val T, ok bool) {
 	return
 }
 
+// GetRev returns element in reverse order, i.e. key pointed by value.
 func (m *Bimap[K, T]) GetRev(val T) (key K, ok bool) {
 	m.mux.RLock()
 	key, ok = m.rev[val]
@@ -357,6 +377,7 @@ func (m *Bimap[K, T]) GetRev(val T) (key K, ok bool) {
 	return
 }
 
+// Set inserts key-value pair into map.
 func (m *Bimap[K, T]) Set(key K, val T) {
 	m.mux.Lock()
 	m.dir[key] = val
@@ -364,8 +385,8 @@ func (m *Bimap[K, T]) Set(key K, val T) {
 	m.mux.Unlock()
 }
 
-func (m *Bimap[K, T]) DeleteDir(key K) (ok bool) {
-	var val T
+// DeleteDir deletes key-value pair pointed by key, and returns deleted value.
+func (m *Bimap[K, T]) DeleteDir(key K) (val T, ok bool) {
 	m.mux.Lock()
 	if val, ok = m.dir[key]; ok {
 		delete(m.dir, key)
@@ -375,8 +396,8 @@ func (m *Bimap[K, T]) DeleteDir(key K) (ok bool) {
 	return
 }
 
-func (m *Bimap[K, T]) DeleteRev(val T) (ok bool) {
-	var key K
+// DeleteRev deletes key-value pair pointed by value, and returns deleted key.
+func (m *Bimap[K, T]) DeleteRev(val T) (key K, ok bool) {
 	m.mux.Lock()
 	if key, ok = m.rev[val]; ok {
 		delete(m.dir, key)

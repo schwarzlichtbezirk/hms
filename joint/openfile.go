@@ -24,25 +24,40 @@ type RFile interface {
 // opens it, and opens nested into iso-disk file. Or opens file at cloud.
 func OpenFile(anypath string) (r RFile, err error) {
 	if strings.HasPrefix(anypath, "ftp://") {
-		var f FtpFile
-		if err = f.Open(anypath); err != nil {
+		var addr, fpath = SplitUrl(anypath)
+		var jnt *FtpJoint
+		if jnt, err = GetFtpJoint(addr); err != nil {
 			return
 		}
-		r = &f
+		if r, err = jnt.Open(fpath); err != nil {
+			return
+		}
 		return
 	} else if strings.HasPrefix(anypath, "sftp://") {
-		var f SftpFile
-		if err = f.Open(anypath); err != nil {
+		var addr, fpath = SplitUrl(anypath)
+		var jnt *SftpJoint
+		if jnt, err = GetSftpJoint(addr); err != nil {
 			return
 		}
-		r = &f
+		fpath = path.Join(jnt.pwd, fpath)
+		if r, err = jnt.Open(fpath); err != nil {
+			return
+		}
 		return
 	} else if strings.HasPrefix(anypath, "http://") || strings.HasPrefix(anypath, "https://") {
-		var f DavFile
-		if err = f.Open(anypath); err != nil {
+		var addr, fpath, ok = GetDavPath(anypath)
+		if !ok {
+			err = ErrNotFound
 			return
 		}
-		r = &f
+		var jnt *DavJoint
+		if jnt, err = GetDavJoint(addr); err != nil {
+			return
+		}
+
+		if r, err = jnt.Open(fpath); err != nil {
+			return
+		}
 		return
 	} else {
 		if r, err = os.Open(anypath); err == nil { // primary filesystem file
@@ -68,45 +83,73 @@ func OpenFile(anypath string) (r RFile, err error) {
 			fpath = anypath[len(isopath)+1:] // without slash prefix
 		}
 
-		var f IsoFile
-		if err = f.Open(isopath, fpath); err != nil {
+		var jnt *IsoJoint
+		if jnt, err = GetIsoJoint(isopath); err != nil {
 			return
 		}
-		r = &f
+		if r, err = jnt.Open(fpath); err != nil {
+			return
+		}
 		return
 	}
 }
+
+/*func OpenNested(anypath string) (r RFile, err error) {
+	var chunks = strings.Split(anypath, "/")
+	var curdir, curpath string
+	for i, chunk := range chunks {
+		curdir = curpath
+		if i > 0 {
+			curpath += "/"
+		}
+		curpath += chunk
+		if strings.ToLower(path.Ext(chunk)) == ".iso" {
+			var fi fs.FileInfo
+			if fi, err = os.Stat(curpath); err != nil {
+				return
+			}
+			if fi.IsDir() {
+				continue
+			}
+		}
+	}
+}*/
 
 // StatFile returns fs.FileInfo of file in file system,
 // or file nested in disk image, or cloud file.
 func StatFile(anypath string) (fi fs.FileInfo, err error) {
 	if strings.HasPrefix(anypath, "ftp://") {
-		var ftpaddr, ftppath = SplitUrl(anypath)
-		var d *FtpJoint
-		if d, err = GetFtpJoint(ftpaddr); err != nil {
+		var addr, fpath = SplitUrl(anypath)
+		var jnt *FtpJoint
+		if jnt, err = GetFtpJoint(addr); err != nil {
 			return
 		}
+		defer func() {
+			if err != nil {
+				jnt.Cleanup()
+			} else {
+				PutFtpJoint(jnt)
+			}
+		}()
 
-		fi, err = d.Stat(ftppath)
-		if err != nil { // on case connection was dropped
-			d.Close()
-		} else {
-			PutFtpJoint(ftpaddr, d)
-		}
+		fi, err = jnt.Stat(fpath)
 		return
 	} else if strings.HasPrefix(anypath, "sftp://") {
-		var sftpaddr, sftppath = SplitUrl(anypath)
-		var d *SftpJoint
-		if d, err = GetSftpJoint(sftpaddr); err != nil {
+		var addr, fpath = SplitUrl(anypath)
+		var jnt *SftpJoint
+		if jnt, err = GetSftpJoint(addr); err != nil {
 			return
 		}
+		defer func() {
+			if err != nil {
+				jnt.Cleanup()
+			} else {
+				PutSftpJoint(jnt)
+			}
+		}()
 
-		fi, err = d.Stat(sftppath)
-		if err != nil { // on case connection was dropped
-			d.Close()
-		} else {
-			PutSftpJoint(sftpaddr, d)
-		}
+		fpath = path.Join(jnt.pwd, fpath)
+		fi, err = jnt.Stat(fpath)
 		return
 	} else if strings.HasPrefix(anypath, "http://") || strings.HasPrefix(anypath, "https://") {
 		var addr, fpath, ok = GetDavPath(anypath)
@@ -114,18 +157,19 @@ func StatFile(anypath string) (fi fs.FileInfo, err error) {
 			err = ErrNotFound
 			return
 		}
-
-		var d *DavJoint
-		if d, err = GetDavJoint(addr); err != nil {
+		var jnt *DavJoint
+		if jnt, err = GetDavJoint(addr); err != nil {
 			return
 		}
+		defer func() {
+			if err != nil {
+				jnt.Cleanup()
+			} else {
+				PutDavJoint(jnt)
+			}
+		}()
 
-		fi, err = d.Stat(fpath)
-		if err != nil { // on case connection was dropped
-			d.Close()
-		} else {
-			PutDavJoint(addr, d)
-		}
+		fi, err = jnt.Stat(fpath)
 		return
 	} else {
 		// check up file is at primary filesystem
@@ -153,17 +197,19 @@ func StatFile(anypath string) (fi fs.FileInfo, err error) {
 			fpath = anypath[len(isopath)+1:] // without slash prefix
 		}
 
-		var d *IsoJoint
-		if d, err = GetIsoJoint(isopath); err != nil {
+		var jnt *IsoJoint
+		if jnt, err = GetIsoJoint(isopath); err != nil {
 			return
 		}
+		defer func() {
+			if err != nil {
+				jnt.Cleanup()
+			} else {
+				PutIsoJoint(jnt)
+			}
+		}()
 
-		fi, err = d.Stat(fpath)
-		if err != nil { // on case connection was dropped
-			d.Close()
-		} else {
-			PutIsoJoint(isopath, d)
-		}
+		fi, err = jnt.Stat(fpath)
 		return
 	}
 }
@@ -199,16 +245,22 @@ func FtpEscapeBrackets(s string) string {
 // into iso-disk local directory. Or reads directory at cloud path.
 func ReadDir(anypath string) (ret []fs.FileInfo, err error) {
 	if strings.HasPrefix(anypath, "ftp://") {
-		var ftpaddr, ftppath = SplitUrl(anypath)
-		var d *FtpJoint
-		if d, err = GetFtpJoint(ftpaddr); err != nil {
+		var addr, fpath = SplitUrl(anypath)
+		var jnt *FtpJoint
+		if jnt, err = GetFtpJoint(addr); err != nil {
 			return
 		}
-		defer PutFtpJoint(ftpaddr, d)
+		defer func() {
+			if err != nil {
+				jnt.Cleanup()
+			} else {
+				PutFtpJoint(jnt)
+			}
+		}()
 
-		var fpath = FtpEscapeBrackets(path.Join(d.pwd, ftppath))
+		fpath = FtpEscapeBrackets(path.Join(jnt.pwd, fpath))
 		var entries []*ftp.Entry
-		if entries, err = d.conn.List(fpath); err != nil {
+		if entries, err = jnt.conn.List(fpath); err != nil {
 			return
 		}
 		ret = make([]fs.FileInfo, 0, len(entries))
@@ -219,15 +271,21 @@ func ReadDir(anypath string) (ret []fs.FileInfo, err error) {
 		}
 		return
 	} else if strings.HasPrefix(anypath, "sftp://") {
-		var sftpaddr, sftppath = SplitUrl(anypath)
-		var d *SftpJoint
-		if d, err = GetSftpJoint(sftpaddr); err != nil {
+		var addr, fpath = SplitUrl(anypath)
+		var jnt *SftpJoint
+		if jnt, err = GetSftpJoint(addr); err != nil {
 			return
 		}
-		defer PutSftpJoint(sftpaddr, d)
+		defer func() {
+			if err != nil {
+				jnt.Cleanup()
+			} else {
+				PutSftpJoint(jnt)
+			}
+		}()
 
-		var fpath = path.Join(d.pwd, sftppath)
-		if ret, err = d.client.ReadDir(fpath); err != nil {
+		fpath = path.Join(jnt.pwd, fpath)
+		if ret, err = jnt.client.ReadDir(fpath); err != nil {
 			return
 		}
 		return
@@ -237,14 +295,19 @@ func ReadDir(anypath string) (ret []fs.FileInfo, err error) {
 			err = ErrNotFound
 			return
 		}
-
-		var d *DavJoint
-		if d, err = GetDavJoint(addr); err != nil {
+		var jnt *DavJoint
+		if jnt, err = GetDavJoint(addr); err != nil {
 			return
 		}
-		defer PutDavJoint(addr, d)
+		defer func() {
+			if err != nil {
+				jnt.Cleanup()
+			} else {
+				PutDavJoint(jnt)
+			}
+		}()
 
-		if ret, err = d.client.ReadDir(fpath); err != nil {
+		if ret, err = jnt.client.ReadDir(fpath); err != nil {
 			return
 		}
 		return
@@ -279,18 +342,25 @@ func ReadDir(anypath string) (ret []fs.FileInfo, err error) {
 			fpath = anypath[len(isopath)+1:] // without slash prefix
 		}
 
-		var d *IsoJoint
-		if d, err = GetIsoJoint(isopath); err != nil {
+		var jnt *IsoJoint
+		if jnt, err = GetIsoJoint(isopath); err != nil {
 			return
 		}
-		defer PutIsoJoint(isopath, d)
+		defer func() {
+			if err != nil {
+				jnt.Cleanup()
+			} else {
+				PutIsoJoint(jnt)
+			}
+		}()
 
-		var f IsoFile
-		if err = f.Open(isopath, fpath); err != nil {
+		var f RFile
+		if f, err = jnt.Open(fpath); err != nil {
 			return
 		}
+		defer f.Close()
 		var files []*iso.File
-		if files, err = f.GetChildren(); err != nil {
+		if files, err = f.(*IsoFile).GetChildren(); err != nil {
 			return
 		}
 		ret = make([]fs.FileInfo, len(files))

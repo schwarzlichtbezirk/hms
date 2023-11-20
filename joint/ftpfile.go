@@ -72,25 +72,11 @@ func SftpPwd(ftpaddr string, client *sftp.Client) (pwd string) {
 
 // FtpFile implements for FTP-file io.Reader, io.Writer, io.Seeker, io.Closer.
 type FtpFile struct {
-	addr string // address of FTP-service, i.e. ftp://user:pass@example.com
-	path string // path inside of FTP-service
 	jnt  *FtpJoint
+	path string // path inside of FTP-service
 	io.ReadCloser
 	pos int64
 	end int64
-}
-
-// Opens new connection for any some one file with given full FTP URL.
-// FTP-connection can serve only one file by the time, so it can not
-// be used for parallel reading group of files.
-func (f *FtpFile) Open(ftpurl string) (err error) {
-	f.addr, f.path = SplitUrl(ftpurl)
-	if f.jnt, err = GetFtpJoint(f.addr); err != nil {
-		return
-	}
-	f.ReadCloser = nil
-	f.pos, f.end = 0, 0
-	return
 }
 
 func (f *FtpFile) Close() (err error) {
@@ -98,7 +84,7 @@ func (f *FtpFile) Close() (err error) {
 		err = f.ReadCloser.Close()
 		f.ReadCloser = nil
 	}
-	PutFtpJoint(f.addr, f.jnt)
+	PutFtpJoint(f.jnt)
 	return
 }
 
@@ -227,27 +213,14 @@ func (fi FtpFileInfo) Sys() interface{} {
 
 // SftpFile implements for SFTP-file io.Reader, io.Writer, io.Seeker, io.Closer.
 type SftpFile struct {
-	addr string // address of SFTP-service, i.e. sftp://user:pass@example.com
-	path string // path inside of SFTP-service without PWD
 	jnt  *SftpJoint
+	path string // path inside of SFTP-service without PWD
 	*sftp.File
-}
-
-// Opens new connection for any some one file with given full SFTP URL.
-func (f *SftpFile) Open(sftpurl string) (err error) {
-	f.addr, f.path = SplitUrl(sftpurl)
-	if f.jnt, err = GetSftpJoint(f.addr); err != nil {
-		return
-	}
-	if f.File, err = f.jnt.client.Open(path.Join(f.jnt.pwd, f.path)); err != nil {
-		return
-	}
-	return
 }
 
 func (f *SftpFile) Close() (err error) {
 	err = f.File.Close()
-	PutSftpJoint(f.addr, f.jnt)
+	PutSftpJoint(f.jnt)
 	return
 }
 
