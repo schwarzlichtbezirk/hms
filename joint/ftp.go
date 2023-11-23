@@ -5,13 +5,15 @@ import (
 	"errors"
 	"io"
 	"io/fs"
+	"net/url"
 	"path"
 	"strings"
 	"sync"
 	"time"
 
+	cfg "github.com/schwarzlichtbezirk/hms/config"
+
 	"github.com/jlaffaye/ftp"
-	"github.com/pkg/sftp"
 )
 
 var (
@@ -53,18 +55,71 @@ func FtpPwd(ftpaddr string, conn *ftp.ServerConn) (pwd string) {
 	return
 }
 
-// SftpPwd return SFTP current directory. It's used cache to avoid
-// extra calls to SFTP-server to get current directory for every call.
-func SftpPwd(ftpaddr string, client *sftp.Client) (pwd string) {
-	pwdmux.RLock()
-	pwd, ok := pwdmap[ftpaddr]
-	pwdmux.RUnlock()
-	if !ok {
-		var err error
-		if pwd, err = client.Getwd(); err == nil {
-			pwdmux.Lock()
-			pwdmap[ftpaddr] = pwd
-			pwdmux.Unlock()
+// FtpJoint create connection to FTP-server, login with provided by
+// given URL credentials, and gets a once current directory.
+// Joint can be used for followed files access.
+type FtpJoint struct {
+	key  string // address of FTP-service, i.e. ftp://user:pass@example.com
+	conn *ftp.ServerConn
+	pwd  string
+}
+
+func (jnt *FtpJoint) Make(urladdr string) (err error) {
+	jnt.key = urladdr
+	var u *url.URL
+	if u, err = url.Parse(urladdr); err != nil {
+		return
+	}
+	if jnt.conn, err = ftp.Dial(u.Host, ftp.DialWithTimeout(cfg.Cfg.DialTimeout)); err != nil {
+		return
+	}
+	var pass, _ = u.User.Password()
+	if err = jnt.conn.Login(u.User.Username(), pass); err != nil {
+		return
+	}
+	jnt.pwd = FtpPwd(u.Host, jnt.conn)
+	return
+}
+
+func (jnt *FtpJoint) Cleanup() error {
+	return jnt.conn.Quit()
+}
+
+func (jnt *FtpJoint) Key() string {
+	return jnt.key
+}
+
+// Opens new connection for any some one file with given full FTP URL.
+// FTP-connection can serve only one file by the time, so it can not
+// be used for parallel reading group of files.
+func (jnt *FtpJoint) Open(fpath string) (file RFile, err error) {
+	return &FtpFile{
+		jnt:  jnt,
+		path: fpath,
+	}, nil
+}
+
+func (jnt *FtpJoint) Stat(fpath string) (fi fs.FileInfo, err error) {
+	var ent *ftp.Entry
+	if ent, err = jnt.conn.GetEntry(path.Join(jnt.pwd, fpath)); err != nil {
+		return
+	}
+	fi = FtpFileInfo{
+		ent,
+	}
+	return
+}
+
+func (jnt *FtpJoint) ReadDir(fpath string) (ret []fs.FileInfo, err error) {
+	fpath = FtpEscapeBrackets(path.Join(jnt.pwd, fpath))
+	var entries []*ftp.Entry
+	if entries, err = jnt.conn.List(fpath); err != nil {
+		return
+	}
+	ret = make([]fs.FileInfo, 0, len(entries))
+	for _, ent := range entries {
+		if ent.Name != "." && ent.Name != ".." {
+			ret = append(ret, FtpFileInfo{ent})
 		}
 	}
 	return
@@ -209,19 +264,6 @@ func (fi FtpFileInfo) IsDir() bool {
 // fs.FileInfo implementation. Returns structure pointer itself.
 func (fi FtpFileInfo) Sys() interface{} {
 	return fi
-}
-
-// SftpFile implements for SFTP-file io.Reader, io.Writer, io.Seeker, io.Closer.
-type SftpFile struct {
-	jnt  *SftpJoint
-	path string // path inside of SFTP-service without PWD
-	*sftp.File
-}
-
-func (f *SftpFile) Close() (err error) {
-	err = f.File.Close()
-	PutJoint(f.jnt)
-	return
 }
 
 // The End.

@@ -183,7 +183,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			WriteError500(w, r, err, AECfolderstat)
 			return
 		}
-		ret.Static = jnt.IsStatic(fi) || !fi.IsDir()
+		ret.Static = IsStatic(fi) || !fi.IsDir()
 
 		var ext = arg.Ext
 		if ext == "" && !fi.IsDir() {

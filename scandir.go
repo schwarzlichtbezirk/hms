@@ -8,6 +8,29 @@ import (
 	jnt "github.com/schwarzlichtbezirk/hms/joint"
 )
 
+// IsStatic returns whether file info refers to content
+// that can not be modified or moved.
+func IsStatic(fi fs.FileInfo) (static bool) {
+	if static = fi == nil; static {
+		return
+	}
+	if _, static = fi.(*jnt.IsoFile); static {
+		return
+	}
+	if _, static = fi.(jnt.DavFileStat); static {
+		return
+	}
+	if _, static = fi.(jnt.FtpFileInfo); static {
+		return
+	}
+	if sys := fi.Sys(); sys != nil {
+		if _, static = sys.(*jnt.SftpFileStat); static {
+			return
+		}
+	}
+	return
+}
+
 // ScanFileNameList returns file properties list for given list of
 // full file system paths. File paths can be in different folders.
 func ScanFileNameList(prf *Profile, session *Session, vpaths []DiskPath, scanembed bool) (ret []any, lstp DirProp, err error) {
@@ -124,7 +147,7 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 			PUID:   puid,
 			Free:   prf.PathAccess(fpath, false),
 			Shared: prf.IsShared(fpath),
-			Static: jnt.IsStatic(fi),
+			Static: IsStatic(fi),
 		}
 		var fp FileProp
 		fp.Name = dp.Name
