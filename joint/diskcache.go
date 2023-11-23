@@ -49,72 +49,105 @@ func IsStatic(fi fs.FileInfo) (static bool) {
 	return
 }
 
-// MakeCloser describes structure that can be initialized
-// by some resource path, and can be closed.
-type MakeCloser interface {
-	Make(urladdr string) error
-	Cleanup() error
-	Open(string) (RFile, error)
-	Stat(string) (fs.FileInfo, error)
+// Joint describes interface with joint to some file system provider.
+type Joint interface {
+	Make(urladdr string) error             // establish connection to file system provider
+	Cleanup() error                        // close connection to file system provider
+	Key() string                           // key path to resource
+	Open(string) (RFile, error)            // open file with local file path
+	Stat(string) (fs.FileInfo, error)      // returns file state pointed by local file path
+	ReadDir(string) ([]fs.FileInfo, error) // read directory pointed by local file path
 }
 
-// DiskCache implements cache with opened joints to some disk resource.
-type DiskCache[T MakeCloser] struct {
-	cache  []T
+// JointCache implements cache with opened joints to some file system resource.
+type JointCache struct {
+	cache  []Joint
 	expire []*time.Timer
 	mux    sync.Mutex
 }
 
-func (dc *DiskCache[T]) Count() int {
-	dc.mux.Lock()
-	defer dc.mux.Unlock()
-	return len(dc.cache)
+func (jc *JointCache) Count() int {
+	jc.mux.Lock()
+	defer jc.mux.Unlock()
+	return len(jc.cache)
 }
 
 // Close performs close-call to all cached disk joints.
-func (dc *DiskCache[T]) Close() (err error) {
-	dc.mux.Lock()
-	defer dc.mux.Unlock()
+func (jc *JointCache) Close() (err error) {
+	jc.mux.Lock()
+	defer jc.mux.Unlock()
 
-	for _, t := range dc.expire {
+	for _, t := range jc.expire {
 		t.Stop()
 	}
-	dc.expire = nil
+	jc.expire = nil
 
-	for _, t := range dc.cache {
+	for _, t := range jc.cache {
 		if err1 := t.Cleanup(); err1 != nil {
 			err = err1
 		}
 	}
-	dc.cache = nil
+	jc.cache = nil
 	return
 }
 
-// Peek retrieves cached disk joint, and returns ok if it has.
-func (dc *DiskCache[T]) Peek() (val T, ok bool) {
-	dc.mux.Lock()
-	defer dc.mux.Unlock()
-	var l = len(dc.cache)
+// Get retrieves cached disk joint, and returns ok if it has.
+func (jc *JointCache) Get() (val Joint, ok bool) {
+	jc.mux.Lock()
+	defer jc.mux.Unlock()
+	var l = len(jc.cache)
 	if l > 0 {
-		dc.expire[0].Stop()
-		dc.expire = dc.expire[1:]
-		val = dc.cache[0]
-		dc.cache = dc.cache[1:]
+		jc.expire[0].Stop()
+		jc.expire = jc.expire[1:]
+		val = jc.cache[0]
+		jc.cache = jc.cache[1:]
 		ok = true
 	}
 	return
 }
 
 // Put disk joint to cache.
-func (dc *DiskCache[T]) Put(val T) {
-	dc.mux.Lock()
-	defer dc.mux.Unlock()
-	dc.cache = append(dc.cache, val)
-	dc.expire = append(dc.expire, time.AfterFunc(cfg.Cfg.DiskCacheExpire, func() {
-		if val, ok := dc.Peek(); ok {
+func (jc *JointCache) Put(val Joint) {
+	jc.mux.Lock()
+	defer jc.mux.Unlock()
+	jc.cache = append(jc.cache, val)
+	jc.expire = append(jc.expire, time.AfterFunc(cfg.Cfg.DiskCacheExpire, func() {
+		if val, ok := jc.Get(); ok {
 			val.Cleanup()
 		}
 	}))
+}
+
+// JointPool is map with joint caches.
+// Each key is path to file system resource,
+// value - cached for this resource list of joints.
+var JointPool = map[string]*JointCache{}
+
+// GetIsoJoint gets cached joint for given key path,
+// or creates new one on given template.
+func GetJoint(isopath string, tmp Joint) (jnt Joint, err error) {
+	var ok bool
+	var jc *JointCache
+	if jc, ok = JointPool[isopath]; !ok {
+		jc = &JointCache{}
+		JointPool[isopath] = jc
+	}
+	if jnt, ok = jc.Get(); !ok {
+		jnt = tmp
+		err = jnt.Make(isopath)
+	}
+	return
+}
+
+// PutJoint puts to cache given joint.
+func PutJoint(jnt Joint) {
+	var ok bool
+	var jc *JointCache
+	if jc, ok = JointPool[jnt.Key()]; !ok {
+		jc = &JointCache{}
+		JointPool[jnt.Key()] = jc
+	}
+	jc.Put(jnt)
 }
 
 // IsoJoint opens file with ISO9660 disk and prepares disk-structure
@@ -143,6 +176,10 @@ func (jnt *IsoJoint) Make(isopath string) (err error) {
 
 func (jnt *IsoJoint) Cleanup() error {
 	return jnt.file.Close()
+}
+
+func (jnt *IsoJoint) Key() string {
+	return jnt.key
 }
 
 func (jnt *IsoJoint) Open(fpath string) (file RFile, err error) {
@@ -211,35 +248,23 @@ func (jnt *IsoJoint) Stat(fpath string) (fi fs.FileInfo, err error) {
 	return
 }
 
-// IsoCaches is map with ISO9660-disks joints.
-// Each key is path to ISO-disk, value - cached for this disk list of joints.
-var IsoCaches = map[string]*DiskCache[*IsoJoint]{}
-
-// GetIsoJoint gets cached joint for given path to ISO-disk,
-// or creates new one.
-func GetIsoJoint(isopath string) (jnt *IsoJoint, err error) {
-	var ok bool
-	var dc *DiskCache[*IsoJoint]
-	if dc, ok = IsoCaches[isopath]; !ok {
-		dc = &DiskCache[*IsoJoint]{}
-		IsoCaches[isopath] = dc
+func (jnt *IsoJoint) ReadDir(fpath string) (ret []fs.FileInfo, err error) {
+	var f RFile
+	if f, err = jnt.Open(fpath); err != nil {
+		return
 	}
-	if jnt, ok = dc.Peek(); !ok {
-		jnt = &IsoJoint{}
-		err = jnt.Make(isopath)
+	defer f.Close()
+	var files []*iso.File
+	if files, err = f.(*IsoFile).GetChildren(); err != nil {
+		return
+	}
+	ret = make([]fs.FileInfo, len(files))
+	for i, file := range files {
+		ret[i] = &IsoFile{
+			File: file,
+		}
 	}
 	return
-}
-
-// PutIsoJoint puts to cache joint for ISO-disk with given path.
-func PutIsoJoint(jnt *IsoJoint) {
-	var ok bool
-	var dc *DiskCache[*IsoJoint]
-	if dc, ok = IsoCaches[jnt.key]; !ok {
-		dc = &DiskCache[*IsoJoint]{}
-		IsoCaches[jnt.key] = dc
-	}
-	dc.Put(jnt)
 }
 
 // DavJoint keeps gowebdav.Client object.
@@ -259,6 +284,10 @@ func (jnt *DavJoint) Cleanup() error {
 	return nil
 }
 
+func (jnt *DavJoint) Key() string {
+	return jnt.key
+}
+
 func (jnt *DavJoint) Open(fpath string) (file RFile, err error) {
 	return &DavFile{
 		jnt:  jnt,
@@ -270,9 +299,9 @@ func (jnt *DavJoint) Stat(fpath string) (fi fs.FileInfo, err error) {
 	return jnt.client.Stat(fpath)
 }
 
-// DavCaches is map of gowebdav.Client joints.
-// Each key is URL of WebDAV service, value - cached for this service list of joints.
-var DavCaches = map[string]*DiskCache[*DavJoint]{}
+func (jnt *DavJoint) ReadDir(fpath string) ([]fs.FileInfo, error) {
+	return jnt.client.ReadDir(fpath)
+}
 
 // DavPath is map of WebDAV servises root paths by services URLs.
 var DavPath = map[string]string{}
@@ -297,7 +326,7 @@ func GetDavPath(davurl string) (dpath, fpath string, ok bool) {
 		dpath += chunk + "/"
 		var client = gowebdav.NewClient(dpath, "", "")
 		if fi, err := client.Stat(""); err == nil && fi.IsDir() {
-			PutDavJoint(&DavJoint{
+			PutJoint(&DavJoint{
 				key:    dpath,
 				client: client,
 			})
@@ -307,33 +336,6 @@ func GetDavPath(davurl string) (dpath, fpath string, ok bool) {
 		}
 	}
 	return
-}
-
-// GetDavJoint gets cached joint for given URL to WebDAV service,
-// or creates new one.
-func GetDavJoint(davurl string) (jnt *DavJoint, err error) {
-	var ok bool
-	var dc *DiskCache[*DavJoint]
-	if dc, ok = DavCaches[davurl]; !ok {
-		dc = &DiskCache[*DavJoint]{}
-		DavCaches[davurl] = dc
-	}
-	if jnt, ok = dc.Peek(); !ok {
-		jnt = &DavJoint{}
-		err = jnt.Make(davurl)
-	}
-	return
-}
-
-// PutDavJoint puts to cache joint for WebDAV service with given URL.
-func PutDavJoint(jnt *DavJoint) {
-	var ok bool
-	var dc *DiskCache[*DavJoint]
-	if dc, ok = DavCaches[jnt.key]; !ok {
-		dc = &DiskCache[*DavJoint]{}
-		DavCaches[jnt.key] = dc
-	}
-	dc.Put(jnt)
 }
 
 // FtpJoint create connection to FTP-server, login with provided by
@@ -366,6 +368,10 @@ func (jnt *FtpJoint) Cleanup() error {
 	return jnt.conn.Quit()
 }
 
+func (jnt *FtpJoint) Key() string {
+	return jnt.key
+}
+
 // Opens new connection for any some one file with given full FTP URL.
 // FTP-connection can serve only one file by the time, so it can not
 // be used for parallel reading group of files.
@@ -387,35 +393,19 @@ func (jnt *FtpJoint) Stat(fpath string) (fi fs.FileInfo, err error) {
 	return
 }
 
-// FtpCaches is map with FTP-joints.
-// Each key is FTP-server address, value - cached on it's server list of joints.
-var FtpCaches = map[string]*DiskCache[*FtpJoint]{}
-
-// GetFtpJoint gets cached joint for given address to FTP-server,
-// or creates new one.
-func GetFtpJoint(ftpaddr string) (jnt *FtpJoint, err error) {
-	var ok bool
-	var dc *DiskCache[*FtpJoint]
-	if dc, ok = FtpCaches[ftpaddr]; !ok {
-		dc = &DiskCache[*FtpJoint]{}
-		FtpCaches[ftpaddr] = dc
+func (jnt *FtpJoint) ReadDir(fpath string) (ret []fs.FileInfo, err error) {
+	fpath = FtpEscapeBrackets(path.Join(jnt.pwd, fpath))
+	var entries []*ftp.Entry
+	if entries, err = jnt.conn.List(fpath); err != nil {
+		return
 	}
-	if jnt, ok = dc.Peek(); !ok {
-		jnt = &FtpJoint{}
-		err = jnt.Make(ftpaddr)
+	ret = make([]fs.FileInfo, 0, len(entries))
+	for _, ent := range entries {
+		if ent.Name != "." && ent.Name != ".." {
+			ret = append(ret, FtpFileInfo{ent})
+		}
 	}
 	return
-}
-
-// PutSftpJoint puts to cache joint for FTP-server with given address.
-func PutFtpJoint(jnt *FtpJoint) {
-	var ok bool
-	var dc *DiskCache[*FtpJoint]
-	if dc, ok = FtpCaches[jnt.key]; !ok {
-		dc = &DiskCache[*FtpJoint]{}
-		FtpCaches[jnt.key] = dc
-	}
-	dc.Put(jnt)
 }
 
 // SftpJoint create SSH-connection to SFTP-server, login with provided by
@@ -460,6 +450,10 @@ func (jnt *SftpJoint) Cleanup() (err error) {
 	return
 }
 
+func (jnt *SftpJoint) Key() string {
+	return jnt.key
+}
+
 // Opens new connection for any some one file with given full SFTP URL.
 func (jnt *SftpJoint) Open(fpath string) (file RFile, err error) {
 	var f = SftpFile{
@@ -477,35 +471,8 @@ func (jnt *SftpJoint) Stat(fpath string) (fs.FileInfo, error) {
 	return jnt.client.Stat(path.Join(jnt.pwd, fpath))
 }
 
-// SftpCaches is map with SFTP-joints.
-// Each key is SFTP-server address, value - cached on it's server list of joints.
-var SftpCaches = map[string]*DiskCache[*SftpJoint]{}
-
-// GetSftpJoint gets cached joint for given address to SFTP-server,
-// or creates new one.
-func GetSftpJoint(sftpaddr string) (jnt *SftpJoint, err error) {
-	var ok bool
-	var dc *DiskCache[*SftpJoint]
-	if dc, ok = SftpCaches[sftpaddr]; !ok {
-		dc = &DiskCache[*SftpJoint]{}
-		SftpCaches[sftpaddr] = dc
-	}
-	if jnt, ok = dc.Peek(); !ok {
-		jnt = &SftpJoint{}
-		err = jnt.Make(sftpaddr)
-	}
-	return
-}
-
-// PutSftpJoint puts to cache joint for SFTP-server with given address.
-func PutSftpJoint(jnt *SftpJoint) {
-	var ok bool
-	var dc *DiskCache[*SftpJoint]
-	if dc, ok = SftpCaches[jnt.key]; !ok {
-		dc = &DiskCache[*SftpJoint]{}
-		SftpCaches[jnt.key] = dc
-	}
-	dc.Put(jnt)
+func (jnt *SftpJoint) ReadDir(fpath string) ([]fs.FileInfo, error) {
+	return jnt.client.ReadDir(path.Join(jnt.pwd, fpath))
 }
 
 // The End.

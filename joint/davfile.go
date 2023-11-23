@@ -18,7 +18,7 @@ func (f *DavFile) Close() (err error) {
 		f.ReadCloser.Close()
 		f.ReadCloser = nil
 	}
-	PutDavJoint(f.jnt)
+	PutJoint(f.jnt)
 	return
 }
 

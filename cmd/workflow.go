@@ -360,25 +360,9 @@ func Done() {
 		return
 	})
 
-	// close all opened ISO-disks joints
+	// close all opened joints
 	wg.Go(func() (err error) {
-		for _, dc := range jnt.IsoCaches {
-			dc.Close()
-		}
-		return
-	})
-
-	// close all opened FTP joints
-	wg.Go(func() (err error) {
-		for _, dc := range jnt.FtpCaches {
-			dc.Close()
-		}
-		return
-	})
-
-	// close all opened SFTP joints
-	wg.Go(func() (err error) {
-		for _, dc := range jnt.SftpCaches {
+		for _, dc := range jnt.JointPool {
 			dc.Close()
 		}
 		return

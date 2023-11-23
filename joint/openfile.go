@@ -7,9 +7,6 @@ import (
 	"os"
 	"path"
 	"strings"
-
-	"github.com/jlaffaye/ftp"
-	iso "github.com/kdomanski/iso9660"
 )
 
 // RFile combines fs.File interface and io.Seeker interface.
@@ -25,8 +22,8 @@ type RFile interface {
 func OpenFile(anypath string) (r RFile, err error) {
 	if strings.HasPrefix(anypath, "ftp://") {
 		var addr, fpath = SplitUrl(anypath)
-		var jnt *FtpJoint
-		if jnt, err = GetFtpJoint(addr); err != nil {
+		var jnt Joint
+		if jnt, err = GetJoint(addr, &FtpJoint{}); err != nil {
 			return
 		}
 		if r, err = jnt.Open(fpath); err != nil {
@@ -35,11 +32,10 @@ func OpenFile(anypath string) (r RFile, err error) {
 		return
 	} else if strings.HasPrefix(anypath, "sftp://") {
 		var addr, fpath = SplitUrl(anypath)
-		var jnt *SftpJoint
-		if jnt, err = GetSftpJoint(addr); err != nil {
+		var jnt Joint
+		if jnt, err = GetJoint(addr, &SftpJoint{}); err != nil {
 			return
 		}
-		fpath = path.Join(jnt.pwd, fpath)
 		if r, err = jnt.Open(fpath); err != nil {
 			return
 		}
@@ -50,8 +46,8 @@ func OpenFile(anypath string) (r RFile, err error) {
 			err = ErrNotFound
 			return
 		}
-		var jnt *DavJoint
-		if jnt, err = GetDavJoint(addr); err != nil {
+		var jnt Joint
+		if jnt, err = GetJoint(addr, &DavJoint{}); err != nil {
 			return
 		}
 
@@ -83,8 +79,8 @@ func OpenFile(anypath string) (r RFile, err error) {
 			fpath = anypath[len(isopath)+1:] // without slash prefix
 		}
 
-		var jnt *IsoJoint
-		if jnt, err = GetIsoJoint(isopath); err != nil {
+		var jnt Joint
+		if jnt, err = GetJoint(isopath, &IsoJoint{}); err != nil {
 			return
 		}
 		if r, err = jnt.Open(fpath); err != nil {
@@ -120,15 +116,15 @@ func OpenFile(anypath string) (r RFile, err error) {
 func StatFile(anypath string) (fi fs.FileInfo, err error) {
 	if strings.HasPrefix(anypath, "ftp://") {
 		var addr, fpath = SplitUrl(anypath)
-		var jnt *FtpJoint
-		if jnt, err = GetFtpJoint(addr); err != nil {
+		var jnt Joint
+		if jnt, err = GetJoint(addr, &FtpJoint{}); err != nil {
 			return
 		}
 		defer func() {
 			if err != nil {
 				jnt.Cleanup()
 			} else {
-				PutFtpJoint(jnt)
+				PutJoint(jnt)
 			}
 		}()
 
@@ -136,19 +132,18 @@ func StatFile(anypath string) (fi fs.FileInfo, err error) {
 		return
 	} else if strings.HasPrefix(anypath, "sftp://") {
 		var addr, fpath = SplitUrl(anypath)
-		var jnt *SftpJoint
-		if jnt, err = GetSftpJoint(addr); err != nil {
+		var jnt Joint
+		if jnt, err = GetJoint(addr, &SftpJoint{}); err != nil {
 			return
 		}
 		defer func() {
 			if err != nil {
 				jnt.Cleanup()
 			} else {
-				PutSftpJoint(jnt)
+				PutJoint(jnt)
 			}
 		}()
 
-		fpath = path.Join(jnt.pwd, fpath)
 		fi, err = jnt.Stat(fpath)
 		return
 	} else if strings.HasPrefix(anypath, "http://") || strings.HasPrefix(anypath, "https://") {
@@ -157,15 +152,15 @@ func StatFile(anypath string) (fi fs.FileInfo, err error) {
 			err = ErrNotFound
 			return
 		}
-		var jnt *DavJoint
-		if jnt, err = GetDavJoint(addr); err != nil {
+		var jnt Joint
+		if jnt, err = GetJoint(addr, &DavJoint{}); err != nil {
 			return
 		}
 		defer func() {
 			if err != nil {
 				jnt.Cleanup()
 			} else {
-				PutDavJoint(jnt)
+				PutJoint(jnt)
 			}
 		}()
 
@@ -197,15 +192,15 @@ func StatFile(anypath string) (fi fs.FileInfo, err error) {
 			fpath = anypath[len(isopath)+1:] // without slash prefix
 		}
 
-		var jnt *IsoJoint
-		if jnt, err = GetIsoJoint(isopath); err != nil {
+		var jnt Joint
+		if jnt, err = GetJoint(isopath, &IsoJoint{}); err != nil {
 			return
 		}
 		defer func() {
 			if err != nil {
 				jnt.Cleanup()
 			} else {
-				PutIsoJoint(jnt)
+				PutJoint(jnt)
 			}
 		}()
 
@@ -246,48 +241,35 @@ func FtpEscapeBrackets(s string) string {
 func ReadDir(anypath string) (ret []fs.FileInfo, err error) {
 	if strings.HasPrefix(anypath, "ftp://") {
 		var addr, fpath = SplitUrl(anypath)
-		var jnt *FtpJoint
-		if jnt, err = GetFtpJoint(addr); err != nil {
+		var jnt Joint
+		if jnt, err = GetJoint(addr, &FtpJoint{}); err != nil {
 			return
 		}
 		defer func() {
 			if err != nil {
 				jnt.Cleanup()
 			} else {
-				PutFtpJoint(jnt)
+				PutJoint(jnt)
 			}
 		}()
 
-		fpath = FtpEscapeBrackets(path.Join(jnt.pwd, fpath))
-		var entries []*ftp.Entry
-		if entries, err = jnt.conn.List(fpath); err != nil {
-			return
-		}
-		ret = make([]fs.FileInfo, 0, len(entries))
-		for _, ent := range entries {
-			if ent.Name != "." && ent.Name != ".." {
-				ret = append(ret, FtpFileInfo{ent})
-			}
-		}
+		ret, err = jnt.ReadDir(fpath)
 		return
 	} else if strings.HasPrefix(anypath, "sftp://") {
 		var addr, fpath = SplitUrl(anypath)
-		var jnt *SftpJoint
-		if jnt, err = GetSftpJoint(addr); err != nil {
+		var jnt Joint
+		if jnt, err = GetJoint(addr, &SftpJoint{}); err != nil {
 			return
 		}
 		defer func() {
 			if err != nil {
 				jnt.Cleanup()
 			} else {
-				PutSftpJoint(jnt)
+				PutJoint(jnt)
 			}
 		}()
 
-		fpath = path.Join(jnt.pwd, fpath)
-		if ret, err = jnt.client.ReadDir(fpath); err != nil {
-			return
-		}
+		ret, err = jnt.ReadDir(fpath)
 		return
 	} else if strings.HasPrefix(anypath, "http://") || strings.HasPrefix(anypath, "https://") {
 		var addr, fpath, ok = GetDavPath(anypath)
@@ -295,21 +277,19 @@ func ReadDir(anypath string) (ret []fs.FileInfo, err error) {
 			err = ErrNotFound
 			return
 		}
-		var jnt *DavJoint
-		if jnt, err = GetDavJoint(addr); err != nil {
+		var jnt Joint
+		if jnt, err = GetJoint(addr, &DavJoint{}); err != nil {
 			return
 		}
 		defer func() {
 			if err != nil {
 				jnt.Cleanup()
 			} else {
-				PutDavJoint(jnt)
+				PutJoint(jnt)
 			}
 		}()
 
-		if ret, err = jnt.client.ReadDir(fpath); err != nil {
-			return
-		}
+		ret, err = jnt.ReadDir(fpath)
 		return
 	} else {
 		var file *os.File
@@ -342,33 +322,19 @@ func ReadDir(anypath string) (ret []fs.FileInfo, err error) {
 			fpath = anypath[len(isopath)+1:] // without slash prefix
 		}
 
-		var jnt *IsoJoint
-		if jnt, err = GetIsoJoint(isopath); err != nil {
+		var jnt Joint
+		if jnt, err = GetJoint(isopath, &IsoJoint{}); err != nil {
 			return
 		}
 		defer func() {
 			if err != nil {
 				jnt.Cleanup()
 			} else {
-				PutIsoJoint(jnt)
+				PutJoint(jnt)
 			}
 		}()
 
-		var f RFile
-		if f, err = jnt.Open(fpath); err != nil {
-			return
-		}
-		defer f.Close()
-		var files []*iso.File
-		if files, err = f.(*IsoFile).GetChildren(); err != nil {
-			return
-		}
-		ret = make([]fs.FileInfo, len(files))
-		for i, file := range files {
-			ret[i] = &IsoFile{
-				File: file,
-			}
-		}
+		ret, err = jnt.ReadDir(fpath)
 		return
 	}
 }

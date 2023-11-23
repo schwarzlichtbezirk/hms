@@ -8,6 +8,7 @@ import (
 	"path"
 	"runtime"
 	"strconv"
+	"strings"
 	"time"
 
 	cfg "github.com/schwarzlichtbezirk/hms/config"
@@ -126,24 +127,17 @@ func cchinfAPI(w http.ResponseWriter, r *http.Request) {
 		return true
 	})
 
-	var isocount int
-	for _, cc := range jnt.IsoCaches {
-		isocount += cc.Count()
-	}
-
-	var davcount int
-	for _, cc := range jnt.DavCaches {
-		davcount += cc.Count()
-	}
-
-	var ftpcount int
-	for _, cc := range jnt.FtpCaches {
-		ftpcount += cc.Count()
-	}
-
-	var sftpcount int
-	for _, cc := range jnt.SftpCaches {
-		sftpcount += cc.Count()
+	var isocount, davcount, ftpcount, sftpcount int
+	for key, jc := range jnt.JointPool {
+		if len(key) >= 4 && ToLower(key[len(key)-4:]) == ".iso" {
+			isocount += jc.Count()
+		} else if strings.HasPrefix(key, "http://") || strings.HasPrefix(key, "https://") {
+			davcount += jc.Count()
+		} else if strings.HasPrefix(key, "ftp://") {
+			ftpcount += jc.Count()
+		} else if strings.HasPrefix(key, "sftp://") {
+			sftpcount += jc.Count()
+		}
 	}
 
 	var ret = XmlMap{

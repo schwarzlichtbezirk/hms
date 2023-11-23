@@ -84,7 +84,7 @@ func (f *FtpFile) Close() (err error) {
 		err = f.ReadCloser.Close()
 		f.ReadCloser = nil
 	}
-	PutFtpJoint(f.jnt)
+	PutJoint(f.jnt)
 	return
 }
 
@@ -220,7 +220,7 @@ type SftpFile struct {
 
 func (f *SftpFile) Close() (err error) {
 	err = f.File.Close()
-	PutSftpJoint(f.jnt)
+	PutJoint(f.jnt)
 	return
 }
 

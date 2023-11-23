@@ -17,7 +17,7 @@ type IsoFile struct {
 
 func (f *IsoFile) Close() error {
 	if f.jnt != nil {
-		PutIsoJoint(f.jnt)
+		PutJoint(f.jnt)
 	}
 	return nil
 }
