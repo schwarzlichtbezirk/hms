@@ -62,6 +62,11 @@ type FtpJoint struct {
 	key  string // address of FTP-service, i.e. ftp://user:pass@example.com
 	conn *ftp.ServerConn
 	pwd  string
+
+	path string // path inside of FTP-service
+	io.ReadCloser
+	pos int64
+	end int64
 }
 
 func (jnt *FtpJoint) Make(urladdr string) (err error) {
@@ -89,17 +94,28 @@ func (jnt *FtpJoint) Key() string {
 	return jnt.key
 }
 
-// Opens new connection for any some one file with given full FTP URL.
-// FTP-connection can serve only one file by the time, so it can not
-// be used for parallel reading group of files.
-func (jnt *FtpJoint) Open(fpath string) (file RFile, err error) {
-	return &FtpFile{
-		jnt:  jnt,
-		path: fpath,
-	}, nil
+func (jnt *FtpJoint) Busy() bool {
+	return jnt.path != ""
 }
 
-func (jnt *FtpJoint) Stat(fpath string) (fi fs.FileInfo, err error) {
+func (jnt *FtpJoint) Open(fpath string) (file fs.File, err error) {
+	jnt.path = fpath
+	return jnt, nil
+}
+
+func (jnt *FtpJoint) Close() (err error) {
+	jnt.path = ""
+	if jnt.ReadCloser != nil {
+		err = jnt.ReadCloser.Close()
+		jnt.ReadCloser = nil
+	}
+	jnt.pos = 0
+	jnt.end = 0
+	PutJoint(jnt)
+	return
+}
+
+func (jnt *FtpJoint) Info(fpath string) (fi fs.FileInfo, err error) {
 	var ent *ftp.Entry
 	if ent, err = jnt.conn.GetEntry(path.Join(jnt.pwd, fpath)); err != nil {
 		return
@@ -125,27 +141,9 @@ func (jnt *FtpJoint) ReadDir(fpath string) (ret []fs.FileInfo, err error) {
 	return
 }
 
-// FtpFile implements for FTP-file io.Reader, io.Writer, io.Seeker, io.Closer.
-type FtpFile struct {
-	jnt  *FtpJoint
-	path string // path inside of FTP-service
-	io.ReadCloser
-	pos int64
-	end int64
-}
-
-func (f *FtpFile) Close() (err error) {
-	if f.ReadCloser != nil {
-		err = f.ReadCloser.Close()
-		f.ReadCloser = nil
-	}
-	PutJoint(f.jnt)
-	return
-}
-
-func (f *FtpFile) Stat() (fi fs.FileInfo, err error) {
+func (jnt *FtpJoint) Stat() (fi fs.FileInfo, err error) {
 	var ent *ftp.Entry
-	if ent, err = f.jnt.conn.GetEntry(path.Join(f.jnt.pwd, f.path)); err != nil {
+	if ent, err = jnt.conn.GetEntry(path.Join(jnt.pwd, jnt.path)); err != nil {
 		return
 	}
 	fi = FtpFileInfo{
@@ -154,46 +152,46 @@ func (f *FtpFile) Stat() (fi fs.FileInfo, err error) {
 	return
 }
 
-func (f *FtpFile) Size() int64 {
-	if f.end == 0 {
-		f.end, _ = f.jnt.conn.FileSize(path.Join(f.jnt.pwd, f.path))
+func (jnt *FtpJoint) Size() int64 {
+	if jnt.end == 0 {
+		jnt.end, _ = jnt.conn.FileSize(path.Join(jnt.pwd, jnt.path))
 	}
-	return f.end
+	return jnt.end
 }
 
-func (f *FtpFile) Read(b []byte) (n int, err error) {
-	if f.ReadCloser == nil {
-		if f.ReadCloser, err = f.jnt.conn.RetrFrom(path.Join(f.jnt.pwd, f.path), uint64(f.pos)); err != nil {
+func (jnt *FtpJoint) Read(b []byte) (n int, err error) {
+	if jnt.ReadCloser == nil {
+		if jnt.ReadCloser, err = jnt.conn.RetrFrom(path.Join(jnt.pwd, jnt.path), uint64(jnt.pos)); err != nil {
 			return
 		}
 	}
-	n, err = f.ReadCloser.Read(b)
-	f.pos += int64(n)
+	n, err = jnt.ReadCloser.Read(b)
+	jnt.pos += int64(n)
 	return
 }
 
-func (f *FtpFile) Write(p []byte) (n int, err error) {
+func (jnt *FtpJoint) Write(p []byte) (n int, err error) {
 	var buf = bytes.NewReader(p)
-	err = f.jnt.conn.StorFrom(path.Join(f.jnt.pwd, f.path), buf, uint64(f.pos))
+	err = jnt.conn.StorFrom(path.Join(jnt.pwd, jnt.path), buf, uint64(jnt.pos))
 	var n64, _ = buf.Seek(0, io.SeekCurrent)
-	f.pos += n64
+	jnt.pos += n64
 	n = int(n64)
 	return
 }
 
-func (f *FtpFile) Seek(offset int64, whence int) (abs int64, err error) {
+func (jnt *FtpJoint) Seek(offset int64, whence int) (abs int64, err error) {
 	switch whence {
 	case io.SeekStart:
 		abs = offset
 	case io.SeekCurrent:
-		abs = f.pos + offset
+		abs = jnt.pos + offset
 	case io.SeekEnd:
-		if f.end == 0 {
-			if f.end, err = f.jnt.conn.FileSize(path.Join(f.jnt.pwd, f.path)); err != nil {
+		if jnt.end == 0 {
+			if jnt.end, err = jnt.conn.FileSize(path.Join(jnt.pwd, jnt.path)); err != nil {
 				return
 			}
 		}
-		abs = f.end + offset
+		abs = jnt.end + offset
 	default:
 		err = ErrFtpWhence
 		return
@@ -202,25 +200,25 @@ func (f *FtpFile) Seek(offset int64, whence int) (abs int64, err error) {
 		err = ErrFtpNegPos
 		return
 	}
-	if abs != f.pos && f.ReadCloser != nil {
-		f.ReadCloser.Close()
-		f.ReadCloser = nil
+	if abs != jnt.pos && jnt.ReadCloser != nil {
+		jnt.ReadCloser.Close()
+		jnt.ReadCloser = nil
 	}
-	f.pos = abs
+	jnt.pos = abs
 	return
 }
 
-func (f *FtpFile) ReadAt(b []byte, off int64) (n int, err error) {
+func (jnt *FtpJoint) ReadAt(b []byte, off int64) (n int, err error) {
 	if off < 0 {
 		err = ErrFtpNegPos
 		return
 	}
-	if off != f.pos && f.ReadCloser != nil {
-		f.ReadCloser.Close()
-		f.ReadCloser = nil
+	if off != jnt.pos && jnt.ReadCloser != nil {
+		jnt.ReadCloser.Close()
+		jnt.ReadCloser = nil
 	}
-	f.pos = off
-	return f.Read(b)
+	jnt.pos = off
+	return jnt.Read(b)
 }
 
 // FtpFileInfo encapsulates ftp.Entry structure and provides fs.FileInfo implementation.

@@ -450,7 +450,7 @@ func HdCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 // Package splitted in two files - tags table file and
 // data file with cached nested files.
 type FileCache struct {
-	wpk.Package
+	*wpk.Package
 	wpt wpk.WriteSeekCloser // package tags part
 	wpf wpk.WriteSeekCloser // package files part
 }
@@ -466,10 +466,7 @@ func InitCacheWriter(fpath string) (fc *FileCache, d time.Duration, err error) {
 	var pkgpath = wpk.MakeTagsPath(fpath)
 	var datpath = wpk.MakeDataPath(fpath)
 	fc = &FileCache{
-		Package: wpk.Package{
-			FTT:       &wpk.FTT{},
-			Workspace: ".",
-		},
+		Package: wpk.NewPackage(),
 	}
 	defer func() {
 		if err != nil {
@@ -625,13 +622,13 @@ func InitPackages() (err error) {
 		err = fmt.Errorf("inits thumbnails database: %w", err)
 		return
 	}
-	PackInfo(tmbfile, &ThumbPkg.Package, d)
+	PackInfo(tmbfile, ThumbPkg.Package, d)
 
 	if TilesPkg, d, err = InitCacheWriter(JoinFast(cfg.CachePath, tilfile)); err != nil {
 		err = fmt.Errorf("inits tiles database: %w", err)
 		return
 	}
-	PackInfo(tilfile, &TilesPkg.Package, d)
+	PackInfo(tilfile, TilesPkg.Package, d)
 
 	return nil
 }

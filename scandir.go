@@ -14,10 +14,10 @@ func IsStatic(fi fs.FileInfo) (static bool) {
 	if static = fi == nil; static {
 		return
 	}
-	if _, static = fi.(*jnt.IsoFile); static {
+	if _, static = fi.(*jnt.IsoFileInfo); static {
 		return
 	}
-	if _, static = fi.(jnt.DavFileStat); static {
+	if _, static = fi.(jnt.DavFileInfo); static {
 		return
 	}
 	if _, static = fi.(jnt.FtpFileInfo); static {

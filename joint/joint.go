@@ -2,6 +2,7 @@ package joint
 
 import (
 	"errors"
+	"io"
 	"io/fs"
 	"sync"
 	"time"
@@ -17,13 +18,15 @@ var (
 
 // Joint describes interface with joint to some file system provider.
 type Joint interface {
-	Make(urladdr string) error // establish connection to file system provider
-	Cleanup() error            // close connection to file system provider
-	Key() string               // key path to resource
-	//Busy() bool                            // file is opened now
-	Open(string) (RFile, error)            // open file with local file path
-	Stat(string) (fs.FileInfo, error)      // returns file state pointed by local file path
+	Make(urladdr string) error             // establish connection to file system provider
+	Cleanup() error                        // close connection to file system provider
+	Key() string                           // key path to resource
+	Busy() bool                            // file is opened
+	fs.FS                                  // open file with local file path
+	io.Closer                              // close local file
+	Info(string) (fs.FileInfo, error)      // returns file state pointed by local file path
 	ReadDir(string) ([]fs.FileInfo, error) // read directory pointed by local file path
+	RFile
 }
 
 // JointCache implements cache with opened joints to some file system resource.

@@ -26,9 +26,10 @@ func OpenFile(anypath string) (r RFile, err error) {
 		if jnt, err = GetJoint(addr, &FtpJoint{}); err != nil {
 			return
 		}
-		if r, err = jnt.Open(fpath); err != nil {
+		if _, err = jnt.Open(fpath); err != nil {
 			return
 		}
+		r = jnt
 		return
 	} else if strings.HasPrefix(anypath, "sftp://") {
 		var addr, fpath = SplitUrl(anypath)
@@ -36,9 +37,10 @@ func OpenFile(anypath string) (r RFile, err error) {
 		if jnt, err = GetJoint(addr, &SftpJoint{}); err != nil {
 			return
 		}
-		if r, err = jnt.Open(fpath); err != nil {
+		if _, err = jnt.Open(fpath); err != nil {
 			return
 		}
+		r = jnt
 		return
 	} else if strings.HasPrefix(anypath, "http://") || strings.HasPrefix(anypath, "https://") {
 		var addr, fpath, ok = GetDavPath(anypath)
@@ -51,9 +53,10 @@ func OpenFile(anypath string) (r RFile, err error) {
 			return
 		}
 
-		if r, err = jnt.Open(fpath); err != nil {
+		if _, err = jnt.Open(fpath); err != nil {
 			return
 		}
+		r = jnt
 		return
 	} else {
 		if r, err = os.Open(anypath); err == nil { // primary filesystem file
@@ -83,9 +86,10 @@ func OpenFile(anypath string) (r RFile, err error) {
 		if jnt, err = GetJoint(isopath, &IsoJoint{}); err != nil {
 			return
 		}
-		if r, err = jnt.Open(fpath); err != nil {
+		if _, err = jnt.Open(fpath); err != nil {
 			return
 		}
+		r = jnt
 		return
 	}
 }
@@ -128,7 +132,7 @@ func StatFile(anypath string) (fi fs.FileInfo, err error) {
 			}
 		}()
 
-		fi, err = jnt.Stat(fpath)
+		fi, err = jnt.Info(fpath)
 		return
 	} else if strings.HasPrefix(anypath, "sftp://") {
 		var addr, fpath = SplitUrl(anypath)
@@ -144,7 +148,7 @@ func StatFile(anypath string) (fi fs.FileInfo, err error) {
 			}
 		}()
 
-		fi, err = jnt.Stat(fpath)
+		fi, err = jnt.Info(fpath)
 		return
 	} else if strings.HasPrefix(anypath, "http://") || strings.HasPrefix(anypath, "https://") {
 		var addr, fpath, ok = GetDavPath(anypath)
@@ -164,7 +168,7 @@ func StatFile(anypath string) (fi fs.FileInfo, err error) {
 			}
 		}()
 
-		fi, err = jnt.Stat(fpath)
+		fi, err = jnt.Info(fpath)
 		return
 	} else {
 		// check up file is at primary filesystem
@@ -204,7 +208,7 @@ func StatFile(anypath string) (fi fs.FileInfo, err error) {
 			}
 		}()
 
-		fi, err = jnt.Stat(fpath)
+		fi, err = jnt.Info(fpath)
 		return
 	}
 }

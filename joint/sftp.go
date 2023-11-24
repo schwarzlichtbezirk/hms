@@ -36,6 +36,9 @@ type SftpJoint struct {
 	conn   *ssh.Client
 	client *sftp.Client
 	pwd    string
+
+	path string // path inside of SFTP-service without PWD
+	*sftp.File
 }
 
 func (jnt *SftpJoint) Make(urladdr string) (err error) {
@@ -74,38 +77,34 @@ func (jnt *SftpJoint) Key() string {
 	return jnt.key
 }
 
+func (jnt *SftpJoint) Busy() bool {
+	return jnt.File != nil
+}
+
 // Opens new connection for any some one file with given full SFTP URL.
-func (jnt *SftpJoint) Open(fpath string) (file RFile, err error) {
-	var f = SftpFile{
-		jnt:  jnt,
-		path: fpath,
-	}
-	if f.File, err = jnt.client.Open(path.Join(jnt.pwd, fpath)); err != nil {
+func (jnt *SftpJoint) Open(fpath string) (file fs.File, err error) {
+	jnt.path = fpath
+	if jnt.File, err = jnt.client.Open(path.Join(jnt.pwd, fpath)); err != nil {
 		return
 	}
-	file = &f
+	file = jnt
 	return
 }
 
-func (jnt *SftpJoint) Stat(fpath string) (fs.FileInfo, error) {
+func (jnt *SftpJoint) Close() (err error) {
+	err = jnt.File.Close()
+	jnt.path = ""
+	jnt.File = nil
+	PutJoint(jnt)
+	return
+}
+
+func (jnt *SftpJoint) Info(fpath string) (fs.FileInfo, error) {
 	return jnt.client.Stat(path.Join(jnt.pwd, fpath))
 }
 
 func (jnt *SftpJoint) ReadDir(fpath string) ([]fs.FileInfo, error) {
 	return jnt.client.ReadDir(path.Join(jnt.pwd, fpath))
-}
-
-// SftpFile implements for SFTP-file io.Reader, io.Writer, io.Seeker, io.Closer.
-type SftpFile struct {
-	jnt  *SftpJoint
-	path string // path inside of SFTP-service without PWD
-	*sftp.File
-}
-
-func (f *SftpFile) Close() (err error) {
-	err = f.File.Close()
-	PutJoint(f.jnt)
-	return
 }
 
 // The End.

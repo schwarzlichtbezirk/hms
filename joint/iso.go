@@ -16,6 +16,9 @@ type IsoJoint struct {
 	file  RFile
 	img   *iso.Image
 	cache map[string]*iso.File
+
+	*iso.File
+	*io.SectionReader
 }
 
 func (jnt *IsoJoint) Make(isopath string) (err error) {
@@ -41,18 +44,26 @@ func (jnt *IsoJoint) Key() string {
 	return jnt.key
 }
 
-func (jnt *IsoJoint) Open(fpath string) (file RFile, err error) {
-	var f = IsoFile{
-		jnt: jnt,
-	}
-	if f.File, err = f.jnt.OpenFile(fpath); err != nil {
+func (jnt *IsoJoint) Busy() bool {
+	return jnt.File != nil
+}
+
+func (jnt *IsoJoint) Open(fpath string) (file fs.File, err error) {
+	if jnt.File, err = jnt.OpenFile(fpath); err != nil {
 		return
 	}
-	if sr := f.File.Reader(); sr != nil {
-		f.SectionReader = sr.(*io.SectionReader)
+	if sr := jnt.File.Reader(); sr != nil {
+		jnt.SectionReader = sr.(*io.SectionReader)
 	}
-	file = &f
+	file = jnt
 	return
+}
+
+func (jnt *IsoJoint) Close() error {
+	jnt.File = nil
+	jnt.SectionReader = nil
+	PutJoint(jnt)
+	return nil
 }
 
 func (jnt *IsoJoint) OpenFile(intpath string) (file *iso.File, err error) {
@@ -96,66 +107,52 @@ func (jnt *IsoJoint) OpenFile(intpath string) (file *iso.File, err error) {
 	return
 }
 
-func (jnt *IsoJoint) Stat(fpath string) (fi fs.FileInfo, err error) {
+func (jnt *IsoJoint) Info(fpath string) (fi fs.FileInfo, err error) {
 	var file *iso.File
 	if file, err = jnt.OpenFile(fpath); err != nil {
 		return
 	}
-	fi = &IsoFile{
+	fi = &IsoFileInfo{
 		File: file,
 	}
 	return
 }
 
 func (jnt *IsoJoint) ReadDir(fpath string) (ret []fs.FileInfo, err error) {
-	var f RFile
+	var f fs.File
 	if f, err = jnt.Open(fpath); err != nil {
 		return
 	}
 	defer f.Close()
 	var files []*iso.File
-	if files, err = f.(*IsoFile).GetChildren(); err != nil {
+	if files, err = jnt.File.GetChildren(); err != nil {
 		return
 	}
 	ret = make([]fs.FileInfo, len(files))
 	for i, file := range files {
-		ret[i] = &IsoFile{
+		ret[i] = &IsoFileInfo{
 			File: file,
 		}
 	}
 	return
 }
 
-// IsoFile implements for ISO9660-file io.Reader, io.Seeker, io.Closer.
-type IsoFile struct {
-	jnt *IsoJoint
+func (jnt *IsoJoint) Stat() (fs.FileInfo, error) {
+	return &IsoFileInfo{jnt.File}, nil
+}
+
+type IsoFileInfo struct {
 	*iso.File
-	*io.SectionReader
 }
 
-func (f *IsoFile) Close() error {
-	if f.jnt != nil {
-		PutJoint(f.jnt)
-	}
-	return nil
-}
-
-func (f *IsoFile) Name() string {
+func (fi *IsoFileInfo) Name() string {
 	var dec = charmap.Windows1251.NewDecoder()
-	var name, _ = dec.String(f.File.Name())
+	var name, _ = dec.String(fi.File.Name())
 	return name
 }
 
-func (f *IsoFile) Size() int64 {
-	return f.File.Size()
-}
-
-func (f *IsoFile) Stat() (fs.FileInfo, error) {
-	return f.File, nil
-}
-
-func (f *IsoFile) Sys() interface{} {
-	return f
+func (fi *IsoFileInfo) Sys() interface{} {
+	return fi
 }
 
 // The End.

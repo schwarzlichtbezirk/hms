@@ -8,43 +8,7 @@ import (
 	"github.com/studio-b12/gowebdav"
 )
 
-type DavFileStat = gowebdav.File
-
-// DavJoint keeps gowebdav.Client object.
-type DavJoint struct {
-	key    string // URL to service, address + service route, i.e. https://user:pass@example.com/webdav/
-	client *gowebdav.Client
-}
-
-func (jnt *DavJoint) Make(urladdr string) (err error) {
-	jnt.key = urladdr
-	jnt.client = gowebdav.NewClient(urladdr, "", "") // user & password gets from URL
-	err = jnt.client.Connect()
-	return
-}
-
-func (jnt *DavJoint) Cleanup() error {
-	return nil
-}
-
-func (jnt *DavJoint) Key() string {
-	return jnt.key
-}
-
-func (jnt *DavJoint) Open(fpath string) (file RFile, err error) {
-	return &DavFile{
-		jnt:  jnt,
-		path: fpath,
-	}, nil
-}
-
-func (jnt *DavJoint) Stat(fpath string) (fi fs.FileInfo, err error) {
-	return jnt.client.Stat(fpath)
-}
-
-func (jnt *DavJoint) ReadDir(fpath string) ([]fs.FileInfo, error) {
-	return jnt.client.ReadDir(fpath)
-}
+type DavFileInfo = gowebdav.File
 
 // DavPath is map of WebDAV servises root paths by services URLs.
 var DavPath = map[string]string{}
@@ -81,49 +45,87 @@ func GetDavPath(davurl string) (dpath, fpath string, ok bool) {
 	return
 }
 
-type DavFile struct {
-	jnt  *DavJoint
+// DavJoint keeps gowebdav.Client object.
+type DavJoint struct {
+	key    string // URL to service, address + service route, i.e. https://user:pass@example.com/webdav/
+	client *gowebdav.Client
+
 	path string // truncated file path from full URL
 	io.ReadCloser
 	pos int64
 	end int64
 }
 
-func (f *DavFile) Close() (err error) {
-	if f.ReadCloser != nil {
-		f.ReadCloser.Close()
-		f.ReadCloser = nil
-	}
-	PutJoint(f.jnt)
+func (jnt *DavJoint) Make(urladdr string) (err error) {
+	jnt.key = urladdr
+	jnt.client = gowebdav.NewClient(urladdr, "", "") // user & password gets from URL
+	err = jnt.client.Connect()
 	return
 }
 
-func (f *DavFile) Read(b []byte) (n int, err error) {
-	if f.ReadCloser == nil {
-		if f.ReadCloser, err = f.jnt.client.ReadStreamRange(f.path, f.pos, 0); err != nil {
+func (jnt *DavJoint) Cleanup() error {
+	return nil
+}
+
+func (jnt *DavJoint) Key() string {
+	return jnt.key
+}
+
+func (jnt *DavJoint) Busy() bool {
+	return jnt.path != ""
+}
+
+func (jnt *DavJoint) Open(fpath string) (file fs.File, err error) {
+	jnt.path = fpath
+	return jnt, nil
+}
+
+func (jnt *DavJoint) Close() (err error) {
+	jnt.path = ""
+	if jnt.ReadCloser != nil {
+		jnt.ReadCloser.Close()
+		jnt.ReadCloser = nil
+	}
+	jnt.pos = 0
+	jnt.end = 0
+	PutJoint(jnt)
+	return
+}
+
+func (jnt *DavJoint) Info(fpath string) (fi fs.FileInfo, err error) {
+	return jnt.client.Stat(fpath)
+}
+
+func (jnt *DavJoint) ReadDir(fpath string) ([]fs.FileInfo, error) {
+	return jnt.client.ReadDir(fpath)
+}
+
+func (jnt *DavJoint) Read(b []byte) (n int, err error) {
+	if jnt.ReadCloser == nil {
+		if jnt.ReadCloser, err = jnt.client.ReadStreamRange(jnt.path, jnt.pos, 0); err != nil {
 			return
 		}
 	}
-	n, err = f.ReadCloser.Read(b)
-	f.pos += int64(n)
+	n, err = jnt.ReadCloser.Read(b)
+	jnt.pos += int64(n)
 	return
 }
 
-func (f *DavFile) Seek(offset int64, whence int) (abs int64, err error) {
+func (jnt *DavJoint) Seek(offset int64, whence int) (abs int64, err error) {
 	switch whence {
 	case io.SeekStart:
 		abs = offset
 	case io.SeekCurrent:
-		abs = f.pos + offset
+		abs = jnt.pos + offset
 	case io.SeekEnd:
-		if f.end == 0 {
+		if jnt.end == 0 {
 			var fi fs.FileInfo
-			if fi, err = f.jnt.client.Stat(f.path); err != nil {
+			if fi, err = jnt.client.Stat(jnt.path); err != nil {
 				return
 			}
-			f.end = fi.Size()
+			jnt.end = fi.Size()
 		}
-		abs = f.end + offset
+		abs = jnt.end + offset
 	default:
 		err = ErrFtpWhence
 		return
@@ -132,29 +134,29 @@ func (f *DavFile) Seek(offset int64, whence int) (abs int64, err error) {
 		err = ErrFtpNegPos
 		return
 	}
-	if abs != f.pos && f.ReadCloser != nil {
-		f.ReadCloser.Close()
-		f.ReadCloser = nil
+	if abs != jnt.pos && jnt.ReadCloser != nil {
+		jnt.ReadCloser.Close()
+		jnt.ReadCloser = nil
 	}
-	f.pos = abs
+	jnt.pos = abs
 	return
 }
 
-func (f *DavFile) ReadAt(b []byte, off int64) (n int, err error) {
+func (jnt *DavJoint) ReadAt(b []byte, off int64) (n int, err error) {
 	if off < 0 {
 		err = ErrFtpNegPos
 		return
 	}
-	if off != f.pos && f.ReadCloser != nil {
-		f.ReadCloser.Close()
-		f.ReadCloser = nil
+	if off != jnt.pos && jnt.ReadCloser != nil {
+		jnt.ReadCloser.Close()
+		jnt.ReadCloser = nil
 	}
-	f.pos = off
-	return f.Read(b)
+	jnt.pos = off
+	return jnt.Read(b)
 }
 
-func (f *DavFile) Stat() (fi fs.FileInfo, err error) {
-	fi, err = f.jnt.Stat(f.path)
+func (jnt *DavJoint) Stat() (fi fs.FileInfo, err error) {
+	fi, err = jnt.client.Stat(jnt.path)
 	return
 }
 

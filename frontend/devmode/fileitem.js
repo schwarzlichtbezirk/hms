@@ -132,7 +132,7 @@ const fileinfo = file => {
 	/*if (file.software) {
 		lst.push(['software', file.software]);
 	}*/
-	if (file.datetime) {
+	if (file.datetime > "0001-01-01T00:00:00Z") {
 		lst.push(['photo taken', (new Date(file.datetime)).toLocaleString('en-GB')]);
 	}
 	switch (file.orientation) {
