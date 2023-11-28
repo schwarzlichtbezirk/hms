@@ -13,7 +13,7 @@ import (
 	"time"
 
 	cfg "github.com/schwarzlichtbezirk/hms/config"
-	jnt "github.com/schwarzlichtbezirk/hms/joint"
+	jnt "github.com/schwarzlichtbezirk/joint"
 	"github.com/schwarzlichtbezirk/wpk"
 )
 
@@ -129,7 +129,8 @@ func cchinfAPI(w http.ResponseWriter, r *http.Request) {
 	})
 
 	var isocount, davcount, ftpcount, sftpcount int
-	for key, jc := range jnt.JointPool {
+	var jp = jnt.JointPool()
+	for key, jc := range jp {
 		if len(key) >= 4 && ToLower(key[len(key)-4:]) == ".iso" {
 			isocount += jc.Count()
 		} else if strings.HasPrefix(key, "http://") || strings.HasPrefix(key, "https://") {

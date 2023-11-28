@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	jnt "github.com/schwarzlichtbezirk/hms/joint"
+	jnt "github.com/schwarzlichtbezirk/joint"
 
 	"github.com/gorilla/mux"
 )
@@ -22,7 +22,7 @@ func pageHandler(pref, fname string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var content, ok = pagecache[pref+"/"+fname]
 		if !ok {
-			WriteError(w, r, http.StatusNotFound, jnt.ErrNotFound, AECpageabsent)
+			WriteError(w, r, http.StatusNotFound, fs.ErrNotExist, AECpageabsent)
 			return
 		}
 
@@ -162,7 +162,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	var content jnt.RFile
 	if content, err = jnt.OpenFile(syspath); err != nil {
-		if errors.Is(err, jnt.ErrNotFound) {
+		if errors.Is(err, fs.ErrNotExist) {
 			// try to redirect to external shared file (not at DAV-disk)
 			if IsRemote(syspath) {
 				http.Redirect(w, r, syspath, http.StatusMovedPermanently)
@@ -285,7 +285,7 @@ func mtmbHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 	if file == nil {
-		WriteError(w, r, http.StatusNotFound, jnt.ErrNotFound, AECmtmbabsent)
+		WriteError(w, r, http.StatusNotFound, fs.ErrNotExist, AECmtmbabsent)
 		return
 	}
 	defer file.Close()
@@ -345,7 +345,7 @@ func tileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 	if file == nil {
-		WriteError(w, r, http.StatusNotFound, jnt.ErrNotFound, AECtileabsent)
+		WriteError(w, r, http.StatusNotFound, fs.ErrNotExist, AECtileabsent)
 		return
 	}
 	defer file.Close()

@@ -5,7 +5,7 @@ import (
 	"io/fs"
 	"time"
 
-	jnt "github.com/schwarzlichtbezirk/hms/joint"
+	jnt "github.com/schwarzlichtbezirk/joint"
 )
 
 // IsStatic returns whether file info refers to content
@@ -14,7 +14,7 @@ func IsStatic(fi fs.FileInfo) (static bool) {
 	if static = fi == nil; static {
 		return
 	}
-	if _, static = fi.(*jnt.IsoFileInfo); static {
+	if _, static = fi.(jnt.IsoFileInfo); static {
 		return
 	}
 	if _, static = fi.(jnt.DavFileInfo); static {
@@ -193,7 +193,7 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 // ScanDir returns file properties list for given file system directory,
 // or directory in iso-disk.
 func ScanDir(prf *Profile, session *Session, dir string, isadmin bool, scanembed bool) (ret []any, skipped int, err error) {
-	var files []fs.FileInfo
+	var files []fs.DirEntry
 	if files, err = jnt.ReadDir(dir); err != nil && len(files) == 0 {
 		return
 	}
@@ -204,8 +204,9 @@ func ScanDir(prf *Profile, session *Session, dir string, isadmin bool, scanembed
 
 	var vfiles = make([]fs.FileInfo, 0, len(files)) // verified file infos
 	var vpaths = make([]DiskPath, 0, len(files))    // verified paths
-	for _, fi := range files {
-		if fi == nil {
+	for _, de := range files {
+		var fi fs.FileInfo
+		if fi, err = de.Info(); err != nil {
 			continue
 		}
 		var fpath = JoinFast(dir, fi.Name())

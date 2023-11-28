@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	jnt "github.com/schwarzlichtbezirk/hms/joint"
+	jnt "github.com/schwarzlichtbezirk/joint"
 
 	"github.com/jlaffaye/ftp"
 	"github.com/pkg/sftp"

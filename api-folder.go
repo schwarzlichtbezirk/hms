@@ -9,7 +9,7 @@ import (
 	"path"
 	"time"
 
-	jnt "github.com/schwarzlichtbezirk/hms/joint"
+	jnt "github.com/schwarzlichtbezirk/joint"
 )
 
 var catcolumn = map[Puid_t]string{

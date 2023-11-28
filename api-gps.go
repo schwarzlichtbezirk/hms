@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	jnt "github.com/schwarzlichtbezirk/hms/joint"
+	jnt "github.com/schwarzlichtbezirk/joint"
 
 	"github.com/rwcarlsen/goexif/exif"
 )

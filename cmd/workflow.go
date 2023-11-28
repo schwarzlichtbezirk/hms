@@ -12,7 +12,7 @@ import (
 
 	hms "github.com/schwarzlichtbezirk/hms"
 	cfg "github.com/schwarzlichtbezirk/hms/config"
-	jnt "github.com/schwarzlichtbezirk/hms/joint"
+	jnt "github.com/schwarzlichtbezirk/joint"
 
 	"github.com/gorilla/mux"
 	"github.com/jessevdk/go-flags"
@@ -362,8 +362,9 @@ func Done() {
 
 	// close all opened joints
 	wg.Go(func() (err error) {
-		for _, dc := range jnt.JointPool {
-			dc.Close()
+		var jp = jnt.JointPool()
+		for _, jc := range jp {
+			jc.Close()
 		}
 		return
 	})

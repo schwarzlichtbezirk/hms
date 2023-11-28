@@ -10,7 +10,7 @@ import (
 	"os"
 	"path"
 
-	jnt "github.com/schwarzlichtbezirk/hms/joint"
+	jnt "github.com/schwarzlichtbezirk/joint"
 )
 
 // APIHANDLER
@@ -123,7 +123,7 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			}
 
 			// copy dir content
-			var files []fs.FileInfo
+			var files []fs.DirEntry
 			if files, err = jnt.ReadDir(srcpath); err != nil {
 				WriteError500(w, r, err, AECedtcopyrd)
 				return

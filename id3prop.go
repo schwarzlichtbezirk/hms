@@ -5,7 +5,7 @@ import (
 	"io"
 	"time"
 
-	jnt "github.com/schwarzlichtbezirk/hms/joint"
+	jnt "github.com/schwarzlichtbezirk/joint"
 
 	"github.com/dhowden/tag"
 	"github.com/tcolgate/mp3"

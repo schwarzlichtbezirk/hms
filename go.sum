@@ -183,6 +183,8 @@ github.com/rs/zerolog v1.15.0/go.mod h1:xYTKnLHcpfU2225ny5qZjxnj9NvkumZYjJHlAThC
 github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd h1:CmH9+J6ZSsIjUK3dcGsnCnO41eRBOnY12zwkn5qVwgc=
 github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd/go.mod h1:hPqNNc0+uJM6H+SuU8sEs5K5IQeKccPqeSjfgcKGgPk=
 github.com/satori/go.uuid v1.2.0/go.mod h1:dA0hQrYB0VpLJoorglMZABFdXlWrHn1NEOzdhQKdks0=
+github.com/schwarzlichtbezirk/joint v0.0.0-20231127143255-444c1841ee79 h1:yKArfNT7dobdBkRCAWZfzYZwgZo9eReh8uq5mgEBAyg=
+github.com/schwarzlichtbezirk/joint v0.0.0-20231127143255-444c1841ee79/go.mod h1:5i8Xi6WzyRsvWP7y1nSxqWEqMiG0N5DvDsz1PGWhaU4=
 github.com/schwarzlichtbezirk/tga v1.0.0 h1:iy2AFv+TQgVK5u703VLlKhqew8F90LJfyOfa36uVFQk=
 github.com/schwarzlichtbezirk/tga v1.0.0/go.mod h1:cUwm7hlnqqQx/y8kQ0BLPFVnyibAAZ5vAzH4+S5ln4U=
 github.com/schwarzlichtbezirk/wpk v1.6.0 h1:lRIN7wOrlrv1zE4dOa2TOIFfjh2QPdj5UiksAqpmzHQ=
