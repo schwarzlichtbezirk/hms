@@ -12,8 +12,6 @@ import (
 	"io/fs"
 	"time"
 
-	jnt "github.com/schwarzlichtbezirk/joint"
-
 	"github.com/disintegration/gift"
 
 	"github.com/chai2010/webp" // register WebP
@@ -211,7 +209,7 @@ func CacheThumb(session *Session, syspath string) (md MediaData, err error) {
 	}
 
 	var fi fs.FileInfo
-	if fi, err = jnt.StatFile(syspath); err != nil {
+	if fi, err = JP.Stat(syspath); err != nil {
 		return
 	}
 	if fi.IsDir() {
@@ -258,8 +256,8 @@ func CacheThumb(session *Session, syspath string) (md MediaData, err error) {
 		return // file is not image
 	}
 
-	var file jnt.RFile
-	if file, err = jnt.OpenFile(syspath); err != nil {
+	var file RFile
+	if file, err = OpenFile(syspath); err != nil {
 		return // can not open file
 	}
 	defer file.Close()
@@ -345,7 +343,7 @@ func CacheTile(session *Session, syspath string, wdh, hgt int) (md MediaData, er
 	}
 
 	var fi fs.FileInfo
-	if fi, err = jnt.StatFile(syspath); err != nil {
+	if fi, err = JP.Stat(syspath); err != nil {
 		return
 	}
 	if fi.IsDir() {
@@ -361,8 +359,8 @@ func CacheTile(session *Session, syspath string, wdh, hgt int) (md MediaData, er
 		return // file is not image
 	}
 
-	var file jnt.RFile
-	if file, err = jnt.OpenFile(syspath); err != nil {
+	var file RFile
+	if file, err = OpenFile(syspath); err != nil {
 		return // can not open file
 	}
 	defer file.Close()

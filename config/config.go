@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"time"
 
+	jnt "github.com/schwarzlichtbezirk/joint"
 	"github.com/schwarzlichtbezirk/wpk"
 )
 
@@ -118,14 +119,14 @@ type CfgAppSets struct {
 
 // Config is common service settings.
 type Config struct {
-	CfgAppMode `json:"-" yaml:"-" group:"Application mode"`
-	CfgJWTAuth `json:"authentication" yaml:"authentication" group:"Authentication"`
-	CfgWebServ `json:"web-server" yaml:"web-server" group:"Web server"`
-	CfgTlsCert `json:"tls-certificates" yaml:"tls-certificates" group:"Automatic certificates"`
-	CfgNetwork `json:"network" yaml:"network" group:"Network"`
-	CfgXormDrv `json:"xorm" yaml:"xorm" group:"XORM"`
-	CfgImgProp `json:"images-prop" yaml:"images-prop" group:"Images properties"`
-	CfgAppSets `json:"specification" yaml:"specification" group:"Application settings"`
+	CfgAppMode  `json:"-" yaml:"-" group:"Application mode"`
+	CfgJWTAuth  `json:"authentication" yaml:"authentication" group:"Authentication"`
+	CfgWebServ  `json:"web-server" yaml:"web-server" group:"Web server"`
+	CfgTlsCert  `json:"tls-certificates" yaml:"tls-certificates" group:"Automatic certificates"`
+	*jnt.Config `json:"network" yaml:"network" group:"Network"`
+	CfgXormDrv  `json:"xorm" yaml:"xorm" group:"XORM"`
+	CfgImgProp  `json:"images-prop" yaml:"images-prop" group:"Images properties"`
+	CfgAppSets  `json:"specification" yaml:"specification" group:"Application settings"`
 }
 
 // Instance of common service settings.
@@ -156,10 +157,7 @@ var Cfg = &Config{ // inits default values:
 		Email:         "example@example.org",
 		HostWhitelist: []string{"example.org", "www.example.org"},
 	},
-	CfgNetwork: CfgNetwork{
-		DialTimeout:     5 * time.Second,
-		DiskCacheExpire: 2 * time.Minute,
-	},
+	Config: &jnt.Cfg,
 	CfgXormDrv: CfgXormDrv{
 		XormDriverName: "sqlite3",
 	},

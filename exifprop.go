@@ -3,9 +3,8 @@ package hms
 import (
 	"fmt"
 	"io"
+	"io/fs"
 	"time"
-
-	jnt "github.com/schwarzlichtbezirk/joint"
 
 	"github.com/rwcarlsen/goexif/exif"
 	"github.com/rwcarlsen/goexif/mknote"
@@ -181,8 +180,8 @@ func ExtractThumbEXIF(syspath string) (md MediaData, err error) {
 		}
 	}()
 
-	var file jnt.RFile
-	if file, err = jnt.OpenFile(syspath); err != nil {
+	var file fs.File
+	if file, err = JP.Open(syspath); err != nil {
 		return
 	}
 	defer file.Close()

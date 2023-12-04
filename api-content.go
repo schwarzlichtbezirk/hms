@@ -12,8 +12,6 @@ import (
 	"strings"
 	"time"
 
-	jnt "github.com/schwarzlichtbezirk/joint"
-
 	"github.com/gorilla/mux"
 )
 
@@ -160,8 +158,8 @@ func fileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		})
 	}
 
-	var content jnt.RFile
-	if content, err = jnt.OpenFile(syspath); err != nil {
+	var content RFile
+	if content, err = OpenFile(syspath); err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			// try to redirect to external shared file (not at DAV-disk)
 			if IsRemote(syspath) {

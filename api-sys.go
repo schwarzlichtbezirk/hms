@@ -13,7 +13,6 @@ import (
 	"time"
 
 	cfg "github.com/schwarzlichtbezirk/hms/config"
-	jnt "github.com/schwarzlichtbezirk/joint"
 	"github.com/schwarzlichtbezirk/wpk"
 )
 
@@ -129,8 +128,9 @@ func cchinfAPI(w http.ResponseWriter, r *http.Request) {
 	})
 
 	var isocount, davcount, ftpcount, sftpcount int
-	var jp = jnt.JointPool()
-	for key, jc := range jp {
+	var keys = JP.Keys()
+	for _, key := range keys {
+		var jc = JP.GetCache(key)
 		if len(key) >= 4 && ToLower(key[len(key)-4:]) == ".iso" {
 			isocount += jc.Count()
 		} else if strings.HasPrefix(key, "http://") || strings.HasPrefix(key, "https://") {
@@ -327,7 +327,7 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var fpath = ToSlash(arg.Path)
 	var syspath string
 	var fi fs.FileInfo
-	if fi, _ = jnt.StatFile(fpath); fi != nil {
+	if fi, _ = JP.Stat(fpath); fi != nil {
 		syspath = path.Clean(fpath)
 		// append slash to disk root to prevent open current dir on this disk
 		if syspath[len(syspath)-1] == ':' { // syspath here is always have non zero length
@@ -339,7 +339,7 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			WriteOK(w, r, &ret)
 			return
 		}
-		if fi, err = jnt.StatFile(syspath); err != nil {
+		if fi, err = JP.Stat(syspath); err != nil {
 			ret.Valid = false
 			WriteOK(w, r, &ret)
 			return

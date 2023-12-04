@@ -58,7 +58,7 @@ func IsCached(fpath string) bool {
 }
 
 // FileList forms list of files to process by caching algorithm.
-func FileList(fsys jnt.FS, pathlist *[]string, extlist, cnvlist FileMap) (err error) {
+func FileList(fsys *hms.SubPool, pathlist *[]string, extlist, cnvlist FileMap) (err error) {
 	var session = hms.XormStorage.NewSession()
 	defer session.Close()
 
@@ -66,7 +66,7 @@ func FileList(fsys jnt.FS, pathlist *[]string, extlist, cnvlist FileMap) (err er
 		if err != nil {
 			return err
 		}
-		var fullpath = JoinFast(string(fsys), fpath)
+		var fullpath = JoinFast(fsys.Dir, fpath)
 		if d.Name() != "." && d.Name() != ".." {
 			if _, ok := hms.PathStorePUID(session, fullpath); !ok {
 				*pathlist = append(*pathlist, fullpath)
@@ -455,7 +455,12 @@ func RunCacher() {
 	for i, p := range shares {
 		fmt.Fprintf(os.Stdout, "starts scan %d share with path %s\n", i+1, p)
 		var t0 = time.Now()
-		if err := FileList(jnt.FS(p), &pathlist, extlist, cnvlist); err != nil {
+		var err error
+		var sub fs.FS
+		if sub, err = hms.JP.Sub(p); err != nil {
+			Log.Fatal(err)
+		}
+		if err = FileList(sub.(*hms.SubPool), &pathlist, extlist, cnvlist); err != nil {
 			Log.Fatal(err)
 		}
 		var d = time.Since(t0)

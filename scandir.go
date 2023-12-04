@@ -8,6 +8,52 @@ import (
 	jnt "github.com/schwarzlichtbezirk/joint"
 )
 
+type SubPool struct {
+	*jnt.JointPool
+	Dir string
+}
+
+func (sp *SubPool) Open(fullpath string) (f fs.File, err error) {
+	fullpath = jnt.JoinFast(sp.Dir, fullpath)
+	return sp.JointPool.Open(fullpath)
+}
+
+func (sp *SubPool) Stat(fullpath string) (fi fs.FileInfo, err error) {
+	fullpath = jnt.JoinFast(sp.Dir, fullpath)
+	return sp.JointPool.Stat(fullpath)
+}
+
+func (sp *SubPool) ReadDir(fullpath string) (ret []fs.DirEntry, err error) {
+	fullpath = jnt.JoinFast(sp.Dir, fullpath)
+	return sp.JointPool.ReadDir(fullpath)
+}
+
+func (sp *SubPool) Sub(dir string) (fs.FS, error) {
+	dir = jnt.JoinFast(sp.Dir, dir)
+	var fi, err = sp.JointPool.Stat(dir)
+	if err != nil {
+		return nil, err
+	}
+	if !fi.IsDir() && jnt.IsTypeIso(dir) {
+		return nil, ErrNotDir
+	}
+	return &SubPool{
+		JointPool: sp.JointPool,
+		Dir:       dir,
+	}, nil
+}
+
+var JP = SubPool{jnt.NewJointPool(), ""}
+
+type RFile = jnt.RFile
+
+func OpenFile(fpath string) (file RFile, err error) {
+	var f fs.File
+	f, err = JP.Open(fpath)
+	file = f.(RFile)
+	return
+}
+
 // IsStatic returns whether file info refers to content
 // that can not be modified or moved.
 func IsStatic(fi fs.FileInfo) (static bool) {
@@ -36,7 +82,7 @@ func IsStatic(fi fs.FileInfo) (static bool) {
 func ScanFileNameList(prf *Profile, session *Session, vpaths []DiskPath, scanembed bool) (ret []any, lstp DirProp, err error) {
 	var files = make([]fs.FileInfo, len(vpaths))
 	for i, dp := range vpaths {
-		fi, _ := jnt.StatFile(dp.Path)
+		fi, _ := JP.Stat(dp.Path)
 		files[i] = fi
 	}
 
@@ -194,7 +240,7 @@ func ScanFileInfoList(prf *Profile, session *Session, vfiles []fs.FileInfo, vpat
 // or directory in iso-disk.
 func ScanDir(prf *Profile, session *Session, dir string, isadmin bool, scanembed bool) (ret []any, skipped int, err error) {
 	var files []fs.DirEntry
-	if files, err = jnt.ReadDir(dir); err != nil && len(files) == 0 {
+	if files, err = JP.ReadDir(dir); err != nil && len(files) == 0 {
 		return
 	}
 

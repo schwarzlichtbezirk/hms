@@ -9,8 +9,6 @@ import (
 	"strings"
 	"time"
 
-	jnt "github.com/schwarzlichtbezirk/joint"
-
 	"github.com/jlaffaye/ftp"
 	"github.com/pkg/sftp"
 	"github.com/studio-b12/gowebdav"
@@ -62,7 +60,7 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var syspath string
 	var puid Puid_t
 	var fi fs.FileInfo
-	if fi, _ = jnt.StatFile(fpath); fi != nil {
+	if fi, _ = JP.Stat(fpath); fi != nil {
 		syspath = path.Clean(fpath)
 		// append slash to disk root to prevent open current dir on this disk
 		if syspath[len(syspath)-1] == ':' { // syspath here is always have non zero length
@@ -74,7 +72,7 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			WriteError400(w, r, err, AECdrvaddbadpath)
 			return
 		}
-		if fi, err = jnt.StatFile(syspath); err != nil {
+		if fi, err = JP.Stat(syspath); err != nil {
 			WriteError(w, r, http.StatusNotFound, http.ErrMissingFile, AECdrvaddmiss)
 			return
 		}

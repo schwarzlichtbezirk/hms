@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"image"
 	"io"
+	"io/fs"
 	"os"
 	"path"
 	"sync"
@@ -336,8 +337,8 @@ func MediaCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 		return // uncacheable type
 	}
 
-	var file jnt.RFile
-	if file, err = jnt.OpenFile(syspath); err != nil {
+	var file fs.File
+	if file, err = JP.Open(syspath); err != nil {
 		return // can not open file
 	}
 	defer file.Close()
@@ -375,8 +376,8 @@ func HdCacheGet(session *Session, puid Puid_t) (md MediaData, err error) {
 		return // file path not found
 	}
 
-	var file jnt.RFile
-	if file, err = jnt.OpenFile(syspath); err != nil {
+	var file RFile
+	if file, err = OpenFile(syspath); err != nil {
 		return // can not open file
 	}
 	defer file.Close()
@@ -542,7 +543,7 @@ func (fc *FileCache) Close() (err error) {
 }
 
 // GetFile extracts file from the cache with given file name.
-func (fc *FileCache) GetFile(fpath string) (file wpk.PkgFile, mime string, t time.Time, err error) {
+func (fc *FileCache) GetFile(fpath string) (file wpk.RFile, mime string, t time.Time, err error) {
 	if ts, ok := fc.GetTagset(fpath); ok {
 		if t, ok = ts.TagTime(wpk.TIDmtime); !ok {
 			err = ErrNoMTime

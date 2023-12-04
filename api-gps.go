@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	jnt "github.com/schwarzlichtbezirk/joint"
-
 	"github.com/rwcarlsen/goexif/exif"
 )
 
@@ -146,7 +144,7 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		if inc {
 			var fpath, _ = PathStorePath(session, puid)
 			if !acc.IsHidden(fpath) && acc.PathAccess(fpath, uid == aid) {
-				if fi, _ := jnt.StatFile(fpath); fi != nil {
+				if fi, _ := JP.Stat(fpath); fi != nil {
 					vfiles = append(vfiles, fi)
 					vpaths = append(vpaths, MakeFilePath(fpath))
 				}
@@ -221,8 +219,8 @@ func gpsscanAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 				} else {
 					// try to extract from file
 					func() (err error) {
-						var file jnt.RFile
-						if file, err = jnt.OpenFile(syspath); err != nil {
+						var file fs.File
+						if file, err = JP.Open(syspath); err != nil {
 							return
 						}
 						defer file.Close()

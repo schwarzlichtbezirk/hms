@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"path"
 	"time"
-
-	jnt "github.com/schwarzlichtbezirk/joint"
 )
 
 var catcolumn = map[Puid_t]string{
@@ -159,7 +157,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			gpscache.Range(func(puid Puid_t, gps GpsInfo) bool {
 				if fpath, ok := PathStorePath(session, puid); ok {
 					if !acc.IsHidden(fpath) && acc.PathAccess(fpath, uid == aid) {
-						if fi, _ := jnt.StatFile(fpath); fi != nil {
+						if fi, _ := JP.Stat(fpath); fi != nil {
 							vfiles = append(vfiles, fi)
 							vpaths = append(vpaths, MakeFilePath(fpath))
 							n++
@@ -179,7 +177,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		ret.Static = true
 	} else {
 		var fi fs.FileInfo
-		if fi, err = jnt.StatFile(syspath); err != nil {
+		if fi, err = JP.Stat(syspath); err != nil {
 			WriteError500(w, r, err, AECfolderstat)
 			return
 		}
@@ -200,8 +198,8 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 				return
 			}
 		} else if IsTypePlaylist(ext) {
-			var file jnt.RFile
-			if file, err = jnt.OpenFile(syspath); err != nil {
+			var file fs.File
+			if file, err = JP.Open(syspath); err != nil {
 				WriteError500(w, r, err, AECfolderopen)
 				return
 			}
@@ -245,7 +243,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			for _, track := range pl.Tracks {
 				var fpath = ToSlash(track.Location)
 				if !acc.IsHidden(fpath) && acc.PathAccess(fpath, uid == aid) {
-					if fi, _ := jnt.StatFile(fpath); fi != nil {
+					if fi, _ := JP.Stat(fpath); fi != nil {
 						vfiles = append(vfiles, fi)
 						vpaths = append(vpaths, MakeFilePath(fpath))
 					}

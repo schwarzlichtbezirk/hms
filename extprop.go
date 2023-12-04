@@ -3,10 +3,9 @@ package hms
 import (
 	"image"
 	"io"
+	"io/fs"
 	"sync/atomic"
 	"time"
-
-	jnt "github.com/schwarzlichtbezirk/joint"
 
 	"github.com/dhowden/tag"
 	"github.com/rwcarlsen/goexif/exif"
@@ -68,8 +67,8 @@ func TagsExtract(fpath string, session *Session, buf *StoreBuf, es *ExtStat, get
 			atomic.AddUint64(&es.ExtCount, 1)
 		}()
 
-		var file jnt.RFile
-		if file, err = jnt.OpenFile(fpath); err != nil {
+		var file RFile
+		if file, err = OpenFile(fpath); err != nil {
 			return // can not open file
 		}
 		defer file.Close()
@@ -132,8 +131,8 @@ func TagsExtract(fpath string, session *Session, buf *StoreBuf, es *ExtStat, get
 			atomic.AddUint64(&es.ExtCount, 1)
 		}()
 
-		var file jnt.RFile
-		if file, err = jnt.OpenFile(fpath); err != nil {
+		var file fs.File
+		if file, err = JP.Open(fpath); err != nil {
 			return // can not open file
 		}
 		defer file.Close()
@@ -157,8 +156,8 @@ func TagsExtract(fpath string, session *Session, buf *StoreBuf, es *ExtStat, get
 			atomic.AddUint64(&es.ExtCount, 1)
 		}()
 
-		var file jnt.RFile
-		if file, err = jnt.OpenFile(fpath); err != nil {
+		var file RFile
+		if file, err = OpenFile(fpath); err != nil {
 			return // can not open file
 		}
 		defer file.Close()

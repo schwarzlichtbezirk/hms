@@ -5,8 +5,6 @@ import (
 	"io"
 	"time"
 
-	jnt "github.com/schwarzlichtbezirk/joint"
-
 	"github.com/dhowden/tag"
 	"github.com/tcolgate/mp3"
 )
@@ -86,8 +84,8 @@ func Id3ExtractThumb(syspath string) (md MediaData, err error) {
 		}
 	}()
 
-	var file jnt.RFile
-	if file, err = jnt.OpenFile(syspath); err != nil {
+	var file RFile
+	if file, err = OpenFile(syspath); err != nil {
 		return
 	}
 	defer file.Close()

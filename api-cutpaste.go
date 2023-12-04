@@ -9,8 +9,6 @@ import (
 	"net/http"
 	"os"
 	"path"
-
-	jnt "github.com/schwarzlichtbezirk/joint"
 )
 
 // APIHANDLER
@@ -90,11 +88,11 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			}
 		}
 
-		var src jnt.RFile
+		var src fs.File
 		var dst *os.File
 		var fi fs.FileInfo
 		// open source file
-		if src, err = jnt.OpenFile(srcpath); err != nil {
+		if src, err = JP.Open(srcpath); err != nil {
 			WriteError500(w, r, err, AECedtcopyopsrc)
 			return
 		}
@@ -124,7 +122,7 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 			// copy dir content
 			var files []fs.DirEntry
-			if files, err = jnt.ReadDir(srcpath); err != nil {
+			if files, err = JP.ReadDir(srcpath); err != nil {
 				WriteError500(w, r, err, AECedtcopyrd)
 				return
 			}
@@ -244,7 +242,7 @@ func edtrenameAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	// get returned file properties at last
 	var fi fs.FileInfo
-	if fi, err = jnt.StatFile(dstpath); err != nil {
+	if fi, err = JP.Stat(dstpath); err != nil {
 		WriteError500(w, r, err, AECedtrenstat)
 		return
 	}
