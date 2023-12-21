@@ -35,7 +35,7 @@ func (sp *SubPool) Sub(dir string) (fs.FS, error) {
 		return nil, err
 	}
 	if !fi.IsDir() && jnt.IsTypeIso(dir) {
-		return nil, ErrNotDir
+		return nil, fs.ErrNotExist
 	}
 	return &SubPool{
 		JointPool: sp.JointPool,

@@ -84,6 +84,10 @@ const gpxcolors = [
 	'#4169E1', // RoyalBlue
 ];
 
+// single global popup for markers.
+const markerpopup = L.popup();
+const popuptemplate = document.createElement('template');
+
 ///////////////////////////
 // Full screen functions //
 ///////////////////////////
@@ -2628,16 +2632,32 @@ const VueMapCard = {
 						});
 					}
 
-					const template = document.createElement('template');
-					template.innerHTML = this.makemarkerpopup(file).trim();
-					const popup = template.content.firstChild;
-					popup.querySelector(".photoinfo picture")?.addEventListener('click', () => {
-						eventHub.emit('open', file, this.gpslist);
+					const m = L.marker([file.latitude, file.longitude], opt);
+					m.addTo(this.markers);
+					m.on('click', e => {
+						(async () => {
+							if (file.tags != -1 && !file.scanned) {
+								try {
+									const response = await fetchjsonauth("POST", `/id${this.$root.aid}/api/res/tags`, {
+										puid: file.puid
+									});
+									const data = await response.json();
+									traceajax(response, data);
+									file.scanned = true
+									if (response.ok) {
+										extend(file, data.prop);
+									}
+								} catch (e) {
+								}
+							}
+							popuptemplate.innerHTML = this.makemarkerpopup(file).trim();
+							const content = popuptemplate.content.firstChild;
+							content.querySelector(".photoinfo picture")?.addEventListener('click', () => {
+								eventHub.emit('open', file, this.gpslist);
+							});
+							markerpopup.setLatLng(e.latlng).setContent(content).openOn(this.map);
+						})();
 					});
-
-					L.marker([file.latitude, file.longitude], opt)
-						.addTo(this.markers)
-						.bindPopup(popup);
 				}
 
 				const update = this.gpslist.length == 0;
@@ -2675,8 +2695,11 @@ const VueMapCard = {
 				trk += prev.distanceTo(p);
 				prev = p;
 			}
-			this.phototrack.setLatLngs(latlngs)
-				.bindPopup(`total <b>${latlngs.length}</b> waypoints<br>route <b>${route.toFixed()}</b> m<br>track <b>${trk.toFixed()}</b> m<br>ascent <b>${asc.toFixed()}</b> m`)
+			this.phototrack.setLatLngs(latlngs);
+			this.phototrack.on('click', e => {
+				const content = `total <b>${latlngs.length}</b> waypoints<br>route <b>${route.toFixed()}</b> m<br>track <b>${trk.toFixed()}</b> m<br>ascent <b>${asc.toFixed()}</b> m`
+				markerpopup.setLatLng(e.latlng).setContent(content).openOn(this.map);
+			});
 		},
 		// add GPX track polyline
 		addgpx(file) {

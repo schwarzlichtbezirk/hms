@@ -13,7 +13,6 @@ import (
 	"time"
 
 	cfg "github.com/schwarzlichtbezirk/hms/config"
-	jnt "github.com/schwarzlichtbezirk/joint"
 	"github.com/schwarzlichtbezirk/wpk"
 	"github.com/schwarzlichtbezirk/wpk/fsys"
 
@@ -580,7 +579,7 @@ func (fc *FileCache) GetData(fpath string) (md MediaData, err error) {
 			return
 		}
 
-		var file jnt.RFile
+		var file fs.File
 		if file, err = fc.OpenTagset(ts); err != nil {
 			return
 		}

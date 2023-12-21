@@ -1,23 +1,29 @@
 "use strict";
 
-const isMainImage = ext => ({
+const isTypeImage = ext => ({
 	".tga": true, ".bmp": true, ".dib": true, ".rle": true, ".dds": true,
 	".tif": true, ".tiff": true, ".dng": true, ".jpg": true, ".jpe": true, ".jpeg": true, ".jfif": true,
-	".gif": true, ".png": true, ".avif": true, ".webp": true, ".psd": true, ".psb": true
+	".gif": true, ".png": true, ".avif": true, ".webp": true, ".psd": true, ".psb": true,
 })[ext];
 
-const isMainAudio = ext => ({
+const isTypeEXIF = ext => ({
+	".tif": true, ".tiff": true, ".dng": true,
+	".jpg": true, ".jpe": true, ".jpeg": true, ".jfif": true,
+	".png": true, ".webp": true,
+})[ext];
+
+const isTypeAudio = ext => ({
 	".wav": true, ".flac": true, ".mp3": true, ".ogg": true, ".opus": true,
-	".acc": true, ".m4a": true, ".alac": true
+	".acc": true, ".m4a": true, ".alac": true,
 })[ext];
 
-const isMainVideo = ext => ({
-	".mp4": true, ".webm": true
+const isTypeVideo = ext => ({
+	".mp4": true, ".webm": true,
 })[ext];
 
-const imagefilter = file => file.type === FT.file && file.size && isMainImage(pathext(file.name));
-const audiofilter = file => file.type === FT.file && file.size && isMainAudio(pathext(file.name));
-const videofilter = file => file.type === FT.file && file.size && isMainVideo(pathext(file.name));
+const imagefilter = file => file.type === FT.file && file.size && isTypeImage(pathext(file.name));
+const audiofilter = file => file.type === FT.file && file.size && isTypeAudio(pathext(file.name));
+const videofilter = file => file.type === FT.file && file.size && isTypeVideo(pathext(file.name));
 
 const filehint = file => {
 	const lst = [];
@@ -411,7 +417,6 @@ const VueIconMenu = {
 	data() {
 		return {
 			popover: null,
-			scanned: false,
 		};
 	},
 	computed: {
@@ -448,6 +453,7 @@ const VueIconMenu = {
 					});
 					const data = await response.json();
 					traceajax(response, data);
+					this.file.scanned = true;
 					if (response.ok) {
 						extend(this.file, data.prop);
 						this.popover.setContent({
@@ -462,8 +468,7 @@ const VueIconMenu = {
 			})();
 		},
 		oninfo() {
-			if (!this.scanned) {
-				this.scanned = true;
+			if (this.file.tags != -1 && !this.file.scanned) {
 				this.scan();
 			}
 		},

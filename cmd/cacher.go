@@ -12,7 +12,6 @@ import (
 	"time"
 
 	hms "github.com/schwarzlichtbezirk/hms"
-	jnt "github.com/schwarzlichtbezirk/joint"
 
 	"github.com/rwcarlsen/goexif/exif"
 	"github.com/rwcarlsen/goexif/tiff"
@@ -105,7 +104,7 @@ func Convert(fpath string, fi fs.FileInfo, cs *CnvStat) (err error) {
 			return
 		}
 
-		var file jnt.RFile
+		var file io.ReadSeekCloser
 		if file, err = os.Open(fpath); err != nil {
 			return // can not open file
 		}
@@ -299,12 +298,12 @@ func BatchExtractor(extlist FileMap) {
 			defer session.Close()
 
 			var buf hms.StoreBuf
-			buf.Init()
+			buf.Init(256)
+			defer buf.Flush(session)
 
 			for c := range pathchan {
 				hms.TagsExtract(c.fpath, session, &buf, &es, false)
 			}
-			buf.Flush(session)
 		}()
 	}
 	workwg.Wait()

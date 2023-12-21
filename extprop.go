@@ -65,6 +65,7 @@ func TagsExtract(fpath string, session *Session, buf *StoreBuf, es *ExtStat, get
 				Prop: xp,
 			})
 			atomic.AddUint64(&es.ExtCount, 1)
+			extcache.Poke(puid, xp)
 		}()
 
 		var file RFile
@@ -129,6 +130,7 @@ func TagsExtract(fpath string, session *Session, buf *StoreBuf, es *ExtStat, get
 				Prop: xp,
 			})
 			atomic.AddUint64(&es.ExtCount, 1)
+			extcache.Poke(puid, xp)
 		}()
 
 		var file fs.File
@@ -154,6 +156,7 @@ func TagsExtract(fpath string, session *Session, buf *StoreBuf, es *ExtStat, get
 				Prop: xp,
 			})
 			atomic.AddUint64(&es.ExtCount, 1)
+			extcache.Poke(puid, xp)
 		}()
 
 		var file RFile
@@ -167,11 +170,12 @@ func TagsExtract(fpath string, session *Session, buf *StoreBuf, es *ExtStat, get
 				return
 			}
 			atomic.AddUint64(&es.Mp3Count, 1)
+
+			if _, err = file.Seek(0, io.SeekStart); err != nil {
+				return
+			}
 		}
 
-		if _, err = file.Seek(0, io.SeekStart); err != nil {
-			return
-		}
 		var m tag.Metadata
 		if m, err = tag.ReadFrom(file); err != nil {
 			return

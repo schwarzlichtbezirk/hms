@@ -23,13 +23,11 @@ func (puid EmbedPath) Cache() {
 	defer session.Close()
 
 	var fpath, _ = PathStorePath(session, Puid_t(puid))
-	var es ExtStat
-	var buf StoreBuf
-	buf.Init()
-	var _, xp, _ = TagsExtract(fpath, session, &buf, &es, true)
-	buf.Flush(session)
 
-	extcache.Poke(Puid_t(puid), xp)
+	var buf StoreBuf
+	buf.Init(1) // flush on every push
+
+	TagsExtract(fpath, session, &buf, &ExtStat{}, true)
 }
 
 // ThumbPath is thumbnail path type for cache processing.

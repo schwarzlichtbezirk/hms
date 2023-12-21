@@ -273,7 +273,10 @@ func tagsAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 
-	if ret.Prop, _, err = TagsExtract(syspath, session, nil, &ExtStat{}, false); err != nil {
+	var buf StoreBuf
+	buf.Init(1) // flush on every push
+
+	if ret.Prop, _, err = TagsExtract(syspath, session, &buf, &ExtStat{}, false); err != nil {
 		if !errors.Is(err, io.EOF) {
 			WriteError500(w, r, err, AECtagsextract)
 			return

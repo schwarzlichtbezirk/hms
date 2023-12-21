@@ -9,21 +9,21 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/dhowden/tag v0.0.0-20230630033851-978a0926ee25
 	github.com/disintegration/gift v1.2.1
-	github.com/google/uuid v1.4.0
+	github.com/google/uuid v1.5.0
 	github.com/gorilla/mux v1.8.1
 	github.com/jessevdk/go-flags v1.5.0
 	github.com/jlaffaye/ftp v0.2.0
-	github.com/mattn/go-sqlite3 v1.14.18
+	github.com/mattn/go-sqlite3 v1.14.19
 	github.com/oov/psd v0.0.0-20220121172623-5db5eafcecbb
 	github.com/pkg/sftp v1.13.6
 	github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd
-	github.com/schwarzlichtbezirk/joint v0.2.0
+	github.com/schwarzlichtbezirk/joint v0.3.0
 	github.com/schwarzlichtbezirk/tga v1.0.0
 	github.com/schwarzlichtbezirk/wpk v1.6.1
 	github.com/spate/glimage v0.0.0-20200505055513-fbdcc60a65e5
 	github.com/studio-b12/gowebdav v0.9.0
 	github.com/tcolgate/mp3 v0.0.0-20170426193717-e79c5a46d300
-	golang.org/x/crypto v0.16.0
+	golang.org/x/crypto v0.17.0
 	golang.org/x/image v0.14.0
 	golang.org/x/sync v0.5.0
 	gopkg.in/ini.v1 v1.67.0
