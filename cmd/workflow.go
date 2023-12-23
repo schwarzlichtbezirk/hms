@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	cfgfile = "settings.yaml"
+	cfgfile = "hms.yaml"
 	prffile = "profiles.yaml"
 	passlst = "passlist.yaml"
 )

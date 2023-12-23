@@ -3,6 +3,9 @@ rem This script compiles project for Windows amd64.
 rem It produces static C-libraries linkage.
 set wd=%~dp0..
 
+if not exist "%GOPATH%\bin\cache" (mkdir "%GOPATH%\bin\cache")
+xcopy %wd%\confdata %GOPATH%\bin\config /f /d /i /e /k /y
+
 for /F "tokens=*" %%g in ('git describe --tags') do (set buildvers=%%g)
 for /F "tokens=*" %%g in ('go run %~dp0/timenow.go') do (set buildtime=%%g)
 

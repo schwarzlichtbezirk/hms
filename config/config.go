@@ -244,7 +244,7 @@ var ErrNoCongig = errors.New("no configuration path was found")
 
 // DetectConfigPath finds configuration path with existing configuration file at least.
 func DetectConfigPath() (retpath string, err error) {
-	var detectname = "settings.yaml"
+	var detectname = "hms.yaml"
 	var ok bool
 	var fpath string
 
