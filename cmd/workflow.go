@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"context"
@@ -10,8 +10,8 @@ import (
 	"sync"
 	"syscall"
 
-	hms "github.com/schwarzlichtbezirk/hms"
 	cfg "github.com/schwarzlichtbezirk/hms/config"
+	srv "github.com/schwarzlichtbezirk/hms/server"
 
 	"github.com/gorilla/mux"
 	"github.com/jessevdk/go-flags"
@@ -34,7 +34,7 @@ var (
 )
 
 var (
-	JoinFast = hms.JoinFast
+	JoinFast = srv.JoinFast
 	Cfg      = cfg.Cfg
 	Log      = cfg.Log
 )
@@ -57,7 +57,7 @@ func Init() {
 		Log.Fatal(err)
 	}
 	// load content of Config structure from YAML-file.
-	if err = hms.CfgReadYaml(cfgfile); err != nil {
+	if err = srv.CfgReadYaml(cfgfile); err != nil {
 		Log.Error("error at settings file: " + err.Error())
 	}
 	// rewrite settings from config file
@@ -113,63 +113,63 @@ func Init() {
 	}()
 
 	// load package with data files
-	if err = hms.OpenPackage(); err != nil {
+	if err = srv.OpenPackage(); err != nil {
 		Log.Fatal("can not load wpk-package: " + err.Error())
 	}
 
 	// init database caches
-	if err = hms.InitStorage(); err != nil {
+	if err = srv.InitStorage(); err != nil {
 		Log.Fatal("can not init XORM storage: " + err.Error())
 	}
-	hms.SqlSession(func(session *hms.Session) (res any, err error) {
-		var pathcount, _ = session.Count(&hms.PathStore{})
+	srv.SqlSession(func(session *srv.Session) (res any, err error) {
+		var pathcount, _ = session.Count(&srv.PathStore{})
 		Log.Infof("found %d items at system path cache", pathcount)
-		var dircount, _ = session.Count(&hms.DirStore{})
+		var dircount, _ = session.Count(&srv.DirStore{})
 		Log.Infof("found %d items at directories cache", dircount)
-		var exifcount, _ = session.Count(&hms.ExifStore{})
+		var exifcount, _ = session.Count(&srv.ExifStore{})
 		Log.Infof("found %d items at EXIF cache", exifcount)
-		var tagcount, _ = session.Count(&hms.Id3Store{})
+		var tagcount, _ = session.Count(&srv.Id3Store{})
 		Log.Infof("found %d items at ID3-tags cache", tagcount)
 		return
 	})
 
 	// load path, directories and GPS caches
-	if err = hms.LoadPathCache(); err != nil {
+	if err = srv.LoadPathCache(); err != nil {
 		Log.Fatal("path cache loading failure: " + err.Error())
 	}
-	if err = hms.LoadGpsCache(); err != nil {
+	if err = srv.LoadGpsCache(); err != nil {
 		Log.Fatal("GPS cache loading failure: " + err.Error())
 	}
 
-	if err = hms.InitUserlog(); err != nil {
+	if err = srv.InitUserlog(); err != nil {
 		Log.Fatal("can not init XORM user log: " + err.Error())
 	}
-	if err = hms.LoadUaMap(); err != nil {
+	if err = srv.LoadUaMap(); err != nil {
 		Log.Fatal("user agent map loading failure: " + err.Error())
 	}
 
 	// insert components templates into pages
-	if err = hms.LoadTemplates(); err != nil {
+	if err = srv.LoadTemplates(); err != nil {
 		Log.Fatal(err)
 	}
 
 	// init wpk caches
-	if err = hms.InitPackages(); err != nil {
+	if err = srv.InitPackages(); err != nil {
 		Log.Fatal(err)
 	}
 
 	// load profiles with roots, hidden and shares lists
-	if err = hms.PrfReadYaml(prffile); err != nil {
+	if err = srv.PrfReadYaml(prffile); err != nil {
 		Log.Fatal("error at profiles file: " + err.Error())
 	}
 
 	// load white list
-	if err = hms.ReadPasslist(passlst); err != nil {
+	if err = srv.ReadPasslist(passlst); err != nil {
 		Log.Fatal("error at white list file: " + err.Error())
 	}
 
 	// run thumbnails scanner
-	go hms.ImgScanner.Scan()
+	go srv.ImgScanner.Scan()
 }
 
 // Run starts main application body.
@@ -184,10 +184,10 @@ func Run() {
 	}
 	if Cfg.CacherMode&cfg.CmWebserver != 0 {
 		var gmux = mux.NewRouter()
-		hms.RegisterRoutes(gmux)
+		srv.RegisterRoutes(gmux)
 		RunWeb(gmux)
 		WaitExit()
-		hms.WaitHandlers()
+		srv.WaitHandlers()
 	}
 }
 
@@ -347,45 +347,45 @@ func Done() {
 	var wg errgroup.Group
 
 	wg.Go(func() (err error) {
-		if err := hms.PrfWriteYaml(prffile); err != nil {
+		if err := srv.PrfWriteYaml(prffile); err != nil {
 			Log.Error("error on profiles list file: " + err.Error())
 		}
 		return
 	})
 
 	wg.Go(func() (err error) {
-		var ctx = hms.ImgScanner.Stop()
+		var ctx = srv.ImgScanner.Stop()
 		<-ctx.Done()
 		return
 	})
 
 	// close all opened joints
 	wg.Go(func() (err error) {
-		hms.JP.Clear()
+		srv.JP.Clear()
 		return
 	})
 
 	wg.Go(func() (err error) {
-		hms.ClosePackages()
+		srv.ClosePackages()
 		return
 	})
 
 	wg.Go(func() (err error) {
-		if hms.XormStorage != nil {
-			hms.XormStorage.Close()
+		if srv.XormStorage != nil {
+			srv.XormStorage.Close()
 		}
 		return
 	})
 
 	wg.Go(func() (err error) {
-		if hms.XormUserlog != nil {
-			hms.XormUserlog.Close()
+		if srv.XormUserlog != nil {
+			srv.XormUserlog.Close()
 		}
 		return
 	})
 
 	wg.Go(func() (err error) {
-		hms.ResFS.Close()
+		srv.ResFS.Close()
 		return
 	})
 

@@ -8,7 +8,7 @@
 			"name": "webserver",
 			"type": "go",
 			"request": "launch",
-			"program": "${workspaceFolder}/cmd",
+			"program": "${workspaceFolder}",
 			"args": [],
 			"cwd": "${workspaceFolder}"
 		},
@@ -16,7 +16,7 @@
 			"name": "cacher",
 			"type": "go",
 			"request": "launch",
-			"program": "${workspaceFolder}/cmd",
+			"program": "${workspaceFolder}",
 			"args": ["--cm=2"],
 			"cwd": "${workspaceFolder}"
 		}

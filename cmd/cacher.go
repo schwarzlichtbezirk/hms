@@ -1,4 +1,4 @@
-package main
+package cmd
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	hms "github.com/schwarzlichtbezirk/hms"
+	srv "github.com/schwarzlichtbezirk/hms/server"
 
 	"github.com/rwcarlsen/goexif/exif"
 	"github.com/rwcarlsen/goexif/tiff"
@@ -41,14 +41,14 @@ type pathpair struct {
 
 // IsCached returns "true" if thumbnail and all tiles are cached for given filename.
 func IsCached(fpath string) bool {
-	if !hms.ThumbPkg.HasTagset(fpath) {
+	if !srv.ThumbPkg.HasTagset(fpath) {
 		return false
 	}
 
 	for _, tm := range tilemult {
 		var wdh, hgt = tm * 24, tm * 18
 		var tilepath = fmt.Sprintf("%s?%dx%d", fpath, wdh, hgt)
-		if !hms.TilesPkg.HasTagset(tilepath) {
+		if !srv.TilesPkg.HasTagset(tilepath) {
 			return false
 		}
 	}
@@ -57,8 +57,8 @@ func IsCached(fpath string) bool {
 }
 
 // FileList forms list of files to process by caching algorithm.
-func FileList(fsys *hms.SubPool, pathlist *[]string, extlist, cnvlist FileMap) (err error) {
-	var session = hms.XormStorage.NewSession()
+func FileList(fsys *srv.SubPool, pathlist *[]string, extlist, cnvlist FileMap) (err error) {
+	var session = srv.XormStorage.NewSession()
 	defer session.Close()
 
 	fs.WalkDir(fsys, ".", func(fpath string, d fs.DirEntry, err error) error {
@@ -67,20 +67,20 @@ func FileList(fsys *hms.SubPool, pathlist *[]string, extlist, cnvlist FileMap) (
 		}
 		var fullpath = JoinFast(fsys.Dir, fpath)
 		if d.Name() != "." && d.Name() != ".." {
-			if _, ok := hms.PathStorePUID(session, fullpath); !ok {
+			if _, ok := srv.PathStorePUID(session, fullpath); !ok {
 				*pathlist = append(*pathlist, fullpath)
 			}
 		}
 		if d.IsDir() {
 			return nil // file is directory
 		}
-		var ext = hms.GetFileExt(fpath)
-		if hms.IsTypeDecoded(ext) {
+		var ext = srv.GetFileExt(fpath)
+		if srv.IsTypeDecoded(ext) {
 			if !IsCached(fullpath) {
 				cnvlist[fullpath], _ = d.Info()
 			}
 		}
-		if hms.IsTypeEXIF(ext) || hms.IsTypeDecoded(ext) || hms.IsTypeID3(ext) {
+		if srv.IsTypeEXIF(ext) || srv.IsTypeDecoded(ext) || srv.IsTypeID3(ext) {
 			extlist[fullpath], _ = d.Info()
 		}
 		return nil
@@ -96,7 +96,7 @@ func Convert(fpath string, fi fs.FileInfo, cs *CnvStat) (err error) {
 	}()
 
 	// lazy decode
-	var orientation = hms.OrientNormal
+	var orientation = srv.OrientNormal
 	var src image.Image
 	var imc image.Config
 	var decode = func() {
@@ -114,7 +114,7 @@ func Convert(fpath string, fi fs.FileInfo, cs *CnvStat) (err error) {
 			return // can not recognize format or decode config
 		}
 		if float32(imc.Width*imc.Height+5e5)/1e6 > Cfg.ImageMaxMpx {
-			err = hms.ErrTooBig
+			err = srv.ErrTooBig
 			return // file is too big
 		}
 
@@ -138,28 +138,28 @@ func Convert(fpath string, fi fs.FileInfo, cs *CnvStat) (err error) {
 		}
 	}
 
-	var md hms.MediaData
-	md.Mime = hms.MimeWebp
+	var md srv.MediaData
+	md.Mime = srv.MimeWebp
 	md.Time = fi.ModTime()
 	var size = fi.Size()
 
 	atomic.AddUint64(&cs.FileCount, 1)
 	atomic.AddUint64(&cs.filesize, uint64(size))
 
-	var ext = hms.GetFileExt(fpath)
-	if hms.IsTypeTileImg(ext) && size > 512*1024 {
+	var ext = srv.GetFileExt(fpath)
+	if srv.IsTypeTileImg(ext) && size > 512*1024 {
 		for _, tm := range tilemult {
 			var wdh, hgt = tm * 24, tm * 18
 			var tilepath = fmt.Sprintf("%s?%dx%d", fpath, wdh, hgt)
-			if !hms.TilesPkg.HasTagset(tilepath) {
+			if !srv.TilesPkg.HasTagset(tilepath) {
 				if decode(); err != nil {
 					return
 				}
-				if md.Data, err = hms.DrawTile(src, wdh, hgt, orientation); err != nil {
+				if md.Data, err = srv.DrawTile(src, wdh, hgt, orientation); err != nil {
 					return
 				}
 				// push tile to package
-				if err = hms.TilesPkg.PutFile(tilepath, md); err != nil {
+				if err = srv.TilesPkg.PutFile(tilepath, md); err != nil {
 					return
 				}
 				atomic.AddUint64(&cs.tilecount, 1)
@@ -168,15 +168,15 @@ func Convert(fpath string, fi fs.FileInfo, cs *CnvStat) (err error) {
 		}
 	}
 
-	if !hms.ThumbPkg.HasTagset(fpath) {
+	if !srv.ThumbPkg.HasTagset(fpath) {
 		if decode(); err != nil {
 			return
 		}
-		if md.Data, err = hms.DrawThumb(src, imc.Width, imc.Height, orientation); err != nil {
+		if md.Data, err = srv.DrawThumb(src, imc.Width, imc.Height, orientation); err != nil {
 			return
 		}
 		// push thumbnail to package
-		if err = hms.ThumbPkg.PutFile(fpath, md); err != nil {
+		if err = srv.ThumbPkg.PutFile(fpath, md); err != nil {
 			return
 		}
 		atomic.AddUint64(&cs.tmbcount, 1)
@@ -191,7 +191,7 @@ func BatchPathList(pathlist []string) {
 	fmt.Fprintf(os.Stdout, "start caching %d file paths\n", len(pathlist))
 	var t0 = time.Now()
 
-	var session = hms.XormStorage.NewSession()
+	var session = srv.XormStorage.NewSession()
 	defer session.Close()
 
 	const limit = 256
@@ -202,7 +202,7 @@ func BatchPathList(pathlist []string) {
 		} else {
 			pc = pathlist[i:]
 		}
-		var nps = make([]hms.PathStore, len(pc))
+		var nps = make([]srv.PathStore, len(pc))
 		for i, fpath := range pc {
 			nps[i].Path = fpath
 			nps[i].Puid = 0
@@ -216,7 +216,7 @@ func BatchPathList(pathlist []string) {
 		}
 		for _, ps := range nps {
 			if ps.Puid != 0 {
-				hms.PathCache.Set(ps.Puid, ps.Path)
+				srv.PathCache.Set(ps.Puid, ps.Path)
 			}
 		}
 	}
@@ -226,7 +226,7 @@ func BatchPathList(pathlist []string) {
 }
 
 func UpdateExtList(extlist FileMap) {
-	var session = hms.XormStorage.NewSession()
+	var session = srv.XormStorage.NewSession()
 	defer session.Close()
 
 	const limit = 256
@@ -238,7 +238,7 @@ func UpdateExtList(extlist FileMap) {
 		}
 		offset += limit
 		for _, puid := range puids {
-			if fpath, ok := hms.PathStorePath(session, hms.Puid_t(puid)); ok {
+			if fpath, ok := srv.PathStorePath(session, srv.Puid_t(puid)); ok {
 				delete(extlist, fpath)
 			} else {
 				fmt.Fprintf(os.Stdout, "found unlinked PUID in ext_store: %d\n", puid)
@@ -251,8 +251,8 @@ func UpdateExtList(extlist FileMap) {
 }
 
 func BatchExtractor(extlist FileMap) {
-	var es hms.ExtStat
-	var thrnum = hms.GetScanThreadsNum()
+	var es srv.ExtStat
+	var thrnum = srv.GetScanThreadsNum()
 
 	fmt.Fprintf(os.Stdout, "start processing %d files with %d threads...\n", len(extlist), thrnum)
 	var t0 = time.Now()
@@ -294,15 +294,15 @@ func BatchExtractor(extlist FileMap) {
 		go func() {
 			defer workwg.Done()
 
-			var session = hms.XormStorage.NewSession()
+			var session = srv.XormStorage.NewSession()
 			defer session.Close()
 
-			var buf hms.StoreBuf
+			var buf srv.StoreBuf
 			buf.Init(256)
 			defer buf.Flush(session)
 
 			for c := range pathchan {
-				hms.TagsExtract(c.fpath, session, &buf, &es, false)
+				srv.TagsExtract(c.fpath, session, &buf, &es, false)
 			}
 		}()
 	}
@@ -319,7 +319,7 @@ func BatchExtractor(extlist FileMap) {
 
 func BatchCacher(cnvlist FileMap) {
 	var cs CnvStat
-	var thrnum = hms.GetScanThreadsNum()
+	var thrnum = srv.GetScanThreadsNum()
 
 	fmt.Fprintf(os.Stdout, "start processing %d files with %d threads to prepare tiles and thumbnails...\n", len(cnvlist), thrnum)
 	var t0 = time.Now()
@@ -340,11 +340,11 @@ func BatchCacher(cnvlist FileMap) {
 				continue
 			case <-tsync.C:
 				// sync file tags tables of caches
-				if err := hms.ThumbPkg.Sync(); err != nil {
+				if err := srv.ThumbPkg.Sync(); err != nil {
 					Log.Error(err)
 					return
 				}
-				if err := hms.TilesPkg.Sync(); err != nil {
+				if err := srv.TilesPkg.Sync(); err != nil {
 					Log.Error(err)
 					return
 				}
@@ -398,7 +398,7 @@ func RunCacher() {
 	fmt.Fprintf(os.Stdout, "starts caching processing\n")
 
 	var shares []string
-	for _, acc := range hms.PrfList {
+	for _, acc := range srv.PrfList {
 		for _, shr := range acc.Shares {
 			var add = true
 			for i, p := range shares {
@@ -413,7 +413,7 @@ func RunCacher() {
 				}
 			}
 			if add {
-				if _, ok := hms.CatPathKey[shr.Path]; !ok {
+				if _, ok := srv.CatPathKey[shr.Path]; !ok {
 					shares = append(shares, shr.Path)
 				}
 			}
@@ -441,7 +441,7 @@ func RunCacher() {
 			}
 		}
 		if add {
-			if _, ok := hms.CatPathKey[fpath]; !ok {
+			if _, ok := srv.CatPathKey[fpath]; !ok {
 				shares = append(shares, fpath)
 			}
 		}
@@ -456,10 +456,10 @@ func RunCacher() {
 		var t0 = time.Now()
 		var err error
 		var sub fs.FS
-		if sub, err = hms.JP.Sub(p); err != nil {
+		if sub, err = srv.JP.Sub(p); err != nil {
 			Log.Fatal(err)
 		}
-		if err = FileList(sub.(*hms.SubPool), &pathlist, extlist, cnvlist); err != nil {
+		if err = FileList(sub.(*srv.SubPool), &pathlist, extlist, cnvlist); err != nil {
 			Log.Fatal(err)
 		}
 		var d = time.Since(t0)
