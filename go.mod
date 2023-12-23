@@ -11,7 +11,6 @@ require (
 	github.com/disintegration/gift v1.2.1
 	github.com/google/uuid v1.5.0
 	github.com/gorilla/mux v1.8.1
-	github.com/jessevdk/go-flags v1.5.0
 	github.com/jlaffaye/ftp v0.2.0
 	github.com/mattn/go-sqlite3 v1.14.19
 	github.com/oov/psd v0.0.0-20220121172623-5db5eafcecbb
@@ -21,6 +20,8 @@ require (
 	github.com/schwarzlichtbezirk/tga v1.0.0
 	github.com/schwarzlichtbezirk/wpk v1.6.1
 	github.com/spate/glimage v0.0.0-20200505055513-fbdcc60a65e5
+	github.com/spf13/cobra v1.2.1
+	github.com/spf13/viper v1.8.1
 	github.com/studio-b12/gowebdav v0.9.0
 	github.com/tcolgate/mp3 v0.0.0-20170426193717-e79c5a46d300
 	golang.org/x/crypto v0.17.0
@@ -33,21 +34,33 @@ require (
 
 require (
 	github.com/edsrzf/mmap-go v1.1.0 // indirect
+	github.com/fsnotify/fsnotify v1.4.9 // indirect
 	github.com/goccy/go-json v0.10.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
+	github.com/hashicorp/hcl v1.0.0 // indirect
+	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/kdomanski/iso9660 v0.4.0 // indirect
 	github.com/kr/fs v0.1.0 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
+	github.com/magiconair/properties v1.8.5 // indirect
+	github.com/mitchellh/mapstructure v1.4.1 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
+	github.com/pelletier/go-toml v1.9.3 // indirect
+	github.com/spf13/afero v1.6.0 // indirect
+	github.com/spf13/cast v1.3.1 // indirect
+	github.com/spf13/jwalterweatherman v1.1.0 // indirect
+	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/subosito/gotenv v1.2.0 // indirect
 	github.com/syndtr/goleveldb v1.0.0 // indirect
 	golang.org/x/net v0.19.0 // indirect
 	golang.org/x/sys v0.15.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	gopkg.in/djherbis/times.v1 v1.3.0 // indirect
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 	xorm.io/builder v0.3.13 // indirect
 )

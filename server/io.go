@@ -17,7 +17,7 @@ const utf8bom = "\xef\xbb\xbf"
 // File writes in UTF-8 format with BOM, and "intro" comment.
 func WriteYaml(fname, intro string, data any) (err error) {
 	var w io.WriteCloser
-	if w, err = os.OpenFile(JoinFast(cfg.ConfigPath, fname), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644); err != nil {
+	if w, err = os.OpenFile(JoinFast(cfg.CfgPath, fname), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644); err != nil {
 		return
 	}
 	defer w.Close()
@@ -43,7 +43,7 @@ func WriteYaml(fname, intro string, data any) (err error) {
 // with given file name.
 func ReadYaml(fname string, data any) (err error) {
 	var body []byte
-	if body, err = os.ReadFile(JoinFast(cfg.ConfigPath, fname)); err != nil {
+	if body, err = os.ReadFile(JoinFast(cfg.CfgPath, fname)); err != nil {
 		return
 	}
 	if err = yaml.Unmarshal(body, data); err != nil {
@@ -91,9 +91,9 @@ func PrfReadYaml(fname string) (err error) {
 		PrfList[prf.ID] = prf
 	}
 
-	if len(list) > 0 {
+	if len(PrfList) > 0 {
 		SqlSession(func(session *Session) (res any, err error) {
-			for _, prf := range list {
+			for _, prf := range PrfList {
 				Log.Infof("loaded profile id%d, login='%s'", prf.ID, prf.Login)
 				// cache local and remote roots
 				for _, dp := range prf.Roots {

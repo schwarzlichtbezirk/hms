@@ -14,7 +14,6 @@ import (
 	srv "github.com/schwarzlichtbezirk/hms/server"
 
 	"github.com/gorilla/mux"
-	"github.com/jessevdk/go-flags"
 	"golang.org/x/crypto/acme/autocert"
 	"golang.org/x/sync/errgroup"
 )
@@ -45,15 +44,10 @@ var (
 
 // Init performs global data initialization. Loads configuration files, initializes file cache.
 func Init() {
-	if cfg.DevMode {
-		Log.Infof("*running in developer mode*")
-	}
-	Log.Infof("version: %s, builton: %s", cfg.BuildVers, cfg.BuildTime)
-
 	var err error
 
 	// get confiruration path
-	if cfg.ConfigPath, err = cfg.DetectConfigPath(); err != nil {
+	/*if cfg.ConfigPath, err = cfg.DetectConfigPath(); err != nil {
 		Log.Fatal(err)
 	}
 	// load content of Config structure from YAML-file.
@@ -65,19 +59,19 @@ func Init() {
 		Log.Error("error at command line flags: " + err.Error())
 		os.Exit(1)
 	}
-	Log.Infof("config path: %s", cfg.ConfigPath)
+	Log.Infof("config path: %s", cfg.ConfigPath)*/
 
 	// get package path
-	if cfg.PackPath, err = cfg.DetectPackPath(); err != nil {
+	if cfg.PkgPath, err = cfg.DetectPackPath(); err != nil {
 		Log.Fatal(err)
 	}
-	Log.Infof("package path: %s", cfg.PackPath)
+	Log.Infof("package path: %s", cfg.PkgPath)
 
 	// get cache path
-	if cfg.CachePath, err = cfg.DetectCachePath(); err != nil {
+	if cfg.TmbPath, err = cfg.DetectCachePath(); err != nil {
 		Log.Fatal(err)
 	}
-	Log.Infof("cache path: %s", cfg.CachePath)
+	Log.Infof("cache path: %s", cfg.TmbPath)
 
 	Log.Info("starts")
 
@@ -172,25 +166,6 @@ func Init() {
 	go srv.ImgScanner.Scan()
 }
 
-// Run starts main application body.
-func Run() {
-	if Cfg.CacherMode&cfg.CmCacher != 0 {
-		RunCacher()
-		select {
-		case <-exitctx.Done():
-			return
-		default:
-		}
-	}
-	if Cfg.CacherMode&cfg.CmWebserver != 0 {
-		var gmux = mux.NewRouter()
-		srv.RegisterRoutes(gmux)
-		RunWeb(gmux)
-		WaitExit()
-		srv.WaitHandlers()
-	}
-}
-
 // RunWeb launches server listeners.
 func RunWeb(gmux *mux.Router) {
 	// helpers for graceful startup to prevent call to uninitialized data
@@ -256,7 +231,7 @@ func RunWeb(gmux *mux.Router) {
 				if Cfg.UseAutoCert { // get certificate from letsencrypt.org
 					var m = &autocert.Manager{
 						Prompt:     autocert.AcceptTOS,
-						Cache:      autocert.DirCache(JoinFast(cfg.ConfigPath, "cert")),
+						Cache:      autocert.DirCache(JoinFast(cfg.CfgPath, "cert")),
 						Email:      Cfg.Email,
 						HostPolicy: autocert.HostWhitelist(Cfg.HostWhitelist...),
 					}
@@ -282,8 +257,8 @@ func RunWeb(gmux *mux.Router) {
 				go func() {
 					httpwg.Done()
 					if err := server.ListenAndServeTLS(
-						JoinFast(cfg.ConfigPath, "serv.crt"),
-						JoinFast(cfg.ConfigPath, "prvk.pem")); err != http.ErrServerClosed {
+						JoinFast(cfg.CfgPath, "serv.crt"),
+						JoinFast(cfg.CfgPath, "prvk.pem")); err != http.ErrServerClosed {
 						Log.Fatalf("failed to serve on %s: %v", addr, err)
 						return
 					}

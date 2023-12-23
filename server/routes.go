@@ -394,7 +394,7 @@ var ResFS wpk.Union // resources packages root dir.
 func OpenPackage() (err error) {
 	for _, fname := range Cfg.WPKName {
 		var t0 = time.Now()
-		var fpath = JoinFast(cfg.PackPath, fname)
+		var fpath = JoinFast(cfg.PkgPath, fname)
 		var pkg = wpk.NewPackage()
 		if err = pkg.OpenFile(fpath); err != nil {
 			return

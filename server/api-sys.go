@@ -66,11 +66,10 @@ func srvinfAPI(w http.ResponseWriter, r *http.Request) {
 		"os":        runtime.GOOS,
 		"numcpu":    runtime.NumCPU(),
 		"maxprocs":  runtime.GOMAXPROCS(0),
-		"curpath":   cfg.CurPath,
 		"exepath":   cfg.ExePath,
-		"cfgpath":   cfg.ConfigPath,
-		"wpkpath":   cfg.PackPath,
-		"cchpath":   cfg.CachePath,
+		"cfgpath":   cfg.CfgPath,
+		"pkgpath":   cfg.PkgPath,
+		"tmbpath":   cfg.TmbPath,
 	}
 
 	WriteOK(w, r, ret)

@@ -63,7 +63,7 @@ func RequestUAID(r *http.Request) ID_t {
 
 // InitUserlog inits database user log engine.
 func InitUserlog() (err error) {
-	if XormUserlog, err = xorm.NewEngine(Cfg.XormDriverName, JoinFast(cfg.CachePath, userlog)); err != nil {
+	if XormUserlog, err = xorm.NewEngine(Cfg.XormDriverName, JoinFast(cfg.TmbPath, userlog)); err != nil {
 		return
 	}
 	XormUserlog.SetMapper(names.GonicMapper{})

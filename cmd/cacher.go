@@ -419,7 +419,7 @@ func RunCacher() {
 			}
 		}
 	}
-	for _, fpath := range Cfg.ExceptPath {
+	for _, fpath := range ExcludePath {
 		for i, p := range shares {
 			if strings.HasPrefix(p, fpath) {
 				shares = append(shares[:i], shares[i+1:]...)
@@ -427,7 +427,7 @@ func RunCacher() {
 			}
 		}
 	}
-	for _, fpath := range Cfg.CacherPath {
+	for _, fpath := range IncludePath {
 		var add = true
 		for i, p := range shares {
 			if strings.HasPrefix(fpath, p) {

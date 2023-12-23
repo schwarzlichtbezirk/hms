@@ -9,25 +9,10 @@ import (
 
 	jnt "github.com/schwarzlichtbezirk/joint"
 	"github.com/schwarzlichtbezirk/wpk"
-)
 
-const (
-	cfgdest = "config"
-	cfgbase = "confdata"
-	gitname = "hms"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
-
-const (
-	CmWebserver = 0x1
-	CmCacher    = 0x2
-)
-
-// CfgAppMode is set of applications running modes.
-type CfgAppMode struct {
-	CacherMode uint     `long:"cm" default:"1" description:"Run application in mode to cache thumbnails at all shares."`
-	CacherPath []string `long:"cp" description:"Cache thumbnails and tiles at given paths in addition to shared paths, can be several same arguments."`
-	ExceptPath []string `long:"ep" description:"Paths to exclude from scanning, can be several same arguments."`
-}
 
 // CfgJWTAuth is authentication settings.
 type CfgJWTAuth struct {
@@ -119,21 +104,17 @@ type CfgAppSets struct {
 
 // Config is common service settings.
 type Config struct {
-	CfgAppMode  `json:"-" yaml:"-" group:"Application mode"`
-	CfgJWTAuth  `json:"authentication" yaml:"authentication" group:"Authentication"`
-	CfgWebServ  `json:"web-server" yaml:"web-server" group:"Web server"`
-	CfgTlsCert  `json:"tls-certificates" yaml:"tls-certificates" group:"Automatic certificates"`
-	*jnt.Config `json:"network" yaml:"network" group:"Network"`
-	CfgXormDrv  `json:"xorm" yaml:"xorm" group:"XORM"`
-	CfgImgProp  `json:"images-prop" yaml:"images-prop" group:"Images properties"`
-	CfgAppSets  `json:"specification" yaml:"specification" group:"Application settings"`
+	CfgJWTAuth  `json:"authentication" yaml:"authentication"`
+	CfgWebServ  `json:"web-server" yaml:"web-server"`
+	CfgTlsCert  `json:"tls-certificates" yaml:"tls-certificates"`
+	*jnt.Config `json:"network" yaml:"network"`
+	CfgXormDrv  `json:"xorm" yaml:"xorm"`
+	CfgImgProp  `json:"images-prop" yaml:"images-prop"`
+	CfgAppSets  `json:"specification" yaml:"specification"`
 }
 
 // Instance of common service settings.
 var Cfg = &Config{ // inits default values:
-	CfgAppMode: CfgAppMode{
-		CacherMode: CmWebserver,
-	},
 	CfgJWTAuth: CfgJWTAuth{
 		AccessTTL:   1 * 24 * time.Hour,
 		RefreshTTL:  3 * 24 * time.Hour,
@@ -192,39 +173,89 @@ var (
 )
 
 var (
-	// Current path
-	CurPath string
-	// Executable path
-	ExePath string
-	// Path to deployed project
-	GitPath string
-	// developer mode, running at debugger
+	// Developer mode, running at debugger.
 	DevMode bool
+	// AppName is name of this application without extension.
+	AppName = BaseName(os.Args[0])
+	// Executable path.
+	ExePath string
+	// Configuration file with path.
+	CfgFile string
+	// Configuration path.
+	CfgPath string
+	// PkgPath determines resources packages path.
+	PkgPath string
+	// TmbPath determines images cache path.
+	TmbPath string
 )
 
-// ToSlash brings filenames to true slashes.
-var ToSlash = wpk.ToSlash
-
-func init() {
-	if str, err := filepath.Abs("."); err == nil {
-		CurPath = ToSlash(str)
-	} else {
-		CurPath = "."
+// BaseName returns name of file in given file path without extension.
+func BaseName(fpath string) string {
+	var j = len(fpath)
+	if j == 0 {
+		return ""
 	}
-	if str, err := os.Executable(); err == nil {
-		ExePath = path.Dir(ToSlash(str))
-	} else {
-		ExePath = path.Dir(ToSlash(os.Args[0]))
-	}
-	var fpath, i = ExePath, 0
-	for fpath != "." && i < 2 {
-		if path.Base(fpath) == gitname {
-			if ok, _ := wpk.PathExists(path.Join(fpath, "go.mod")); ok {
-				GitPath, DevMode = fpath, true
-				break
-			}
+	var i = j - 1
+	for {
+		if os.IsPathSeparator(fpath[i]) {
+			i++
+			break
 		}
-		fpath, i = path.Dir(fpath), i+1
+		if fpath[i] == '.' {
+			j = i
+		}
+		if i == 0 {
+			break
+		}
+		i--
+	}
+	return fpath[i:j]
+}
+
+func InitConfig() {
+	var err error
+
+	if DevMode {
+		Log.Info("*running in developer mode*")
+	}
+	Log.Infof("version: %s, builton: %s", BuildVers, BuildTime)
+
+	if str, err := os.Executable(); err == nil {
+		ExePath = path.Dir(str)
+	} else {
+		ExePath = path.Dir(os.Args[0])
+	}
+
+	if CfgFile != "" {
+		// Use config file from the flag.
+		viper.SetConfigFile(CfgFile)
+	} else {
+		const cfgsub = "config"
+		// Search config in home directory with name "hms" (without extension).
+		viper.SetConfigName("hms")
+		viper.SetConfigType("yaml")
+		viper.AddConfigPath(path.Join(ExePath, cfgsub))
+		viper.AddConfigPath(ExePath)
+		viper.AddConfigPath(cfgsub)
+		viper.AddConfigPath(".")
+		viper.AddConfigPath("$HOME/" + cfgsub)
+		viper.AddConfigPath("$HOME")
+		viper.AddConfigPath("$GOPATH/bin/" + cfgsub)
+		viper.AddConfigPath("$GOPATH/bin")
+	}
+
+	viper.AutomaticEnv()
+
+	if err = viper.ReadInConfig(); err != nil {
+		Log.Info("Config file not found!")
+	} else {
+		CfgFile = viper.ConfigFileUsed()
+		Log.Info("Using config file:", CfgFile)
+		CfgPath = filepath.Dir(CfgFile)
+
+		if err = viper.Unmarshal(&Cfg); err != nil {
+			cobra.CheckErr(err)
+		}
 	}
 }
 
@@ -237,7 +268,7 @@ func CheckPath(fpath string, fname string) (string, bool) {
 }
 
 // ConfigPath determines configuration path, depended on what directory is exist.
-var ConfigPath string
+/*var ConfigPath string
 
 // ErrNoCongig is "no configuration path was found" error message.
 var ErrNoCongig = errors.New("no configuration path was found")
@@ -318,10 +349,7 @@ func DetectConfigPath() (retpath string, err error) {
 	// no config was found
 	err = ErrNoCongig
 	return
-}
-
-// PackPath determines resources package path, depended on what directory is exist.
-var PackPath string
+}*/
 
 // ErrNoPack is "no package path was found" error message.
 var ErrNoPack = errors.New("no package path was found")
@@ -334,7 +362,7 @@ func DetectPackPath() (retpath string, err error) {
 
 	// try to get from environment setting
 	if fpath, ok = os.LookupEnv("PACKPATH"); ok {
-		fpath = ToSlash(fpath)
+		fpath = filepath.ToSlash(fpath)
 		// try to get access to full path
 		if retpath, ok = CheckPath(fpath, detectname); ok {
 			return
@@ -351,11 +379,11 @@ func DetectPackPath() (retpath string, err error) {
 		return
 	}
 	// try to find in current path
-	if retpath, ok = CheckPath(CurPath, detectname); ok {
+	if retpath, ok = CheckPath(".", detectname); ok {
 		return
 	}
 	// try to find at parental of cofiguration path
-	if retpath, ok = CheckPath(path.Join(ConfigPath, ".."), detectname); ok {
+	if retpath, ok = CheckPath(path.Join(CfgPath, ".."), detectname); ok {
 		return
 	}
 
@@ -366,7 +394,7 @@ func DetectPackPath() (retpath string, err error) {
 		}
 	}
 	if ok {
-		fpath = ToSlash(fpath)
+		fpath = filepath.ToSlash(fpath)
 		// try to get from go bin root
 		if retpath, ok = CheckPath(fpath, detectname); ok {
 			return
@@ -378,9 +406,6 @@ func DetectPackPath() (retpath string, err error) {
 	return
 }
 
-// CachePath determines images cache path, depended on what directory is exist.
-var CachePath string
-
 // DetectCachePath finds configuration path with existing configuration file at least.
 func DetectCachePath() (retpath string, err error) {
 	var ok bool
@@ -388,7 +413,7 @@ func DetectCachePath() (retpath string, err error) {
 
 	// try to get from environment setting
 	if fpath, ok = os.LookupEnv("CACHEPATH"); ok {
-		fpath = ToSlash(fpath)
+		fpath = filepath.ToSlash(fpath)
 		// try to get access to full path
 		if retpath, ok = CheckPath(fpath, ""); ok {
 			return
@@ -400,7 +425,7 @@ func DetectCachePath() (retpath string, err error) {
 		Log.Warnf("no access to pointed cache path '%s'", fpath)
 	}
 
-	retpath = path.Join(PackPath, "cache")
+	retpath = path.Join(PkgPath, "cache")
 
 	err = os.MkdirAll(retpath, os.ModePerm)
 	return

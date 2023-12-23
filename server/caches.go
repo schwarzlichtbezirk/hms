@@ -618,13 +618,13 @@ func PackInfo(fname string, pkg *wpk.Package, d time.Duration) {
 // InitPackages opens all existing caches.
 func InitPackages() (err error) {
 	var d time.Duration
-	if ThumbPkg, d, err = InitCacheWriter(JoinFast(cfg.CachePath, tmbfile)); err != nil {
+	if ThumbPkg, d, err = InitCacheWriter(JoinFast(cfg.TmbPath, tmbfile)); err != nil {
 		err = fmt.Errorf("inits thumbnails database: %w", err)
 		return
 	}
 	PackInfo(tmbfile, ThumbPkg.Package, d)
 
-	if TilesPkg, d, err = InitCacheWriter(JoinFast(cfg.CachePath, tilfile)); err != nil {
+	if TilesPkg, d, err = InitCacheWriter(JoinFast(cfg.TmbPath, tilfile)); err != nil {
 		err = fmt.Errorf("inits tiles database: %w", err)
 		return
 	}
@@ -647,7 +647,7 @@ func ClosePackages() (err error) {
 
 // InitStorage inits database caches engine.
 func InitStorage() (err error) {
-	if XormStorage, err = xorm.NewEngine(Cfg.XormDriverName, JoinFast(cfg.CachePath, dirfile)); err != nil {
+	if XormStorage, err = xorm.NewEngine(Cfg.XormDriverName, JoinFast(cfg.TmbPath, dirfile)); err != nil {
 		return
 	}
 	XormStorage.SetMapper(names.GonicMapper{})
