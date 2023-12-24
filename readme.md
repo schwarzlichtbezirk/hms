@@ -64,7 +64,7 @@ Before server start you can configure some options. Any configuration files lays
 
 If you're going to share resources, first of all you can open `hms.yaml` file and change `access-key` and `refresh-key` for tokens protection. This is main server settings file, and it does not modified by program. Then you can open `profiles.yaml` file and change default admin password to anything other. Changing authentication passwords and profile passwords - that's all modifications to provide basic protection access to server.
 
-Resources placement can be configured by environment variables. Path with configurations files - by `CONFIGPATH`, placement of resorces package - by `PACKPATH`, path with package caches - by `CACHEPATH`.
+Resources placement can be configured by environment variables. Path to configuration file `hms.yaml` - by `CFGFILE`, directory with placement of resorces package - by `PKGPATH`, directory with images caches - by `TMBPATH`.
 
 # Authorization
 

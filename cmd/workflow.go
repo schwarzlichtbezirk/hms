@@ -46,33 +46,6 @@ var (
 func Init() {
 	var err error
 
-	// get confiruration path
-	/*if cfg.ConfigPath, err = cfg.DetectConfigPath(); err != nil {
-		Log.Fatal(err)
-	}
-	// load content of Config structure from YAML-file.
-	if err = srv.CfgReadYaml(cfgfile); err != nil {
-		Log.Error("error at settings file: " + err.Error())
-	}
-	// rewrite settings from config file
-	if _, err := flags.Parse(Cfg); err != nil {
-		Log.Error("error at command line flags: " + err.Error())
-		os.Exit(1)
-	}
-	Log.Infof("config path: %s", cfg.ConfigPath)*/
-
-	// get package path
-	if cfg.PkgPath, err = cfg.DetectPackPath(); err != nil {
-		Log.Fatal(err)
-	}
-	Log.Infof("package path: %s", cfg.PkgPath)
-
-	// get cache path
-	if cfg.TmbPath, err = cfg.DetectCachePath(); err != nil {
-		Log.Fatal(err)
-	}
-	Log.Infof("cache path: %s", cfg.TmbPath)
-
 	Log.Info("starts")
 
 	// create context and wait the break
@@ -153,13 +126,18 @@ func Init() {
 	}
 
 	// load profiles with roots, hidden and shares lists
-	if err = srv.PrfReadYaml(prffile); err != nil {
-		Log.Fatal("error at profiles file: " + err.Error())
+	if cfg.CfgPath != "" {
+		if err = srv.PrfReadYaml(prffile); err != nil {
+			Log.Fatal("error at profiles file: " + err.Error())
+		}
 	}
+	srv.PrfUpdate()
 
 	// load white list
-	if err = srv.ReadPasslist(passlst); err != nil {
-		Log.Fatal("error at white list file: " + err.Error())
+	if cfg.CfgPath != "" {
+		if err = srv.ReadWhiteList(passlst); err != nil {
+			Log.Fatal("error at white list file: " + err.Error())
+		}
 	}
 
 	// run thumbnails scanner

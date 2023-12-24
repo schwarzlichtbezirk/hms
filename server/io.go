@@ -90,7 +90,11 @@ func PrfReadYaml(fname string) (err error) {
 	for _, prf := range list {
 		PrfList[prf.ID] = prf
 	}
+	return
+}
 
+// PrfUpdate performs initial updates for profiles list.
+func PrfUpdate() {
 	if len(PrfList) > 0 {
 		SqlSession(func(session *Session) (res any, err error) {
 			for _, prf := range PrfList {
@@ -145,7 +149,6 @@ func PrfReadYaml(fname string) (err error) {
 		prf.FindLocal()
 		Log.Infof("created profile id%d, login='%s'", prf.ID, prf.Login)
 	}
-	return
 }
 
 // PrfWriteYaml writes content of Profiles object in YAML format
@@ -167,9 +170,9 @@ func PrfWriteYaml(fname string) error {
 	return WriteYaml(fname, intro, list)
 }
 
-// ReadPasslist reads content of white list from YAML-file
+// ReadWhiteList reads content of white list from YAML-file
 // with given file name.
-func ReadPasslist(fname string) (err error) {
+func ReadWhiteList(fname string) (err error) {
 	var list []string
 	if err = ReadYaml(fname, &list); err != nil {
 		return

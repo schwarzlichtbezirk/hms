@@ -481,7 +481,7 @@ func InitCacheWriter(fpath string) (fc *FileCache, d time.Duration, err error) {
 		}
 	}()
 
-	var ok, _ = wpk.PathExists(pkgpath)
+	var ok, _ = cfg.FileExists(pkgpath)
 	if fc.wpt, err = os.OpenFile(pkgpath, os.O_WRONLY|os.O_CREATE, 0755); err != nil {
 		return
 	}
