@@ -112,7 +112,7 @@ func (pt Puid_t) String() string {
 // Set writes base32 string representation of ID into integer value.
 func (pt *Puid_t) Set(puid string) error {
 	var buf [8]byte
-	_, err := idenc.Decode(buf[:], s2b(puid))
+	_, err := idenc.Decode(buf[:], S2B(puid))
 	*pt = Puid_t(binary.LittleEndian.Uint64(buf[:]))
 	return err
 }
@@ -178,13 +178,13 @@ func (ut Unix_t) String() string {
 
 // ToDB is Conversion interface implementation for XORM engine.
 func (ut Unix_t) ToDB() ([]byte, error) {
-	return s2b(ut.Time().Format(ExifDate)), nil
+	return S2B(ut.Time().Format(ExifDate)), nil
 }
 
 // FromDB is Conversion interface implementation for XORM engine.
 func (ut *Unix_t) FromDB(b []byte) (err error) {
 	var t time.Time
-	if t, err = time.Parse(ExifDate, b2s(b)); err != nil {
+	if t, err = time.Parse(ExifDate, B2S(b)); err != nil {
 		return
 	}
 	*ut = UnixJS(t)

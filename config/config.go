@@ -26,7 +26,7 @@ var (
 	// Developer mode, running at debugger.
 	DevMode bool
 	// AppName is name of this application without extension.
-	AppName = BaseName(os.Args[0])
+	AppName = PathName(os.Args[0])
 	// Executable path.
 	ExePath string
 	// Configuration file with path.
@@ -329,8 +329,8 @@ func InitConfig() {
 	Log.Infof("cache path: %s", TmbPath)
 }
 
-// BaseName returns name of file in given file path without extension.
-func BaseName(fpath string) string {
+// PathName returns name of file in given file path without extension.
+func PathName(fpath string) string {
 	var j = len(fpath)
 	if j == 0 {
 		return ""
@@ -353,8 +353,8 @@ func BaseName(fpath string) string {
 }
 
 // DirExists check up directory existence.
-func DirExists(path string) (bool, error) {
-	var stat, err = os.Stat(path)
+func DirExists(fpath string) (bool, error) {
+	var stat, err = os.Stat(fpath)
 	if err == nil {
 		return stat.IsDir(), nil
 	}
@@ -365,8 +365,8 @@ func DirExists(path string) (bool, error) {
 }
 
 // FileExists check up file existence.
-func FileExists(path string) (bool, error) {
-	var stat, err = os.Stat(path)
+func FileExists(fpath string) (bool, error) {
+	var stat, err = os.Stat(fpath)
 	if err == nil {
 		return !stat.IsDir(), nil
 	}

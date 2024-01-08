@@ -393,7 +393,7 @@ func (pl *Playlist) WriteM3U(w io.Writer) (num int64, err error) {
 func (pl *Playlist) WriteM3U8(w io.Writer) (num int64, err error) {
 	var n int
 	var n64 int64
-	n, err = w.Write(s2b(utf8bom))
+	n, err = w.Write(S2B(utf8bom))
 	num += int64(n)
 	if err != nil {
 		return
@@ -449,7 +449,7 @@ func (pl *Playlist) WriteWPL(w io.Writer) (num int64, err error) {
 				return
 			}
 		}
-		var id = uuid.NewSHA1(uuid.NameSpaceURL, s2b(fpath)).String()
+		var id = uuid.NewSHA1(uuid.NameSpaceURL, S2B(fpath)).String()
 		wpl.Body.Seq.Media = append(wpl.Body.Seq.Media, WplMedia{Src: fpath, Tid: "{" + id + "}"})
 	}
 

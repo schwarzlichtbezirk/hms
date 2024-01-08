@@ -66,7 +66,7 @@ func signinAPI(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var mac = hmac.New(sha256.New, arg.PubK[:])
-	mac.Write(s2b(prf.Password))
+	mac.Write(S2B(prf.Password))
 	var cmp = mac.Sum(nil)
 	if !hmac.Equal(arg.Hash[:], cmp) {
 		WriteError(w, r, http.StatusForbidden, ErrBadPass, AECsignindeny)
@@ -96,7 +96,7 @@ func refrshAPI(w http.ResponseWriter, r *http.Request) {
 
 	var claims Claims
 	if _, err = jwt.ParseWithClaims(arg.Refrsh, &claims, func(token *jwt.Token) (any, error) {
-		return s2b(Cfg.RefreshKey), nil
+		return S2B(Cfg.RefreshKey), nil
 	}); err != nil {
 		WriteError400(w, r, err, AECrefrshparse)
 		return

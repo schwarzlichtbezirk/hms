@@ -17,15 +17,15 @@ const utf8bom = "\xef\xbb\xbf"
 // File writes in UTF-8 format with BOM, and "intro" comment.
 func WriteYaml(fname, intro string, data any) (err error) {
 	var w io.WriteCloser
-	if w, err = os.OpenFile(JoinFast(cfg.CfgPath, fname), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644); err != nil {
+	if w, err = os.OpenFile(JoinPath(cfg.CfgPath, fname), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644); err != nil {
 		return
 	}
 	defer w.Close()
 
-	if _, err = w.Write(s2b(utf8bom)); err != nil {
+	if _, err = w.Write(S2B(utf8bom)); err != nil {
 		return
 	}
-	if _, err = w.Write(s2b(intro)); err != nil {
+	if _, err = w.Write(S2B(intro)); err != nil {
 		return
 	}
 
@@ -43,7 +43,7 @@ func WriteYaml(fname, intro string, data any) (err error) {
 // with given file name.
 func ReadYaml(fname string, data any) (err error) {
 	var body []byte
-	if body, err = os.ReadFile(JoinFast(cfg.CfgPath, fname)); err != nil {
+	if body, err = os.ReadFile(JoinPath(cfg.CfgPath, fname)); err != nil {
 		return
 	}
 	if err = yaml.Unmarshal(body, data); err != nil {

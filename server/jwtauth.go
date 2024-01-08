@@ -118,7 +118,7 @@ func GetAuth(r *http.Request) (uid ID_t, aerr error) {
 				bearer = true
 				if _, err = jwt.ParseWithClaims(val[7:], &claims, func(*jwt.Token) (any, error) {
 					if claims.UID > 0 {
-						return s2b(Cfg.AccessKey), nil
+						return S2B(Cfg.AccessKey), nil
 					} else {
 						return nil, ErrNoUserID
 					}

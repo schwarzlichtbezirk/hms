@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/gorilla/mux"
@@ -24,15 +25,17 @@ var webCmd = &cobra.Command{
 	Short:   webShort,
 	Long:    webLong,
 	Example: fmt.Sprintf(webExmp, config.AppName, config.AppName),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		Init()
+	RunE: func(cmd *cobra.Command, args []string) (err error) {
+		var exitctx context.Context
+		if exitctx, err = Init(); err != nil {
+			return
+		}
 		var gmux = mux.NewRouter()
 		srv.RegisterRoutes(gmux)
-		RunWeb(gmux)
-		WaitExit()
+		RunWeb(exitctx, gmux)
 		srv.WaitHandlers()
-		Done()
-		return nil
+		err = Done()
+		return
 	},
 }
 

@@ -40,8 +40,8 @@ const (
 	FPAshare = 2
 )
 
-// JoinPath performs concatenation of URL address with path elements.
-func JoinPath(elem ...string) string {
+// JoinUrl performs concatenation of URL address with path elements.
+func JoinUrl(elem ...string) string {
 	var fpath = elem[0]
 	if i := strings.Index(fpath, "://"); i != -1 {
 		var pref, suff string
@@ -92,7 +92,7 @@ func UnfoldPath(session *Session, shrpath string) (syspath string, puid Puid_t, 
 	if len(suff) == 0 {
 		return // whole cached path
 	}
-	syspath = JoinFast(syspath, suff)
+	syspath = JoinPath(syspath, suff)
 	// get PUID if it not have
 	puid = PathStoreCache(session, syspath)
 	return // composite path
@@ -543,7 +543,7 @@ func (prf *Profile) GetSharePath(session *Session, syspath string) (shrpath, shr
 	}
 	if len(base) > 0 {
 		var puid = PathStoreCache(session, base)
-		shrpath = JoinFast(puid.String(), syspath[len(base):])
+		shrpath = JoinPath(puid.String(), syspath[len(base):])
 		return
 	}
 	return
@@ -566,7 +566,7 @@ func (prf *Profile) GetRootPath(session *Session, syspath string) (rootpath, roo
 	}
 	if len(base) > 0 {
 		var puid = PathStoreCache(session, base)
-		rootpath = JoinFast(puid.String(), syspath[len(base):])
+		rootpath = JoinPath(puid.String(), syspath[len(base):])
 		return
 	}
 	for _, dp := range prf.Remote {
@@ -579,7 +579,7 @@ func (prf *Profile) GetRootPath(session *Session, syspath string) (rootpath, roo
 	}
 	if len(base) > 0 {
 		var puid = PathStoreCache(session, base)
-		rootpath = JoinFast(puid.String(), syspath[len(base):])
+		rootpath = JoinPath(puid.String(), syspath[len(base):])
 		return
 	}
 	return

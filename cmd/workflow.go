@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
@@ -25,15 +26,7 @@ const (
 )
 
 var (
-	// context to indicate about service shutdown
-	exitctx context.Context
-	exitfn  context.CancelFunc
-	// wait group for all service goroutines
-	exitwg sync.WaitGroup
-)
-
-var (
-	JoinFast = srv.JoinFast
+	JoinPath = srv.JoinPath
 	Cfg      = cfg.Cfg
 	Log      = cfg.Log
 )
@@ -43,16 +36,15 @@ var (
 //////////////////////
 
 // Init performs global data initialization. Loads configuration files, initializes file cache.
-func Init() {
+func Init() (context.Context, error) {
 	var err error
-
 	Log.Info("starts")
 
-	// create context and wait the break
-	exitctx, exitfn = context.WithCancel(context.Background())
+	// context to indicate about service shutdown
+	var exitctx, cancel = context.WithCancel(context.Background())
 	go func() {
 		// Make exit signal on function exit.
-		defer exitfn()
+		defer cancel()
 
 		var sigint = make(chan os.Signal, 1)
 		var sigterm = make(chan os.Signal, 1)
@@ -81,12 +73,12 @@ func Init() {
 
 	// load package with data files
 	if err = srv.OpenPackage(); err != nil {
-		Log.Fatal("can not load wpk-package: " + err.Error())
+		return exitctx, fmt.Errorf("can not load wpk-package: %w", err)
 	}
 
 	// init database caches
 	if err = srv.InitStorage(); err != nil {
-		Log.Fatal("can not init XORM storage: " + err.Error())
+		return exitctx, fmt.Errorf("can not init XORM storage: %w", err)
 	}
 	srv.SqlSession(func(session *srv.Session) (res any, err error) {
 		var pathcount, _ = session.Count(&srv.PathStore{})
@@ -102,33 +94,33 @@ func Init() {
 
 	// load path, directories and GPS caches
 	if err = srv.LoadPathCache(); err != nil {
-		Log.Fatal("path cache loading failure: " + err.Error())
+		return exitctx, fmt.Errorf("path cache loading failure: %w", err)
 	}
 	if err = srv.LoadGpsCache(); err != nil {
-		Log.Fatal("GPS cache loading failure: " + err.Error())
+		return exitctx, fmt.Errorf("GPS cache loading failure: %w", err)
 	}
 
 	if err = srv.InitUserlog(); err != nil {
-		Log.Fatal("can not init XORM user log: " + err.Error())
+		return exitctx, fmt.Errorf("can not init XORM user log: %w", err)
 	}
 	if err = srv.LoadUaMap(); err != nil {
-		Log.Fatal("user agent map loading failure: " + err.Error())
+		return exitctx, fmt.Errorf("user agent map loading failure: %w", err)
 	}
 
 	// insert components templates into pages
 	if err = srv.LoadTemplates(); err != nil {
-		Log.Fatal(err)
+		return exitctx, err
 	}
 
 	// init wpk caches
 	if err = srv.InitPackages(); err != nil {
-		Log.Fatal(err)
+		return exitctx, err
 	}
 
 	// load profiles with roots, hidden and shares lists
 	if cfg.CfgPath != "" {
 		if err = srv.PrfReadYaml(prffile); err != nil {
-			Log.Fatal("error at profiles file: " + err.Error())
+			return exitctx, fmt.Errorf("error at profiles file: %w", err)
 		}
 	}
 	srv.PrfUpdate()
@@ -136,18 +128,22 @@ func Init() {
 	// load white list
 	if cfg.CfgPath != "" {
 		if err = srv.ReadWhiteList(passlst); err != nil {
-			Log.Fatal("error at white list file: " + err.Error())
+			return exitctx, fmt.Errorf("error at white list file: %w", err)
 		}
 	}
 
 	// run thumbnails scanner
 	go srv.ImgScanner.Scan()
+	return exitctx, nil
 }
 
 // RunWeb launches server listeners.
-func RunWeb(gmux *mux.Router) {
+func RunWeb(exitctx context.Context, gmux *mux.Router) {
 	// helpers for graceful startup to prevent call to uninitialized data
 	var httpctx, httpcancel = context.WithCancel(context.Background())
+
+	// wait group for all service goroutines
+	var exitwg sync.WaitGroup
 
 	// webserver start
 	go func() {
@@ -209,7 +205,7 @@ func RunWeb(gmux *mux.Router) {
 				if Cfg.UseAutoCert { // get certificate from letsencrypt.org
 					var m = &autocert.Manager{
 						Prompt:     autocert.AcceptTOS,
-						Cache:      autocert.DirCache(JoinFast(cfg.CfgPath, "cert")),
+						Cache:      autocert.DirCache(JoinPath(cfg.CfgPath, "cert")),
 						Email:      Cfg.Email,
 						HostPolicy: autocert.HostWhitelist(Cfg.HostWhitelist...),
 					}
@@ -235,8 +231,8 @@ func RunWeb(gmux *mux.Router) {
 				go func() {
 					httpwg.Done()
 					if err := server.ListenAndServeTLS(
-						JoinFast(cfg.CfgPath, "serv.crt"),
-						JoinFast(cfg.CfgPath, "prvk.pem")); err != http.ErrServerClosed {
+						JoinPath(cfg.CfgPath, "serv.crt"),
+						JoinPath(cfg.CfgPath, "prvk.pem")); err != http.ErrServerClosed {
 						Log.Fatalf("failed to serve on %s: %v", addr, err)
 						return
 					}
@@ -282,10 +278,7 @@ func RunWeb(gmux *mux.Router) {
 		}
 		Log.Infof("hint: Open http://localhost%[1]s page in browser to view the player. If you want to stop the server, press 'Ctrl+C' for graceful network shutdown. Use http://localhost%[1]s/stat for server state monitoring.", suff)
 	}
-}
 
-// WaitExit waits until all server threads will be stopped and all transactions will be done.
-func WaitExit() {
 	// wait for exit signal
 	<-exitctx.Done()
 	Log.Info("shutting down begin")
@@ -296,12 +289,12 @@ func WaitExit() {
 }
 
 // Done performs graceful network shutdown.
-func Done() {
+func Done() (err error) {
 	var wg errgroup.Group
 
 	wg.Go(func() (err error) {
 		if err := srv.PrfWriteYaml(prffile); err != nil {
-			Log.Error("error on profiles list file: " + err.Error())
+			return fmt.Errorf("error on profiles list file: %w", err)
 		}
 		return
 	})
@@ -314,7 +307,7 @@ func Done() {
 
 	// close all opened joints
 	wg.Go(func() (err error) {
-		srv.JP.Clear()
+		err = srv.JP.Clear()
 		return
 	})
 
@@ -325,27 +318,28 @@ func Done() {
 
 	wg.Go(func() (err error) {
 		if srv.XormStorage != nil {
-			srv.XormStorage.Close()
+			err = srv.XormStorage.Close()
 		}
 		return
 	})
 
 	wg.Go(func() (err error) {
 		if srv.XormUserlog != nil {
-			srv.XormUserlog.Close()
+			err = srv.XormUserlog.Close()
 		}
 		return
 	})
 
 	wg.Go(func() (err error) {
-		srv.ResFS.Close()
+		err = srv.ResFS.Close()
 		return
 	})
 
-	if err := wg.Wait(); err != nil {
+	if err = wg.Wait(); err != nil {
 		return
 	}
 	Log.Info("shutting down complete.")
+	return
 }
 
 // The End.

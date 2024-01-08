@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"image"
 	"io"
@@ -12,6 +13,7 @@ import (
 	"time"
 
 	srv "github.com/schwarzlichtbezirk/hms/server"
+	jnt "github.com/schwarzlichtbezirk/joint"
 
 	"github.com/rwcarlsen/goexif/exif"
 	"github.com/rwcarlsen/goexif/tiff"
@@ -57,7 +59,7 @@ func IsCached(fpath string) bool {
 }
 
 // FileList forms list of files to process by caching algorithm.
-func FileList(fsys *srv.SubPool, pathlist *[]string, extlist, cnvlist FileMap) (err error) {
+func FileList(fsys *jnt.SubPool, pathlist *[]string, extlist, cnvlist FileMap) (err error) {
 	var session = srv.XormStorage.NewSession()
 	defer session.Close()
 
@@ -65,7 +67,7 @@ func FileList(fsys *srv.SubPool, pathlist *[]string, extlist, cnvlist FileMap) (
 		if err != nil {
 			return err
 		}
-		var fullpath = JoinFast(fsys.Dir, fpath)
+		var fullpath = JoinPath(fsys.Dir(), fpath)
 		if d.Name() != "." && d.Name() != ".." {
 			if _, ok := srv.PathStorePUID(session, fullpath); !ok {
 				*pathlist = append(*pathlist, fullpath)
@@ -250,7 +252,7 @@ func UpdateExtList(extlist FileMap) {
 	}
 }
 
-func BatchExtractor(extlist FileMap) {
+func BatchExtractor(exitctx context.Context, extlist FileMap) {
 	var es srv.ExtStat
 	var thrnum = srv.GetScanThreadsNum()
 
@@ -317,7 +319,7 @@ func BatchExtractor(extlist FileMap) {
 	}
 }
 
-func BatchCacher(cnvlist FileMap) {
+func BatchCacher(exitctx context.Context, cnvlist FileMap) {
 	var cs CnvStat
 	var thrnum = srv.GetScanThreadsNum()
 
@@ -394,7 +396,7 @@ func BatchCacher(cnvlist FileMap) {
 	}
 }
 
-func RunCacher() {
+func RunCacher(exitctx context.Context) {
 	fmt.Fprintf(os.Stdout, "starts caching processing\n")
 
 	var shares []string
@@ -459,7 +461,7 @@ func RunCacher() {
 		if sub, err = srv.JP.Sub(p); err != nil {
 			Log.Fatal(err)
 		}
-		if err = FileList(sub.(*srv.SubPool), &pathlist, extlist, cnvlist); err != nil {
+		if err = FileList(sub.(*jnt.SubPool), &pathlist, extlist, cnvlist); err != nil {
 			Log.Fatal(err)
 		}
 		var d = time.Since(t0)
@@ -489,7 +491,7 @@ func RunCacher() {
 	UpdateExtList(extlist)
 
 	if len(extlist) > 0 {
-		BatchExtractor(extlist)
+		BatchExtractor(exitctx, extlist)
 
 		select {
 		case <-exitctx.Done():
@@ -499,7 +501,7 @@ func RunCacher() {
 	}
 
 	if len(cnvlist) > 0 {
-		BatchCacher(cnvlist)
+		BatchCacher(exitctx, cnvlist)
 
 		select {
 		case <-exitctx.Done():

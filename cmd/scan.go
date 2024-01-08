@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/schwarzlichtbezirk/hms/config"
@@ -19,11 +20,14 @@ var scanCmd = &cobra.Command{
 	Short:   scanShort,
 	Long:    scanLong,
 	Example: fmt.Sprintf(scanExmp, config.AppName),
-	RunE: func(cmd *cobra.Command, args []string) error {
-		Init()
-		RunCacher()
-		Done()
-		return nil
+	RunE: func(cmd *cobra.Command, args []string) (err error) {
+		var exitctx context.Context
+		if exitctx, err = Init(); err != nil {
+			return
+		}
+		RunCacher(exitctx)
+		err = Done()
+		return
 	},
 }
 

@@ -50,9 +50,9 @@ var (
 // CalcUAID calculate user agent ID by xxhash from given strings.
 func CalcUAID(addr, ua string) ID_t {
 	var h = xxhash.New()
-	h.Write(s2b(Cfg.UaidHmacKey))
-	h.Write(s2b(addr))
-	h.Write(s2b(ua))
+	h.Write(S2B(Cfg.UaidHmacKey))
+	h.Write(S2B(addr))
+	h.Write(S2B(ua))
 	return ID_t(h.Sum64() & 0x7fff_ffff_ffff_ffff) // clear highest bit for xorm compatibility
 }
 
@@ -63,7 +63,7 @@ func RequestUAID(r *http.Request) ID_t {
 
 // InitUserlog inits database user log engine.
 func InitUserlog() (err error) {
-	if XormUserlog, err = xorm.NewEngine(Cfg.XormDriverName, JoinFast(cfg.TmbPath, userlog)); err != nil {
+	if XormUserlog, err = xorm.NewEngine(Cfg.XormDriverName, JoinPath(cfg.TmbPath, userlog)); err != nil {
 		return
 	}
 	XormUserlog.SetMapper(names.GonicMapper{})

@@ -13,23 +13,23 @@ type SubPool struct {
 	Dir string
 }
 
-func (sp *SubPool) Open(fullpath string) (f fs.File, err error) {
-	fullpath = jnt.JoinFast(sp.Dir, fullpath)
+func (sp *SubPool) Open(fpath string) (f fs.File, err error) {
+	var fullpath = jnt.JoinFast(sp.Dir, fpath)
 	return sp.JointPool.Open(fullpath)
 }
 
-func (sp *SubPool) Stat(fullpath string) (fi fs.FileInfo, err error) {
-	fullpath = jnt.JoinFast(sp.Dir, fullpath)
+func (sp *SubPool) Stat(fpath string) (fi fs.FileInfo, err error) {
+	var fullpath = jnt.JoinFast(sp.Dir, fpath)
 	return sp.JointPool.Stat(fullpath)
 }
 
-func (sp *SubPool) ReadDir(fullpath string) (ret []fs.DirEntry, err error) {
-	fullpath = jnt.JoinFast(sp.Dir, fullpath)
+func (sp *SubPool) ReadDir(fpath string) (ret []fs.DirEntry, err error) {
+	var fullpath = jnt.JoinFast(sp.Dir, fpath)
 	return sp.JointPool.ReadDir(fullpath)
 }
 
 func (sp *SubPool) Sub(dir string) (fs.FS, error) {
-	dir = jnt.JoinFast(sp.Dir, dir)
+	var fulldir = jnt.JoinFast(sp.Dir, dir)
 	var fi, err = sp.JointPool.Stat(dir)
 	if err != nil {
 		return nil, err
@@ -39,17 +39,20 @@ func (sp *SubPool) Sub(dir string) (fs.FS, error) {
 	}
 	return &SubPool{
 		JointPool: sp.JointPool,
-		Dir:       dir,
+		Dir:       fulldir,
 	}, nil
 }
 
+// var JP = jnt.NewSubPool(jnt.NewJointPool(), "")
 var JP = SubPool{jnt.NewJointPool(), ""}
 
 type RFile = jnt.RFile
 
 func OpenFile(fpath string) (file RFile, err error) {
 	var f fs.File
-	f, err = JP.Open(fpath)
+	if f, err = JP.Open(fpath); err != nil {
+		return
+	}
 	file = f.(RFile)
 	return
 }
@@ -255,7 +258,7 @@ func ScanDir(prf *Profile, session *Session, dir string, isadmin bool, scanembed
 		if fi, err = de.Info(); err != nil {
 			continue
 		}
-		var fpath = JoinFast(dir, fi.Name())
+		var fpath = JoinPath(dir, fi.Name())
 		if prf.IsHidden(fpath) {
 			continue
 		}
