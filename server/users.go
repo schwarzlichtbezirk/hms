@@ -149,7 +149,7 @@ func usrlstAPI(w http.ResponseWriter, r *http.Request) {
 
 	var asts []AgentStore
 	if err = XormUserlog.Limit(arg.Num, arg.Pos).Find(&asts); err != nil {
-		WriteError500(w, r, err, AECusrlstasts)
+		WriteError500(w, r, err, SEC_usrlst_asts)
 		return
 	}
 
@@ -169,7 +169,7 @@ func usrlstAPI(w http.ResponseWriter, r *http.Request) {
 		var is bool
 		var fost, post OpenStore
 		if is, err = XormUserlog.Where("uaid=? AND latency<0", ast.UAID).Desc("time").Get(&fost); err != nil {
-			WriteError500(w, r, err, AECusrlstfost)
+			WriteError500(w, r, err, SEC_usrlst_fost)
 			return
 		}
 		if is {
@@ -178,7 +178,7 @@ func usrlstAPI(w http.ResponseWriter, r *http.Request) {
 			ui.UID = fost.UID
 		}
 		if is, err = XormUserlog.Where("uaid=? AND latency>=0", ast.UAID).Desc("time").Get(&post); err != nil {
-			WriteError500(w, r, err, AECusrlstpost)
+			WriteError500(w, r, err, SEC_usrlst_post)
 			return
 		}
 		if is {

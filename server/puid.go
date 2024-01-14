@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"encoding/base32"
 	"encoding/binary"
-	"encoding/json"
 	"encoding/xml"
 	"time"
 

@@ -2,7 +2,6 @@ package hms
 
 import (
 	"bytes"
-	"encoding/json"
 	"encoding/xml"
 	"errors"
 	"fmt"
@@ -22,8 +21,11 @@ import (
 	"github.com/schwarzlichtbezirk/wpk/mmap"
 
 	"github.com/gorilla/mux"
+	jsoniter "github.com/json-iterator/go"
 	"gopkg.in/yaml.v3"
 )
+
+var json = jsoniter.ConfigFastest
 
 type jerr struct {
 	error
@@ -176,27 +178,27 @@ func ParseBody(w http.ResponseWriter, r *http.Request, arg any) (err error) {
 		switch ctype {
 		case "application/json", "text/json":
 			if err = json.Unmarshal(jb, arg); err != nil {
-				WriteError400(w, r, err, AECbadjson)
+				WriteError400(w, r, err, SEC_badjson)
 				return
 			}
 		case "application/x-yaml", "application/yaml", "application/yml",
 			"text/x-yaml", "text/yaml", "text/yml":
 			if err = yaml.Unmarshal(jb, arg); err != nil {
-				WriteError400(w, r, err, AECbadyaml)
+				WriteError400(w, r, err, SEC_badyaml)
 				return
 			}
 		case "application/xml", "text/xml":
 			if err = xml.Unmarshal(jb, arg); err != nil {
-				WriteError400(w, r, err, AECbadxml)
+				WriteError400(w, r, err, SEC_badxml)
 				return
 			}
 		default:
-			WriteError400(w, r, ErrArgUndef, AECargundef)
+			WriteError400(w, r, ErrArgUndef, SEC_argundef)
 			return
 		}
 	} else {
 		err = ErrNoJSON
-		WriteError400(w, r, err, AECnoreq)
+		WriteError400(w, r, err, SEC_noreq)
 		return
 	}
 	return
@@ -320,7 +322,7 @@ func WriteRet(w http.ResponseWriter, r *http.Request, status int, body any) {
 	if err == nil {
 		err = ErrBadEnc // no released encoding was found
 	}
-	b, _ = json.Marshal(MakeAjaxErr(err, AECbadenc))
+	b, _ = json.Marshal(MakeAjaxErr(err, SEC_badenc))
 	w.Write(b)
 
 	if status >= 500 {
@@ -507,7 +509,7 @@ func AjaxMiddleware(next http.Handler) http.Handler {
 				var stacklen = runtime.Stack(buf[:], false)
 				var str = B2S(buf[:stacklen])
 				Log.Error(str)
-				WriteRet(w, r, http.StatusInternalServerError, MakeErrPanic(err, AECpanic, str))
+				WriteRet(w, r, http.StatusInternalServerError, MakeErrPanic(err, SEC_panic, str))
 			}
 		}()
 

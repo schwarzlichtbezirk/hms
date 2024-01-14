@@ -1252,11 +1252,11 @@ const VueAuth = {
 					} else if (resp2.status === 403) { // Forbidden
 						auth.signout();
 						switch (data2.code) {
-							case 61: // AECsigninnoacc
+							case 61: // SEC_signin_noacc
 								this.namestate = -1;
 								this.passstate = 0;
 								break;
-							case 63: // AECsignindeny
+							case 63: // SEC_signin_deny
 								this.namestate = 1;
 								this.passstate = -1;
 								break;

@@ -40,16 +40,16 @@ func reloadAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if uid == 0 { // only authorized access allowed
-		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, AECnoauth)
+		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, SEC_noauth)
 		return
 	}
 
 	if err = OpenPackage(); err != nil {
-		WriteError500(w, r, err, AECreloadload)
+		WriteError500(w, r, err, SEC_reload_load)
 		return
 	}
 	if err = LoadTemplates(); err != nil {
-		WriteError500(w, r, err, AECreloadtmpl)
+		WriteError500(w, r, err, SEC_reload_tmpl)
 		return
 	}
 
@@ -179,7 +179,7 @@ func getlogAPI(w http.ResponseWriter, r *http.Request) {
 	if s := r.FormValue("num"); len(s) > 0 {
 		var i64 int64
 		if i64, err = strconv.ParseInt(s, 10, 64); err != nil {
-			WriteError400(w, r, ErrArgNoNum, AECgetlogbadnum)
+			WriteError400(w, r, ErrArgNoNum, SEC_getlog_badnum)
 			return
 		}
 		num = int(i64)
@@ -191,7 +191,7 @@ func getlogAPI(w http.ResponseWriter, r *http.Request) {
 	if s := r.FormValue("unix"); len(s) > 0 {
 		var i64 int64
 		if i64, err = strconv.ParseInt(s, 10, 64); err != nil {
-			WriteError400(w, r, ErrArgNoTime, AECgetlogbadunix)
+			WriteError400(w, r, ErrArgNoTime, SEC_getlog_badunix)
 			return
 		}
 		from = time.Unix(i64, 0)
@@ -199,7 +199,7 @@ func getlogAPI(w http.ResponseWriter, r *http.Request) {
 	if s := r.FormValue("unixms"); len(s) > 0 {
 		var i64 int64
 		if i64, err = strconv.ParseInt(s, 10, 64); err != nil {
-			WriteError400(w, r, ErrArgNoTime, AECgetlogbadums)
+			WriteError400(w, r, ErrArgNoTime, SEC_getlog_badums)
 			return
 		}
 		from = time.UnixMilli(i64)
@@ -240,7 +240,7 @@ func tagsAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	var acc *Profile
 	if acc = ProfileByID(aid); acc == nil {
-		WriteError400(w, r, ErrNoAcc, AECtagsnoacc)
+		WriteError400(w, r, ErrNoAcc, SEC_tags_noacc)
 		return
 	}
 
@@ -249,7 +249,7 @@ func tagsAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 	if arg.PUID == 0 {
-		WriteError400(w, r, ErrArgNoPuid, AECtagsnodata)
+		WriteError400(w, r, ErrArgNoPuid, SEC_tags_nodata)
 		return
 	}
 
@@ -259,16 +259,16 @@ func tagsAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var syspath string
 	var ok bool
 	if syspath, ok = PathStorePath(session, arg.PUID); !ok {
-		WriteError400(w, r, ErrNoPath, AECtagsbadpath)
+		WriteError400(w, r, ErrNoPath, SEC_tags_badpath)
 		return
 	}
 
 	if acc.IsHidden(syspath) {
-		WriteError(w, r, http.StatusForbidden, ErrHidden, AECtagshidden)
+		WriteError(w, r, http.StatusForbidden, ErrHidden, SEC_tags_hidden)
 		return
 	}
 	if !acc.PathAccess(syspath, uid == aid) {
-		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECtagsaccess)
+		WriteError(w, r, http.StatusForbidden, ErrNoAccess, SEC_tags_access)
 		return
 	}
 
@@ -277,7 +277,7 @@ func tagsAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	if ret.Prop, _, err = TagsExtract(syspath, session, &buf, &ExtStat{}, false); err != nil {
 		if !errors.Is(err, io.EOF) {
-			WriteError500(w, r, err, AECtagsextract)
+			WriteError500(w, r, err, SEC_tags_extract)
 			return
 		}
 	}
@@ -301,16 +301,16 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		Space bool `json:"space" yaml:"space" xml:"space"`
 	}
 	if uid == 0 { // only authorized access allowed
-		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, AECnoauth)
+		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, SEC_noauth)
 		return
 	}
 	var acc *Profile
 	if acc = ProfileByID(aid); acc == nil {
-		WriteError400(w, r, ErrNoAcc, AECispathnoacc)
+		WriteError400(w, r, ErrNoAcc, SEC_ispath_noacc)
 		return
 	}
 	if uid != aid {
-		WriteError(w, r, http.StatusForbidden, ErrDeny, AECispathdeny)
+		WriteError(w, r, http.StatusForbidden, ErrDeny, SEC_ispath_deny)
 		return
 	}
 
@@ -319,7 +319,7 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 	if len(arg.Path) == 0 {
-		WriteError400(w, r, ErrArgNoPuid, AECispathnodata)
+		WriteError400(w, r, ErrArgNoPuid, SEC_ispath_nodata)
 		return
 	}
 

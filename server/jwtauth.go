@@ -130,29 +130,29 @@ func GetAuth(r *http.Request) (uid ID_t, aerr error) {
 		var ve jwt.ValidationError
 		if errors.As(err, &ve) {
 			if ve.Errors&jwt.ValidationErrorMalformed != 0 {
-				aerr = MakeAjaxErr(err, AECtokenmalform)
+				aerr = MakeAjaxErr(err, SEC_token_malform)
 				return
 			} else if ve.Errors&jwt.ValidationErrorSignatureInvalid != 0 {
-				aerr = MakeAjaxErr(err, AECtokennotsign)
+				aerr = MakeAjaxErr(err, SEC_token_notsign)
 				return
 			} else if ve.Errors&jwt.ValidationErrorExpired != 0 {
-				aerr = MakeAjaxErr(err, AECtokenexpired)
+				aerr = MakeAjaxErr(err, SEC_token_expired)
 				return
 			} else if ve.Errors&jwt.ValidationErrorNotValidYet != 0 {
-				aerr = MakeAjaxErr(err, AECtokennotyet)
+				aerr = MakeAjaxErr(err, SEC_token_notyet)
 				return
 			} else {
-				aerr = MakeAjaxErr(err, AECtokenerror)
+				aerr = MakeAjaxErr(err, SEC_token_error)
 				return
 			}
 		} else if err != nil {
-			aerr = MakeAjaxErr(err, AECtokenerror)
+			aerr = MakeAjaxErr(err, SEC_token_error)
 			return
 		} else if !bearer {
-			aerr = MakeAjaxErr(ErrNoBearer, AECtokenless)
+			aerr = MakeAjaxErr(ErrNoBearer, SEC_token_less)
 			return
 		} else if ProfileByID(claims.UID) == nil {
-			aerr = MakeAjaxErr(ErrNoAcc, AECtokennoacc)
+			aerr = MakeAjaxErr(ErrNoAcc, SEC_token_noacc)
 			return
 		}
 		uid = claims.UID
@@ -168,7 +168,7 @@ func GetAuth(r *http.Request) (uid ID_t, aerr error) {
 		return // no authorization
 	}
 	if ProfileByID(aid) == nil {
-		aerr = MakeAjaxErr(ErrNoAcc, AECtokennoaid)
+		aerr = MakeAjaxErr(ErrNoAcc, SEC_token_noaid)
 		return
 	}
 	var ip = net.ParseIP(StripPort(r.RemoteAddr))
@@ -201,7 +201,7 @@ func AuthWrap(fn AuthHandlerFunc) http.HandlerFunc {
 		}
 		var aid ID_t
 		if aid, err = ParseID(vars["aid"]); err != nil {
-			WriteError400(w, r, err, AECnoaid)
+			WriteError400(w, r, err, SEC_noaid)
 			return
 		}
 		var uid ID_t

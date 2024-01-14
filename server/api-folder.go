@@ -48,7 +48,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	var acc *Profile
 	if acc = ProfileByID(aid); acc == nil {
-		WriteError400(w, r, ErrNoAcc, AECfoldernoacc)
+		WriteError400(w, r, ErrNoAcc, SEC_folder_noacc)
 		return
 	}
 
@@ -57,7 +57,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 	if len(arg.Path) == 0 {
-		WriteError400(w, r, ErrArgNoPuid, AECfoldernodata)
+		WriteError400(w, r, ErrArgNoPuid, SEC_folder_nodata)
 		return
 	}
 
@@ -67,16 +67,16 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var syspath string
 	var puid Puid_t
 	if syspath, puid, err = UnfoldPath(session, ToSlash(arg.Path)); err != nil {
-		WriteError400(w, r, err, AECfolderbadpath)
+		WriteError400(w, r, err, SEC_folder_badpath)
 		return
 	}
 
 	if acc.IsHidden(syspath) {
-		WriteError(w, r, http.StatusForbidden, ErrHidden, AECfolderhidden)
+		WriteError(w, r, http.StatusForbidden, ErrHidden, SEC_folder_hidden)
 		return
 	}
 	if !acc.PathAccess(syspath, uid == aid) {
-		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECfolderaccess)
+		WriteError(w, r, http.StatusForbidden, ErrNoAccess, SEC_folder_access)
 		return
 	}
 
@@ -103,7 +103,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var t = time.Now()
 	if puid < PUIDcache {
 		if uid != aid && !acc.IsShared(syspath) {
-			WriteError(w, r, http.StatusForbidden, ErrNotShared, AECfoldernoshr)
+			WriteError(w, r, http.StatusForbidden, ErrNotShared, SEC_folder_noshr)
 			return
 		}
 		switch puid {
@@ -122,7 +122,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 			var dp DirProp
 			if ret.List, dp, err = ScanFileNameList(acc, session, vfiles, arg.Scan); err != nil {
-				WriteError500(w, r, err, AECfolderhome)
+				WriteError500(w, r, err, SEC_folder_home)
 				return
 			}
 
@@ -132,22 +132,22 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			})
 		case PUIDlocal:
 			if ret.List, err = acc.ScanLocal(session, arg.Scan); err != nil {
-				WriteError500(w, r, err, AECfolderdrives)
+				WriteError500(w, r, err, SEC_folder_drives)
 				return
 			}
 		case PUIDremote:
 			if ret.List, err = acc.ScanRemote(session, arg.Scan); err != nil {
-				WriteError500(w, r, err, AECfolderremote)
+				WriteError500(w, r, err, SEC_folder_remote)
 				return
 			}
 		case PUIDshares:
 			if ret.List, err = acc.ScanShares(session, arg.Scan); err != nil {
-				WriteError500(w, r, err, AECfoldershares)
+				WriteError500(w, r, err, SEC_folder_shares)
 				return
 			}
 		case PUIDmedia, PUIDvideo, PUIDaudio, PUIDimage, PUIDbooks, PUIDtexts:
 			if ret.List, err = ScanCat(acc, session, puid, catcolumn[puid], 0.5, arg.Scan); err != nil {
-				WriteError500(w, r, err, AECfoldermedia)
+				WriteError500(w, r, err, SEC_folder_media)
 				return
 			}
 		case PUIDmap:
@@ -167,18 +167,18 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 				return Cfg.RangeSearchAny <= 0 || n < Cfg.RangeSearchAny
 			})
 			if ret.List, _, err = ScanFileInfoList(acc, session, vfiles, vpaths, arg.Scan); err != nil {
-				WriteError500(w, r, err, AECfoldermap)
+				WriteError500(w, r, err, SEC_folder_map)
 				return
 			}
 		default:
-			WriteError(w, r, http.StatusNotFound, ErrNoCat, AECfoldernocat)
+			WriteError(w, r, http.StatusNotFound, ErrNoCat, SEC_folder_nocat)
 			return
 		}
 		ret.Static = true
 	} else {
 		var fi fs.FileInfo
 		if fi, err = JP.Stat(syspath); err != nil {
-			WriteError500(w, r, err, AECfolderstat)
+			WriteError500(w, r, err, SEC_folder_stat)
 			return
 		}
 		ret.Static = IsStatic(fi) || !fi.IsDir()
@@ -191,16 +191,16 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		if fi.IsDir() || IsTypeISO(ext) {
 			if ret.List, ret.Skipped, err = ScanDir(acc, session, syspath, uid == aid, arg.Scan); err != nil && len(ret.List) == 0 {
 				if errors.Is(err, fs.ErrNotExist) {
-					WriteError(w, r, http.StatusNotFound, err, AECfolderabsent)
+					WriteError(w, r, http.StatusNotFound, err, SEC_folder_absent)
 				} else {
-					WriteError500(w, r, err, AECfolderfail)
+					WriteError500(w, r, err, SEC_folder_fail)
 				}
 				return
 			}
 		} else if IsTypePlaylist(ext) {
 			var file fs.File
 			if file, err = JP.Open(syspath); err != nil {
-				WriteError500(w, r, err, AECfolderopen)
+				WriteError500(w, r, err, SEC_folder_open)
 				return
 			}
 			defer file.Close()
@@ -210,31 +210,31 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			switch ext {
 			case ".m3u", ".m3u8":
 				if _, err = pl.ReadM3U(file); err != nil {
-					WriteError(w, r, http.StatusUnsupportedMediaType, err, AECfolderm3u)
+					WriteError(w, r, http.StatusUnsupportedMediaType, err, SEC_folder_m3u)
 					return
 				}
 			case ".wpl":
 				if _, err = pl.ReadWPL(file); err != nil {
-					WriteError(w, r, http.StatusUnsupportedMediaType, err, AECfolderwpl)
+					WriteError(w, r, http.StatusUnsupportedMediaType, err, SEC_folder_wpl)
 					return
 				}
 			case ".pls":
 				if _, err = pl.ReadPLS(file); err != nil {
-					WriteError(w, r, http.StatusUnsupportedMediaType, err, AECfolderpls)
+					WriteError(w, r, http.StatusUnsupportedMediaType, err, SEC_folder_pls)
 					return
 				}
 			case ".asx":
 				if _, err = pl.ReadASX(file); err != nil {
-					WriteError(w, r, http.StatusUnsupportedMediaType, err, AECfolderasx)
+					WriteError(w, r, http.StatusUnsupportedMediaType, err, SEC_folder_asx)
 					return
 				}
 			case ".xspf":
 				if _, err = pl.ReadXSPF(file); err != nil {
-					WriteError(w, r, http.StatusUnsupportedMediaType, err, AECfolderxspf)
+					WriteError(w, r, http.StatusUnsupportedMediaType, err, SEC_folder_xspf)
 					return
 				}
 			default:
-				WriteError(w, r, http.StatusUnsupportedMediaType, ErrNotPlay, AECfolderformat)
+				WriteError(w, r, http.StatusUnsupportedMediaType, ErrNotPlay, SEC_folder_format)
 				return
 			}
 
@@ -250,7 +250,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 				}
 			}
 			if ret.List, _, err = ScanFileInfoList(acc, session, vfiles, vpaths, arg.Scan); err != nil {
-				WriteError500(w, r, err, AECfoldertracks)
+				WriteError500(w, r, err, SEC_folder_tracks)
 				return
 			}
 			ret.Skipped = len(pl.Tracks) - len(ret.List)

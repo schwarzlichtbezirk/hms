@@ -31,16 +31,16 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		FP    FileKit `json:"fp" yaml:"fp" xml:"fp"`
 	}
 	if uid == 0 { // only authorized access allowed
-		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, AECnoauth)
+		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, SEC_noauth)
 		return
 	}
 	var acc *Profile
 	if acc = ProfileByID(aid); acc == nil {
-		WriteError400(w, r, ErrNoAcc, AECdrvaddnoacc)
+		WriteError400(w, r, ErrNoAcc, SEC_drvadd_noacc)
 		return
 	}
 	if uid != aid {
-		WriteError(w, r, http.StatusForbidden, ErrDeny, AECdrvadddeny)
+		WriteError(w, r, http.StatusForbidden, ErrDeny, SEC_drvadd_deny)
 		return
 	}
 
@@ -49,7 +49,7 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 	if len(arg.Path) == 0 {
-		WriteError400(w, r, ErrArgNoPuid, AECdrvaddnodata)
+		WriteError400(w, r, ErrArgNoPuid, SEC_drvadd_nodata)
 		return
 	}
 
@@ -69,17 +69,17 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		puid = PathStoreCache(session, syspath)
 	} else {
 		if syspath, puid, err = UnfoldPath(session, fpath); err != nil {
-			WriteError400(w, r, err, AECdrvaddbadpath)
+			WriteError400(w, r, err, SEC_drvadd_badpath)
 			return
 		}
 		if fi, err = JP.Stat(syspath); err != nil {
-			WriteError(w, r, http.StatusNotFound, http.ErrMissingFile, AECdrvaddmiss)
+			WriteError(w, r, http.StatusNotFound, http.ErrMissingFile, SEC_drvadd_miss)
 			return
 		}
 	}
 
 	if acc.IsHidden(syspath) {
-		WriteError(w, r, http.StatusForbidden, ErrHidden, AECdrvaddhidden)
+		WriteError(w, r, http.StatusForbidden, ErrHidden, SEC_drvadd_hidden)
 		return
 	}
 
@@ -122,16 +122,16 @@ func drvdelAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		Deleted bool `json:"deleted" yaml:"deleted" xml:"deleted"`
 	}
 	if uid == 0 { // only authorized access allowed
-		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, AECnoauth)
+		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, SEC_noauth)
 		return
 	}
 	var acc *Profile
 	if acc = ProfileByID(aid); acc == nil {
-		WriteError400(w, r, ErrNoAcc, AECdrvdelnoacc)
+		WriteError400(w, r, ErrNoAcc, SEC_drvdel_noacc)
 		return
 	}
 	if uid != aid {
-		WriteError(w, r, http.StatusForbidden, ErrDeny, AECdrvdeldeny)
+		WriteError(w, r, http.StatusForbidden, ErrDeny, SEC_drvdel_deny)
 		return
 	}
 
@@ -140,7 +140,7 @@ func drvdelAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 	if arg.PUID == 0 {
-		WriteError400(w, r, ErrArgNoPuid, AECdrvdelnodata)
+		WriteError400(w, r, ErrArgNoPuid, SEC_drvdel_nodata)
 		return
 	}
 
@@ -149,7 +149,7 @@ func drvdelAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	var syspath, ok = PathStorePath(session, arg.PUID)
 	if !ok {
-		WriteError(w, r, http.StatusNotFound, ErrNoPath, AECdrvdelnopath)
+		WriteError(w, r, http.StatusNotFound, ErrNoPath, SEC_drvdel_nopath)
 	}
 
 	ret.Deleted = acc.DelLocal(syspath)
@@ -176,16 +176,16 @@ func cldaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		FP    FileKit `json:"fp" yaml:"fp" xml:"fp"`
 	}
 	if uid == 0 { // only authorized access allowed
-		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, AECnoauth)
+		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, SEC_noauth)
 		return
 	}
 	var acc *Profile
 	if acc = ProfileByID(aid); acc == nil {
-		WriteError400(w, r, ErrNoAcc, AECcldaddnoacc)
+		WriteError400(w, r, ErrNoAcc, SEC_cldadd_noacc)
 		return
 	}
 	if uid != aid {
-		WriteError(w, r, http.StatusForbidden, ErrDeny, AECdrvadddeny)
+		WriteError(w, r, http.StatusForbidden, ErrDeny, SEC_drvadd_deny)
 		return
 	}
 
@@ -194,13 +194,13 @@ func cldaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 	if len(arg.Host) == 0 {
-		WriteError400(w, r, ErrArgNoPuid, AECcldaddnodata)
+		WriteError400(w, r, ErrArgNoPuid, SEC_cldadd_nodata)
 		return
 	}
 
 	var argurl *url.URL
 	if argurl, err = url.Parse(arg.Host); err != nil {
-		WriteError400(w, r, err, AECcldaddbadhost)
+		WriteError400(w, r, err, SEC_cldadd_badhost)
 		return
 	}
 	if argurl.Scheme == "" {
@@ -230,18 +230,18 @@ func cldaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	case "ftp":
 		var conn *ftp.ServerConn
 		if conn, err = ftp.Dial(argurl.Host, ftp.DialWithTimeout(Cfg.DialTimeout)); err != nil {
-			WriteError(w, r, http.StatusNotFound, err, AECcldaddftpdial)
+			WriteError(w, r, http.StatusNotFound, err, SEC_cldadd_ftpdial)
 			return
 		}
 		defer conn.Quit()
 		if err = conn.Login(arg.Login, arg.Password); err != nil {
-			WriteError(w, r, http.StatusNotFound, err, AECcldaddftpcred)
+			WriteError(w, r, http.StatusNotFound, err, SEC_cldadd_ftpcred)
 			return
 		}
 
 		var root *ftp.Entry
 		if root, err = conn.GetEntry(""); err != nil {
-			WriteError(w, r, http.StatusNotFound, err, AECcldaddftproot)
+			WriteError(w, r, http.StatusNotFound, err, SEC_cldadd_ftproot)
 			return
 		}
 		size, mtime = int64(root.Size), root.Time
@@ -256,27 +256,27 @@ func cldaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 		}
 		if conn, err = ssh.Dial("tcp", argurl.Host, config); err != nil {
-			WriteError(w, r, http.StatusNotFound, err, AECcldaddsftpdial)
+			WriteError(w, r, http.StatusNotFound, err, SEC_cldadd_sftpdial)
 			return
 		}
 		defer conn.Close()
 
 		var client *sftp.Client
 		if client, err = sftp.NewClient(conn); err != nil {
-			WriteError(w, r, http.StatusNotFound, err, AECcldaddsftpcli)
+			WriteError(w, r, http.StatusNotFound, err, SEC_cldadd_sftpcli)
 			return
 		}
 		defer client.Close()
 
 		var pwd string
 		if pwd, err = client.Getwd(); err != nil {
-			WriteError(w, r, http.StatusNotFound, err, AECcldaddsftppwd)
+			WriteError(w, r, http.StatusNotFound, err, SEC_cldadd_sftppwd)
 			return
 		}
 
 		var root fs.FileInfo
 		if root, err = client.Lstat(path.Join(pwd, "/")); err != nil {
-			WriteError(w, r, http.StatusNotFound, err, AECcldaddsftproot)
+			WriteError(w, r, http.StatusNotFound, err, SEC_cldadd_sftproot)
 			return
 		}
 		size, mtime = int64(root.Size()), root.ModTime()
@@ -285,7 +285,7 @@ func cldaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		var client = gowebdav.NewClient(surl, "", "") // user & password gets from URL
 		var fi fs.FileInfo
 		if fi, err = client.Stat(""); err != nil || !fi.IsDir() {
-			WriteError(w, r, http.StatusNotFound, err, AECcldadddavdial)
+			WriteError(w, r, http.StatusNotFound, err, SEC_cldadd_davdial)
 			return
 		}
 		size, mtime = 0, time.Unix(0, 0) // DAV does not provides info for folders
@@ -321,16 +321,16 @@ func clddelAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		Deleted bool `json:"deleted" yaml:"deleted" xml:"deleted"`
 	}
 	if uid == 0 { // only authorized access allowed
-		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, AECnoauth)
+		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, SEC_noauth)
 		return
 	}
 	var acc *Profile
 	if acc = ProfileByID(aid); acc == nil {
-		WriteError400(w, r, ErrNoAcc, AECclddelnoacc)
+		WriteError400(w, r, ErrNoAcc, SEC_clddel_noacc)
 		return
 	}
 	if uid != aid {
-		WriteError(w, r, http.StatusForbidden, ErrDeny, AECclddeldeny)
+		WriteError(w, r, http.StatusForbidden, ErrDeny, SEC_clddel_deny)
 		return
 	}
 
@@ -339,7 +339,7 @@ func clddelAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 	if arg.PUID == 0 {
-		WriteError400(w, r, ErrArgNoPuid, AECclddelnodata)
+		WriteError400(w, r, ErrArgNoPuid, SEC_clddel_nodata)
 		return
 	}
 
@@ -348,7 +348,7 @@ func clddelAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	var syspath, ok = PathStorePath(session, arg.PUID)
 	if !ok {
-		WriteError(w, r, http.StatusNotFound, ErrNoPath, AECclddelnopath)
+		WriteError(w, r, http.StatusNotFound, ErrNoPath, SEC_clddel_nopath)
 	}
 
 	ret.Deleted = acc.DelCloud(syspath)
@@ -369,16 +369,16 @@ func shraddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		Shared bool `json:"shared" yaml:"shared" xml:"shared"`
 	}
 	if uid == 0 { // only authorized access allowed
-		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, AECnoauth)
+		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, SEC_noauth)
 		return
 	}
 	var acc *Profile
 	if acc = ProfileByID(aid); acc == nil {
-		WriteError400(w, r, ErrNoAcc, AECshraddnoacc)
+		WriteError400(w, r, ErrNoAcc, SEC_shradd_noacc)
 		return
 	}
 	if uid != aid {
-		WriteError(w, r, http.StatusForbidden, ErrDeny, AECshradddeny)
+		WriteError(w, r, http.StatusForbidden, ErrDeny, SEC_shradd_deny)
 		return
 	}
 
@@ -387,7 +387,7 @@ func shraddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 	if len(arg.Path) == 0 {
-		WriteError400(w, r, ErrArgNoPuid, AECshraddnodata)
+		WriteError400(w, r, ErrArgNoPuid, SEC_shradd_nodata)
 		return
 	}
 
@@ -396,10 +396,10 @@ func shraddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	var syspath string
 	if syspath, _, err = UnfoldPath(session, ToSlash(arg.Path)); err != nil {
-		WriteError(w, r, http.StatusNotFound, err, AECshraddnopath)
+		WriteError(w, r, http.StatusNotFound, err, SEC_shradd_nopath)
 	}
 	if !acc.PathAdmin(syspath) {
-		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECshraddaccess)
+		WriteError(w, r, http.StatusForbidden, ErrNoAccess, SEC_shradd_access)
 		return
 	}
 
@@ -423,16 +423,16 @@ func shrdelAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		Deleted bool `json:"deleted" yaml:"deleted" xml:"deleted"`
 	}
 	if uid == 0 { // only authorized access allowed
-		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, AECnoauth)
+		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, SEC_noauth)
 		return
 	}
 	var acc *Profile
 	if acc = ProfileByID(aid); acc == nil {
-		WriteError400(w, r, ErrNoAcc, AECshrdelnoacc)
+		WriteError400(w, r, ErrNoAcc, SEC_shrdel_noacc)
 		return
 	}
 	if uid != aid {
-		WriteError(w, r, http.StatusForbidden, ErrDeny, AECshrdeldeny)
+		WriteError(w, r, http.StatusForbidden, ErrDeny, SEC_shrdel_deny)
 		return
 	}
 
@@ -441,7 +441,7 @@ func shrdelAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 	if len(arg.Path) == 0 {
-		WriteError400(w, r, ErrArgNoPuid, AECshrdelnodata)
+		WriteError400(w, r, ErrArgNoPuid, SEC_shrdel_nodata)
 		return
 	}
 
@@ -450,10 +450,10 @@ func shrdelAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	var syspath string
 	if syspath, _, err = UnfoldPath(session, ToSlash(arg.Path)); err != nil {
-		WriteError(w, r, http.StatusNotFound, ErrNoPath, AECshrdelnopath)
+		WriteError(w, r, http.StatusNotFound, ErrNoPath, SEC_shrdel_nopath)
 	}
 	if !acc.PathAdmin(syspath) {
-		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECshrdelaccess)
+		WriteError(w, r, http.StatusForbidden, ErrNoAccess, SEC_shrdel_access)
 		return
 	}
 

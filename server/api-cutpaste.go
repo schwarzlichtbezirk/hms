@@ -28,7 +28,7 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	}
 	var isret bool
 	if uid == 0 { // only authorized access allowed
-		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, AECnoauth)
+		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, SEC_noauth)
 		return
 	}
 
@@ -37,7 +37,7 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 	if arg.Src == "" || arg.Dst == "" {
-		WriteError400(w, r, ErrArgNoPuid, AECedtcopynodata)
+		WriteError400(w, r, ErrArgNoPuid, SEC_edtcopy_nodata)
 		return
 	}
 
@@ -46,22 +46,22 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	var prf *Profile
 	if prf = ProfileByID(aid); prf == nil {
-		WriteError400(w, r, ErrNoAcc, AECedtcopynoacc)
+		WriteError400(w, r, ErrNoAcc, SEC_edtcopy_noacc)
 		return
 	}
 	if uid != aid {
-		WriteError(w, r, http.StatusForbidden, ErrDeny, AECedtcopydeny)
+		WriteError(w, r, http.StatusForbidden, ErrDeny, SEC_edtcopy_deny)
 		return
 	}
 
 	// get source and destination filenames
 	var srcpath, dstpath string
 	if srcpath, _, err = UnfoldPath(session, arg.Src); err != nil {
-		WriteError(w, r, http.StatusNotFound, err, AECedtcopynopath)
+		WriteError(w, r, http.StatusNotFound, err, SEC_edtcopy_nopath)
 		return
 	}
 	if dstpath, _, err = UnfoldPath(session, arg.Dst); err != nil {
-		WriteError(w, r, http.StatusNotFound, err, AECedtcopynodest)
+		WriteError(w, r, http.StatusNotFound, err, SEC_edtcopy_nodest)
 		return
 	}
 	dstpath = JoinPath(dstpath, path.Base(srcpath))
@@ -82,7 +82,7 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 				dstpath = fmt.Sprintf("%s (%d)%s", org, i, ext)
 				if i > 100 {
 					err = ErrFileOver
-					WriteError500(w, r, err, AECedtcopyover)
+					WriteError500(w, r, err, SEC_edtcopy_over)
 					return
 				}
 			}
@@ -93,7 +93,7 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		var fi fs.FileInfo
 		// open source file
 		if src, err = JP.Open(srcpath); err != nil {
-			WriteError500(w, r, err, AECedtcopyopsrc)
+			WriteError500(w, r, err, SEC_edtcopy_opsrc)
 			return
 		}
 		defer func() {
@@ -104,13 +104,13 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		}()
 
 		if fi, err = src.Stat(); err != nil {
-			WriteError500(w, r, err, AECedtcopystatsrc)
+			WriteError500(w, r, err, SEC_edtcopy_statsrc)
 			return
 		}
 		if fi.IsDir() {
 			// create destination dir
 			if err = os.Mkdir(dstpath, 0644); err != nil && !errors.Is(err, fs.ErrExist) {
-				WriteError500(w, r, err, AECedtcopymkdir)
+				WriteError500(w, r, err, SEC_edtcopy_mkdir)
 				return
 			}
 
@@ -123,7 +123,7 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			// copy dir content
 			var files []fs.DirEntry
 			if files, err = JP.ReadDir(srcpath); err != nil {
-				WriteError500(w, r, err, AECedtcopyrd)
+				WriteError500(w, r, err, SEC_edtcopy_rd)
 				return
 			}
 			for _, file := range files {
@@ -135,14 +135,14 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		} else {
 			// create destination file
 			if dst, err = os.Create(dstpath); err != nil {
-				WriteError500(w, r, err, AECedtcopyopdst)
+				WriteError500(w, r, err, SEC_edtcopy_opdst)
 				return
 			}
 			defer dst.Close()
 
 			// copy file content
 			if _, err = io.Copy(dst, src); err != nil {
-				WriteError500(w, r, err, AECedtcopycopy)
+				WriteError500(w, r, err, SEC_edtcopy_copy)
 				return
 			}
 
@@ -177,7 +177,7 @@ func edtrenameAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		Prop FileKit `json:"prop" yaml:"prop" xml:"prop"`
 	}
 	if uid == 0 { // only authorized access allowed
-		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, AECnoauth)
+		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, SEC_noauth)
 		return
 	}
 
@@ -186,7 +186,7 @@ func edtrenameAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 	if arg.Src == "" || arg.Dst == "" {
-		WriteError400(w, r, ErrArgNoPuid, AECedtrennodata)
+		WriteError400(w, r, ErrArgNoPuid, SEC_edtren_nodata)
 		return
 	}
 
@@ -195,22 +195,22 @@ func edtrenameAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	var prf *Profile
 	if prf = ProfileByID(aid); prf == nil {
-		WriteError400(w, r, ErrNoAcc, AECedtrennoacc)
+		WriteError400(w, r, ErrNoAcc, SEC_edtren_noacc)
 		return
 	}
 	if uid != aid {
-		WriteError(w, r, http.StatusForbidden, ErrDeny, AECedtrendeny)
+		WriteError(w, r, http.StatusForbidden, ErrDeny, SEC_edtren_deny)
 		return
 	}
 
 	// get source and destination filenames
 	var srcpath, dstpath string
 	if srcpath, _, err = UnfoldPath(session, arg.Src); err != nil {
-		WriteError(w, r, http.StatusNotFound, err, AECedtrennopath)
+		WriteError(w, r, http.StatusNotFound, err, SEC_edtren_nopath)
 		return
 	}
 	if dstpath, _, err = UnfoldPath(session, arg.Dst); err != nil {
-		WriteError(w, r, http.StatusNotFound, err, AECedtrennodest)
+		WriteError(w, r, http.StatusNotFound, err, SEC_edtren_nodest)
 		return
 	}
 	dstpath = JoinPath(dstpath, path.Base(srcpath))
@@ -228,7 +228,7 @@ func edtrenameAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			dstpath = fmt.Sprintf("%s (%d)%s", org, i, ext)
 			if i > 100 {
 				err = ErrFileOver
-				WriteError500(w, r, err, AECedtrenover)
+				WriteError500(w, r, err, SEC_edtren_over)
 				return
 			}
 		}
@@ -236,14 +236,14 @@ func edtrenameAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	// rename destination file
 	if err = os.Rename(srcpath, dstpath); err != nil && !errors.Is(err, fs.ErrExist) {
-		WriteError500(w, r, err, AECedtrenmove)
+		WriteError500(w, r, err, SEC_edtren_move)
 		return
 	}
 
 	// get returned file properties at last
 	var fi fs.FileInfo
 	if fi, err = JP.Stat(dstpath); err != nil {
-		WriteError500(w, r, err, AECedtrenstat)
+		WriteError500(w, r, err, SEC_edtren_stat)
 		return
 	}
 	ret.Prop.PuidProp.Setup(session, dstpath)
@@ -267,7 +267,7 @@ func edtdeleteAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		Src string `json:"src" yaml:"src" xml:"src"`
 	}
 	if uid == 0 { // only authorized access allowed
-		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, AECnoauth)
+		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, SEC_noauth)
 		return
 	}
 
@@ -276,7 +276,7 @@ func edtdeleteAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 	if arg.Src == "" {
-		WriteError400(w, r, ErrArgNoPuid, AECedtdelnodata)
+		WriteError400(w, r, ErrArgNoPuid, SEC_edtdel_nodata)
 		return
 	}
 
@@ -285,22 +285,22 @@ func edtdeleteAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	var prf *Profile
 	if prf = ProfileByID(aid); prf == nil {
-		WriteError400(w, r, ErrNoAcc, AECedtdelnoacc)
+		WriteError400(w, r, ErrNoAcc, SEC_edtdel_noacc)
 		return
 	}
 	if uid != aid {
-		WriteError(w, r, http.StatusForbidden, ErrDeny, AECedtdeldeny)
+		WriteError(w, r, http.StatusForbidden, ErrDeny, SEC_edtdel_deny)
 		return
 	}
 
 	var srcpath string
 	if srcpath, _, err = UnfoldPath(session, arg.Src); err != nil {
-		WriteError(w, r, http.StatusNotFound, err, AECedtdelnopath)
+		WriteError(w, r, http.StatusNotFound, err, SEC_edtdel_nopath)
 		return
 	}
 
 	if err = os.RemoveAll(srcpath); err != nil {
-		WriteError500(w, r, err, AECedtdelremove)
+		WriteError500(w, r, err, SEC_edtdel_remove)
 		return
 	}
 

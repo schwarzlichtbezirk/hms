@@ -20,7 +20,7 @@ func pubkeyAPI(w http.ResponseWriter, r *http.Request) {
 		Key [32]byte `json:"key" yaml:"key,flow" xml:"key"`
 	}
 	if _, err = rand.Read(ret.Key[:]); err != nil {
-		WriteError500(w, r, err, AECpubkeyrand)
+		WriteError500(w, r, err, SEC_pubkey_rand)
 		return
 	}
 
@@ -50,18 +50,18 @@ func signinAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if arg.Name == "" || bytes.Equal(arg.PubK[:], zero32[:]) || bytes.Equal(arg.Hash[:], zero32[:]) {
-		WriteError400(w, r, ErrNoData, AECsigninnodata)
+		WriteError400(w, r, ErrNoData, SEC_signin_nodata)
 		return
 	}
 
 	var prf *Profile
 	if prf = ProfileByUser(arg.Name); prf == nil {
-		WriteError(w, r, http.StatusForbidden, ErrNoAcc, AECsigninnoacc)
+		WriteError(w, r, http.StatusForbidden, ErrNoAcc, SEC_signin_noacc)
 		return
 	}
 
 	if _, ok := pubkcache.Get(arg.PubK); !ok {
-		WriteError(w, r, http.StatusForbidden, ErrNoPubKey, AECsigninpkey)
+		WriteError(w, r, http.StatusForbidden, ErrNoPubKey, SEC_signin_pkey)
 		return
 	}
 
@@ -69,7 +69,7 @@ func signinAPI(w http.ResponseWriter, r *http.Request) {
 	mac.Write(S2B(prf.Password))
 	var cmp = mac.Sum(nil)
 	if !hmac.Equal(arg.Hash[:], cmp) {
-		WriteError(w, r, http.StatusForbidden, ErrBadPass, AECsignindeny)
+		WriteError(w, r, http.StatusForbidden, ErrBadPass, SEC_signin_deny)
 		return
 	}
 
@@ -90,7 +90,7 @@ func refrshAPI(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if len(arg.Refrsh) == 0 {
-		WriteError400(w, r, ErrNoData, AECrefrshnodata)
+		WriteError400(w, r, ErrNoData, SEC_refrsh_nodata)
 		return
 	}
 
@@ -98,7 +98,7 @@ func refrshAPI(w http.ResponseWriter, r *http.Request) {
 	if _, err = jwt.ParseWithClaims(arg.Refrsh, &claims, func(token *jwt.Token) (any, error) {
 		return S2B(Cfg.RefreshKey), nil
 	}); err != nil {
-		WriteError400(w, r, err, AECrefrshparse)
+		WriteError400(w, r, err, SEC_refrsh_parse)
 		return
 	}
 

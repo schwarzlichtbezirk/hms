@@ -69,12 +69,12 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		HasHome bool `json:"hashome" yaml:"hashome" xml:"hashome,attr"`
 	}
 	if uid == 0 { // only authorized access allowed
-		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, AECnoauth)
+		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, SEC_noauth)
 		return
 	}
 	var acc *Profile
 	if acc = ProfileByID(aid); acc == nil {
-		WriteError400(w, r, ErrNoAcc, AECgpsrangenoacc)
+		WriteError400(w, r, ErrNoAcc, SEC_gpsrange_noacc)
 		return
 	}
 
@@ -86,21 +86,21 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		switch mp.Shape {
 		case Circle:
 			if len(mp.Coord) != 1 {
-				WriteError400(w, r, ErrShapeCirc, AECgpsrangeshpcirc)
+				WriteError400(w, r, ErrShapeCirc, SEC_gpsrange_shpcirc)
 				return
 			}
 		case Polygon:
 			if len(mp.Coord) < 3 {
-				WriteError400(w, r, ErrShapePoly, AECgpsrangeshppoly)
+				WriteError400(w, r, ErrShapePoly, SEC_gpsrange_shppoly)
 				return
 			}
 		case Rectangle:
 			if len(mp.Coord) != 4 {
-				WriteError400(w, r, ErrShapeRect, AECgpsrangeshprect)
+				WriteError400(w, r, ErrShapeRect, SEC_gpsrange_shprect)
 				return
 			}
 		default:
-			WriteError400(w, r, ErrShapeBad, AECgpsrangeshpbad)
+			WriteError400(w, r, ErrShapeBad, SEC_gpsrange_shpbad)
 			return
 		}
 	}
@@ -153,7 +153,7 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return arg.Limit == 0 || len(ret.List) < arg.Limit
 	})
 	if ret.List, _, err = ScanFileInfoList(acc, session, vfiles, vpaths, true); err != nil {
-		WriteError500(w, r, err, AECgpsrangelist)
+		WriteError500(w, r, err, SEC_gpsrange_list)
 		return
 	}
 
@@ -176,7 +176,7 @@ func gpsscanAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	var acc *Profile
 	if acc = ProfileByID(aid); acc == nil {
-		WriteError400(w, r, ErrNoAcc, AECgpsscannoacc)
+		WriteError400(w, r, ErrNoAcc, SEC_gpsscan_noacc)
 		return
 	}
 
@@ -185,7 +185,7 @@ func gpsscanAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 	if len(arg.List) == 0 {
-		WriteError400(w, r, ErrNoData, AECgpsscannodata)
+		WriteError400(w, r, ErrNoData, SEC_gpsscan_nodata)
 		return
 	}
 

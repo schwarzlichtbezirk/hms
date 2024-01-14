@@ -8,43 +8,7 @@ import (
 	jnt "github.com/schwarzlichtbezirk/joint"
 )
 
-type SubPool struct {
-	*jnt.JointPool
-	Dir string
-}
-
-func (sp *SubPool) Open(fpath string) (f fs.File, err error) {
-	var fullpath = jnt.JoinFast(sp.Dir, fpath)
-	return sp.JointPool.Open(fullpath)
-}
-
-func (sp *SubPool) Stat(fpath string) (fi fs.FileInfo, err error) {
-	var fullpath = jnt.JoinFast(sp.Dir, fpath)
-	return sp.JointPool.Stat(fullpath)
-}
-
-func (sp *SubPool) ReadDir(fpath string) (ret []fs.DirEntry, err error) {
-	var fullpath = jnt.JoinFast(sp.Dir, fpath)
-	return sp.JointPool.ReadDir(fullpath)
-}
-
-func (sp *SubPool) Sub(dir string) (fs.FS, error) {
-	var fulldir = jnt.JoinFast(sp.Dir, dir)
-	var fi, err = sp.JointPool.Stat(dir)
-	if err != nil {
-		return nil, err
-	}
-	if !fi.IsDir() && jnt.IsTypeIso(dir) {
-		return nil, fs.ErrNotExist
-	}
-	return &SubPool{
-		JointPool: sp.JointPool,
-		Dir:       fulldir,
-	}, nil
-}
-
-// var JP = jnt.NewSubPool(jnt.NewJointPool(), "")
-var JP = SubPool{jnt.NewJointPool(), ""}
+var JP = jnt.NewJointPool()
 
 type RFile = jnt.RFile
 

@@ -20,7 +20,7 @@ func pageHandler(pref, fname string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var content, ok = pagecache[pref+"/"+fname]
 		if !ok {
-			WriteError(w, r, http.StatusNotFound, fs.ErrNotExist, AECpageabsent)
+			WriteError(w, r, http.StatusNotFound, fs.ErrNotExist, SEC_page_absent)
 			return
 		}
 
@@ -35,7 +35,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	var acc *Profile
 	if acc = ProfileByID(aid); acc == nil {
-		WriteError(w, r, http.StatusNotFound, ErrNoAcc, AECmedianoacc)
+		WriteError(w, r, http.StatusNotFound, ErrNoAcc, SEC_media_noacc)
 		return
 	}
 
@@ -43,14 +43,14 @@ func fileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var media bool
 	if s := r.FormValue("media"); len(s) > 0 {
 		if media, err = strconv.ParseBool(s); err != nil {
-			WriteError400(w, r, ErrArgNoHD, AECmediabadmedia)
+			WriteError400(w, r, ErrArgNoHD, SEC_media_badmedia)
 			return
 		}
 	}
 	var hd bool
 	if s := r.FormValue("hd"); len(s) > 0 {
 		if hd, err = strconv.ParseBool(s); err != nil {
-			WriteError400(w, r, ErrArgNoHD, AECmediabadhd)
+			WriteError400(w, r, ErrArgNoHD, SEC_media_badhd)
 			return
 		}
 	}
@@ -67,16 +67,16 @@ func fileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var syspath string
 	var puid Puid_t
 	if syspath, puid, err = UnfoldPath(session, fpath); err != nil {
-		WriteError400(w, r, err, AECmediabadpath)
+		WriteError400(w, r, err, SEC_media_badpath)
 		return
 	}
 
 	if acc.IsHidden(syspath) {
-		WriteError(w, r, http.StatusForbidden, ErrHidden, AECmediahidden)
+		WriteError(w, r, http.StatusForbidden, ErrHidden, SEC_media_hidden)
 		return
 	}
 	if !acc.PathAccess(syspath, uid == aid) {
-		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECmediaaccess)
+		WriteError(w, r, http.StatusForbidden, ErrNoAccess, SEC_media_access)
 		return
 	}
 
@@ -85,16 +85,16 @@ func fileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		var md MediaData
 		if md, err = HdCacheGet(session, puid); err != nil {
 			if errors.Is(err, fs.ErrNotExist) {
-				WriteError(w, r, http.StatusGone, err, AECmediahdgone)
+				WriteError(w, r, http.StatusGone, err, SEC_media_hdgone)
 				return
 			}
 			if !errors.Is(err, ErrNotHD) {
-				WriteError500(w, r, err, AECmediahdfail)
+				WriteError500(w, r, err, SEC_media_hdfail)
 				return
 			}
 		} else {
 			if md.Mime == MimeNil {
-				WriteError500(w, r, ErrBadMedia, AECmediahdnocnt)
+				WriteError500(w, r, ErrBadMedia, SEC_media_hdnocnt)
 				return
 			}
 
@@ -118,16 +118,16 @@ func fileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		var md MediaData
 		if md, err = MediaCacheGet(session, puid); err != nil {
 			if errors.Is(err, fs.ErrNotExist) {
-				WriteError(w, r, http.StatusGone, err, AECmediamedgone)
+				WriteError(w, r, http.StatusGone, err, SEC_media_medgone)
 				return
 			}
 			if !errors.Is(err, ErrUncacheable) {
-				WriteError(w, r, http.StatusNotFound, err, AECmediamedfail)
+				WriteError(w, r, http.StatusNotFound, err, SEC_media_medfail)
 				return
 			}
 		} else {
 			if md.Mime == MimeNil {
-				WriteError500(w, r, ErrBadMedia, AECmediamednocnt)
+				WriteError500(w, r, ErrBadMedia, SEC_media_mednocnt)
 				return
 			}
 
@@ -168,10 +168,10 @@ func fileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			}
 		}
 		if errors.Is(err, fs.ErrNotExist) {
-			WriteError(w, r, http.StatusGone, err, AECmediafilegone)
+			WriteError(w, r, http.StatusGone, err, SEC_media_filegone)
 			return
 		}
-		WriteError500(w, r, err, AECmediafileopen)
+		WriteError500(w, r, err, SEC_media_fileopen)
 		return
 	}
 	defer content.Close()
@@ -195,7 +195,7 @@ func etmbHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	var acc *Profile
 	if acc = ProfileByID(aid); acc == nil {
-		WriteError(w, r, http.StatusNotFound, ErrNoAcc, AECetmbnoacc)
+		WriteError(w, r, http.StatusNotFound, ErrNoAcc, SEC_etmb_noacc)
 		return
 	}
 
@@ -203,7 +203,7 @@ func etmbHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var vars = mux.Vars(r)
 	var puid Puid_t
 	if err = puid.Set(vars["puid"]); err != nil {
-		WriteError400(w, r, err, AECetmbnopuid)
+		WriteError400(w, r, err, SEC_etmb_nopuid)
 		return
 	}
 
@@ -212,26 +212,26 @@ func etmbHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	var syspath, ok = PathStorePath(session, puid)
 	if !ok {
-		WriteError(w, r, http.StatusNotFound, ErrNoPath, AECetmbnopath)
+		WriteError(w, r, http.StatusNotFound, ErrNoPath, SEC_etmb_nopath)
 		return
 	}
 
 	if acc.IsHidden(syspath) {
-		WriteError(w, r, http.StatusForbidden, ErrHidden, AECetmbhidden)
+		WriteError(w, r, http.StatusForbidden, ErrHidden, SEC_etmb_hidden)
 		return
 	}
 	if !acc.PathAccess(syspath, uid == aid) {
-		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECetmbaccess)
+		WriteError(w, r, http.StatusForbidden, ErrNoAccess, SEC_etmb_access)
 		return
 	}
 
 	var md MediaData
 	if md, err = ExtractThmub(session, syspath); err != nil {
 		if errors.Is(err, ErrNoThumb) {
-			WriteError(w, r, http.StatusNoContent, err, AECetmbnotmb)
+			WriteError(w, r, http.StatusNoContent, err, SEC_etmb_notmb)
 			return
 		} else {
-			WriteError500(w, r, err, AECetmbbadcnt)
+			WriteError500(w, r, err, SEC_etmb_badcnt)
 			return
 		}
 	}
@@ -245,7 +245,7 @@ func mtmbHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	var acc *Profile
 	if acc = ProfileByID(aid); acc == nil {
-		WriteError(w, r, http.StatusNotFound, ErrNoAcc, AECmtmbnoacc)
+		WriteError(w, r, http.StatusNotFound, ErrNoAcc, SEC_mtmb_noacc)
 		return
 	}
 
@@ -253,7 +253,7 @@ func mtmbHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var vars = mux.Vars(r)
 	var puid Puid_t
 	if err = puid.Set(vars["puid"]); err != nil {
-		WriteError400(w, r, err, AECmtmbnopuid)
+		WriteError400(w, r, err, SEC_mtmb_nopuid)
 		return
 	}
 
@@ -262,16 +262,16 @@ func mtmbHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	var syspath, ok = PathStorePath(session, puid)
 	if !ok {
-		WriteError(w, r, http.StatusNotFound, ErrNoPath, AECmtmbnopath)
+		WriteError(w, r, http.StatusNotFound, ErrNoPath, SEC_mtmb_nopath)
 		return
 	}
 
 	if acc.IsHidden(syspath) {
-		WriteError(w, r, http.StatusForbidden, ErrHidden, AECmtmbhidden)
+		WriteError(w, r, http.StatusForbidden, ErrHidden, SEC_mtmb_hidden)
 		return
 	}
 	if !acc.PathAccess(syspath, uid == aid) {
-		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECmtmbaccess)
+		WriteError(w, r, http.StatusForbidden, ErrNoAccess, SEC_mtmb_access)
 		return
 	}
 
@@ -279,11 +279,11 @@ func mtmbHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var mime string
 	var t time.Time
 	if file, mime, t, err = ThumbPkg.GetFile(syspath); err != nil {
-		WriteError500(w, r, err, AECmtmbbadcnt)
+		WriteError500(w, r, err, SEC_mtmb_badcnt)
 		return
 	}
 	if file == nil {
-		WriteError(w, r, http.StatusNotFound, fs.ErrNotExist, AECmtmbabsent)
+		WriteError(w, r, http.StatusNotFound, fs.ErrNotExist, SEC_mtmb_absent)
 		return
 	}
 	defer file.Close()
@@ -298,7 +298,7 @@ func tileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	var acc *Profile
 	if acc = ProfileByID(aid); acc == nil {
-		WriteError(w, r, http.StatusNotFound, ErrNoAcc, AECtilenoacc)
+		WriteError(w, r, http.StatusNotFound, ErrNoAcc, SEC_tile_noacc)
 		return
 	}
 
@@ -306,13 +306,13 @@ func tileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var vars = mux.Vars(r)
 	var puid Puid_t
 	if err = puid.Set(vars["puid"]); err != nil {
-		WriteError400(w, r, err, AECtilenopuid)
+		WriteError400(w, r, err, SEC_tile_nopuid)
 		return
 	}
 	var wdh, _ = strconv.Atoi(vars["wdh"])
 	var hgt, _ = strconv.Atoi(vars["hgt"])
 	if wdh == 0 || hgt == 0 {
-		WriteError400(w, r, ErrArgNoDim, AECtilebaddim)
+		WriteError400(w, r, ErrArgNoDim, SEC_tile_baddim)
 		return
 	}
 
@@ -321,16 +321,16 @@ func tileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	var syspath, ok = PathStorePath(session, puid)
 	if !ok {
-		WriteError(w, r, http.StatusNotFound, ErrNoPath, AECtilenopath)
+		WriteError(w, r, http.StatusNotFound, ErrNoPath, SEC_tile_nopath)
 		return
 	}
 
 	if acc.IsHidden(syspath) {
-		WriteError(w, r, http.StatusForbidden, ErrHidden, AECtilehidden)
+		WriteError(w, r, http.StatusForbidden, ErrHidden, SEC_tile_hidden)
 		return
 	}
 	if !acc.PathAccess(syspath, uid == aid) {
-		WriteError(w, r, http.StatusForbidden, ErrNoAccess, AECtileaccess)
+		WriteError(w, r, http.StatusForbidden, ErrNoAccess, SEC_tile_access)
 		return
 	}
 
@@ -339,11 +339,11 @@ func tileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var mime string
 	var t time.Time
 	if file, mime, t, err = TilesPkg.GetFile(tilepath); err != nil {
-		WriteError500(w, r, err, AECtilebadcnt)
+		WriteError500(w, r, err, SEC_tile_badcnt)
 		return
 	}
 	if file == nil {
-		WriteError(w, r, http.StatusNotFound, fs.ErrNotExist, AECtileabsent)
+		WriteError(w, r, http.StatusNotFound, fs.ErrNotExist, SEC_tile_absent)
 		return
 	}
 	defer file.Close()

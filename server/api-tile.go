@@ -23,7 +23,7 @@ func extchkAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	var acc *Profile
 	if acc = ProfileByID(aid); acc == nil {
-		WriteError400(w, r, ErrNoAcc, AECtagschknoacc)
+		WriteError400(w, r, ErrNoAcc, SEC_tagschk_noacc)
 		return
 	}
 
@@ -32,7 +32,7 @@ func extchkAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 	if len(arg.List) == 0 {
-		WriteError400(w, r, ErrNoData, AECtagschknodata)
+		WriteError400(w, r, ErrNoData, SEC_tagschk_nodata)
 		return
 	}
 
@@ -66,7 +66,7 @@ func extstartAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	var acc *Profile
 	if acc = ProfileByID(aid); acc == nil {
-		WriteError400(w, r, ErrNoAcc, AECtagsstartnoacc)
+		WriteError400(w, r, ErrNoAcc, SEC_tagsstart_noacc)
 		return
 	}
 
@@ -75,7 +75,7 @@ func extstartAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 	if len(arg.List) == 0 {
-		WriteError400(w, r, ErrNoData, AECtagsstartnodata)
+		WriteError400(w, r, ErrNoData, SEC_tagsstart_nodata)
 		return
 	}
 
@@ -96,7 +96,7 @@ func extbreakAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	var acc *Profile
 	if acc = ProfileByID(aid); acc == nil {
-		WriteError400(w, r, ErrNoAcc, AECtagsbreaknoacc)
+		WriteError400(w, r, ErrNoAcc, SEC_tagsbreak_noacc)
 		return
 	}
 
@@ -105,7 +105,7 @@ func extbreakAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 	if len(arg.List) == 0 {
-		WriteError400(w, r, ErrNoData, AECtagsbreaknodata)
+		WriteError400(w, r, ErrNoData, SEC_tagsbreak_nodata)
 		return
 	}
 
@@ -139,7 +139,7 @@ func tilechkAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	var acc *Profile
 	if acc = ProfileByID(aid); acc == nil {
-		WriteError400(w, r, ErrNoAcc, AECtilechknoacc)
+		WriteError400(w, r, ErrNoAcc, SEC_tilechk_noacc)
 		return
 	}
 
@@ -148,7 +148,7 @@ func tilechkAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 	if len(arg.List) == 0 {
-		WriteError400(w, r, ErrNoData, AECtilechknodata)
+		WriteError400(w, r, ErrNoData, SEC_tilechk_nodata)
 		return
 	}
 
@@ -187,7 +187,7 @@ func tilestartAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	var acc *Profile
 	if acc = ProfileByID(aid); acc == nil {
-		WriteError400(w, r, ErrNoAcc, AECtilestartnoacc)
+		WriteError400(w, r, ErrNoAcc, SEC_tilestart_noacc)
 		return
 	}
 
@@ -196,7 +196,7 @@ func tilestartAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 	if len(arg.List) == 0 {
-		WriteError400(w, r, ErrNoData, AECtilestartnodata)
+		WriteError400(w, r, ErrNoData, SEC_tilestart_nodata)
 		return
 	}
 
@@ -221,7 +221,7 @@ func tilebreakAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	var acc *Profile
 	if acc = ProfileByID(aid); acc == nil {
-		WriteError400(w, r, ErrNoAcc, AECtilebreaknoacc)
+		WriteError400(w, r, ErrNoAcc, SEC_tilebreak_noacc)
 		return
 	}
 
@@ -230,7 +230,7 @@ func tilebreakAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 	if len(arg.List) == 0 {
-		WriteError400(w, r, ErrNoData, AECtilebreaknodata)
+		WriteError400(w, r, ErrNoData, SEC_tilebreak_nodata)
 		return
 	}
 

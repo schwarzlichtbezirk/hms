@@ -1,6 +1,0 @@
-{
-	"files.associations": {
-		"*.go": "go",
-		"math.h": "c"
-	}
-}
