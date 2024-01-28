@@ -20,13 +20,9 @@ import (
 	"github.com/disintegration/gift"
 	_ "github.com/mattn/go-sqlite3"
 	"xorm.io/xorm"
-	"xorm.io/xorm/names"
 )
 
 const (
-	dirfile = "storage.sqlite"
-	userlog = "userlog.sqlite"
-
 	tmbfile = "thumb.wpt"
 	tilfile = "tiles.wpt"
 )
@@ -133,7 +129,7 @@ type (
 
 var (
 	PathCache = NewBimap[Puid_t, string]()   // Bidirectional map for PUIDs and system paths.
-	gpscache  = NewCache[Puid_t, GpsInfo]()  // FIFO cache with GPS coordinates.
+	GpsCache  = NewCache[Puid_t, GpsInfo]()  // FIFO cache with GPS coordinates.
 	tilecache = NewCache[Puid_t, TileProp]() // FIFO cache with set of available tiles.
 	extcache  = NewCache[Puid_t, ExtProp]()  // FIFO cache with set of base extension properties.
 
@@ -240,7 +236,7 @@ func GpsCachePut(puid Puid_t, tp ExifProp) {
 	if tp.Latitude != 0 || tp.Longitude != 0 {
 		var gi GpsInfo
 		gi.FromProp(&tp)
-		gpscache.Poke(puid, gi)
+		GpsCache.Poke(puid, gi)
 	}
 }
 
@@ -644,102 +640,6 @@ func ClosePackages() (err error) {
 	if err1 = TilesPkg.Close(); err1 != nil {
 		err = err1
 	}
-	return
-}
-
-// InitStorage inits database caches engine.
-func InitStorage() (err error) {
-	if XormStorage, err = xorm.NewEngine(Cfg.XormDriverName, JoinPath(cfg.TmbPath, dirfile)); err != nil {
-		return
-	}
-	XormStorage.SetMapper(names.GonicMapper{})
-	var xlb = cfg.XormLoggerBridge{
-		Logger: Log,
-	}
-	xlb.ShowSQL(cfg.DevMode)
-	XormStorage.SetLogger(&xlb)
-
-	_, err = SqlSession(func(session *Session) (res any, err error) {
-		if err = session.Sync(&PathStore{}, &DirStore{}, &ExtStore{}, &ExifStore{}, &Id3Store{}); err != nil {
-			return
-		}
-
-		// fill path_store & file_store with predefined items
-		var ok bool
-		if ok, err = session.IsTableEmpty(&PathStore{}); err != nil {
-			return
-		}
-		if ok {
-			var ctgrpath = make([]PathStore, PUIDcache-1)
-			for puid, path := range CatKeyPath {
-				ctgrpath[puid-1].Puid = puid
-				ctgrpath[puid-1].Path = path
-				PathCache.Set(puid, path)
-			}
-			for puid := Puid_t(len(CatKeyPath) + 1); puid < PUIDcache; puid++ {
-				var path = fmt.Sprintf("<reserved%d>", puid)
-				ctgrpath[puid-1].Puid = puid
-				ctgrpath[puid-1].Path = path
-				PathCache.Set(puid, path)
-			}
-			if _, err = session.Insert(&ctgrpath); err != nil {
-				return
-			}
-		}
-		return
-	})
-	return
-}
-
-// LoadPathCache loads whole path table from database into cache.
-func LoadPathCache() (err error) {
-	var session = XormStorage.NewSession()
-	defer session.Close()
-
-	const limit = 256
-	var offset int
-	for {
-		var chunk []PathStore
-		if err = session.Limit(limit, offset).Find(&chunk); err != nil {
-			return
-		}
-		offset += limit
-		for _, ps := range chunk {
-			PathCache.Set(ps.Puid, ps.Path)
-		}
-		if limit > len(chunk) {
-			break
-		}
-	}
-
-	Log.Infof("loaded %d items into path cache", PathCache.Len())
-	return
-}
-
-// LoadGpsCache loads all items with GPS information from EXIF table of storage into cache.
-func LoadGpsCache() (err error) {
-	var session = XormStorage.NewSession()
-	defer session.Close()
-
-	const limit = 256
-	var offset int
-	for {
-		var chunk []ExifStore
-		if err = session.Where("latitude != 0").Cols("puid", "datetime", "latitude", "longitude", "altitude").Limit(limit, offset).Find(&chunk); err != nil {
-			return
-		}
-		offset += limit
-		for _, ec := range chunk {
-			var gi GpsInfo
-			gi.FromProp(&ec.Prop)
-			gpscache.Poke(ec.Puid, gi)
-		}
-		if limit > len(chunk) {
-			break
-		}
-	}
-
-	Log.Infof("loaded %d items into GPS cache", gpscache.Len())
 	return
 }
 

@@ -154,7 +154,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			var n = 0
 			var vfiles []fs.FileInfo // verified file infos
 			var vpaths []DiskPath    // verified paths
-			gpscache.Range(func(puid Puid_t, gps GpsInfo) bool {
+			GpsCache.Range(func(puid Puid_t, gps GpsInfo) bool {
 				if fpath, ok := PathStorePath(session, puid); ok {
 					if !acc.IsHidden(fpath) && acc.PathAccess(fpath, uid == aid) {
 						if fi, _ := JP.Stat(fpath); fi != nil {

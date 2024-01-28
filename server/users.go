@@ -6,12 +6,9 @@ import (
 	"sync"
 	"time"
 
-	cfg "github.com/schwarzlichtbezirk/hms/config"
-
 	uas "github.com/avct/uasurfer"
 	"github.com/cespare/xxhash"
 	"xorm.io/xorm"
-	"xorm.io/xorm/names"
 )
 
 var XormUserlog *xorm.Engine
@@ -59,25 +56,6 @@ func CalcUAID(addr, ua string) ID_t {
 // RequestUAID calculate user agent ID from given request.
 func RequestUAID(r *http.Request) ID_t {
 	return CalcUAID(StripPort(r.RemoteAddr), r.UserAgent())
-}
-
-// InitUserlog inits database user log engine.
-func InitUserlog() (err error) {
-	if XormUserlog, err = xorm.NewEngine(Cfg.XormDriverName, JoinPath(cfg.TmbPath, userlog)); err != nil {
-		return
-	}
-	XormUserlog.SetMapper(names.GonicMapper{})
-	XormUserlog.ShowSQL(false)
-
-	if err = XormUserlog.Sync(&AgentStore{}, &OpenStore{}); err != nil {
-		return
-	}
-
-	var uacount, _ = XormUserlog.Count(&AgentStore{})
-	Log.Infof("user agent count %d items", uacount)
-	var opencount, _ = XormUserlog.Count(&OpenStore{})
-	Log.Infof("resources open count %d items", opencount)
-	return
 }
 
 // LoadUaMap forms content of UaMap from database on server start.

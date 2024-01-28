@@ -30,8 +30,9 @@ func init() {
 
 	var flags = rootCmd.PersistentFlags()
 	flags.StringVarP(&config.CfgFile, "config", "c", "", "config file (default is config/slot.yaml at executable location), binded to CFGFILE variable")
+	flags.StringVarP(&config.SqlPath, "sqlite", "q", "", "sqlite databases path (default same as config file path)")
+	flags.StringVarP(&config.TmbPath, "thumbs", "t", "", "images cache path (default is 'cache' subdirectory at executable location), binded to TMBPATH variable")
 	flags.StringVarP(&config.PkgPath, "package", "w", "", "resource packages path (default is executable location), binded to PKGPATH variable")
-	flags.StringVarP(&config.TmbPath, "thumb", "t", "", "images cache path (default is 'cache' subdirectory at executable location), binded to TMBPATH variable")
 	flags.BoolVarP(&config.DevMode, "devmode", "d", false, "start application in developer mode")
 	rootCmd.SetVersionTemplate(fmt.Sprintf("version: %s, builton: %s", config.BuildVers, config.BuildTime))
 }

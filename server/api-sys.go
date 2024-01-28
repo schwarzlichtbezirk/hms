@@ -61,7 +61,7 @@ func srvinfAPI(w http.ResponseWriter, r *http.Request) {
 	var ret = XmlMap{
 		"buildvers": cfg.BuildVers,
 		"buildtime": cfg.BuildTime,
-		"started":   starttime,
+		"started":   starttime.Format(time.RFC3339),
 		"govers":    runtime.Version(),
 		"os":        runtime.GOOS,
 		"numcpu":    runtime.NumCPU(),
@@ -106,7 +106,7 @@ func cchinfAPI(w http.ResponseWriter, r *http.Request) {
 		dircount, _  = session.Count(&DirStore{})
 		exifcount, _ = session.Count(&ExifStore{})
 		tagcount, _  = session.Count(&Id3Store{})
-		gpscount     = gpscache.Len()
+		gpscount     = GpsCache.Len()
 		etmbcount    = etmbcache.Len()
 		etmbsize     = CacheSize(etmbcache)
 		imgcount     = imgcache.Len()

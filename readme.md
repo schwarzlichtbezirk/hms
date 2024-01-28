@@ -6,7 +6,7 @@
 
 Browse files on your computer as in explorer, listen music with folder as playlist, view photos and markers of them on map by theirs geotags. Share some file or folder to get access from internet.
 
-Music: plays MP3, OGG and others formats supported by browser. Video: display browser native supported formats, MP4 in all cases. Images: displays JPEG, PNG, GIF and others formats supported by browser. Also displays Adobe Photoshop PSD, TIFF, DDS, TGA images by converting to JPEG or PNG at server layer for browser representation. If any image have EXIF properties with geotags it will be placed at the map. Maps tiles provider can be changed, there is can be selected satellite view, streets view, topographic view, or hybrid. GPS-tracks in GPX file format also builds on map.
+Music: plays MP3, OGG and others formats supported by browser. Video: display browser native supported formats, MP4 in all cases. Images: displays WebP, JPEG, PNG, GIF and others formats supported by browser. Also displays Adobe Photoshop PSD, TIFF, DDS, TGA images by converting to WebP at server layer for browser representation. If any image have EXIF properties with geotags it will be placed at the map. Maps tiles provider can be changed, there is can be selected satellite view, streets view, topographic view, or hybrid. GPS-tracks in GPX file format also builds on map.
 
 Files can be viewed by browsing file structure same as in Explorer. Disks ISO9660 images can be browsed same as file system folders. Also opens any popular playlist formats as the folder.
 
@@ -34,7 +34,7 @@ git clone https://github.com/schwarzlichtbezirk/hms.git
 cd hms
 go mod download
 task\bootstrap.cmd
-task\build-win.x64.cmd
+task\build-win-x64.cmd
 ```
 
 or
@@ -45,7 +45,7 @@ cd hms
 go mod download
 sudo chmod +x ./task/*.sh
 ./task/bootstrap.sh
-./task/build-linux.x64.sh
+./task/build-linux-x64.sh
 ```
 
 # Packages variations
@@ -84,4 +84,5 @@ Other categories at home page contains list of folders with files of those categ
 
 If some category of files is shared, then anyone will see this category at home page, and have access to files of this category grouped into their folders. In this case there is no access to nested folders for anyone and no access to files of not shared categories in those folders. For example, if `Music and audio files` is shared, then anyone will see 10 mp3 files in some music folder, and does not see 2 jpg files in that folder.
 
+---
 (c) schwarzlichtbezirk, 2020-2023.

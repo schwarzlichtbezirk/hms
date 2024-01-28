@@ -7,13 +7,13 @@ require (
 	github.com/cespare/xxhash v1.1.0
 	github.com/chai2010/webp v1.1.1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
-	github.com/dhowden/tag v0.0.0-20230630033851-978a0926ee25
+	github.com/dhowden/tag v0.0.0-20240122214204-713ab0e94639
 	github.com/disintegration/gift v1.2.1
-	github.com/google/uuid v1.5.0
+	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
 	github.com/jlaffaye/ftp v0.2.0
 	github.com/json-iterator/go v1.1.12
-	github.com/mattn/go-sqlite3 v1.14.19
+	github.com/mattn/go-sqlite3 v1.14.20
 	github.com/oov/psd v0.0.0-20220121172623-5db5eafcecbb
 	github.com/pkg/sftp v1.13.6
 	github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd
@@ -30,7 +30,7 @@ require (
 	golang.org/x/sync v0.6.0
 	gopkg.in/ini.v1 v1.67.0
 	gopkg.in/yaml.v3 v3.0.1
-	xorm.io/xorm v1.3.6
+	xorm.io/xorm v1.3.7
 )
 
 require (
@@ -59,7 +59,7 @@ require (
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/syndtr/goleveldb v1.0.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	golang.org/x/exp v0.0.0-20240112132812-db7319d0e0e3 // indirect
+	golang.org/x/exp v0.0.0-20240119083558-1b970713d09a // indirect
 	golang.org/x/net v0.20.0 // indirect
 	golang.org/x/sys v0.16.0 // indirect
 	golang.org/x/text v0.14.0 // indirect

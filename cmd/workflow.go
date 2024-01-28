@@ -19,18 +19,6 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-const (
-	cfgfile = "hms.yaml"
-	prffile = "profiles.yaml"
-	passlst = "passlist.yaml"
-)
-
-var (
-	JoinPath = srv.JoinPath
-	Cfg      = cfg.Cfg
-	Log      = cfg.Log
-)
-
 //////////////////////
 // Start web server //
 //////////////////////
@@ -77,7 +65,7 @@ func Init() (context.Context, error) {
 	}
 
 	// init database caches
-	if err = srv.InitStorage(); err != nil {
+	if err = InitStorage(); err != nil {
 		return exitctx, fmt.Errorf("can not init XORM storage: %w", err)
 	}
 	srv.SqlSession(func(session *srv.Session) (res any, err error) {
@@ -93,14 +81,14 @@ func Init() (context.Context, error) {
 	})
 
 	// load path, directories and GPS caches
-	if err = srv.LoadPathCache(); err != nil {
+	if err = LoadPathCache(); err != nil {
 		return exitctx, fmt.Errorf("path cache loading failure: %w", err)
 	}
-	if err = srv.LoadGpsCache(); err != nil {
+	if err = LoadGpsCache(); err != nil {
 		return exitctx, fmt.Errorf("GPS cache loading failure: %w", err)
 	}
 
-	if err = srv.InitUserlog(); err != nil {
+	if err = InitUserlog(); err != nil {
 		return exitctx, fmt.Errorf("can not init XORM user log: %w", err)
 	}
 	if err = srv.LoadUaMap(); err != nil {
