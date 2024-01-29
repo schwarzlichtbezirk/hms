@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 func pubkeyAPI(w http.ResponseWriter, r *http.Request) {

@@ -157,6 +157,13 @@ func NewProfile(login, password string) *Profile {
 	return prf
 }
 
+func HasProfile(prfid ID_t) bool {
+	plmux.RLock()
+	defer plmux.RUnlock()
+	var _, ok = PrfList[prfid]
+	return ok
+}
+
 // ProfileByID finds profile with given identifier.
 func ProfileByID(prfid ID_t) *Profile {
 	plmux.RLock()

@@ -6,9 +6,9 @@ require (
 	github.com/avct/uasurfer v0.0.0-20191028135549-26b5daa857f1
 	github.com/cespare/xxhash v1.1.0
 	github.com/chai2010/webp v1.1.1
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/dhowden/tag v0.0.0-20240122214204-713ab0e94639
 	github.com/disintegration/gift v1.2.1
+	github.com/golang-jwt/jwt/v5 v5.2.0
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
 	github.com/jlaffaye/ftp v0.2.0

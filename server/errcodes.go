@@ -26,6 +26,7 @@ const (
 	SEC_token_error
 	SEC_token_less
 	SEC_token_noacc
+	SEC_token_badaid
 	SEC_token_noaid
 
 	// page
