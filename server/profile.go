@@ -135,8 +135,7 @@ type Profile struct {
 	mux       sync.RWMutex
 }
 
-var PrfList map[ID_t]*Profile
-var plmux sync.RWMutex
+var Profiles RWMap[ID_t, *Profile]
 
 // NewProfile make new profile and insert it to the list.
 func NewProfile(login, password string) *Profile {
@@ -146,57 +145,25 @@ func NewProfile(login, password string) *Profile {
 	}
 
 	var mid ID_t
-	for id := range PrfList {
-		if id > mid {
-			mid = id
-		}
-	}
+	Profiles.Range(func(id ID_t, prf *Profile) bool {
+		mid = max(mid, id)
+		return true
+	})
 	prf.ID = mid + 1
 
-	ProfileInsert(prf)
+	Profiles.Set(prf.ID, prf)
 	return prf
 }
 
-func HasProfile(prfid ID_t) bool {
-	plmux.RLock()
-	defer plmux.RUnlock()
-	var _, ok = PrfList[prfid]
-	return ok
-}
-
-// ProfileByID finds profile with given identifier.
-func ProfileByID(prfid ID_t) *Profile {
-	plmux.RLock()
-	defer plmux.RUnlock()
-	return PrfList[prfid]
-}
-
 // ProfileByUser finds profile with given login.
-func ProfileByUser(login string) *Profile {
-	plmux.RLock()
-	defer plmux.RUnlock()
-	for _, prf := range PrfList {
-		if prf.Login == login {
-			return prf
+func ProfileByUser(login string) (found *Profile) {
+	Profiles.Range(func(id ID_t, prf *Profile) bool {
+		if prf.Login != login {
+			return true
 		}
-	}
-	return nil
-}
-
-// ProfileInsert new profile to the list.
-func ProfileInsert(prf *Profile) {
-	plmux.Lock()
-	defer plmux.Unlock()
-	PrfList[prf.ID] = prf
-}
-
-// ProfileDelete profile with "prfid" identifier from the list.
-func ProfileDelete(prfid ID_t) (ok bool) {
-	plmux.RLock()
-	defer plmux.RUnlock()
-	if _, ok = PrfList[prfid]; ok {
-		delete(PrfList, prfid)
-	}
+		found = prf
+		return false
+	})
 	return
 }
 

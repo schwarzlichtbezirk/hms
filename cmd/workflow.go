@@ -106,6 +106,7 @@ func Init() (context.Context, error) {
 	}
 
 	// load profiles with roots, hidden and shares lists
+	srv.Profiles.Init(0)
 	if cfg.CfgPath != "" {
 		if err = srv.PrfReadYaml(prffile); err != nil {
 			return exitctx, fmt.Errorf("error at profiles file: %w", err)

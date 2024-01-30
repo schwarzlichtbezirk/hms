@@ -18,6 +18,7 @@ import (
 // APIHANDLER
 func drvaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var err error
+	var ok bool
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
@@ -35,7 +36,7 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 	var acc *Profile
-	if acc = ProfileByID(aid); acc == nil {
+	if acc, ok = Profiles.Get(aid); !ok {
 		WriteError400(w, r, ErrNoAcc, SEC_drvadd_noacc)
 		return
 	}
@@ -111,6 +112,7 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 // APIHANDLER
 func drvdelAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var err error
+	var ok bool
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
@@ -126,7 +128,7 @@ func drvdelAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 	var acc *Profile
-	if acc = ProfileByID(aid); acc == nil {
+	if acc, ok = Profiles.Get(aid); !ok {
 		WriteError400(w, r, ErrNoAcc, SEC_drvdel_noacc)
 		return
 	}
@@ -147,8 +149,8 @@ func drvdelAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var session = XormStorage.NewSession()
 	defer session.Close()
 
-	var syspath, ok = PathStorePath(session, arg.PUID)
-	if !ok {
+	var syspath string
+	if syspath, ok = PathStorePath(session, arg.PUID); !ok {
 		WriteError(w, r, http.StatusNotFound, ErrNoPath, SEC_drvdel_nopath)
 	}
 
@@ -159,6 +161,7 @@ func drvdelAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 // APIHANDLER
 func cldaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var err error
+	var ok bool
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
@@ -180,7 +183,7 @@ func cldaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 	var acc *Profile
-	if acc = ProfileByID(aid); acc == nil {
+	if acc, ok = Profiles.Get(aid); !ok {
 		WriteError400(w, r, ErrNoAcc, SEC_cldadd_noacc)
 		return
 	}
@@ -310,6 +313,7 @@ func cldaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 // APIHANDLER
 func clddelAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var err error
+	var ok bool
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
@@ -325,7 +329,7 @@ func clddelAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 	var acc *Profile
-	if acc = ProfileByID(aid); acc == nil {
+	if acc, ok = Profiles.Get(aid); !ok {
 		WriteError400(w, r, ErrNoAcc, SEC_clddel_noacc)
 		return
 	}
@@ -346,8 +350,8 @@ func clddelAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var session = XormStorage.NewSession()
 	defer session.Close()
 
-	var syspath, ok = PathStorePath(session, arg.PUID)
-	if !ok {
+	var syspath string
+	if syspath, ok = PathStorePath(session, arg.PUID); !ok {
 		WriteError(w, r, http.StatusNotFound, ErrNoPath, SEC_clddel_nopath)
 	}
 
@@ -358,6 +362,7 @@ func clddelAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 // APIHANDLER
 func shraddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var err error
+	var ok bool
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
@@ -373,7 +378,7 @@ func shraddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 	var acc *Profile
-	if acc = ProfileByID(aid); acc == nil {
+	if acc, ok = Profiles.Get(aid); !ok {
 		WriteError400(w, r, ErrNoAcc, SEC_shradd_noacc)
 		return
 	}
@@ -412,6 +417,7 @@ func shraddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 // APIHANDLER
 func shrdelAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var err error
+	var ok bool
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
@@ -427,7 +433,7 @@ func shrdelAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 	var acc *Profile
-	if acc = ProfileByID(aid); acc == nil {
+	if acc, ok = Profiles.Get(aid); !ok {
 		WriteError400(w, r, ErrNoAcc, SEC_shrdel_noacc)
 		return
 	}

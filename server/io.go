@@ -86,18 +86,17 @@ func PrfReadYaml(fname string) (err error) {
 	if err = ReadYaml(fname, &list); err != nil {
 		return
 	}
-	PrfList = map[ID_t]*Profile{}
 	for _, prf := range list {
-		PrfList[prf.ID] = prf
+		Profiles.Set(prf.ID, prf)
 	}
 	return
 }
 
 // PrfUpdate performs initial updates for profiles list.
 func PrfUpdate() {
-	if len(PrfList) > 0 {
+	if Profiles.Len() > 0 {
 		SqlSession(func(session *Session) (res any, err error) {
-			for _, prf := range PrfList {
+			Profiles.Range(func(id ID_t, prf *Profile) bool {
 				Log.Infof("loaded profile id%d, login='%s'", prf.ID, prf.Login)
 				// cache local and remote roots
 				for _, dp := range prf.Roots {
@@ -131,12 +130,12 @@ func PrfUpdate() {
 						Log.Warnf("id%d: can not share '%s'", prf.ID, dp.Name)
 					}
 				}
-			}
+				return true
+			})
 			return
 		})
 	} else {
 		var prf = NewProfile("admin", "dag qus fly in the sky")
-		prf.ID = 1
 		// set hidden files array to default predefined list
 		prf.Hidden = append([]string{}, DefHidden...)
 		// set default "home" share
@@ -161,9 +160,10 @@ func PrfWriteYaml(fname string) error {
 
 `
 	var list []*Profile
-	for _, prf := range PrfList {
+	Profiles.Range(func(id ID_t, prf *Profile) bool {
 		list = append(list, prf)
-	}
+		return true
+	})
 	sort.Slice(list, func(i, j int) bool {
 		return list[i].ID < list[j].ID
 	})

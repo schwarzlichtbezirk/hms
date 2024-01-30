@@ -32,9 +32,10 @@ func pageHandler(pref, fname string) http.HandlerFunc {
 // Hands out converted media files if them can be cached.
 func fileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var err error
+	var ok bool
 
 	var acc *Profile
-	if acc = ProfileByID(aid); acc == nil {
+	if acc, ok = Profiles.Get(aid); !ok {
 		WriteError(w, r, http.StatusNotFound, ErrNoAcc, SEC_media_noacc)
 		return
 	}
@@ -192,9 +193,10 @@ func fileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 // Hands out embedded thumbnails for given files if any.
 func etmbHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var err error
+	var ok bool
 
 	var acc *Profile
-	if acc = ProfileByID(aid); acc == nil {
+	if acc, ok = Profiles.Get(aid); !ok {
 		WriteError(w, r, http.StatusNotFound, ErrNoAcc, SEC_etmb_noacc)
 		return
 	}
@@ -210,8 +212,8 @@ func etmbHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var session = XormStorage.NewSession()
 	defer session.Close()
 
-	var syspath, ok = PathStorePath(session, puid)
-	if !ok {
+	var syspath string
+	if syspath, ok = PathStorePath(session, puid); !ok {
 		WriteError(w, r, http.StatusNotFound, ErrNoPath, SEC_etmb_nopath)
 		return
 	}
@@ -242,9 +244,10 @@ func etmbHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 // Hands out cached thumbnails for given files.
 func mtmbHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var err error
+	var ok bool
 
 	var acc *Profile
-	if acc = ProfileByID(aid); acc == nil {
+	if acc, ok = Profiles.Get(aid); !ok {
 		WriteError(w, r, http.StatusNotFound, ErrNoAcc, SEC_mtmb_noacc)
 		return
 	}
@@ -260,8 +263,8 @@ func mtmbHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var session = XormStorage.NewSession()
 	defer session.Close()
 
-	var syspath, ok = PathStorePath(session, puid)
-	if !ok {
+	var syspath string
+	if syspath, ok = PathStorePath(session, puid); !ok {
 		WriteError(w, r, http.StatusNotFound, ErrNoPath, SEC_mtmb_nopath)
 		return
 	}
@@ -295,9 +298,10 @@ func mtmbHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 // Hands out thumbnails for given files if them cached.
 func tileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var err error
+	var ok bool
 
 	var acc *Profile
-	if acc = ProfileByID(aid); acc == nil {
+	if acc, ok = Profiles.Get(aid); !ok {
 		WriteError(w, r, http.StatusNotFound, ErrNoAcc, SEC_tile_noacc)
 		return
 	}
@@ -319,8 +323,8 @@ func tileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var session = XormStorage.NewSession()
 	defer session.Close()
 
-	var syspath, ok = PathStorePath(session, puid)
-	if !ok {
+	var syspath string
+	if syspath, ok = PathStorePath(session, puid); !ok {
 		WriteError(w, r, http.StatusNotFound, ErrNoPath, SEC_tile_nopath)
 		return
 	}

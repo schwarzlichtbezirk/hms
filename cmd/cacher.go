@@ -400,8 +400,8 @@ func RunCacher(exitctx context.Context) {
 	fmt.Fprintf(os.Stdout, "starts caching processing\n")
 
 	var shares []string
-	for _, acc := range srv.PrfList {
-		for _, shr := range acc.Shares {
+	srv.Profiles.Range(func(id srv.ID_t, prf *srv.Profile) bool {
+		for _, shr := range prf.Shares {
 			var add = true
 			for i, p := range shares {
 				if strings.HasPrefix(shr.Path, p) {
@@ -420,7 +420,8 @@ func RunCacher(exitctx context.Context) {
 				}
 			}
 		}
-	}
+		return true
+	})
 	for _, fpath := range ExcludePath {
 		for i, p := range shares {
 			if strings.HasPrefix(p, fpath) {

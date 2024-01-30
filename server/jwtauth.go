@@ -1,6 +1,7 @@
 package hms
 
 import (
+	"encoding/base64"
 	"errors"
 	"net"
 	"net/http"
@@ -23,24 +24,24 @@ type Claims struct {
 
 func (c *Claims) Validate() error {
 	if c.UID == 0 {
-		return ErrNoUserID
+		return ErrNoJwtID
 	}
-	if !HasProfile(c.UID) {
-		return ErrBadUserID
+	if !Profiles.Has(c.UID) {
+		return ErrBadJwtID
 	}
 	return nil
 }
 
 // HTTP error messages
 var (
-	ErrNoAuth    = errors.New("authorization is absent")
-	ErrNoBearer  = errors.New("authorization does not have bearer format")
-	ErrIssOut    = errors.New("outside jwt-token issuer")
-	ErrNoUserID  = errors.New("jwt-token does not have user id")
-	ErrBadUserID = errors.New("jwt-token id does not refer to registered user")
-	ErrNoPubKey  = errors.New("public key does not exist any more")
-	ErrBadPass   = errors.New("password is incorrect")
-	ErrNoAcc     = errors.New("profile is absent")
+	ErrNoAuth   = errors.New("authorization is absent")
+	ErrNoScheme = errors.New("authorization does not have expected scheme")
+	ErrIssOut   = errors.New("outside jwt-token issuer")
+	ErrNoJwtID  = errors.New("jwt-token does not have user id")
+	ErrBadJwtID = errors.New("jwt-token id does not refer to registered user")
+	ErrNoPubKey = errors.New("public key does not exist any more")
+	ErrBadPass  = errors.New("password is incorrect")
+	ErrNoAcc    = errors.New("profile is absent")
 )
 
 var Passlist []net.IPNet
@@ -115,62 +116,83 @@ func GetUAID(r *http.Request) (uaid ID_t, err error) {
 	return
 }
 
+func GetBasicAuth(credentials string) (uid ID_t, aerr *AjaxErr) {
+	var err error
+	var decoded []byte
+	if decoded, err = base64.RawURLEncoding.DecodeString(credentials); err != nil {
+		aerr = MakeAjaxErr(err, SEC_basic_decode)
+		return
+	}
+	var parts = strings.Split(B2S(decoded), ":")
+
+	var prf *Profile
+	if prf = ProfileByUser(parts[0]); prf == nil {
+		aerr = MakeAjaxErr(ErrNoAcc, SEC_basic_noacc)
+		return
+	}
+
+	if parts[1] != prf.Password {
+		aerr = MakeAjaxErr(ErrBadPass, SEC_basic_deny)
+		return
+	}
+
+	uid = prf.ID
+	return
+}
+
+func GetBearerAuth(tokenstr string) (uid ID_t, aerr *AjaxErr) {
+	var err error
+	var claims Claims
+	_, err = jwt.ParseWithClaims(tokenstr, &claims, func(*jwt.Token) (any, error) {
+		if claims.Issuer != jwtissuer {
+			return nil, ErrIssOut
+		}
+		var keys = jwt.VerificationKeySet{
+			Keys: []jwt.VerificationKey{
+				S2B(Cfg.AccessKey),
+				S2B(Cfg.RefreshKey),
+			},
+		}
+		return keys, nil
+	}, jwt.WithLeeway(5*time.Second))
+
+	if err == nil {
+		uid = claims.UID
+		return
+	}
+	switch {
+	case errors.Is(err, jwt.ErrTokenMalformed):
+		aerr = MakeAjaxErr(err, SEC_token_malform)
+		return
+	case errors.Is(err, jwt.ErrTokenSignatureInvalid):
+		aerr = MakeAjaxErr(err, SEC_token_notsign)
+		return
+	case errors.Is(err, jwt.ErrTokenExpired):
+		aerr = MakeAjaxErr(err, SEC_token_expired)
+		return
+	case errors.Is(err, jwt.ErrTokenNotValidYet):
+		aerr = MakeAjaxErr(err, SEC_token_notyet)
+		return
+	default:
+		aerr = MakeAjaxErr(err, SEC_token_error)
+		return
+	}
+}
+
 // GetAuth returns profile ID from authorization header if it present,
 // or default profile with no error if authorization is absent on localhost.
 // Returns nil pointer and nil error on unauthorized request from any host.
-func GetAuth(r *http.Request) (uid ID_t, aerr error) {
+func GetAuth(r *http.Request) (uid ID_t, aerr *AjaxErr) {
 	var err error
-	if pool, is := r.Header["Authorization"]; is {
-		var claims Claims
-		var bearer = false
-		// at least one authorization field should have valid bearer access
-		for _, val := range pool {
-			if strings.HasPrefix(ToLower(val), "bearer ") {
-				bearer = true
-				if _, err = jwt.ParseWithClaims(val[7:], &claims, func(*jwt.Token) (any, error) {
-					if claims.Issuer != jwtissuer {
-						return nil, ErrIssOut
-					}
-					var keys = jwt.VerificationKeySet{
-						Keys: []jwt.VerificationKey{
-							S2B(Cfg.AccessKey),
-							S2B(Cfg.RefreshKey),
-						},
-					}
-					return keys, nil
-				}, jwt.WithLeeway(5*time.Second)); err == nil {
-					break // found valid authorization
-				}
-			}
-		}
-		switch {
-		case !bearer:
-			aerr = MakeAjaxErr(ErrNoBearer, SEC_token_less)
-			return
-		case err == nil:
-			break
-		case errors.Is(err, jwt.ErrTokenMalformed):
-			aerr = MakeAjaxErr(err, SEC_token_malform)
-			return
-		case errors.Is(err, jwt.ErrTokenSignatureInvalid):
-			aerr = MakeAjaxErr(err, SEC_token_notsign)
-			return
-		case errors.Is(err, jwt.ErrTokenExpired):
-			aerr = MakeAjaxErr(err, SEC_token_expired)
-			return
-		case errors.Is(err, jwt.ErrTokenNotValidYet):
-			aerr = MakeAjaxErr(err, SEC_token_notyet)
-			return
-		default:
-			aerr = MakeAjaxErr(err, SEC_token_error)
+	if hdr := r.Header.Get("Authorization"); hdr != "" {
+		if strings.HasPrefix(hdr, "Basic ") {
+			return GetBasicAuth(hdr[6:])
+		} else if strings.HasPrefix(hdr, "Bearer ") {
+			return GetBearerAuth(hdr[7:])
+		} else {
+			aerr = MakeAjaxErr(ErrNoScheme, SEC_auth_scheme)
 			return
 		}
-		if err = claims.Validate(); err != nil {
-			aerr = MakeAjaxErr(ErrNoAcc, SEC_token_noacc)
-			return
-		}
-		uid = claims.UID
-		return
 	}
 
 	var vars = mux.Vars(r)
@@ -182,7 +204,7 @@ func GetAuth(r *http.Request) (uid ID_t, aerr error) {
 		aerr = MakeAjaxErr(err, SEC_token_badaid)
 		return // no authorization
 	}
-	if !HasProfile(aid) {
+	if !Profiles.Has(aid) {
 		aerr = MakeAjaxErr(ErrNoAcc, SEC_token_noaid)
 		return
 	}
@@ -209,19 +231,20 @@ func InPasslist(ip net.IP) bool {
 // AuthWrap is handler wrapper for API with admin checkup.
 func AuthWrap(fn AuthHandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var err error
 		var vars = mux.Vars(r)
 		if vars == nil {
 			panic("bad route for URL " + r.URL.Path)
 		}
 		var aid ID_t
+		var err error
 		if aid, err = ParseID(vars["aid"]); err != nil {
 			WriteError400(w, r, err, SEC_noaid)
 			return
 		}
 		var uid ID_t
-		if uid, err = GetAuth(r); err != nil {
-			WriteRet(w, r, http.StatusUnauthorized, err)
+		var aerr *AjaxErr
+		if uid, aerr = GetAuth(r); aerr != nil {
+			WriteRet(w, r, http.StatusUnauthorized, aerr)
 			return
 		}
 

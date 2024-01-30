@@ -19,13 +19,15 @@ const (
 
 	SEC_noaid
 	SEC_noauth
+	SEC_auth_scheme
+	SEC_basic_decode
+	SEC_basic_noacc
+	SEC_basic_deny
 	SEC_token_malform
 	SEC_token_notsign
 	SEC_token_expired
 	SEC_token_notyet
 	SEC_token_error
-	SEC_token_less
-	SEC_token_noacc
 	SEC_token_badaid
 	SEC_token_noaid
 

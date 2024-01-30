@@ -32,11 +32,10 @@ func pingAPI(w http.ResponseWriter, r *http.Request) {
 }
 
 // APIHANDLER
-func reloadAPI(w http.ResponseWriter, r *http.Request) {
+func reloadAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var err error
-	var uid ID_t
-	if uid, err = GetAuth(r); err != nil {
-		WriteRet(w, r, http.StatusUnauthorized, err)
+	if uid == 0 { // only authorized access allowed
+		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, SEC_noauth)
 		return
 	}
 	if uid == 0 { // only authorized access allowed
@@ -227,6 +226,7 @@ func getlogAPI(w http.ResponseWriter, r *http.Request) {
 // APIHANDLER
 func tagsAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var err error
+	var ok bool
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
@@ -239,7 +239,7 @@ func tagsAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	}
 
 	var acc *Profile
-	if acc = ProfileByID(aid); acc == nil {
+	if acc, ok = Profiles.Get(aid); !ok {
 		WriteError400(w, r, ErrNoAcc, SEC_tags_noacc)
 		return
 	}
@@ -257,7 +257,6 @@ func tagsAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	defer session.Close()
 
 	var syspath string
-	var ok bool
 	if syspath, ok = PathStorePath(session, arg.PUID); !ok {
 		WriteError400(w, r, ErrNoPath, SEC_tags_badpath)
 		return
@@ -288,6 +287,7 @@ func tagsAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 // APIHANDLER
 func ispathAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var err error
+	var ok bool
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
@@ -305,7 +305,7 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 	var acc *Profile
-	if acc = ProfileByID(aid); acc == nil {
+	if acc, ok = Profiles.Get(aid); !ok {
 		WriteError400(w, r, ErrNoAcc, SEC_ispath_noacc)
 		return
 	}

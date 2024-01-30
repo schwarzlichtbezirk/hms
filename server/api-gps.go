@@ -53,6 +53,7 @@ func (mp *MapPath) Contains(lat, lon float64) bool {
 // APIHANDLER
 func gpsrangeAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var err error
+	var ok bool
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
@@ -73,7 +74,7 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 	var acc *Profile
-	if acc = ProfileByID(aid); acc == nil {
+	if acc, ok = Profiles.Get(aid); !ok {
 		WriteError400(w, r, ErrNoAcc, SEC_gpsrange_noacc)
 		return
 	}
@@ -163,6 +164,7 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 // APIHANDLER
 func gpsscanAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var err error
+	var ok bool
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
@@ -175,7 +177,7 @@ func gpsscanAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	}
 
 	var acc *Profile
-	if acc = ProfileByID(aid); acc == nil {
+	if acc, ok = Profiles.Get(aid); !ok {
 		WriteError400(w, r, ErrNoAcc, SEC_gpsscan_noacc)
 		return
 	}

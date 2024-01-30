@@ -86,9 +86,8 @@ func (e *AjaxErr) Error() string {
 	return fmt.Sprintf("error with code %d: %s", e.Code, e.What.Error())
 }
 
-// Unwrap returns inherited error object.
 func (e *AjaxErr) Unwrap() error {
-	return e.What
+	return e.What.error
 }
 
 // ErrPanic is error object that helps to get stack trace of goroutine within panic rises.
@@ -264,6 +263,10 @@ func WriteHTMLHeader(w http.ResponseWriter) {
 
 // WriteRet writes to response given status code and marshaled body.
 func WriteRet(w http.ResponseWriter, r *http.Request, status int, body any) {
+	if status == http.StatusUnauthorized {
+		w.Header().Set("WWW-Authenticate", `Basic realm="hms", charset="UTF-8"`)
+		w.Header().Set("WWW-Authenticate", `Bearer realm="hms", charset="UTF-8"`)
+	}
 	if body == nil {
 		w.WriteHeader(status)
 		WriteStdHeader(w)
@@ -604,7 +607,7 @@ func RegisterRoutes(gmux *mux.Router) {
 	var usr = gacc.PathPrefix("/api").Subrouter()
 	api.Use(AjaxMiddleware)
 	api.Path("/ping").HandlerFunc(pingAPI)
-	api.Path("/reload").HandlerFunc(reloadAPI) // authorized only
+	api.Path("/reload").HandlerFunc(AuthWrap(reloadAPI)) // authorized only
 
 	api.Path("/stat/srvinf").HandlerFunc(srvinfAPI)
 	api.Path("/stat/memusg").HandlerFunc(memusgAPI)

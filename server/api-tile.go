@@ -12,6 +12,7 @@ func extchkAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		ExtProp `xorm:"extends" yaml:",inline"`
 	}
 	var err error
+	var ok bool
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 		List    []Puid_t `json:"list" yaml:"list" xml:"list>puid"`
@@ -22,7 +23,7 @@ func extchkAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	}
 
 	var acc *Profile
-	if acc = ProfileByID(aid); acc == nil {
+	if acc, ok = Profiles.Get(aid); !ok {
 		WriteError400(w, r, ErrNoAcc, SEC_tagschk_noacc)
 		return
 	}
@@ -64,8 +65,7 @@ func extstartAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		List    []Puid_t `json:"list" yaml:"list" xml:"list>tiletm"`
 	}
 
-	var acc *Profile
-	if acc = ProfileByID(aid); acc == nil {
+	if !Profiles.Has(aid) {
 		WriteError400(w, r, ErrNoAcc, SEC_tagsstart_noacc)
 		return
 	}
@@ -94,8 +94,7 @@ func extbreakAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		List    []Puid_t `json:"list" yaml:"list" xml:"list>tiletm"`
 	}
 
-	var acc *Profile
-	if acc = ProfileByID(aid); acc == nil {
+	if !Profiles.Has(aid) {
 		WriteError400(w, r, ErrNoAcc, SEC_tagsbreak_noacc)
 		return
 	}
@@ -128,6 +127,7 @@ func tilechkAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		Mime Mime_t `json:"mime,omitempty" yaml:"mime,omitempty" xml:"mime,omitempty,attr"`
 	}
 	var err error
+	var ok bool
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 		List    []tiletm `json:"list" yaml:"list" xml:"list>puid"`
@@ -138,7 +138,7 @@ func tilechkAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	}
 
 	var acc *Profile
-	if acc = ProfileByID(aid); acc == nil {
+	if acc, ok = Profiles.Get(aid); !ok {
 		WriteError400(w, r, ErrNoAcc, SEC_tilechk_noacc)
 		return
 	}
@@ -185,8 +185,7 @@ func tilestartAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		List    []tiletm `json:"list" yaml:"list" xml:"list>tiletm"`
 	}
 
-	var acc *Profile
-	if acc = ProfileByID(aid); acc == nil {
+	if !Profiles.Has(aid) {
 		WriteError400(w, r, ErrNoAcc, SEC_tilestart_noacc)
 		return
 	}
@@ -219,8 +218,7 @@ func tilebreakAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		List    []tiletm `json:"list" yaml:"list" xml:"list>tiletm"`
 	}
 
-	var acc *Profile
-	if acc = ProfileByID(aid); acc == nil {
+	if !Profiles.Has(aid) {
 		WriteError400(w, r, ErrNoAcc, SEC_tilebreak_noacc)
 		return
 	}

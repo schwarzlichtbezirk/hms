@@ -22,6 +22,7 @@ var catcolumn = map[Puid_t]string{
 // APIHANDLER
 func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var err error
+	var ok bool
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
@@ -47,7 +48,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	}
 
 	var acc *Profile
-	if acc = ProfileByID(aid); acc == nil {
+	if acc, ok = Profiles.Get(aid); !ok {
 		WriteError400(w, r, ErrNoAcc, SEC_folder_noacc)
 		return
 	}
