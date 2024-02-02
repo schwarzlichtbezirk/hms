@@ -72,7 +72,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 
-	if acc.IsHidden(syspath) {
+	if Hidden.Fits(syspath) {
 		WriteError(w, r, http.StatusForbidden, ErrHidden, SEC_folder_hidden)
 		return
 	}
@@ -157,7 +157,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			var vpaths []DiskPath    // verified paths
 			GpsCache.Range(func(puid Puid_t, gps GpsInfo) bool {
 				if fpath, ok := PathStorePath(session, puid); ok {
-					if !acc.IsHidden(fpath) && acc.PathAccess(fpath, uid == aid) {
+					if !Hidden.Fits(fpath) && acc.PathAccess(fpath, uid == aid) {
 						if fi, _ := JP.Stat(fpath); fi != nil {
 							vfiles = append(vfiles, fi)
 							vpaths = append(vpaths, MakeFilePath(fpath))
@@ -243,7 +243,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			var vpaths []DiskPath    // verified paths
 			for _, track := range pl.Tracks {
 				var fpath = ToSlash(track.Location)
-				if !acc.IsHidden(fpath) && acc.PathAccess(fpath, uid == aid) {
+				if !Hidden.Fits(fpath) && acc.PathAccess(fpath, uid == aid) {
 					if fi, _ := JP.Stat(fpath); fi != nil {
 						vfiles = append(vfiles, fi)
 						vpaths = append(vpaths, MakeFilePath(fpath))

@@ -4,6 +4,68 @@ import (
 	"sync"
 )
 
+type RWList[T comparable] struct {
+	list []T
+	mux  sync.RWMutex
+}
+
+func (rwl *RWList[T]) Init(capacity int) {
+	rwl.mux.Lock()
+	defer rwl.mux.Unlock()
+	rwl.list = make([]T, 0, capacity)
+}
+
+func (rwl *RWList[T]) Push(val T) {
+	rwl.mux.Lock()
+	defer rwl.mux.Unlock()
+	rwl.list = append(rwl.list, val)
+}
+
+func (rwl *RWList[T]) Pop() (val T, ok bool) {
+	rwl.mux.Lock()
+	defer rwl.mux.Unlock()
+	if l := len(rwl.list); l > 0 {
+		val = rwl.list[l-1]
+		rwl.list = rwl.list[:l-1]
+		ok = true
+	}
+	return
+}
+
+func (rwl *RWList[T]) Find(val T, from int) int {
+	rwl.mux.RLock()
+	defer rwl.mux.RUnlock()
+	for i := from; i < len(rwl.list); i++ {
+		if rwl.list[i] == val {
+			return i
+		}
+	}
+	return -1
+}
+
+func (rwl *RWList[T]) Remove(i int) {
+	rwl.mux.Lock()
+	defer rwl.mux.Unlock()
+	copy(rwl.list[i:], rwl.list[i+1:])
+	rwl.list = rwl.list[:len(rwl.list)-1]
+}
+
+func (rwl *RWList[T]) Insert(val T, i int) {
+	rwl.mux.Lock()
+	defer rwl.mux.Unlock()
+	rwl.list = append(rwl.list, val)
+	copy(rwl.list[i+1:], rwl.list[i:])
+	rwl.list[i] = val
+}
+
+func (rwl *RWList[T]) Copy() []T {
+	rwl.mux.RLock()
+	defer rwl.mux.RUnlock()
+	var list = make([]T, len(rwl.list))
+	copy(list, rwl.list)
+	return list
+}
+
 type kvpair[K comparable, T any] struct {
 	key K
 	val T

@@ -14,7 +14,7 @@ import (
 )
 
 // "iss" field for this tokens.
-const jwtissuer = "hms"
+const jwtIssuer = "hms"
 
 // Claims of JWT-tokens. Contains additional profile identifier.
 type Claims struct {
@@ -36,11 +36,11 @@ func (c *Claims) Validate() error {
 var (
 	ErrNoAuth   = errors.New("authorization is absent")
 	ErrNoScheme = errors.New("authorization does not have expected scheme")
-	ErrIssOut   = errors.New("outside jwt-token issuer")
 	ErrNoJwtID  = errors.New("jwt-token does not have user id")
 	ErrBadJwtID = errors.New("jwt-token id does not refer to registered user")
+	ErrNoCred   = errors.New("profile with given credentials does not registered")
 	ErrNoPubKey = errors.New("public key does not exist any more")
-	ErrBadPass  = errors.New("password is incorrect")
+	ErrNotPass  = errors.New("password is incorrect")
 	ErrNoAcc    = errors.New("profile is absent")
 )
 
@@ -66,7 +66,7 @@ func (t *Tokens) Make(uid ID_t) {
 			IssuedAt:  now,
 			NotBefore: now,
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(Cfg.AccessTTL)),
-			Issuer:    jwtissuer,
+			Issuer:    jwtIssuer,
 		},
 		UID: uid,
 	}).SignedString([]byte(Cfg.AccessKey))
@@ -75,7 +75,7 @@ func (t *Tokens) Make(uid ID_t) {
 			IssuedAt:  now,
 			NotBefore: now,
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(Cfg.RefreshTTL)),
-			Issuer:    jwtissuer,
+			Issuer:    jwtIssuer,
 		},
 		UID: uid,
 	}).SignedString([]byte(Cfg.RefreshKey))
@@ -116,37 +116,28 @@ func GetUAID(r *http.Request) (uaid ID_t, err error) {
 	return
 }
 
-func GetBasicAuth(credentials string) (uid ID_t, aerr *AjaxErr) {
-	var err error
+func GetBasicAuth(credentials string) (prf *Profile, code int, err error) {
 	var decoded []byte
 	if decoded, err = base64.RawURLEncoding.DecodeString(credentials); err != nil {
-		aerr = MakeAjaxErr(err, SEC_basic_decode)
-		return
+		return nil, SEC_basic_decode, err
 	}
 	var parts = strings.Split(B2S(decoded), ":")
 
-	var prf *Profile
 	if prf = ProfileByUser(parts[0]); prf == nil {
-		aerr = MakeAjaxErr(ErrNoAcc, SEC_basic_noacc)
+		err, code = ErrNoCred, SEC_basic_noacc
 		return
 	}
 
 	if parts[1] != prf.Password {
-		aerr = MakeAjaxErr(ErrBadPass, SEC_basic_deny)
+		err, code = ErrNotPass, SEC_basic_deny
 		return
 	}
-
-	uid = prf.ID
 	return
 }
 
-func GetBearerAuth(tokenstr string) (uid ID_t, aerr *AjaxErr) {
-	var err error
+func GetBearerAuth(tokenstr string) (prf *Profile, code int, err error) {
 	var claims Claims
 	_, err = jwt.ParseWithClaims(tokenstr, &claims, func(*jwt.Token) (any, error) {
-		if claims.Issuer != jwtissuer {
-			return nil, ErrIssOut
-		}
 		var keys = jwt.VerificationKeySet{
 			Keys: []jwt.VerificationKey{
 				S2B(Cfg.AccessKey),
@@ -154,44 +145,45 @@ func GetBearerAuth(tokenstr string) (uid ID_t, aerr *AjaxErr) {
 			},
 		}
 		return keys, nil
-	}, jwt.WithLeeway(5*time.Second))
+	}, jwt.WithExpirationRequired(), jwt.WithIssuer(jwtIssuer), jwt.WithLeeway(5*time.Second))
 
 	if err == nil {
-		uid = claims.UID
+		var ok bool
+		if prf, ok = Profiles.Get(claims.UID); !ok {
+			code, err = SEC_token_noacc, ErrBadJwtID
+		}
 		return
 	}
 	switch {
 	case errors.Is(err, jwt.ErrTokenMalformed):
-		aerr = MakeAjaxErr(err, SEC_token_malform)
-		return
+		code = SEC_token_malform
 	case errors.Is(err, jwt.ErrTokenSignatureInvalid):
-		aerr = MakeAjaxErr(err, SEC_token_notsign)
-		return
+		code = SEC_token_notsign
+	case errors.Is(err, jwt.ErrTokenInvalidClaims):
+		code = SEC_token_badclaims
 	case errors.Is(err, jwt.ErrTokenExpired):
-		aerr = MakeAjaxErr(err, SEC_token_expired)
-		return
+		code = SEC_token_expired
 	case errors.Is(err, jwt.ErrTokenNotValidYet):
-		aerr = MakeAjaxErr(err, SEC_token_notyet)
-		return
+		code = SEC_token_notyet
+	case errors.Is(err, jwt.ErrTokenInvalidIssuer):
+		code = SEC_token_issuer
 	default:
-		aerr = MakeAjaxErr(err, SEC_token_error)
-		return
+		code = SEC_token_error
 	}
+	return
 }
 
 // GetAuth returns profile ID from authorization header if it present,
 // or default profile with no error if authorization is absent on localhost.
 // Returns nil pointer and nil error on unauthorized request from any host.
-func GetAuth(r *http.Request) (uid ID_t, aerr *AjaxErr) {
-	var err error
+func GetAuth(r *http.Request) (prf *Profile, code int, err error) {
 	if hdr := r.Header.Get("Authorization"); hdr != "" {
 		if strings.HasPrefix(hdr, "Basic ") {
 			return GetBasicAuth(hdr[6:])
 		} else if strings.HasPrefix(hdr, "Bearer ") {
 			return GetBearerAuth(hdr[7:])
 		} else {
-			aerr = MakeAjaxErr(ErrNoScheme, SEC_auth_scheme)
-			return
+			return nil, SEC_auth_scheme, ErrNoScheme
 		}
 	}
 
@@ -201,16 +193,16 @@ func GetAuth(r *http.Request) (uid ID_t, aerr *AjaxErr) {
 	}
 	var aid ID_t
 	if aid, err = ParseID(vars["aid"]); err != nil {
-		aerr = MakeAjaxErr(err, SEC_token_badaid)
+		code = SEC_token_badaid
 		return // no authorization
-	}
-	if !Profiles.Has(aid) {
-		aerr = MakeAjaxErr(ErrNoAcc, SEC_token_noaid)
-		return
 	}
 	var ip = net.ParseIP(StripPort(r.RemoteAddr))
 	if InPasslist(ip) {
-		uid = aid
+		var ok bool
+		if prf, ok = Profiles.Get(aid); !ok {
+			code, err = SEC_param_noacc, ErrNoAcc
+			return
+		}
 	}
 	return
 }
@@ -241,11 +233,14 @@ func AuthWrap(fn AuthHandlerFunc) http.HandlerFunc {
 			WriteError400(w, r, err, SEC_noaid)
 			return
 		}
+		var prf *Profile
 		var uid ID_t
-		var aerr *AjaxErr
-		if uid, aerr = GetAuth(r); aerr != nil {
-			WriteRet(w, r, http.StatusUnauthorized, aerr)
+		var code int
+		if prf, code, err = GetAuth(r); err != nil {
+			WriteRet(w, r, http.StatusUnauthorized, MakeAjaxErr(err, code))
 			return
+		} else if prf != nil {
+			uid = prf.ID
 		}
 
 		fn(w, r, aid, uid)

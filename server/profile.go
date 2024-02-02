@@ -12,22 +12,54 @@ import (
 	"sync"
 )
 
-// DefHidden is default hidden path templates.
-var DefHidden = []string{
-	"**/*.sys",
-	"**/*.tmp",
-	"**/*.bak",
-	"**/.*",
-	"**/Thumbs.db",
-	"?:/System Volume Information",
-	"?:/Windows",
-	"?:/WindowsApps",
-	"?:/$Recycle.Bin",
-	"?:/Program Files",
-	"?:/Program Files (x86)",
-	"?:/ProgramData",
-	"?:/Recovery",
-	"?:/Config.Msi",
+type FileMask struct {
+	Exts  []string `json:"extensions" yaml:"extensions" xml:"extensions"`
+	Names []string `json:"filenames" yaml:"filenames" xml:"filenames"`
+	Paths []string `json:"filepaths" yaml:"filepaths" xml:"filepaths"`
+}
+
+func (fm *FileMask) Fits(fpath string) bool {
+	var nfp = ToKey(fpath)
+	var ext = path.Ext(nfp)
+	for _, mask := range fm.Exts {
+		if ext == mask {
+			return true
+		}
+	}
+	var fname = path.Base(fpath)
+	for _, mask := range fm.Names {
+		if ok, _ := path.Match(mask, fname); ok {
+			return true
+		}
+	}
+	for _, mask := range fm.Paths {
+		if ok, _ := path.Match(mask, fpath); ok {
+			return true
+		}
+	}
+	return false
+}
+
+var Hidden = FileMask{
+	Exts: []string{
+		".sys", ".tmp", ".bak",
+	},
+	Names: []string{
+		"thumbs.db", ".*",
+	},
+	Paths: []string{
+		"?:/system volume information",
+		"?:/windows",
+		"?:/windowsapps",
+		"?:/winreagent",
+		"?:/$windows.~ws",
+		"?:/$recycle.bin",
+		"?:/program files",
+		"?:/program files (x86)",
+		"?:/programdata",
+		"?:/recovery",
+		"?:/config.msi",
+	},
 }
 
 // File path access.
@@ -128,7 +160,6 @@ type Profile struct {
 	Roots  []DiskPath `json:"local" yaml:"local" xml:"local>item"` // root directories list
 	Remote []DiskPath `json:"remote" yaml:"remote" xml:"remote>item"`
 	Shares []DiskPath `json:"shares" yaml:"shares" xml:"shares>item"`
-	Hidden []string   `json:"hidden" yaml:"hidden" xml:"hidden>item"` // patterns for hidden files
 
 	// private shares data
 	ctgrshare CatGrp
@@ -144,12 +175,12 @@ func NewProfile(login, password string) *Profile {
 		Password: password,
 	}
 
-	var mid ID_t
+	var maxid ID_t
 	Profiles.Range(func(id ID_t, prf *Profile) bool {
-		mid = max(mid, id)
+		maxid = max(maxid, id)
 		return true
 	})
-	prf.ID = mid + 1
+	prf.ID = maxid + 1
 
 	Profiles.Set(prf.ID, prf)
 	return prf
@@ -212,37 +243,6 @@ func (prf *Profile) GetPathGroup(fpath string, fi fs.FileInfo) (grp FG_t) {
 		return FGgroup
 	}
 	return GetFileGroup(fpath)
-}
-
-// IsHidden do check up that file path is in hidden list.
-func (prf *Profile) IsHidden(fpath string) bool {
-	var matched bool
-	var kpath = ToLower(fpath)
-
-	prf.mux.RLock()
-	defer prf.mux.RUnlock()
-
-	var name = path.Base(kpath)
-	for _, pattern := range prf.Hidden {
-		if strings.HasPrefix(pattern, "**/") {
-			if matched, _ = path.Match(pattern[3:], name); matched {
-				return true
-			}
-		} else if strings.HasPrefix(pattern, "?:/") {
-			for _, dp := range prf.Roots {
-				if PathStarts(kpath, ToLower(dp.Path)) {
-					if matched, _ = path.Match(pattern[3:], kpath[len(dp.Path):]); matched {
-						return true
-					}
-				}
-			}
-		} else {
-			if matched, _ = path.Match(pattern, kpath); matched {
-				return true
-			}
-		}
-	}
-	return false
 }
 
 // IsLocal checks whether file path is disk root path.

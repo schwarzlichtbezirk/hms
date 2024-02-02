@@ -1,4 +1,29 @@
 ﻿
+# Hidden extensions, files, directories. File names
+# and directories can be patterns with '?', '*' masks.
+# Patterns are case insensitive.
+
+extensions:
+    - .sys
+    - .tmp
+    - .bak
+filenames:
+    - thumbs.db
+    - .*
+filepaths:
+    - ?:/system volume information
+    - ?:/windows
+    - ?:/windowsapps
+    - ?:/winreagent
+    - ?:/$windows.~ws
+    - ?:/$recycle.bin
+    - ?:/program files
+    - ?:/program files (x86)
+    - ?:/programdata
+    - ?:/recovery
+    - ?:/config.msi
+---
+
 # List of administration profiles. Each profile should be with
 # unique password, and allows to configure access to specified
 # root paths, shares, and to hide files on specified masks.
@@ -11,18 +36,3 @@
   shares:
     - path: '<home>'
       name: Home
-  hidden:
-    - '**/*.sys'
-    - '**/*.tmp'
-    - '**/*.bak'
-    - '**/.*'
-    - '**/Thumbs.db'
-    - ?:/System Volume Information
-    - ?:/Windows
-    - ?:/WindowsApps
-    - ?:/$Recycle.Bin
-    - ?:/Program Files
-    - ?:/Program Files (x86)
-    - ?:/ProgramData
-    - ?:/Recovery
-    - ?:/Config.Msi

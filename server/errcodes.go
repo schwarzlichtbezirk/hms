@@ -23,13 +23,16 @@ const (
 	SEC_basic_decode
 	SEC_basic_noacc
 	SEC_basic_deny
+	SEC_token_noacc
 	SEC_token_malform
 	SEC_token_notsign
+	SEC_token_badclaims
 	SEC_token_expired
 	SEC_token_notyet
+	SEC_token_issuer
 	SEC_token_error
 	SEC_token_badaid
-	SEC_token_noaid
+	SEC_param_noacc
 
 	// page
 

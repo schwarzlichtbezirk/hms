@@ -79,7 +79,7 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		}
 	}
 
-	if acc.IsHidden(syspath) {
+	if Hidden.Fits(syspath) {
 		WriteError(w, r, http.StatusForbidden, ErrHidden, SEC_drvadd_hidden)
 		return
 	}

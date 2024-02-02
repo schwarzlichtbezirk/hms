@@ -12,10 +12,11 @@ import (
 )
 
 const utf8bom = "\xef\xbb\xbf"
+const yamlsep = "---\n"
 
-// WriteYaml writes "data" object to YAML-file with given file name.
+// WriteYaml writes "data" objects to YAML-file with given file name.
 // File writes in UTF-8 format with BOM, and "intro" comment.
-func WriteYaml(fname, intro string, data any) (err error) {
+func WriteYaml(fname string, data ...any) (err error) {
 	var w io.WriteCloser
 	if w, err = os.OpenFile(JoinPath(cfg.CfgPath, fname), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644); err != nil {
 		return
@@ -25,29 +26,48 @@ func WriteYaml(fname, intro string, data any) (err error) {
 	if _, err = w.Write(S2B(utf8bom)); err != nil {
 		return
 	}
-	if _, err = w.Write(S2B(intro)); err != nil {
-		return
+	for i, entity := range data {
+		if str, ok := entity.(string); ok {
+			if _, err = w.Write(S2B(str)); err != nil {
+				return
+			}
+		} else if bin, ok := entity.([]byte); ok {
+			if _, err = w.Write(bin); err != nil {
+				return
+			}
+		} else {
+			var body []byte
+			if body, err = yaml.Marshal(entity); err != nil {
+				return
+			}
+			if _, err = w.Write(body); err != nil {
+				return
+			}
+			if i < len(data)-1 {
+				if _, err = w.Write(S2B(yamlsep)); err != nil {
+					return
+				}
+			}
+		}
 	}
 
-	var body []byte
-	if body, err = yaml.Marshal(data); err != nil {
-		return
-	}
-	if _, err = w.Write(body); err != nil {
-		return
-	}
 	return
 }
 
-// ReadYaml reads "data" object from YAML-file
+// ReadYaml reads "data" objects from YAML-file
 // with given file name.
-func ReadYaml(fname string, data any) (err error) {
-	var body []byte
-	if body, err = os.ReadFile(JoinPath(cfg.CfgPath, fname)); err != nil {
+func ReadYaml(fname string, data ...any) (err error) {
+	var r io.ReadCloser
+	if r, err = os.Open(JoinPath(cfg.CfgPath, fname)); err != nil {
 		return
 	}
-	if err = yaml.Unmarshal(body, data); err != nil {
-		return
+	defer r.Close()
+
+	var dec = yaml.NewDecoder(r)
+	for _, entity := range data {
+		if err = dec.Decode(entity); err != nil {
+			return
+		}
 	}
 	return
 }
@@ -83,7 +103,7 @@ func CfgWriteYaml(fname string) error {
 // with given file name.
 func PrfReadYaml(fname string) (err error) {
 	var list []*Profile
-	if err = ReadYaml(fname, &list); err != nil {
+	if err = ReadYaml(fname, &Hidden, &list); err != nil {
 		return
 	}
 	for _, prf := range list {
@@ -110,11 +130,6 @@ func PrfUpdate() {
 					PathStoreCache(session, dp.Path)
 				}
 
-				// bring all hidden to lowercase
-				for i, fpath := range prf.Hidden {
-					prf.Hidden[i] = ToLower(ToSlash(fpath))
-				}
-
 				// build shares tables
 				prf.updateGrp()
 				// check up some roots already defined
@@ -136,8 +151,6 @@ func PrfUpdate() {
 		})
 	} else {
 		var prf = NewProfile("admin", "dag qus fly in the sky")
-		// set hidden files array to default predefined list
-		prf.Hidden = append([]string{}, DefHidden...)
 		// set default "home" share
 		prf.Shares = []DiskPath{
 			{CPhome, CatNames[CPhome]},
@@ -153,7 +166,13 @@ func PrfUpdate() {
 // PrfWriteYaml writes content of Profiles object in YAML format
 // with header comment to file with given file name.
 func PrfWriteYaml(fname string) error {
-	const intro = `
+	const intro1 = `
+# Hidden extensions, files, directories. File names
+# and directories can be patterns with '?', '*' masks.
+# Patterns are case insensitive.
+
+`
+	const intro2 = `
 # List of administration profiles. Each profile should be with
 # unique password, and allows to configure access to specified
 # root paths, shares, and to hide files on specified masks.
@@ -167,7 +186,7 @@ func PrfWriteYaml(fname string) error {
 	sort.Slice(list, func(i, j int) bool {
 		return list[i].ID < list[j].ID
 	})
-	return WriteYaml(fname, intro, list)
+	return WriteYaml(fname, intro1, &Hidden, intro2, list)
 }
 
 // ReadWhiteList reads content of white list from YAML-file

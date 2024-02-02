@@ -262,7 +262,7 @@ func tagsAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 
-	if acc.IsHidden(syspath) {
+	if Hidden.Fits(syspath) {
 		WriteError(w, r, http.StatusForbidden, ErrHidden, SEC_tags_hidden)
 		return
 	}
@@ -348,7 +348,7 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		}
 	}
 
-	if acc.IsHidden(syspath) {
+	if Hidden.Fits(syspath) {
 		ret.Valid = false
 		WriteOK(w, r, &ret)
 		return

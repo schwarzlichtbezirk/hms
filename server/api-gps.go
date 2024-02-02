@@ -144,7 +144,7 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		}
 		if inc {
 			var fpath, _ = PathStorePath(session, puid)
-			if !acc.IsHidden(fpath) && acc.PathAccess(fpath, uid == aid) {
+			if !Hidden.Fits(fpath) && acc.PathAccess(fpath, uid == aid) {
 				if fi, _ := JP.Stat(fpath); fi != nil {
 					vfiles = append(vfiles, fi)
 					vpaths = append(vpaths, MakeFilePath(fpath))

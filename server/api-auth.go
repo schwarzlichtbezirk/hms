@@ -69,7 +69,7 @@ func signinAPI(w http.ResponseWriter, r *http.Request) {
 	mac.Write(S2B(prf.Password))
 	var cmp = mac.Sum(nil)
 	if !hmac.Equal(arg.Hash[:], cmp) {
-		WriteError(w, r, http.StatusForbidden, ErrBadPass, SEC_signin_deny)
+		WriteError(w, r, http.StatusForbidden, ErrNotPass, SEC_signin_deny)
 		return
 	}
 

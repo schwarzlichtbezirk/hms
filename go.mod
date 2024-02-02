@@ -13,7 +13,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/jlaffaye/ftp v0.2.0
 	github.com/json-iterator/go v1.1.12
-	github.com/mattn/go-sqlite3 v1.14.20
+	github.com/mattn/go-sqlite3 v1.14.21
 	github.com/oov/psd v0.0.0-20220121172623-5db5eafcecbb
 	github.com/pkg/sftp v1.13.6
 	github.com/rwcarlsen/goexif v0.0.0-20190401172101-9e8deecbddbd

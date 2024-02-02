@@ -33,6 +33,7 @@ var (
 	JoinPath = wpk.JoinPath
 	ToSlash  = wpk.ToSlash
 	ToLower  = wpk.ToLower
+	ToKey    = wpk.ToKey
 	Cfg      = cfg.Cfg
 	Log      = cfg.Log
 )

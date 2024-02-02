@@ -72,7 +72,7 @@ func fileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 
-	if acc.IsHidden(syspath) {
+	if Hidden.Fits(syspath) {
 		WriteError(w, r, http.StatusForbidden, ErrHidden, SEC_media_hidden)
 		return
 	}
@@ -218,7 +218,7 @@ func etmbHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 
-	if acc.IsHidden(syspath) {
+	if Hidden.Fits(syspath) {
 		WriteError(w, r, http.StatusForbidden, ErrHidden, SEC_etmb_hidden)
 		return
 	}
@@ -269,7 +269,7 @@ func mtmbHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 
-	if acc.IsHidden(syspath) {
+	if Hidden.Fits(syspath) {
 		WriteError(w, r, http.StatusForbidden, ErrHidden, SEC_mtmb_hidden)
 		return
 	}
@@ -329,7 +329,7 @@ func tileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return
 	}
 
-	if acc.IsHidden(syspath) {
+	if Hidden.Fits(syspath) {
 		WriteError(w, r, http.StatusForbidden, ErrHidden, SEC_tile_hidden)
 		return
 	}

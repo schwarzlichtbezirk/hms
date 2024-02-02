@@ -223,7 +223,7 @@ func ScanDir(prf *Profile, session *Session, dir string, isadmin bool, scanembed
 			continue
 		}
 		var fpath = JoinPath(dir, fi.Name())
-		if prf.IsHidden(fpath) {
+		if Hidden.Fits(fpath) {
 			continue
 		}
 		if !prf.PathAccess(fpath, isadmin) {
