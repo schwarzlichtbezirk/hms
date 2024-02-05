@@ -157,7 +157,7 @@ type Profile struct {
 	Login    string `json:"login" yaml:"login" xml:"login"`
 	Password string `json:"password" yaml:"password" xml:"password"`
 
-	Roots  []DiskPath `json:"local" yaml:"local" xml:"local>item"` // root directories list
+	Local  []DiskPath `json:"local" yaml:"local" xml:"local>item"` // root directories list
 	Remote []DiskPath `json:"remote" yaml:"remote" xml:"remote>item"`
 	Shares []DiskPath `json:"shares" yaml:"shares" xml:"shares>item"`
 
@@ -204,7 +204,7 @@ func (prf *Profile) pathName(syspath string) string {
 		return name
 	}
 
-	for _, dp := range prf.Roots {
+	for _, dp := range prf.Local {
 		if syspath == dp.Path {
 			return dp.Name
 		}
@@ -249,7 +249,7 @@ func (prf *Profile) GetPathGroup(fpath string, fi fs.FileInfo) (grp FG_t) {
 func (prf *Profile) IsLocal(syspath string) bool {
 	prf.mux.RLock()
 	defer prf.mux.RUnlock()
-	for _, dp := range prf.Roots {
+	for _, dp := range prf.Local {
 		if dp.Path == syspath {
 			return true
 		}
@@ -300,7 +300,7 @@ func (prf *Profile) FindLocal() {
 			if _, err := os.Stat(root); err == nil {
 				if !prf.IsLocal(root) {
 					prf.mux.Lock()
-					prf.Roots = append(prf.Roots, DiskPath{
+					prf.Local = append(prf.Local, DiskPath{
 						Path: root,
 						Name: "disk " + d,
 					})
@@ -320,7 +320,7 @@ func (prf *Profile) FindLocal() {
 				if _, err := os.Stat(root); err == nil {
 					if !prf.IsLocal(root) {
 						prf.mux.Lock()
-						prf.Roots = append(prf.Roots, DiskPath{
+						prf.Local = append(prf.Local, DiskPath{
 							Path: root,
 							Name: "disk " + strings.ToUpper(name),
 						})
@@ -335,7 +335,7 @@ func (prf *Profile) FindLocal() {
 // ScanLocal scans paths from local roots list.
 func (prf *Profile) ScanLocal(session *Session, scanembed bool) (ret []any, err error) {
 	prf.mux.RLock()
-	var vfiles = append([]DiskPath{}, prf.Roots...) // make non-nil copy
+	var vfiles = append([]DiskPath{}, prf.Local...) // make non-nil copy
 	prf.mux.RUnlock()
 
 	var dp DirProp
@@ -419,12 +419,12 @@ func (prf *Profile) AddLocal(syspath, name string) bool {
 	prf.mux.Lock()
 	defer prf.mux.Unlock()
 
-	for _, dp := range prf.Roots {
+	for _, dp := range prf.Local {
 		if dp.Path == syspath {
 			return false
 		}
 	}
-	prf.Roots = append(prf.Roots, DiskPath{syspath, name})
+	prf.Local = append(prf.Local, DiskPath{syspath, name})
 	return true
 }
 
@@ -433,9 +433,9 @@ func (prf *Profile) DelLocal(syspath string) bool {
 	prf.mux.Lock()
 	defer prf.mux.Unlock()
 
-	for i, dp := range prf.Roots {
+	for i, dp := range prf.Local {
 		if dp.Path == syspath {
-			prf.Roots = append(prf.Roots[:i], prf.Roots[i+1:]...)
+			prf.Local = append(prf.Local[:i], prf.Local[i+1:]...)
 			return true
 		}
 	}
@@ -530,7 +530,7 @@ func (prf *Profile) GetRootPath(session *Session, syspath string) (rootpath, roo
 	defer prf.mux.RUnlock()
 
 	var base string
-	for _, dp := range prf.Roots {
+	for _, dp := range prf.Local {
 		if PathStarts(syspath, dp.Path) {
 			if len(dp.Path) > len(base) {
 				base = dp.Path
@@ -569,7 +569,7 @@ func (prf *Profile) PathAccess(syspath string, isadmin bool) bool {
 			return true
 		}
 	}
-	for _, dp := range prf.Roots {
+	for _, dp := range prf.Local {
 		if PathStarts(syspath, dp.Path) {
 			if isadmin {
 				return true
@@ -605,7 +605,7 @@ func (prf *Profile) PathAdmin(syspath string) bool {
 			return true
 		}
 	}
-	for _, dp := range prf.Roots {
+	for _, dp := range prf.Local {
 		if PathStarts(syspath, dp.Path) {
 			return true
 		}

@@ -8,10 +8,10 @@ import (
 	"net/http"
 	"path"
 	"runtime"
-	"strconv"
 	"strings"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	cfg "github.com/schwarzlichtbezirk/hms/config"
 	"github.com/schwarzlichtbezirk/wpk"
 )
@@ -19,16 +19,12 @@ import (
 // save server start time
 var starttime = time.Now()
 
-//////////////////////////
-// API request handlers //
-//////////////////////////
-
-// APIHANDLER
-func pingAPI(w http.ResponseWriter, r *http.Request) {
-	var body, _ = io.ReadAll(r.Body)
-	WriteStdHeader(w)
-	w.WriteHeader(http.StatusOK)
-	w.Write(body)
+// Check service response.
+func SpiPing(c *gin.Context) {
+	var ret = gin.H{
+		"message": "pong",
+	}
+	RetOk(c, ret)
 }
 
 // APIHANDLER
@@ -55,9 +51,9 @@ func reloadAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	WriteOK(w, r, nil)
 }
 
-// APIHANDLER
-func srvinfAPI(w http.ResponseWriter, r *http.Request) {
-	var ret = XmlMap{
+// Static service system information.
+func SpiServInfo(c *gin.Context) {
+	var ret = gin.H{
 		"buildvers": cfg.BuildVers,
 		"buildtime": cfg.BuildTime,
 		"started":   starttime.Format(time.RFC3339),
@@ -70,12 +66,11 @@ func srvinfAPI(w http.ResponseWriter, r *http.Request) {
 		"pkgpath":   cfg.PkgPath,
 		"tmbpath":   cfg.TmbPath,
 	}
-
-	WriteOK(w, r, ret)
+	RetOk(c, ret)
 }
 
-// APIHANDLER
-func memusgAPI(w http.ResponseWriter, r *http.Request) {
+// Memory usage footprint.
+func SpiMemUsage(c *gin.Context) {
 	var mem runtime.MemStats
 	runtime.ReadMemStats(&mem)
 
@@ -91,12 +86,11 @@ func memusgAPI(w http.ResponseWriter, r *http.Request) {
 		"pausetotalns":  mem.PauseTotalNs,
 		"gccpufraction": mem.GCCPUFraction,
 	}
-
-	WriteOK(w, r, ret)
+	RetOk(c, ret)
 }
 
-// APIHANDLER
-func cchinfAPI(w http.ResponseWriter, r *http.Request) {
+// Get caches state snapshot.
+func SpiCachesInfo(c *gin.Context) {
 	var session = XormStorage.NewSession()
 	defer session.Close()
 
@@ -159,50 +153,36 @@ func cchinfAPI(w http.ResponseWriter, r *http.Request) {
 		"sftpcount":    sftpcount,
 	}
 
-	WriteOK(w, r, ret)
+	RetOk(c, ret)
 }
 
 // APIHANDLER
-func getlogAPI(w http.ResponseWriter, r *http.Request) {
+func SpiGetLog(c *gin.Context) {
 	var err error
+	var arg struct {
+		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
+
+		Num    int   `json:"num" yaml:"num" xml:"num" form:"num"`
+		Unixms int64 `json:"unixms" yaml:"unixms" xml:"unixms" form:"unixms"`
+	}
 	var ret struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
 
 		List []cfg.LogStore `json:"list" yaml:"list" xml:"list>item"`
 	}
 
-	var size = Log.Size()
-
 	// get arguments
-	var num int
-	if s := r.FormValue("num"); len(s) > 0 {
-		var i64 int64
-		if i64, err = strconv.ParseInt(s, 10, 64); err != nil {
-			WriteError400(w, r, ErrArgNoNum, SEC_getlog_badnum)
-			return
-		}
-		num = int(i64)
+	if err = c.ShouldBind(&arg); err != nil {
+		Ret400(c, SEC_getlog_nobind, err)
+		return
 	}
+
+	var size = Log.Size()
+	var num = arg.Num
 	if num <= 0 || num > size {
 		num = size
 	}
-	var from time.Time
-	if s := r.FormValue("unix"); len(s) > 0 {
-		var i64 int64
-		if i64, err = strconv.ParseInt(s, 10, 64); err != nil {
-			WriteError400(w, r, ErrArgNoTime, SEC_getlog_badunix)
-			return
-		}
-		from = time.Unix(i64, 0)
-	}
-	if s := r.FormValue("unixms"); len(s) > 0 {
-		var i64 int64
-		if i64, err = strconv.ParseInt(s, 10, 64); err != nil {
-			WriteError400(w, r, ErrArgNoTime, SEC_getlog_badums)
-			return
-		}
-		from = time.UnixMilli(i64)
-	}
+	var from = time.UnixMilli(arg.Unixms)
 
 	if !from.IsZero() {
 		var h = Log.Ring()
@@ -220,7 +200,7 @@ func getlogAPI(w http.ResponseWriter, r *http.Request) {
 		h = h.Prev()
 	}
 
-	WriteOK(w, r, &ret)
+	RetOk(c, ret)
 }
 
 // APIHANDLER

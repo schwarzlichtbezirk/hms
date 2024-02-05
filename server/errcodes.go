@@ -93,9 +93,7 @@ const (
 
 	// stat/getlog
 
-	SEC_getlog_badnum
-	SEC_getlog_badunix
-	SEC_getlog_badums
+	SEC_getlog_nobind
 
 	// auth/pubkey
 
@@ -299,8 +297,6 @@ var (
 	ErrNotSys   = errors.New("root PUID does not refers to file system path")
 	ErrPathOut  = errors.New("path cannot refers outside root PUID")
 
-	ErrArgNoNum  = errors.New("'num' parameter not recognized")
-	ErrArgNoTime = errors.New("unix time value not recognized")
 	ErrArgNoHD   = errors.New("'hd' parameter not recognized")
 	ErrArgNoPuid = errors.New("'puid' argument required")
 	ErrArgNoDim  = errors.New("bad tiles dimensions")

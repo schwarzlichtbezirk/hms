@@ -27,7 +27,7 @@ import (
 
 var json = jsoniter.ConfigFastest
 
-type jerr struct {
+/*type jerr struct {
 	error
 }
 
@@ -49,7 +49,7 @@ func (err *jerr) MarshalYAML() (any, error) {
 // MarshalXML is XML marshaler interface implementation to stream errors on Ajax.
 func (err *jerr) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	return e.EncodeElement(err.Error(), start)
-}
+}*/
 
 // AjaxErr is error object on AJAX API handlers calls.
 type AjaxErr struct {
@@ -606,13 +606,8 @@ func RegisterRoutes(gmux *mux.Router) {
 	var api = gmux.PathPrefix("/api").Subrouter()
 	var usr = gacc.PathPrefix("/api").Subrouter()
 	api.Use(AjaxMiddleware)
-	api.Path("/ping").HandlerFunc(pingAPI)
 	api.Path("/reload").HandlerFunc(AuthWrap(reloadAPI)) // authorized only
 
-	api.Path("/stat/srvinf").HandlerFunc(srvinfAPI)
-	api.Path("/stat/memusg").HandlerFunc(memusgAPI)
-	api.Path("/stat/cchinf").HandlerFunc(cchinfAPI)
-	api.Path("/stat/getlog").HandlerFunc(getlogAPI)
 	api.Path("/stat/usrlst").HandlerFunc(usrlstAPI)
 
 	api.Path("/auth/pubkey").HandlerFunc(pubkeyAPI)

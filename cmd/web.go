@@ -4,8 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/gin-gonic/gin"
 	"github.com/gorilla/mux"
-	"github.com/schwarzlichtbezirk/hms/config"
+	cfg "github.com/schwarzlichtbezirk/hms/config"
 	srv "github.com/schwarzlichtbezirk/hms/server"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -24,14 +25,28 @@ var webCmd = &cobra.Command{
 	Aliases: []string{"srv"},
 	Short:   webShort,
 	Long:    webLong,
-	Example: fmt.Sprintf(webExmp, config.AppName, config.AppName),
+	Example: fmt.Sprintf(webExmp, cfg.AppName, cfg.AppName),
 	RunE: func(cmd *cobra.Command, args []string) (err error) {
+		if cfg.DevMode {
+			gin.SetMode(gin.DebugMode)
+		} else {
+			gin.SetMode(gin.ReleaseMode)
+		}
+
 		var exitctx context.Context
 		if exitctx, err = Init(); err != nil {
 			return
 		}
+
 		var gmux = mux.NewRouter()
 		srv.RegisterRoutes(gmux)
+
+		var r = gin.New()
+		r.SetTrustedProxies([]string{"127.0.0.0/8"})
+		srv.Router(r)
+
+		gmux.NotFoundHandler = r
+
 		RunWeb(exitctx, gmux)
 		srv.WaitHandlers()
 		err = Done()

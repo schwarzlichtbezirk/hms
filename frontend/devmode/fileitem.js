@@ -748,7 +748,7 @@ const VueImgItem = {
 };
 
 // media max-width multiplier
-let wdhmult = 0;
+let wdhmult = 4; // lg by default
 (() => {
 	const mqlsm = window.matchMedia('(width <= 576px)');
 	const mqlmd = window.matchMedia('(576px < width <= 854px)');

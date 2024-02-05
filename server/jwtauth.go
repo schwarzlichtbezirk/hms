@@ -13,8 +13,17 @@ import (
 	"github.com/gorilla/mux"
 )
 
-// "iss" field for this tokens.
-const jwtIssuer = "hms"
+const (
+	// "iss" field for this tokens.
+	jwtIssuer = "hms"
+
+	// Pointer to Profile object stored at gin context
+	// after successful authorization.
+	userKey = "user"
+
+	realmBasic  = `Basic realm="slotopol", charset="UTF-8"`
+	realmBearer = `JWT realm="slotopol", charset="UTF-8"`
+)
 
 // Claims of JWT-tokens. Contains additional profile identifier.
 type Claims struct {

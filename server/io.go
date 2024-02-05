@@ -119,7 +119,7 @@ func PrfUpdate() {
 			Profiles.Range(func(id ID_t, prf *Profile) bool {
 				Log.Infof("loaded profile id%d, login='%s'", prf.ID, prf.Login)
 				// cache local and remote roots
-				for _, dp := range prf.Roots {
+				for _, dp := range prf.Local {
 					PathStoreCache(session, dp.Path)
 				}
 				for _, dp := range prf.Remote {
@@ -133,7 +133,7 @@ func PrfUpdate() {
 				// build shares tables
 				prf.updateGrp()
 				// check up some roots already defined
-				if len(prf.Roots) == 0 {
+				if len(prf.Local) == 0 {
 					prf.FindLocal()
 				}
 
