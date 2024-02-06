@@ -55,7 +55,14 @@ func signinAPI(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var prf *Profile
-	if prf = ProfileByUser(arg.Name); prf == nil {
+	Profiles.Range(func(uid ID_t, u *Profile) bool {
+		if u.Login != arg.Name {
+			return true
+		}
+		prf = u
+		return false
+	})
+	if prf == nil {
 		WriteError(w, r, http.StatusForbidden, ErrNoAcc, SEC_signin_noacc)
 		return
 	}

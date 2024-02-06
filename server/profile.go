@@ -186,18 +186,6 @@ func NewProfile(login, password string) *Profile {
 	return prf
 }
 
-// ProfileByUser finds profile with given login.
-func ProfileByUser(login string) (found *Profile) {
-	Profiles.Range(func(id ID_t, prf *Profile) bool {
-		if prf.Login != login {
-			return true
-		}
-		found = prf
-		return false
-	})
-	return
-}
-
 // pathName returns label for given path.
 func (prf *Profile) pathName(syspath string) string {
 	if name, ok := CatNames[syspath]; ok {

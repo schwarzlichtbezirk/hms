@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/avct/uasurfer v0.0.0-20191028135549-26b5daa857f1
-	github.com/cespare/xxhash v1.1.0
+	github.com/cespare/xxhash/v2 v2.2.0
 	github.com/chai2010/webp v1.1.1
 	github.com/dhowden/tag v0.0.0-20240122214204-713ab0e94639
 	github.com/disintegration/gift v1.2.1

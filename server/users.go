@@ -7,7 +7,8 @@ import (
 	"time"
 
 	uas "github.com/avct/uasurfer"
-	"github.com/cespare/xxhash"
+	"github.com/cespare/xxhash/v2"
+	"github.com/gin-gonic/gin"
 	"xorm.io/xorm"
 )
 
@@ -90,7 +91,7 @@ func LoadUaMap() (err error) {
 }
 
 // APIHANDLER
-func usrlstAPI(w http.ResponseWriter, r *http.Request) {
+func SpiUserList(c *gin.Context) {
 	type item struct { // user info
 		Addr   string        `json:"addr" yaml:"addr" xml:"addr"`
 		UA     uas.UserAgent `json:"ua" yaml:"ua" xml:"ua"`
@@ -118,7 +119,8 @@ func usrlstAPI(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get arguments
-	if err = ParseBody(w, r, &arg); err != nil {
+	if err = c.ShouldBind(&arg); err != nil {
+		Ret400(c, SEC_usrlst_nobind, err)
 		return
 	}
 
@@ -127,7 +129,7 @@ func usrlstAPI(w http.ResponseWriter, r *http.Request) {
 
 	var asts []AgentStore
 	if err = XormUserlog.Limit(arg.Num, arg.Pos).Find(&asts); err != nil {
-		WriteError500(w, r, err, SEC_usrlst_asts)
+		Ret500(c, SEC_usrlst_asts, err)
 		return
 	}
 
@@ -147,7 +149,7 @@ func usrlstAPI(w http.ResponseWriter, r *http.Request) {
 		var is bool
 		var fost, post OpenStore
 		if is, err = XormUserlog.Where("uaid=? AND latency<0", ast.UAID).Desc("time").Get(&fost); err != nil {
-			WriteError500(w, r, err, SEC_usrlst_fost)
+			Ret500(c, SEC_usrlst_fost, err)
 			return
 		}
 		if is {
@@ -156,7 +158,7 @@ func usrlstAPI(w http.ResponseWriter, r *http.Request) {
 			ui.UID = fost.UID
 		}
 		if is, err = XormUserlog.Where("uaid=? AND latency>=0", ast.UAID).Desc("time").Get(&post); err != nil {
-			WriteError500(w, r, err, SEC_usrlst_post)
+			Ret500(c, SEC_usrlst_post, err)
 			return
 		}
 		if is {
@@ -172,7 +174,7 @@ func usrlstAPI(w http.ResponseWriter, r *http.Request) {
 	ret.UANum = len(UaMap)
 	uamux.Unlock()
 
-	WriteOK(w, r, &ret)
+	RetOk(c, ret)
 }
 
 // The End.

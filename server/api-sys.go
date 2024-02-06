@@ -156,7 +156,7 @@ func SpiCachesInfo(c *gin.Context) {
 	RetOk(c, ret)
 }
 
-// APIHANDLER
+// Returns log items.
 func SpiGetLog(c *gin.Context) {
 	var err error
 	var arg struct {

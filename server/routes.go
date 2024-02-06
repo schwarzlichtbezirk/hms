@@ -608,8 +608,6 @@ func RegisterRoutes(gmux *mux.Router) {
 	api.Use(AjaxMiddleware)
 	api.Path("/reload").HandlerFunc(AuthWrap(reloadAPI)) // authorized only
 
-	api.Path("/stat/usrlst").HandlerFunc(usrlstAPI)
-
 	api.Path("/auth/pubkey").HandlerFunc(pubkeyAPI)
 	api.Path("/auth/signin").HandlerFunc(signinAPI)
 	api.Path("/auth/refrsh").HandlerFunc(refrshAPI)

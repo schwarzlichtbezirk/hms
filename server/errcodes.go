@@ -15,10 +15,11 @@ const (
 	SEC_badenc
 	SEC_panic
 
-	// auth
-
+	// authorization
 	SEC_noaid
 	SEC_noauth
+
+	SEC_auth_absent
 	SEC_auth_scheme
 	SEC_basic_decode
 	SEC_basic_noacc
@@ -34,12 +35,16 @@ const (
 	SEC_token_badaid
 	SEC_param_noacc
 
+	// 404
+	SEC_nourl
+
 	// page
 
 	SEC_page_absent
 
 	// file
 
+	SEC_media_badacc
 	SEC_media_noacc
 	SEC_media_badmedia
 	SEC_media_badhd
@@ -283,6 +288,7 @@ const (
 	SEC_gpsscan_nodata
 
 	// stat/usrlst
+	SEC_usrlst_nobind
 	SEC_usrlst_asts
 	SEC_usrlst_fost
 	SEC_usrlst_post
@@ -290,6 +296,7 @@ const (
 
 // HTTP error messages
 var (
+	Err404      = errors.New("page not found")
 	ErrNoJSON   = errors.New("data not given")
 	ErrNoData   = errors.New("data is empty")
 	ErrArgUndef = errors.New("request content type is undefined")

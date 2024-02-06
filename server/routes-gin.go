@@ -110,10 +110,18 @@ func Ret500(c *gin.Context, code int, err error) {
 }
 
 func Router(r *gin.Engine) {
-	//r.NoRoute(Auth(false), Handle404)
+	r.NoRoute(Auth(false), Handle404)
 	r.GET("/ping", SpiPing)
 	r.GET("/stat/srvinf", SpiServInfo)
 	r.GET("/stat/memusg", SpiMemUsage)
 	r.GET("/stat/cchinf", SpiCachesInfo)
-	r.GET("/stat/getlog", SpiGetLog)
+	r.POST("/stat/getlog", SpiGetLog)
+	r.POST("/stat/usrlst", SpiUserList)
+
+	//var rdev = r.Group("/dev")
+	//var dacc = rdev.Group("/id:aid")
+	//var gacc = r.Group("/id:aid")
+
+	// file system sharing & converted media files
+	//gacc.GET("/file/*path", Auth(false), SpiFile)
 }

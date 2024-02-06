@@ -639,7 +639,7 @@ const VueConsoleCard = {
 		onrefresh() {
 			(async () => {
 				try {
-					const response = await fetch("/api/stat/getlog");
+					const response = await fetchjson("POST", "/api/stat/getlog");
 					if (response.ok) {
 						const data = await response.json();
 						this.log = data.list;
@@ -651,7 +651,7 @@ const VueConsoleCard = {
 		update() {
 			this.upid = setInterval(() => (async () => {
 				try {
-					const response = await fetch(`/api/stat/getlog?unixms=${this.last}`);
+					const response = fetchjson("POST", `/api/stat/getlog?unixms=${this.last}`);
 					if (response.ok) {
 						const data = await response.json();
 						this.log.push(...data.list);
