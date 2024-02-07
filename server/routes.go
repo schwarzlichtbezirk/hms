@@ -375,11 +375,6 @@ var pagealias = map[string]string{
 	"/stat": "stat.html",
 }
 
-// Main page routes.
-var routemain = []string{
-	"/home/", "/ctgr/", "/path/",
-}
-
 // Routes aliases.
 var routealias = map[string]string{
 	"/fs/":   ".",
@@ -569,38 +564,9 @@ func AjaxMiddleware(next http.Handler) http.Handler {
 func RegisterRoutes(gmux *mux.Router) {
 	gmux.Use(AjaxMiddleware)
 
-	// UI pages
-	var devm = gmux.PathPrefix("/dev").Subrouter()
-	for fpath, fname := range pagealias {
-		devm.Path(fpath).HandlerFunc(pageHandler(devmsuff, fname)) // development mode
-		gmux.Path(fpath).HandlerFunc(pageHandler(relmsuff, fname)) // release mode
-	}
-
-	// profile routes
-	var dacc = devm.PathPrefix("/id{aid:[0-9]+}/").Subrouter()
+	//var devm = gmux.PathPrefix("/dev").Subrouter()
+	//var dacc = devm.PathPrefix("/id{aid:[0-9]+}/").Subrouter()
 	var gacc = gmux.PathPrefix("/id{aid:[0-9]+}/").Subrouter()
-	for _, pref := range routemain {
-		dacc.PathPrefix(pref).HandlerFunc(pageHandler(devmsuff, pagealias["/"]))
-		gacc.PathPrefix(pref).HandlerFunc(pageHandler(relmsuff, pagealias["/"]))
-	}
-
-	// wpk-files sharing
-	for alias, prefix := range routealias {
-		var sub, err = ResFS.Sub(prefix)
-		if err != nil {
-			Log.Fatal(err)
-		}
-		gmux.PathPrefix(alias).Handler(http.StripPrefix(alias, http.FileServer(http.FS(sub))))
-	}
-
-	// file system sharing & converted media files
-	gacc.PathPrefix("/file/").HandlerFunc(AuthWrap(fileHandler))
-	// embedded thumbnails
-	gacc.Path("/etmb/{puid}").HandlerFunc(AuthWrap(etmbHandler))
-	// cached thumbnails
-	gacc.Path("/mtmb/{puid}").HandlerFunc(AuthWrap(mtmbHandler))
-	// cached tiles
-	gacc.Path("/tile/{puid}/{wdh:[0-9]+}x{hgt:[0-9]+}").HandlerFunc(AuthWrap(tileHandler))
 
 	// API routes
 	var api = gmux.PathPrefix("/api").Subrouter()

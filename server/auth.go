@@ -216,6 +216,13 @@ func GetBearerAuth(tokenstr string) (prf *Profile, code int, err error) {
 	return
 }
 
+func GetUID(c *gin.Context) ID_t {
+	if v, ok := c.Get(userKey); ok {
+		return v.(*Profile).ID
+	}
+	return 0
+}
+
 func GetUser(c *gin.Context) *Profile {
 	if v, ok := c.Get(userKey); ok {
 		return v.(*Profile)

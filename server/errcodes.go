@@ -62,6 +62,7 @@ const (
 
 	// etmb
 
+	SEC_etmb_badacc
 	SEC_etmb_noacc
 	SEC_etmb_nopuid
 	SEC_etmb_nopath
@@ -72,6 +73,7 @@ const (
 
 	// mtmb
 
+	SEC_mtmb_badacc
 	SEC_mtmb_noacc
 	SEC_mtmb_nopuid
 	SEC_mtmb_nopath
@@ -82,9 +84,13 @@ const (
 
 	// tile
 
+	SEC_tile_badacc
 	SEC_tile_noacc
 	SEC_tile_nopuid
-	SEC_tile_baddim
+	SEC_tile_twodim
+	SEC_tile_badwdh
+	SEC_tile_badhgt
+	SEC_tile_zero
 	SEC_tile_nopath
 	SEC_tile_hidden
 	SEC_tile_access
@@ -307,6 +313,7 @@ var (
 	ErrArgNoHD   = errors.New("'hd' parameter not recognized")
 	ErrArgNoPuid = errors.New("'puid' argument required")
 	ErrArgNoDim  = errors.New("bad tiles dimensions")
+	ErrArgZDim   = errors.New("dimensions can noy be zero")
 	ErrNotDir    = errors.New("path is not directory")
 	ErrNoPath    = errors.New("path is not found")
 	ErrDeny      = errors.New("access denied for specified authorization")

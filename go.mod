@@ -8,6 +8,7 @@ require (
 	github.com/chai2010/webp v1.1.1
 	github.com/dhowden/tag v0.0.0-20240122214204-713ab0e94639
 	github.com/disintegration/gift v1.2.1
+	github.com/gin-contrib/gzip v0.0.6
 	github.com/gin-gonic/gin v1.9.1
 	github.com/golang-jwt/jwt/v5 v5.2.0
 	github.com/google/uuid v1.6.0

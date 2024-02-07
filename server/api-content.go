@@ -12,55 +12,57 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 )
 
 // APIHANDLER
-func pageHandler(pref, fname string) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func SpiPage(pref, fname string) gin.HandlerFunc {
+	return func(c *gin.Context) {
 		var content, ok = pagecache[pref+"/"+fname]
 		if !ok {
-			WriteError(w, r, http.StatusNotFound, fs.ErrNotExist, SEC_page_absent)
+			Ret404(c, SEC_page_absent, fs.ErrNotExist)
 			return
 		}
 
-		WriteHTMLHeader(w)
-		http.ServeContent(w, r, fname, starttime, bytes.NewReader(content))
+		c.Header("Content-Type", "text/html; charset=utf-8")
+		http.ServeContent(c.Writer, c.Request, fname, starttime, bytes.NewReader(content))
 	}
 }
 
-// Hands out converted media files if them can be cached.
-func fileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
+// Hands out converted media files if them can be cached,
+// or file system content as is.
+func SpiFile(c *gin.Context) {
 	var err error
 	var ok bool
 
-	var acc *Profile
-	if acc, ok = Profiles.Get(aid); !ok {
-		WriteError(w, r, http.StatusNotFound, ErrNoAcc, SEC_media_noacc)
+	// get arguments
+	var aid ID_t
+	if aid, err = ParseID(c.Param("aid")); err != nil {
+		Ret400(c, SEC_media_badacc, ErrNoAcc)
 		return
 	}
+	var acc *Profile
+	if acc, ok = Profiles.Get(aid); !ok {
+		Ret404(c, SEC_media_noacc, ErrNoAcc)
+		return
+	}
+	var uid = GetUID(c)
+	var fpath = strings.TrimPrefix(c.Param("path"), "/")
 
-	// get arguments
 	var media bool
-	if s := r.FormValue("media"); len(s) > 0 {
+	if s, ok := c.GetQuery("media"); ok {
 		if media, err = strconv.ParseBool(s); err != nil {
-			WriteError400(w, r, ErrArgNoHD, SEC_media_badmedia)
+			Ret400(c, SEC_media_badmedia, ErrArgNoHD)
 			return
 		}
 	}
 	var hd bool
-	if s := r.FormValue("hd"); len(s) > 0 {
+	if s, ok := c.GetQuery("hd"); ok {
 		if hd, err = strconv.ParseBool(s); err != nil {
-			WriteError400(w, r, ErrArgNoHD, SEC_media_badhd)
+			Ret400(c, SEC_media_badhd, ErrArgNoHD)
 			return
 		}
 	}
-
-	var chunks = strings.Split(r.URL.Path, "/")
-	if len(chunks) < 4 {
-		panic("bad route for URL " + r.URL.Path)
-	}
-	var fpath = strings.Join(chunks[3:], "/")
 
 	var session = XormStorage.NewSession()
 	defer session.Close()
@@ -68,16 +70,16 @@ func fileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var syspath string
 	var puid Puid_t
 	if syspath, puid, err = UnfoldPath(session, fpath); err != nil {
-		WriteError400(w, r, err, SEC_media_badpath)
+		Ret400(c, SEC_media_badpath, err)
 		return
 	}
 
 	if Hidden.Fits(syspath) {
-		WriteError(w, r, http.StatusForbidden, ErrHidden, SEC_media_hidden)
+		Ret403(c, SEC_media_hidden, ErrHidden)
 		return
 	}
 	if !acc.PathAccess(syspath, uid == aid) {
-		WriteError(w, r, http.StatusForbidden, ErrNoAccess, SEC_media_access)
+		Ret403(c, SEC_media_access, ErrNoAccess)
 		return
 	}
 
@@ -86,31 +88,31 @@ func fileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		var md MediaData
 		if md, err = HdCacheGet(session, puid); err != nil {
 			if errors.Is(err, fs.ErrNotExist) {
-				WriteError(w, r, http.StatusGone, err, SEC_media_hdgone)
+				RetErr(c, http.StatusGone, SEC_media_hdgone, err)
 				return
 			}
 			if !errors.Is(err, ErrNotHD) {
-				WriteError500(w, r, err, SEC_media_hdfail)
+				Ret500(c, SEC_media_hdfail, err)
 				return
 			}
 		} else {
 			if md.Mime == MimeNil {
-				WriteError500(w, r, ErrBadMedia, SEC_media_hdnocnt)
+				Ret500(c, SEC_media_hdnocnt, ErrBadMedia)
 				return
 			}
 
-			if HasRangeBegin(r) { // beginning of content
+			if HasRangeBegin(c.Request) { // beginning of content
 				Log.Infof("id%d: media-hd %s", acc.ID, path.Base(syspath))
 				go XormUserlog.InsertOne(&OpenStore{
-					UAID:    RequestUAID(r),
+					UAID:    RequestUAID(c.Request),
 					AID:     aid,
 					UID:     uid,
 					Path:    syspath,
 					Latency: -1,
 				})
 			}
-			w.Header().Set("Content-Type", MimeStr[md.Mime])
-			http.ServeContent(w, r, syspath, md.Time, bytes.NewReader(md.Data))
+			c.Header("Content-Type", MimeStr[md.Mime])
+			http.ServeContent(c.Writer, c.Request, syspath, md.Time, bytes.NewReader(md.Data))
 			return
 		}
 	}
@@ -119,39 +121,39 @@ func fileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		var md MediaData
 		if md, err = MediaCacheGet(session, puid); err != nil {
 			if errors.Is(err, fs.ErrNotExist) {
-				WriteError(w, r, http.StatusGone, err, SEC_media_medgone)
+				RetErr(c, http.StatusGone, SEC_media_medgone, err)
 				return
 			}
 			if !errors.Is(err, ErrUncacheable) {
-				WriteError(w, r, http.StatusNotFound, err, SEC_media_medfail)
+				Ret404(c, SEC_media_medfail, err)
 				return
 			}
 		} else {
 			if md.Mime == MimeNil {
-				WriteError500(w, r, ErrBadMedia, SEC_media_mednocnt)
+				Ret500(c, SEC_media_mednocnt, ErrBadMedia)
 				return
 			}
 
-			if HasRangeBegin(r) { // beginning of content
+			if HasRangeBegin(c.Request) { // beginning of content
 				Log.Infof("id%d: media %s", acc.ID, path.Base(syspath))
 				go XormUserlog.InsertOne(&OpenStore{
-					UAID:    RequestUAID(r),
+					UAID:    RequestUAID(c.Request),
 					AID:     aid,
 					UID:     uid,
 					Path:    syspath,
 					Latency: -1,
 				})
 			}
-			w.Header().Set("Content-Type", MimeStr[md.Mime])
-			http.ServeContent(w, r, syspath, md.Time, bytes.NewReader(md.Data))
+			c.Header("Content-Type", MimeStr[md.Mime])
+			http.ServeContent(c.Writer, c.Request, syspath, md.Time, bytes.NewReader(md.Data))
 			return
 		}
 	}
 
-	if HasRangeBegin(r) { // beginning of content
+	if HasRangeBegin(c.Request) { // beginning of content
 		Log.Infof("id%d: serve %s", acc.ID, path.Base(syspath))
 		go XormUserlog.InsertOne(&OpenStore{
-			UAID:    RequestUAID(r),
+			UAID:    RequestUAID(c.Request),
 			AID:     aid,
 			UID:     uid,
 			Path:    syspath,
@@ -164,15 +166,15 @@ func fileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		if errors.Is(err, fs.ErrNotExist) {
 			// try to redirect to external shared file (not at DAV-disk)
 			if IsRemote(syspath) {
-				http.Redirect(w, r, syspath, http.StatusMovedPermanently)
+				http.Redirect(c.Writer, c.Request, syspath, http.StatusMovedPermanently)
 				return
 			}
 		}
 		if errors.Is(err, fs.ErrNotExist) {
-			WriteError(w, r, http.StatusGone, err, SEC_media_filegone)
+			RetErr(c, http.StatusGone, SEC_media_filegone, err)
 			return
 		}
-		WriteError500(w, r, err, SEC_media_fileopen)
+		Ret500(c, SEC_media_fileopen, err)
 		return
 	}
 	defer content.Close()
@@ -186,95 +188,96 @@ func fileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		}
 	}
 
-	WriteStdHeader(w)
-	http.ServeContent(w, r, syspath, t, content)
+	http.ServeContent(c.Writer, c.Request, syspath, t, content)
 }
 
 // Hands out embedded thumbnails for given files if any.
-func etmbHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
+func SpiEtmb(c *gin.Context) {
 	var err error
 	var ok bool
 
+	// get arguments
+	var aid ID_t
+	if aid, err = ParseID(c.Param("aid")); err != nil {
+		Ret400(c, SEC_etmb_badacc, ErrNoAcc)
+		return
+	}
 	var acc *Profile
 	if acc, ok = Profiles.Get(aid); !ok {
-		WriteError(w, r, http.StatusNotFound, ErrNoAcc, SEC_etmb_noacc)
+		Ret404(c, SEC_etmb_noacc, ErrNoAcc)
 		return
 	}
-
-	// get arguments
-	var vars = mux.Vars(r)
+	var uid = GetUID(c)
 	var puid Puid_t
-	if err = puid.Set(vars["puid"]); err != nil {
-		WriteError400(w, r, err, SEC_etmb_nopuid)
+	if err = puid.Set(c.Param("puid")); err != nil {
+		Ret400(c, SEC_etmb_nopuid, err)
 		return
 	}
-
-	var session = XormStorage.NewSession()
-	defer session.Close()
 
 	var syspath string
-	if syspath, ok = PathStorePath(session, puid); !ok {
-		WriteError(w, r, http.StatusNotFound, ErrNoPath, SEC_etmb_nopath)
+	if syspath, ok = PathCache.GetDir(puid); !ok {
+		Ret404(c, SEC_etmb_nopath, ErrNoPath)
 		return
 	}
 
 	if Hidden.Fits(syspath) {
-		WriteError(w, r, http.StatusForbidden, ErrHidden, SEC_etmb_hidden)
+		Ret403(c, SEC_etmb_hidden, ErrHidden)
 		return
 	}
 	if !acc.PathAccess(syspath, uid == aid) {
-		WriteError(w, r, http.StatusForbidden, ErrNoAccess, SEC_etmb_access)
+		Ret403(c, SEC_etmb_access, ErrNoAccess)
 		return
 	}
 
 	var md MediaData
-	if md, err = ExtractThmub(session, syspath); err != nil {
+	if md, err = ExtractThmub(syspath); err != nil {
 		if errors.Is(err, ErrNoThumb) {
-			WriteError(w, r, http.StatusNoContent, err, SEC_etmb_notmb)
+			RetErr(c, http.StatusNoContent, SEC_etmb_notmb, err)
 			return
 		} else {
-			WriteError500(w, r, err, SEC_etmb_badcnt)
+			Ret500(c, SEC_etmb_badcnt, err)
 			return
 		}
 	}
-	w.Header().Set("Content-Type", MimeStr[md.Mime])
-	http.ServeContent(w, r, syspath, md.Time, bytes.NewReader(md.Data))
+	c.Header("Content-Type", MimeStr[md.Mime])
+	http.ServeContent(c.Writer, c.Request, syspath, md.Time, bytes.NewReader(md.Data))
 }
 
 // Hands out cached thumbnails for given files.
-func mtmbHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
+func SpiMtmb(c *gin.Context) {
 	var err error
 	var ok bool
 
+	// get arguments
+	var aid ID_t
+	if aid, err = ParseID(c.Param("aid")); err != nil {
+		Ret400(c, SEC_mtmb_badacc, ErrNoAcc)
+		return
+	}
 	var acc *Profile
 	if acc, ok = Profiles.Get(aid); !ok {
-		WriteError(w, r, http.StatusNotFound, ErrNoAcc, SEC_mtmb_noacc)
+		Ret404(c, SEC_mtmb_noacc, ErrNoAcc)
 		return
 	}
-
-	// get arguments
-	var vars = mux.Vars(r)
+	var uid = GetUID(c)
 	var puid Puid_t
-	if err = puid.Set(vars["puid"]); err != nil {
-		WriteError400(w, r, err, SEC_mtmb_nopuid)
+	if err = puid.Set(c.Param("puid")); err != nil {
+		Ret400(c, SEC_mtmb_nopuid, err)
 		return
 	}
-
-	var session = XormStorage.NewSession()
-	defer session.Close()
 
 	var syspath string
-	if syspath, ok = PathStorePath(session, puid); !ok {
-		WriteError(w, r, http.StatusNotFound, ErrNoPath, SEC_mtmb_nopath)
+	if syspath, ok = PathCache.GetDir(puid); !ok {
+		Ret404(c, SEC_mtmb_nopath, ErrNoPath)
 		return
 	}
 
 	if Hidden.Fits(syspath) {
-		WriteError(w, r, http.StatusForbidden, ErrHidden, SEC_mtmb_hidden)
+		Ret403(c, SEC_mtmb_hidden, ErrHidden)
 		return
 	}
 	if !acc.PathAccess(syspath, uid == aid) {
-		WriteError(w, r, http.StatusForbidden, ErrNoAccess, SEC_mtmb_access)
+		Ret403(c, SEC_mtmb_access, ErrNoAccess)
 		return
 	}
 
@@ -282,59 +285,72 @@ func mtmbHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var mime string
 	var t time.Time
 	if file, mime, t, err = ThumbPkg.GetFile(syspath); err != nil {
-		WriteError500(w, r, err, SEC_mtmb_badcnt)
+		Ret500(c, SEC_mtmb_badcnt, err)
 		return
 	}
 	if file == nil {
-		WriteError(w, r, http.StatusNotFound, fs.ErrNotExist, SEC_mtmb_absent)
+		Ret404(c, SEC_mtmb_absent, fs.ErrNotExist)
 		return
 	}
 	defer file.Close()
 
-	w.Header().Set("Content-Type", mime)
-	http.ServeContent(w, r, syspath, t, file)
+	c.Header("Content-Type", mime)
+	http.ServeContent(c.Writer, c.Request, syspath, t, file)
 }
 
 // Hands out thumbnails for given files if them cached.
-func tileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
+func SpiTile(c *gin.Context) {
 	var err error
 	var ok bool
 
+	// get arguments
+	var aid ID_t
+	if aid, err = ParseID(c.Param("aid")); err != nil {
+		Ret400(c, SEC_tile_badacc, ErrNoAcc)
+		return
+	}
 	var acc *Profile
 	if acc, ok = Profiles.Get(aid); !ok {
-		WriteError(w, r, http.StatusNotFound, ErrNoAcc, SEC_tile_noacc)
+		Ret404(c, SEC_tile_noacc, ErrNoAcc)
 		return
 	}
-
-	// get arguments
-	var vars = mux.Vars(r)
+	var uid = GetUID(c)
 	var puid Puid_t
-	if err = puid.Set(vars["puid"]); err != nil {
-		WriteError400(w, r, err, SEC_tile_nopuid)
+	if err = puid.Set(c.Param("puid")); err != nil {
+		Ret400(c, SEC_tile_nopuid, err)
 		return
 	}
-	var wdh, _ = strconv.Atoi(vars["wdh"])
-	var hgt, _ = strconv.Atoi(vars["hgt"])
+	var dim = strings.Split(c.Param("dim"), "x")
+	if len(dim) != 2 {
+		Ret400(c, SEC_tile_twodim, ErrArgNoDim)
+		return
+	}
+	var wdh, hgt int
+	if wdh, err = strconv.Atoi(dim[0]); err != nil {
+		Ret400(c, SEC_tile_badwdh, ErrArgNoDim)
+		return
+	}
+	if hgt, err = strconv.Atoi(dim[1]); err != nil {
+		Ret400(c, SEC_tile_badhgt, ErrArgNoDim)
+		return
+	}
 	if wdh == 0 || hgt == 0 {
-		WriteError400(w, r, ErrArgNoDim, SEC_tile_baddim)
+		Ret400(c, SEC_tile_zero, ErrArgZDim)
 		return
 	}
-
-	var session = XormStorage.NewSession()
-	defer session.Close()
 
 	var syspath string
-	if syspath, ok = PathStorePath(session, puid); !ok {
-		WriteError(w, r, http.StatusNotFound, ErrNoPath, SEC_tile_nopath)
+	if syspath, ok = PathCache.GetDir(puid); !ok {
+		Ret404(c, SEC_tile_nopath, ErrNoPath)
 		return
 	}
 
 	if Hidden.Fits(syspath) {
-		WriteError(w, r, http.StatusForbidden, ErrHidden, SEC_tile_hidden)
+		Ret403(c, SEC_tile_hidden, ErrHidden)
 		return
 	}
 	if !acc.PathAccess(syspath, uid == aid) {
-		WriteError(w, r, http.StatusForbidden, ErrNoAccess, SEC_tile_access)
+		Ret403(c, SEC_tile_access, ErrNoAccess)
 		return
 	}
 
@@ -343,17 +359,17 @@ func tileHandler(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var mime string
 	var t time.Time
 	if file, mime, t, err = TilesPkg.GetFile(tilepath); err != nil {
-		WriteError500(w, r, err, SEC_tile_badcnt)
+		Ret500(c, SEC_tile_badcnt, err)
 		return
 	}
 	if file == nil {
-		WriteError(w, r, http.StatusNotFound, fs.ErrNotExist, SEC_tile_absent)
+		Ret404(c, SEC_tile_absent, fs.ErrNotExist)
 		return
 	}
 	defer file.Close()
 
-	w.Header().Set("Content-Type", mime)
-	http.ServeContent(w, r, syspath, t, file)
+	c.Header("Content-Type", mime)
+	http.ServeContent(c.Writer, c.Request, syspath, t, file)
 }
 
 // The End.

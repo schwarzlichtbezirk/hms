@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 )
@@ -111,17 +112,53 @@ func Ret500(c *gin.Context, code int, err error) {
 
 func Router(r *gin.Engine) {
 	r.NoRoute(Auth(false), Handle404)
-	r.GET("/ping", SpiPing)
-	r.GET("/stat/srvinf", SpiServInfo)
-	r.GET("/stat/memusg", SpiMemUsage)
-	r.GET("/stat/cchinf", SpiCachesInfo)
-	r.POST("/stat/getlog", SpiGetLog)
-	r.POST("/stat/usrlst", SpiUserList)
 
-	//var rdev = r.Group("/dev")
-	//var dacc = rdev.Group("/id:aid")
-	//var gacc = r.Group("/id:aid")
+	var rdev = r.Group("/dev")
+	var dacc = rdev.Group("/id:aid")
+	var gacc = r.Group("/id:aid")
+
+	//////////////////////
+	// content delivery //
+	//////////////////////
+
+	// wpk-files sharing
+	var rgz = r.Group("/", gzip.Gzip(gzip.DefaultCompression, gzip.WithExcludedExtensions([]string{
+		".avif", ".webp", ".jp2", ".jpg", ".png", ".gif", ".woff", ".woff2",
+	})))
+	for alias, prefix := range routealias {
+		var sub, err = ResFS.Sub(prefix)
+		if err != nil {
+			Log.Fatal(err)
+		}
+		rgz.StaticFS(alias, http.FS(sub))
+	}
+
+	// UI pages
+	for fpath, fname := range pagealias {
+		rdev.GET(fpath, SpiPage(devmsuff, fname)) // development mode
+		r.GET(fpath, SpiPage(relmsuff, fname))    // release mode
+	}
+	dacc.GET("/path/*path", SpiPage(devmsuff, pagealias["/"]))
+	gacc.GET("/path/*path", SpiPage(relmsuff, pagealias["/"]))
 
 	// file system sharing & converted media files
-	//gacc.GET("/file/*path", Auth(false), SpiFile)
+	gacc.GET("/file/*path", Auth(false), SpiFile)
+	// embedded thumbnails
+	gacc.GET("/etmb/:puid", Auth(false), SpiEtmb)
+	// cached thumbnails
+	gacc.GET("/mtmb/:puid", Auth(false), SpiMtmb)
+	// cached tiles
+	gacc.GET("/tile/:puid/:dim", Auth(false), SpiTile)
+
+	////////////////
+	// API routes //
+	////////////////
+
+	var api = r.Group("/api")
+	api.GET("/ping", SpiPing)
+	api.GET("/stat/srvinf", SpiServInfo)
+	api.GET("/stat/memusg", SpiMemUsage)
+	api.GET("/stat/cchinf", SpiCachesInfo)
+	api.POST("/stat/getlog", SpiGetLog)
+	api.POST("/stat/usrlst", SpiUserList)
 }

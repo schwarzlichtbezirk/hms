@@ -146,8 +146,8 @@ var (
 )
 
 // ExtractThmub extract thumbnail from embedded file tags.
-func ExtractThmub(session *Session, syspath string) (md MediaData, err error) {
-	var puid = PathStoreCache(session, syspath)
+func ExtractThmub(syspath string) (md MediaData, err error) {
+	var puid, _ = PathCache.GetRev(syspath)
 	var ok bool
 	if md, ok = etmbcache.Peek(puid); ok {
 		return
