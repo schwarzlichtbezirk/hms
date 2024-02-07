@@ -161,4 +161,12 @@ func Router(r *gin.Engine) {
 	api.GET("/stat/cchinf", SpiCachesInfo)
 	api.POST("/stat/getlog", SpiGetLog)
 	api.POST("/stat/usrlst", SpiUserList)
+
+	var usr = gacc.Group("/api")
+	usr.POST("/tags/check", Auth(false), SpiTagsCheck)
+	usr.POST("/tags/start", Auth(false), SpiTagsStart)
+	usr.POST("/tags/break", Auth(false), SpiTagsBreak)
+	usr.POST("/tile/check", Auth(false), SpiTileCheck)
+	usr.POST("/tile/start", Auth(false), SpiTileStart)
+	usr.POST("/tile/break", Auth(false), SpiTileBreak)
 }

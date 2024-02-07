@@ -3,10 +3,12 @@ package hms
 import (
 	"encoding/xml"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
-// APIHANDLER
-func extchkAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
+// Check whether thumbnails of pointed images prepared.
+func SpiTagsCheck(c *gin.Context) {
 	type store struct {
 		PUID    Puid_t `xorm:"puid" json:"puid" yaml:"puid" xml:"puid,attr"`
 		ExtProp `xorm:"extends" yaml:",inline"`
@@ -15,27 +17,29 @@ func extchkAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var ok bool
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
-		List    []Puid_t `json:"list" yaml:"list" xml:"list>puid"`
+		List    []Puid_t `json:"list" yaml:"list" xml:"list>puid" binding:"required"`
 	}
 	var ret struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
 		List    []store  `json:"list" yaml:"list" xml:"list>tile"`
 	}
 
+	// get arguments
+	if err = c.ShouldBind(&arg); err != nil {
+		Ret400(c, SEC_tagschk_nobind, err)
+		return
+	}
+	var aid ID_t
+	if aid, err = ParseID(c.Param("aid")); err != nil {
+		Ret400(c, SEC_tagschk_badacc, ErrNoAcc)
+		return
+	}
 	var acc *Profile
 	if acc, ok = Profiles.Get(aid); !ok {
-		WriteError400(w, r, ErrNoAcc, SEC_tagschk_noacc)
+		Ret404(c, SEC_tagschk_noacc, ErrNoAcc)
 		return
 	}
-
-	// get arguments
-	if err = ParseBody(w, r, &arg); err != nil {
-		return
-	}
-	if len(arg.List) == 0 {
-		WriteError400(w, r, ErrNoData, SEC_tagschk_nodata)
-		return
-	}
+	var uid = GetUID(c)
 
 	var session = XormStorage.NewSession()
 	defer session.Close()
@@ -54,28 +58,20 @@ func extchkAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		ret.List[i] = store{puid, xp}
 	}
 
-	WriteOK(w, r, &ret)
+	RetOk(c, ret)
 }
 
-// APIHANDLER
-func extstartAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
+// Start to preparing thumbnails of pointed images.
+func SpiTagsStart(c *gin.Context) {
 	var err error
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
-		List    []Puid_t `json:"list" yaml:"list" xml:"list>tiletm"`
-	}
-
-	if !Profiles.Has(aid) {
-		WriteError400(w, r, ErrNoAcc, SEC_tagsstart_noacc)
-		return
+		List    []Puid_t `json:"list" yaml:"list" xml:"list>tiletm" binding:"required"`
 	}
 
 	// get arguments
-	if err = ParseBody(w, r, &arg); err != nil {
-		return
-	}
-	if len(arg.List) == 0 {
-		WriteError400(w, r, ErrNoData, SEC_tagsstart_nodata)
+	if err = c.ShouldBind(&arg); err != nil {
+		Ret400(c, SEC_tagsstart_nobind, err)
 		return
 	}
 
@@ -83,28 +79,20 @@ func extstartAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		ImgScanner.AddTags(puid)
 	}
 
-	WriteOK(w, r, nil)
+	c.Status(http.StatusOK)
 }
 
-// APIHANDLER
-func extbreakAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
+// Break preparing thumbnails of pointed images.
+func SpiTagsBreak(c *gin.Context) {
 	var err error
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
-		List    []Puid_t `json:"list" yaml:"list" xml:"list>tiletm"`
-	}
-
-	if !Profiles.Has(aid) {
-		WriteError400(w, r, ErrNoAcc, SEC_tagsbreak_noacc)
-		return
+		List    []Puid_t `json:"list" yaml:"list" xml:"list>tiletm" binding:"required"`
 	}
 
 	// get arguments
-	if err = ParseBody(w, r, &arg); err != nil {
-		return
-	}
-	if len(arg.List) == 0 {
-		WriteError400(w, r, ErrNoData, SEC_tagsbreak_nodata)
+	if err = c.ShouldBind(&arg); err != nil {
+		Ret400(c, SEC_tagsbreak_nobind, err)
 		return
 	}
 
@@ -112,11 +100,11 @@ func extbreakAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		ImgScanner.RemoveTags(puid)
 	}
 
-	WriteOK(w, r, nil)
+	c.Status(http.StatusOK)
 }
 
-// APIHANDLER
-func tilechkAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
+// Check whether tiles of pointed images prepared.
+func SpiTileCheck(c *gin.Context) {
 	type tiletm struct {
 		PUID Puid_t `json:"puid" yaml:"puid" xml:"puid,attr"`
 		TM   TM_t   `json:"tm" yaml:"tm" xml:"tm,omitempty,attr"`
@@ -130,27 +118,29 @@ func tilechkAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var ok bool
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
-		List    []tiletm `json:"list" yaml:"list" xml:"list>puid"`
+		List    []tiletm `json:"list" yaml:"list" xml:"list>puid" binding:"required"`
 	}
 	var ret struct {
 		XMLName xml.Name   `json:"-" yaml:"-" xml:"ret"`
 		List    []tilemime `json:"list" yaml:"list" xml:"list>tile"`
 	}
 
+	// get arguments
+	if err = c.ShouldBind(&arg); err != nil {
+		Ret400(c, SEC_tilechk_nobind, err)
+		return
+	}
+	var aid ID_t
+	if aid, err = ParseID(c.Param("aid")); err != nil {
+		Ret400(c, SEC_tilechk_badacc, ErrNoAcc)
+		return
+	}
 	var acc *Profile
 	if acc, ok = Profiles.Get(aid); !ok {
-		WriteError400(w, r, ErrNoAcc, SEC_tilechk_noacc)
+		Ret404(c, SEC_tilechk_noacc, ErrNoAcc)
 		return
 	}
-
-	// get arguments
-	if err = ParseBody(w, r, &arg); err != nil {
-		return
-	}
-	if len(arg.List) == 0 {
-		WriteError400(w, r, ErrNoData, SEC_tilechk_nodata)
-		return
-	}
+	var uid = GetUID(c)
 
 	var session = XormStorage.NewSession()
 	defer session.Close()
@@ -170,11 +160,11 @@ func tilechkAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		ret.List[i].PUID, ret.List[i].TM, ret.List[i].Mime = ttm.PUID, ttm.TM, mime
 	}
 
-	WriteOK(w, r, &ret)
+	RetOk(c, ret)
 }
 
-// APIHANDLER
-func tilestartAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
+// Start to preparing tiles of pointed images.
+func SpiTileStart(c *gin.Context) {
 	type tiletm struct {
 		PUID Puid_t `json:"puid" yaml:"puid" xml:"puid,attr"`
 		TM   TM_t   `json:"tm,omitempty" yaml:"tm,omitempty" xml:"tm,omitempty,attr"`
@@ -182,20 +172,12 @@ func tilestartAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var err error
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
-		List    []tiletm `json:"list" yaml:"list" xml:"list>tiletm"`
-	}
-
-	if !Profiles.Has(aid) {
-		WriteError400(w, r, ErrNoAcc, SEC_tilestart_noacc)
-		return
+		List    []tiletm `json:"list" yaml:"list" xml:"list>tiletm" binding:"required"`
 	}
 
 	// get arguments
-	if err = ParseBody(w, r, &arg); err != nil {
-		return
-	}
-	if len(arg.List) == 0 {
-		WriteError400(w, r, ErrNoData, SEC_tilestart_nodata)
+	if err = c.ShouldBind(&arg); err != nil {
+		Ret400(c, SEC_tilestart_nobind, err)
 		return
 	}
 
@@ -203,11 +185,11 @@ func tilestartAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		ImgScanner.AddTile(ttm.PUID, ttm.TM)
 	}
 
-	WriteOK(w, r, nil)
+	c.Status(http.StatusOK)
 }
 
-// APIHANDLER
-func tilebreakAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
+// Break preparing tiles of pointed images.
+func SpiTileBreak(c *gin.Context) {
 	type tiletm struct {
 		PUID Puid_t `json:"puid" yaml:"puid" xml:"puid,attr"`
 		TM   TM_t   `json:"tm,omitempty" yaml:"tm,omitempty" xml:"tm,omitempty,attr"`
@@ -215,20 +197,12 @@ func tilebreakAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var err error
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
-		List    []tiletm `json:"list" yaml:"list" xml:"list>tiletm"`
-	}
-
-	if !Profiles.Has(aid) {
-		WriteError400(w, r, ErrNoAcc, SEC_tilebreak_noacc)
-		return
+		List    []tiletm `json:"list" yaml:"list" xml:"list>tiletm" binding:"required"`
 	}
 
 	// get arguments
-	if err = ParseBody(w, r, &arg); err != nil {
-		return
-	}
-	if len(arg.List) == 0 {
-		WriteError400(w, r, ErrNoData, SEC_tilebreak_nodata)
+	if err = c.ShouldBind(&arg); err != nil {
+		Ret400(c, SEC_tilebreak_nobind, err)
 		return
 	}
 
@@ -236,7 +210,7 @@ func tilebreakAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		ImgScanner.RemoveTile(ttm.PUID, ttm.TM)
 	}
 
-	WriteOK(w, r, nil)
+	c.Status(http.StatusOK)
 }
 
 // The End.

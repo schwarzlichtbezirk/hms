@@ -165,33 +165,31 @@ const (
 
 	// tags/chk
 
+	SEC_tagschk_nobind
+	SEC_tagschk_badacc
 	SEC_tagschk_noacc
-	SEC_tagschk_nodata
 
 	// tags/start
 
-	SEC_tagsstart_noacc
-	SEC_tagsstart_nodata
+	SEC_tagsstart_nobind
 
 	// tags/break
 
-	SEC_tagsbreak_noacc
-	SEC_tagsbreak_nodata
+	SEC_tagsbreak_nobind
 
 	// tile/chk
 
+	SEC_tilechk_nobind
+	SEC_tilechk_badacc
 	SEC_tilechk_noacc
-	SEC_tilechk_nodata
 
 	// tile/start
 
-	SEC_tilestart_noacc
-	SEC_tilestart_nodata
+	SEC_tilestart_nobind
 
 	// tile/break
 
-	SEC_tilebreak_noacc
-	SEC_tilebreak_nodata
+	SEC_tilebreak_nobind
 
 	// drive/add
 

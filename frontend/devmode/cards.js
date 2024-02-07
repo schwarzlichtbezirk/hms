@@ -1188,7 +1188,7 @@ const VueFileCard = {
 						if (stop || !self.expanded) {
 							return;
 						}
-						const response = await fetchjsonauth("POST", `/id${self.$root.aid}/api/tags/chk`, {
+						const response = await fetchjsonauth("POST", `/id${self.$root.aid}/api/tags/check`, {
 							list: euncached
 						});
 						const data = await response.json();
@@ -1269,7 +1269,7 @@ const VueFileCard = {
 							}
 							return;
 						}
-						const response = await fetchjsonauth("POST", `/id${self.$root.aid}/api/tile/chk`, {
+						const response = await fetchjsonauth("POST", `/id${self.$root.aid}/api/tile/check`, {
 							list: muncached
 						});
 						const data = await response.json();
@@ -1840,7 +1840,7 @@ const VueTileCard = {
 						}
 						return;
 					}
-					const response = await fetchjsonauth("POST", `/id${self.$root.aid}/api/tile/chk`, {
+					const response = await fetchjsonauth("POST", `/id${self.$root.aid}/api/tile/check`, {
 						list: uncached
 					});
 					const data = await response.json();
@@ -2238,7 +2238,7 @@ const VueMapCard = {
 						if (stop || !self.expanded) {
 							return;
 						}
-						const response = await fetchjsonauth("POST", `/id${self.$root.aid}/api/tags/chk`, {
+						const response = await fetchjsonauth("POST", `/id${self.$root.aid}/api/tags/check`, {
 							list: euncached
 						});
 						const data = await response.json();
@@ -2319,7 +2319,7 @@ const VueMapCard = {
 							}
 							return;
 						}
-						const response = await fetchjsonauth("POST", `/id${self.$root.aid}/api/tile/chk`, {
+						const response = await fetchjsonauth("POST", `/id${self.$root.aid}/api/tile/check`, {
 							list: muncached
 						});
 						const data = await response.json();
