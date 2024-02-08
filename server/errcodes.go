@@ -193,24 +193,28 @@ const (
 
 	// drive/add
 
+	SEC_drvadd_nobind
+	SEC_drvadd_badacc
 	SEC_drvadd_noacc
 	SEC_drvadd_deny
-	SEC_drvadd_nodata
 	SEC_drvadd_badpath
 	SEC_drvadd_miss
 	SEC_drvadd_hidden
 
 	// drive/del
 
+	SEC_drvdel_nobind
+	SEC_drvdel_badacc
 	SEC_drvdel_noacc
 	SEC_drvdel_deny
-	SEC_drvdel_nodata
 	SEC_drvdel_nopath
 
 	// cloud/add
 
+	SEC_cldadd_nobind
+	SEC_cldadd_badacc
 	SEC_cldadd_noacc
-	SEC_cldadd_nodata
+	SEC_cldadd_deny
 	SEC_cldadd_badhost
 	SEC_cldadd_ftpdial
 	SEC_cldadd_ftpcred
@@ -223,24 +227,27 @@ const (
 
 	// cloud/del
 
+	SEC_clddel_nobind
+	SEC_clddel_badacc
 	SEC_clddel_noacc
 	SEC_clddel_deny
-	SEC_clddel_nodata
 	SEC_clddel_nopath
 
 	// share/add
 
+	SEC_shradd_nobind
+	SEC_shradd_badacc
 	SEC_shradd_noacc
 	SEC_shradd_deny
-	SEC_shradd_nodata
 	SEC_shradd_nopath
 	SEC_shradd_access
 
 	// share/del
 
+	SEC_shrdel_nobind
+	SEC_shrdel_badacc
 	SEC_shrdel_noacc
 	SEC_shrdel_deny
-	SEC_shrdel_nodata
 	SEC_shrdel_nopath
 	SEC_shrdel_access
 

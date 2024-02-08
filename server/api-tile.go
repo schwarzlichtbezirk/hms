@@ -29,6 +29,7 @@ func SpiTagsCheck(c *gin.Context) {
 		Ret400(c, SEC_tagschk_nobind, err)
 		return
 	}
+	var uid = GetUID(c)
 	var aid ID_t
 	if aid, err = ParseID(c.Param("aid")); err != nil {
 		Ret400(c, SEC_tagschk_badacc, ErrNoAcc)
@@ -39,7 +40,6 @@ func SpiTagsCheck(c *gin.Context) {
 		Ret404(c, SEC_tagschk_noacc, ErrNoAcc)
 		return
 	}
-	var uid = GetUID(c)
 
 	var session = XormStorage.NewSession()
 	defer session.Close()
@@ -130,6 +130,7 @@ func SpiTileCheck(c *gin.Context) {
 		Ret400(c, SEC_tilechk_nobind, err)
 		return
 	}
+	var uid = GetUID(c)
 	var aid ID_t
 	if aid, err = ParseID(c.Param("aid")); err != nil {
 		Ret400(c, SEC_tilechk_badacc, ErrNoAcc)
@@ -140,7 +141,6 @@ func SpiTileCheck(c *gin.Context) {
 		Ret404(c, SEC_tilechk_noacc, ErrNoAcc)
 		return
 	}
-	var uid = GetUID(c)
 
 	var session = XormStorage.NewSession()
 	defer session.Close()

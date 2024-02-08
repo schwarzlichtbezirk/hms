@@ -169,4 +169,13 @@ func Router(r *gin.Engine) {
 	usr.POST("/tile/check", Auth(false), SpiTileCheck)
 	usr.POST("/tile/start", Auth(false), SpiTileStart)
 	usr.POST("/tile/break", Auth(false), SpiTileBreak)
+
+	usr.POST("/drive/add", Auth(true), SpiDriveAdd)
+	usr.POST("/drive/del", Auth(true), SpiDriveDel)
+
+	usr.POST("/cloud/add", Auth(true), SpiCloudAdd)
+	usr.POST("/cloud/del", Auth(true), SpiCloudDel)
+
+	usr.POST("/share/add", Auth(true), SpiShareAdd)
+	usr.POST("/share/del", Auth(true), SpiShareDel)
 }

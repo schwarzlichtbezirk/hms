@@ -36,6 +36,7 @@ func SpiFile(c *gin.Context) {
 	var ok bool
 
 	// get arguments
+	var uid = GetUID(c)
 	var aid ID_t
 	if aid, err = ParseID(c.Param("aid")); err != nil {
 		Ret400(c, SEC_media_badacc, ErrNoAcc)
@@ -46,7 +47,6 @@ func SpiFile(c *gin.Context) {
 		Ret404(c, SEC_media_noacc, ErrNoAcc)
 		return
 	}
-	var uid = GetUID(c)
 	var fpath = strings.TrimPrefix(c.Param("path"), "/")
 
 	var media bool
@@ -197,6 +197,7 @@ func SpiEtmb(c *gin.Context) {
 	var ok bool
 
 	// get arguments
+	var uid = GetUID(c)
 	var aid ID_t
 	if aid, err = ParseID(c.Param("aid")); err != nil {
 		Ret400(c, SEC_etmb_badacc, ErrNoAcc)
@@ -207,7 +208,6 @@ func SpiEtmb(c *gin.Context) {
 		Ret404(c, SEC_etmb_noacc, ErrNoAcc)
 		return
 	}
-	var uid = GetUID(c)
 	var puid Puid_t
 	if err = puid.Set(c.Param("puid")); err != nil {
 		Ret400(c, SEC_etmb_nopuid, err)
@@ -249,6 +249,7 @@ func SpiMtmb(c *gin.Context) {
 	var ok bool
 
 	// get arguments
+	var uid = GetUID(c)
 	var aid ID_t
 	if aid, err = ParseID(c.Param("aid")); err != nil {
 		Ret400(c, SEC_mtmb_badacc, ErrNoAcc)
@@ -259,7 +260,6 @@ func SpiMtmb(c *gin.Context) {
 		Ret404(c, SEC_mtmb_noacc, ErrNoAcc)
 		return
 	}
-	var uid = GetUID(c)
 	var puid Puid_t
 	if err = puid.Set(c.Param("puid")); err != nil {
 		Ret400(c, SEC_mtmb_nopuid, err)
@@ -304,6 +304,7 @@ func SpiTile(c *gin.Context) {
 	var ok bool
 
 	// get arguments
+	var uid = GetUID(c)
 	var aid ID_t
 	if aid, err = ParseID(c.Param("aid")); err != nil {
 		Ret400(c, SEC_tile_badacc, ErrNoAcc)
@@ -314,7 +315,6 @@ func SpiTile(c *gin.Context) {
 		Ret404(c, SEC_tile_noacc, ErrNoAcc)
 		return
 	}
-	var uid = GetUID(c)
 	var puid Puid_t
 	if err = puid.Set(c.Param("puid")); err != nil {
 		Ret400(c, SEC_tile_nopuid, err)

@@ -9,20 +9,21 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/jlaffaye/ftp"
 	"github.com/pkg/sftp"
 	"github.com/studio-b12/gowebdav"
 	"golang.org/x/crypto/ssh"
 )
 
-// APIHANDLER
-func drvaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
+// Add new drive location for profile.
+func SpiDriveAdd(c *gin.Context) {
 	var err error
 	var ok bool
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
-		Path string `json:"path" yaml:"path" xml:"path"`
+		Path string `json:"path" yaml:"path" xml:"path" binding:"required"`
 		Name string `json:"name" yaml:"name" xml:"name"`
 	}
 	var ret struct {
@@ -31,26 +32,26 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		Added bool    `json:"added" yaml:"added" xml:"added"`
 		FP    FileKit `json:"fp" yaml:"fp" xml:"fp"`
 	}
-	if uid == 0 { // only authorized access allowed
-		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, SEC_noauth)
+
+	// get arguments
+	if err = c.ShouldBind(&arg); err != nil {
+		Ret400(c, SEC_drvadd_nobind, err)
+		return
+	}
+	var uid = GetUID(c)
+	var aid ID_t
+	if aid, err = ParseID(c.Param("aid")); err != nil {
+		Ret400(c, SEC_drvadd_badacc, ErrNoAcc)
 		return
 	}
 	var acc *Profile
 	if acc, ok = Profiles.Get(aid); !ok {
-		WriteError400(w, r, ErrNoAcc, SEC_drvadd_noacc)
-		return
-	}
-	if uid != aid {
-		WriteError(w, r, http.StatusForbidden, ErrDeny, SEC_drvadd_deny)
+		Ret404(c, SEC_drvadd_noacc, ErrNoAcc)
 		return
 	}
 
-	// get arguments
-	if err = ParseBody(w, r, &arg); err != nil {
-		return
-	}
-	if len(arg.Path) == 0 {
-		WriteError400(w, r, ErrArgNoPuid, SEC_drvadd_nodata)
+	if uid != aid {
+		Ret403(c, SEC_drvadd_deny, ErrDeny)
 		return
 	}
 
@@ -70,17 +71,17 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		puid = PathStoreCache(session, syspath)
 	} else {
 		if syspath, puid, err = UnfoldPath(session, fpath); err != nil {
-			WriteError400(w, r, err, SEC_drvadd_badpath)
+			Ret400(c, SEC_drvadd_badpath, err)
 			return
 		}
 		if fi, err = JP.Stat(syspath); err != nil {
-			WriteError(w, r, http.StatusNotFound, http.ErrMissingFile, SEC_drvadd_miss)
+			Ret404(c, SEC_drvadd_miss, http.ErrMissingFile)
 			return
 		}
 	}
 
 	if Hidden.Fits(syspath) {
-		WriteError(w, r, http.StatusForbidden, ErrHidden, SEC_drvadd_hidden)
+		Ret403(c, SEC_drvadd_hidden, ErrHidden)
 		return
 	}
 
@@ -106,43 +107,43 @@ func drvaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	ret.FP = fk
 	ret.Added = acc.AddLocal(syspath, name)
 
-	WriteOK(w, r, &ret)
+	RetOk(c, ret)
 }
 
-// APIHANDLER
-func drvdelAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
+// Remove drive from profile with given identifier.
+func SpiDriveDel(c *gin.Context) {
 	var err error
 	var ok bool
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
-		PUID Puid_t `json:"puid" yaml:"puid" xml:"puid"`
+		PUID Puid_t `json:"puid" yaml:"puid" xml:"puid" binding:"required"`
 	}
 	var ret struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
 
 		Deleted bool `json:"deleted" yaml:"deleted" xml:"deleted"`
 	}
-	if uid == 0 { // only authorized access allowed
-		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, SEC_noauth)
+
+	// get arguments
+	if err = c.ShouldBind(&arg); err != nil {
+		Ret400(c, SEC_drvdel_nobind, err)
+		return
+	}
+	var uid = GetUID(c)
+	var aid ID_t
+	if aid, err = ParseID(c.Param("aid")); err != nil {
+		Ret400(c, SEC_drvdel_badacc, ErrNoAcc)
 		return
 	}
 	var acc *Profile
 	if acc, ok = Profiles.Get(aid); !ok {
-		WriteError400(w, r, ErrNoAcc, SEC_drvdel_noacc)
-		return
-	}
-	if uid != aid {
-		WriteError(w, r, http.StatusForbidden, ErrDeny, SEC_drvdel_deny)
+		Ret404(c, SEC_drvdel_noacc, ErrNoAcc)
 		return
 	}
 
-	// get arguments
-	if err = ParseBody(w, r, &arg); err != nil {
-		return
-	}
-	if arg.PUID == 0 {
-		WriteError400(w, r, ErrArgNoPuid, SEC_drvdel_nodata)
+	if uid != aid {
+		Ret403(c, SEC_drvdel_deny, ErrDeny)
 		return
 	}
 
@@ -151,22 +152,24 @@ func drvdelAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	var syspath string
 	if syspath, ok = PathStorePath(session, arg.PUID); !ok {
-		WriteError(w, r, http.StatusNotFound, ErrNoPath, SEC_drvdel_nopath)
+		Ret404(c, SEC_drvdel_nopath, ErrNoPath)
+		return
 	}
 
 	ret.Deleted = acc.DelLocal(syspath)
-	WriteOK(w, r, &ret)
+
+	RetOk(c, ret)
 }
 
-// APIHANDLER
-func cldaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
+// Add new cloud entry for profile.
+func SpiCloudAdd(c *gin.Context) {
 	var err error
 	var ok bool
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
 		Scheme   string `json:"scheme" yaml:"scheme" xml:"scheme"`
-		Host     string `json:"host" yaml:"host" xml:"host"`
+		Host     string `json:"host" yaml:"host" xml:"host" binding:"required"`
 		Port     string `json:"port" yaml:"port" xml:"port"`
 		Login    string `json:"login,omitempty" yaml:"login,omitempty" xml:"login,omitempty"`
 		Password string `json:"password,omitempty" yaml:"password,omitempty" xml:"password,omitempty"`
@@ -178,32 +181,32 @@ func cldaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		Added bool    `json:"added" yaml:"added" xml:"added"`
 		FP    FileKit `json:"fp" yaml:"fp" xml:"fp"`
 	}
-	if uid == 0 { // only authorized access allowed
-		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, SEC_noauth)
+
+	// get arguments
+	if err = c.ShouldBind(&arg); err != nil {
+		Ret400(c, SEC_cldadd_nobind, err)
+		return
+	}
+	var uid = GetUID(c)
+	var aid ID_t
+	if aid, err = ParseID(c.Param("aid")); err != nil {
+		Ret400(c, SEC_cldadd_badacc, ErrNoAcc)
 		return
 	}
 	var acc *Profile
 	if acc, ok = Profiles.Get(aid); !ok {
-		WriteError400(w, r, ErrNoAcc, SEC_cldadd_noacc)
-		return
-	}
-	if uid != aid {
-		WriteError(w, r, http.StatusForbidden, ErrDeny, SEC_drvadd_deny)
+		Ret404(c, SEC_cldadd_noacc, ErrNoAcc)
 		return
 	}
 
-	// get arguments
-	if err = ParseBody(w, r, &arg); err != nil {
-		return
-	}
-	if len(arg.Host) == 0 {
-		WriteError400(w, r, ErrArgNoPuid, SEC_cldadd_nodata)
+	if uid != aid {
+		Ret403(c, SEC_cldadd_deny, ErrDeny)
 		return
 	}
 
 	var argurl *url.URL
 	if argurl, err = url.Parse(arg.Host); err != nil {
-		WriteError400(w, r, err, SEC_cldadd_badhost)
+		Ret400(c, SEC_cldadd_badhost, err)
 		return
 	}
 	if argurl.Scheme == "" {
@@ -233,18 +236,18 @@ func cldaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	case "ftp":
 		var conn *ftp.ServerConn
 		if conn, err = ftp.Dial(argurl.Host, ftp.DialWithTimeout(Cfg.DialTimeout)); err != nil {
-			WriteError(w, r, http.StatusNotFound, err, SEC_cldadd_ftpdial)
+			Ret404(c, SEC_cldadd_ftpdial, err)
 			return
 		}
 		defer conn.Quit()
 		if err = conn.Login(arg.Login, arg.Password); err != nil {
-			WriteError(w, r, http.StatusNotFound, err, SEC_cldadd_ftpcred)
+			Ret403(c, SEC_cldadd_ftpcred, err)
 			return
 		}
 
 		var root *ftp.Entry
 		if root, err = conn.GetEntry(""); err != nil {
-			WriteError(w, r, http.StatusNotFound, err, SEC_cldadd_ftproot)
+			Ret403(c, SEC_cldadd_ftproot, err)
 			return
 		}
 		size, mtime = int64(root.Size), root.Time
@@ -259,27 +262,27 @@ func cldaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 		}
 		if conn, err = ssh.Dial("tcp", argurl.Host, config); err != nil {
-			WriteError(w, r, http.StatusNotFound, err, SEC_cldadd_sftpdial)
+			Ret404(c, SEC_cldadd_sftpdial, err)
 			return
 		}
 		defer conn.Close()
 
 		var client *sftp.Client
 		if client, err = sftp.NewClient(conn); err != nil {
-			WriteError(w, r, http.StatusNotFound, err, SEC_cldadd_sftpcli)
+			Ret403(c, SEC_cldadd_sftpcli, err)
 			return
 		}
 		defer client.Close()
 
 		var pwd string
 		if pwd, err = client.Getwd(); err != nil {
-			WriteError(w, r, http.StatusNotFound, err, SEC_cldadd_sftppwd)
+			Ret403(c, SEC_cldadd_sftppwd, err)
 			return
 		}
 
 		var root fs.FileInfo
 		if root, err = client.Lstat(path.Join(pwd, "/")); err != nil {
-			WriteError(w, r, http.StatusNotFound, err, SEC_cldadd_sftproot)
+			Ret403(c, SEC_cldadd_sftproot, err)
 			return
 		}
 		size, mtime = int64(root.Size()), root.ModTime()
@@ -288,7 +291,7 @@ func cldaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		var client = gowebdav.NewClient(surl, "", "") // user & password gets from URL
 		var fi fs.FileInfo
 		if fi, err = client.Stat(""); err != nil || !fi.IsDir() {
-			WriteError(w, r, http.StatusNotFound, err, SEC_cldadd_davdial)
+			Ret404(c, SEC_cldadd_davdial, err)
 			return
 		}
 		size, mtime = 0, time.Unix(0, 0) // DAV does not provides info for folders
@@ -307,43 +310,43 @@ func cldaddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	ret.FP = fk
 	ret.Added = acc.AddCloud(surl, name)
 
-	WriteOK(w, r, &ret)
+	RetOk(c, ret)
 }
 
-// APIHANDLER
-func clddelAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
+// Remove cloud entry from profile with given identifier.
+func SpiCloudDel(c *gin.Context) {
 	var err error
 	var ok bool
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
-		PUID Puid_t `json:"puid" yaml:"puid" xml:"puid"`
+		PUID Puid_t `json:"puid" yaml:"puid" xml:"puid" binding:"required"`
 	}
 	var ret struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
 
 		Deleted bool `json:"deleted" yaml:"deleted" xml:"deleted"`
 	}
-	if uid == 0 { // only authorized access allowed
-		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, SEC_noauth)
+
+	// get arguments
+	if err = c.ShouldBind(&arg); err != nil {
+		Ret400(c, SEC_clddel_nobind, err)
+		return
+	}
+	var uid = GetUID(c)
+	var aid ID_t
+	if aid, err = ParseID(c.Param("aid")); err != nil {
+		Ret400(c, SEC_clddel_badacc, ErrNoAcc)
 		return
 	}
 	var acc *Profile
 	if acc, ok = Profiles.Get(aid); !ok {
-		WriteError400(w, r, ErrNoAcc, SEC_clddel_noacc)
-		return
-	}
-	if uid != aid {
-		WriteError(w, r, http.StatusForbidden, ErrDeny, SEC_clddel_deny)
+		Ret404(c, SEC_clddel_noacc, ErrNoAcc)
 		return
 	}
 
-	// get arguments
-	if err = ParseBody(w, r, &arg); err != nil {
-		return
-	}
-	if arg.PUID == 0 {
-		WriteError400(w, r, ErrArgNoPuid, SEC_clddel_nodata)
+	if uid != aid {
+		Ret403(c, SEC_clddel_deny, ErrDeny)
 		return
 	}
 
@@ -352,47 +355,49 @@ func clddelAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	var syspath string
 	if syspath, ok = PathStorePath(session, arg.PUID); !ok {
-		WriteError(w, r, http.StatusNotFound, ErrNoPath, SEC_clddel_nopath)
+		Ret404(c, SEC_clddel_nopath, ErrNoPath)
+		return
 	}
 
 	ret.Deleted = acc.DelCloud(syspath)
-	WriteOK(w, r, &ret)
+
+	RetOk(c, ret)
 }
 
 // APIHANDLER
-func shraddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
+func SpiShareAdd(c *gin.Context) {
 	var err error
 	var ok bool
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
-		Path string `json:"path" yaml:"path" xml:"path"`
+		Path string `json:"path" yaml:"path" xml:"path" binding:"required"`
 	}
 	var ret struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
 
 		Shared bool `json:"shared" yaml:"shared" xml:"shared"`
 	}
-	if uid == 0 { // only authorized access allowed
-		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, SEC_noauth)
+
+	// get arguments
+	if err = c.ShouldBind(&arg); err != nil {
+		Ret400(c, SEC_shradd_nobind, err)
+		return
+	}
+	var uid = GetUID(c)
+	var aid ID_t
+	if aid, err = ParseID(c.Param("aid")); err != nil {
+		Ret400(c, SEC_shradd_badacc, ErrNoAcc)
 		return
 	}
 	var acc *Profile
 	if acc, ok = Profiles.Get(aid); !ok {
-		WriteError400(w, r, ErrNoAcc, SEC_shradd_noacc)
-		return
-	}
-	if uid != aid {
-		WriteError(w, r, http.StatusForbidden, ErrDeny, SEC_shradd_deny)
+		Ret404(c, SEC_shradd_noacc, ErrNoAcc)
 		return
 	}
 
-	// get arguments
-	if err = ParseBody(w, r, &arg); err != nil {
-		return
-	}
-	if len(arg.Path) == 0 {
-		WriteError400(w, r, ErrArgNoPuid, SEC_shradd_nodata)
+	if uid != aid {
+		Ret403(c, SEC_shradd_deny, ErrDeny)
 		return
 	}
 
@@ -401,53 +406,54 @@ func shraddAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	var syspath string
 	if syspath, _, err = UnfoldPath(session, ToSlash(arg.Path)); err != nil {
-		WriteError(w, r, http.StatusNotFound, err, SEC_shradd_nopath)
+		Ret404(c, SEC_shradd_nopath, err)
+		return
 	}
 	if !acc.PathAdmin(syspath) {
-		WriteError(w, r, http.StatusForbidden, ErrNoAccess, SEC_shradd_access)
+		Ret403(c, SEC_shradd_access, ErrNoAccess)
 		return
 	}
 
 	ret.Shared = acc.AddShare(syspath)
 	Log.Infof("id%d: add share '%s'", acc.ID, syspath)
 
-	WriteOK(w, r, &ret)
+	RetOk(c, ret)
 }
 
 // APIHANDLER
-func shrdelAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
+func SpiShareDel(c *gin.Context) {
 	var err error
 	var ok bool
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
-		Path string `json:"path" yaml:"path" xml:"path"`
+		Path string `json:"path" yaml:"path" xml:"path" binding:"required"`
 	}
 	var ret struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
 
 		Deleted bool `json:"deleted" yaml:"deleted" xml:"deleted"`
 	}
-	if uid == 0 { // only authorized access allowed
-		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, SEC_noauth)
+
+	// get arguments
+	if err = c.ShouldBind(&arg); err != nil {
+		Ret400(c, SEC_shrdel_nobind, err)
+		return
+	}
+	var uid = GetUID(c)
+	var aid ID_t
+	if aid, err = ParseID(c.Param("aid")); err != nil {
+		Ret400(c, SEC_shrdel_badacc, ErrNoAcc)
 		return
 	}
 	var acc *Profile
 	if acc, ok = Profiles.Get(aid); !ok {
-		WriteError400(w, r, ErrNoAcc, SEC_shrdel_noacc)
-		return
-	}
-	if uid != aid {
-		WriteError(w, r, http.StatusForbidden, ErrDeny, SEC_shrdel_deny)
+		Ret404(c, SEC_shrdel_noacc, ErrNoAcc)
 		return
 	}
 
-	// get arguments
-	if err = ParseBody(w, r, &arg); err != nil {
-		return
-	}
-	if len(arg.Path) == 0 {
-		WriteError400(w, r, ErrArgNoPuid, SEC_shrdel_nodata)
+	if uid != aid {
+		Ret403(c, SEC_shrdel_deny, ErrDeny)
 		return
 	}
 
@@ -456,10 +462,11 @@ func shrdelAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	var syspath string
 	if syspath, _, err = UnfoldPath(session, ToSlash(arg.Path)); err != nil {
-		WriteError(w, r, http.StatusNotFound, ErrNoPath, SEC_shrdel_nopath)
+		Ret404(c, SEC_shrdel_nopath, ErrNoPath)
+		return
 	}
 	if !acc.PathAdmin(syspath) {
-		WriteError(w, r, http.StatusForbidden, ErrNoAccess, SEC_shrdel_access)
+		Ret403(c, SEC_shrdel_access, ErrNoAccess)
 		return
 	}
 
@@ -467,7 +474,7 @@ func shrdelAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		Log.Infof("id%d: delete share '%s'", acc.ID, syspath)
 	}
 
-	WriteOK(w, r, &ret)
+	RetOk(c, ret)
 }
 
 // The End.
