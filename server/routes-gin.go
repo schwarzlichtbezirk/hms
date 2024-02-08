@@ -178,4 +178,8 @@ func Router(r *gin.Engine) {
 
 	usr.POST("/share/add", Auth(true), SpiShareAdd)
 	usr.POST("/share/del", Auth(true), SpiShareDel)
+
+	usr.POST("/edit/copy", Auth(true), SpiEditCopy)
+	usr.POST("/edit/rename", Auth(true), SpiEditRename)
+	usr.POST("/edit/delete", Auth(true), SpiEditDelete)
 }

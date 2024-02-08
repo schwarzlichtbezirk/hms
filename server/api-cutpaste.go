@@ -9,16 +9,18 @@ import (
 	"net/http"
 	"os"
 	"path"
+
+	"github.com/gin-gonic/gin"
 )
 
 // APIHANDLER
-func edtcopyAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
+func SpiEditCopy(c *gin.Context) {
 	var err error
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
-		Src string `json:"src" yaml:"src" xml:"src"`
-		Dst string `json:"dst" yaml:"dst" xml:"dst"`
+		Src string `json:"src" yaml:"src" xml:"src" binding:"required"`
+		Dst string `json:"dst" yaml:"dst" xml:"dst" binding:"required"`
 		Ovw bool   `json:"overwrite,omitempty" yaml:"overwrite,omitempty" xml:"overwrite,omitempty,attr"`
 	}
 	var ret struct {
@@ -27,47 +29,46 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		FT FT_t `json:"ft" yaml:"ft" xml:"ft"`
 	}
 	var isret bool
-	if uid == 0 { // only authorized access allowed
-		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, SEC_noauth)
+
+	// get arguments
+	if err = c.ShouldBind(&arg); err != nil {
+		Ret400(c, SEC_edtcopy_nobind, err)
+		return
+	}
+	var uid = GetUID(c)
+	var aid ID_t
+	if aid, err = ParseID(c.Param("aid")); err != nil {
+		Ret400(c, SEC_edtcopy_badacc, ErrNoAcc)
+		return
+	}
+	if !Profiles.Has(aid) {
+		Ret404(c, SEC_edtcopy_noacc, ErrNoAcc)
 		return
 	}
 
-	// get arguments
-	if err = ParseBody(w, r, &arg); err != nil {
-		return
-	}
-	if arg.Src == "" || arg.Dst == "" {
-		WriteError400(w, r, ErrArgNoPuid, SEC_edtcopy_nodata)
+	if uid != aid {
+		Ret403(c, SEC_edtcopy_deny, ErrDeny)
 		return
 	}
 
 	var session = XormStorage.NewSession()
 	defer session.Close()
 
-	if !Profiles.Has(aid) {
-		WriteError400(w, r, ErrNoAcc, SEC_edtcopy_noacc)
-		return
-	}
-	if uid != aid {
-		WriteError(w, r, http.StatusForbidden, ErrDeny, SEC_edtcopy_deny)
-		return
-	}
-
 	// get source and destination filenames
 	var srcpath, dstpath string
 	if srcpath, _, err = UnfoldPath(session, arg.Src); err != nil {
-		WriteError(w, r, http.StatusNotFound, err, SEC_edtcopy_nopath)
+		Ret404(c, SEC_edtcopy_nopath, err)
 		return
 	}
 	if dstpath, _, err = UnfoldPath(session, arg.Dst); err != nil {
-		WriteError(w, r, http.StatusNotFound, err, SEC_edtcopy_nodest)
+		Ret404(c, SEC_edtcopy_nodest, err)
 		return
 	}
 	dstpath = JoinPath(dstpath, path.Base(srcpath))
 
 	// copies file or dir from source to destination
-	var filecopy func(srcpath, dstpath string) (err error)
-	filecopy = func(srcpath, dstpath string) (err error) {
+	var filecopy func(srcpath, dstpath string) (code int, err error)
+	filecopy = func(srcpath, dstpath string) (code int, err error) {
 		// generate unique destination filename
 		if !arg.Ovw {
 			var ext = path.Ext(dstpath)
@@ -80,9 +81,7 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 				i++
 				dstpath = fmt.Sprintf("%s (%d)%s", org, i, ext)
 				if i > 100 {
-					err = ErrFileOver
-					WriteError500(w, r, err, SEC_edtcopy_over)
-					return
+					return SEC_edtcopy_over, ErrFileOver
 				}
 			}
 		}
@@ -92,8 +91,7 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		var fi fs.FileInfo
 		// open source file
 		if src, err = JP.Open(srcpath); err != nil {
-			WriteError500(w, r, err, SEC_edtcopy_opsrc)
-			return
+			return SEC_edtcopy_opsrc, err
 		}
 		defer func() {
 			src.Close()
@@ -103,14 +101,12 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		}()
 
 		if fi, err = src.Stat(); err != nil {
-			WriteError500(w, r, err, SEC_edtcopy_statsrc)
-			return
+			return SEC_edtcopy_statsrc, err
 		}
 		if fi.IsDir() {
 			// create destination dir
 			if err = os.Mkdir(dstpath, 0644); err != nil && !errors.Is(err, fs.ErrExist) {
-				WriteError500(w, r, err, SEC_edtcopy_mkdir)
-				return
+				return SEC_edtcopy_mkdir, err
 			}
 
 			// get returned dir properties now
@@ -122,27 +118,24 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			// copy dir content
 			var files []fs.DirEntry
 			if files, err = JP.ReadDir(srcpath); err != nil {
-				WriteError500(w, r, err, SEC_edtcopy_rd)
-				return
+				return SEC_edtcopy_rd, err
 			}
 			for _, file := range files {
 				var name = file.Name()
-				if err = filecopy(JoinPath(srcpath, name), JoinPath(dstpath, name)); err != nil {
+				if code, err = filecopy(JoinPath(srcpath, name), JoinPath(dstpath, name)); err != nil {
 					return // error already written
 				}
 			}
 		} else {
 			// create destination file
 			if dst, err = os.Create(dstpath); err != nil {
-				WriteError500(w, r, err, SEC_edtcopy_opdst)
-				return
+				return SEC_edtcopy_opdst, err
 			}
 			defer dst.Close()
 
 			// copy file content
 			if _, err = io.Copy(dst, src); err != nil {
-				WriteError500(w, r, err, SEC_edtcopy_copy)
-				return
+				return SEC_edtcopy_copy, err
 			}
 
 			// get returned file properties at last
@@ -153,21 +146,22 @@ func edtcopyAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		}
 		return
 	}
-	if err = filecopy(srcpath, dstpath); err != nil {
-		return // error already written
+	if code, err := filecopy(srcpath, dstpath); err != nil {
+		Ret500(c, code, err)
+		return
 	}
 
-	WriteOK(w, r, &ret)
+	RetOk(c, ret)
 }
 
 // APIHANDLER
-func edtrenameAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
+func SpiEditRename(c *gin.Context) {
 	var err error
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
-		Src string `json:"src" yaml:"src" xml:"src"`
-		Dst string `json:"dst" yaml:"dst" xml:"dst"`
+		Src string `json:"src" yaml:"src" xml:"src" binding:"required"`
+		Dst string `json:"dst" yaml:"dst" xml:"dst" binding:"required"`
 		Ovw bool   `json:"overwrite,omitempty" yaml:"overwrite,omitempty" xml:"overwrite,omitempty,attr"`
 	}
 	var ret struct {
@@ -175,17 +169,25 @@ func edtrenameAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 		Prop FileKit `json:"prop" yaml:"prop" xml:"prop"`
 	}
-	if uid == 0 { // only authorized access allowed
-		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, SEC_noauth)
+
+	// get arguments
+	if err = c.ShouldBind(&arg); err != nil {
+		Ret400(c, SEC_edtren_nobind, err)
+		return
+	}
+	var uid = GetUID(c)
+	var aid ID_t
+	if aid, err = ParseID(c.Param("aid")); err != nil {
+		Ret400(c, SEC_edtren_badacc, ErrNoAcc)
+		return
+	}
+	if !Profiles.Has(aid) {
+		Ret404(c, SEC_edtren_noacc, ErrNoAcc)
 		return
 	}
 
-	// get arguments
-	if err = ParseBody(w, r, &arg); err != nil {
-		return
-	}
-	if arg.Src == "" || arg.Dst == "" {
-		WriteError400(w, r, ErrArgNoPuid, SEC_edtren_nodata)
+	if uid != aid {
+		Ret403(c, SEC_edtren_deny, ErrDeny)
 		return
 	}
 
@@ -193,22 +195,22 @@ func edtrenameAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	defer session.Close()
 
 	if !Profiles.Has(aid) {
-		WriteError400(w, r, ErrNoAcc, SEC_edtren_noacc)
+		Ret400(c, SEC_edtren_noacc, ErrNoAcc)
 		return
 	}
 	if uid != aid {
-		WriteError(w, r, http.StatusForbidden, ErrDeny, SEC_edtren_deny)
+		Ret403(c, SEC_edtren_deny, ErrDeny)
 		return
 	}
 
 	// get source and destination filenames
 	var srcpath, dstpath string
 	if srcpath, _, err = UnfoldPath(session, arg.Src); err != nil {
-		WriteError(w, r, http.StatusNotFound, err, SEC_edtren_nopath)
+		Ret404(c, SEC_edtren_nopath, err)
 		return
 	}
 	if dstpath, _, err = UnfoldPath(session, arg.Dst); err != nil {
-		WriteError(w, r, http.StatusNotFound, err, SEC_edtren_nodest)
+		Ret404(c, SEC_edtren_nodest, err)
 		return
 	}
 	dstpath = JoinPath(dstpath, path.Base(srcpath))
@@ -226,7 +228,7 @@ func edtrenameAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			dstpath = fmt.Sprintf("%s (%d)%s", org, i, ext)
 			if i > 100 {
 				err = ErrFileOver
-				WriteError500(w, r, err, SEC_edtren_over)
+				Ret500(c, SEC_edtren_over, err)
 				return
 			}
 		}
@@ -234,14 +236,14 @@ func edtrenameAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	// rename destination file
 	if err = os.Rename(srcpath, dstpath); err != nil && !errors.Is(err, fs.ErrExist) {
-		WriteError500(w, r, err, SEC_edtren_move)
+		Ret500(c, SEC_edtren_move, err)
 		return
 	}
 
 	// get returned file properties at last
 	var fi fs.FileInfo
 	if fi, err = JP.Stat(dstpath); err != nil {
-		WriteError500(w, r, err, SEC_edtren_stat)
+		Ret500(c, SEC_edtren_stat, err)
 		return
 	}
 	ret.Prop.PuidProp.Setup(session, dstpath)
@@ -253,28 +255,36 @@ func edtrenameAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		ret.Prop.ExtProp = xp
 	}
 
-	WriteOK(w, r, &ret)
+	RetOk(c, ret)
 }
 
 // APIHANDLER
-func edtdeleteAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
+func SpiEditDelete(c *gin.Context) {
 	var err error
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
-		Src string `json:"src" yaml:"src" xml:"src"`
-	}
-	if uid == 0 { // only authorized access allowed
-		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, SEC_noauth)
-		return
+		Src string `json:"src" yaml:"src" xml:"src" binding:"required"`
 	}
 
 	// get arguments
-	if err = ParseBody(w, r, &arg); err != nil {
+	if err = c.ShouldBind(&arg); err != nil {
+		Ret400(c, SEC_edtdel_nobind, err)
 		return
 	}
-	if arg.Src == "" {
-		WriteError400(w, r, ErrArgNoPuid, SEC_edtdel_nodata)
+	var uid = GetUID(c)
+	var aid ID_t
+	if aid, err = ParseID(c.Param("aid")); err != nil {
+		Ret400(c, SEC_edtdel_badacc, ErrNoAcc)
+		return
+	}
+	if !Profiles.Has(aid) {
+		Ret404(c, SEC_edtdel_noacc, ErrNoAcc)
+		return
+	}
+
+	if uid != aid {
+		Ret403(c, SEC_edtdel_deny, ErrDeny)
 		return
 	}
 
@@ -282,26 +292,26 @@ func edtdeleteAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	defer session.Close()
 
 	if !Profiles.Has(aid) {
-		WriteError400(w, r, ErrNoAcc, SEC_edtdel_noacc)
+		Ret400(c, SEC_edtdel_noacc, ErrNoAcc)
 		return
 	}
 	if uid != aid {
-		WriteError(w, r, http.StatusForbidden, ErrDeny, SEC_edtdel_deny)
+		Ret403(c, SEC_edtdel_deny, ErrDeny)
 		return
 	}
 
 	var srcpath string
 	if srcpath, _, err = UnfoldPath(session, arg.Src); err != nil {
-		WriteError(w, r, http.StatusNotFound, err, SEC_edtdel_nopath)
+		Ret404(c, SEC_edtdel_nopath, err)
 		return
 	}
 
 	if err = os.RemoveAll(srcpath); err != nil {
-		WriteError500(w, r, err, SEC_edtdel_remove)
+		Ret500(c, SEC_edtdel_remove, err)
 		return
 	}
 
-	WriteOK(w, r, nil)
+	c.Status(http.StatusOK)
 }
 
 // The End.

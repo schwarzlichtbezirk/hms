@@ -253,7 +253,8 @@ const (
 
 	// edit/copy
 
-	SEC_edtcopy_nodata
+	SEC_edtcopy_nobind
+	SEC_edtcopy_badacc
 	SEC_edtcopy_noacc
 	SEC_edtcopy_deny
 	SEC_edtcopy_nopath
@@ -269,7 +270,8 @@ const (
 
 	// edit/rename
 
-	SEC_edtren_nodata
+	SEC_edtren_nobind
+	SEC_edtren_badacc
 	SEC_edtren_noacc
 	SEC_edtren_deny
 	SEC_edtren_nopath
@@ -280,7 +282,8 @@ const (
 
 	// edit/del
 
-	SEC_edtdel_nodata
+	SEC_edtdel_nobind
+	SEC_edtdel_badacc
 	SEC_edtdel_noacc
 	SEC_edtdel_deny
 	SEC_edtdel_nopath

@@ -582,10 +582,6 @@ func RegisterRoutes(gmux *mux.Router) {
 	usr.Path("/res/tags").HandlerFunc(AuthWrap(tagsAPI))
 	usr.Path("/res/ispath").HandlerFunc(AuthWrap(ispathAPI)) // authorized only
 
-	usr.Path("/edit/copy").HandlerFunc(AuthWrap(edtcopyAPI))     // authorized only
-	usr.Path("/edit/rename").HandlerFunc(AuthWrap(edtrenameAPI)) // authorized only
-	usr.Path("/edit/delete").HandlerFunc(AuthWrap(edtdeleteAPI)) // authorized only
-
 	usr.Path("/gps/range").HandlerFunc(AuthWrap(gpsrangeAPI)) // authorized only
 	usr.Path("/gps/scan").HandlerFunc(AuthWrap(gpsscanAPI))
 }
