@@ -16,9 +16,6 @@ const (
 	SEC_panic
 
 	// authorization
-	SEC_noaid
-	SEC_noauth
-
 	SEC_auth_absent
 	SEC_auth_scheme
 	SEC_basic_decode
@@ -124,8 +121,9 @@ const (
 
 	// res/folder
 
+	SEC_folder_nobind
+	SEC_folder_badacc
 	SEC_folder_noacc
-	SEC_folder_nodata
 	SEC_folder_badpath
 	SEC_folder_hidden
 	SEC_folder_access
@@ -150,8 +148,9 @@ const (
 	SEC_folder_tracks
 
 	// res/tags
+	SEC_tags_nobind
+	SEC_tags_badacc
 	SEC_tags_noacc
-	SEC_tags_nodata
 	SEC_tags_badpath
 	SEC_tags_hidden
 	SEC_tags_access
@@ -159,9 +158,10 @@ const (
 
 	// res/ispath
 
+	SEC_ispath_nobind
+	SEC_ispath_badacc
 	SEC_ispath_noacc
 	SEC_ispath_deny
-	SEC_ispath_nodata
 
 	// tags/chk
 
@@ -290,6 +290,8 @@ const (
 	SEC_edtdel_remove
 
 	// gps/range
+	SEC_gpsrange_nobind
+	SEC_gpsrange_badacc
 	SEC_gpsrange_noacc
 	SEC_gpsrange_shpcirc
 	SEC_gpsrange_shppoly
@@ -298,8 +300,9 @@ const (
 	SEC_gpsrange_list
 
 	// gps/scan
+	SEC_gpsscan_nobind
+	SEC_gpsscan_badacc
 	SEC_gpsscan_noacc
-	SEC_gpsscan_nodata
 
 	// stat/usrlst
 	SEC_usrlst_nobind
@@ -319,7 +322,6 @@ var (
 	ErrPathOut  = errors.New("path cannot refers outside root PUID")
 
 	ErrArgNoHD   = errors.New("'hd' parameter not recognized")
-	ErrArgNoPuid = errors.New("'puid' argument required")
 	ErrArgNoDim  = errors.New("bad tiles dimensions")
 	ErrArgZDim   = errors.New("dimensions can noy be zero")
 	ErrNotDir    = errors.New("path is not directory")

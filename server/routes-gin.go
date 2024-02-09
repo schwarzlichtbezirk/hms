@@ -156,6 +156,7 @@ func Router(r *gin.Engine) {
 
 	var api = r.Group("/api")
 	api.GET("/ping", SpiPing)
+	api.POST("/reload", Auth(true), SpiReload)
 	api.GET("/stat/srvinf", SpiServInfo)
 	api.GET("/stat/memusg", SpiMemUsage)
 	api.GET("/stat/cchinf", SpiCachesInfo)
@@ -163,6 +164,14 @@ func Router(r *gin.Engine) {
 	api.POST("/stat/usrlst", SpiUserList)
 
 	var usr = gacc.Group("/api")
+
+	usr.POST("/res/folder", Auth(false), SpiFolder)
+	usr.POST("/res/tags", Auth(false), SpiTags)
+	usr.POST("/res/ispath", Auth(true), SpiHasPath)
+
+	usr.POST("/gps/range", Auth(true), SpiGpsRange)
+	usr.POST("/gps/scan", Auth(false), SpiGpsScan)
+
 	usr.POST("/tags/check", Auth(false), SpiTagsCheck)
 	usr.POST("/tags/start", Auth(false), SpiTagsStart)
 	usr.POST("/tags/break", Auth(false), SpiTagsBreak)

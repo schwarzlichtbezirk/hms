@@ -22,8 +22,8 @@ const (
 	// after successful authorization.
 	userKey = "user"
 
-	realmBasic  = `Basic realm="slotopol", charset="UTF-8"`
-	realmBearer = `JWT realm="slotopol", charset="UTF-8"`
+	realmBasic  = `Basic realm="hms", charset="UTF-8"`
+	realmBearer = `JWT realm="hms", charset="UTF-8"`
 )
 
 // HTTP error messages
@@ -363,7 +363,7 @@ func AuthWrap(fn AuthHandlerFunc) http.HandlerFunc {
 		var aid ID_t
 		var err error
 		if aid, err = ParseID(vars["aid"]); err != nil {
-			WriteError400(w, r, err, SEC_noaid)
+			WriteError400(w, r, err, 0)
 			return
 		}
 		var prf *Profile

@@ -28,27 +28,18 @@ func SpiPing(c *gin.Context) {
 }
 
 // APIHANDLER
-func reloadAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
+func SpiReload(c *gin.Context) {
 	var err error
-	if uid == 0 { // only authorized access allowed
-		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, SEC_noauth)
-		return
-	}
-	if uid == 0 { // only authorized access allowed
-		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, SEC_noauth)
-		return
-	}
-
 	if err = OpenPackage(); err != nil {
-		WriteError500(w, r, err, SEC_reload_load)
+		Ret500(c, SEC_reload_load, err)
 		return
 	}
 	if err = LoadTemplates(); err != nil {
-		WriteError500(w, r, err, SEC_reload_tmpl)
+		Ret500(c, SEC_reload_tmpl, err)
 		return
 	}
 
-	WriteOK(w, r, nil)
+	c.Status(http.StatusOK)
 }
 
 // Static service system information.
@@ -203,14 +194,14 @@ func SpiGetLog(c *gin.Context) {
 	RetOk(c, ret)
 }
 
-// APIHANDLER
-func tagsAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
+// Extract embedded tags from given file.
+func SpiTags(c *gin.Context) {
 	var err error
 	var ok bool
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
-		PUID Puid_t `json:"puid" yaml:"puid" xml:"puid,attr"`
+		PUID Puid_t `json:"puid" yaml:"puid" xml:"puid,attr" binding:"required"`
 	}
 	var ret struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
@@ -218,18 +209,20 @@ func tagsAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		Prop any `json:"prop" yaml:"prop" xml:"prop"`
 	}
 
+	// get arguments
+	if err = c.ShouldBind(&arg); err != nil {
+		Ret400(c, SEC_tags_nobind, err)
+		return
+	}
+	var uid = GetUID(c)
+	var aid ID_t
+	if aid, err = ParseID(c.Param("aid")); err != nil {
+		Ret400(c, SEC_tags_badacc, ErrNoAcc)
+		return
+	}
 	var acc *Profile
 	if acc, ok = Profiles.Get(aid); !ok {
-		WriteError400(w, r, ErrNoAcc, SEC_tags_noacc)
-		return
-	}
-
-	// get arguments
-	if err = ParseBody(w, r, &arg); err != nil {
-		return
-	}
-	if arg.PUID == 0 {
-		WriteError400(w, r, ErrArgNoPuid, SEC_tags_nodata)
+		Ret404(c, SEC_tags_noacc, ErrNoAcc)
 		return
 	}
 
@@ -238,16 +231,16 @@ func tagsAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	var syspath string
 	if syspath, ok = PathStorePath(session, arg.PUID); !ok {
-		WriteError400(w, r, ErrNoPath, SEC_tags_badpath)
+		Ret400(c, SEC_tags_badpath, ErrNoPath)
 		return
 	}
 
 	if Hidden.Fits(syspath) {
-		WriteError(w, r, http.StatusForbidden, ErrHidden, SEC_tags_hidden)
+		Ret403(c, SEC_tags_hidden, ErrHidden)
 		return
 	}
 	if !acc.PathAccess(syspath, uid == aid) {
-		WriteError(w, r, http.StatusForbidden, ErrNoAccess, SEC_tags_access)
+		Ret403(c, SEC_tags_access, ErrNoAccess)
 		return
 	}
 
@@ -256,22 +249,22 @@ func tagsAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 	if ret.Prop, _, err = TagsExtract(syspath, session, &buf, &ExtStat{}, false); err != nil {
 		if !errors.Is(err, io.EOF) {
-			WriteError500(w, r, err, SEC_tags_extract)
+			Ret500(c, SEC_tags_extract, err)
 			return
 		}
 	}
 
-	WriteOK(w, r, &ret)
+	RetOk(c, ret)
 }
 
-// APIHANDLER
-func ispathAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
+// Check access to given system path.
+func SpiHasPath(c *gin.Context) {
 	var err error
 	var ok bool
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
-		Path string `json:"path" yaml:"path" xml:"path"`
+		Path string `json:"path" yaml:"path" xml:"path" binding:"required"`
 	}
 	var ret struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
@@ -280,26 +273,26 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		IsDir bool `json:"isdir" yaml:"isdir" xml:"isdir"`
 		Space bool `json:"space" yaml:"space" xml:"space"`
 	}
-	if uid == 0 { // only authorized access allowed
-		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, SEC_noauth)
+
+	// get arguments
+	if err = c.ShouldBind(&arg); err != nil {
+		Ret400(c, SEC_ispath_nobind, err)
+		return
+	}
+	var uid = GetUID(c)
+	var aid ID_t
+	if aid, err = ParseID(c.Param("aid")); err != nil {
+		Ret400(c, SEC_ispath_badacc, ErrNoAcc)
 		return
 	}
 	var acc *Profile
 	if acc, ok = Profiles.Get(aid); !ok {
-		WriteError400(w, r, ErrNoAcc, SEC_ispath_noacc)
-		return
-	}
-	if uid != aid {
-		WriteError(w, r, http.StatusForbidden, ErrDeny, SEC_ispath_deny)
+		Ret404(c, SEC_ispath_noacc, ErrNoAcc)
 		return
 	}
 
-	// get arguments
-	if err = ParseBody(w, r, &arg); err != nil {
-		return
-	}
-	if len(arg.Path) == 0 {
-		WriteError400(w, r, ErrArgNoPuid, SEC_ispath_nodata)
+	if uid != aid {
+		Ret403(c, SEC_ispath_deny, ErrDeny)
 		return
 	}
 
@@ -318,26 +311,27 @@ func ispathAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	} else {
 		if syspath, _, err = UnfoldPath(session, fpath); err != nil {
 			ret.Valid = false
-			WriteOK(w, r, &ret)
+			RetOk(c, ret)
 			return
 		}
 		if fi, err = JP.Stat(syspath); err != nil {
 			ret.Valid = false
-			WriteOK(w, r, &ret)
+			RetOk(c, ret)
 			return
 		}
 	}
 
 	if Hidden.Fits(syspath) {
 		ret.Valid = false
-		WriteOK(w, r, &ret)
+		RetOk(c, ret)
 		return
 	}
 
 	ret.Valid = true
 	ret.IsDir = fi.IsDir()
 	ret.Space = acc.PathAdmin(syspath)
-	WriteOK(w, r, &ret)
+
+	RetOk(c, ret)
 }
 
 // The End.

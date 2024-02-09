@@ -3,9 +3,9 @@ package hms
 import (
 	"encoding/xml"
 	"io/fs"
-	"net/http"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/rwcarlsen/goexif/exif"
 )
 
@@ -51,7 +51,7 @@ func (mp *MapPath) Contains(lat, lon float64) bool {
 }
 
 // APIHANDLER
-func gpsrangeAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
+func SpiGpsRange(c *gin.Context) {
 	var err error
 	var ok bool
 	var arg struct {
@@ -69,39 +69,43 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 		HasHome bool `json:"hashome" yaml:"hashome" xml:"hashome,attr"`
 	}
-	if uid == 0 { // only authorized access allowed
-		WriteError(w, r, http.StatusUnauthorized, ErrNoAuth, SEC_noauth)
+
+	// get arguments
+	if err = c.ShouldBind(&arg); err != nil {
+		Ret400(c, SEC_gpsrange_nobind, err)
+		return
+	}
+	var uid = GetUID(c)
+	var aid ID_t
+	if aid, err = ParseID(c.Param("aid")); err != nil {
+		Ret400(c, SEC_gpsrange_badacc, ErrNoAcc)
 		return
 	}
 	var acc *Profile
 	if acc, ok = Profiles.Get(aid); !ok {
-		WriteError400(w, r, ErrNoAcc, SEC_gpsrange_noacc)
+		Ret404(c, SEC_gpsrange_noacc, ErrNoAcc)
 		return
 	}
 
-	// get arguments
-	if err = ParseBody(w, r, &arg); err != nil {
-		return
-	}
 	for _, mp := range arg.Paths {
 		switch mp.Shape {
 		case Circle:
 			if len(mp.Coord) != 1 {
-				WriteError400(w, r, ErrShapeCirc, SEC_gpsrange_shpcirc)
+				Ret400(c, SEC_gpsrange_shpcirc, ErrShapeCirc)
 				return
 			}
 		case Polygon:
 			if len(mp.Coord) < 3 {
-				WriteError400(w, r, ErrShapePoly, SEC_gpsrange_shppoly)
+				Ret400(c, SEC_gpsrange_shppoly, ErrShapePoly)
 				return
 			}
 		case Rectangle:
 			if len(mp.Coord) != 4 {
-				WriteError400(w, r, ErrShapeRect, SEC_gpsrange_shprect)
+				Ret400(c, SEC_gpsrange_shprect, ErrShapeRect)
 				return
 			}
 		default:
-			WriteError400(w, r, ErrShapeBad, SEC_gpsrange_shpbad)
+			Ret400(c, SEC_gpsrange_shpbad, ErrShapeBad)
 			return
 		}
 	}
@@ -154,21 +158,21 @@ func gpsrangeAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		return arg.Limit == 0 || len(ret.List) < arg.Limit
 	})
 	if ret.List, _, err = ScanFileInfoList(acc, session, vfiles, vpaths, true); err != nil {
-		WriteError500(w, r, err, SEC_gpsrange_list)
+		Ret500(c, SEC_gpsrange_list, err)
 		return
 	}
 
-	WriteOK(w, r, &ret)
+	RetOk(c, ret)
 }
 
 // APIHANDLER
-func gpsscanAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
+func SpiGpsScan(c *gin.Context) {
 	var err error
 	var ok bool
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
-		List []Puid_t `json:"list" yaml:"list" xml:"list>puid"`
+		List []Puid_t `json:"list" yaml:"list" xml:"list>puid" binding:"required"`
 	}
 	var ret struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
@@ -176,18 +180,20 @@ func gpsscanAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		List []Store[GpsInfo] `json:"list" yaml:"list" xml:"list>tile"`
 	}
 
+	// get arguments
+	if err = c.ShouldBind(&arg); err != nil {
+		Ret400(c, SEC_gpsscan_nobind, err)
+		return
+	}
+	var uid = GetUID(c)
+	var aid ID_t
+	if aid, err = ParseID(c.Param("aid")); err != nil {
+		Ret400(c, SEC_gpsscan_badacc, ErrNoAcc)
+		return
+	}
 	var acc *Profile
 	if acc, ok = Profiles.Get(aid); !ok {
-		WriteError400(w, r, ErrNoAcc, SEC_gpsscan_noacc)
-		return
-	}
-
-	// get arguments
-	if err = ParseBody(w, r, &arg); err != nil {
-		return
-	}
-	if len(arg.List) == 0 {
-		WriteError400(w, r, ErrNoData, SEC_gpsscan_nodata)
+		Ret404(c, SEC_gpsscan_noacc, ErrNoAcc)
 		return
 	}
 
@@ -260,7 +266,7 @@ func gpsscanAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		})
 	}
 
-	WriteOK(w, r, &ret)
+	RetOk(c, ret)
 }
 
 // The End.

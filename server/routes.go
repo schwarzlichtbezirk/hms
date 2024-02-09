@@ -27,30 +27,6 @@ import (
 
 var json = jsoniter.ConfigFastest
 
-/*type jerr struct {
-	error
-}
-
-// Unwrap returns inherited error object.
-func (err *jerr) Unwrap() error {
-	return err.error
-}
-
-// MarshalJSON is standard JSON interface implementation to stream errors on Ajax.
-func (err *jerr) MarshalJSON() ([]byte, error) {
-	return json.Marshal(err.Error())
-}
-
-// MarshalYAML is YAML marshaler interface implementation to stream errors on Ajax.
-func (err *jerr) MarshalYAML() (any, error) {
-	return err.Error(), nil
-}
-
-// MarshalXML is XML marshaler interface implementation to stream errors on Ajax.
-func (err *jerr) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	return e.EncodeElement(err.Error(), start)
-}*/
-
 // AjaxErr is error object on AJAX API handlers calls.
 type AjaxErr struct {
 	// message with problem description
@@ -264,8 +240,8 @@ func WriteHTMLHeader(w http.ResponseWriter) {
 // WriteRet writes to response given status code and marshaled body.
 func WriteRet(w http.ResponseWriter, r *http.Request, status int, body any) {
 	if status == http.StatusUnauthorized {
-		w.Header().Set("WWW-Authenticate", `Basic realm="hms", charset="UTF-8"`)
-		w.Header().Set("WWW-Authenticate", `Bearer realm="hms", charset="UTF-8"`)
+		w.Header().Set("WWW-Authenticate", realmBasic)
+		w.Header().Set("WWW-Authenticate", realmBearer)
 	}
 	if body == nil {
 		w.WriteHeader(status)
@@ -562,28 +538,13 @@ func AjaxMiddleware(next http.Handler) http.Handler {
 
 // RegisterRoutes puts application routes to given router.
 func RegisterRoutes(gmux *mux.Router) {
-	gmux.Use(AjaxMiddleware)
-
-	//var devm = gmux.PathPrefix("/dev").Subrouter()
-	//var dacc = devm.PathPrefix("/id{aid:[0-9]+}/").Subrouter()
-	var gacc = gmux.PathPrefix("/id{aid:[0-9]+}/").Subrouter()
-
 	// API routes
 	var api = gmux.PathPrefix("/api").Subrouter()
-	var usr = gacc.PathPrefix("/api").Subrouter()
 	api.Use(AjaxMiddleware)
-	api.Path("/reload").HandlerFunc(AuthWrap(reloadAPI)) // authorized only
 
 	api.Path("/auth/pubkey").HandlerFunc(pubkeyAPI)
 	api.Path("/auth/signin").HandlerFunc(signinAPI)
 	api.Path("/auth/refrsh").HandlerFunc(refrshAPI)
-
-	usr.Path("/res/folder").HandlerFunc(AuthWrap(folderAPI))
-	usr.Path("/res/tags").HandlerFunc(AuthWrap(tagsAPI))
-	usr.Path("/res/ispath").HandlerFunc(AuthWrap(ispathAPI)) // authorized only
-
-	usr.Path("/gps/range").HandlerFunc(AuthWrap(gpsrangeAPI)) // authorized only
-	usr.Path("/gps/scan").HandlerFunc(AuthWrap(gpsscanAPI))
 }
 
 // The End.

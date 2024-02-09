@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"path"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 var catcolumn = map[Puid_t]string{
@@ -20,13 +22,13 @@ var catcolumn = map[Puid_t]string{
 }
 
 // APIHANDLER
-func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
+func SpiFolder(c *gin.Context) {
 	var err error
 	var ok bool
 	var arg struct {
 		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
 
-		Path string `json:"path,omitempty" yaml:"path,omitempty" xml:"path,omitempty,attr"`
+		Path string `json:"path,omitempty" yaml:"path,omitempty" xml:"path,omitempty,attr" binding:"required"`
 		Scan bool   `json:"scan,omitempty" yaml:"scan,omitempty" xml:"scan,omitempty"`
 		Ext  string `json:"ext,omitempty" yaml:"ext,omitempty" xml:"ext,omitempty,attr"`
 	}
@@ -47,18 +49,20 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		Access  bool `json:"access" yaml:"access" xml:"access,attr"`
 	}
 
+	// get arguments
+	if err = c.ShouldBind(&arg); err != nil {
+		Ret400(c, SEC_folder_nobind, err)
+		return
+	}
+	var uid = GetUID(c)
+	var aid ID_t
+	if aid, err = ParseID(c.Param("aid")); err != nil {
+		Ret400(c, SEC_folder_badacc, ErrNoAcc)
+		return
+	}
 	var acc *Profile
 	if acc, ok = Profiles.Get(aid); !ok {
-		WriteError400(w, r, ErrNoAcc, SEC_folder_noacc)
-		return
-	}
-
-	// get arguments
-	if err = ParseBody(w, r, &arg); err != nil {
-		return
-	}
-	if len(arg.Path) == 0 {
-		WriteError400(w, r, ErrArgNoPuid, SEC_folder_nodata)
+		Ret404(c, SEC_folder_noacc, ErrNoAcc)
 		return
 	}
 
@@ -68,16 +72,16 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var syspath string
 	var puid Puid_t
 	if syspath, puid, err = UnfoldPath(session, ToSlash(arg.Path)); err != nil {
-		WriteError400(w, r, err, SEC_folder_badpath)
+		Ret400(c, SEC_folder_badpath, err)
 		return
 	}
 
 	if Hidden.Fits(syspath) {
-		WriteError(w, r, http.StatusForbidden, ErrHidden, SEC_folder_hidden)
+		Ret403(c, SEC_folder_hidden, ErrHidden)
 		return
 	}
 	if !acc.PathAccess(syspath, uid == aid) {
-		WriteError(w, r, http.StatusForbidden, ErrNoAccess, SEC_folder_access)
+		Ret403(c, SEC_folder_access, ErrNoAccess)
 		return
 	}
 
@@ -98,13 +102,13 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			}
 		}
 	}
-	var ip = net.ParseIP(StripPort(r.RemoteAddr))
+	var ip = net.ParseIP(c.RemoteIP())
 	ret.Access = InPasslist(ip)
 
 	var t = time.Now()
 	if puid < PUIDcache {
 		if uid != aid && !acc.IsShared(syspath) {
-			WriteError(w, r, http.StatusForbidden, ErrNotShared, SEC_folder_noshr)
+			Ret403(c, SEC_folder_noshr, ErrNotShared)
 			return
 		}
 		switch puid {
@@ -123,7 +127,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 
 			var dp DirProp
 			if ret.List, dp, err = ScanFileNameList(acc, session, vfiles, arg.Scan); err != nil {
-				WriteError500(w, r, err, SEC_folder_home)
+				Ret500(c, SEC_folder_home, err)
 				return
 			}
 
@@ -133,22 +137,22 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			})
 		case PUIDlocal:
 			if ret.List, err = acc.ScanLocal(session, arg.Scan); err != nil {
-				WriteError500(w, r, err, SEC_folder_drives)
+				Ret500(c, SEC_folder_drives, err)
 				return
 			}
 		case PUIDremote:
 			if ret.List, err = acc.ScanRemote(session, arg.Scan); err != nil {
-				WriteError500(w, r, err, SEC_folder_remote)
+				Ret500(c, SEC_folder_remote, err)
 				return
 			}
 		case PUIDshares:
 			if ret.List, err = acc.ScanShares(session, arg.Scan); err != nil {
-				WriteError500(w, r, err, SEC_folder_shares)
+				Ret500(c, SEC_folder_shares, err)
 				return
 			}
 		case PUIDmedia, PUIDvideo, PUIDaudio, PUIDimage, PUIDbooks, PUIDtexts:
 			if ret.List, err = ScanCat(acc, session, puid, catcolumn[puid], 0.5, arg.Scan); err != nil {
-				WriteError500(w, r, err, SEC_folder_media)
+				Ret500(c, SEC_folder_media, err)
 				return
 			}
 		case PUIDmap:
@@ -168,18 +172,18 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 				return Cfg.RangeSearchAny <= 0 || n < Cfg.RangeSearchAny
 			})
 			if ret.List, _, err = ScanFileInfoList(acc, session, vfiles, vpaths, arg.Scan); err != nil {
-				WriteError500(w, r, err, SEC_folder_map)
+				Ret500(c, SEC_folder_map, err)
 				return
 			}
 		default:
-			WriteError(w, r, http.StatusNotFound, ErrNoCat, SEC_folder_nocat)
+			Ret404(c, SEC_folder_nocat, ErrNoCat)
 			return
 		}
 		ret.Static = true
 	} else {
 		var fi fs.FileInfo
 		if fi, err = JP.Stat(syspath); err != nil {
-			WriteError500(w, r, err, SEC_folder_stat)
+			Ret500(c, SEC_folder_stat, err)
 			return
 		}
 		ret.Static = IsStatic(fi) || !fi.IsDir()
@@ -192,16 +196,16 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 		if fi.IsDir() || IsTypeISO(ext) {
 			if ret.List, ret.Skipped, err = ScanDir(acc, session, syspath, uid == aid, arg.Scan); err != nil && len(ret.List) == 0 {
 				if errors.Is(err, fs.ErrNotExist) {
-					WriteError(w, r, http.StatusNotFound, err, SEC_folder_absent)
+					Ret404(c, SEC_folder_absent, err)
 				} else {
-					WriteError500(w, r, err, SEC_folder_fail)
+					Ret500(c, SEC_folder_fail, err)
 				}
 				return
 			}
 		} else if IsTypePlaylist(ext) {
 			var file fs.File
 			if file, err = JP.Open(syspath); err != nil {
-				WriteError500(w, r, err, SEC_folder_open)
+				Ret500(c, SEC_folder_open, err)
 				return
 			}
 			defer file.Close()
@@ -211,31 +215,31 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 			switch ext {
 			case ".m3u", ".m3u8":
 				if _, err = pl.ReadM3U(file); err != nil {
-					WriteError(w, r, http.StatusUnsupportedMediaType, err, SEC_folder_m3u)
+					RetErr(c, http.StatusUnsupportedMediaType, SEC_folder_m3u, err)
 					return
 				}
 			case ".wpl":
 				if _, err = pl.ReadWPL(file); err != nil {
-					WriteError(w, r, http.StatusUnsupportedMediaType, err, SEC_folder_wpl)
+					RetErr(c, http.StatusUnsupportedMediaType, SEC_folder_wpl, err)
 					return
 				}
 			case ".pls":
 				if _, err = pl.ReadPLS(file); err != nil {
-					WriteError(w, r, http.StatusUnsupportedMediaType, err, SEC_folder_pls)
+					RetErr(c, http.StatusUnsupportedMediaType, SEC_folder_pls, err)
 					return
 				}
 			case ".asx":
 				if _, err = pl.ReadASX(file); err != nil {
-					WriteError(w, r, http.StatusUnsupportedMediaType, err, SEC_folder_asx)
+					RetErr(c, http.StatusUnsupportedMediaType, SEC_folder_asx, err)
 					return
 				}
 			case ".xspf":
 				if _, err = pl.ReadXSPF(file); err != nil {
-					WriteError(w, r, http.StatusUnsupportedMediaType, err, SEC_folder_xspf)
+					RetErr(c, http.StatusUnsupportedMediaType, SEC_folder_xspf, err)
 					return
 				}
 			default:
-				WriteError(w, r, http.StatusUnsupportedMediaType, ErrNotPlay, SEC_folder_format)
+				RetErr(c, http.StatusUnsupportedMediaType, SEC_folder_format, ErrNotPlay)
 				return
 			}
 
@@ -251,7 +255,7 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 				}
 			}
 			if ret.List, _, err = ScanFileInfoList(acc, session, vfiles, vpaths, arg.Scan); err != nil {
-				WriteError500(w, r, err, SEC_folder_tracks)
+				Ret500(c, SEC_folder_tracks, err)
 				return
 			}
 			ret.Skipped = len(pl.Tracks) - len(ret.List)
@@ -261,14 +265,14 @@ func folderAPI(w http.ResponseWriter, r *http.Request, aid, uid ID_t) {
 	var latency = time.Since(t)
 	Log.Infof("id%d: navigate to %s, items %d, timeout %s", acc.ID, syspath, len(ret.List), latency)
 	go XormUserlog.InsertOne(&OpenStore{
-		UAID:    RequestUAID(r),
+		UAID:    RequestUAID(c.Request),
 		AID:     aid,
 		UID:     uid,
 		Path:    syspath,
 		Latency: int(latency / time.Millisecond),
 	})
 
-	WriteOK(w, r, &ret)
+	RetOk(c, ret)
 }
 
 // The End.
