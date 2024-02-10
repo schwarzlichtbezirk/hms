@@ -65,7 +65,7 @@ func SpiMemUsage(c *gin.Context) {
 	var mem runtime.MemStats
 	runtime.ReadMemStats(&mem)
 
-	var ret = XmlMap{
+	var ret = gin.H{
 		"buildvers":     cfg.BuildVers,
 		"buildtime":     cfg.BuildTime,
 		"running":       time.Since(starttime) / time.Millisecond,
@@ -125,7 +125,7 @@ func SpiCachesInfo(c *gin.Context) {
 		}
 	}
 
-	var ret = XmlMap{
+	var ret = gin.H{
 		"pathcount":    pathcount,
 		"dircount":     dircount,
 		"exifcount":    exifcount,
@@ -215,7 +215,7 @@ func SpiTags(c *gin.Context) {
 		return
 	}
 	var uid = GetUID(c)
-	var aid ID_t
+	var aid uint64
 	if aid, err = ParseID(c.Param("aid")); err != nil {
 		Ret400(c, SEC_tags_badacc, ErrNoAcc)
 		return
@@ -280,7 +280,7 @@ func SpiHasPath(c *gin.Context) {
 		return
 	}
 	var uid = GetUID(c)
-	var aid ID_t
+	var aid uint64
 	if aid, err = ParseID(c.Param("aid")); err != nil {
 		Ret400(c, SEC_ispath_badacc, ErrNoAcc)
 		return

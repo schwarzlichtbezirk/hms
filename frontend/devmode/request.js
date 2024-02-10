@@ -103,12 +103,13 @@ const fetchjsonauth = async (method, url, body) => {
 		body: body && JSON.stringify(body),
 	});
 	if (resp0.status === 401 && auth.refrsh) { // Unauthorized
-		const resp1 = await fetch("/api/auth/refrsh", { // get new token
+		const resp1 = await fetch("/api/auth/refresh", { // get new token
 			method: "POST",
-			headers: ajaxheader(true),
-			body: JSON.stringify({
-				refrsh: auth.refrsh
-			}),
+			headers: {
+				'Accept': 'application/json',
+				'Content-Type': 'application/json; charset=utf-8',
+				'Authorization': 'Bearer ' + auth.refrsh,
+			},
 		});
 		const data1 = await resp1.json();
 		if (!resp1.ok) {

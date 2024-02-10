@@ -116,7 +116,7 @@ func PrfReadYaml(fname string) (err error) {
 func PrfUpdate() {
 	if Profiles.Len() > 0 {
 		SqlSession(func(session *Session) (res any, err error) {
-			Profiles.Range(func(id ID_t, prf *Profile) bool {
+			Profiles.Range(func(id uint64, prf *Profile) bool {
 				Log.Infof("loaded profile id%d, login='%s'", prf.ID, prf.Login)
 				// cache local and remote roots
 				for _, dp := range prf.Local {
@@ -179,7 +179,7 @@ func PrfWriteYaml(fname string) error {
 
 `
 	var list []*Profile
-	Profiles.Range(func(id ID_t, prf *Profile) bool {
+	Profiles.Range(func(id uint64, prf *Profile) bool {
 		list = append(list, prf)
 		return true
 	})

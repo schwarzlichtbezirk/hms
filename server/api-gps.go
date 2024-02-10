@@ -76,7 +76,7 @@ func SpiGpsRange(c *gin.Context) {
 		return
 	}
 	var uid = GetUID(c)
-	var aid ID_t
+	var aid uint64
 	if aid, err = ParseID(c.Param("aid")); err != nil {
 		Ret400(c, SEC_gpsrange_badacc, ErrNoAcc)
 		return
@@ -186,7 +186,7 @@ func SpiGpsScan(c *gin.Context) {
 		return
 	}
 	var uid = GetUID(c)
-	var aid ID_t
+	var aid uint64
 	if aid, err = ParseID(c.Param("aid")); err != nil {
 		Ret400(c, SEC_gpsscan_badacc, ErrNoAcc)
 		return

@@ -37,7 +37,7 @@ func SpiFile(c *gin.Context) {
 
 	// get arguments
 	var uid = GetUID(c)
-	var aid ID_t
+	var aid uint64
 	if aid, err = ParseID(c.Param("aid")); err != nil {
 		Ret400(c, SEC_media_badacc, ErrNoAcc)
 		return
@@ -104,7 +104,7 @@ func SpiFile(c *gin.Context) {
 			if HasRangeBegin(c.Request) { // beginning of content
 				Log.Infof("id%d: media-hd %s", acc.ID, path.Base(syspath))
 				go XormUserlog.InsertOne(&OpenStore{
-					UAID:    RequestUAID(c.Request),
+					UAID:    RequestUAID(c),
 					AID:     aid,
 					UID:     uid,
 					Path:    syspath,
@@ -137,7 +137,7 @@ func SpiFile(c *gin.Context) {
 			if HasRangeBegin(c.Request) { // beginning of content
 				Log.Infof("id%d: media %s", acc.ID, path.Base(syspath))
 				go XormUserlog.InsertOne(&OpenStore{
-					UAID:    RequestUAID(c.Request),
+					UAID:    RequestUAID(c),
 					AID:     aid,
 					UID:     uid,
 					Path:    syspath,
@@ -153,7 +153,7 @@ func SpiFile(c *gin.Context) {
 	if HasRangeBegin(c.Request) { // beginning of content
 		Log.Infof("id%d: serve %s", acc.ID, path.Base(syspath))
 		go XormUserlog.InsertOne(&OpenStore{
-			UAID:    RequestUAID(c.Request),
+			UAID:    RequestUAID(c),
 			AID:     aid,
 			UID:     uid,
 			Path:    syspath,
@@ -198,7 +198,7 @@ func SpiEtmb(c *gin.Context) {
 
 	// get arguments
 	var uid = GetUID(c)
-	var aid ID_t
+	var aid uint64
 	if aid, err = ParseID(c.Param("aid")); err != nil {
 		Ret400(c, SEC_etmb_badacc, ErrNoAcc)
 		return
@@ -250,7 +250,7 @@ func SpiMtmb(c *gin.Context) {
 
 	// get arguments
 	var uid = GetUID(c)
-	var aid ID_t
+	var aid uint64
 	if aid, err = ParseID(c.Param("aid")); err != nil {
 		Ret400(c, SEC_mtmb_badacc, ErrNoAcc)
 		return
@@ -305,7 +305,7 @@ func SpiTile(c *gin.Context) {
 
 	// get arguments
 	var uid = GetUID(c)
-	var aid ID_t
+	var aid uint64
 	if aid, err = ParseID(c.Param("aid")); err != nil {
 		Ret400(c, SEC_tile_badacc, ErrNoAcc)
 		return

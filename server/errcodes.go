@@ -7,15 +7,11 @@ import "errors"
 // so this error code at service reply exactly points to error place.
 const (
 	SEC_null = iota
-	SEC_noreq
-	SEC_badjson
-	SEC_badyaml
-	SEC_badxml
-	SEC_argundef
 	SEC_badenc
 	SEC_panic
 
 	// authorization
+
 	SEC_auth_absent
 	SEC_auth_scheme
 	SEC_basic_decode
@@ -33,7 +29,20 @@ const (
 	SEC_param_noacc
 
 	// 404
+
 	SEC_nourl
+
+	// auth/signin
+
+	SEC_signin_nobind
+	SEC_signin_nosecret
+	SEC_signin_smallsec
+	SEC_signin_nouser
+	SEC_signin_denypass
+	SEC_signin_sigtime
+	SEC_signin_timeout
+	SEC_signin_hs256
+	SEC_signin_denyhash
 
 	// page
 
@@ -102,22 +111,6 @@ const (
 	// stat/getlog
 
 	SEC_getlog_nobind
-
-	// auth/pubkey
-
-	SEC_pubkey_rand
-
-	// auth/signin
-
-	SEC_signin_nodata
-	SEC_signin_noacc
-	SEC_signin_pkey
-	SEC_signin_deny
-
-	// auth/refrsh
-
-	SEC_refrsh_nodata
-	SEC_refrsh_parse
 
 	// res/folder
 

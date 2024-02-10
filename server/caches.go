@@ -136,8 +136,6 @@ var (
 
 	etmbcache = NewCache[Puid_t, MediaData]() // FIFO cache with files embedded thumbnails.
 	imgcache  = NewCache[Puid_t, MediaData]() // FIFO cache with converted to HD resolution images, processed media files and embedded thumbnails.
-
-	pubkcache = NewCache[[32]byte, TempCell[struct{}]]() // LRU cache with public keys.
 )
 
 const (

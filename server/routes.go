@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"html/template"
-	"io"
 	"net/http"
 	"path"
 	"runtime"
@@ -84,100 +83,9 @@ func MakeErrPanic(what error, code int, stack string) *ErrPanic {
 	}
 }
 
-type XmlMap map[string]any
-
-type xmlMapEntry struct {
-	XMLName xml.Name
-	Value   any `xml:",chardata"`
-}
-
-// MarshalXML marshals the map to XML, with each key in the map being a
-// tag and it's corresponding value being it's contents.
-//
-// See https://stackoverflow.com/questions/30928770/marshall-map-to-xml-in-go
-func (m XmlMap) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
-	if len(m) == 0 {
-		return nil
-	}
-
-	if err := e.EncodeToken(start); err != nil {
-		return err
-	}
-
-	for k, v := range m {
-		e.Encode(xmlMapEntry{XMLName: xml.Name{Local: k}, Value: v})
-	}
-
-	return e.EncodeToken(start.End())
-}
-
-// UnmarshalXML unmarshals the XML into a map of string to strings,
-// creating a key in the map for each tag and setting it's value to the
-// tags contents.
-//
-// The fact this function is on the pointer of Map is important, so that
-// if m is nil it can be initialized, which is often the case if m is
-// nested in another xml structurel. This is also why the first thing done
-// on the first line is initialize it.
-func (m *XmlMap) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
-	*m = XmlMap{}
-	for {
-		var e xmlMapEntry
-
-		var err = d.Decode(&e)
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			return err
-		}
-
-		(*m)[e.XMLName.Local] = e.Value
-	}
-	return nil
-}
-
 ////////////////
 // Routes API //
 ////////////////
-
-// "Server" field for HTTP headers.
-var serverlabel = fmt.Sprintf("hms/%s (%s)", cfg.BuildVers, runtime.GOOS)
-
-// ParseBody fetch and unmarshal request argument.
-func ParseBody(w http.ResponseWriter, r *http.Request, arg any) (err error) {
-	if jb, _ := io.ReadAll(r.Body); len(jb) > 0 {
-		var ctype = r.Header.Get("Content-Type")
-		if pos := strings.IndexByte(ctype, ';'); pos != -1 {
-			ctype = ctype[:pos]
-		}
-		switch ctype {
-		case "application/json", "text/json":
-			if err = json.Unmarshal(jb, arg); err != nil {
-				WriteError400(w, r, err, SEC_badjson)
-				return
-			}
-		case "application/x-yaml", "application/yaml", "application/yml",
-			"text/x-yaml", "text/yaml", "text/yml":
-			if err = yaml.Unmarshal(jb, arg); err != nil {
-				WriteError400(w, r, err, SEC_badyaml)
-				return
-			}
-		case "application/xml", "text/xml":
-			if err = xml.Unmarshal(jb, arg); err != nil {
-				WriteError400(w, r, err, SEC_badxml)
-				return
-			}
-		default:
-			WriteError400(w, r, ErrArgUndef, SEC_argundef)
-			return
-		}
-	} else {
-		err = ErrNoJSON
-		WriteError400(w, r, err, SEC_noreq)
-		return
-	}
-	return
-}
 
 // HdrRange describes one range chunk of the file to download.
 type HdrRange struct {
@@ -311,26 +219,6 @@ func WriteRet(w http.ResponseWriter, r *http.Request, status int, body any) {
 			Log.Errorf("response status: %d, body: %v", status, body)
 		}
 	}
-}
-
-// WriteOK puts 200 status code and some data to response.
-func WriteOK(w http.ResponseWriter, r *http.Request, body any) {
-	WriteRet(w, r, http.StatusOK, body)
-}
-
-// WriteError puts to response given error status code and AjaxErr formed by given error object.
-func WriteError(w http.ResponseWriter, r *http.Request, status int, err error, code int) {
-	WriteRet(w, r, status, MakeAjaxErr(err, code))
-}
-
-// WriteError400 puts to response 400 status code and AjaxErr formed by given error object.
-func WriteError400(w http.ResponseWriter, r *http.Request, err error, code int) {
-	WriteRet(w, r, http.StatusBadRequest, MakeAjaxErr(err, code))
-}
-
-// WriteError500 puts to response 500 status code and AjaxErr formed by given error object.
-func WriteError500(w http.ResponseWriter, r *http.Request, err error, code int) {
-	WriteRet(w, r, http.StatusInternalServerError, MakeAjaxErr(err, code))
 }
 
 //////////////////
@@ -492,8 +380,8 @@ func AjaxMiddleware(next http.Handler) http.Handler {
 		defer handwg.Done()
 
 		var (
-			cid          ID_t
-			uaold, uanew ID_t
+			cid          uint64
+			uaold, uanew uint64
 			isold, isnew bool
 		)
 
@@ -504,7 +392,7 @@ func AjaxMiddleware(next http.Handler) http.Handler {
 		if uaold, _ = GetUAID(r); uaold == 0 {
 			http.SetCookie(w, &http.Cookie{
 				Name:  "UAID",
-				Value: strconv.FormatUint(uint64(uanew), 10),
+				Value: strconv.FormatUint(uanew, 10),
 				Path:  "/",
 			})
 		}
@@ -542,9 +430,9 @@ func RegisterRoutes(gmux *mux.Router) {
 	var api = gmux.PathPrefix("/api").Subrouter()
 	api.Use(AjaxMiddleware)
 
-	api.Path("/auth/pubkey").HandlerFunc(pubkeyAPI)
-	api.Path("/auth/signin").HandlerFunc(signinAPI)
-	api.Path("/auth/refrsh").HandlerFunc(refrshAPI)
+	//api.Path("/auth/pubkey").HandlerFunc(pubkeyAPI)
+	//api.Path("/auth/signin").HandlerFunc(signinAPI)
+	//api.Path("/auth/refrsh").HandlerFunc(refrshAPI)
 }
 
 // The End.

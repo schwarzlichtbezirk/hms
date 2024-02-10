@@ -4,11 +4,16 @@ import (
 	"encoding/xml"
 	"fmt"
 	"net/http"
+	"runtime"
 
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
+	cfg "github.com/schwarzlichtbezirk/hms/config"
 )
+
+// "Server" field for HTTP headers.
+var serverlabel = fmt.Sprintf("hms/%s (%s)", cfg.BuildVers, runtime.GOOS)
 
 var Offered = []string{
 	binding.MIMEJSON,
@@ -18,6 +23,7 @@ var Offered = []string{
 }
 
 func Negotiate(c *gin.Context, code int, data any) {
+	c.Header("Server", serverlabel)
 	switch c.NegotiateFormat(Offered...) {
 	case binding.MIMEJSON:
 		c.JSON(code, data)
@@ -79,7 +85,7 @@ func (err ajaxerr) Unwrap() error {
 func RetErr(c *gin.Context, status, code int, err error) {
 	var uid uint64
 	if uv, ok := c.Get(userKey); ok {
-		uid = uint64(uv.(*Profile).ID)
+		uid = uv.(*Profile).ID
 	}
 	Negotiate(c, status, ajaxerr{
 		What: jerr{err},
@@ -162,6 +168,9 @@ func Router(r *gin.Engine) {
 	api.GET("/stat/cchinf", SpiCachesInfo)
 	api.POST("/stat/getlog", SpiGetLog)
 	api.POST("/stat/usrlst", SpiUserList)
+
+	api.POST("/auth/signin", SpiSignin)
+	api.GET("/auth/refresh", Auth(true), SpiRefresh)
 
 	var usr = gacc.Group("/api")
 

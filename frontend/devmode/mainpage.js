@@ -1226,37 +1226,33 @@ const VueAuth = {
 			(async () => {
 				eventHub.emit('ajax', +1);
 				try {
-					const resp1 = await fetchjson("POST", "/api/auth/pubkey");
-					const data1 = await resp1.json();
-					traceajax(resp1, data1);
-					if (!resp1.ok) {
-						throw new HttpError(resp1.status, data1);
-					}
+					const sigtime = (new Date(Date.now())).toJSON()
 
 					// github.com/emn178/js-sha256
-					const hash = sha256.hmac.create(data1.key);
-					hash.update(this.password);
+					const hs256 = sha256.create();
+					hs256.update(sigtime);
+					hs256.update(this.password);
 
-					const resp2 = await fetchjson("POST", "/api/auth/signin", {
-						name: this.login,
-						pubk: data1.key,
-						hash: hash.digest()
+					const resp = await fetchjson("POST", "/api/auth/signin", {
+						login: this.login,
+						hs256: hs256.hex(),
+						sigtime: sigtime,
 					});
-					const data2 = await resp2.json();
-					traceajax(resp2, data2);
+					const data = await resp.json();
+					traceajax(resp, data);
 
-					if (resp2.status === 200) {
-						auth.signin(data2.access, data2.refrsh, this.login);
+					if (resp.status === 200) {
+						auth.signin(data.access, data.refrsh, this.login);
 						this.namestate = 1;
 						this.passstate = 1;
-					} else if (resp2.status === 403) { // Forbidden
+					} else if (resp.status === 403) { // Forbidden
 						auth.signout();
-						switch (data2.code) {
-							case 61: // SEC_signin_noacc
+						switch (data.code) {
+							case 22: // SEC_signin_nouser
 								this.namestate = -1;
 								this.passstate = 0;
 								break;
-							case 63: // SEC_signin_deny
+							case 27: // SEC_signin_denyhash
 								this.namestate = 1;
 								this.passstate = -1;
 								break;
@@ -1265,7 +1261,7 @@ const VueAuth = {
 								this.passstate = -1;
 						}
 					} else {
-						throw new HttpError(resp2.status, data2);
+						throw new HttpError(resp.status, data);
 					}
 				} catch (e) {
 					ajaxfail(e);

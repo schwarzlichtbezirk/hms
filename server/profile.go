@@ -153,7 +153,7 @@ func (cg *CatGrp) SetAll(v bool) {
 
 // Profile contains access configuration to resources.
 type Profile struct {
-	ID       ID_t   `json:"id" yaml:"id" xml:"id,attr"`
+	ID       uint64 `json:"id" yaml:"id" xml:"id,attr"`
 	Login    string `json:"login" yaml:"login" xml:"login"`
 	Password string `json:"password" yaml:"password" xml:"password"`
 
@@ -166,7 +166,7 @@ type Profile struct {
 	mux       sync.RWMutex
 }
 
-var Profiles RWMap[ID_t, *Profile]
+var Profiles RWMap[uint64, *Profile]
 
 // NewProfile make new profile and insert it to the list.
 func NewProfile(login, password string) *Profile {
@@ -175,8 +175,8 @@ func NewProfile(login, password string) *Profile {
 		Password: password,
 	}
 
-	var maxid ID_t
-	Profiles.Range(func(id ID_t, prf *Profile) bool {
+	var maxid uint64
+	Profiles.Range(func(id uint64, prf *Profile) bool {
 		maxid = max(maxid, id)
 		return true
 	})

@@ -55,7 +55,7 @@ func SpiFolder(c *gin.Context) {
 		return
 	}
 	var uid = GetUID(c)
-	var aid ID_t
+	var aid uint64
 	if aid, err = ParseID(c.Param("aid")); err != nil {
 		Ret400(c, SEC_folder_badacc, ErrNoAcc)
 		return
@@ -265,7 +265,7 @@ func SpiFolder(c *gin.Context) {
 	var latency = time.Since(t)
 	Log.Infof("id%d: navigate to %s, items %d, timeout %s", acc.ID, syspath, len(ret.List), latency)
 	go XormUserlog.InsertOne(&OpenStore{
-		UAID:    RequestUAID(c.Request),
+		UAID:    RequestUAID(c),
 		AID:     aid,
 		UID:     uid,
 		Path:    syspath,

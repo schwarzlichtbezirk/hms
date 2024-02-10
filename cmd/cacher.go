@@ -400,7 +400,7 @@ func RunCacher(exitctx context.Context) {
 	fmt.Fprintf(os.Stdout, "starts caching processing\n")
 
 	var shares []string
-	srv.Profiles.Range(func(id srv.ID_t, prf *srv.Profile) bool {
+	srv.Profiles.Range(func(id uint64, prf *srv.Profile) bool {
 		for _, shr := range prf.Shares {
 			var add = true
 			for i, p := range shares {

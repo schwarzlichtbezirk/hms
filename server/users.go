@@ -2,7 +2,6 @@ package hms
 
 import (
 	"encoding/xml"
-	"net/http"
 	"sync"
 	"time"
 
@@ -16,8 +15,8 @@ var XormUserlog *xorm.Engine
 
 // AgentStore is storage record with user agent string and user host address.
 type AgentStore struct {
-	UAID ID_t      `xorm:"unique"` // user agent ID
-	CID  ID_t      // client ID
+	UAID uint64    `xorm:"unique"` // user agent ID
+	CID  uint64    // client ID
 	Addr string    // remote address
 	UA   string    // user agent
 	Lang string    // accept language
@@ -26,9 +25,9 @@ type AgentStore struct {
 
 // OpenStore is storage record with some opened file or opened folder.
 type OpenStore struct {
-	UAID    ID_t      // client ID
-	AID     ID_t      `xorm:"default 0"` // access profile ID
-	UID     ID_t      `xorm:"default 0"` // user profile ID
+	UAID    uint64    // client ID
+	AID     uint64    `xorm:"default 0"` // access profile ID
+	UID     uint64    `xorm:"default 0"` // user profile ID
 	Path    string    // system path
 	Latency int       // event latency, in milliseconds, or -1 if it file
 	Time    time.Time `xorm:"created"` // time of event rise
@@ -36,27 +35,27 @@ type OpenStore struct {
 
 var (
 	// UserOnline is map of last AJAX query time for each user.
-	UserOnline = map[ID_t]time.Time{}
+	UserOnline = map[uint64]time.Time{}
 	// UaMap is the map of user agent hashes and associated client IDs.
-	UaMap = map[ID_t]ID_t{}
+	UaMap = map[uint64]uint64{}
 	// current maximum client ID
-	maxcid ID_t
+	maxcid uint64
 	// mutex to get access to user-agent maps.
 	uamux sync.Mutex
 )
 
 // CalcUAID calculate user agent ID by xxhash from given strings.
-func CalcUAID(addr, ua string) ID_t {
+func CalcUAID(addr, ua string) uint64 {
 	var h = xxhash.New()
 	h.Write(S2B(Cfg.UaidHmacKey))
 	h.Write(S2B(addr))
 	h.Write(S2B(ua))
-	return ID_t(h.Sum64() & 0x7fff_ffff_ffff_ffff) // clear highest bit for xorm compatibility
+	return h.Sum64() & 0x7fff_ffff_ffff_ffff // clear highest bit for xorm compatibility
 }
 
 // RequestUAID calculate user agent ID from given request.
-func RequestUAID(r *http.Request) ID_t {
-	return CalcUAID(StripPort(r.RemoteAddr), r.UserAgent())
+func RequestUAID(c *gin.Context) uint64 {
+	return CalcUAID(StripPort(c.RemoteIP()), c.Request.UserAgent())
 }
 
 // LoadUaMap forms content of UaMap from database on server start.
@@ -64,11 +63,9 @@ func LoadUaMap() (err error) {
 	var session = XormUserlog.NewSession()
 	defer session.Close()
 
-	var u64 uint64
-	if _, err = session.Table(&AgentStore{}).Select("MAX(cid)").Get(&u64); err != nil {
+	if _, err = session.Table(&AgentStore{}).Select("MAX(cid)").Get(&maxcid); err != nil {
 		return
 	}
-	maxcid = ID_t(u64)
 
 	const limit = 256
 	var offset int
@@ -97,8 +94,8 @@ func SpiUserList(c *gin.Context) {
 		UA     uas.UserAgent `json:"ua" yaml:"ua" xml:"ua"`
 		Lang   string        `json:"lang" yaml:"lang" xml:"lang"`
 		Online bool          `json:"online" yaml:"online" xml:"online,attr"`
-		AID    ID_t          `json:"accid" yaml:"accid" xml:"accid,attr"`
-		UID    ID_t          `json:"usrid" yaml:"usrid" xml:"usrid,attr"`
+		AID    uint64        `json:"accid" yaml:"accid" xml:"accid,attr"`
+		UID    uint64        `json:"usrid" yaml:"usrid" xml:"usrid,attr"`
 		Path   string        `json:"path" yaml:"path" xml:"path"`
 		File   string        `json:"file" yaml:"file" xml:"file"`
 	}

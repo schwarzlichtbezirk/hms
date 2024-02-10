@@ -26,6 +26,8 @@ type CfgJWTAuth struct {
 	AccessKey string `json:"access-key" yaml:"access-key" mapstructure:"access-key"`
 	// Key for refresh HS-256 JWT-tokens.
 	RefreshKey string `json:"refresh-key" yaml:"refresh-key" mapstructure:"refresh-key"`
+	// Validity timeout of the nonce with which the login hash is signed.
+	NonceTimeout time.Duration `json:"nonce-timeout" yaml:"nonce-timeout" mapstructure:"nonce-timeout"`
 	// Key to calculate user agent ID by xxhash algorithm.
 	UaidHmacKey string `json:"uaid-hmac-key" yaml:"uaid-hmac-key" mapstructure:"uaid-hmac-key"`
 }
@@ -126,11 +128,12 @@ type Config struct {
 // Inits default values if config is not found.
 var Cfg = &Config{
 	CfgJWTAuth: CfgJWTAuth{
-		AccessTTL:   1 * 24 * time.Hour,
-		RefreshTTL:  3 * 24 * time.Hour,
-		AccessKey:   "skJgM4NsbP3fs4k7vh0gfdkgGl8dJTszdLxZ1sQ9ksFnxbgvw2RsGH8xxddUV479",
-		RefreshKey:  "zxK4dUnuq3Lhd1Gzhpr3usI5lAzgvy2t3fmxld2spzz7a5nfv0hsksm9cheyutie",
-		UaidHmacKey: "hms-ua",
+		AccessTTL:    1 * 24 * time.Hour,
+		RefreshTTL:   3 * 24 * time.Hour,
+		AccessKey:    "skJgM4NsbP3fs4k7vh0gfdkgGl8dJTszdLxZ1sQ9ksFnxbgvw2RsGH8xxddUV479",
+		RefreshKey:   "zxK4dUnuq3Lhd1Gzhpr3usI5lAzgvy2t3fmxld2spzz7a5nfv0hsksm9cheyutie",
+		NonceTimeout: 150 * time.Second,
+		UaidHmacKey:  "hms-ua",
 	},
 	CfgWebServ: CfgWebServ{
 		PortHTTP:          []string{":80"},

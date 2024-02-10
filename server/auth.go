@@ -1,7 +1,11 @@
 package hms
 
 import (
+	"bytes"
+	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
+	"encoding/xml"
 	"errors"
 	"net"
 	"net/http"
@@ -11,7 +15,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/gorilla/mux"
 )
 
 const (
@@ -28,20 +31,24 @@ const (
 
 // HTTP error messages
 var (
-	ErrNoAuth   = errors.New("authorization is absent")
-	ErrNoScheme = errors.New("authorization does not have expected scheme")
 	ErrNoJwtID  = errors.New("jwt-token does not have user id")
 	ErrBadJwtID = errors.New("jwt-token id does not refer to registered user")
+	ErrNoAuth   = errors.New("authorization is absent")
+	ErrNoScheme = errors.New("authorization does not have expected scheme")
+	ErrNoSecret = errors.New("expected password or SHA25 hash on it and current time as a nonce")
+	ErrSmallKey = errors.New("password too small")
 	ErrNoCred   = errors.New("profile with given credentials does not registered")
-	ErrNoPubKey = errors.New("public key does not exist any more")
 	ErrNotPass  = errors.New("password is incorrect")
+	ErrSigTime  = errors.New("signing time can not been recognized (time in RFC3339 expected)")
+	ErrSigOut   = errors.New("nonce is expired")
+	ErrBadHash  = errors.New("hash cannot be decoded in hexadecimal")
 	ErrNoAcc    = errors.New("profile is absent")
 )
 
 // Claims of JWT-tokens. Contains additional profile identifier.
 type Claims struct {
 	jwt.RegisteredClaims
-	UID ID_t `json:"uid,omitempty"`
+	UID uint64 `json:"uid,omitempty"`
 }
 
 func (c *Claims) Validate() error {
@@ -79,7 +86,7 @@ func Auth(required bool) gin.HandlerFunc {
 
 		if user == nil {
 			if q := c.Param("aid"); q != "" {
-				var aid ID_t
+				var aid uint64
 				if aid, err = ParseID(q); err != nil {
 					Ret400(c, SEC_token_badaid, err)
 					return
@@ -160,7 +167,7 @@ func GetBasicAuth(credentials string) (user *Profile, code int, err error) {
 	var parts = strings.Split(B2S(decoded), ":")
 
 	var login = parts[0]
-	Profiles.Range(func(uid ID_t, u *Profile) bool {
+	Profiles.Range(func(uid uint64, u *Profile) bool {
 		if u.Login != login {
 			return true
 		}
@@ -216,7 +223,7 @@ func GetBearerAuth(tokenstr string) (prf *Profile, code int, err error) {
 	return
 }
 
-func GetUID(c *gin.Context) ID_t {
+func GetUID(c *gin.Context) uint64 {
 	if v, ok := c.Get(userKey); ok {
 		return v.(*Profile).ID
 	}
@@ -234,42 +241,130 @@ func Handle404(c *gin.Context) {
 	Ret404(c, SEC_nourl, Err404)
 }
 
-var Passlist []net.IPNet
-
-// Zero hash value.
-var zero32 [32]byte
-
-// Tokens is access and refresh tokens pair.
-type Tokens struct {
-	Access string `json:"access" yaml:"access" xml:"access"`
-	Refrsh string `json:"refrsh" yaml:"refrsh" xml:"refrsh"`
+type AuthResp struct {
+	XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
+	UID     uint64   `json:"uid" yaml:"uid" xml:"uid"`
+	Access  string   `json:"access" yaml:"access" xml:"access"`
+	Refrsh  string   `json:"refrsh" yaml:"refrsh" xml:"refrsh"`
+	Expire  string   `json:"expire" yaml:"expire" xml:"expire"`
+	Living  string   `json:"living" yaml:"living" xml:"living"`
 }
 
-// AuthHandlerFunc is type of handler for authorized API calls.
-type AuthHandlerFunc func(w http.ResponseWriter, r *http.Request, aid, uid ID_t)
-
-// Make creates access and refresh tokens pair for given AID.
-func (t *Tokens) Make(uid ID_t) {
+func (r *AuthResp) Setup(user *Profile) {
+	var err error
+	var token *jwt.Token
 	var now = jwt.NewNumericDate(time.Now())
-	t.Access, _ = jwt.NewWithClaims(jwt.SigningMethodHS256, &Claims{
+	var exp = jwt.NewNumericDate(time.Now().Add(Cfg.AccessTTL))
+	var age = jwt.NewNumericDate(time.Now().Add(Cfg.RefreshTTL))
+	token = jwt.NewWithClaims(jwt.SigningMethodHS256, &Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
-			IssuedAt:  now,
 			NotBefore: now,
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(Cfg.AccessTTL)),
+			ExpiresAt: exp,
 			Issuer:    jwtIssuer,
 		},
-		UID: uid,
-	}).SignedString([]byte(Cfg.AccessKey))
-	t.Refrsh, _ = jwt.NewWithClaims(jwt.SigningMethodHS256, &Claims{
+		UID: user.ID,
+	})
+	if r.Access, err = token.SignedString([]byte(Cfg.AccessKey)); err != nil {
+		panic(err)
+	}
+	r.Expire = exp.Format(time.RFC3339)
+	token = jwt.NewWithClaims(jwt.SigningMethodHS256, &Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
-			IssuedAt:  now,
 			NotBefore: now,
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(Cfg.RefreshTTL)),
+			ExpiresAt: age,
 			Issuer:    jwtIssuer,
 		},
-		UID: uid,
-	}).SignedString([]byte(Cfg.RefreshKey))
+		UID: user.ID,
+	})
+	if r.Refrsh, err = token.SignedString([]byte(Cfg.AccessKey)); err != nil {
+		panic(err)
+	}
+	r.Living = age.Format(time.RFC3339)
+	r.UID = user.ID
 }
+
+func SpiSignin(c *gin.Context) {
+	var err error
+	var arg struct {
+		XMLName xml.Name `json:"-" yaml:"-" xml:"arg"`
+		Login   string   `json:"login" yaml:"login" xml:"login" form:"login" binding:"required"`
+		Secret  string   `json:"secret" yaml:"secret,omitempty" xml:"secret,omitempty" form:"secret"`
+		HS256   string   `json:"hs256,omitempty" yaml:"hs256,omitempty" xml:"hs256,omitempty" form:"hs256"`
+		SigTime string   `json:"sigtime,omitempty" yaml:"sigtime,omitempty" xml:"sigtime,omitempty" form:"sigtime"`
+	}
+	var ret AuthResp
+
+	if err = c.ShouldBind(&arg); err != nil {
+		Ret400(c, SEC_signin_nobind, err)
+		return
+	}
+	if len(arg.SigTime) == 0 && len(arg.Secret) == 0 {
+		Ret400(c, SEC_signin_nosecret, ErrNoSecret)
+		return
+	}
+	if len(arg.Secret) > 0 && len(arg.Secret) < 6 {
+		Ret400(c, SEC_signin_smallsec, ErrSmallKey)
+		return
+	}
+
+	var user *Profile
+	Profiles.Range(func(uid uint64, u *Profile) bool {
+		if u.Login != arg.Login {
+			return true
+		}
+		user = u
+		return false
+	})
+	if user == nil {
+		Ret403(c, SEC_signin_nouser, ErrNoCred)
+		return
+	}
+
+	if len(arg.Secret) > 0 {
+		if arg.Secret != user.Password {
+			Ret403(c, SEC_signin_denypass, ErrNotPass)
+			return
+		}
+	} else {
+		var sigtime time.Time
+		if sigtime, err = time.Parse(time.RFC3339, arg.SigTime); err != nil {
+			Ret400(c, SEC_signin_sigtime, ErrSigTime)
+			return
+		}
+		if time.Since(sigtime) > Cfg.NonceTimeout {
+			Ret403(c, SEC_signin_timeout, ErrSigOut)
+			return
+		}
+
+		var hs256 []byte
+		if hs256, err = hex.DecodeString(arg.HS256); err != nil {
+			Ret400(c, SEC_signin_hs256, ErrBadHash)
+			return
+		}
+
+		var h = sha256.New()
+		h.Write(S2B(arg.SigTime))
+		h.Write(S2B(user.Password))
+		var master = h.Sum(nil)
+		if !bytes.Equal(master, hs256) {
+			Ret403(c, SEC_signin_denyhash, ErrNotPass)
+			return
+		}
+	}
+
+	ret.Setup(user)
+	RetOk(c, ret)
+}
+
+func SpiRefresh(c *gin.Context) {
+	var ret AuthResp
+
+	var user = c.MustGet(userKey).(*Profile)
+	ret.Setup(user)
+	RetOk(c, ret)
+}
+
+var Passlist []net.IPNet
 
 // StripPort makes fast IP-address extract from valid host:port string.
 func StripPort(addrport string) string {
@@ -285,57 +380,21 @@ func StripPort(addrport string) string {
 }
 
 // ParseID is like ParseUint but for identifiers.
-func ParseID(s string) (id ID_t, err error) {
-	var u64 uint64
-	if u64, err = strconv.ParseUint(s, 10, 64); err != nil {
+func ParseID(s string) (id uint64, err error) {
+	if id, err = strconv.ParseUint(s, 10, 64); err != nil {
 		return
 	}
-	id = ID_t(u64)
 	return
 }
 
 // GetUAID extract user agent ID from cookie.
-func GetUAID(r *http.Request) (uaid ID_t, err error) {
+func GetUAID(r *http.Request) (uaid uint64, err error) {
 	var c *http.Cookie
 	if c, err = r.Cookie("UAID"); err != nil {
 		return
 	}
 	if uaid, err = ParseID(c.Value); err != nil {
 		return
-	}
-	return
-}
-
-// GetAuth returns profile ID from authorization header if it present,
-// or default profile with no error if authorization is absent on localhost.
-// Returns nil pointer and nil error on unauthorized request from any host.
-func GetAuth(r *http.Request) (prf *Profile, code int, err error) {
-	if hdr := r.Header.Get("Authorization"); hdr != "" {
-		if strings.HasPrefix(hdr, "Basic ") {
-			return GetBasicAuth(hdr[6:])
-		} else if strings.HasPrefix(hdr, "Bearer ") {
-			return GetBearerAuth(hdr[7:])
-		} else {
-			return nil, SEC_auth_scheme, ErrNoScheme
-		}
-	}
-
-	var vars = mux.Vars(r)
-	if vars == nil {
-		return // no authorization
-	}
-	var aid ID_t
-	if aid, err = ParseID(vars["aid"]); err != nil {
-		code = SEC_token_badaid
-		return // no authorization
-	}
-	var ip = net.ParseIP(StripPort(r.RemoteAddr))
-	if InPasslist(ip) {
-		var ok bool
-		if prf, ok = Profiles.Get(aid); !ok {
-			code, err = SEC_param_noacc, ErrNoAcc
-			return
-		}
 	}
 	return
 }
@@ -351,33 +410,6 @@ func InPasslist(ip net.IP) bool {
 		}
 	}
 	return false
-}
-
-// AuthWrap is handler wrapper for API with admin checkup.
-func AuthWrap(fn AuthHandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		var vars = mux.Vars(r)
-		if vars == nil {
-			panic("bad route for URL " + r.URL.Path)
-		}
-		var aid ID_t
-		var err error
-		if aid, err = ParseID(vars["aid"]); err != nil {
-			WriteError400(w, r, err, 0)
-			return
-		}
-		var prf *Profile
-		var uid ID_t
-		var code int
-		if prf, code, err = GetAuth(r); err != nil {
-			WriteRet(w, r, http.StatusUnauthorized, MakeAjaxErr(err, code))
-			return
-		} else if prf != nil {
-			uid = prf.ID
-		}
-
-		fn(w, r, aid, uid)
-	}
 }
 
 // The End.

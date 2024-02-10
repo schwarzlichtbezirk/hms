@@ -10,9 +10,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// ID_t is the type of any users identifiers
-type ID_t uint64
-
 // Puid_t represents integer form of path unique ID.
 type Puid_t uint64
 
