@@ -1229,8 +1229,7 @@ const VueAuth = {
 					const sigtime = (new Date(Date.now())).toJSON()
 
 					// github.com/emn178/js-sha256
-					const hs256 = sha256.create();
-					hs256.update(sigtime);
+					const hs256 = sha256.hmac.create(sigtime);
 					hs256.update(this.password);
 
 					const resp = await fetchjson("POST", "/api/auth/signin", {

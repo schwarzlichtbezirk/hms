@@ -306,17 +306,13 @@ const (
 
 // HTTP error messages
 var (
-	Err404      = errors.New("page not found")
-	ErrNoJSON   = errors.New("data not given")
-	ErrNoData   = errors.New("data is empty")
-	ErrArgUndef = errors.New("request content type is undefined")
-	ErrBadEnc   = errors.New("encoding format does not supported")
-	ErrNotSys   = errors.New("root PUID does not refers to file system path")
-	ErrPathOut  = errors.New("path cannot refers outside root PUID")
+	Err404     = errors.New("page not found")
+	ErrNotSys  = errors.New("root PUID does not refers to file system path")
+	ErrPathOut = errors.New("path cannot refers outside root PUID")
 
 	ErrArgNoHD   = errors.New("'hd' parameter not recognized")
 	ErrArgNoDim  = errors.New("bad tiles dimensions")
-	ErrArgZDim   = errors.New("dimensions can noy be zero")
+	ErrArgZDim   = errors.New("dimensions can not be zero")
 	ErrNotDir    = errors.New("path is not directory")
 	ErrNoPath    = errors.New("path is not found")
 	ErrDeny      = errors.New("access denied for specified authorization")

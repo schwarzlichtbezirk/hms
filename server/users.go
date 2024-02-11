@@ -55,7 +55,7 @@ func CalcUAID(addr, ua string) uint64 {
 
 // RequestUAID calculate user agent ID from given request.
 func RequestUAID(c *gin.Context) uint64 {
-	return CalcUAID(StripPort(c.RemoteIP()), c.Request.UserAgent())
+	return CalcUAID(c.RemoteIP(), c.Request.UserAgent())
 }
 
 // LoadUaMap forms content of UaMap from database on server start.

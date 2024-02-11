@@ -7,8 +7,11 @@ import (
 	"encoding/xml"
 	"time"
 
+	jsoniter "github.com/json-iterator/go"
 	"gopkg.in/yaml.v3"
 )
+
+var json = jsoniter.ConfigFastest
 
 // Puid_t represents integer form of path unique ID.
 type Puid_t uint64

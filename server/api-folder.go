@@ -56,7 +56,7 @@ func SpiFolder(c *gin.Context) {
 	}
 	var uid = GetUID(c)
 	var aid uint64
-	if aid, err = ParseID(c.Param("aid")); err != nil {
+	if aid, err = GetAID(c); err != nil {
 		Ret400(c, SEC_folder_badacc, ErrNoAcc)
 		return
 	}

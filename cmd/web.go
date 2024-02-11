@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gorilla/mux"
 	cfg "github.com/schwarzlichtbezirk/hms/config"
 	srv "github.com/schwarzlichtbezirk/hms/server"
 	"github.com/spf13/cobra"
@@ -38,16 +37,11 @@ var webCmd = &cobra.Command{
 			return
 		}
 
-		var gmux = mux.NewRouter()
-		srv.RegisterRoutes(gmux)
-
 		var r = gin.New()
 		r.SetTrustedProxies([]string{"127.0.0.0/8"})
 		srv.Router(r)
 
-		gmux.NotFoundHandler = r
-
-		RunWeb(exitctx, gmux)
+		RunWeb(exitctx, r)
 		srv.WaitHandlers()
 		err = Done()
 		return

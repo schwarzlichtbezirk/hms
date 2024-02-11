@@ -5,12 +5,38 @@ import (
 	"fmt"
 	"net/http"
 	"runtime"
+	"strconv"
+	"strings"
+
+	cfg "github.com/schwarzlichtbezirk/hms/config"
 
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
-	cfg "github.com/schwarzlichtbezirk/hms/config"
 )
+
+const (
+	devmsuff = "devmode" // relative path to folder with development mode code files
+	relmsuff = "build"   // relative path to folder with compiled code files
+)
+
+// HTTP distribution cache
+var pagecache = map[string][]byte{}
+
+// Pages aliases.
+var pagealias = map[string]string{
+	"/":     "main.html",
+	"/stat": "stat.html",
+}
+
+// Routes aliases.
+var routealias = map[string]string{
+	"/fs/":   ".",
+	"/devm/": devmsuff,
+	"/relm/": relmsuff,
+	"/plug/": "plugin",
+	"/asst/": "assets",
+}
 
 // "Server" field for HTTP headers.
 var serverlabel = fmt.Sprintf("hms/%s (%s)", cfg.BuildVers, runtime.GOOS)
@@ -113,7 +139,53 @@ func Ret404(c *gin.Context, code int, err error) {
 }
 
 func Ret500(c *gin.Context, code int, err error) {
+	Log.Error("response error: %s", err.Error())
 	RetErr(c, http.StatusInternalServerError, code, err)
+}
+
+// HdrRange describes one range chunk of the file to download.
+type HdrRange struct {
+	Start int64
+	End   int64
+}
+
+// GetHdrRange returns array of ranges of file to download from request header.
+func GetHdrRange(r *http.Request) (ret []HdrRange) {
+	for _, hdr := range r.Header["Range"] {
+		var chunks = strings.Split(strings.TrimPrefix(hdr, "bytes="), ", ")
+		for _, chunk := range chunks {
+			if vals := strings.Split(chunk, "-"); len(vals) == 2 {
+				var rv HdrRange
+				if vals[0] == "" {
+					rv.Start = -1
+				} else if i64, err := strconv.ParseInt(vals[0], 10, 64); err == nil {
+					rv.Start = i64
+				}
+				if vals[1] == "" {
+					rv.End = -1
+				} else if i64, err := strconv.ParseInt(vals[1], 10, 64); err == nil {
+					rv.End = i64
+				}
+				ret = append(ret, rv)
+			}
+		}
+	}
+	return
+}
+
+// HasRangeBegin returns true if request headers have "Range" header
+// with range thats starts from beginning of the file.
+func HasRangeBegin(r *http.Request) bool {
+	var ranges = GetHdrRange(r)
+	if len(ranges) == 0 {
+		return true
+	}
+	for _, rv := range ranges {
+		if rv.Start == 0 {
+			return true
+		}
+	}
+	return false
 }
 
 func Router(r *gin.Engine) {
@@ -160,7 +232,7 @@ func Router(r *gin.Engine) {
 	// API routes //
 	////////////////
 
-	var api = r.Group("/api")
+	var api = r.Group("/api", ApiWrap)
 	api.GET("/ping", SpiPing)
 	api.POST("/reload", Auth(true), SpiReload)
 	api.GET("/stat/srvinf", SpiServInfo)

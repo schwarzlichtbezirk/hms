@@ -37,7 +37,7 @@ func SpiEditCopy(c *gin.Context) {
 	}
 	var uid = GetUID(c)
 	var aid uint64
-	if aid, err = ParseID(c.Param("aid")); err != nil {
+	if aid, err = GetAID(c); err != nil {
 		Ret400(c, SEC_edtcopy_badacc, ErrNoAcc)
 		return
 	}
@@ -177,7 +177,7 @@ func SpiEditRename(c *gin.Context) {
 	}
 	var uid = GetUID(c)
 	var aid uint64
-	if aid, err = ParseID(c.Param("aid")); err != nil {
+	if aid, err = GetAID(c); err != nil {
 		Ret400(c, SEC_edtren_badacc, ErrNoAcc)
 		return
 	}
@@ -274,7 +274,7 @@ func SpiEditDelete(c *gin.Context) {
 	}
 	var uid = GetUID(c)
 	var aid uint64
-	if aid, err = ParseID(c.Param("aid")); err != nil {
+	if aid, err = GetAID(c); err != nil {
 		Ret400(c, SEC_edtdel_badacc, ErrNoAcc)
 		return
 	}

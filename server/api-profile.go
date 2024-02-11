@@ -40,7 +40,7 @@ func SpiDriveAdd(c *gin.Context) {
 	}
 	var uid = GetUID(c)
 	var aid uint64
-	if aid, err = ParseID(c.Param("aid")); err != nil {
+	if aid, err = GetAID(c); err != nil {
 		Ret400(c, SEC_drvadd_badacc, ErrNoAcc)
 		return
 	}
@@ -132,7 +132,7 @@ func SpiDriveDel(c *gin.Context) {
 	}
 	var uid = GetUID(c)
 	var aid uint64
-	if aid, err = ParseID(c.Param("aid")); err != nil {
+	if aid, err = GetAID(c); err != nil {
 		Ret400(c, SEC_drvdel_badacc, ErrNoAcc)
 		return
 	}
@@ -189,7 +189,7 @@ func SpiCloudAdd(c *gin.Context) {
 	}
 	var uid = GetUID(c)
 	var aid uint64
-	if aid, err = ParseID(c.Param("aid")); err != nil {
+	if aid, err = GetAID(c); err != nil {
 		Ret400(c, SEC_cldadd_badacc, ErrNoAcc)
 		return
 	}
@@ -335,7 +335,7 @@ func SpiCloudDel(c *gin.Context) {
 	}
 	var uid = GetUID(c)
 	var aid uint64
-	if aid, err = ParseID(c.Param("aid")); err != nil {
+	if aid, err = GetAID(c); err != nil {
 		Ret400(c, SEC_clddel_badacc, ErrNoAcc)
 		return
 	}
@@ -386,7 +386,7 @@ func SpiShareAdd(c *gin.Context) {
 	}
 	var uid = GetUID(c)
 	var aid uint64
-	if aid, err = ParseID(c.Param("aid")); err != nil {
+	if aid, err = GetAID(c); err != nil {
 		Ret400(c, SEC_shradd_badacc, ErrNoAcc)
 		return
 	}
@@ -442,7 +442,7 @@ func SpiShareDel(c *gin.Context) {
 	}
 	var uid = GetUID(c)
 	var aid uint64
-	if aid, err = ParseID(c.Param("aid")); err != nil {
+	if aid, err = GetAID(c); err != nil {
 		Ret400(c, SEC_shrdel_badacc, ErrNoAcc)
 		return
 	}

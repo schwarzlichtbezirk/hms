@@ -1,7 +1,7 @@
 package hms
 
 import (
-	"bytes"
+	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
@@ -85,9 +85,9 @@ func Auth(required bool) gin.HandlerFunc {
 		}
 
 		if user == nil {
-			if q := c.Param("aid"); q != "" {
+			if s := c.Param("aid"); s != "" {
 				var aid uint64
-				if aid, err = ParseID(q); err != nil {
+				if aid, err = strconv.ParseUint(s, 10, 64); err != nil {
 					Ret400(c, SEC_token_badaid, err)
 					return
 				}
@@ -223,20 +223,6 @@ func GetBearerAuth(tokenstr string) (prf *Profile, code int, err error) {
 	return
 }
 
-func GetUID(c *gin.Context) uint64 {
-	if v, ok := c.Get(userKey); ok {
-		return v.(*Profile).ID
-	}
-	return 0
-}
-
-func GetUser(c *gin.Context) *Profile {
-	if v, ok := c.Get(userKey); ok {
-		return v.(*Profile)
-	}
-	return nil
-}
-
 func Handle404(c *gin.Context) {
 	Ret404(c, SEC_nourl, Err404)
 }
@@ -342,11 +328,10 @@ func SpiSignin(c *gin.Context) {
 			return
 		}
 
-		var h = sha256.New()
-		h.Write(S2B(arg.SigTime))
+		var h = hmac.New(sha256.New, S2B(arg.SigTime))
 		h.Write(S2B(user.Password))
 		var master = h.Sum(nil)
-		if !bytes.Equal(master, hs256) {
+		if !hmac.Equal(master, hs256) {
 			Ret403(c, SEC_signin_denyhash, ErrNotPass)
 			return
 		}
@@ -364,7 +349,36 @@ func SpiRefresh(c *gin.Context) {
 	RetOk(c, ret)
 }
 
-var Passlist []net.IPNet
+func GetUID(c *gin.Context) uint64 {
+	if v, ok := c.Get(userKey); ok {
+		return v.(*Profile).ID
+	}
+	return 0
+}
+
+func GetUser(c *gin.Context) *Profile {
+	if v, ok := c.Get(userKey); ok {
+		return v.(*Profile)
+	}
+	return nil
+}
+
+func GetAID(c *gin.Context) (id uint64, err error) {
+	id, err = strconv.ParseUint(c.Param("aid"), 10, 64)
+	return
+}
+
+// GetUAID extract user agent ID from cookie.
+func GetUAID(r *http.Request) (uaid uint64, err error) {
+	var c *http.Cookie
+	if c, err = r.Cookie("UAID"); err != nil {
+		return
+	}
+	if uaid, err = strconv.ParseUint(c.Value, 10, 64); err != nil {
+		return
+	}
+	return
+}
 
 // StripPort makes fast IP-address extract from valid host:port string.
 func StripPort(addrport string) string {
@@ -379,25 +393,7 @@ func StripPort(addrport string) string {
 	return addrport // return as is otherwise
 }
 
-// ParseID is like ParseUint but for identifiers.
-func ParseID(s string) (id uint64, err error) {
-	if id, err = strconv.ParseUint(s, 10, 64); err != nil {
-		return
-	}
-	return
-}
-
-// GetUAID extract user agent ID from cookie.
-func GetUAID(r *http.Request) (uaid uint64, err error) {
-	var c *http.Cookie
-	if c, err = r.Cookie("UAID"); err != nil {
-		return
-	}
-	if uaid, err = ParseID(c.Value); err != nil {
-		return
-	}
-	return
-}
+var Passlist []net.IPNet
 
 // InPasslist checks that IP is loopback or in passlist.
 func InPasslist(ip net.IP) bool {

@@ -11,10 +11,10 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/gin-gonic/gin"
 	cfg "github.com/schwarzlichtbezirk/hms/config"
 	srv "github.com/schwarzlichtbezirk/hms/server"
 
-	"github.com/gorilla/mux"
 	"golang.org/x/crypto/acme/autocert"
 	"golang.org/x/sync/errgroup"
 )
@@ -127,7 +127,7 @@ func Init() (context.Context, error) {
 }
 
 // RunWeb launches server listeners.
-func RunWeb(exitctx context.Context, gmux *mux.Router) {
+func RunWeb(exitctx context.Context, r *gin.Engine) {
 	// helpers for graceful startup to prevent call to uninitialized data
 	var httpctx, httpcancel = context.WithCancel(context.Background())
 
@@ -150,7 +150,7 @@ func RunWeb(exitctx context.Context, gmux *mux.Router) {
 				Log.Infof("start http on %s", addr)
 				var server = &http.Server{
 					Addr:              addr,
-					Handler:           gmux,
+					Handler:           r,
 					ReadTimeout:       Cfg.ReadTimeout,
 					ReadHeaderTimeout: Cfg.ReadHeaderTimeout,
 					WriteTimeout:      Cfg.WriteTimeout,
@@ -209,7 +209,7 @@ func RunWeb(exitctx context.Context, gmux *mux.Router) {
 				}
 				var server = &http.Server{
 					Addr:              addr,
-					Handler:           gmux,
+					Handler:           r,
 					TLSConfig:         config,
 					ReadTimeout:       Cfg.ReadTimeout,
 					ReadHeaderTimeout: Cfg.ReadHeaderTimeout,

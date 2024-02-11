@@ -38,7 +38,7 @@ func SpiFile(c *gin.Context) {
 	// get arguments
 	var uid = GetUID(c)
 	var aid uint64
-	if aid, err = ParseID(c.Param("aid")); err != nil {
+	if aid, err = GetAID(c); err != nil {
 		Ret400(c, SEC_media_badacc, ErrNoAcc)
 		return
 	}
@@ -199,7 +199,7 @@ func SpiEtmb(c *gin.Context) {
 	// get arguments
 	var uid = GetUID(c)
 	var aid uint64
-	if aid, err = ParseID(c.Param("aid")); err != nil {
+	if aid, err = GetAID(c); err != nil {
 		Ret400(c, SEC_etmb_badacc, ErrNoAcc)
 		return
 	}
@@ -251,7 +251,7 @@ func SpiMtmb(c *gin.Context) {
 	// get arguments
 	var uid = GetUID(c)
 	var aid uint64
-	if aid, err = ParseID(c.Param("aid")); err != nil {
+	if aid, err = GetAID(c); err != nil {
 		Ret400(c, SEC_mtmb_badacc, ErrNoAcc)
 		return
 	}
@@ -306,7 +306,7 @@ func SpiTile(c *gin.Context) {
 	// get arguments
 	var uid = GetUID(c)
 	var aid uint64
-	if aid, err = ParseID(c.Param("aid")); err != nil {
+	if aid, err = GetAID(c); err != nil {
 		Ret400(c, SEC_tile_badacc, ErrNoAcc)
 		return
 	}

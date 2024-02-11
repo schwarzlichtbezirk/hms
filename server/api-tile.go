@@ -31,7 +31,7 @@ func SpiTagsCheck(c *gin.Context) {
 	}
 	var uid = GetUID(c)
 	var aid uint64
-	if aid, err = ParseID(c.Param("aid")); err != nil {
+	if aid, err = GetAID(c); err != nil {
 		Ret400(c, SEC_tagschk_badacc, ErrNoAcc)
 		return
 	}
@@ -132,7 +132,7 @@ func SpiTileCheck(c *gin.Context) {
 	}
 	var uid = GetUID(c)
 	var aid uint64
-	if aid, err = ParseID(c.Param("aid")); err != nil {
+	if aid, err = GetAID(c); err != nil {
 		Ret400(c, SEC_tilechk_badacc, ErrNoAcc)
 		return
 	}
