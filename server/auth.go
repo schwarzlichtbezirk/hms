@@ -1,6 +1,7 @@
 package hms
 
 import (
+	"bytes"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
@@ -224,7 +225,13 @@ func GetBearerAuth(tokenstr string) (prf *Profile, code int, err error) {
 }
 
 func Handle404(c *gin.Context) {
-	Ret404(c, SEC_nourl, Err404)
+	if strings.HasPrefix(c.Request.RequestURI, "/api/") {
+		Ret404(c, SEC_nourl, Err404)
+		return
+	}
+	var content = pagecache[devmsuff+"/404.html"]
+	c.Header("Content-Type", "text/html; charset=utf-8")
+	http.ServeContent(c.Writer, c.Request, "404.html", starttime, bytes.NewReader(content))
 }
 
 type AuthResp struct {

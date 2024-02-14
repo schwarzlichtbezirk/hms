@@ -29,7 +29,7 @@ set retval=%~f1
 exit /b
 
 :compileskin
-java -jar %cs%^
+"%JAVA_HOME%\bin\java.exe" -jar %cs%^
  %wd%\%~1\page.css^
  %wd%\%~1\card.css^
  %wd%\%~1\icon.css^

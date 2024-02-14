@@ -27,6 +27,7 @@ var pagecache = map[string][]byte{}
 var pagealias = map[string]string{
 	"/":     "main.html",
 	"/stat": "stat.html",
+	"/404":  "404.html",
 }
 
 // Routes aliases.
@@ -216,6 +217,8 @@ func Router(r *gin.Engine) {
 		rdev.GET(fpath, SpiPage(devmsuff, fname)) // development mode
 		r.GET(fpath, SpiPage(relmsuff, fname))    // release mode
 	}
+	dacc.GET("/ctgr/:cat", SpiPage(devmsuff, pagealias["/"]))
+	gacc.GET("/ctgr/:cat", SpiPage(relmsuff, pagealias["/"]))
 	dacc.GET("/path/*path", SpiPage(devmsuff, pagealias["/"]))
 	gacc.GET("/path/*path", SpiPage(relmsuff, pagealias["/"]))
 

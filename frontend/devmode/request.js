@@ -104,7 +104,7 @@ const fetchjsonauth = async (method, url, body) => {
 	});
 	if (resp0.status === 401 && auth.refrsh) { // Unauthorized
 		const resp1 = await fetch("/api/auth/refresh", { // get new token
-			method: "POST",
+			method: "GET",
 			headers: {
 				'Accept': 'application/json',
 				'Content-Type': 'application/json; charset=utf-8',

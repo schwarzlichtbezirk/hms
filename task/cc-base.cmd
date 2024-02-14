@@ -14,7 +14,7 @@ if not exist %cc% (
 	 https://repo1.maven.org/maven2/com/google/javascript/closure-compiler/%cv%/closure-compiler-%cv%.jar
 )
 
-java -jar %cc%^
+"%JAVA_HOME%\bin\java.exe" -jar %cc%^
  --js %wd%\plugin\leaflet.js^
  --js %wd%\plugin\leaflet.markercluster.js^
  --js %wd%\plugin\sha256.min.js^

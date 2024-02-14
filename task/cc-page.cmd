@@ -14,7 +14,7 @@ if not exist %cc% (
 	 https://repo1.maven.org/maven2/com/google/javascript/closure-compiler/%cv%/closure-compiler-%cv%.jar
 )
 
-java -jar %cc%^
+"%JAVA_HOME%\bin\java.exe" -jar %cc%^
  --js %wd%\devmode\relmode.js^
  --js %wd%\devmode\common.js^
  --js %wd%\devmode\request.js^

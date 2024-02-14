@@ -15,7 +15,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// APIHANDLER
+// Distributes static pages.
 func SpiPage(pref, fname string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var content, ok = pagecache[pref+"/"+fname]

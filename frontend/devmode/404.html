@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<!-- Required meta tags -->
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+	<title>hms - 404</title>
+	<link rel="shortcut icon" href="/asst/hms.256.ico" type="image/vnd.microsoft.icon" />
+	<link rel="apple-touch-icon" href="/asst/hms.256.png" type="image/png" />
+</head>
+
+<body>
+	<!-- normalize -->
+	<link rel="stylesheet" type="text/css" href="/plug/normalize.min.css?8.0.1">
+	<!-- Bootstrap CSS -->
+	<link rel="stylesheet" type="text/css" href="/plug/bootstrap.min.css?5.3.2">
+	<!-- Google fonts -->
+	<link rel="stylesheet" type="text/css" href="/asst/iconfont/material-icons.css">
+
+	<!-- Project CSS -->
+	<link rel="stylesheet" type="text/css" href="/devm/stat.css?0.9.3">
+	<link rel="stylesheet" type="text/css" href="" id="skinmodel">
+
+	<div class="main">
+		<div class="d-flex flex-column justify-content-center align-items-center w-100 vh-100">
+			<div class="card hms-card" style="min-width: 18rem; width: 40%;">
+				<div class="card-body card-body">
+					<h4 class="card-title">404 page not found</h4>
+					<p class="card-text">Pointed URL does not refers to any resource.</p>
+					<a href="/" class="card-link">open main page</a>
+					<a href="/dev/id1/ctgr/shares/" class="card-link">open shares</a>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Popper.js, then Bootstrap JS -->
+	<script src="/plug/popper.min.js?2.11.8"></script>
+	<script src="/plug/bootstrap.min.js?5.3.2"></script>
+
+	<script>
+		(async () => {
+			// load resources model at first
+			const response = await fetch("/fs/assets/resmodel.json");
+			if (!response.ok) {
+				throw new HttpError(response.status, { what: "can not load resources model file", when: Date.now(), code: 0 });
+			}
+			const resmodel = await response.json();
+
+			// set skin
+			const id = JSON.parse(sessionStorage.getItem('skinid')) ?? resmodel.defskinid;
+			for (const v of resmodel.skinlist) {
+				if (v.id === id) {
+					document.getElementById('skinmodel')?.setAttribute('href', v.link);
+				}
+			}
+		})();
+	</script>
+</body>
+</html>

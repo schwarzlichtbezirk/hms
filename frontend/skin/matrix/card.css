@@ -78,6 +78,10 @@
 				color: PaleGreen;
 			}
 
+			.hms-card .card-body {
+				color: rgba(128, 255, 128, 0.66);
+			}
+
 	.hms-card .dropdown-menu {
 		background: #003c00;
 	}
