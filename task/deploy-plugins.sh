@@ -18,10 +18,10 @@ vers="2.11.8"
 curl https://cdnjs.cloudflare.com/ajax/libs/popper.js/$vers/umd/popper.min.js --output $plugdir/popper.min.js
 curl https://cdnjs.cloudflare.com/ajax/libs/popper.js/$vers/umd/popper.min.js.map --output $plugdir/popper.min.js.map
 
-# Vue 3.3.8
+# Vue 3.4.19
 # https://cdnjs.com/libraries/vue
 # https://unpkg.com/vue@next
-vers="3.3.8"
+vers="3.4.19"
 curl https://unpkg.com/vue@$vers/dist/vue.global.js --output $plugdir/vue.global.js
 curl https://unpkg.com/vue@$vers/dist/vue.global.prod.js --output $plugdir/vue.global.prod.js
 
@@ -45,9 +45,9 @@ curl https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/$vers/leaflet.
 curl https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/$vers/MarkerCluster.css --output $plugdir/MarkerCluster.css
 curl https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/$vers/MarkerCluster.Default.css --output $plugdir/MarkerCluster.Default.css
 
-# sha256 0.9.0
+# sha256 0.11.0
 # https://cdnjs.com/libraries/js-sha256
-vers="0.9.0"
+vers="0.11.0"
 curl https://cdnjs.cloudflare.com/ajax/libs/js-sha256/$vers/sha256.min.js --output $plugdir/sha256.min.js
 
 # normalize 8.0.1

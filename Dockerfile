@@ -11,7 +11,7 @@
 ##
 
 # Use image with golang last version as builder.
-FROM golang:1.20-bullseye AS build
+FROM golang:1.22-bullseye AS build
 
 # See https://stackoverflow.com/questions/64462922/docker-multi-stage-build-go-image-x509-certificate-signed-by-unknown-authorit
 RUN apt-get update && apt-get install -y ca-certificates openssl
@@ -24,13 +24,17 @@ RUN openssl s_client -showcerts -connect proxy.golang.org:443 </dev/null 2>/dev/
 RUN update-ca-certificates
 
 # Make project root folder as current dir.
-WORKDIR $GOPATH/src/github.com/schwarzlichtbezirk/hms
+WORKDIR /go/src/github.com/schwarzlichtbezirk/hms
 # Copy only go.mod and go.sum to prevent downloads all dependencies again on any code changes.
-COPY go.* .
+COPY go.mod go.sum ./
 # Download all dependencies pointed at go.mod file.
 RUN go mod download
 # Copy all files and subfolders in current state as is.
 COPY . .
+COPY ./cmd ./cmd
+COPY ./config ./config
+COPY ./server ./server
+COPY ./confdata /go/bin/config
 
 # Set executable rights to all shell-scripts.
 RUN chmod +x task/*.sh
@@ -43,7 +47,11 @@ RUN task/wpk-app.sh
 RUN task/wpk-edge.sh
 
 # Compile project for Linux amd64.
-RUN task/build-linux.x64.sh
+RUN \
+buildvers=$(git describe --tags) && \
+buildtime=$(go run ./task/timenow.go) && \
+go env -w GOOS=linux GOARCH=amd64 CGO_ENABLED=1 && \
+go build -o /go/bin/hms_linux_x64 -v -ldflags="-linkmode external -extldflags -static -X 'github.com/schwarzlichtbezirk/hms/config.BuildVers=$buildvers' -X 'github.com/schwarzlichtbezirk/hms/config.BuildTime=$buildtime'" ./
 
 ##
 ## Deploy stage
@@ -55,11 +63,11 @@ FROM scratch
 # Copy compiled executable and packages to new image destination.
 COPY --from=build /go/bin/hms* /go/bin/
 # Copy configuration files.
-COPY --from=build /go/bin/config/* /go/bin/config/
+COPY --from=build /go/bin/config /go/bin/config
 
 # Open REST listen port.
-EXPOSE 80 8080
+EXPOSE 80 8804
 
 # Run application with full path representation.
 # Without shell to get signal for graceful shutdown.
-ENTRYPOINT ["/go/bin/hms.linux.x64.exe"]
+ENTRYPOINT ["/go/bin/hms_linux_x64", "web"]
