@@ -1,6 +1,7 @@
 package hms
 
 import (
+	"errors"
 	"image"
 	"io"
 	"io/fs"
@@ -86,6 +87,10 @@ func TagsExtract(fpath string, session *Session, buf *StoreBuf, es *ExtStat, get
 		}
 		var x *exif.Exif
 		if x, err = exif.Decode(file); err != nil {
+			if errors.Is(err, io.EOF) {
+				err = nil
+				return
+			}
 			return
 		}
 		ek.Setup(x)

@@ -639,6 +639,7 @@ func ClosePackages() (err error) {
 	if err1 = TilesPkg.Close(); err1 != nil {
 		err = err1
 	}
+	Log.Info("caches closed")
 	return
 }
 

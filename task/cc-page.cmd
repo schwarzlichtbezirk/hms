@@ -27,7 +27,7 @@ if not exist %cc% (
  --js_output_file %wd%\build\main.bundle.js^
  --create_source_map %wd%\build\main.bundle.js.map
 
-java -jar %cc%^
+"%JAVA_HOME%\bin\java.exe" -jar %cc%^
  --js %wd%\devmode\relmode.js^
  --js %wd%\devmode\common.js^
  --js %wd%\devmode\request.js^

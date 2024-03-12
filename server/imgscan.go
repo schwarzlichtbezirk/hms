@@ -2,6 +2,7 @@ package hms
 
 import (
 	"context"
+	"path"
 	"runtime"
 	"sync"
 	"sync/atomic"
@@ -27,7 +28,9 @@ func (puid EmbedPath) Cache() {
 	var buf StoreBuf
 	buf.Init(1) // flush on every push
 
-	TagsExtract(fpath, session, &buf, &ExtStat{}, true)
+	if _, _, err := TagsExtract(fpath, session, &buf, &ExtStat{}, true); err != nil {
+		Log.Warnf("etmb: %s, error %v", path.Base(fpath), err)
+	}
 }
 
 // ThumbPath is thumbnail path type for cache processing.
@@ -43,6 +46,7 @@ func (puid ThumbPath) Cache() {
 	var md MediaData
 	if md, err = CacheThumb(session, fpath); err != nil {
 		md.Mime = MimeDis
+		Log.Warnf("mtmb: %s, error %v", path.Base(fpath), err)
 	}
 
 	var tp, _ = tilecache.Peek(Puid_t(puid))
@@ -67,6 +71,7 @@ func (tile TilePath) Cache() {
 	var md MediaData
 	if md, err = CacheTile(session, fpath, tile.Wdh, tile.Hgt); err != nil {
 		md.Mime = MimeDis
+		Log.Warnf("tile%dx%d: %s, error %v", tile.Wdh, tile.Hgt, path.Base(fpath), err)
 	}
 
 	var tp, _ = tilecache.Peek(tile.Puid)

@@ -126,8 +126,12 @@ func Mp3Scan(r io.Reader) (length time.Duration, bitrate int, err error) {
 			break
 		}
 		var h = f.Header()
-		brm[h.BitRate()]++
-		ms += (1000 / float64(f.Header().SampleRate())) * float64(f.Samples())
+		if br := h.BitRate(); br != mp3.ErrInvalidBitrate {
+			brm[br]++
+		}
+		if sr := f.Header().SampleRate(); sr != mp3.ErrInvalidSampleRate {
+			ms += (1000 / float64(sr)) * float64(f.Samples())
+		}
 	}
 	length = time.Duration(ms * float64(time.Millisecond))
 
@@ -136,7 +140,9 @@ func Mp3Scan(r io.Reader) (length time.Duration, bitrate int, err error) {
 		n += float64(sn)
 		ws += float64(br) * float64(sn)
 	}
-	bitrate = int(ws/n+500) / 1000
+	if n > 0 {
+		bitrate = int(ws/n+500) / 1000
+	}
 	return
 }
 
