@@ -58,7 +58,7 @@ var (
 	ErrNoPUID      = errors.New("file with given puid not found")
 	ErrUncacheable = errors.New("file format is uncacheable")
 	ErrNotHD       = errors.New("image dimensions does not fit to full HD")
-	ErrNotDisk     = errors.New("file is not image of supported format")
+	ErrNotDisk     = errors.New("file is not disk image of supported format")
 	ErrNoMTime     = errors.New("modify time tag does not found")
 	ErrNoMime      = errors.New("MIME tag does not found")
 	ErrEmptyExif   = errors.New("EXIF metadata is empty")

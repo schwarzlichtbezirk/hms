@@ -2,6 +2,7 @@ package hms
 
 import (
 	"context"
+	"errors"
 	"path"
 	"runtime"
 	"sync"
@@ -46,7 +47,9 @@ func (puid ThumbPath) Cache() {
 	var md MediaData
 	if md, err = CacheThumb(session, fpath); err != nil {
 		md.Mime = MimeDis
-		Log.Warnf("mtmb: %s, error %v", path.Base(fpath), err)
+		if !errors.Is(err, ErrNotImg) {
+			Log.Warnf("mtmb: %s, error %v", path.Base(fpath), err)
+		}
 	}
 
 	var tp, _ = tilecache.Peek(Puid_t(puid))

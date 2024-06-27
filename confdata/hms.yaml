@@ -17,6 +17,10 @@ authentication:
   # Key to calculate user agent ID by xxhash algorithm.
   uaid-hmac-key: hms-ua
 web-server: # See https://golang.org/pkg/net/http/#Server for details.
+  # List of network origins (IPv4 addresses, IPv4 CIDRs, IPv6 addresses
+  # or IPv6 CIDRs) from which to trust request's headers that contain
+  # alternative client IP when `(*gin.Engine).ForwardedByClientIP` is `true`.
+  trusted-proxies: 127.0.0.0/8
   # List of address:port values for non-encrypted connections.
   # Address is skipped in most common cases, port only remains.
   port-http:

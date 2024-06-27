@@ -766,6 +766,9 @@ const VueMainApp = {
 
 			// update folder settings
 			this.flist = newlist ?? [];
+			for (const file of newlist) {
+				file.view = true;
+			}
 
 			// update page data
 			this.curscan = new Date(Date.now());

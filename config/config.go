@@ -34,6 +34,8 @@ type CfgJWTAuth struct {
 
 // CfgWebServ is web server settings.
 type CfgWebServ struct {
+	// List of network origins (IPv4 addresses, IPv4 CIDRs, IPv6 addresses or IPv6 CIDRs) from which to trust request's headers that contain alternative client IP when `(*gin.Engine).ForwardedByClientIP` is `true`.
+	TrustedProxies []string `json:"trusted-proxies" yaml:"trusted-proxies" mapstructure:"trusted-proxies"`
 	// List of address:port values for non-encrypted connections. Address is skipped in most common cases, port only remains.
 	PortHTTP []string `json:"port-http" yaml:"port-http" mapstructure:"port-http"`
 	// List of address:port values for encrypted connections. Address is skipped in most common cases, port only remains.
@@ -136,6 +138,7 @@ var Cfg = &Config{
 		UaidHmacKey:  "hms-ua",
 	},
 	CfgWebServ: CfgWebServ{
+		TrustedProxies:    []string{"127.0.0.0/8"},
 		PortHTTP:          []string{":80"},
 		PortTLS:           []string{},
 		ReadTimeout:       15 * time.Second,

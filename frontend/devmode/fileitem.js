@@ -21,9 +21,9 @@ const isTypeVideo = ext => ({
 	".mp4": true, ".webm": true,
 })[ext];
 
-const imagefilter = file => file.type === FT.file && file.size && isTypeImage(pathext(file.name));
-const audiofilter = file => file.type === FT.file && file.size && isTypeAudio(pathext(file.name));
-const videofilter = file => file.type === FT.file && file.size && isTypeVideo(pathext(file.name));
+const imagefilter = file => file.type === FT.file && file.size && file.view && isTypeImage(pathext(file.name));
+const audiofilter = file => file.type === FT.file && file.size && file.view && isTypeAudio(pathext(file.name));
+const videofilter = file => file.type === FT.file && file.size && file.view && isTypeVideo(pathext(file.name));
 
 const filehint = file => {
 	const lst = [];
@@ -435,13 +435,24 @@ const VueIconMenu = {
 			const ext = pathext(this.file.name);
 			return extfmt.image[ext] || extfmt.video[ext]
 				|| extfmt.books[ext] || extfmt.texts[ext] || extfmt.playlist[ext]
-				|| (extfmt.audio[ext] && this.file.etmb);
+				|| (extfmt.audio[ext] && Number(this.file.etmb) > 0);
+		},
+		showview() {
+			if (this.file.type !== FT.file) {
+				return false;
+			}
+			const ext = pathext(this.file.name);
+			return extfmt.image[ext] || extfmt.audio[ext] || extfmt.video[ext] ||
+				ext == ".gpx";
 		},
 		showcopy() {
 			return this.file.type === FT.file || this.file.type === FT.dir;
 		},
 		showcutdel() {
 			return !this.file.static;
+		},
+		iconview() {
+			return this.file.view ? 'visibility' : 'visibility_off';
 		}
 	},
 	methods: {
@@ -477,10 +488,13 @@ const VueIconMenu = {
 			if (extfmt.image[ext] || extfmt.video[ext] || extfmt.books[ext] || extfmt.texts[ext] || extfmt.playlist[ext]) {
 				const url = `/id${this.$root.aid}/file/${this.file.puid}?media=1&hd=0`;
 				window.open(url, this.file.name);
-			} else if (extfmt.audio[ext] && this.file.etmb) {
+			} else if (extfmt.audio[ext] && Number(this.file.etmb) > 0) {
 				const url = `/id${this.$root.aid}/etmb/${this.file.puid}`;
 				window.open(url, this.file.name);
 			}
+		},
+		onview() {
+			this.file.view = !this.file.view;
 		},
 		onlink() {
 			navigator.clipboard.writeText(window.location.origin + `/id${this.$root.aid}/file/${this.file.puid}`);

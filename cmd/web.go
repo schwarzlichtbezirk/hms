@@ -38,7 +38,7 @@ var webCmd = &cobra.Command{
 		}
 
 		var r = gin.New()
-		r.SetTrustedProxies([]string{"127.0.0.0/8"})
+		r.SetTrustedProxies(Cfg.TrustedProxies)
 		srv.Router(r)
 
 		RunWeb(exitctx, r)
