@@ -11,7 +11,7 @@
 ##
 
 # Use image with golang last version as builder.
-FROM golang:1.22-bullseye AS build
+FROM golang:1.23-bullseye AS build
 
 # See https://stackoverflow.com/questions/64462922/docker-multi-stage-build-go-image-x509-certificate-signed-by-unknown-authorit
 RUN apt-get update && apt-get install -y ca-certificates openssl
@@ -31,25 +31,22 @@ COPY go.mod go.sum ./
 RUN go mod download
 # Copy all files and subfolders in current state as is.
 COPY . .
-COPY ./cmd ./cmd
-COPY ./config ./config
-COPY ./server ./server
 COPY ./confdata /go/bin/config
 
 # Set executable rights to all shell-scripts.
-RUN chmod +x task/*.sh
+RUN chmod +x ./task/*.sh
 
 # Compile WPK-builder and build packages.
-RUN task/make-builder.sh
+RUN ./task/make-builder.sh
 
 # Build WPK-files.
-RUN task/wpk-app.sh
-RUN task/wpk-edge.sh
+RUN ./task/wpk-app.sh
+RUN ./task/wpk-edge.sh
 
 # Compile project for Linux amd64.
 RUN \
 buildvers=$(git describe --tags) && \
-buildtime=$(go run ./task/timenow.go) && \
+buildtime=$(date +'%FT%T.%3NZ') && \
 go env -w GOOS=linux GOARCH=amd64 CGO_ENABLED=1 && \
 go build -o /go/bin/hms_linux_x64 -v -ldflags="-linkmode external -extldflags -static -X 'github.com/schwarzlichtbezirk/hms/config.BuildVers=$buildvers' -X 'github.com/schwarzlichtbezirk/hms/config.BuildTime=$buildtime'" ./
 

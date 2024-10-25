@@ -39,6 +39,7 @@ var webCmd = &cobra.Command{
 
 		var r = gin.New()
 		r.SetTrustedProxies(Cfg.TrustedProxies)
+		r.HandleMethodNotAllowed = true
 		srv.Router(r)
 
 		RunWeb(exitctx, r)

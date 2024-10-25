@@ -32,6 +32,10 @@ const (
 
 	SEC_nourl
 
+	// 405
+
+	SEC_nomethod
+
 	// auth/signin
 
 	SEC_signin_nobind
@@ -283,6 +287,7 @@ const (
 	SEC_edtdel_remove
 
 	// gps/range
+
 	SEC_gpsrange_nobind
 	SEC_gpsrange_badacc
 	SEC_gpsrange_noacc
@@ -293,11 +298,13 @@ const (
 	SEC_gpsrange_list
 
 	// gps/scan
+
 	SEC_gpsscan_nobind
 	SEC_gpsscan_badacc
 	SEC_gpsscan_noacc
 
 	// stat/usrlst
+
 	SEC_usrlst_nobind
 	SEC_usrlst_asts
 	SEC_usrlst_fost
@@ -307,6 +314,7 @@ const (
 // HTTP error messages
 var (
 	Err404     = errors.New("page not found")
+	Err405     = errors.New("method not allowed")
 	ErrNotSys  = errors.New("root PUID does not refers to file system path")
 	ErrPathOut = errors.New("path cannot refers outside root PUID")
 

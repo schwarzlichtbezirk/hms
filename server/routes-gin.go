@@ -190,7 +190,8 @@ func HasRangeBegin(r *http.Request) bool {
 }
 
 func Router(r *gin.Engine) {
-	r.NoRoute(Auth(false), Handle404)
+	r.NoRoute(Handle404)
+	r.NoMethod(Handle405)
 
 	var rdev = r.Group("/dev")
 	var dacc = rdev.Group("/id:aid")

@@ -41,11 +41,13 @@ func InitConfig() {
 	}
 	Log.Infof("version: %s, builton: %s", BuildVers, BuildTime)
 
-	if str, err := os.Executable(); err == nil {
-		ExePath = filepath.Dir(str)
-	} else {
-		ExePath = filepath.Dir(os.Args[0])
-	}
+	ExePath = func() string {
+		if str, err := os.Executable(); err == nil {
+			return filepath.Dir(str)
+		} else {
+			return filepath.Dir(os.Args[0])
+		}
+	}()
 
 	if CfgFile != "" {
 		if ok, _ := FileExists(CfgFile); !ok {

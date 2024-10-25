@@ -234,6 +234,16 @@ func Handle404(c *gin.Context) {
 	http.ServeContent(c.Writer, c.Request, "404.html", starttime, bytes.NewReader(content))
 }
 
+func Handle405(c *gin.Context) {
+	if strings.HasPrefix(c.Request.RequestURI, "/api/") {
+		RetErr(c, http.StatusMethodNotAllowed, SEC_nomethod, Err405)
+		return
+	}
+	var content = pagecache[devmsuff+"/404.html"]
+	c.Header("Content-Type", "text/html; charset=utf-8")
+	http.ServeContent(c.Writer, c.Request, "404.html", starttime, bytes.NewReader(content))
+}
+
 type AuthResp struct {
 	XMLName xml.Name `json:"-" yaml:"-" xml:"ret"`
 	UID     uint64   `json:"uid" yaml:"uid" xml:"uid"`
