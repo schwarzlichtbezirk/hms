@@ -117,7 +117,7 @@ func SpiUserList(c *gin.Context) {
 
 	// get arguments
 	if err = c.ShouldBind(&arg); err != nil {
-		Ret400(c, SEC_usrlst_nobind, err)
+		Ret400(c, AEC_usrlst_nobind, err)
 		return
 	}
 
@@ -126,7 +126,7 @@ func SpiUserList(c *gin.Context) {
 
 	var asts []AgentStore
 	if err = XormUserlog.Limit(arg.Num, arg.Pos).Find(&asts); err != nil {
-		Ret500(c, SEC_usrlst_asts, err)
+		Ret500(c, AEC_usrlst_asts, err)
 		return
 	}
 
@@ -146,7 +146,7 @@ func SpiUserList(c *gin.Context) {
 		var is bool
 		var fost, post OpenStore
 		if is, err = XormUserlog.Where("uaid=? AND latency<0", ast.UAID).Desc("time").Get(&fost); err != nil {
-			Ret500(c, SEC_usrlst_fost, err)
+			Ret500(c, AEC_usrlst_fost, err)
 			return
 		}
 		if is {
@@ -155,7 +155,7 @@ func SpiUserList(c *gin.Context) {
 			ui.UID = fost.UID
 		}
 		if is, err = XormUserlog.Where("uaid=? AND latency>=0", ast.UAID).Desc("time").Get(&post); err != nil {
-			Ret500(c, SEC_usrlst_post, err)
+			Ret500(c, AEC_usrlst_post, err)
 			return
 		}
 		if is {

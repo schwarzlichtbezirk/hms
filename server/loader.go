@@ -138,7 +138,7 @@ func ApiWrap(c *gin.Context) {
 			var stacklen = runtime.Stack(buf[:], false)
 			var str = B2S(buf[:stacklen])
 			Log.Error(str)
-			Ret500(c, SEC_panic, err)
+			Ret500(c, AEC_panic, err)
 		}
 	}()
 

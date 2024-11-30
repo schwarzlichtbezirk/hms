@@ -32,22 +32,22 @@ func SpiEditCopy(c *gin.Context) {
 
 	// get arguments
 	if err = c.ShouldBind(&arg); err != nil {
-		Ret400(c, SEC_edtcopy_nobind, err)
+		Ret400(c, AEC_edtcopy_nobind, err)
 		return
 	}
 	var uid = GetUID(c)
 	var aid uint64
 	if aid, err = GetAID(c); err != nil {
-		Ret400(c, SEC_edtcopy_badacc, ErrNoAcc)
+		Ret400(c, AEC_edtcopy_badacc, ErrNoAcc)
 		return
 	}
 	if !Profiles.Has(aid) {
-		Ret404(c, SEC_edtcopy_noacc, ErrNoAcc)
+		Ret404(c, AEC_edtcopy_noacc, ErrNoAcc)
 		return
 	}
 
 	if uid != aid {
-		Ret403(c, SEC_edtcopy_deny, ErrDeny)
+		Ret403(c, AEC_edtcopy_deny, ErrDeny)
 		return
 	}
 
@@ -57,11 +57,11 @@ func SpiEditCopy(c *gin.Context) {
 	// get source and destination filenames
 	var srcpath, dstpath string
 	if srcpath, _, err = UnfoldPath(session, arg.Src); err != nil {
-		Ret404(c, SEC_edtcopy_nopath, err)
+		Ret404(c, AEC_edtcopy_nopath, err)
 		return
 	}
 	if dstpath, _, err = UnfoldPath(session, arg.Dst); err != nil {
-		Ret404(c, SEC_edtcopy_nodest, err)
+		Ret404(c, AEC_edtcopy_nodest, err)
 		return
 	}
 	dstpath = JoinPath(dstpath, path.Base(srcpath))
@@ -81,7 +81,7 @@ func SpiEditCopy(c *gin.Context) {
 				i++
 				dstpath = fmt.Sprintf("%s (%d)%s", org, i, ext)
 				if i > 100 {
-					return SEC_edtcopy_over, ErrFileOver
+					return AEC_edtcopy_over, ErrFileOver
 				}
 			}
 		}
@@ -91,7 +91,7 @@ func SpiEditCopy(c *gin.Context) {
 		var fi fs.FileInfo
 		// open source file
 		if src, err = JP.Open(srcpath); err != nil {
-			return SEC_edtcopy_opsrc, err
+			return AEC_edtcopy_opsrc, err
 		}
 		defer func() {
 			src.Close()
@@ -101,12 +101,12 @@ func SpiEditCopy(c *gin.Context) {
 		}()
 
 		if fi, err = src.Stat(); err != nil {
-			return SEC_edtcopy_statsrc, err
+			return AEC_edtcopy_statsrc, err
 		}
 		if fi.IsDir() {
 			// create destination dir
 			if err = os.Mkdir(dstpath, 0644); err != nil && !errors.Is(err, fs.ErrExist) {
-				return SEC_edtcopy_mkdir, err
+				return AEC_edtcopy_mkdir, err
 			}
 
 			// get returned dir properties now
@@ -118,7 +118,7 @@ func SpiEditCopy(c *gin.Context) {
 			// copy dir content
 			var files []fs.DirEntry
 			if files, err = JP.ReadDir(srcpath); err != nil {
-				return SEC_edtcopy_rd, err
+				return AEC_edtcopy_rd, err
 			}
 			for _, file := range files {
 				var name = file.Name()
@@ -129,13 +129,13 @@ func SpiEditCopy(c *gin.Context) {
 		} else {
 			// create destination file
 			if dst, err = os.Create(dstpath); err != nil {
-				return SEC_edtcopy_opdst, err
+				return AEC_edtcopy_opdst, err
 			}
 			defer dst.Close()
 
 			// copy file content
 			if _, err = io.Copy(dst, src); err != nil {
-				return SEC_edtcopy_copy, err
+				return AEC_edtcopy_copy, err
 			}
 
 			// get returned file properties at last
@@ -172,22 +172,22 @@ func SpiEditRename(c *gin.Context) {
 
 	// get arguments
 	if err = c.ShouldBind(&arg); err != nil {
-		Ret400(c, SEC_edtren_nobind, err)
+		Ret400(c, AEC_edtren_nobind, err)
 		return
 	}
 	var uid = GetUID(c)
 	var aid uint64
 	if aid, err = GetAID(c); err != nil {
-		Ret400(c, SEC_edtren_badacc, ErrNoAcc)
+		Ret400(c, AEC_edtren_badacc, ErrNoAcc)
 		return
 	}
 	if !Profiles.Has(aid) {
-		Ret404(c, SEC_edtren_noacc, ErrNoAcc)
+		Ret404(c, AEC_edtren_noacc, ErrNoAcc)
 		return
 	}
 
 	if uid != aid {
-		Ret403(c, SEC_edtren_deny, ErrDeny)
+		Ret403(c, AEC_edtren_deny, ErrDeny)
 		return
 	}
 
@@ -195,22 +195,22 @@ func SpiEditRename(c *gin.Context) {
 	defer session.Close()
 
 	if !Profiles.Has(aid) {
-		Ret400(c, SEC_edtren_noacc, ErrNoAcc)
+		Ret400(c, AEC_edtren_noacc, ErrNoAcc)
 		return
 	}
 	if uid != aid {
-		Ret403(c, SEC_edtren_deny, ErrDeny)
+		Ret403(c, AEC_edtren_deny, ErrDeny)
 		return
 	}
 
 	// get source and destination filenames
 	var srcpath, dstpath string
 	if srcpath, _, err = UnfoldPath(session, arg.Src); err != nil {
-		Ret404(c, SEC_edtren_nopath, err)
+		Ret404(c, AEC_edtren_nopath, err)
 		return
 	}
 	if dstpath, _, err = UnfoldPath(session, arg.Dst); err != nil {
-		Ret404(c, SEC_edtren_nodest, err)
+		Ret404(c, AEC_edtren_nodest, err)
 		return
 	}
 	dstpath = JoinPath(dstpath, path.Base(srcpath))
@@ -228,7 +228,7 @@ func SpiEditRename(c *gin.Context) {
 			dstpath = fmt.Sprintf("%s (%d)%s", org, i, ext)
 			if i > 100 {
 				err = ErrFileOver
-				Ret500(c, SEC_edtren_over, err)
+				Ret500(c, AEC_edtren_over, err)
 				return
 			}
 		}
@@ -236,14 +236,14 @@ func SpiEditRename(c *gin.Context) {
 
 	// rename destination file
 	if err = os.Rename(srcpath, dstpath); err != nil && !errors.Is(err, fs.ErrExist) {
-		Ret500(c, SEC_edtren_move, err)
+		Ret500(c, AEC_edtren_move, err)
 		return
 	}
 
 	// get returned file properties at last
 	var fi fs.FileInfo
 	if fi, err = JP.Stat(dstpath); err != nil {
-		Ret500(c, SEC_edtren_stat, err)
+		Ret500(c, AEC_edtren_stat, err)
 		return
 	}
 	ret.Prop.PuidProp.Setup(session, dstpath)
@@ -269,22 +269,22 @@ func SpiEditDelete(c *gin.Context) {
 
 	// get arguments
 	if err = c.ShouldBind(&arg); err != nil {
-		Ret400(c, SEC_edtdel_nobind, err)
+		Ret400(c, AEC_edtdel_nobind, err)
 		return
 	}
 	var uid = GetUID(c)
 	var aid uint64
 	if aid, err = GetAID(c); err != nil {
-		Ret400(c, SEC_edtdel_badacc, ErrNoAcc)
+		Ret400(c, AEC_edtdel_badacc, ErrNoAcc)
 		return
 	}
 	if !Profiles.Has(aid) {
-		Ret404(c, SEC_edtdel_noacc, ErrNoAcc)
+		Ret404(c, AEC_edtdel_noacc, ErrNoAcc)
 		return
 	}
 
 	if uid != aid {
-		Ret403(c, SEC_edtdel_deny, ErrDeny)
+		Ret403(c, AEC_edtdel_deny, ErrDeny)
 		return
 	}
 
@@ -292,22 +292,22 @@ func SpiEditDelete(c *gin.Context) {
 	defer session.Close()
 
 	if !Profiles.Has(aid) {
-		Ret400(c, SEC_edtdel_noacc, ErrNoAcc)
+		Ret400(c, AEC_edtdel_noacc, ErrNoAcc)
 		return
 	}
 	if uid != aid {
-		Ret403(c, SEC_edtdel_deny, ErrDeny)
+		Ret403(c, AEC_edtdel_deny, ErrDeny)
 		return
 	}
 
 	var srcpath string
 	if srcpath, _, err = UnfoldPath(session, arg.Src); err != nil {
-		Ret404(c, SEC_edtdel_nopath, err)
+		Ret404(c, AEC_edtdel_nopath, err)
 		return
 	}
 
 	if err = os.RemoveAll(srcpath); err != nil {
-		Ret500(c, SEC_edtdel_remove, err)
+		Ret500(c, AEC_edtdel_remove, err)
 		return
 	}
 

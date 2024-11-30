@@ -72,18 +72,18 @@ func SpiGpsRange(c *gin.Context) {
 
 	// get arguments
 	if err = c.ShouldBind(&arg); err != nil {
-		Ret400(c, SEC_gpsrange_nobind, err)
+		Ret400(c, AEC_gpsrange_nobind, err)
 		return
 	}
 	var uid = GetUID(c)
 	var aid uint64
 	if aid, err = GetAID(c); err != nil {
-		Ret400(c, SEC_gpsrange_badacc, ErrNoAcc)
+		Ret400(c, AEC_gpsrange_badacc, ErrNoAcc)
 		return
 	}
 	var acc *Profile
 	if acc, ok = Profiles.Get(aid); !ok {
-		Ret404(c, SEC_gpsrange_noacc, ErrNoAcc)
+		Ret404(c, AEC_gpsrange_noacc, ErrNoAcc)
 		return
 	}
 
@@ -91,21 +91,21 @@ func SpiGpsRange(c *gin.Context) {
 		switch mp.Shape {
 		case Circle:
 			if len(mp.Coord) != 1 {
-				Ret400(c, SEC_gpsrange_shpcirc, ErrShapeCirc)
+				Ret400(c, AEC_gpsrange_shpcirc, ErrShapeCirc)
 				return
 			}
 		case Polygon:
 			if len(mp.Coord) < 3 {
-				Ret400(c, SEC_gpsrange_shppoly, ErrShapePoly)
+				Ret400(c, AEC_gpsrange_shppoly, ErrShapePoly)
 				return
 			}
 		case Rectangle:
 			if len(mp.Coord) != 4 {
-				Ret400(c, SEC_gpsrange_shprect, ErrShapeRect)
+				Ret400(c, AEC_gpsrange_shprect, ErrShapeRect)
 				return
 			}
 		default:
-			Ret400(c, SEC_gpsrange_shpbad, ErrShapeBad)
+			Ret400(c, AEC_gpsrange_shpbad, ErrShapeBad)
 			return
 		}
 	}
@@ -158,7 +158,7 @@ func SpiGpsRange(c *gin.Context) {
 		return arg.Limit == 0 || len(ret.List) < arg.Limit
 	})
 	if ret.List, _, err = ScanFileInfoList(acc, session, vfiles, vpaths, true); err != nil {
-		Ret500(c, SEC_gpsrange_list, err)
+		Ret500(c, AEC_gpsrange_list, err)
 		return
 	}
 
@@ -182,18 +182,18 @@ func SpiGpsScan(c *gin.Context) {
 
 	// get arguments
 	if err = c.ShouldBind(&arg); err != nil {
-		Ret400(c, SEC_gpsscan_nobind, err)
+		Ret400(c, AEC_gpsscan_nobind, err)
 		return
 	}
 	var uid = GetUID(c)
 	var aid uint64
 	if aid, err = GetAID(c); err != nil {
-		Ret400(c, SEC_gpsscan_badacc, ErrNoAcc)
+		Ret400(c, AEC_gpsscan_badacc, ErrNoAcc)
 		return
 	}
 	var acc *Profile
 	if acc, ok = Profiles.Get(aid); !ok {
-		Ret404(c, SEC_gpsscan_noacc, ErrNoAcc)
+		Ret404(c, AEC_gpsscan_noacc, ErrNoAcc)
 		return
 	}
 

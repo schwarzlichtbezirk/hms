@@ -1,8 +1,13 @@
 
 # Home Media Server
 
-[![GitHub release](https://img.shields.io/github/v/release/schwarzlichtbezirk/hms.svg)](https://github.com/schwarzlichtbezirk/hms/releases/latest)
-[![Hits-of-Code](https://hitsofcode.com/github/schwarzlichtbezirk/hms?branch=master)](https://hitsofcode.com/github/schwarzlichtbezirk/hms/view?branch=master)
+[![GitHub release][1]][2]
+[![Hits-of-Code][3]][4]
+
+[1]: https://img.shields.io/github/v/release/schwarzlichtbezirk/hms.svg
+[2]: https://github.com/schwarzlichtbezirk/hms/releases/latest
+[3]: https://hitsofcode.com/github/schwarzlichtbezirk/hms?branch=master
+[4]: https://hitsofcode.com/github/schwarzlichtbezirk/hms/view?branch=master
 
 Browse files on your computer as in explorer, listen music with folder as playlist, view photos and markers of them on map by theirs geotags. Share some file or folder to get access from internet.
 

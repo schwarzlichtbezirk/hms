@@ -51,18 +51,18 @@ func SpiFolder(c *gin.Context) {
 
 	// get arguments
 	if err = c.ShouldBind(&arg); err != nil {
-		Ret400(c, SEC_folder_nobind, err)
+		Ret400(c, AEC_folder_nobind, err)
 		return
 	}
 	var uid = GetUID(c)
 	var aid uint64
 	if aid, err = GetAID(c); err != nil {
-		Ret400(c, SEC_folder_badacc, ErrNoAcc)
+		Ret400(c, AEC_folder_badacc, ErrNoAcc)
 		return
 	}
 	var acc *Profile
 	if acc, ok = Profiles.Get(aid); !ok {
-		Ret404(c, SEC_folder_noacc, ErrNoAcc)
+		Ret404(c, AEC_folder_noacc, ErrNoAcc)
 		return
 	}
 
@@ -72,16 +72,16 @@ func SpiFolder(c *gin.Context) {
 	var syspath string
 	var puid Puid_t
 	if syspath, puid, err = UnfoldPath(session, ToSlash(arg.Path)); err != nil {
-		Ret400(c, SEC_folder_badpath, err)
+		Ret400(c, AEC_folder_badpath, err)
 		return
 	}
 
 	if Hidden.Fits(syspath) {
-		Ret403(c, SEC_folder_hidden, ErrHidden)
+		Ret403(c, AEC_folder_hidden, ErrHidden)
 		return
 	}
 	if !acc.PathAccess(syspath, uid == aid) {
-		Ret403(c, SEC_folder_access, ErrNoAccess)
+		Ret403(c, AEC_folder_access, ErrNoAccess)
 		return
 	}
 
@@ -108,7 +108,7 @@ func SpiFolder(c *gin.Context) {
 	var t = time.Now()
 	if puid < PUIDcache {
 		if uid != aid && !acc.IsShared(syspath) {
-			Ret403(c, SEC_folder_noshr, ErrNotShared)
+			Ret403(c, AEC_folder_noshr, ErrNotShared)
 			return
 		}
 		switch puid {
@@ -127,7 +127,7 @@ func SpiFolder(c *gin.Context) {
 
 			var dp DirProp
 			if ret.List, dp, err = ScanFileNameList(acc, session, vfiles, arg.Scan); err != nil {
-				Ret500(c, SEC_folder_home, err)
+				Ret500(c, AEC_folder_home, err)
 				return
 			}
 
@@ -137,22 +137,22 @@ func SpiFolder(c *gin.Context) {
 			})
 		case PUIDlocal:
 			if ret.List, err = acc.ScanLocal(session, arg.Scan); err != nil {
-				Ret500(c, SEC_folder_drives, err)
+				Ret500(c, AEC_folder_drives, err)
 				return
 			}
 		case PUIDremote:
 			if ret.List, err = acc.ScanRemote(session, arg.Scan); err != nil {
-				Ret500(c, SEC_folder_remote, err)
+				Ret500(c, AEC_folder_remote, err)
 				return
 			}
 		case PUIDshares:
 			if ret.List, err = acc.ScanShares(session, arg.Scan); err != nil {
-				Ret500(c, SEC_folder_shares, err)
+				Ret500(c, AEC_folder_shares, err)
 				return
 			}
 		case PUIDmedia, PUIDvideo, PUIDaudio, PUIDimage, PUIDbooks, PUIDtexts:
 			if ret.List, err = ScanCat(acc, session, puid, catcolumn[puid], 0.5, arg.Scan); err != nil {
-				Ret500(c, SEC_folder_media, err)
+				Ret500(c, AEC_folder_media, err)
 				return
 			}
 		case PUIDmap:
@@ -172,18 +172,18 @@ func SpiFolder(c *gin.Context) {
 				return Cfg.RangeSearchAny <= 0 || n < Cfg.RangeSearchAny
 			})
 			if ret.List, _, err = ScanFileInfoList(acc, session, vfiles, vpaths, arg.Scan); err != nil {
-				Ret500(c, SEC_folder_map, err)
+				Ret500(c, AEC_folder_map, err)
 				return
 			}
 		default:
-			Ret404(c, SEC_folder_nocat, ErrNoCat)
+			Ret404(c, AEC_folder_nocat, ErrNoCat)
 			return
 		}
 		ret.Static = true
 	} else {
 		var fi fs.FileInfo
 		if fi, err = JP.Stat(syspath); err != nil {
-			Ret500(c, SEC_folder_stat, err)
+			Ret500(c, AEC_folder_stat, err)
 			return
 		}
 		ret.Static = IsStatic(fi) || !fi.IsDir()
@@ -196,16 +196,16 @@ func SpiFolder(c *gin.Context) {
 		if fi.IsDir() || IsTypeISO(ext) {
 			if ret.List, ret.Skipped, err = ScanDir(acc, session, syspath, uid == aid, arg.Scan); err != nil && len(ret.List) == 0 {
 				if errors.Is(err, fs.ErrNotExist) {
-					Ret404(c, SEC_folder_absent, err)
+					Ret404(c, AEC_folder_absent, err)
 				} else {
-					Ret500(c, SEC_folder_fail, err)
+					Ret500(c, AEC_folder_fail, err)
 				}
 				return
 			}
 		} else if IsTypePlaylist(ext) {
 			var file fs.File
 			if file, err = JP.Open(syspath); err != nil {
-				Ret500(c, SEC_folder_open, err)
+				Ret500(c, AEC_folder_open, err)
 				return
 			}
 			defer file.Close()
@@ -215,31 +215,31 @@ func SpiFolder(c *gin.Context) {
 			switch ext {
 			case ".m3u", ".m3u8":
 				if _, err = pl.ReadM3U(file); err != nil {
-					RetErr(c, http.StatusUnsupportedMediaType, SEC_folder_m3u, err)
+					RetErr(c, http.StatusUnsupportedMediaType, AEC_folder_m3u, err)
 					return
 				}
 			case ".wpl":
 				if _, err = pl.ReadWPL(file); err != nil {
-					RetErr(c, http.StatusUnsupportedMediaType, SEC_folder_wpl, err)
+					RetErr(c, http.StatusUnsupportedMediaType, AEC_folder_wpl, err)
 					return
 				}
 			case ".pls":
 				if _, err = pl.ReadPLS(file); err != nil {
-					RetErr(c, http.StatusUnsupportedMediaType, SEC_folder_pls, err)
+					RetErr(c, http.StatusUnsupportedMediaType, AEC_folder_pls, err)
 					return
 				}
 			case ".asx":
 				if _, err = pl.ReadASX(file); err != nil {
-					RetErr(c, http.StatusUnsupportedMediaType, SEC_folder_asx, err)
+					RetErr(c, http.StatusUnsupportedMediaType, AEC_folder_asx, err)
 					return
 				}
 			case ".xspf":
 				if _, err = pl.ReadXSPF(file); err != nil {
-					RetErr(c, http.StatusUnsupportedMediaType, SEC_folder_xspf, err)
+					RetErr(c, http.StatusUnsupportedMediaType, AEC_folder_xspf, err)
 					return
 				}
 			default:
-				RetErr(c, http.StatusUnsupportedMediaType, SEC_folder_format, ErrNotPlay)
+				RetErr(c, http.StatusUnsupportedMediaType, AEC_folder_format, ErrNotPlay)
 				return
 			}
 
@@ -255,7 +255,7 @@ func SpiFolder(c *gin.Context) {
 				}
 			}
 			if ret.List, _, err = ScanFileInfoList(acc, session, vfiles, vpaths, arg.Scan); err != nil {
-				Ret500(c, SEC_folder_tracks, err)
+				Ret500(c, AEC_folder_tracks, err)
 				return
 			}
 			ret.Skipped = len(pl.Tracks) - len(ret.List)

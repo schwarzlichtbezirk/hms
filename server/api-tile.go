@@ -26,18 +26,18 @@ func SpiTagsCheck(c *gin.Context) {
 
 	// get arguments
 	if err = c.ShouldBind(&arg); err != nil {
-		Ret400(c, SEC_tagschk_nobind, err)
+		Ret400(c, AEC_tagschk_nobind, err)
 		return
 	}
 	var uid = GetUID(c)
 	var aid uint64
 	if aid, err = GetAID(c); err != nil {
-		Ret400(c, SEC_tagschk_badacc, ErrNoAcc)
+		Ret400(c, AEC_tagschk_badacc, ErrNoAcc)
 		return
 	}
 	var acc *Profile
 	if acc, ok = Profiles.Get(aid); !ok {
-		Ret404(c, SEC_tagschk_noacc, ErrNoAcc)
+		Ret404(c, AEC_tagschk_noacc, ErrNoAcc)
 		return
 	}
 
@@ -71,7 +71,7 @@ func SpiTagsStart(c *gin.Context) {
 
 	// get arguments
 	if err = c.ShouldBind(&arg); err != nil {
-		Ret400(c, SEC_tagsstart_nobind, err)
+		Ret400(c, AEC_tagsstart_nobind, err)
 		return
 	}
 
@@ -92,7 +92,7 @@ func SpiTagsBreak(c *gin.Context) {
 
 	// get arguments
 	if err = c.ShouldBind(&arg); err != nil {
-		Ret400(c, SEC_tagsbreak_nobind, err)
+		Ret400(c, AEC_tagsbreak_nobind, err)
 		return
 	}
 
@@ -127,18 +127,18 @@ func SpiTileCheck(c *gin.Context) {
 
 	// get arguments
 	if err = c.ShouldBind(&arg); err != nil {
-		Ret400(c, SEC_tilechk_nobind, err)
+		Ret400(c, AEC_tilechk_nobind, err)
 		return
 	}
 	var uid = GetUID(c)
 	var aid uint64
 	if aid, err = GetAID(c); err != nil {
-		Ret400(c, SEC_tilechk_badacc, ErrNoAcc)
+		Ret400(c, AEC_tilechk_badacc, ErrNoAcc)
 		return
 	}
 	var acc *Profile
 	if acc, ok = Profiles.Get(aid); !ok {
-		Ret404(c, SEC_tilechk_noacc, ErrNoAcc)
+		Ret404(c, AEC_tilechk_noacc, ErrNoAcc)
 		return
 	}
 
@@ -177,7 +177,7 @@ func SpiTileStart(c *gin.Context) {
 
 	// get arguments
 	if err = c.ShouldBind(&arg); err != nil {
-		Ret400(c, SEC_tilestart_nobind, err)
+		Ret400(c, AEC_tilestart_nobind, err)
 		return
 	}
 
@@ -202,7 +202,7 @@ func SpiTileBreak(c *gin.Context) {
 
 	// get arguments
 	if err = c.ShouldBind(&arg); err != nil {
-		Ret400(c, SEC_tilebreak_nobind, err)
+		Ret400(c, AEC_tilebreak_nobind, err)
 		return
 	}
 

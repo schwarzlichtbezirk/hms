@@ -16,18 +16,23 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
-/frontend/assets/iconfont/material-icons.*
-/frontend/build/*.bundle.js
-/frontend/build/*.bundle.js.map
-/frontend/plugin/*
-/frontend/skin/*.css
 
 # Go workspace file
 go.work
 go.work.sum
+
+# env file
+.env
 
 # Visual Studio settings
 .vs/
 
 # Visual Studio Code settings
 .vscode/
+
+# Frontend downloaded and compiled files
+/frontend/assets/iconfont/material-icons.*
+/frontend/build/*.bundle.js
+/frontend/build/*.bundle.js.map
+/frontend/plugin/*
+/frontend/skin/*.css

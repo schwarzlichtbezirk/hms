@@ -14,11 +14,11 @@ import (
 
 	"github.com/disintegration/gift"
 
-	"github.com/chai2010/webp" // register WebP
-	_ "github.com/oov/psd"     // register PSD format
+	"github.com/chai2010/webp"    // register WebP
+	_ "github.com/jsummers/gobmp" // register BMP format
+	_ "github.com/oov/psd"        // register PSD format
 	"github.com/schwarzlichtbezirk/tga"
 	_ "github.com/spate/glimage/dds" // register DDS format
-	_ "golang.org/x/image/bmp"       // register BMP format
 	_ "golang.org/x/image/tiff"      // register TIFF format
 )
 

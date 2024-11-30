@@ -44,11 +44,7 @@ RUN ./task/wpk-app.sh
 RUN ./task/wpk-edge.sh
 
 # Compile project for Linux amd64.
-RUN \
-buildvers=$(git describe --tags) && \
-buildtime=$(date +'%FT%T.%3NZ') && \
-go env -w GOOS=linux GOARCH=amd64 CGO_ENABLED=1 && \
-go build -o /go/bin/hms_linux_x64 -v -ldflags="-linkmode external -extldflags -static -X 'github.com/schwarzlichtbezirk/hms/config.BuildVers=$buildvers' -X 'github.com/schwarzlichtbezirk/hms/config.BuildTime=$buildtime'" ./
+RUN ./task/build-docker.sh
 
 ##
 ## Deploy stage

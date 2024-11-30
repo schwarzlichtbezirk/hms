@@ -89,14 +89,14 @@ func Auth(required bool) gin.HandlerFunc {
 			if s := c.Param("aid"); s != "" {
 				var aid uint64
 				if aid, err = strconv.ParseUint(s, 10, 64); err != nil {
-					Ret400(c, SEC_token_badaid, err)
+					Ret400(c, AEC_token_badaid, err)
 					return
 				}
 				var ip = net.ParseIP(c.RemoteIP())
 				if InPasslist(ip) {
 					var ok bool
 					if user, ok = Profiles.Get(aid); !ok {
-						Ret404(c, SEC_param_noacc, ErrNoAcc)
+						Ret404(c, AEC_param_noacc, ErrNoAcc)
 						return
 					}
 				}
@@ -106,7 +106,7 @@ func Auth(required bool) gin.HandlerFunc {
 		if user != nil {
 			c.Set(userKey, user)
 		} else if required {
-			Ret401(c, SEC_auth_absent, ErrNoAuth)
+			Ret401(c, AEC_auth_absent, ErrNoAuth)
 			return
 		}
 
@@ -121,7 +121,7 @@ func UserFromHeader(c *gin.Context) (*Profile, int, error) {
 		} else if strings.HasPrefix(hdr, "Bearer ") {
 			return GetBearerAuth(hdr[7:])
 		} else {
-			return nil, SEC_auth_scheme, ErrNoScheme
+			return nil, AEC_auth_scheme, ErrNoScheme
 		}
 	}
 	return nil, 0, nil
@@ -163,7 +163,7 @@ func UserFromForm(c *gin.Context) (*Profile, int, error) {
 func GetBasicAuth(credentials string) (user *Profile, code int, err error) {
 	var decoded []byte
 	if decoded, err = base64.RawURLEncoding.DecodeString(credentials); err != nil {
-		return nil, SEC_basic_decode, err
+		return nil, AEC_basic_decode, err
 	}
 	var parts = strings.Split(B2S(decoded), ":")
 
@@ -176,11 +176,11 @@ func GetBasicAuth(credentials string) (user *Profile, code int, err error) {
 		return false
 	})
 	if user == nil {
-		err, code = ErrNoCred, SEC_basic_noacc
+		err, code = ErrNoCred, AEC_basic_noacc
 		return
 	}
 	if user.Password != parts[1] {
-		err, code = ErrNotPass, SEC_basic_deny
+		err, code = ErrNotPass, AEC_basic_deny
 		return
 	}
 	return
@@ -201,32 +201,32 @@ func GetBearerAuth(tokenstr string) (prf *Profile, code int, err error) {
 	if err == nil {
 		var ok bool
 		if prf, ok = Profiles.Get(claims.UID); !ok {
-			code, err = SEC_token_noacc, ErrBadJwtID
+			code, err = AEC_token_noacc, ErrBadJwtID
 		}
 		return
 	}
 	switch {
 	case errors.Is(err, jwt.ErrTokenMalformed):
-		code = SEC_token_malform
+		code = AEC_token_malform
 	case errors.Is(err, jwt.ErrTokenSignatureInvalid):
-		code = SEC_token_notsign
+		code = AEC_token_notsign
 	case errors.Is(err, jwt.ErrTokenInvalidClaims):
-		code = SEC_token_badclaims
+		code = AEC_token_badclaims
 	case errors.Is(err, jwt.ErrTokenExpired):
-		code = SEC_token_expired
+		code = AEC_token_expired
 	case errors.Is(err, jwt.ErrTokenNotValidYet):
-		code = SEC_token_notyet
+		code = AEC_token_notyet
 	case errors.Is(err, jwt.ErrTokenInvalidIssuer):
-		code = SEC_token_issuer
+		code = AEC_token_issuer
 	default:
-		code = SEC_token_error
+		code = AEC_token_error
 	}
 	return
 }
 
 func Handle404(c *gin.Context) {
 	if strings.HasPrefix(c.Request.RequestURI, "/api/") {
-		Ret404(c, SEC_nourl, Err404)
+		Ret404(c, AEC_nourl, Err404)
 		return
 	}
 	var content = pagecache[devmsuff+"/404.html"]
@@ -236,7 +236,7 @@ func Handle404(c *gin.Context) {
 
 func Handle405(c *gin.Context) {
 	if strings.HasPrefix(c.Request.RequestURI, "/api/") {
-		RetErr(c, http.StatusMethodNotAllowed, SEC_nomethod, Err405)
+		RetErr(c, http.StatusMethodNotAllowed, AEC_nomethod, Err405)
 		return
 	}
 	var content = pagecache[devmsuff+"/404.html"]
@@ -298,15 +298,15 @@ func SpiSignin(c *gin.Context) {
 	var ret AuthResp
 
 	if err = c.ShouldBind(&arg); err != nil {
-		Ret400(c, SEC_signin_nobind, err)
+		Ret400(c, AEC_signin_nobind, err)
 		return
 	}
 	if len(arg.SigTime) == 0 && len(arg.Secret) == 0 {
-		Ret400(c, SEC_signin_nosecret, ErrNoSecret)
+		Ret400(c, AEC_signin_nosecret, ErrNoSecret)
 		return
 	}
 	if len(arg.Secret) > 0 && len(arg.Secret) < 6 {
-		Ret400(c, SEC_signin_smallsec, ErrSmallKey)
+		Ret400(c, AEC_signin_smallsec, ErrSmallKey)
 		return
 	}
 
@@ -319,29 +319,29 @@ func SpiSignin(c *gin.Context) {
 		return false
 	})
 	if user == nil {
-		Ret403(c, SEC_signin_nouser, ErrNoCred)
+		Ret403(c, AEC_signin_nouser, ErrNoCred)
 		return
 	}
 
 	if len(arg.Secret) > 0 {
 		if arg.Secret != user.Password {
-			Ret403(c, SEC_signin_denypass, ErrNotPass)
+			Ret403(c, AEC_signin_denypass, ErrNotPass)
 			return
 		}
 	} else {
 		var sigtime time.Time
 		if sigtime, err = time.Parse(time.RFC3339, arg.SigTime); err != nil {
-			Ret400(c, SEC_signin_sigtime, ErrSigTime)
+			Ret400(c, AEC_signin_sigtime, ErrSigTime)
 			return
 		}
 		if time.Since(sigtime) > Cfg.NonceTimeout {
-			Ret403(c, SEC_signin_timeout, ErrSigOut)
+			Ret403(c, AEC_signin_timeout, ErrSigOut)
 			return
 		}
 
 		var hs256 []byte
 		if hs256, err = hex.DecodeString(arg.HS256); err != nil {
-			Ret400(c, SEC_signin_hs256, ErrBadHash)
+			Ret400(c, AEC_signin_hs256, ErrBadHash)
 			return
 		}
 
@@ -349,7 +349,7 @@ func SpiSignin(c *gin.Context) {
 		h.Write(S2B(user.Password))
 		var master = h.Sum(nil)
 		if !hmac.Equal(master, hs256) {
-			Ret403(c, SEC_signin_denyhash, ErrNotPass)
+			Ret403(c, AEC_signin_denyhash, ErrNotPass)
 			return
 		}
 	}

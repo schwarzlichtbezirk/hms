@@ -40,7 +40,7 @@ var routealias = map[string]string{
 }
 
 // "Server" field for HTTP headers.
-var serverlabel = fmt.Sprintf("hms/%s (%s)", cfg.BuildVers, runtime.GOOS)
+var serverhdr = fmt.Sprintf("hms/%s (%s; %s)", cfg.BuildVers, runtime.GOOS, runtime.GOARCH)
 
 var Offered = []string{
 	binding.MIMEJSON,
@@ -50,7 +50,7 @@ var Offered = []string{
 }
 
 func Negotiate(c *gin.Context, code int, data any) {
-	c.Header("Server", serverlabel)
+	c.Header("Server", serverhdr)
 	switch c.NegotiateFormat(Offered...) {
 	case binding.MIMEJSON:
 		c.JSON(code, data)

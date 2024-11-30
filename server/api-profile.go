@@ -35,23 +35,23 @@ func SpiDriveAdd(c *gin.Context) {
 
 	// get arguments
 	if err = c.ShouldBind(&arg); err != nil {
-		Ret400(c, SEC_drvadd_nobind, err)
+		Ret400(c, AEC_drvadd_nobind, err)
 		return
 	}
 	var uid = GetUID(c)
 	var aid uint64
 	if aid, err = GetAID(c); err != nil {
-		Ret400(c, SEC_drvadd_badacc, ErrNoAcc)
+		Ret400(c, AEC_drvadd_badacc, ErrNoAcc)
 		return
 	}
 	var acc *Profile
 	if acc, ok = Profiles.Get(aid); !ok {
-		Ret404(c, SEC_drvadd_noacc, ErrNoAcc)
+		Ret404(c, AEC_drvadd_noacc, ErrNoAcc)
 		return
 	}
 
 	if uid != aid {
-		Ret403(c, SEC_drvadd_deny, ErrDeny)
+		Ret403(c, AEC_drvadd_deny, ErrDeny)
 		return
 	}
 
@@ -71,17 +71,17 @@ func SpiDriveAdd(c *gin.Context) {
 		puid = PathStoreCache(session, syspath)
 	} else {
 		if syspath, puid, err = UnfoldPath(session, fpath); err != nil {
-			Ret400(c, SEC_drvadd_badpath, err)
+			Ret400(c, AEC_drvadd_badpath, err)
 			return
 		}
 		if fi, err = JP.Stat(syspath); err != nil {
-			Ret404(c, SEC_drvadd_miss, http.ErrMissingFile)
+			Ret404(c, AEC_drvadd_miss, http.ErrMissingFile)
 			return
 		}
 	}
 
 	if Hidden.Fits(syspath) {
-		Ret403(c, SEC_drvadd_hidden, ErrHidden)
+		Ret403(c, AEC_drvadd_hidden, ErrHidden)
 		return
 	}
 
@@ -127,23 +127,23 @@ func SpiDriveDel(c *gin.Context) {
 
 	// get arguments
 	if err = c.ShouldBind(&arg); err != nil {
-		Ret400(c, SEC_drvdel_nobind, err)
+		Ret400(c, AEC_drvdel_nobind, err)
 		return
 	}
 	var uid = GetUID(c)
 	var aid uint64
 	if aid, err = GetAID(c); err != nil {
-		Ret400(c, SEC_drvdel_badacc, ErrNoAcc)
+		Ret400(c, AEC_drvdel_badacc, ErrNoAcc)
 		return
 	}
 	var acc *Profile
 	if acc, ok = Profiles.Get(aid); !ok {
-		Ret404(c, SEC_drvdel_noacc, ErrNoAcc)
+		Ret404(c, AEC_drvdel_noacc, ErrNoAcc)
 		return
 	}
 
 	if uid != aid {
-		Ret403(c, SEC_drvdel_deny, ErrDeny)
+		Ret403(c, AEC_drvdel_deny, ErrDeny)
 		return
 	}
 
@@ -152,7 +152,7 @@ func SpiDriveDel(c *gin.Context) {
 
 	var syspath string
 	if syspath, ok = PathStorePath(session, arg.PUID); !ok {
-		Ret404(c, SEC_drvdel_nopath, ErrNoPath)
+		Ret404(c, AEC_drvdel_nopath, ErrNoPath)
 		return
 	}
 
@@ -184,29 +184,29 @@ func SpiCloudAdd(c *gin.Context) {
 
 	// get arguments
 	if err = c.ShouldBind(&arg); err != nil {
-		Ret400(c, SEC_cldadd_nobind, err)
+		Ret400(c, AEC_cldadd_nobind, err)
 		return
 	}
 	var uid = GetUID(c)
 	var aid uint64
 	if aid, err = GetAID(c); err != nil {
-		Ret400(c, SEC_cldadd_badacc, ErrNoAcc)
+		Ret400(c, AEC_cldadd_badacc, ErrNoAcc)
 		return
 	}
 	var acc *Profile
 	if acc, ok = Profiles.Get(aid); !ok {
-		Ret404(c, SEC_cldadd_noacc, ErrNoAcc)
+		Ret404(c, AEC_cldadd_noacc, ErrNoAcc)
 		return
 	}
 
 	if uid != aid {
-		Ret403(c, SEC_cldadd_deny, ErrDeny)
+		Ret403(c, AEC_cldadd_deny, ErrDeny)
 		return
 	}
 
 	var argurl *url.URL
 	if argurl, err = url.Parse(arg.Host); err != nil {
-		Ret400(c, SEC_cldadd_badhost, err)
+		Ret400(c, AEC_cldadd_badhost, err)
 		return
 	}
 	if argurl.Scheme == "" {
@@ -236,18 +236,18 @@ func SpiCloudAdd(c *gin.Context) {
 	case "ftp":
 		var conn *ftp.ServerConn
 		if conn, err = ftp.Dial(argurl.Host, ftp.DialWithTimeout(Cfg.DialTimeout)); err != nil {
-			Ret404(c, SEC_cldadd_ftpdial, err)
+			Ret404(c, AEC_cldadd_ftpdial, err)
 			return
 		}
 		defer conn.Quit()
 		if err = conn.Login(arg.Login, arg.Password); err != nil {
-			Ret403(c, SEC_cldadd_ftpcred, err)
+			Ret403(c, AEC_cldadd_ftpcred, err)
 			return
 		}
 
 		var root *ftp.Entry
 		if root, err = conn.GetEntry(""); err != nil {
-			Ret403(c, SEC_cldadd_ftproot, err)
+			Ret403(c, AEC_cldadd_ftproot, err)
 			return
 		}
 		size, mtime = int64(root.Size), root.Time
@@ -262,27 +262,27 @@ func SpiCloudAdd(c *gin.Context) {
 			HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 		}
 		if conn, err = ssh.Dial("tcp", argurl.Host, config); err != nil {
-			Ret404(c, SEC_cldadd_sftpdial, err)
+			Ret404(c, AEC_cldadd_sftpdial, err)
 			return
 		}
 		defer conn.Close()
 
 		var client *sftp.Client
 		if client, err = sftp.NewClient(conn); err != nil {
-			Ret403(c, SEC_cldadd_sftpcli, err)
+			Ret403(c, AEC_cldadd_sftpcli, err)
 			return
 		}
 		defer client.Close()
 
 		var pwd string
 		if pwd, err = client.Getwd(); err != nil {
-			Ret403(c, SEC_cldadd_sftppwd, err)
+			Ret403(c, AEC_cldadd_sftppwd, err)
 			return
 		}
 
 		var root fs.FileInfo
 		if root, err = client.Lstat(path.Join(pwd, "/")); err != nil {
-			Ret403(c, SEC_cldadd_sftproot, err)
+			Ret403(c, AEC_cldadd_sftproot, err)
 			return
 		}
 		size, mtime = int64(root.Size()), root.ModTime()
@@ -291,7 +291,7 @@ func SpiCloudAdd(c *gin.Context) {
 		var client = gowebdav.NewClient(surl, "", "") // user & password gets from URL
 		var fi fs.FileInfo
 		if fi, err = client.Stat(""); err != nil || !fi.IsDir() {
-			Ret404(c, SEC_cldadd_davdial, err)
+			Ret404(c, AEC_cldadd_davdial, err)
 			return
 		}
 		size, mtime = 0, time.Unix(0, 0) // DAV does not provides info for folders
@@ -330,23 +330,23 @@ func SpiCloudDel(c *gin.Context) {
 
 	// get arguments
 	if err = c.ShouldBind(&arg); err != nil {
-		Ret400(c, SEC_clddel_nobind, err)
+		Ret400(c, AEC_clddel_nobind, err)
 		return
 	}
 	var uid = GetUID(c)
 	var aid uint64
 	if aid, err = GetAID(c); err != nil {
-		Ret400(c, SEC_clddel_badacc, ErrNoAcc)
+		Ret400(c, AEC_clddel_badacc, ErrNoAcc)
 		return
 	}
 	var acc *Profile
 	if acc, ok = Profiles.Get(aid); !ok {
-		Ret404(c, SEC_clddel_noacc, ErrNoAcc)
+		Ret404(c, AEC_clddel_noacc, ErrNoAcc)
 		return
 	}
 
 	if uid != aid {
-		Ret403(c, SEC_clddel_deny, ErrDeny)
+		Ret403(c, AEC_clddel_deny, ErrDeny)
 		return
 	}
 
@@ -355,7 +355,7 @@ func SpiCloudDel(c *gin.Context) {
 
 	var syspath string
 	if syspath, ok = PathStorePath(session, arg.PUID); !ok {
-		Ret404(c, SEC_clddel_nopath, ErrNoPath)
+		Ret404(c, AEC_clddel_nopath, ErrNoPath)
 		return
 	}
 
@@ -381,23 +381,23 @@ func SpiShareAdd(c *gin.Context) {
 
 	// get arguments
 	if err = c.ShouldBind(&arg); err != nil {
-		Ret400(c, SEC_shradd_nobind, err)
+		Ret400(c, AEC_shradd_nobind, err)
 		return
 	}
 	var uid = GetUID(c)
 	var aid uint64
 	if aid, err = GetAID(c); err != nil {
-		Ret400(c, SEC_shradd_badacc, ErrNoAcc)
+		Ret400(c, AEC_shradd_badacc, ErrNoAcc)
 		return
 	}
 	var acc *Profile
 	if acc, ok = Profiles.Get(aid); !ok {
-		Ret404(c, SEC_shradd_noacc, ErrNoAcc)
+		Ret404(c, AEC_shradd_noacc, ErrNoAcc)
 		return
 	}
 
 	if uid != aid {
-		Ret403(c, SEC_shradd_deny, ErrDeny)
+		Ret403(c, AEC_shradd_deny, ErrDeny)
 		return
 	}
 
@@ -406,11 +406,11 @@ func SpiShareAdd(c *gin.Context) {
 
 	var syspath string
 	if syspath, _, err = UnfoldPath(session, ToSlash(arg.Path)); err != nil {
-		Ret404(c, SEC_shradd_nopath, err)
+		Ret404(c, AEC_shradd_nopath, err)
 		return
 	}
 	if !acc.PathAdmin(syspath) {
-		Ret403(c, SEC_shradd_access, ErrNoAccess)
+		Ret403(c, AEC_shradd_access, ErrNoAccess)
 		return
 	}
 
@@ -437,23 +437,23 @@ func SpiShareDel(c *gin.Context) {
 
 	// get arguments
 	if err = c.ShouldBind(&arg); err != nil {
-		Ret400(c, SEC_shrdel_nobind, err)
+		Ret400(c, AEC_shrdel_nobind, err)
 		return
 	}
 	var uid = GetUID(c)
 	var aid uint64
 	if aid, err = GetAID(c); err != nil {
-		Ret400(c, SEC_shrdel_badacc, ErrNoAcc)
+		Ret400(c, AEC_shrdel_badacc, ErrNoAcc)
 		return
 	}
 	var acc *Profile
 	if acc, ok = Profiles.Get(aid); !ok {
-		Ret404(c, SEC_shrdel_noacc, ErrNoAcc)
+		Ret404(c, AEC_shrdel_noacc, ErrNoAcc)
 		return
 	}
 
 	if uid != aid {
-		Ret403(c, SEC_shrdel_deny, ErrDeny)
+		Ret403(c, AEC_shrdel_deny, ErrDeny)
 		return
 	}
 
@@ -462,11 +462,11 @@ func SpiShareDel(c *gin.Context) {
 
 	var syspath string
 	if syspath, _, err = UnfoldPath(session, ToSlash(arg.Path)); err != nil {
-		Ret404(c, SEC_shrdel_nopath, ErrNoPath)
+		Ret404(c, AEC_shrdel_nopath, ErrNoPath)
 		return
 	}
 	if !acc.PathAdmin(syspath) {
-		Ret403(c, SEC_shrdel_access, ErrNoAccess)
+		Ret403(c, AEC_shrdel_access, ErrNoAccess)
 		return
 	}
 

@@ -31,11 +31,11 @@ func SpiPing(c *gin.Context) {
 func SpiReload(c *gin.Context) {
 	var err error
 	if err = OpenPackage(); err != nil {
-		Ret500(c, SEC_reload_load, err)
+		Ret500(c, AEC_reload_load, err)
 		return
 	}
 	if err = LoadTemplates(); err != nil {
-		Ret500(c, SEC_reload_tmpl, err)
+		Ret500(c, AEC_reload_tmpl, err)
 		return
 	}
 
@@ -164,7 +164,7 @@ func SpiGetLog(c *gin.Context) {
 
 	// get arguments
 	if err = c.ShouldBind(&arg); err != nil {
-		Ret400(c, SEC_getlog_nobind, err)
+		Ret400(c, AEC_getlog_nobind, err)
 		return
 	}
 
@@ -211,18 +211,18 @@ func SpiTags(c *gin.Context) {
 
 	// get arguments
 	if err = c.ShouldBind(&arg); err != nil {
-		Ret400(c, SEC_tags_nobind, err)
+		Ret400(c, AEC_tags_nobind, err)
 		return
 	}
 	var uid = GetUID(c)
 	var aid uint64
 	if aid, err = GetAID(c); err != nil {
-		Ret400(c, SEC_tags_badacc, ErrNoAcc)
+		Ret400(c, AEC_tags_badacc, ErrNoAcc)
 		return
 	}
 	var acc *Profile
 	if acc, ok = Profiles.Get(aid); !ok {
-		Ret404(c, SEC_tags_noacc, ErrNoAcc)
+		Ret404(c, AEC_tags_noacc, ErrNoAcc)
 		return
 	}
 
@@ -231,16 +231,16 @@ func SpiTags(c *gin.Context) {
 
 	var syspath string
 	if syspath, ok = PathStorePath(session, arg.PUID); !ok {
-		Ret400(c, SEC_tags_badpath, ErrNoPath)
+		Ret400(c, AEC_tags_badpath, ErrNoPath)
 		return
 	}
 
 	if Hidden.Fits(syspath) {
-		Ret403(c, SEC_tags_hidden, ErrHidden)
+		Ret403(c, AEC_tags_hidden, ErrHidden)
 		return
 	}
 	if !acc.PathAccess(syspath, uid == aid) {
-		Ret403(c, SEC_tags_access, ErrNoAccess)
+		Ret403(c, AEC_tags_access, ErrNoAccess)
 		return
 	}
 
@@ -249,7 +249,7 @@ func SpiTags(c *gin.Context) {
 
 	if ret.Prop, _, err = TagsExtract(syspath, session, &buf, &ExtStat{}, false); err != nil {
 		if !errors.Is(err, io.EOF) {
-			Ret500(c, SEC_tags_extract, err)
+			Ret500(c, AEC_tags_extract, err)
 			return
 		}
 	}
@@ -276,23 +276,23 @@ func SpiHasPath(c *gin.Context) {
 
 	// get arguments
 	if err = c.ShouldBind(&arg); err != nil {
-		Ret400(c, SEC_ispath_nobind, err)
+		Ret400(c, AEC_ispath_nobind, err)
 		return
 	}
 	var uid = GetUID(c)
 	var aid uint64
 	if aid, err = GetAID(c); err != nil {
-		Ret400(c, SEC_ispath_badacc, ErrNoAcc)
+		Ret400(c, AEC_ispath_badacc, ErrNoAcc)
 		return
 	}
 	var acc *Profile
 	if acc, ok = Profiles.Get(aid); !ok {
-		Ret404(c, SEC_ispath_noacc, ErrNoAcc)
+		Ret404(c, AEC_ispath_noacc, ErrNoAcc)
 		return
 	}
 
 	if uid != aid {
-		Ret403(c, SEC_ispath_deny, ErrDeny)
+		Ret403(c, AEC_ispath_deny, ErrDeny)
 		return
 	}
 

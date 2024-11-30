@@ -5,7 +5,7 @@ plugdir=$(realpath -s "$(dirname $0)/../frontend/plugin")
 mkdir -pv "$plugdir/images"
 
 # bootstrap 5.3.2
-# https://cdnjs.com/libraries/
+# https://cdnjs.com/libraries/bootstrap
 vers="5.3.2"
 curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/$vers/js/bootstrap.min.js --output $plugdir/bootstrap.min.js
 curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/$vers/js/bootstrap.min.js.map --output $plugdir/bootstrap.min.js.map
