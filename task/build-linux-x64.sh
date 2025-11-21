@@ -3,7 +3,7 @@
 # It produces static C-libraries linkage.
 
 wd=$(realpath -s "$(dirname "$0")/..")
-mkdir -p "$GOPATH/bin/cache"
+mkdir -p "$GOPATH/bin/config" "$GOPATH/bin/sqlite" "$GOPATH/bin/thumbs"
 cp -ruv "$wd/confdata/"* "$GOPATH/bin/config"
 
 buildvers=$(git describe --tags)
@@ -13,6 +13,7 @@ buildtime=$(date +'%FT%T.%3NZ')
 
 go env -w GOOS=linux GOARCH=amd64 CGO_ENABLED=1
 go build -o "$GOPATH/bin/hms_linux_x64" -v\
+ -buildvcs=false\
  -ldflags="-linkmode external -extldflags -static\
  -X 'github.com/schwarzlichtbezirk/hms/config.BuildVers=$buildvers'\
  -X 'github.com/schwarzlichtbezirk/hms/config.BuildTime=$buildtime'"\

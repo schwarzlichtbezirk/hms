@@ -140,7 +140,7 @@ func Ret404(c *gin.Context, code int, err error) {
 }
 
 func Ret500(c *gin.Context, code int, err error) {
-	Log.Error("response error: %s", err.Error())
+	Log.Errorf("response error: %s", err.Error())
 	RetErr(c, http.StatusInternalServerError, code, err)
 }
 

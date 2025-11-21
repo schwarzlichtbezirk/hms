@@ -20,13 +20,13 @@ Screenshots:
 [![hms #1](http://images.sevstar.net/images/86980114770981357724_thumb.png)](http://images.sevstar.net/images/86980114770981357724.jpg)
 [![hms #1](http://images.sevstar.net/images/08282078015756047629_thumb.png)](http://images.sevstar.net/images/08282078015756047629.jpg)
 
-# Download
+## Download
 
 Compiled binaries can be downloaded in [Releases](https://github.com/schwarzlichtbezirk/hms/releases) section.
 
-# How to build
+## How to build
 
-1. First of all install [Golang](https://go.dev/dl/) of last version. Requires that [GOPATH is set](https://golang.org/doc/code.html#GOPATH). Be sure that `PATH` environment variable contains `%GOPATH%/bin` chunk.
+1. First of all install [Golang](https://go.dev/dl/) of last version and GCC toolchain *(tip: for Windows it can be MinGW-w64 distribution from [WinLibs](https://winlibs.com/))*. Requires that [GOPATH is set](https://golang.org/doc/code.html#GOPATH). Be sure that `PATH` environment variable contains `%GOPATH%/bin` chunk.
 
 2. Install [Java RE](https://www.java.com/en/download/manual.jsp), its needed to run [Closure Compiler](https://developers.google.com/closure/compiler) and [Closure Stylesheets](https://github.com/google/closure-stylesheets/releases).
 
@@ -53,7 +53,7 @@ sudo chmod +x ./task/*.sh
 ./task/build-linux-x64.sh
 ```
 
-# Packages variations
+## Packages variations
 
 Script `pack.lua` helps to build resources pack with given at another lua-script set of skins and icons. Available formats for each icons set can be seen at `fulliconset` table. You can provide several formats for each icons set with given subsequence that will be used as list of `<source>` tags in `<picture>`. In common case subsequence for formats can be followed: `avif`, `webp`, `jp2`, `png`, `gif`, `svg`. You can check on [caniuse.com](https://caniuse.com/) support of custom combination of formats. There is presents predefined scripts and tasks to build some resources combinations:
 
@@ -63,7 +63,7 @@ Script `pack.lua` helps to build resources pack with given at another lua-script
 * `hms-tiny` - minimal set, with two `svg` icons set. Can be used on lightweight systems.
 * `hms-free` - set of icons with public license and allowed commercial usage.
 
-# Configuration
+## Configuration
 
 Before server start you can configure some options. Any configuration files lays at "config" folder, and have `yaml` file format.
 
@@ -71,13 +71,13 @@ If you're going to share resources, first of all you can open `hms.yaml` file an
 
 Resources placement can be configured by environment variables. Path to configuration file `hms.yaml` - by `CFGFILE`, directory with placement of resorces package - by `PKGPATH`, directory with images caches - by `TMBPATH`.
 
-# Authorization
+## Authorization
 
 Server provides ability to make profiles each of which can have own set of drives, own set of shared resources, own templates for excluded files. User can be authorized for profile by its login+password. Unauthorized users can have access to shared by profile resources and have no ability for any modifications. List of profiles can be found in file `profiles.yaml`.
 
 If page is opened on localhost, there is no need for authorization. On localhost you have silent authorized access to default profile. ID of default profile is `1` and can be modified at field `default-profile-id` of settings.
 
-# Home page and sharing
+## Home page and sharing
 
 Open home page in browser, `localhost` if it running on local computer, and there will be list of categories. Home page can be opened from any other location by "home" button at top left.
 
