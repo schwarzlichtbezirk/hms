@@ -71,7 +71,7 @@ local function checkname(name)
 	local fc = string.sub(name, 1, 1) -- first char
 	if fc == "." or fc == "~" then return false end
 	name = string.lower(name)
-	for i, pattern in ipairs(skippattern) do
+	for _, pattern in ipairs(skippattern) do
 		if string.match(name, pattern) then return false end
 	end
 	local ext = string.match(name, "%.(%w+)$") -- file extension
@@ -90,15 +90,15 @@ local function authput(fkey, fpath)
 	if logrec then logfile(fkey) end
 end
 local function packdir(prefix, dir, putfunc)
-	for i, name in ipairs(path.enum(dir)) do
+	for _, name in ipairs(path.enum(dir)) do
 		local fkey = path.join(prefix, name)
 		local fpath = path.join(dir, name)
-		local access, isdir = checkfile(fpath)
+		local access, isfile = checkfile(fpath)
 		if access and checkname(name) then
-			if isdir then
-				packdir(fkey, fpath, putfunc)
-			else
+			if isfile then
 				putfunc(fkey, fpath)
+			else
+				packdir(fkey, fpath, putfunc)
 			end
 		end
 	end
@@ -114,13 +114,14 @@ packdir("plugin", rootdir.."plugin", commonput)
 packdir("tmpl", rootdir.."tmpl", commonput)
 packdir("task", scrdir, commonput)
 -- put sources
-for i, fpath in ipairs{path.glob(rootdir.."../*")} do
-	local has, isdir = checkfile(fpath)
-	if not isdir then
+for _, fpath in ipairs{path.glob(rootdir.."../*")} do
+	local access, isfile = checkfile(fpath)
+	if access and isfile then
 		local fname = string.match(fpath, "([%w%-%.]+)$")
 		authput("src/"..fname, fpath)
 	end
 end
+packdir("src/task", path.join(scrdir, "..", "task"), authput)
 
 if logdir then
 	logfmt("packaged %d files to %d aliases on %d bytes", pkg.recnum, pkg.tagnum, pkg.datasize)

@@ -4,9 +4,9 @@
 plugdir=$(realpath -s "$(dirname $0)/../frontend/plugin")
 mkdir -pv "$plugdir/images"
 
-# bootstrap 5.3.2
+# bootstrap 5.3.8
 # https://cdnjs.com/libraries/bootstrap
-vers="5.3.2"
+vers="5.3.8"
 curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/$vers/js/bootstrap.min.js --output $plugdir/bootstrap.min.js
 curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/$vers/js/bootstrap.min.js.map --output $plugdir/bootstrap.min.js.map
 curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/$vers/css/bootstrap.min.css --output $plugdir/bootstrap.min.css
@@ -18,10 +18,10 @@ vers="2.11.8"
 curl https://cdnjs.cloudflare.com/ajax/libs/popper.js/$vers/umd/popper.min.js --output $plugdir/popper.min.js
 curl https://cdnjs.cloudflare.com/ajax/libs/popper.js/$vers/umd/popper.min.js.map --output $plugdir/popper.min.js.map
 
-# Vue 3.4.19
+# Vue 3.5.22
 # https://cdnjs.com/libraries/vue
 # https://unpkg.com/vue@next
-vers="3.4.19"
+vers="3.5.22"
 curl https://unpkg.com/vue@$vers/dist/vue.global.js --output $plugdir/vue.global.js
 curl https://unpkg.com/vue@$vers/dist/vue.global.prod.js --output $plugdir/vue.global.prod.js
 
@@ -45,9 +45,9 @@ curl https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/$vers/leaflet.
 curl https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/$vers/MarkerCluster.css --output $plugdir/MarkerCluster.css
 curl https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/$vers/MarkerCluster.Default.css --output $plugdir/MarkerCluster.Default.css
 
-# sha256 0.11.0
+# sha256 0.11.1
 # https://cdnjs.com/libraries/js-sha256
-vers="0.11.0"
+vers="0.11.1"
 curl https://cdnjs.cloudflare.com/ajax/libs/js-sha256/$vers/sha256.min.js --output $plugdir/sha256.min.js
 
 # normalize 8.0.1

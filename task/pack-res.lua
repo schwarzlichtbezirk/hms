@@ -21,6 +21,7 @@ local fullskinmap = {
 	["coffee-beans"] = {"coffee-beans.css", "coffee-beans.jpg"},
 	["matrix"] = {"matrix.css"},
 }
+local _ = fullskinmap
 -- full list of skins identifiers
 local fullskinset = {
 	"daylight", "light", "blue", "dark", "neon", "cup-of-coffee", "coffee-beans", "matrix",
@@ -131,7 +132,7 @@ local function checkname(name)
 	local fc = string.sub(name, 1, 1) -- first char
 	if fc == "." or fc == "~" then return false end
 	name = string.lower(name)
-	for i, pattern in ipairs(skippattern) do
+	for _, pattern in ipairs(skippattern) do
 		if string.match(name, pattern) then return false end
 	end
 	local ext = string.match(name, "%.(%w+)$") -- file extension
@@ -150,15 +151,15 @@ local function authput(fkey, fpath)
 	if logrec then logfile(fkey) end
 end
 local function packdir(prefix, dir, putfunc)
-	for i, name in ipairs(path.enum(dir)) do
+	for _, name in ipairs(path.enum(dir)) do
 		local fkey = path.join(prefix, name)
 		local fpath = path.join(dir, name)
-		local access, isdir = checkfile(fpath)
+		local access, isfile = checkfile(fpath)
 		if access and checkname(name) then
-			if isdir then
-				packdir(fkey, fpath, putfunc)
-			else
+			if isfile then
 				putfunc(fkey, fpath)
+			else
+				packdir(fkey, fpath, putfunc)
 			end
 		end
 	end
@@ -170,7 +171,7 @@ if logdir then logfmt("writes %s package", pkg.pkgpath) end
 -- put some directories as is
 packdir("assets", rootdir.."assets", commonput)
 -- put skins
-for i, id in ipairs(cfg.skinset) do
+for _, id in ipairs(cfg.skinset) do
 	local fkey = path.join("skin", id)
 	packdir(fkey, rootdir..fkey, commonput)
 	authput(fkey..".css", rootdir..fkey..".css")
@@ -179,7 +180,7 @@ end
 for id, fmtlst in pairs(cfg.iconset) do
 	local function iconput(fkey, fpath)
 		local is = false
-		for i, name in ipairs(fmtlst) do
+		for _, name in ipairs(fmtlst) do
 			if string.lower(string.sub(fkey, -string.len(name)-1)) == "."..name then
 				is = true
 				break
@@ -189,17 +190,18 @@ for id, fmtlst in pairs(cfg.iconset) do
 			commonput(fkey, fpath)
 		end
 	end
+	local fkey
 	-- put icons with specified formats
-	local fkey = "icon/"..id
+	fkey = "icon/"..id
 	packdir(fkey, rootdir..fkey, iconput)
 	-- read iconset json file
-	local fkey = "icon/"..id..".json"
+	fkey = "icon/"..id..".json"
 	local f = assert(io.open(rootdir..fkey, "rb"))
 	local content = f:read("*all")
 	f:close()
 	-- make iconset content
 	local fmts = {}
-	for i, name in ipairs(fmtlst) do
+	for _, name in ipairs(fmtlst) do
 		table.insert(fmts, iconfmtjson[name])
 	end
 	-- modify file content to put available formats
@@ -217,9 +219,9 @@ do
 	local content = f:read("*all")
 	f:close()
 	-- cut extra items from skinlist
-	for i, id1 in ipairs(fullskinset) do
+	for _, id1 in ipairs(fullskinset) do
 		local found = false
-		for i, id2 in ipairs(cfg.skinset) do
+		for _, id2 in ipairs(cfg.skinset) do
 			if id1 == id2 then
 				found = true
 				break
@@ -230,7 +232,7 @@ do
 		end
 	end
 	-- cut extra items from iconlist
-	for id1, fmtlst in pairs(fulliconset) do
+	for id1 in pairs(fulliconset) do
 		local found = false
 		for id2 in pairs(cfg.iconset) do
 			if id1 == id2 then
@@ -254,11 +256,12 @@ end
 
 -- replace wpk-name in settings
 do
-	local f = assert(io.open(envfmt("${GOPATH}/bin/config/hms.yaml"), "rb"))
+	local f
+	f = assert(io.open(envfmt("${GOPATH}/bin/config/hms.yaml"), "rb"))
 	local content = f:read("*all")
 	f:close()
 	content = string.gsub(content, "\"hms%-full%.wpk\"", "\""..cfg.info.label..".wpk\"")
-	local f = assert(io.open(envfmt("${GOPATH}/bin/config/hms.yaml"), "wb+"))
+	f = assert(io.open(envfmt("${GOPATH}/bin/config/hms.yaml"), "wb+"))
 	f:write(content)
 	f:close()
 end

@@ -7,4 +7,7 @@ buildvers=$(git describe --tags)
 buildtime=$(date +'%FT%T.%3NZ')
 
 go get github.com/schwarzlichtbezirk/wpk/luawpk
-go build -o $GOPATH/bin/wpkbuild.exe -v -ldflags="-X 'github.com/schwarzlichtbezirk/wpk/luawpk.BuildVers=$buildvers' -X 'github.com/schwarzlichtbezirk/wpk/luawpk.BuildTime=$buildtime'" github.com/schwarzlichtbezirk/wpk/util/build
+go build -o $GOPATH/bin/wpkbuild.exe -v -ldflags="-s -w\
+ -X 'github.com/schwarzlichtbezirk/wpk/luawpk.BuildVers=$buildvers'\
+ -X 'github.com/schwarzlichtbezirk/wpk/luawpk.BuildTime=$buildtime'"\
+ github.com/schwarzlichtbezirk/wpk/cmd/build

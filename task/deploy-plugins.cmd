@@ -3,9 +3,9 @@ rem This script downloads all javascript dependencies used on frontend.
 set plugdir=%~dp0..\frontend\plugin
 mkdir %plugdir%\images
 
-rem bootstrap 5.3.2
+rem bootstrap 5.3.8
 rem https://cdnjs.com/libraries/bootstrap
-set vers=5.3.2
+set vers=5.3.8
 curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/%vers%/js/bootstrap.min.js --output %plugdir%/bootstrap.min.js
 curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/%vers%/js/bootstrap.min.js.map --output %plugdir%/bootstrap.min.js.map
 curl https://cdnjs.cloudflare.com/ajax/libs/bootstrap/%vers%/css/bootstrap.min.css --output %plugdir%/bootstrap.min.css
@@ -17,10 +17,10 @@ set vers=2.11.8
 curl https://cdnjs.cloudflare.com/ajax/libs/popper.js/%vers%/umd/popper.min.js --output %plugdir%/popper.min.js
 curl https://cdnjs.cloudflare.com/ajax/libs/popper.js/%vers%/umd/popper.min.js.map --output %plugdir%/popper.min.js.map
 
-rem Vue 3.4.19
+rem Vue 3.5.22
 rem https://cdnjs.com/libraries/vue
 rem https://unpkg.com/vue@next
-set vers=3.4.19
+set vers=3.5.22
 curl https://unpkg.com/vue@%vers%/dist/vue.global.js --output %plugdir%/vue.global.js
 curl https://unpkg.com/vue@%vers%/dist/vue.global.prod.js --output %plugdir%/vue.global.prod.js
 
@@ -44,9 +44,9 @@ curl https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/%vers%/leaflet
 curl https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/%vers%/MarkerCluster.css --output %plugdir%/MarkerCluster.css
 curl https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/%vers%/MarkerCluster.Default.css --output %plugdir%/MarkerCluster.Default.css
 
-rem sha256 0.11.0
+rem sha256 0.11.1
 rem https://cdnjs.com/libraries/js-sha256
-set vers=0.11.0
+set vers=0.11.1
 curl https://cdnjs.cloudflare.com/ajax/libs/js-sha256/%vers%/sha256.min.js --output %plugdir%/sha256.min.js
 
 rem normalize 8.0.1
